@@ -15,10 +15,17 @@ namespace ECS.Unity.Textures.Components.Defaults
             if (self == null)
                 return null;
 
-            if (!self.TryGetTextureUrl(data, out URLAddress url))
-                return null;
+            if (self.IsVideoTexture())
+            {
+                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture());
 
-            return new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture());
+                if (textureComponent.IsVideoTexture)
+                    return textureComponent;
+            }
+
+            return self.TryGetTextureUrl(data, out URLAddress url)
+                ? new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture())
+                : null;
         }
 
         public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url)

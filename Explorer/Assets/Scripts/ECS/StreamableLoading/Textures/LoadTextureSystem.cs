@@ -30,7 +30,9 @@ namespace ECS.StreamableLoading.Textures
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (intention.IsVideoTexture)
-                return new StreamableLoadingResult<Texture2D>(CreateVideoTexture(intention.WrapMode, intention.FilterMode));
+            {
+               return new StreamableLoadingResult<Texture2D>(CreateVideoTexture(intention.WrapMode, intention.FilterMode));
+            }
 
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             GetTextureWebRequest request = await webRequestController.GetTextureAsync(
