@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Oak
   m_EditorClassIdentifier: 
   asset: {fileID: 919132149155446097, guid: c8de0959dc0d7e8478dc9b8a8c0b9016, type: 3}
-  radius: 20
+  radius: 15
   density: 6.02
   randomization:
     randomRotationX: {x: -5, y: 5}
