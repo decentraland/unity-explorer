@@ -9,9 +9,11 @@ using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle;
+using ECS.Prioritization.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
@@ -23,6 +25,9 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         public AvatarAttachHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
+            // Query GLOBAL world with: typeof(AvatarBase) + typeof(PlayerComponent)
+            // PlayerEntity is being created at GlobalWorldFactory...
+
             // world.Query(new QueryDescription().WithAll<DummyComponent>(), (ref DummyComponent dummy) => DummySystem(ref dummy));
             globalWorld.GetWorld()
                        .Query(new QueryDescription().WithAll<Profile, AvatarBase>(), (ref Profile profile, ref AvatarBase avatarBase) =>
@@ -34,17 +39,17 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         protected override void Update(float t)
         {
-            InitializeAvatarAttachQuery(World);
+            SetupAvatarAttachQuery(World);
 
             // UpdateAvatarAttachQuery(World);
         }
 
         [Query]
         [None(typeof(AvatarAttachComponent))]
-        private void InitializeAvatarAttach(in Entity entity, ref PBAvatarAttach pbAvatarAttach, ref TransformComponent transformComponent)
+        private void SetupAvatarAttach(in Entity entity, ref PBAvatarAttach pbAvatarAttach, ref TransformComponent transformComponent, ref PartitionComponent partitionComponent)
         {
-            // Query GLOBAL world with: typeof(AvatarBase) + typeof(PlayerComponent)
-            // PlayerEntity is being created at GlobalWorldFactory...
+            Debug.Log("PRAVS - InitializeAvatarAttach...", transformComponent.Transform);
+
             var component = new AvatarAttachComponent();
 
             switch (pbAvatarAttach.AnchorPointId)

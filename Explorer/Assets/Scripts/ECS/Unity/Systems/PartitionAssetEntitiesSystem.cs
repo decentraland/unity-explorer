@@ -85,7 +85,7 @@ namespace ECS.Unity.Systems
         }
 
         [Query]
-        [Any(typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream))]
+        [Any(typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBAvatarAttach))]
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref TransformComponent transformComponent)
         {
@@ -115,7 +115,7 @@ namespace ECS.Unity.Systems
         }
 
         [Query]
-        [Any(typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream))]
+        [Any(typeof(PBGltfContainer), typeof(PBMaterial), typeof(PBAvatarShape), typeof(PBAudioSource), typeof(PBAudioStream), typeof(PBAvatarAttach))]
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, [Data] bool checkTransform,
             ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ref PartitionComponent partitionComponent)
         {
