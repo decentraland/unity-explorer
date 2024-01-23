@@ -142,11 +142,3 @@ jobs:
           name: Build-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}.tar
           if-no-files-found: error
-
-      - name: Clean-up Required Packages
-        run: |
-          if [ -f "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage" ]; then
-            rm "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage"
-            echo "requiredPackages.unitypackage deleted successfully."
-        
-
