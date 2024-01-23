@@ -15,9 +15,9 @@ namespace DCL.Utilities.Extensions
             {
                 int k = Random.Range(0, n);
                 n--;
-                T value = list[k];
-                destination[k] = list[n];
-                destination[n] = value;
+                T tmp = destination[k];
+                destination[k] = destination[n];
+                destination[n] = tmp;
             }
         }
     }
