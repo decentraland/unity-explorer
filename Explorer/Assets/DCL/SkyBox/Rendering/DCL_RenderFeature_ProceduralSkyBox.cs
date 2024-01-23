@@ -175,7 +175,7 @@ namespace DCL.SkyBox.Rendering
                 desc.mipCount = 0;
                 desc.msaaSamples = 1;
                 desc.shadowSamplingMode = ShadowSamplingMode.None;
-                desc.sRGB = false;
+                desc.sRGB = true;
                 desc.stencilFormat = GraphicsFormat.None;
                 desc.useDynamicScale = false;
                 desc.useMipMap = false;
@@ -183,7 +183,7 @@ namespace DCL.SkyBox.Rendering
                 desc.vrUsage = VRTextureUsage.None;
                 desc.width = nDimensions_SkyBox_Cubemap;
 
-                RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+                RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
             }
 
             // StarBox Cubemap Rendertarget
@@ -237,7 +237,7 @@ namespace DCL.SkyBox.Rendering
                 desc.vrUsage = VRTextureUsage.None;
                 desc.width = nDimensions_SkyBox_Cubemap;
 
-                RenderingUtils.ReAllocateIfNeeded(ref m_SpaceCubemap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SpaceCubeMapTex");
+                RenderingUtils.ReAllocateIfNeeded(ref m_SpaceCubemap_RTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SpaceCubeMapTex");
             }
 
             if (bComputeStarMap == true)
