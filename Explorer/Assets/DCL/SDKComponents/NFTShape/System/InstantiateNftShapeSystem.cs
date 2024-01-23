@@ -24,11 +24,11 @@ namespace DCL.SDKComponents.NFTShape.System
         public InstantiateNftShapeSystem(
             World world,
             INFTShapeRendererFactory nftShapeRendererFactory,
-            IPerformanceBudget? instantiationFrameTimeBudgetProvider = null
+            IPerformanceBudget? instantiationFrameTimeBudgetProvider
         ) : base(world)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider ?? new FrameTimeCapBudget();
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider ?? new FrameTimeCapBudget.Default();
         }
 
         protected override void Update(float t)

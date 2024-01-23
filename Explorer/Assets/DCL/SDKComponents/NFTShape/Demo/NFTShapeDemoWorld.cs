@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     )
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource()),
-                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
+                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default()),
                 w => new VisibilityNftShapeSystem(w)
             );
         }
