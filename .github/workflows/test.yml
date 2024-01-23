@@ -5,6 +5,8 @@ on:
   push: { branches: [main] }
 
 env:
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
   
 concurrency:
@@ -42,7 +44,7 @@ jobs:
           key: Library-Explorer-Windows
 
       # Configure test runner
-      - uses: game-ci/unity-test-runner@v2
+      - uses: game-ci/unity-test-runner@v4.1.1
         id: testRunner
         timeout-minutes: 30
         with:
