@@ -1,5 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using System.Collections.Generic;
+using UnityEngine;
 using Utility;
 
 namespace SceneRunner.Scene
@@ -7,6 +9,8 @@ namespace SceneRunner.Scene
     public interface ISceneData
     {
         SceneShortInfo SceneShortInfo { get; }
+
+        IReadOnlyList<Vector2Int> Parcels { get; }
 
         /// <summary>
         ///     Position of the base parcel in the world

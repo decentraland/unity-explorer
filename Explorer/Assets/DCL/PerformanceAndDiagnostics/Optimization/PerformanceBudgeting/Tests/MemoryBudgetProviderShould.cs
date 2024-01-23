@@ -15,7 +15,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             { MemoryUsageStatus.Full, 0.9f },
         };
 
-        private MemoryBudgetProvider memoryBudgetProvider;
+        private MemoryBudget memoryBudget;
 
         private IProfilingProvider profilingProvider;
         private ISystemMemory systemMemory;
@@ -26,7 +26,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             profilingProvider = Substitute.For<IProfilingProvider>();
             systemMemory = Substitute.For<ISystemMemory>();
 
-            memoryBudgetProvider = new MemoryBudgetProvider(systemMemory, profilingProvider, memoryThreshold);
+            memoryBudget = new MemoryBudget(systemMemory, profilingProvider, memoryThreshold);
         }
 
         [TestCase((ulong)1000, (ulong)500, MemoryUsageStatus.Normal)]
@@ -39,7 +39,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
 
             // Act-Assert
-            Assert.That(memoryBudgetProvider.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
+            Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
         }
 
         [TestCase((ulong)1000, (ulong)810, true)]
@@ -51,7 +51,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             systemMemory.TotalSizeInMB.Returns(systemMemoryInMB);
 
             // Act-Assert
-            Assert.That(memoryBudgetProvider.TrySpendBudget(), Is.EqualTo(canSpendBudget));
+            Assert.That(memoryBudget.TrySpendBudget(), Is.EqualTo(canSpendBudget));
         }
     }
 }

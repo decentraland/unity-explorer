@@ -41,7 +41,7 @@ namespace MVC.Tests
             testView.Received(1).SetDrawOrder(canvasOrdering);
 
             // Show Async is called
-            testView.Received(1).ShowAsync(CancellationToken.None);
+            await testView.Received(1).ShowAsync(CancellationToken.None);
 
             // State is changed
             Assert.That(controller.State, Is.EqualTo(ControllerState.ViewFocused));
@@ -75,7 +75,7 @@ namespace MVC.Tests
             controller.Module.Received(1).OnViewHide();
 
             // View is hidden
-            testView.Received(1).HideAsync(CancellationToken.None);
+            await testView.Received(1).HideAsync(CancellationToken.None);
         }
 
         [Test]
@@ -124,7 +124,7 @@ namespace MVC.Tests
                 AddModule(Module = Substitute.For<IMVCControllerModule>());
             }
 
-            protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+            protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
                 CompletionSource.Task;
         }
     }

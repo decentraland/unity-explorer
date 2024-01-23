@@ -14,20 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nftIcons:
   - key: rare
-    value: {fileID: 21300000, guid: 4a3462f62d6794676b7db0cffc4c93c0, type: 3}
+    value: {fileID: 21300000, guid: 9b1910f69bae144ec8d4122a091f267e, type: 3}
   - key: epic
-    value: {fileID: 21300000, guid: 7a98ab3d0d7ae4df7958fe312df75fd4, type: 3}
+    value: {fileID: 21300000, guid: dfe2025b3e81f42c5888a2a938ac6706, type: 3}
   - key: uncommon
-    value: {fileID: 21300000, guid: eb50d42f8b2e642479006b55f8c538b6, type: 3}
+    value: {fileID: 21300000, guid: 936dcf8cb7310472086027dcbdae26d5, type: 3}
   - key: legendary
-    value: {fileID: 21300000, guid: 39a6c679449244f8491681ec41c88360, type: 3}
+    value: {fileID: 21300000, guid: 2a287e052dd434673bc1d517abbe6411, type: 3}
   - key: unique
-    value: {fileID: 21300000, guid: 771938bcfc47a4694b84810829c6542a, type: 3}
+    value: {fileID: 21300000, guid: 40a02ef6cf4e94182abb9dfac4d7d0e3, type: 3}
   - key: common
-    value: {fileID: 21300000, guid: 667cd6c89f5994b68a0685338783b7c7, type: 3}
+    value: {fileID: 21300000, guid: d99151485960c4e47a8bd1255170cf90, type: 3}
   - key: mythic
-    value: {fileID: 21300000, guid: 382a62f7466574ac8a6d607a3fea583b, type: 3}
+    value: {fileID: 21300000, guid: 8e9a5e9dd7e99454485c708328d637a5, type: 3}
   - key: land
-    value: {fileID: 0}
+    value: {fileID: 21300000, guid: dfe2025b3e81f42c5888a2a938ac6706, type: 3}
   - key: name
-    value: {fileID: 0}
+    value: {fileID: 21300000, guid: dfe2025b3e81f42c5888a2a938ac6706, type: 3}

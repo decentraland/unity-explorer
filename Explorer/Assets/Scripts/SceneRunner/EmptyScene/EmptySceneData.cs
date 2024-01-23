@@ -20,15 +20,17 @@ namespace SceneRunner.EmptyScene
         ///     Per scene data is not resolved as empty scenes use the shared world for all instances
         /// </summary>
         public SceneShortInfo SceneShortInfo { get; }
+        public IReadOnlyList<Vector2Int> Parcels { get; }
 
         public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;
 
         public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
         public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
-        public EmptySceneData(IReadOnlyList<EmptySceneMapping> mappings)
+        public EmptySceneData(IReadOnlyList<EmptySceneMapping> mappings, IReadOnlyList<Vector2Int> parcels)
         {
             Mappings = mappings;
+            Parcels = parcels;
 
             SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "Empty Scene");
 

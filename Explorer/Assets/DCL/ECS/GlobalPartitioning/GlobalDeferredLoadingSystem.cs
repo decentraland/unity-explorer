@@ -12,8 +12,10 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.StreamableLoading.Textures;
 using Ipfs;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace DCL.GlobalPartitioning
 {
@@ -45,10 +47,11 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetProfileIntention, Profile>(),
+                CreateQuery<GetTextureIntention, Texture2D>(),
             };
         }
 
-        internal GlobalDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider)
-            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider, memoryBudgetProvider) { }
+        internal GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
+            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
     }
 }

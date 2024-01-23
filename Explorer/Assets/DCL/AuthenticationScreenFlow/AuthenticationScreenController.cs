@@ -2,9 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Authenticators;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -120,7 +119,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             (lifeCycleTask ??= new UniTaskCompletionSource()).Task.AttachExternalCancellation(ct);
 
         private void StartFlow()

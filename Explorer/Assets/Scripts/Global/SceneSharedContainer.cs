@@ -24,6 +24,7 @@ namespace Global
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
                 exposedGlobalDataContainer.ExposedCameraData,
+                staticContainer.SceneReadinessReportQueue,
                 staticContainer.ECSWorldPlugins);
 
             return new SceneSharedContainer
@@ -35,7 +36,8 @@ namespace Global
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
                     sharedDependencies.EntityFactory,
-                    staticContainer.EntityCollidersGlobalCache
+                    staticContainer.EntityCollidersGlobalCache,
+                    staticContainer.EthereumApi
                 ),
             };
         }

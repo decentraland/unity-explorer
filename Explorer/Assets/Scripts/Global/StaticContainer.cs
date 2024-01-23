@@ -10,14 +10,16 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
+using DCL.Utilities;
+using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Identities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -31,6 +33,7 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        public WorldProxy GlobalWorld = new ();
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -73,6 +76,9 @@ namespace Global
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
+        public IEthereumApi EthereumApi { get; private set; }
+        public IScenesCache ScenesCache { get; private set; }
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
 
         public void Dispose()
         {
@@ -95,8 +101,10 @@ namespace Global
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(
+            IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
+            IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -106,13 +114,18 @@ namespace Global
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
+
+            container.EthereumApi = ethereumApi;
+            container.ScenesCache = new ScenesCache();
+            container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
+
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
 
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
-                return (null, false);
+                return (null, false)!;
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -121,12 +134,12 @@ namespace Global
                 container.ReportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudgetProvider(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudgetProvider(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
+                new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
+                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
-            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudgetProvider);
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
@@ -138,21 +151,26 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new TextShapePlugin(sharedDependencies.FrameTimeBudgetProvider, componentsContainer.ComponentPoolsRegistry, settingsContainer),
+                new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-
+                new AvatarShapePlugin(container.GlobalWorld),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
+                new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+                new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
@@ -161,7 +179,8 @@ namespace Global
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudgetProvider, container.CacheCleaner),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
+                textureResolvePlugin,
             };
 
             return (container, true);

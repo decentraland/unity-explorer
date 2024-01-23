@@ -5,8 +5,7 @@ using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
@@ -18,6 +17,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public async Task LoadMapping()
         {
-            await loadEmptySceneSystemLogic.LoadMappingAsync(CancellationToken.None);
+            await loadEmptySceneSystemLogic.LoadMappingAsync(Array.Empty<Vector2Int>(), CancellationToken.None);
 
             Assert.NotNull(loadEmptySceneSystemLogic.emptySceneData);
             Assert.That(loadEmptySceneSystemLogic.emptySceneData.Mappings.Count, Is.EqualTo(12));

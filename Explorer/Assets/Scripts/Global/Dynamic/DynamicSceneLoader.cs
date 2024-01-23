@@ -1,13 +1,15 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Web3Authentication;
+using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
-using DCL.Web3Authentication.Authenticators;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -41,7 +43,6 @@ namespace Global.Dynamic
         private void Awake()
         {
             realmLauncher.Initialize(settings.Realms);
-
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -77,17 +78,20 @@ namespace Global.Dynamic
                 var identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
 
+                var web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                    settings.AuthWebSocketUrl,
+                    settings.AuthSignatureUrl,
+                    identityCache,
+                    new HashSet<string>(settings.Web3WhitelistMethods));
+
                 web3Authenticator = new ProxyVerifiedWeb3Authenticator(
-                    new DappWeb3Authenticator(new UnityAppWebBrowser(),
-                        settings.AuthWebSocketUrl,
-                        settings.AuthSignatureUrl),
+                    web3VerifiedAuthenticator,
                     identityCache);
 
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer,
-                    identityCache, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {
@@ -137,7 +141,7 @@ namespace Global.Dynamic
                     dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
-                dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
+                dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
                 realmLauncher.OnRealmSelected += ChangeRealm;
             }
@@ -155,24 +159,20 @@ namespace Global.Dynamic
 
         private void ChangeRealm(string selectedRealm)
         {
-            async UniTask ChangeRealmAsync(string selectedRealm, CancellationToken ct)
+            async UniTask ChangeRealmAsync(CancellationToken ct)
             {
                 IRealmController realmController = dynamicWorldContainer!.RealmController;
 
-                if (globalWorld != null)
-                    await realmController.UnloadCurrentRealmAsync();
-
                 await UniTask.SwitchToMainThread();
 
-                Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
-                characterPos.y = 1f;
+                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-                staticContainer!.CharacterObject.Controller.transform.position = characterPos;
-
-                await realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
+                await UniTask.WhenAll(dynamicWorldContainer.MvcManager.ShowAsync(
+                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
+                    realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), settings.StartPosition, loadReport, ct));
             }
 
-            ChangeRealmAsync(selectedRealm, CancellationToken.None).Forget();
+            ChangeRealmAsync(destroyCancellationToken).Forget();
         }
     }
 }

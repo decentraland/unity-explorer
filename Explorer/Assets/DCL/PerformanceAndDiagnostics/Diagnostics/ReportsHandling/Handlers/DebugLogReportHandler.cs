@@ -25,6 +25,7 @@ namespace DCL.Diagnostics
             // Scene Loading blueish
             { ReportCategory.SCENE_LOADING, ColorUtility.ToHtmlStringRGB(new Color(0.30f, 0.50f, 0.90f)) },
             { ReportCategory.SCENE_FACTORY, ColorUtility.ToHtmlStringRGB(new Color(0.15f, 0.35f, 0.75f)) },
+            { ReportCategory.SCENE_UI, ColorUtility.ToHtmlStringRGB(new Color(0.10f, 0.30f, 0.45f)) },
 
             // JavaScript
             { ReportCategory.JAVASCRIPT, ColorUtility.ToHtmlStringRGB(new Color(0.90f, 0.30f, 0.35f)) },
