@@ -65,6 +65,8 @@ namespace DCL.Landscape
                 if (rootGo != null) Object.DestroyImmediate(rootGo);
                 rootGo = new GameObject("Generated Terrain");
 
+                GenerateCliffs();
+
                 if (centerTerrain)
                     rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
 
@@ -80,8 +82,67 @@ namespace DCL.Landscape
                     DigHoles(terrainDatas);
 
                 GenerateChunks(terrainDatas);
+
+
             }
             catch (Exception e) { Debug.LogException(e); }
+        }
+
+        //           size,size
+        //      N
+        //    W + E
+        //      S
+        //0,0
+
+        private void GenerateCliffs()
+        {
+            if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
+                return;
+
+            CreateCliffCornerAt(new Vector3(terrainGenData.terrainSize, 0, terrainGenData.terrainSize), Quaternion.identity);
+            CreateCliffCornerAt(new Vector3(terrainGenData.terrainSize, 0, 0), Quaternion.Euler(0, 90, 0));
+            CreateCliffCornerAt(new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
+            CreateCliffCornerAt(new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(terrainGenData.terrainSize, 0, i + 16);
+                side.rotation = Quaternion.Euler(0, 90, 0);
+                side.SetParent(rootGo.transform, true);
+            }
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(i, 0, terrainGenData.terrainSize);
+                side.rotation = Quaternion.identity;
+                side.SetParent(rootGo.transform, true);
+            }
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(0, 0, i);
+                side.rotation = Quaternion.Euler(0, 270, 0);
+                side.SetParent(rootGo.transform, true);
+            }
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(i + 16, 0, 0);
+                side.rotation = Quaternion.Euler(0, 180, 0);
+                side.SetParent(rootGo.transform, true);
+            }
+        }
+
+        private void CreateCliffCornerAt(Vector3 position, Quaternion rotation)
+        {
+            Transform neCorner = Object.Instantiate(terrainGenData.cliffCorner).transform;
+            neCorner.position = position;
+            neCorner.rotation = rotation;
+            neCorner.SetParent(rootGo.transform, true);
         }
 
         private void SetupEmptyParcelData(NativeArray<int2> emptyParcels, NativeHashSet<int2> ownedParcels)

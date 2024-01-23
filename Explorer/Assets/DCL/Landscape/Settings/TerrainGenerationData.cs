@@ -28,5 +28,9 @@ namespace DCL.Landscape.Settings
         [Header("Detail")]
         public DetailScatterMode detailScatterMode;
         public LandscapeAsset[] detailAssets;
+
+        [Header("Cliffs")]
+        public GameObject cliffSide;
+        public GameObject cliffCorner;
     }
 }
