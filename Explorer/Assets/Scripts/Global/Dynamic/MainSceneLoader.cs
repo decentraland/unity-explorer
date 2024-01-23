@@ -221,7 +221,7 @@ namespace Global.Dynamic
         {
             var timeout = TimeSpan.FromMinutes(2);
 
-            await dynamicWorldContainer!.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout, TimeSpan.FromSeconds(1))))
+            await dynamicWorldContainer!.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
                                         .AttachExternalCancellation(ct);
         }
 

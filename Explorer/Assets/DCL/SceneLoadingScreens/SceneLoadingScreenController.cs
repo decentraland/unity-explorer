@@ -108,13 +108,13 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask FadeInAsync(CancellationToken ct)
         {
-            await viewInstance.RootCanvasGroup.DOFade(1f, (float)inputData.FadeDuration.TotalSeconds).AsyncWaitForCompletion();
+            await viewInstance.RootCanvasGroup.DOFade(1f, 0.6f).AsyncWaitForCompletion();
             ct.ThrowIfCancellationRequested();
         }
 
         private async UniTask FadeOutAsync(CancellationToken ct)
         {
-            await viewInstance.RootCanvasGroup.DOFade(0f, (float)inputData.FadeDuration.TotalSeconds).AsyncWaitForCompletion();
+            await viewInstance.RootCanvasGroup.DOFade(0f, 0.6f).AsyncWaitForCompletion();
             ct.ThrowIfCancellationRequested();
         }
 

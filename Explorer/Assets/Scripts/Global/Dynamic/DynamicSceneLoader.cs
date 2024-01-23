@@ -182,7 +182,7 @@ namespace Global.Dynamic
                 var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
                 await UniTask.WhenAll(dynamicWorldContainer.MvcManager.ShowAsync(
-                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(1)))),
+                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
                     realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), settings.StartPosition, loadReport, ct));
             }
 

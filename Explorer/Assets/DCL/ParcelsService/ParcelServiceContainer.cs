@@ -47,7 +47,7 @@ namespace DCL.ParcelsService
                                       {
                                           var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(1)))),
+                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
 
                                                       // Wait for loading screen fade-in =(
                                                       UniTask.Delay(1000)
