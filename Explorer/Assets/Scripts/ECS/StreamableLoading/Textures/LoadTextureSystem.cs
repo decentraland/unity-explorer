@@ -24,12 +24,10 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IReadOnlyDictionary<CRDTEntity, Entity>? entitiesMap;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync, IReadOnlyDictionary<CRDTEntity, Entity>? entitiesMap = null) : base(world, cache, mutexSync)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.webRequestController = webRequestController;
-            this.entitiesMap = entitiesMap;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)

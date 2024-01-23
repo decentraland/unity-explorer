@@ -2,9 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
+using DCL.SDKComponents.VideoPlayer;
+using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -14,10 +17,12 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Defaults;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using TextureWrapMode = UnityEngine.TextureWrapMode;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -33,13 +38,16 @@ namespace ECS.Unity.Materials.Systems
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
+            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
+            this.entitiesMap = entitiesMap;
         }
 
         protected override void Update(float t)
@@ -160,7 +168,8 @@ namespace ECS.Unity.Materials.Systems
 
             if (textureComponent.Value.IsVideoTexture)
             {
-                StreamableLoadingResult<Texture2D>? result = new StreamableLoadingResult<Texture2D>(CreateVideoTexture(textureComponentValue.WrapMode, textureComponentValue.FilterMode));
+                Texture2D videoTexture = CreateVideoTexture(textureComponentValue.WrapMode, textureComponentValue.FilterMode);
+                StreamableLoadingResult<Texture2D>? result = new StreamableLoadingResult<Texture2D>(videoTexture);
 
                 var loadingState = new StreamableLoadingState
                 {
@@ -175,6 +184,9 @@ namespace ECS.Unity.Materials.Systems
                     IsVideoTexture = textureComponentValue.IsVideoTexture,
                     VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
                 }, partitionComponent, result, loadingState);
+
+                if (entitiesMap.TryGetValue(textureComponent.Value.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
+                    World.Add(videoPlayerEntity, new VideoTextureComponent(videoTexture));
             }
             else
             {

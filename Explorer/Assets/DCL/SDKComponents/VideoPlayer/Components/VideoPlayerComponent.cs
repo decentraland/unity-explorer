@@ -5,11 +5,6 @@ using System;
 
 namespace DCL.SDKComponents.VideoPlayer
 {
-    public struct VideoMaterialComponent
-    {
-
-    }
-
     public struct VideoPlayerComponent: IPoolableComponentProvider<MediaPlayer>
     {
         private readonly PBVideoPlayer sdkComponent;

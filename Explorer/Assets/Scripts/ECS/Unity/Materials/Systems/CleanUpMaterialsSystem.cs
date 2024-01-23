@@ -18,7 +18,7 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly DestroyMaterial destroyMaterial;
 
-        internal CleanUpMaterialsSystem(World world, DestroyMaterial destroyMaterial) : base(world)
+        public CleanUpMaterialsSystem(World world, DestroyMaterial destroyMaterial) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
         }
