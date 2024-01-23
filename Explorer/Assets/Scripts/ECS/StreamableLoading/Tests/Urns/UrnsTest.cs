@@ -1,9 +1,9 @@
 #nullable enable
 
-using ECS.StreamableLoading.NftShapes.Urns;
+using ECS.StreamableLoading.NFTShapes.URNs;
 using NUnit.Framework;
 
-namespace ECS.StreamableLoading.Tests.Urns
+namespace ECS.StreamableLoading.Tests.URNs
 {
     public class UrnsTest
     {
@@ -14,7 +14,7 @@ namespace ECS.StreamableLoading.Tests.Urns
         )]
         public void UrnToUrlTest(string urn, string expectedUrl)
         {
-            Assert.AreEqual(expectedUrl, new BasedUrnSource().UrlOrEmpty(urn).Value);
+            Assert.AreEqual(expectedUrl, new BasedURNSource().UrlOrEmpty(urn).Value);
         }
     }
 }

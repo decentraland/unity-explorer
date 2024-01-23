@@ -3,7 +3,8 @@ using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
-using ECS.StreamableLoading.NftShapes;
+using ECS.StreamableLoading.NFTShapes;
+using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace ECS.StreamableLoading.DeferredLoading
     [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
     [UpdateBefore(typeof(LoadTextureSystem))]
     [UpdateBefore(typeof(LoadAudioClipSystem))]
-    [UpdateBefore(typeof(LoadNftShapeSystem))]
+    [UpdateBefore(typeof(LoadNFTShapeSystem))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class AssetsDeferredLoadingSystem : DeferredLoadingSystem
     {
@@ -28,7 +29,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             {
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetTextureIntention, Texture2D>(),
-                CreateQuery<GetNftShapeIntention, Texture2D>(),
+                CreateQuery<GetNFTShapeIntention, Texture2D>(),
                 CreateQuery<GetAudioClipIntention, AudioClip>(),
             };
         }

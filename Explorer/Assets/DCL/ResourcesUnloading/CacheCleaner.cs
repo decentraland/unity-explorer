@@ -7,7 +7,7 @@ using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.NftShapes;
+using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System.Collections.Generic;
@@ -33,7 +33,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
-        private IStreamableCache<Texture2D, GetNftShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNftShapeIntention>.Fake();
+        private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
@@ -83,7 +83,7 @@ namespace DCL.ResourcesUnloading
         public void Register(IStreamableCache<Texture2D, GetTextureIntention> texturesCache) =>
             this.texturesCache = texturesCache;
 
-        public void Register(IStreamableCache<Texture2D, GetNftShapeIntention> nftShapeCache) =>
+        public void Register(IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache) =>
             this.nftShapeCache = nftShapeCache;
 
         public void Register(IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache) =>
