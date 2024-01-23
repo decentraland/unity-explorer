@@ -15,13 +15,12 @@ namespace ECS.SceneLifeCycle.Components
     {
         public readonly List<IpfsTypes.SceneEntityDefinition> RetrievedReusableList;
         public readonly List<int2> InputReusableList;
+        public readonly PartitionComponent ActivePartitionComponent;
 
         /// <summary>
         ///     Only one bulk request at a time
         /// </summary>
         public AssetPromise<SceneDefinitions, GetSceneDefinitionList>? ActivePromise;
-
-        public PartitionComponent ActivePartitionComponent;
 
         public VolatileScenePointers(List<IpfsTypes.SceneEntityDefinition> retrievedReusableList, List<int2> inputReusableList)
         {

@@ -3,9 +3,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Serialization;
 
 namespace Utility
 {
@@ -100,7 +98,7 @@ namespace Utility
             /// </summary>
             public bool AlreadyProcessed;
 
-            public float RingLevel;
+            public float RingSqrDistance;
         }
 
         [BurstCompile]
@@ -121,6 +119,7 @@ namespace Utility
                 int index = (4 * ringLevel * (ringLevel + 1)) + 1; // + 1 stands for 0 radius
 
                 ringLevel++;
+                float ringSqrDistance = ringLevel * ParcelMathHelper.PARCEL_SIZE * (ringLevel * ParcelMathHelper.PARCEL_SIZE);
 
                 for (int i = -ringLevel; i <= ringLevel; i++)
                 {
@@ -136,7 +135,7 @@ namespace Utility
                             Rings[index] = new ParcelInfo
                             {
                                 AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
-                                RingLevel = ringLevel * ParcelMathHelper.PARCEL_SIZE
+                                RingSqrDistance = ringSqrDistance,
                             };
 
                             index++;
@@ -149,7 +148,7 @@ namespace Utility
                         Rings[index] = new ParcelInfo
                         {
                             AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
-                            RingLevel = ringLevel * ParcelMathHelper.PARCEL_SIZE
+                            RingSqrDistance = ringSqrDistance,
                         };
 
                         index++;
@@ -158,7 +157,7 @@ namespace Utility
                         Rings[index] = new ParcelInfo
                         {
                             AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
-                            RingLevel = ringLevel * ParcelMathHelper.PARCEL_SIZE
+                            RingSqrDistance = ringSqrDistance,
                         };
 
                         index++;

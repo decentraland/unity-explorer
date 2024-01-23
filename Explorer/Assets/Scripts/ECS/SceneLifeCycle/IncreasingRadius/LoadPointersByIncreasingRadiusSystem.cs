@@ -31,6 +31,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly IPartitionSettings partitionSettings;
 
+        private float[]? sqrDistances;
 
         private bool splitIsPending;
 
@@ -45,6 +46,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         protected override void Update(float t)
         {
+            if (realmPartitionSettings.ScenesDefinitionsRequestBatchSize != sqrDistances?.Length)
+                sqrDistances = new float[realmPartitionSettings.ScenesDefinitionsRequestBatchSize];
+
             // VolatileScenePointers should be created from RealmController
 
             // job started means that there was a new split initiated (dirty state)
@@ -79,9 +83,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             int i;
 
             splitIsPending = false;
-            float ringLevel = 0;
-            var processedScenes = 0;
-            
+
             for (i = 0; i < flatArray.Length; i++)
             {
                 ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[i];
@@ -91,11 +93,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
+                    sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                     input.Add(parcelInfo.Parcel);
                     parcelInfo.AlreadyProcessed = true;
                     flatArray[i] = parcelInfo;
-                    ringLevel += parcelInfo.RingLevel;
-                    processedScenes++;
                 }
                 else
                 {
@@ -104,12 +105,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
+            // Use median instead of average as the latter can affect the resulting bucket unpredictably (tends to give higher values)
+            Array.Sort(sqrDistances!);
+            float median = sqrDistances![input.Count / 2];
+
             // Find the bucket
             byte bucketIndex = 0;
-            var averageDistanceSqr = ringLevel / processedScenes * (ringLevel / processedScenes);
             for (; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
             {
-                if (averageDistanceSqr < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                if (median < partitionSettings.SqrDistanceBuckets[bucketIndex])
                     break;
             }
 
