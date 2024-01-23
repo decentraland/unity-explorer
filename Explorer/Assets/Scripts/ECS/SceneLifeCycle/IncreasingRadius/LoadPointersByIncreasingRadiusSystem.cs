@@ -105,6 +105,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
+            if (input.Count == 0) return;
+
+            Array.Clear(sqrDistances!, input.Count, sqrDistances!.Length - input.Count);
+
             // Use median instead of average as the latter can affect the resulting bucket unpredictably (tends to give higher values)
             Array.Sort(sqrDistances!);
             float median = sqrDistances![input.Count / 2];
