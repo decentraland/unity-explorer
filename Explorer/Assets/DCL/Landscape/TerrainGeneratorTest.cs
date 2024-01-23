@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Settings;
 using System;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.Landscape
@@ -13,8 +14,8 @@ namespace DCL.Landscape
         public TerrainGenerationData genData;
         public TextAsset emptyParcelsData;
         public TextAsset ownedParcelsData;
-        private NativeHashSet<Vector2Int> ownedParcels;
-        private NativeArray<Vector2Int> emptyParcels;
+        private NativeHashSet<int2> ownedParcels;
+        private NativeArray<int2> emptyParcels;
 
         [ContextMenu("Generate")]
         private void Generate()
@@ -31,15 +32,15 @@ namespace DCL.Landscape
             string[] ownedParcelsRaw = ownedParcelsData.text.Split('\n');
             string[] emptyParcelsRaw = emptyParcelsData.text.Split('\n');
 
-            ownedParcels = new NativeHashSet<Vector2Int>(ownedParcelsRaw.Length, Allocator.Persistent);
-            emptyParcels = new NativeArray<Vector2Int>(emptyParcelsRaw.Length, Allocator.Persistent);
+            ownedParcels = new NativeHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
+            emptyParcels = new NativeArray<int2>(emptyParcelsRaw.Length, Allocator.Persistent);
 
             foreach (string ownedParcel in ownedParcelsRaw)
             {
                 string[] coordinates = ownedParcel.Trim().Split(',');
 
                 if (TryParse(coordinates, out int x, out int y))
-                    ownedParcels.Add(new Vector2Int(x, y));
+                    ownedParcels.Add(new int2(x, y));
                 else
                     Debug.LogWarning("Invalid line: " + ownedParcel);
             }
@@ -50,7 +51,7 @@ namespace DCL.Landscape
                 string[] coordinates = emptyParcel.Trim().Split(',');
 
                 if (TryParse(coordinates, out int x, out int y))
-                    emptyParcels[i] = new Vector2Int(x, y);
+                    emptyParcels[i] = new int2(x, y);
                 else
                     Debug.LogWarning("Invalid line: " + emptyParcel);
             }

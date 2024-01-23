@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49ee1f2493e44e029443e1a749da5565, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  ownedParcels: {fileID: 4900000, guid: a160048636f0c6a43b91e491836f503b, type: 3}
+  parcelLimitX: {x: -150, y: 150}
+  parcelLimitZ: {x: -150, y: 150}
   terrainSize: 4800
   chunkSize: 1024
   terrainScale: 15
