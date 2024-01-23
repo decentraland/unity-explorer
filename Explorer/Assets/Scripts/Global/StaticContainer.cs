@@ -157,6 +157,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
+                new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 textureResolvePlugin,

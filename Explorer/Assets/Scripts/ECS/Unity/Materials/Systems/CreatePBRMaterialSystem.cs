@@ -19,7 +19,7 @@ namespace ECS.Unity.Materials.Systems
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
+        public CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
             IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
         {
             this.capFrameBudget = capFrameBudget;

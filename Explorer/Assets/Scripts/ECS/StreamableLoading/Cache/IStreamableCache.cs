@@ -27,14 +27,41 @@ namespace ECS.StreamableLoading.Cache
         void Add(in TLoadingIntention key, TAsset asset);
 
         /// <summary>
-        ///     Signal the cache that a single usage of asset went out of scope.
-        ///     It is needed for cache with limited capacity based on LRU, reference counting
-        /// </summary>
-        void Dereference(in TLoadingIntention key, TAsset asset);
-
-        /// <summary>
         ///     Unload assets from the cache to free memory
         /// </summary>
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
+
+        class Fake : IStreamableCache<TAsset, TLoadingIntention>
+        {
+            public bool Equals(TLoadingIntention x, TLoadingIntention y) =>
+                throw new Exception("I am fake, try replace me with a real implementation");
+
+            public int GetHashCode(TLoadingIntention obj) =>
+                throw new Exception("I am fake, try replace me with a real implementation");
+
+            public void Dispose()
+            {
+
+            }
+
+            public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; } = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>();
+            public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; } = new Dictionary<string, StreamableLoadingResult<TAsset>>();
+
+            public bool TryGet(in TLoadingIntention key, out TAsset asset)
+            {
+                asset = default(TAsset);
+                return false;
+            }
+
+            public void Add(in TLoadingIntention key, TAsset asset)
+            {
+                //ignore
+            }
+
+            public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
+            {
+                //ignore
+            }
+        }
     }
 }

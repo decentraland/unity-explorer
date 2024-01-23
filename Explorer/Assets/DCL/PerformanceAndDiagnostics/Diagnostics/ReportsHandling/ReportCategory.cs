@@ -66,6 +66,11 @@
         public const string TEXTURE_WEB_REQUEST = nameof(TEXTURE_WEB_REQUEST);
 
         /// <summary>
+        ///     Texture related web request
+        /// </summary>
+        public const string NFT_SHAPE_WEB_REQUEST = nameof(NFT_SHAPE_WEB_REQUEST);
+
+        /// <summary>
         ///     Audio clip related web request
         /// </summary>
         public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);

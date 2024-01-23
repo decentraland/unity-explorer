@@ -3,7 +3,8 @@ using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;
-using UnityEngine;
+using System;
+using Random = UnityEngine.Random;
 
 namespace DCL.Optimization.Pools.Tests
 {
@@ -25,6 +26,8 @@ namespace DCL.Optimization.Pools.Tests
             }
 
             TestComponent1 IPoolableComponentProvider<TestComponent1>.PoolableComponent => Component;
+
+            public Type PoolableComponentType => typeof(TestComponent1);
 
             public void Dispose() { }
         }
