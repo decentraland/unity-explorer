@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         }
 
         [Query]
-        [All(typeof(PBUiText), typeof(PBUiTransform), typeof(UITransformComponent))]
+        [All(typeof(PBUiText), typeof(UITransformComponent))]
         [None(typeof(UITextComponent))]
         private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
@@ -46,7 +46,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         }
 
         [Query]
-        [All(typeof(PBUiText), typeof(UITransformComponent), typeof(UITextComponent))]
         private void UpdateUIText(ref UITextComponent uiTextComponent, ref PBUiText sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
