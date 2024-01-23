@@ -168,7 +168,19 @@ namespace ECS.Unity.Materials.Systems
 
             if (textureComponent.Value.IsVideoTexture)
             {
-                Texture2D videoTexture = CreateVideoTexture(textureComponentValue.WrapMode, textureComponentValue.FilterMode);
+                Texture2D videoTexture = null;
+
+                if (entitiesMap.TryGetValue(textureComponent.Value.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
+                {
+                    if (World.Has<VideoTextureComponent>(videoPlayerEntity))
+                        videoTexture = World.Get<VideoTextureComponent>(videoPlayerEntity).texture;
+                    else
+                    {
+                        videoTexture = CreateVideoTexture(textureComponentValue.WrapMode, textureComponentValue.FilterMode);
+                        World.Add(videoPlayerEntity, new VideoTextureComponent(videoTexture));
+                    }
+                }
+
                 StreamableLoadingResult<Texture2D>? result = new StreamableLoadingResult<Texture2D>(videoTexture);
 
                 var loadingState = new StreamableLoadingState
@@ -184,9 +196,6 @@ namespace ECS.Unity.Materials.Systems
                     IsVideoTexture = textureComponentValue.IsVideoTexture,
                     VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
                 }, partitionComponent, result, loadingState);
-
-                if (entitiesMap.TryGetValue(textureComponent.Value.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
-                    World.Add(videoPlayerEntity, new VideoTextureComponent(videoTexture));
             }
             else
             {
