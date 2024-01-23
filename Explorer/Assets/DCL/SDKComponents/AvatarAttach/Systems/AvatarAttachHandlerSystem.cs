@@ -40,8 +40,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         protected override void Update(float t)
         {
             SetupAvatarAttachQuery(World);
-
-            // UpdateAvatarAttachQuery(World);
+            UpdateAvatarAttachTransformQuery(World);
         }
 
         [Query]
@@ -50,32 +49,58 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             var component = new AvatarAttachComponent();
 
-            switch (pbAvatarAttach.AnchorPointId)
-            {
-                case AvatarAnchorPointType.AaptLeftHand:
-                    component.anchorPointTransform = ownPlayerAvatarBase.LeftHandAnchorPoint;
-                    break;
-                case AvatarAnchorPointType.AaptRightHand:
-                    component.anchorPointTransform = ownPlayerAvatarBase.RightHandAnchorPoint;
-                    break;
-                case AvatarAnchorPointType.AaptNameTag:
-                default: // AvatarAnchorPointType.AaptPosition
-                    component.anchorPointTransform = ownPlayerAvatarBase.transform;
-                    break;
-            }
+            component.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
 
-            // Debug.Log("PRAVS - SetupAvatarAttach() - 1", transformComponent.Transform);
-            // Debug.Log("PRAVS - SetupAvatarAttach() - 2", component.anchorPointTransform);
-
-            transformComponent.Transform.SetParent(component.anchorPointTransform);
-            transformComponent.Transform.localPosition = Vector3.zero;
-            transformComponent.Transform.localRotation = Quaternion.identity;
+            ApplyAnchorPointTransformValues(transformComponent.Transform, component);
 
             World.Add(entity, component);
         }
 
         [Query]
-        private void UpdateAvatarAttach(ref PBAvatarAttach pbAvatarAttach, ref AvatarAttachComponent avatarAttachComponent) { }
+        private void UpdateAvatarAttachTransform(in Entity entity, ref PBAvatarAttach pbAvatarAttach, ref AvatarAttachComponent avatarAttachComponent, ref TransformComponent transformComponent)
+        {
+            if (pbAvatarAttach.IsDirty) { avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId); }
+
+            if (ApplyAnchorPointTransformValues(transformComponent.Transform, avatarAttachComponent))
+                World.Set(entity, avatarAttachComponent);
+        }
+
+        private Transform GetAnchorPointTransform(AvatarAnchorPointType anchorPointType)
+        {
+            switch (anchorPointType)
+            {
+                case AvatarAnchorPointType.AaptLeftHand:
+                    return ownPlayerAvatarBase.LeftHandAnchorPoint;
+                case AvatarAnchorPointType.AaptRightHand:
+                    return ownPlayerAvatarBase.RightHandAnchorPoint;
+                case AvatarAnchorPointType.AaptNameTag:
+                default: // AvatarAnchorPointType.AaptPosition
+                    return ownPlayerAvatarBase.transform;
+            }
+        }
+
+        private bool ApplyAnchorPointTransformValues(Transform targetTransform, AvatarAttachComponent avatarAttachComponent)
+        {
+            Vector3 anchorPointPosition = avatarAttachComponent.anchorPointTransform.position;
+            Quaternion anchorPointRotation = avatarAttachComponent.anchorPointTransform.rotation;
+            var modifiedComponent = false;
+
+            if (anchorPointPosition != avatarAttachComponent.lastAnchorPointPosition)
+            {
+                targetTransform.position = anchorPointPosition;
+                avatarAttachComponent.lastAnchorPointPosition = anchorPointPosition;
+                modifiedComponent = true;
+            }
+
+            if (anchorPointRotation != avatarAttachComponent.lastAnchorPointRotation)
+            {
+                targetTransform.rotation = anchorPointRotation;
+                avatarAttachComponent.lastAnchorPointRotation = anchorPointRotation;
+                modifiedComponent = true;
+            }
+
+            return modifiedComponent;
+        }
 
         public void FinalizeComponents(in Query query)
         {
