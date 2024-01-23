@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Metadata;
+using DCL.LOD;
 using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -18,11 +20,13 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
+        private readonly ILODAssetsPool lodAssetsPool;
 
-        public UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache) : base(world)
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+            this.lodAssetsPool = lodAssetsPool;
         }
 
         protected override void Update(float t)
@@ -31,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
             SwapSceneFacadeToLODQuery(World);
             SwapScenePromiseToLODQuery(World);
         }
-        
+
         [Query]
         [None(typeof(SceneLODInfo), typeof(DeleteEntityIntention))]
         private void SwapSceneFacadeToLOD(Entity entity, ref VisualSceneState visualSceneState,
@@ -63,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                sceneLODInfo.Dispose(World);
+                sceneLODInfo.Dispose(World, lodAssetsPool);
                 visualSceneState.IsDirty = false;
 
                 //Show Scene
@@ -76,8 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(SceneLODInfo), typeof(DeleteEntityIntention))]
-        private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState,
-            AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             if (!visualSceneState.IsDirty) return;
 

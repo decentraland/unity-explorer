@@ -19,7 +19,7 @@ namespace DCL.LOD.Tests
     public class UpdateSceneLODInfoSystemShould : UnitySystemTestBase<UpdateSceneLODInfoSystem>
     {
         private SceneLODInfo sceneLODInfo;
-        private LODAssetCache lodAssetCache;
+        private LODAssetsPool lodAssetsPool;
         private PartitionComponent partitionComponent;
 
         private string assetBundlePath =>
@@ -35,11 +35,11 @@ namespace DCL.LOD.Tests
             var memoryBudget = Substitute.For<IPerformanceBudget>();
             memoryBudget.TrySpendBudget().Returns(true);
 
-            lodAssetCache = new LODAssetCache();
+            lodAssetsPool = new LODAssetsPool();
             InitializeSceneLODInfo();
             partitionComponent = new PartitionComponent();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetCache, new Vector2Int[] { new(1, 3), new(3, 5) },
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new Vector2Int[] { new (1, 3), new (3, 5) },
                 frameCapBudget,
                 memoryBudget);
         }
@@ -49,7 +49,6 @@ namespace DCL.LOD.Tests
             sceneLODInfo.CurrentLODLevel = -1;
             sceneLODInfo.SceneHash = "FakeHash";
             sceneLODInfo.ParcelPosition = new Vector3(0, 0);
-            sceneLODInfo.LodCache = lodAssetCache;
         }
 
 
@@ -75,7 +74,7 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
         }
 
-        
+
         [Test]
         public void ResolveLODPromise()
         {
@@ -84,7 +83,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevel = 2;
             var sceneLodInfoEntity = world.Create(sceneLODInfo);
-            
+
             //Act
             system.Update(0);
 
@@ -118,7 +117,7 @@ namespace DCL.LOD.Tests
             system.Update(0);
 
             //Assert
-            Assert.AreEqual(lodAssetCache.cache.Count, 1);
+            Assert.AreEqual(lodAssetsPool.vacantInstances.Count, 1);
         }
 
         private (AssetBundleData, Promise) GenerateLODPromise()
@@ -129,11 +128,11 @@ namespace DCL.LOD.Tests
 
             var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
                 new AssetBundleData[] { });
-            
+
             world.Add(promise.Entity,
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
             return (fakeAssetBundleData, promise);
         }
-        
+
     }
 }
