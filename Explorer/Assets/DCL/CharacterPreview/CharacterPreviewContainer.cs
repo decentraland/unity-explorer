@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -13,7 +14,6 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Transform cameraTarget { get; private set; }
         [field: SerializeField] internal Transform rotationTarget { get; private set; }
 
-        //These could be just Vector3 elements as for now we are not using the rotation
         [field: SerializeField] internal Transform defaultPositionTransform { get; private set; }
         [field: SerializeField] internal Transform topPositionTransform { get; private set; }
         [field: SerializeField] internal Transform bottomPositionTransform { get; private set; }
@@ -22,15 +22,23 @@ namespace DCL.CharacterPreview
 
         [field: SerializeField] internal LayerMask layer { get; private set; }
 
+        [field: SerializeField] internal float dragMovementModifier { get; private set; }
+        [field: SerializeField] internal float scrollModifier { get; private set; }
+        [field: SerializeField] internal float rotationModifier { get; private set; }
+
+
+        [field: SerializeField] internal float maxHorizontalOffset { get; private set; }
+
+        [field: SerializeField] internal float minVerticalOffset { get; private set; }
+        [field: SerializeField] internal float maxVerticalOffset { get; private set; }
+
+        [field: SerializeField] internal Vector2 depthLimits { get; private set; }
+
         public void Initialize(RenderTexture targetTexture)
         {
             camera.targetTexture = targetTexture;
             cameraTarget.position = defaultPositionTransform.position;
             rotationTarget.rotation = Quaternion.identity;
-            this.transform.position = new Vector3(0, 5000);
-
-            //Set correct height for the object, reset position of targets and rotation
-            //Magic values should be serialized fields
         }
     }
 

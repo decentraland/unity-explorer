@@ -77,6 +77,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             Transform avatarTransform = avatarBase.transform;
             avatarTransform.SetParent(transformComponent.Transform, false);
+
+            //TODO: Fran -> This code can be probably improved, check if we can get the list of children from somewhere else to avoid allocations.
+            foreach (var child in avatarTransform.GetComponentsInChildren<Transform>())
+            {
+                child.gameObject.layer = transformComponent.Transform.gameObject.layer;
+            }
+
             avatarTransform.ResetLocalTRS();
 
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);

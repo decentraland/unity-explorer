@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
-using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Web3.Identities;
 using System;

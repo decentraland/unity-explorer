@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
@@ -9,44 +10,46 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
 {
-    public class BackpackCharacterPreviewControler : IDisposable
+    public class BackpackCharacterPreviewController : IDisposable
     {
         private readonly BackpackCharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly BackpackEventBus backpackEventBus;
         private readonly CharacterPreviewInputEventBus inputEventBus;
-
-        private IComponentPoolsRegistry poolsRegistry;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private World world;
-        private Entity playerEntity;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
 
-        public BackpackCharacterPreviewControler(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, IComponentPoolsRegistry poolsRegistry, CharacterPreviewInputEventBus inputEventBus)
+        public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, IComponentPoolsRegistry poolsRegistry, CharacterPreviewInputEventBus inputEventBus)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.backpackEventBus = backpackEventBus;
+            this.poolsRegistry = poolsRegistry;
+            this.inputEventBus = inputEventBus;
+
             this.backpackEventBus.EquipEvent += OnEquipped;
             this.backpackEventBus.UnEquipEvent += OnUnequipped;
             this.backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
-            this.poolsRegistry = poolsRegistry;
-            this.inputEventBus = inputEventBus;
+
+            view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
+            view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {
             world = builder.World;
-            this.playerEntity = playerEntity;
-            InitializePreviewModel();
+            InitializePreviewModel(playerEntity);
         }
 
-        private void InitializePreviewModel()
+        private void InitializePreviewModel(Entity playerEntity)
         {
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
@@ -58,10 +61,9 @@ namespace DCL.CharacterPreview
         public void Initialize()
         {
             previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus);
-
-            view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
-            view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
+            OnModelUpdated();
         }
+
 
         private void OnScroll(PointerEventData pointerEventData)
         {
@@ -91,17 +93,24 @@ namespace DCL.CharacterPreview
         private void OnEquipped(IWearable i)
         {
             previewModel.Wearables ??= new List<string>();
-            previewModel.Wearables.Add(i.GetUrn());
-            UpdateModel();
+
+            if (!previewModel.Wearables.Contains(i.GetUrn()))
+            {
+                previewModel.Wearables.Add(i.GetUrn());
+            }
+            OnModelUpdated();
         }
 
         private void OnUnequipped(IWearable i)
         {
-            previewModel.Wearables.Remove(i.GetUrn());
-            UpdateModel();
+            if (previewModel.Wearables.Contains(i.GetUrn()))
+            {
+                previewModel.Wearables.Remove(i.GetUrn());
+            }
+            OnModelUpdated();
         }
 
-        private void UpdateModel()
+        private void OnModelUpdated()
         {
             previewController.UpdateAvatar(previewModel);
         }
