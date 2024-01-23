@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -30,7 +31,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
-        private IStreamableCache<LODAsset, string> lodCache;
+        private ILODAssetsPool lodCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
 
         private IWearableAssetsCache wearableAssetsCache;
@@ -69,9 +70,9 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void Register(IStreamableCache<LODAsset, string> lodCache)
+        public void Register(ILODAssetsPool lodAssetsPool)
         {
-            this.lodCache = lodCache;
+            lodCache = lodAssetsPool;
         }
 
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>
