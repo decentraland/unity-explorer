@@ -3,6 +3,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
 using DCL.Optimization.ThreadSafePool;
+using NSubstitute.ClearExtensions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -70,6 +71,7 @@ namespace DCL.Profiles
     public struct AvatarJsonDto
     {
         private static readonly ThreadSafeListPool<URN> wearablePool = new (10, 10);
+        private static readonly ThreadSafeListPool<string> forceRenderPool = new (15, 15);
 
         public string bodyShape;
         public List<string> wearables;
@@ -85,14 +87,22 @@ namespace DCL.Profiles
             const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
 
             List<URN> wearableUrns = wearablePool.Get();
+            List<string> forceRenderCategories = forceRenderPool.Get();
 
             foreach (string w in wearables)
                 wearableUrns.Add(w);
 
             avatar.sharedWearables.Clear();
+            avatar.forceRender.Clear();
+
+            foreach (string forceRenderCategory in forceRender)
+                forceRenderCategories.Add(forceRenderCategory);
 
             foreach (URN wearable in wearableUrns)
                 avatar.sharedWearables.Add(wearable.Shorten(SHARED_WEARABLES_MAX_URN_PARTS));
+
+            foreach (string forceRenderCategory in forceRenderCategories)
+                avatar.forceRender.Add(forceRenderCategory);
 
             // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
             avatar.uniqueWearables.Clear();
@@ -108,6 +118,7 @@ namespace DCL.Profiles
             avatar.SkinColor = skin!.color!.ToColor();
 
             wearablePool.Release(wearableUrns);
+            forceRenderPool.Release(forceRenderCategories);
         }
 
         public void Reset()

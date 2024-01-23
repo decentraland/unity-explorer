@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Backpack
     {
@@ -119,10 +120,14 @@ namespace DCL.Backpack
                 if(!avatarShapeComponent.WearablePromise.IsConsumed)
                     await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
-                foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
+                Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
+
+                backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
+                backpackCommandBus.SendCommand(new BackpackEquipCommand(avatar.BodyShape.Value));
+
+                foreach (URN avatarSharedWearable in avatar.SharedWearables)
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
 
-                backpackCommandBus.SendCommand(new BackpackEquipCommand(world.Get<Profile>(playerEntity).Avatar.BodyShape.Value));
             }
 
             public void Activate()

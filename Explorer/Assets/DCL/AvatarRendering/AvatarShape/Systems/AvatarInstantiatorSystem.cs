@@ -116,9 +116,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             HashSet<string> wearablesToHide = HashSetPool<string>.Get();
             HashSet<string> usedCategories = HashSetPool<string>.Get();
 
-            //AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset,
-            //    intention.Pointers.Count, wearablesToHide);
-
             GameObject bodyShape = null;
 
             // Using Pointer size for counter, since we dont know the size of the results array

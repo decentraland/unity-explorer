@@ -1,5 +1,6 @@
 using DCL.UI;
 using System;
+using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {

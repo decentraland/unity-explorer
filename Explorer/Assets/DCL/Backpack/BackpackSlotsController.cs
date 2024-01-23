@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using Microsoft.ClearScript.Util.Web;
@@ -16,7 +17,10 @@ namespace DCL.Backpack
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly Dictionary<string, (AvatarSlotView, CancellationTokenSource)> avatarSlots = new ();
+        private readonly List<IWearable> equippedWearables = new (15);
         private AvatarSlotView previousSlot;
+        private readonly HashSet<string> forceRender = new (15);
+        private readonly HashSet<string> hidingList = new (15);
 
         public BackpackSlotsController(
             AvatarSlotView[] avatarSlotViews,
@@ -31,13 +35,26 @@ namespace DCL.Backpack
             this.backpackEventBus.EquipEvent += EquipInSlot;
             this.backpackEventBus.UnEquipEvent += UnEquipInSlot;
             this.backpackEventBus.FilterCategoryEvent += DeselectCategory;
+            this.backpackEventBus.ForceRenderEvent += SetForceRender;
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
                 avatarSlots.Add(avatarSlotView.Category.ToLower(), (avatarSlotView, new CancellationTokenSource()));
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
+                avatarSlotView.OverrideHide.onClick.AddListener(() => RemoveForceRender(avatarSlotView.Category));
+                avatarSlotView.NoOverride.onClick.AddListener(() => AddForceRender(avatarSlotView.Category));
                 avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipCommand(avatarSlotView.SlotWearableUrn)));
             }
+        }
+
+        private void SetForceRender(IReadOnlyCollection<string> forceRenders)
+        {
+            forceRender.Clear();
+
+            foreach (string render in forceRenders)
+                forceRender.Add(render);
+
+            CalculateHideStatus();
         }
 
         private void DeselectCategory(string filterContent)
@@ -53,6 +70,8 @@ namespace DCL.Backpack
         {
             if (!avatarSlots.TryGetValue(wearable.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView)) return;
 
+            equippedWearables.Remove(wearable);
+
             avatarSlotView.Item2.SafeCancelAndDispose();
             avatarSlotView.Item1.UnequipButton.gameObject.SetActive(false);
             avatarSlotView.Item1.SlotWearableUrn = null;
@@ -60,6 +79,8 @@ namespace DCL.Backpack
             avatarSlotView.Item1.SlotWearableThumbnail.sprite = null;
             avatarSlotView.Item1.SlotWearableRarityBackground.sprite = null;
             avatarSlotView.Item1.EmptyOverlay.SetActive(true);
+
+            CalculateHideStatus();
         }
 
         private void EquipInSlot(IWearable equippedWearable)
@@ -67,13 +88,50 @@ namespace DCL.Backpack
             if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView))
                 return;
 
+            equippedWearables.Add(equippedWearable);
+
             avatarSlotView.Item1.SlotWearableUrn = equippedWearable.GetUrn();
             avatarSlotView.Item1.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(equippedWearable.GetRarity());
             avatarSlotView.Item1.EmptyOverlay.SetActive(false);
 
             avatarSlotView.Item2.SafeCancelAndDispose();
             avatarSlotView.Item2 = new CancellationTokenSource();
+
+            CalculateHideStatus();
+
             WaitForThumbnailAsync(equippedWearable, avatarSlotView.Item1, avatarSlotView.Item2.Token).Forget();
+        }
+
+        private void CalculateHideStatus()
+        {
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarSlots["body_shape"].Item1.SlotWearableUrn, null, equippedWearables, hidingList);
+
+            foreach (var avatarSlotView in avatarSlots.Values)
+                avatarSlotView.Item1.OverrideHideContainer.SetActive(false);
+
+            foreach (string category in hidingList)
+            {
+                if (avatarSlots.TryGetValue(category, out (AvatarSlotView, CancellationTokenSource) avatarSlotViewToHide))
+                {
+                    avatarSlotViewToHide.Item1.OverrideHideContainer.SetActive(!string.IsNullOrEmpty(avatarSlotViewToHide.Item1.SlotWearableUrn));
+                    avatarSlotViewToHide.Item1.OverrideHide.gameObject.SetActive(forceRender.Contains(category));
+                    avatarSlotViewToHide.Item1.NoOverride.gameObject.SetActive(!forceRender.Contains(category));
+                }
+            }
+        }
+
+        private void RemoveForceRender(string category)
+        {
+            forceRender.Remove(category.ToLower());
+            //CalculateHideStatus();
+            backpackCommandBus.SendCommand(new BackpackHideCommand(forceRender));
+        }
+
+        private void AddForceRender(string category)
+        {
+            forceRender.Add(category.ToLower());
+            //CalculateHideStatus();
+            backpackCommandBus.SendCommand(new BackpackHideCommand(forceRender));
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable equippedWearable, AvatarSlotView avatarSlotView, CancellationToken ct)

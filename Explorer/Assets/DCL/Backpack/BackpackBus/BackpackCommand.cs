@@ -1,4 +1,7 @@
 using DCL.CharacterPreview;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -34,13 +37,11 @@ namespace DCL.Backpack.BackpackBus
 
     public readonly struct BackpackHideCommand
     {
-        public readonly string Category;
-        public readonly bool? IsHidden;
+        public readonly IReadOnlyCollection<string> ForceRender;
 
-        public BackpackHideCommand(string category, bool? isHidden)
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender)
         {
-            Category = category;
-            IsHidden = isHidden;
+            ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
         }
     }
 

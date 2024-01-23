@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.CharacterPreview;
 using System;
 
 namespace DCL.Backpack.BackpackBus
@@ -33,7 +34,7 @@ namespace DCL.Backpack.BackpackBus
         private void HandleSearchCommand(BackpackSearchCommand command)
         {
             if(!string.IsNullOrEmpty(command.SearchText))
-                backpackEventBus.SendFilterCategory("");
+                backpackEventBus.SendFilterCategory("", AvatarSlotCategoryEnum.Body);
 
             backpackEventBus.SendSearch(command.SearchText);
         }
@@ -70,7 +71,10 @@ namespace DCL.Backpack.BackpackBus
                 backpackEventBus.SendUnEquip(wearable);
         }
 
-        private void HandleHideCommand(BackpackHideCommand command) { }
+        private void HandleHideCommand(BackpackHideCommand command)
+        {
+            backpackEventBus.SendForceRender(command.ForceRender);
+        }
 
         public void Dispose()
         {
