@@ -111,6 +111,11 @@
         public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
 
         /// <summary>
+        ///     Everything related to Scenes audio source components
+        /// </summary>
+        public const string AUDIO_STREAM = nameof(AUDIO_STREAM);
+
+        /// <summary>
         ///     Everything related to prioritization
         /// </summary>
         public const string PRIORITIZATION = nameof(PRIORITIZATION);
