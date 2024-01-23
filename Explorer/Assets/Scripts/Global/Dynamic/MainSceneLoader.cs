@@ -32,8 +32,7 @@ namespace Global.Dynamic
         [SerializeField] private SkyBoxSceneData skyBoxSceneData = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
-        [SerializeField] private string productionRealmUrl = "https://peer.decentraland.org";
-        [SerializeField] private string developmentRealmUrl = "https://peer.decentraland.zone";
+        [SerializeField] private string realmUrl = "https://peer.decentraland.org";
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
 
@@ -220,7 +219,9 @@ namespace Global.Dynamic
 
         private async UniTask ShowLoadingScreen(CancellationToken ct)
         {
-            await dynamicWorldContainer!.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, TimeSpan.FromSeconds(30))))
+            var timeout = TimeSpan.FromMinutes(2);
+
+            await dynamicWorldContainer!.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
                                         .AttachExternalCancellation(ct);
         }
 
@@ -232,10 +233,7 @@ namespace Global.Dynamic
 
         private async UniTask ChangeRealmAsync(CancellationToken ct)
         {
-            string realm = productionRealmUrl;
-#if DEVELOPMENT_BUILD
-            realm = developmentRealmUrl;
-#endif
+            string realm = realmUrl;
 
             IRealmController realmController = dynamicWorldContainer!.RealmController;
             await realmController.SetRealmAsync(URLDomain.FromString(realm), ct);
