@@ -36,6 +36,7 @@ namespace DCL.CharacterPreview
 
         public void Initialize(RenderTexture targetTexture)
         {
+            this.transform.position = new Vector3(0, 5000, 0);
             camera.targetTexture = targetTexture;
             cameraTarget.position = defaultPositionTransform.position;
             rotationTarget.rotation = Quaternion.identity;
