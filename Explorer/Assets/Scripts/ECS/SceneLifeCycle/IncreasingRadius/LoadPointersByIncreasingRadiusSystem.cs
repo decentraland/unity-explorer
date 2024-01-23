@@ -107,24 +107,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Find the bucket
             byte bucketIndex = 0;
             var averageDistanceSqr = ringLevel / processedScenes * (ringLevel / processedScenes);
-            Debug.Log($"JUANI {ringLevel / processedScenes}");
             for (; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
             {
                 if (averageDistanceSqr < partitionSettings.SqrDistanceBuckets[bucketIndex])
                     break;
             }
 
-            var partitionComponent = new PartitionComponent
-            {
-                Bucket = bucketIndex,
-                //Lets lower the prio against asset bundles on the same bucket
-                IsBehind = true
-            };
-
+            volatileScenePointers.ActivePartitionComponent.Bucket = bucketIndex;
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
-                        new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), partitionComponent);
+                        new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)),
+                    volatileScenePointers.ActivePartitionComponent);
         }
 
         [Query]
