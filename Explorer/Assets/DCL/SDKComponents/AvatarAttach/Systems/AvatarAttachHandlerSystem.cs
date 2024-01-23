@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             // Debug.Log("PRAVS - SetupAvatarAttach() - 1", transformComponent.Transform);
             // Debug.Log("PRAVS - SetupAvatarAttach() - 2", component.anchorPointTransform);
 
-            transformComponent.Transform.SetParent(component.anchorPointTransform, false);
+            transformComponent.Transform.SetParent(component.anchorPointTransform);
             transformComponent.Transform.localPosition = Vector3.zero;
             transformComponent.Transform.localRotation = Quaternion.identity;
 
