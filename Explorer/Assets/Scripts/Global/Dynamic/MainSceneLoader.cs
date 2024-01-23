@@ -15,12 +15,11 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.Video;
 using Avatar = DCL.Profiles.Avatar;
-using AvatarPromise = ECS.StreamableLoading.Common.AssetPromise<
-    DCL.Profiles.Profile,
-    DCL.Profiles.GetProfileIntention>;
 
 namespace Global.Dynamic
 {
@@ -35,6 +34,8 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private string productionRealmUrl = "https://peer.decentraland.org";
         [SerializeField] private string developmentRealmUrl = "https://peer.decentraland.zone";
+        [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private VideoPlayer splashAnimation = null!;
 
         private AsyncLoadProcessReport? loadReport;
         private StaticContainer? staticContainer;
@@ -78,6 +79,8 @@ namespace Global.Dynamic
         {
             try
             {
+                splashRoot.SetActive(true);
+
                 loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
                 identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
@@ -149,6 +152,10 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
                 await ChangeRealmAsync(ct);
+
+                await WaitUntilSplashAnimationEnds(ct);
+                splashRoot.SetActive(false);
+
                 await ShowAuthenticationScreen(ct);
 
                 await UniTask.WhenAll(ShowLoadingScreen(ct), LoadCharacterAndWorld(ct));
@@ -163,6 +170,12 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private async Task WaitUntilSplashAnimationEnds(CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => splashAnimation.frame >= (long)(splashAnimation.frameCount - 1),
+                cancellationToken: ct);
         }
 
         private async UniTask LoadCharacterAndWorld(CancellationToken ct)
