@@ -32,15 +32,15 @@ namespace DCL.SDKComponents.NFTShape.System
         }
 
         [Query]
-        [None(typeof(NftLoadingComponent))]
+        [None(typeof(NFTLoadingComponent))]
         private void Start(in Entity entity, in PBNftShape nftShape, in PartitionComponent partitionComponent)
         {
             var promise = Promise.Create(World!, new GetNFTShapeIntention(nftShape.Urn!, urnSource), partitionComponent);
-            World!.Add(entity, new NftLoadingComponent(promise));
+            World!.Add(entity, new NFTLoadingComponent(promise));
         }
 
         [Query]
-        private void FinishAndApply(ref NftLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
+        private void FinishAndApply(ref NFTLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
         {
             if (nftLoadingComponent.TryGetResult(World!, out var result))
             {

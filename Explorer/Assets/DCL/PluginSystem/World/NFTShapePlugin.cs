@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.World
 {
     public class NFTShapePlugin : IDCLWorldPlugin<NFTShapePluginSettings>
     {
-        private readonly INftShapeRendererFactory nftShapeRendererFactory;
+        private readonly INFTShapeRendererFactory nftShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.World
             IWebContentSizes webContentSizes,
             ILazyMaxSize lazyMaxSize
         ) : this(
-            new PoolNftShapeRendererFactory(componentPoolsRegistry, framesPool),
+            new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             webRequestController,
@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.World
         ) { }
 
         public NFTShapePlugin(
-            INftShapeRendererFactory nftShapeRendererFactory,
+            INFTShapeRendererFactory nftShapeRendererFactory,
             IPerformanceBudget instantiationFrameTimeBudgetProvider,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,

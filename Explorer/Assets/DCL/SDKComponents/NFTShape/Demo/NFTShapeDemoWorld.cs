@@ -23,13 +23,13 @@ using Utility.Multithreading;
 
 namespace DCL.SDKComponents.NFTShape.Demo
 {
-    public class NftShapeDemoWorld : IDemoWorld
+    public class NFTShapeDemoWorld : IDemoWorld
     {
         private readonly IDemoWorld origin;
 
-        public NftShapeDemoWorld(World world, IFramesPool framesPool, params (PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, framesPool, list.AsReadOnly()) { }
+        public NFTShapeDemoWorld(World world, IFramesPool framesPool, params (PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, framesPool, list.AsReadOnly()) { }
 
-        public NftShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
+        public NFTShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
             origin = new DemoWorld(
                 world,
@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     )
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource()),
-                w => new InstantiateNftShapeSystem(w, new PoolNftShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
+                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
                 w => new VisibilityNftShapeSystem(w)
             );
         }

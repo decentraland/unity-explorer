@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
 
             this.origin = new SeveralDemoWorld(
                 new MaterialsDemoWorld(world),
-                new NftShapeDemoWorld(
+                new NFTShapeDemoWorld(
                     world,
                     framesPool,
                     (nftShape, visibility, billboard)

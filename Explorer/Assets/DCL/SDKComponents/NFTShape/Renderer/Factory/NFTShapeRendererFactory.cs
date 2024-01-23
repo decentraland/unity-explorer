@@ -1,19 +1,17 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
-using DCL.SDKComponents.NFTShape.Frames;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NFTShape.Renderer.Factory
 {
-    public class NftShapeRendererFactory : INftShapeRendererFactory
+    public class NFTShapeRendererFactory : INFTShapeRendererFactory
     {
         private readonly IFramesPool framesPool;
         private readonly PBNftShape nftShape = Default();
-        private readonly Quaternion backward = Quaternion.Euler(0, 180, 0);
 
-        public NftShapeRendererFactory(IFramesPool framesPool)
+        public NFTShapeRendererFactory(IFramesPool framesPool)
         {
             this.framesPool = framesPool;
         }

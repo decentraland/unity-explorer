@@ -5,11 +5,11 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D,
 
 namespace DCL.SDKComponents.NFTShape.Component
 {
-    public struct NftLoadingComponent
+    public struct NFTLoadingComponent
     {
         private Promise promise;
 
-        public NftLoadingComponent(Promise promise)
+        public NFTLoadingComponent(Promise promise)
         {
             this.promise = promise;
         }

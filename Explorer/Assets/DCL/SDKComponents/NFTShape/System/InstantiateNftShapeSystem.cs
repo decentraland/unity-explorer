@@ -11,7 +11,6 @@ using ECS.Prioritization.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -19,20 +18,17 @@ namespace DCL.SDKComponents.NFTShape.System
     [ThrottlingEnabled]
     public partial class InstantiateNftShapeSystem : BaseUnityLoopSystem
     {
-        private readonly INftShapeRendererFactory nftShapeRendererFactory;
+        private readonly INFTShapeRendererFactory nftShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
-        private readonly ISceneData sceneData;
 
         public InstantiateNftShapeSystem(
             World world,
-            INftShapeRendererFactory nftShapeRendererFactory,
-            IPerformanceBudget? instantiationFrameTimeBudgetProvider = null,
-            ISceneData? sceneData = null
+            INFTShapeRendererFactory nftShapeRendererFactory,
+            IPerformanceBudget? instantiationFrameTimeBudgetProvider = null
         ) : base(world)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider ?? new FrameTimeCapBudget();
-            this.sceneData = sceneData ?? new ISceneData.Fake();
         }
 
         protected override void Update(float t)

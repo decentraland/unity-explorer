@@ -1,5 +1,4 @@
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.NFTShape.Frames;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using UnityEngine;
 
@@ -8,15 +7,15 @@ namespace DCL.SDKComponents.NFTShape.Renderer.Factory
     /// <summary>
     /// Is not thread safe
     /// </summary>
-    public class PoolNftShapeRendererFactory : INftShapeRendererFactory
+    public class PoolNFTShapeRendererFactory : INFTShapeRendererFactory
     {
         private readonly IComponentPool<INftShapeRenderer> componentPool;
 
         private Transform tempTransform = null!;
 
-        public PoolNftShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool) : this(new NftShapeRendererFactory(framesPool), componentPoolsRegistry) { }
+        public PoolNFTShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool) : this(new NFTShapeRendererFactory(framesPool), componentPoolsRegistry) { }
 
-        public PoolNftShapeRendererFactory(INftShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
+        public PoolNFTShapeRendererFactory(INFTShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
         {
             componentPool = new ThreadSafeComponentPool<INftShapeRenderer>(() => origin.New(tempTransform));
             componentPoolsRegistry.AddComponentPool(componentPool);
