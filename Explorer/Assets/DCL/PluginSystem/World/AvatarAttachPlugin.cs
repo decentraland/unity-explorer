@@ -1,9 +1,11 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarAttach.Systems;
 using DCL.Utilities;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -28,7 +30,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            // ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, globalWorld);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
         }

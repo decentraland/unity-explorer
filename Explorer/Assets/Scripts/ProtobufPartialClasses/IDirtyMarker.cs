@@ -12,6 +12,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBAvatarAttach : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBAudioSource : IDirtyMarker
     {
         public bool IsDirty { get; set; }
@@ -85,9 +90,7 @@ namespace DCL.ECSComponents
     public static class DirtyMarkerExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNotDirty(this IDirtyMarker dirtyMarker)
-        {
-            return dirtyMarker.IsDirty == false;
-        }
+        public static bool IsNotDirty(this IDirtyMarker dirtyMarker) =>
+            dirtyMarker.IsDirty == false;
     }
 }
