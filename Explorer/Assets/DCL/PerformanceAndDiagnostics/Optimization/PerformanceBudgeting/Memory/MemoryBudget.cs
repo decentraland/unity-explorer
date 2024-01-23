@@ -79,6 +79,12 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public class Default : IPerformanceBudget
         {
+            public static readonly IReadOnlyDictionary<MemoryUsageStatus, float> MEMORY_THRESHOLD = new Dictionary<MemoryUsageStatus, float>
+            {
+                { Warning, 0.8f },
+                { Full, 0.95f },
+            };
+
             private readonly IPerformanceBudget performanceBudget;
 
             public Default()
@@ -86,11 +92,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                 performanceBudget = new MemoryBudget(
                     new StandaloneSystemMemory(),
                     new ProfilingProvider(),
-                    new Dictionary<MemoryUsageStatus, float>
-                    {
-                        { Warning, 0.8f },
-                        { Full, 0.95f },
-                    }
+                    MEMORY_THRESHOLD
                 );
             }
 
