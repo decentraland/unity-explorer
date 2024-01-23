@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using DCL.UI;
 using DG.Tweening;

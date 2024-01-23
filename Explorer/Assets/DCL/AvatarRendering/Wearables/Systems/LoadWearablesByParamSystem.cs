@@ -54,10 +54,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 
-            URLAddress urlAddress = BuildURL(intention.UserID, intention.Params);
-
             WearableDTO.LambdaResponse lambdaResponse =
-                await (await webRequestController.GetAsync(new CommonArguments(urlAddress, attemptsCount: 1), ct, GetReportCategory()))
+                await (await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory()))
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             intention.TotalAmount = lambdaResponse.totalAmount;

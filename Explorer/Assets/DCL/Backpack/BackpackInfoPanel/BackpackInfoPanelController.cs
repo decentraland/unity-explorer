@@ -2,16 +2,17 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
-using Google.Type;
 using System;
 using System.Threading;
 using Utility;
-using Color = UnityEngine.Color;
 
 namespace DCL.Backpack
 {
     public class BackpackInfoPanelController : IDisposable
     {
+        private const string DEFAULT_DESCRIPTION = "This wearable does not have a description set.";
+        private const int MINIMUM_WAIT_TIME = 500;
+
         private readonly BackpackInfoPanelView view;
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO categoryIcons;
@@ -56,7 +57,7 @@ namespace DCL.Backpack
             view.WearableThumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
-            view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? "This wearable does not have a description set." : wearable.GetDescription();
+            view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? DEFAULT_DESCRIPTION : wearable.GetDescription();
             view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
@@ -74,7 +75,7 @@ namespace DCL.Backpack
         {
             do
             {
-                await UniTask.Delay(500, cancellationToken: ct);
+                await UniTask.Delay(MINIMUM_WAIT_TIME, cancellationToken: ct);
             }
             while (itemWearable.WearableThumbnail == null);
 

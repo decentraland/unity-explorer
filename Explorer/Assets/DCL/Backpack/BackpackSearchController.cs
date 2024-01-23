@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
-using System;
 using System.Threading;
 using Utility;
 
@@ -9,6 +8,7 @@ namespace DCL.Backpack
 {
     public class BackpackSearchController
     {
+        private const int SEARCH_AWAIT_TIME = 1000;
         private readonly SearchBarView view;
         private readonly IBackpackCommandBus commandBus;
 
@@ -49,7 +49,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitAndSendSearchAsync(string searchText)
         {
-            await UniTask.Delay(1000, cancellationToken: cts.Token);
+            await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: cts.Token);
             commandBus.SendCommand(new BackpackSearchCommand(searchText));
         }
     }

@@ -12,6 +12,9 @@ namespace DCL.Backpack
 {
     public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
+        private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
+        private const float ANIMATION_TIME = 0.1f;
+
         public event Action<string> OnSelectItem;
 
         [field: SerializeField]
@@ -54,7 +57,6 @@ namespace DCL.Backpack
         public bool IsEquipped { get; set; }
 
         private CancellationTokenSource cts;
-        private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
 
         public void SetEquipButtonsState()
         {
@@ -77,16 +79,16 @@ namespace DCL.Backpack
             cts = new CancellationTokenSource();
             HoverBackgroundTransform.localScale = Vector3.zero;
             HoverBackgroundTransform.gameObject.SetActive(true);
-            ContainerTransform.DOScale(hoveredScale, 0.1f).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
-            HoverBackgroundTransform.DOScale(Vector3.one, 0.1f).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            ContainerTransform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            HoverBackgroundTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
         }
 
         private void AnimateExit()
         {
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            ContainerTransform.DOScale(Vector3.one, 0.1f).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
-            HoverBackgroundTransform.DOScale(Vector3.zero, 0.1f).SetEase(Ease.Flash)
+            ContainerTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            HoverBackgroundTransform.DOScale(Vector3.zero, ANIMATION_TIME).SetEase(Ease.Flash)
                                     .OnComplete(()=>HoverBackgroundTransform.gameObject.SetActive(false)).ToUniTask(cancellationToken: cts.Token);
         }
 

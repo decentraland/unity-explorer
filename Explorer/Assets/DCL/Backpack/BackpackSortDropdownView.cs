@@ -1,5 +1,4 @@
 using DG.Tweening;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +6,8 @@ namespace DCL.Backpack
 {
     public class BackpackSortDropdownView : MonoBehaviour
     {
+        private const float ANIMATION_TIME = 0.2f;
+
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
 
@@ -37,7 +38,6 @@ namespace DCL.Backpack
         [field: SerializeField]
         internal RectTransform sortContent { get; private set; }
 
-
         private void Start()
         {
             sortDropdownButton.onClick.AddListener(OnSortDropdownClick);
@@ -48,12 +48,12 @@ namespace DCL.Backpack
         {
             if (sortContent.gameObject.activeInHierarchy)
             {
-                CanvasGroup.DOFade(0, 0.2f).SetEase(Ease.InOutQuad).OnComplete(() => sortContent.gameObject.SetActive(false));
+                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => sortContent.gameObject.SetActive(false));
             }
             else
             {
                 sortContent.gameObject.SetActive(true);
-                CanvasGroup.DOFade(1, 0.2f).SetEase(Ease.InOutQuad);
+                CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
 
         }

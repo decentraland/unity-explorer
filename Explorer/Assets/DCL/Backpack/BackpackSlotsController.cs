@@ -2,25 +2,27 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
-using Microsoft.ClearScript.Util.Web;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
 {
     public class BackpackSlotsController : IDisposable
     {
+        private const int MAX_HIDES = 15;
+        private const int MIN_WAIT_TIME = 500;
+
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly Dictionary<string, (AvatarSlotView, CancellationTokenSource)> avatarSlots = new ();
-        private readonly List<IWearable> equippedWearables = new (15);
+        private readonly List<IWearable> equippedWearables = new (MAX_HIDES);
+        private readonly HashSet<string> forceRender = new (MAX_HIDES);
+        private readonly HashSet<string> hidingList = new (MAX_HIDES);
+
         private AvatarSlotView previousSlot;
-        private readonly HashSet<string> forceRender = new (15);
-        private readonly HashSet<string> hidingList = new (15);
 
         public BackpackSlotsController(
             AvatarSlotView[] avatarSlotViews,
@@ -123,14 +125,12 @@ namespace DCL.Backpack
         private void RemoveForceRender(string category)
         {
             forceRender.Remove(category.ToLower());
-            //CalculateHideStatus();
             backpackCommandBus.SendCommand(new BackpackHideCommand(forceRender));
         }
 
         private void AddForceRender(string category)
         {
             forceRender.Add(category.ToLower());
-            //CalculateHideStatus();
             backpackCommandBus.SendCommand(new BackpackHideCommand(forceRender));
         }
 
@@ -139,7 +139,7 @@ namespace DCL.Backpack
             avatarSlotView.LoadingView.StartLoadingAnimation(avatarSlotView.NftContainer);
             do
             {
-                await UniTask.Delay(500, cancellationToken: ct);
+                await UniTask.Delay(MIN_WAIT_TIME, cancellationToken: ct);
             }
             while (equippedWearable.WearableThumbnail == null);
 
@@ -171,9 +171,7 @@ namespace DCL.Backpack
             backpackEventBus.EquipEvent -= EquipInSlot;
             backpackEventBus.UnEquipEvent -= UnEquipInSlot;
             foreach (var avatarSlotView in avatarSlots.Values)
-            {
                 avatarSlotView.Item1.OnSlotButtonPressed -= OnSlotButtonPressed;
-            }
         }
     }
 }
