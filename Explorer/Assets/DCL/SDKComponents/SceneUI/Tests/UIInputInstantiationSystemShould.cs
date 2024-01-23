@@ -1,5 +1,6 @@
 ﻿using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
@@ -24,7 +25,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(TextField), new ComponentPool<TextField>() },
+                    { typeof(DCLInputText), new ComponentPool<DCLInputText>() },
                 }, null);
 
             system = new UIInputInstantiationSystem(world, poolsRegistry);
