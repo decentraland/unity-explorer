@@ -1,4 +1,7 @@
 using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Classes;
+using Google.Protobuf.Collections;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Utils
@@ -33,6 +36,26 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 default:
                     return TextAnchor.MiddleCenter;
             }
+        }
+
+        public static DCLUVs ToDCLUVs([CanBeNull] this RepeatedField<float> uvs) =>
+            uvs is not { Count: 8 }
+                ? DCLUVs.Default
+                : new DCLUVs(
+                    new Vector2(uvs[0], uvs[1]),
+                    new Vector2(uvs[2], uvs[3]),
+                    new Vector2(uvs[4], uvs[5]),
+                    new Vector2(uvs[6], uvs[7]));
+
+        public static DCLImageScaleMode ToDCLImageScaleMode(this BackgroundTextureMode textureMode)
+        {
+            return textureMode switch
+                   {
+                       BackgroundTextureMode.Center => DCLImageScaleMode.Center,
+                       BackgroundTextureMode.Stretch => DCLImageScaleMode.Stretch,
+                       BackgroundTextureMode.NineSlices => DCLImageScaleMode.NineSlices,
+                       _ => DCLImageScaleMode.Stretch
+                   };
         }
     }
 }
