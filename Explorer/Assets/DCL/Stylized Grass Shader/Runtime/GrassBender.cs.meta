@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e55ad0d6ac674e14885d73917021b76f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - renderer: {instanceID: 0}
+  - meshFilter: {instanceID: 0}
+  - trailRenderer: {instanceID: 0}
+  - lineRenderer: {instanceID: 0}
+  - bendingShader: {fileID: 4800000, guid: 83f1a74da0594f2439500e813fc6108b, type: 3}
+  executionOrder: 0
+  icon: {fileID: 5046000976985291195, guid: 0000000000000000d000000000000000, type: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -25,7 +25,7 @@ MonoBehaviour:
   - rid: 8147919132522971138
   - rid: 56198586647707649
   - rid: 1095376790733193218
-  - rid: 728480684080103426
+  - rid: 3022169693460627458
   references:
     version: 2
     RefIds:
@@ -33,13 +33,6 @@ MonoBehaviour:
       type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
         <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
-    - rid: 728480684080103426
-      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
-      data:
-        <SceneLODLimit>k__BackingField: 1
-        LodBucketLimits:
-        - {x: 1, y: 2}
-        - {x: 2, y: 5}
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -123,6 +116,14 @@ MonoBehaviour:
       data:
         MinimapPrefab:
           m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3022169693460627458
+      type: {class: LandscapeDebugSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        realmPartitionSettings:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
