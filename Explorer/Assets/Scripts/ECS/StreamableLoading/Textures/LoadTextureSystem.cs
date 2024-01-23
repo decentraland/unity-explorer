@@ -44,18 +44,6 @@ namespace ECS.StreamableLoading.Textures
             return new StreamableLoadingResult<Texture2D>(request.CreateTexture(intention.WrapMode, intention.FilterMode));
         }
 
-        private static Texture2D CreateVideoTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point)
-        {
-            var tex = new Texture2D(1, 1, TextureFormat.BGRA32, false, false)
-            {
-                wrapMode = wrapMode,
-                filterMode = filterMode,
-            };
 
-            ProfilingCounters.TexturesAmount.Value++;
-            tex.SetDebugName($"VideoTexture {ProfilingCounters.TexturesAmount}");
-
-            return tex;
-        }
     }
 }

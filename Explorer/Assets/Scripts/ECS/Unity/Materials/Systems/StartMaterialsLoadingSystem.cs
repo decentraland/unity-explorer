@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -14,6 +15,7 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Defaults;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -104,8 +106,7 @@ namespace ECS.Unity.Materials.Systems
             in TextureComponent? albedoTexture,
             in TextureComponent? alphaTexture,
             in TextureComponent? emissiveTexture,
-            in TextureComponent? bumpTexture)
-            =>
+            in TextureComponent? bumpTexture) =>
             MaterialData.CreatePBRMaterial(
                 albedoTexture,
                 alphaTexture,
@@ -147,9 +148,6 @@ namespace ECS.Unity.Materials.Systems
                 return false;
             }
 
-            if (textureComponent.Value.IsVideoTexture)
-                return false;
-
             TextureComponent textureComponentValue = textureComponent.Value;
 
             // If data inside promise has not changed just reuse the same promise
@@ -160,16 +158,51 @@ namespace ECS.Unity.Materials.Systems
             // If component is being reused forget the previous promise
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention
+            if (textureComponent.Value.IsVideoTexture)
             {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
-                WrapMode = textureComponentValue.WrapMode,
-                FilterMode = textureComponentValue.FilterMode,
-                IsVideoTexture = textureComponentValue.IsVideoTexture,
-                VideoPlayerEntity = textureComponentValue.VideoPlayerEntity
-            }, partitionComponent);
+                StreamableLoadingResult<Texture2D>? result = new StreamableLoadingResult<Texture2D>(CreateVideoTexture(textureComponentValue.WrapMode, textureComponentValue.FilterMode));
+
+                var loadingState = new StreamableLoadingState
+                {
+                    Value = StreamableLoadingState.Status.Finished,
+                };
+
+                promise = Promise.Create(World, new GetTextureIntention
+                {
+                    CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                    WrapMode = textureComponentValue.WrapMode,
+                    FilterMode = textureComponentValue.FilterMode,
+                    IsVideoTexture = textureComponentValue.IsVideoTexture,
+                    VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
+                }, partitionComponent, result, loadingState);
+            }
+            else
+            {
+                promise = Promise.Create(World, new GetTextureIntention
+                {
+                    CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                    WrapMode = textureComponentValue.WrapMode,
+                    FilterMode = textureComponentValue.FilterMode,
+                    IsVideoTexture = textureComponentValue.IsVideoTexture,
+                    VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
+                }, partitionComponent);
+            }
 
             return true;
+        }
+
+        private static Texture2D CreateVideoTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point)
+        {
+            var tex = new Texture2D(1, 1, TextureFormat.BGRA32, false, false)
+            {
+                wrapMode = wrapMode,
+                filterMode = filterMode,
+            };
+
+            ProfilingCounters.TexturesAmount.Value++;
+            tex.SetDebugName($"VideoTexture {ProfilingCounters.TexturesAmount.Value}");
+
+            return tex;
         }
 
         private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
