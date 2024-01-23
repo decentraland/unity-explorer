@@ -47,7 +47,19 @@ namespace DCL.Editor
             var container = new VisualElement();
             rootVisualElement.Add(container);
 
-            var label = new Label
+            var note1 = new Label
+            {
+                text = "Please, publish test scenes in the area <b>[52,-52] - [71,-71]</b> parcels. This plaza is meant for testing (in contrast to other examples scenes)",
+                enableRichText = true,
+                style =
+                {
+                    color = new StyleColor(Color.yellow),
+                    whiteSpace = WhiteSpace.Normal,
+                },
+            };
+            rootVisualElement.Add(note1);
+
+            var note2 = new Label
             {
                 text = "<b>Note:</b> : you can also run <code>npm update-parcels</code> on the sdk7 repo root to validate that all scenes have unique parcels. It will tell you if there are any overlaps and which scenes & coords",
                 enableRichText = true,
@@ -57,8 +69,7 @@ namespace DCL.Editor
                     whiteSpace = WhiteSpace.Normal,
                 },
             };
-
-            rootVisualElement.Add(label);
+            rootVisualElement.Add(note2);
 
             xInput = new TextField { label = "X:" };
             yInput = new TextField { label = "Y:" };
@@ -85,8 +96,12 @@ namespace DCL.Editor
             DCLWorkspace workspace = await FetchJsonData<DCLWorkspace>(WORKSPACE_URL);
 
             if (workspace != null)
+            {
+                Debug.Log("Occupied parcels:");
+
                 foreach (Folder folder in workspace.folders)
                     await FetchSceneCoordinates(folder.path);
+            }
         }
 
         private static async UniTask FetchSceneCoordinates(string scenePath)
@@ -95,15 +110,11 @@ namespace DCL.Editor
             SceneInfo sceneInfo = await FetchJsonData<SceneInfo>(sceneUrl);
 
             if (sceneInfo != null)
-            {
-                Debug.Log("Occupied parcels:");
-
                 foreach (string parcel in sceneInfo.scene.parcels)
                 {
                     Debug.Log(parcel);
                     FETCHED_PARCELS.Add(parcel);
                 }
-            }
         }
 
         private static async UniTask<T> FetchJsonData<T>(string url)

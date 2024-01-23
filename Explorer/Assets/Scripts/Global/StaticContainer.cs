@@ -125,7 +125,7 @@ namespace Global
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
-                return (null, false);
+                return (null, false)!;
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -170,6 +170,8 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
