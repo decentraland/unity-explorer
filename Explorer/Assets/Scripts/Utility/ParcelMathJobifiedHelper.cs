@@ -3,7 +3,9 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 
 namespace Utility
 {
@@ -23,7 +25,7 @@ namespace Utility
 
         public bool JobStarted { get; private set; }
 
-        public ref readonly NativeArray<ParcelInfo> LastSplit => ref rings;
+        public ref NativeArray<ParcelInfo> LastSplit => ref rings;
 
         private void EnsureRingsArraySize(int maxRadius)
         {
@@ -97,6 +99,8 @@ namespace Utility
             ///     we calculate it in parallel jobs
             /// </summary>
             public bool AlreadyProcessed;
+
+            public float RingLevel;
         }
 
         [BurstCompile]
@@ -130,7 +134,10 @@ namespace Utility
                             var parcel = new int2(j, Center.y + i);
 
                             Rings[index] = new ParcelInfo
-                                { AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel };
+                            {
+                                AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
+                                RingLevel = ringLevel * ParcelMathHelper.PARCEL_SIZE
+                            };
 
                             index++;
                         }
@@ -140,13 +147,19 @@ namespace Utility
                         var parcel = new int2(minX, Center.y + i);
 
                         Rings[index] = new ParcelInfo
-                            { AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel };
+                        {
+                            AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
+                            RingLevel = ringLevel * ParcelMathHelper.PARCEL_SIZE
+                        };
 
                         index++;
                         parcel = new int2(maxX, Center.y + i);
 
                         Rings[index] = new ParcelInfo
-                            { AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel };
+                        {
+                            AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
+                            RingLevel = ringLevel * ParcelMathHelper.PARCEL_SIZE
+                        };
 
                         index++;
                     }

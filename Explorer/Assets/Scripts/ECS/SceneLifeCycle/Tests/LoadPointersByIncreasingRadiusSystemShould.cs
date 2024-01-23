@@ -17,13 +17,16 @@ namespace ECS.SceneLifeCycle.Tests
     {
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
+        private IPartitionSettings partitionSettings;
+
 
         [SetUp]
         public void SetUp()
         {
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
-                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>());
+                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
+                partitionSettings = Substitute.For<IPartitionSettings>());
         }
 
         [Test]

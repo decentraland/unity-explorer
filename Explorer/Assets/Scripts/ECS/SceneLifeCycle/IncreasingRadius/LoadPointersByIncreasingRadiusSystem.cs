@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using System;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -12,7 +13,9 @@ using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -26,15 +29,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     {
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IPartitionSettings partitionSettings;
+
 
         private bool splitIsPending;
 
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
-            IRealmPartitionSettings realmPartitionSettings) : base(world)
+            IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings) : base(world)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.partitionSettings = partitionSettings;
         }
 
         protected override void Update(float t)
@@ -69,9 +75,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Take up to <ScenesDefinitionsRequestBatchSize> closest pointers that were not processed yet
             List<int2> input = volatileScenePointers.InputReusableList;
 
-            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.LastSplit;
+            ref var flatArray = ref parcelMathJobifiedHelper.LastSplit;
             int i;
 
+            splitIsPending = false;
+            float ringLevel = 0;
+            var processedScenes = 0;
+            
             for (i = 0; i < flatArray.Length; i++)
             {
                 ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[i];
@@ -80,26 +90,41 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     continue;
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
+                {
                     input.Add(parcelInfo.Parcel);
-            }
-
-            // Detect if we have other unprocessed parcels in the current split
-            splitIsPending = false;
-
-            for (; i < flatArray.Length; i++)
-            {
-                if (!flatArray[i].AlreadyProcessed)
+                    parcelInfo.AlreadyProcessed = true;
+                    flatArray[i] = parcelInfo;
+                    ringLevel += parcelInfo.RingLevel;
+                    processedScenes++;
+                }
+                else
                 {
                     splitIsPending = true;
                     break;
                 }
             }
 
-            if (input.Count == 0) return;
+            // Find the bucket
+            byte bucketIndex = 0;
+            var averageDistanceSqr = ringLevel / processedScenes * (ringLevel / processedScenes);
+            Debug.Log($"JUANI {ringLevel / processedScenes}");
+            for (; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
+            {
+                if (averageDistanceSqr < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                    break;
+            }
+
+            var partitionComponent = new PartitionComponent
+            {
+                Bucket = bucketIndex,
+                //Lets lower the prio against asset bundles on the same bucket
+                IsBehind = true
+            };
 
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
+                        new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), partitionComponent);
         }
 
         [Query]
