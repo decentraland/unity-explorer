@@ -42,7 +42,7 @@ jobs:
           key: Library-Explorer-Windows
 
       # Configure test runner
-      - uses: game-ci/unity-test-runner@v2
+      - uses: game-ci/unity-test-runner@latest
         id: testRunner
         timeout-minutes: 30
         with:
