@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.AudioClips
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetAudioClipIntention other) =>
-            CommonArguments.URL == other.CommonArguments.URL;
+            this.AreUrlEquals(other);
 
         public override bool Equals(object? obj) =>
             obj is GetAudioClipIntention other && Equals(other);

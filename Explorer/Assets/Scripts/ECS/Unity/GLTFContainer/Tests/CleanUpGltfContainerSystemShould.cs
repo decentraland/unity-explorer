@@ -21,13 +21,13 @@ namespace ECS.Unity.GLTFContainer.Tests
 {
     public class CleanUpGltfContainerSystemShould : UnitySystemTestBase<CleanUpGltfContainerSystem>
     {
-        private IStreamableCache<GltfContainerAsset, string> cache;
+        private IDereferencableCache<GltfContainerAsset, string> cache;
         private IEntityCollidersSceneCache collidersSceneCache;
 
         [SetUp]
         public void SetUp()
         {
-            cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
+            cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>();
             system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 

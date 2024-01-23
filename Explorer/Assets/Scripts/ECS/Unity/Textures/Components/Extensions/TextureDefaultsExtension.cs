@@ -1,16 +1,27 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using Decentraland.Common;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using UnityEngine;
 using Texture = Decentraland.Common.Texture;
 using TextureWrapMode = UnityEngine.TextureWrapMode;
 
-namespace ECS.Unity.Textures.Components.Defaults
+namespace ECS.Unity.Textures.Components.Extensions
 {
-    public static class TextureDefaults
+    public static class TextureDefaultsExtension
     {
-        public static TextureComponent? CreateTextureComponent([CanBeNull] this TextureUnion self, ISceneData data)
+        public static TextureComponent? CreateTextureComponent(this PBNftShape? self, ISceneData data)
+        {
+            if (self == null)
+                return null;
+
+            if (!data.TryGetMediaUrl(self.Urn ?? string.Empty, out URLAddress url))
+                return null;
+
+            return new TextureComponent(url);
+        }
+
+        public static TextureComponent? CreateTextureComponent(this TextureUnion? self, ISceneData data)
         {
             if (self == null)
                 return null;
