@@ -9,14 +9,18 @@ using DCL.Profiles;
 using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
-using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(UpdateTransformSystem))]
+    [UpdateAfter(typeof(ParentingTransformSystem))]
     [LogCategory(ReportCategory.SDK_COMPONENT)]
     [ThrottlingEnabled]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
@@ -60,7 +64,12 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                     break;
             }
 
-            transformComponent.Transform.SetParent(component.anchorPointTransform);
+            // Debug.Log("PRAVS - SetupAvatarAttach() - 1", transformComponent.Transform);
+            // Debug.Log("PRAVS - SetupAvatarAttach() - 2", component.anchorPointTransform);
+
+            transformComponent.Transform.SetParent(component.anchorPointTransform, false);
+            transformComponent.Transform.localPosition = Vector3.zero;
+            transformComponent.Transform.localRotation = Quaternion.identity;
 
             World.Add(entity, component);
         }
