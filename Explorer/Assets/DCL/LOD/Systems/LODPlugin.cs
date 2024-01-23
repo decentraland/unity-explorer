@@ -20,9 +20,9 @@ namespace DCL.LOD
     public class LODPlugin : IDCLGlobalPlugin<LODSettings>
     {
         private int sceneLodLimit;
-        private Vector2Int[] lodBucketLimits;
+        private Vector2Int[]? lodBucketLimits;
 
-        private readonly LODAssetCache lodCache;
+        private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
         private IRealmData realmData;
         private readonly IPerformanceBudget frameCapBudget;
@@ -32,8 +32,8 @@ namespace DCL.LOD
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache)
         {
-            lodCache = new LODAssetCache();
-            cacheCleaner.Register(lodCache);
+            lodAssetsPool = new LODAssetsPool();
+            cacheCleaner.Register(lodAssetsPool);
             this.realmData = realmData;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
@@ -50,10 +50,13 @@ namespace DCL.LOD
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, sceneLodLimit);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache);
-            ResolveSceneLODInfo.InjectToWorld(ref builder, lodCache);
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodBucketLimits, frameCapBudget,
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool);
+            ResolveSceneLODInfo.InjectToWorld(ref builder, lodAssetsPool);
+
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodBucketLimits!, frameCapBudget,
                 memoryBudget);
+
+            UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool);
         }
 
         public void Dispose()

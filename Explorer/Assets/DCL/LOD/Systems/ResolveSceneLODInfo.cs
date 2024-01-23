@@ -20,9 +20,9 @@ namespace DCL.LOD.Systems
     [UpdateAfter(typeof(UpdateVisualSceneStateSystem))]
     public partial class ResolveSceneLODInfo : BaseUnityLoopSystem
     {
-        private readonly LODAssetCache lodCache;
+        private readonly LODAssetsPool lodCache;
 
-        public ResolveSceneLODInfo(World world, LODAssetCache lodCache) : base(world)
+        public ResolveSceneLODInfo(World world, LODAssetsPool lodCache) : base(world)
         {
             this.lodCache = lodCache;
         }
@@ -43,7 +43,6 @@ namespace DCL.LOD.Systems
             sceneLODInfo.SceneHash = sceneDefinitionComponent.Definition.id;
             sceneLODInfo.ParcelPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
             sceneLODInfo.SceneCircumscribedPlanes = sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes;
-            sceneLODInfo.LodCache = lodCache;
         }
     }
 }

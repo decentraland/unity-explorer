@@ -1,32 +1,33 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
+using System;
 using UnityEngine;
 using Utility;
 
-public struct LODAsset : IDisposable
+namespace DCL.LOD
 {
-    public string LodKey;
-    public GameObject Root;
-    public AssetBundleData AssetBundleReference;
-
-    public LODAsset(string lodKey, GameObject root, AssetBundleData assetBundleReference)
+    public struct LODAsset : IDisposable
     {
-        LodKey = lodKey;
-        Root = root;
-        AssetBundleReference = assetBundleReference;
-        ProfilingCounters.LODAssetAmount.Value++;
-    }
+        public string LodKey;
+        public GameObject Root;
+        public AssetBundleData AssetBundleReference;
 
-    public void Dispose()
-    {
-        AssetBundleReference.Dereference();
-        AssetBundleReference = null;
+        public LODAsset(string lodKey, GameObject root, AssetBundleData assetBundleReference)
+        {
+            LodKey = lodKey;
+            Root = root;
+            AssetBundleReference = assetBundleReference;
+            ProfilingCounters.LODAssetAmount.Value++;
+        }
 
-        UnityObjectUtils.SafeDestroy(Root);
+        public void Dispose()
+        {
+            AssetBundleReference.Dereference();
+            AssetBundleReference = null;
 
-        ProfilingCounters.LODAssetAmount.Value--;
+            UnityObjectUtils.SafeDestroy(Root);
+
+            ProfilingCounters.LODAssetAmount.Value--;
+        }
     }
 }
