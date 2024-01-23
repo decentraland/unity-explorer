@@ -36,11 +36,11 @@ namespace DCL.SDKComponents.NFTShape.Frames.FramePrefabs
             CancellationToken ct
         ) =>
             UniTask.WhenAll(
-                DownloadPrefabs(refs, ct),
-                DownloadDefaultPrefab(defaultRef, ct)
+                DownloadPrefabsAsync(refs, ct),
+                DownloadDefaultPrefabAsync(defaultRef, ct)
             );
 
-        private async UniTask DownloadPrefabs(IReadOnlyDictionary<NftFrameType, NFTShapeSettings.FrameRef> refs, CancellationToken ct)
+        private async UniTask DownloadPrefabsAsync(IReadOnlyDictionary<NftFrameType, NFTShapeSettings.FrameRef> refs, CancellationToken ct)
         {
             var map = new Dictionary<NftFrameType, AbstractFrame>(refs.Count);
 
@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.NFTShape.Frames.FramePrefabs
             prefabs = map;
         }
 
-        private async UniTask DownloadDefaultPrefab(NFTShapeSettings.FrameRef defaultRef, CancellationToken ct)
+        private async UniTask DownloadDefaultPrefabAsync(NFTShapeSettings.FrameRef defaultRef, CancellationToken ct)
         {
             var result = await assetsProvisioner
                .ProvideMainAssetAsync(defaultRef.EnsureNotNull(), ct);
