@@ -6,9 +6,11 @@ namespace DCL.Landscape.Settings
 {
     public class TerrainGenerationData : ScriptableObject
     {
-        public TextAsset ownedParcels;
+        [Header("Boundaries")]
+        public Vector2Int parcelLimitX;
+        public Vector2Int parcelLimitZ;
 
-        [Header("General Settings")]
+        [Header("Terrain Settings")]
         public int terrainSize = 4800;
         public int chunkSize = 512;
         public int terrainScale = 15;

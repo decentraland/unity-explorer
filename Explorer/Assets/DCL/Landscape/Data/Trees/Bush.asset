@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bush
   m_EditorClassIdentifier: 
   asset: {fileID: 919132149155446097, guid: 35e3765a2b6217b40aff311113c2d6fd, type: 3}
-  radius: 7
+  radius: 2
   density: 5
   randomization:
     randomRotationX: {x: -5, y: 5}
@@ -28,4 +28,3 @@ MonoBehaviour:
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: -0.5, y: 0.5}
   noiseData: {fileID: 11400000, guid: 8df0e28ce585dc64aab84e8d5cf3db78, type: 2}
-  poolPreWarmCount: 0

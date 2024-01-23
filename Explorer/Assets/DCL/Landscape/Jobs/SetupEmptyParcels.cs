@@ -2,7 +2,7 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace DCL.Landscape.Jobs
 {
@@ -12,23 +12,32 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct SetupEmptyParcels : IJob     // not a parallel job since NativeHashMap does not support parallel write, we need to figure out a better way of doing this
     {
-        [ReadOnly] private readonly NativeArray<Vector2Int> emptyParcels;
-        [ReadOnly] private NativeHashSet<Vector2Int> ownedParcels;
-        private NativeHashMap<Vector2Int, EmptyParcelData> result;
+        [ReadOnly] private readonly NativeArray<int2> emptyParcels;
+        [ReadOnly] private NativeHashSet<int2> ownedParcels;
+        private NativeHashMap<int2, EmptyParcelData> result;
         public float heightNerf;
 
-        public SetupEmptyParcels(in NativeArray<Vector2Int> emptyParcels, in NativeHashSet<Vector2Int> ownedParcels, ref NativeHashMap<Vector2Int, EmptyParcelData> result)
+        private readonly int2 UP;
+        private readonly int2 RIGHT;
+        private readonly int2 DOWN;
+        private readonly int2 LEFT;
+
+        public SetupEmptyParcels(in NativeArray<int2> emptyParcels, in NativeHashSet<int2> ownedParcels, ref NativeHashMap<int2, EmptyParcelData> result)
         {
             this.emptyParcels = emptyParcels;
             this.ownedParcels = ownedParcels;
             this.result = result;
             heightNerf = 0;
+            UP = new int2(0, 1);
+            RIGHT = new int2(1, 0);
+            DOWN = new int2(0, -1);
+            LEFT = new int2(-1, 0);
         }
 
         public void Execute()
         {
             // first calculate the base height
-            foreach (Vector2Int position in emptyParcels)
+            foreach (int2 position in emptyParcels)
             {
                 EmptyParcelData data = result[position];
 
@@ -37,19 +46,19 @@ namespace DCL.Landscape.Jobs
             }
 
             // then get all the neighbour heights
-            foreach (Vector2Int position in emptyParcels)
+            foreach (int2 position in emptyParcels)
             {
                 EmptyParcelData data = result[position];
 
-                data.leftHeight = SafeGet(position + Vector2Int.left);
-                data.rightHeight = SafeGet(position + Vector2Int.right);
-                data.upHeight = SafeGet(position + Vector2Int.up);
-                data.downHeight = SafeGet(position + Vector2Int.down);
+                data.leftHeight = SafeGet(position + LEFT);
+                data.rightHeight = SafeGet(position + RIGHT);
+                data.upHeight = SafeGet(position + UP);
+                data.downHeight = SafeGet(position + DOWN);
 
-                data.upLeftHeight = SafeGet(position + Vector2Int.up + Vector2Int.left);
-                data.upRigthHeight = SafeGet(position + Vector2Int.up + Vector2Int.right);
-                data.downLeftHeight = SafeGet(position + Vector2Int.down + Vector2Int.left);
-                data.downRightHeight = SafeGet(position + Vector2Int.down + Vector2Int.right);
+                data.upLeftHeight = SafeGet(position + UP + LEFT);
+                data.upRigthHeight = SafeGet(position + UP + RIGHT);
+                data.downLeftHeight = SafeGet(position + DOWN + LEFT);
+                data.downRightHeight = SafeGet(position + DOWN + RIGHT);
 
                 result[position] = data;
             }
@@ -60,7 +69,7 @@ namespace DCL.Landscape.Jobs
 
         //math.pow(height, 2f) / heightNerf;
 
-        private int SafeGet(Vector2Int pos)
+        private int SafeGet(int2 pos)
         {
             if (IsOutOfBounds(pos.x) || IsOutOfBounds(pos.y) || ownedParcels.Contains(pos))
                 return -1;
@@ -68,14 +77,14 @@ namespace DCL.Landscape.Jobs
             return result[pos].minIndex;
         }
 
-        private int GetNearestParcelDistance(Vector2Int emptyParcelCoords, int radius)
+        private int GetNearestParcelDistance(int2 emptyParcelCoords, int radius)
         {
             for (int x = -radius; x <= radius; x++)
             {
                 for (int y = -radius; y <= radius; y++)
                 {
-                    var direction = new Vector2Int(x, y);
-                    Vector2Int nextPos = emptyParcelCoords + direction;
+                    var direction = new int2(x, y);
+                    int2 nextPos = emptyParcelCoords + direction;
 
                     if (IsOutOfBounds(nextPos.x) || IsOutOfBounds(nextPos.y))
                         return radius - 1;
