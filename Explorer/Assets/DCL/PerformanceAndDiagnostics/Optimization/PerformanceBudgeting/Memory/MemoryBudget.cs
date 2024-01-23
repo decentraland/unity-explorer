@@ -1,4 +1,6 @@
-﻿using DCL.Profiling;
+﻿#nullable enable
+
+using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
@@ -26,16 +28,6 @@ namespace DCL.Optimization.PerformanceBudgeting
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
-
-        public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider) : this(
-            systemMemory,
-            profilingProvider,
-            new Dictionary<MemoryUsageStatus, float>
-            {
-                { Warning, 0.8f },
-                { Full, 0.95f },
-            }
-        ) { }
 
         public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
@@ -83,6 +75,27 @@ namespace DCL.Optimization.PerformanceBudgeting
             // ReSharper disable once PossibleLossOfFraction
             ulong CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
                 (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * 1.1f));
+        }
+
+        public class Default : IPerformanceBudget
+        {
+            private readonly IPerformanceBudget performanceBudget;
+
+            public Default()
+            {
+                performanceBudget = new MemoryBudget(
+                    new StandaloneSystemMemory(),
+                    new ProfilingProvider(),
+                    new Dictionary<MemoryUsageStatus, float>
+                    {
+                        { Warning, 0.8f },
+                        { Full, 0.95f },
+                    }
+                );
+            }
+
+            public bool TrySpendBudget() =>
+                performanceBudget.TrySpendBudget();
         }
     }
 }

@@ -2,7 +2,6 @@ using Arch.Core;
 using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Pooling;
@@ -27,7 +26,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             world,
             new MaterialsPool(providedAssetMaterials),
             new FrameTimeCapBudget(),
-            new MemoryBudget(new StandaloneSystemMemory(), new ProfilingProvider()),
+            new MemoryBudget.Default(),
             (in MaterialData _, Material material) => { UnityObjectUtils.SafeDestroy(material); },
             new ISceneData.Fake()
         ) { }
