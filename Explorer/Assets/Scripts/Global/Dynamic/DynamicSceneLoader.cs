@@ -1,9 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
 using DCL.Web3.Authenticators;
@@ -13,7 +16,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace Global.Dynamic
 {
@@ -140,6 +143,8 @@ namespace Global.Dynamic
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
+                globalWorld.EcsWorld.SetProfileToOwnPlayer(CreateRandomProfile());
+
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
@@ -156,6 +161,15 @@ namespace Global.Dynamic
                 throw;
             }
         }
+
+        private Profile CreateRandomProfile() =>
+            new ("fakeOwnUserId", "Player",
+                new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
         private void ChangeRealm(string selectedRealm)
         {

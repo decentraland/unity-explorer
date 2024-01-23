@@ -4,8 +4,6 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
@@ -13,7 +11,6 @@ using DCL.GlobalPartitioning;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.Systems;
 using DCL.Time;
 using DCL.Time.Systems;
@@ -42,7 +39,6 @@ using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace Global.Dynamic
 {
@@ -99,7 +95,9 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
+        public GlobalWorld Create(ISceneFactory sceneFactory,
+            IEmptyScenesWorldFactory emptyScenesWorldFactory,
+            ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -116,13 +114,7 @@ namespace Global.Dynamic
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
-                new Profile("fakeOwnUserId", "Player",
-                    new Avatar(
-                        BodyShape.MALE,
-                        WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                        WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                        WearablesConstants.DefaultColors.GetRandomHairColor(),
-                        WearablesConstants.DefaultColors.GetRandomSkinColor())));
+                new OwnPlayerComponent());
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 

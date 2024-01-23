@@ -45,6 +45,8 @@ namespace Global.Dynamic
 
         public IProfileRepository ProfileRepository { get; private set; }
 
+        public ParcelServiceContainer ParcelServiceContainer { get; private set; }
+
         public void Dispose()
         {
             MvcManager.Dispose();
@@ -78,6 +80,7 @@ namespace Global.Dynamic
             container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
+            container.ParcelServiceContainer = parcelServiceContainer;
 
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
