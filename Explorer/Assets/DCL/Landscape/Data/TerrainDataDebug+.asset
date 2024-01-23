@@ -34,3 +34,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3758af9869c39854c9de69bb3f75279c, type: 2}
   detailScatterMode: 0
   detailAssets: []
+  cliffSide: {fileID: 919132149155446097, guid: c771be5f50b31304fa9980668f783ee3, type: 3}
+  cliffCorner: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
