@@ -10,7 +10,7 @@ namespace Global.Dynamic
 
         public static void SetProfileToOwnPlayer(this World world, Profile profile)
         {
-            world.GetEntities(in new QueryDescription().WithAll<OwnPlayerComponent>(), OWN_PROFILE_BUFFER);
+            world.GetEntities(in new QueryDescription().WithAll<PlayerComponent>(), OWN_PROFILE_BUFFER);
             Entity ownPlayerEntity = OWN_PROFILE_BUFFER[0];
 
             if (world.Has<Profile>(ownPlayerEntity))
