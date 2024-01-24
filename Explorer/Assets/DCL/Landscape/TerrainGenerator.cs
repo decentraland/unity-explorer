@@ -354,7 +354,7 @@ namespace DCL.Landscape
             }
         }
 
-        private INoiseGenerator GetGeneratorFor(NoiseData noiseData, uint baseSeed)
+        private INoiseGenerator GetGeneratorFor(NoiseDataBase noiseData, uint baseSeed)
         {
             if (noiseData == null)
                 throw new Exception("Noise data is null, check the terrain generation data");
@@ -382,7 +382,7 @@ namespace DCL.Landscape
             for (var treeAssetIndex = 0; treeAssetIndex < terrainGenData.treeAssets.Length; treeAssetIndex++)
             {
                 LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
-                NoiseData treeNoiseData = treeAsset.noiseData;
+                NoiseDataBase treeNoiseData = treeAsset.noiseData;
 
                 int chunkDensity = chunkSize; //Mathf.FloorToInt(chunkSize / 16f * treeAsset.density);
 
