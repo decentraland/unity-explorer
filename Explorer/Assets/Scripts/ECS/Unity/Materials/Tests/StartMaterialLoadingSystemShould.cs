@@ -11,7 +11,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Components.Defaults;
+using ECS.Unity.Textures.Components.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;

@@ -17,7 +17,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     ///     Individual pool for each GltfContainer source. LRU cache
     ///     <para>Gltf Containers can't be reused</para>
     /// </summary>
-    public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
+    public class GltfContainerAssetsCache : IDereferencableCache<GltfContainerAsset, string>
     {
         internal readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly Transform parentContainer;

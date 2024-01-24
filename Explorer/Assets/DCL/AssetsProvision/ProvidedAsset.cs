@@ -15,6 +15,11 @@ namespace DCL.AssetsProvision
 
         private AsyncOperationHandle<T> handle;
 
+        public ProvidedAsset(T instantValue) : this()
+        {
+            Value = instantValue;
+        }
+
         public ProvidedAsset(AsyncOperationHandle<T> handle)
         {
             this.handle = handle;

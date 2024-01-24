@@ -7,6 +7,7 @@ using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace DCL.ResourcesUnloading
         private const int GLTF_UNLOAD_CHUNK = 3;
         private const int AB_UNLOAD_CHUNK = 1;
         private const int TEXTURE_UNLOAD_CHUNK = 1;
+        private const int NFT_SHAPE_UNLOAD_CHUNK = 1;
         private const int AUDIO_CLIP_UNLOAD_CHUNK = 100;
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
@@ -31,6 +33,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
+        private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
@@ -48,6 +51,7 @@ namespace DCL.ResourcesUnloading
         {
             if (!fpsCapBudget.TrySpendBudget()) return;
 
+            nftShapeCache.Unload(fpsCapBudget, NFT_SHAPE_UNLOAD_CHUNK);
             texturesCache.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
             audioClipsCache.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
             wearableAssetsCache.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
@@ -78,6 +82,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IStreamableCache<Texture2D, GetTextureIntention> texturesCache) =>
             this.texturesCache = texturesCache;
+
+        public void Register(IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache) =>
+            this.nftShapeCache = nftShapeCache;
 
         public void Register(IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache) =>
             this.audioClipsCache = audioClipsCache;
