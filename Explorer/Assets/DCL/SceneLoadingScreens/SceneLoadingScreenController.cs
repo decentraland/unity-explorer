@@ -21,7 +21,6 @@ namespace DCL.SceneLoadingScreens
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
-        private CancellationTokenSource? fadeInCancellationToken;
         private IntVariable? progressLabel;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
@@ -39,7 +38,6 @@ namespace DCL.SceneLoadingScreens
             base.Dispose();
 
             tipsRotationCancellationToken?.SafeCancelAndDispose();
-            fadeInCancellationToken?.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -77,9 +75,7 @@ namespace DCL.SceneLoadingScreens
         {
             base.OnViewShow();
 
-            viewInstance.RootCanvasGroup.alpha = 0f;
-            fadeInCancellationToken = fadeInCancellationToken.SafeRestart();
-            FadeInAsync(fadeInCancellationToken.Token).Forget();
+            viewInstance.RootCanvasGroup.alpha = 1f;
         }
 
         protected override void OnViewClose()
@@ -104,12 +100,6 @@ namespace DCL.SceneLoadingScreens
             catch (TimeoutException) { }
 
             await FadeOutAsync(ct);
-        }
-
-        private async UniTask FadeInAsync(CancellationToken ct)
-        {
-            await viewInstance.RootCanvasGroup.DOFade(1f, 0.6f).AsyncWaitForCompletion();
-            ct.ThrowIfCancellationRequested();
         }
 
         private async UniTask FadeOutAsync(CancellationToken ct)
