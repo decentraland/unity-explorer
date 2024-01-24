@@ -3,6 +3,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Utils
@@ -168,6 +169,18 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.Placeholder.Refresh();
         }
 
+        public static void SetupDCLDropdown(ref DCLDropdown dropdownToSetup, ref PBUiDropdown model)
+        {
+            dropdownToSetup.DropdownField.style.fontSize = model.GetFontSize();
+            dropdownToSetup.DropdownField.style.color = model.GetColor();
+            dropdownToSetup.DropdownField.choices.Clear();
+            dropdownToSetup.DropdownField.choices.AddRange(model.Options);
+            dropdownToSetup.DropdownField.SetValueWithoutNotify(dropdownToSetup.DropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
+            dropdownToSetup.DropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
+            dropdownToSetup.DropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
+            dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign().ToUnityTextAlign();
+        }
+
         public static void SetElementDefaultStyle(IStyle elementStyle)
         {
             elementStyle.right = 0;
@@ -191,6 +204,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
         {
             inputText.Dispose();
             ReleaseUIElement(inputText.TextField);
+        }
+
+        public static void ReleaseDCLDropdown(DCLDropdown dropdown)
+        {
+            dropdown.Dispose();
+            ReleaseUIElement(dropdown.DropdownField);
         }
 
         private static LengthUnit GetUnit(YGUnit unit)
