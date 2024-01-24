@@ -5,7 +5,7 @@ using System;
 
 namespace DCL.SDKComponents.VideoPlayer
 {
-    public struct VideoPlayerComponent: IPoolableComponentProvider<MediaPlayer>
+    public readonly struct VideoPlayerComponent: IPoolableComponentProvider<MediaPlayer>
     {
         private readonly PBVideoPlayer sdkComponent;
         public readonly MediaPlayer mediaPlayer;
@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.VideoPlayer
             this.sdkComponent = sdkComponent;
             this.mediaPlayer = mediaPlayer;
 
-            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkComponent.Src, autoPlay: true); // TODO: change auto-play to 'false'
+            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkComponent.Src, autoPlay: false);
 
             if (sdkComponent is { HasPlaying: true, Playing: true })
                 mediaPlayer.Play();
