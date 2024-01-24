@@ -1,7 +1,9 @@
 using UnityEngine.UIElements;
 using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -125,10 +127,14 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
             else
                 visualElementToSetup.style.left = StyleKeyword.Null;
+
+            visualElementToSetup.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
+            visualElementToSetup.style.backgroundColor = new StyleColor(StyleKeyword.None);
         }
 
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
         {
+            labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
                 labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
 
@@ -137,6 +143,29 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
             //labelToSetup.style.unityFont = model.GetFont();
+        }
+
+        public static void SetupDCLImage(ref DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
+        {
+            imageToSetup.Color = model.GetColor();
+            imageToSetup.Slices = model.GetBorder();
+            imageToSetup.UVs = model.Uvs.ToDCLUVs();
+            imageToSetup.ScaleMode = model.TextureMode.ToDCLImageScaleMode();
+            imageToSetup.Texture = texture;
+        }
+
+        public static void SetupDCLInputText(ref DCLInputText inputToSetup, ref PBUiInput model)
+        {
+            bool isReadonly = !model.IsInteractive();
+            inputToSetup.Placeholder.SetPlaceholder(model.Placeholder);
+            inputToSetup.Placeholder.SetPlaceholderColor(model.GetPlaceholderColor());
+            inputToSetup.Placeholder.SetNormalColor(model.GetColor());
+            inputToSetup.Placeholder.SetReadOnly(isReadonly);
+            inputToSetup.TextField.isReadOnly = isReadonly;
+            inputToSetup.TextField.style.fontSize = model.GetFontSize();
+            inputToSetup.TextField.style.unityTextAlign = model.GetTextAlign();
+            inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
+            inputToSetup.Placeholder.Refresh();
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)
@@ -154,6 +183,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ReleaseUIElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
+
+        public static void ReleaseDCLImage(DCLImage image) =>
+            image.Dispose();
+
+        public static void ReleaseDCLInput(DCLInputText inputText)
+        {
+            inputText.Dispose();
+            ReleaseUIElement(inputText.TextField);
+        }
 
         private static LengthUnit GetUnit(YGUnit unit)
         {

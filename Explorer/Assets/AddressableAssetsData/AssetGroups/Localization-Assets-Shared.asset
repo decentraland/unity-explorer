@@ -33,6 +33,23 @@ MonoBehaviour:
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d8a2184e2c38d488f929003b0f0505af
+    m_Address: Assets/Locales/Localization Tables/SceneLoadingDefaultTips Shared
+      Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 743a5a3b15e404426ab7c23cffec5d68
+    m_Address: Assets/Locales/Localization Tables/SceneLoadingScreen Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8202382ae456247869a9b5cc2c01ff12
+    m_Address: Assets/Locales/Localization Tables/SceneLoadingDefaultImages Shared
+      Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 1
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:

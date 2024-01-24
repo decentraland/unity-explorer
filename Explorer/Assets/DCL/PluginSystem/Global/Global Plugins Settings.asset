@@ -26,6 +26,7 @@ MonoBehaviour:
   - rid: 56198586647707649
   - rid: 1095376790733193218
   - rid: 5121844448145178627
+  - rid: 6909647181449527298
   references:
     version: 2
     RefIds:
@@ -204,6 +205,18 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 6909647181449527298
+      type: {class: LoadingScreenPlugin/LoadingScreenPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <LoadingScreenPrefab>k__BackingField:
+          m_AssetGUID: 605506dac7ec04ed09953980478e93d4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
+        <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
+        <TipDisplayDuration>k__BackingField: 30
+        <MinimumScreenDisplayDuration>k__BackingField: 3
     - rid: 8147919132522971138
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:
