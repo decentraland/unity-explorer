@@ -27,10 +27,12 @@ namespace Utility
 
         private void EnsureRingsArraySize(int maxRadius)
         {
-            if (rings.Length != maxRadius)
+            int ringsArraySize = GetRingsArraySize(maxRadius);
+
+            if (rings.Length != ringsArraySize)
             {
                 rings.Dispose();
-                rings = new NativeArray<ParcelInfo>(GetRingsArraySize(maxRadius), Allocator.Persistent);
+                rings = new NativeArray<ParcelInfo>(ringsArraySize, Allocator.Persistent);
             }
         }
 
