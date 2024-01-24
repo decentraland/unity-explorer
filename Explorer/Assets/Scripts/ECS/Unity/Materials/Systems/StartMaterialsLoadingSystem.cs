@@ -177,7 +177,7 @@ namespace ECS.Unity.Materials.Systems
                         videoTexture = World.Get<VideoTextureComponent>(videoPlayerEntity).texture;
                     else
                     {
-                        videoTexture = CreateVideoTexture(textureComponentValue.WrapMode, textureComponentValue.FilterMode);
+                        videoTexture = CreateVideoTexture();
                         World.Add(videoPlayerEntity, new VideoTextureComponent(videoTexture));
                     }
                 }
@@ -215,16 +215,12 @@ namespace ECS.Unity.Materials.Systems
             return true;
         }
 
-        private static Texture2D CreateVideoTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point)
+        private static Texture2D CreateVideoTexture()
         {
-            var tex = new Texture2D(1, 1, TextureFormat.BGRA32, false, false)
-            {
-                wrapMode = wrapMode,
-                filterMode = filterMode,
-            };
+            var tex = new Texture2D(1, 1, TextureFormat.BGRA32, false, false);
 
-            ProfilingCounters.TexturesAmount.Value++;
             tex.SetDebugName($"VideoTexture {ProfilingCounters.TexturesAmount.Value}");
+            ProfilingCounters.TexturesAmount.Value++;
 
             return tex;
         }

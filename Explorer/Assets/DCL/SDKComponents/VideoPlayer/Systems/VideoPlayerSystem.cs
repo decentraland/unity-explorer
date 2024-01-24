@@ -4,11 +4,15 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.AudioStream;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using static DCL.SDKComponents.VideoPlayer.VideoPlayerComponent;
 
 namespace DCL.SDKComponents.VideoPlayer.Systems
 {
@@ -28,14 +32,14 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
 
         protected override void Update(float t)
         {
-            InstantiateVideoStreamQuery(World);
+            CreateVideoStreamPlayerQuery(World);
             UpdateVideoStreamTextureQuery(World);
         }
 
         [Query]
         [None(typeof(VideoPlayerComponent))]
         [All(typeof(VideoTextureComponent))]
-        private void InstantiateVideoStream(in Entity entity, ref PBVideoPlayer sdkVideo)
+        private void CreateVideoStreamPlayer(in Entity entity, ref PBVideoPlayer sdkVideo)
         {
             var component = new VideoPlayerComponent(sdkVideo, mediaPlayerPool.Get());
             UpdateVolume(ref component, sdkVideo, sceneStateProvider.IsCurrent);
@@ -44,10 +48,50 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         }
 
         [Query]
-        private void UpdateVideoStreamTexture(ref PBVideoPlayer sdkVideo, ref VideoPlayerComponent mediaPlayer, ref VideoTextureComponent assignedTexture)
+        private void UpdateVideoStreamTexture(ref PBVideoPlayer sdkVideo, ref VideoPlayerComponent playerComponent, ref VideoTextureComponent assignedTexture)
         {
-            UpdateVolume(ref mediaPlayer, sdkVideo, sceneStateProvider.IsCurrent);
-            UpdateVideoTexture(ref assignedTexture, mediaPlayer.MediaPlayer.TextureProducer.GetTexture());
+            UpdateVolume(ref playerComponent, sdkVideo, sceneStateProvider.IsCurrent);
+
+            if (sdkVideo.HasPlaying && sdkVideo.Playing)
+                UpdateVideoTexture(ref assignedTexture, playerComponent.MediaPlayer.TextureProducer.GetTexture());
+
+            if (!sdkVideo.IsDirty || !sdkVideo.Src.IsValidUrl()) return;
+
+            UpdateComponentChange(ref playerComponent, sdkVideo);
+
+            sdkVideo.IsDirty = false;
+        }
+
+        private static void UpdateComponentChange(ref VideoPlayerComponent playerComponent, PBVideoPlayer sdkVideo)
+        {
+            playerComponent.MediaPlayer.Loop = sdkVideo.HasLoop && sdkVideo.Loop; // default: loop = false
+            playerComponent.MediaPlayer.Control.SetPlaybackRate(sdkVideo.HasPlaybackRate ? sdkVideo.PlaybackRate : DEFAULT_PLAYBACK_RATE);
+            playerComponent.MediaPlayer.Control.Seek(sdkVideo.HasPosition ? sdkVideo.Position : DEFAULT_POSITION);
+
+            UpdateStreamUrl(ref playerComponent, sdkVideo.Src);
+            UpdatePlayback(ref playerComponent, sdkVideo);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void UpdateStreamUrl(ref VideoPlayerComponent component, string newUrl)
+        {
+            if (component.URL == newUrl) return;
+
+            component.URL = newUrl;
+            component.MediaPlayer.CloseCurrentStream();
+            component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, newUrl, autoPlay: false);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void UpdatePlayback(ref VideoPlayerComponent component, PBVideoPlayer sdkComponent)
+        {
+            if (sdkComponent.HasPlaying && sdkComponent.Playing != component.MediaPlayer.Control.IsPlaying())
+            {
+                if (sdkComponent.Playing)
+                    component.MediaPlayer.Play();
+                else
+                    component.MediaPlayer.Stop();
+            }
         }
 
         private static void UpdateVideoTexture(ref VideoTextureComponent assignedTexture, Texture avText)
@@ -74,7 +118,7 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         private static void UpdateVolume(ref VideoPlayerComponent component, PBVideoPlayer sdkComponent, bool isCurrentScene)
         {
             if (isCurrentScene)
-                component.MediaPlayer.AudioVolume = sdkComponent.HasVolume ? sdkComponent.Volume : VideoPlayerComponent.DEFAULT_VOLUME;
+                component.MediaPlayer.AudioVolume = sdkComponent.HasVolume ? sdkComponent.Volume : DEFAULT_VOLUME;
             else
                 component.MediaPlayer.AudioVolume = 0f;
         }

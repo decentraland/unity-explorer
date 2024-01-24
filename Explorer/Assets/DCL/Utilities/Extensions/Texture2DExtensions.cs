@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.SDKComponents.VideoPlayer.Systems
+namespace DCL.Utilities.Extensions
 {
     public static class Texture2DExtensions
     {

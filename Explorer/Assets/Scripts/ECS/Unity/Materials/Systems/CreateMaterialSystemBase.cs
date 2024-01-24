@@ -1,6 +1,7 @@
 using Arch.Core;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.Textures.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -9,6 +10,7 @@ namespace ECS.Unity.Materials.Systems
 {
     public abstract class CreateMaterialSystemBase : BaseUnityLoopSystem
     {
+        private static readonly Vector2 VIDEO_TEXTURE_VERTICAL_FLIP = new (1, -1);
         private readonly IObjectPool<Material> materialsPool;
 
         protected CreateMaterialSystemBase(World world, IObjectPool<Material> materialsPool) : base(world)
@@ -34,10 +36,13 @@ namespace ECS.Unity.Materials.Systems
             return promise.Value.TryGetResult(World, out textureResult);
         }
 
-        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId)
+        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, TextureComponent? textureComponent)
         {
             if (textureResult.Succeeded)
                 material.SetTexture(propId, textureResult.Asset);
+
+            if (textureComponent is { IsVideoTexture: true })
+                material.SetTextureScale(propId, VIDEO_TEXTURE_VERTICAL_FLIP);
         }
     }
 }

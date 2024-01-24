@@ -2,6 +2,7 @@
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.AudioStream;
+using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -33,10 +34,8 @@ namespace DCL.SDKComponents.VideoPlayer.Wrapper
             var mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
 
             VideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
-            // AudioStreamSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
-
-            // CleanUpAudioStreamSystem.InjectToWorld(ref builder, mediaPlayerPool);
-            // finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, AudioStreamComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            CleanUpVideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool);
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, VideoPlayerComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
         }
     }
