@@ -7,16 +7,16 @@ namespace DCL.SDKComponents.VideoPlayer
 {
     public readonly struct VideoPlayerComponent: IPoolableComponentProvider<MediaPlayer>
     {
-        private readonly PBVideoPlayer sdkComponent;
-        public readonly MediaPlayer mediaPlayer;
+        public const float DEFAULT_VOLUME = 1f;
 
-        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => mediaPlayer;
+        public readonly MediaPlayer MediaPlayer;
+
+        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => MediaPlayer;
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
 
         public VideoPlayerComponent(PBVideoPlayer sdkComponent, MediaPlayer mediaPlayer)
         {
-            this.sdkComponent = sdkComponent;
-            this.mediaPlayer = mediaPlayer;
+            this.MediaPlayer = mediaPlayer;
 
             mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkComponent.Src, autoPlay: false);
 
@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.VideoPlayer
 
         public void Dispose()
         {
-            mediaPlayer.CloseMedia();
+            MediaPlayer.CloseMedia();
         }
     }
 }
