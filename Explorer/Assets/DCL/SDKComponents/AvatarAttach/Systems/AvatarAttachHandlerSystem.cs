@@ -29,12 +29,11 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         public AvatarAttachHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
-            globalWorld.GetWorld()
-                       .Query(new QueryDescription().WithAll<Profile, AvatarBase>(), (ref Profile profile, ref AvatarBase avatarBase) =>
-                        {
-                            if (profile.UserId == "fakeOwnUserId") // TODO: improve
-                                ownPlayerAvatarBase = avatarBase;
-                        });
+            globalWorld.Query(new QueryDescription().WithAll<Profile, AvatarBase>(), (ref Profile profile, ref AvatarBase avatarBase) =>
+            {
+                if (profile.UserId == "fakeOwnUserId") // TODO: improve
+                    ownPlayerAvatarBase = avatarBase;
+            });
         }
 
         protected override void Update(float t)
