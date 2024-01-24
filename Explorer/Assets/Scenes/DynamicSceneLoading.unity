@@ -15,14 +15,14 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 1
-  m_FogColor: {r: 0.854902, g: 0.9803922, b: 0.9960785, a: 1}
+  m_FogColor: {r: 0.5222918, g: 0.605244, b: 0.5468702, a: 0.7834376}
   m_FogMode: 3
-  m_FogDensity: 0.0009
+  m_FogDensity: 0.00078343763
   m_LinearFogStart: 0
   m_LinearFogEnd: 1500
-  m_AmbientSkyColor: {r: 0.9386792, g: 0.9591195, b: 1, a: 1}
-  m_AmbientEquatorColor: {r: 0.47338912, g: 0.49501604, b: 0.509434, a: 1}
-  m_AmbientGroundColor: {r: 0.1792453, g: 0.1792453, b: 0.1792453, a: 1}
+  m_AmbientSkyColor: {r: 0.38403803, g: 0.41783342, b: 0.48849642, a: 0.7834376}
+  m_AmbientEquatorColor: {r: 0.5222918, g: 0.605244, b: 0.5468702, a: 0.7834376}
+  m_AmbientGroundColor: {r: 0.036867652, g: 0.02765074, b: 0.009216913, a: 0.7834376}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
@@ -123,6 +123,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &88366854
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 88366856}
+  - component: {fileID: 88366855}
+  m_Layer: 0
+  m_Name: WindZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!182 &88366855
+WindZone:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88366854}
+  m_Enabled: 1
+  m_Mode: 0
+  m_Radius: 20
+  m_WindMain: 0.5
+  m_WindTurbulence: 0.5
+  m_WindPulseMagnitude: 0.5
+  m_WindPulseFrequency: 0.01
+--- !u!4 &88366856
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88366854}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -70.42869, y: -1.56218, z: 57.700718}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 11
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &158563621
 GameObject:
   m_ObjectHideFlags: 0
@@ -2139,7 +2185,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7432390511473013031, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_Intensity
-      value: 0.6254913
+      value: 0.7834376
       objectReference: {fileID: 0}
     - target: {fileID: 8165004788851571507, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_RootOrder
@@ -2159,19 +2205,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8165004788851571507, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.44237038
+      value: -0.2695401
       objectReference: {fileID: 0}
     - target: {fileID: 8165004788851571507, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.20068692
+      value: -0.17563772
       objectReference: {fileID: 0}
     - target: {fileID: 8165004788851571507, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.79600674
+      value: 0.7932814
       objectReference: {fileID: 0}
     - target: {fileID: 8165004788851571507, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.36111853
+      value: -0.51691806
       objectReference: {fileID: 0}
     - target: {fileID: 8165004788851571507, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

@@ -1,5 +1,7 @@
 ﻿using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
+using DCL.Landscape.NoiseGeneration;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,15 +13,16 @@ namespace DCL.Landscape
         private NativeArray<float> noiseResults;
         private readonly CompositeNoiseData compositeNoiseData;
         private readonly uint baseSeed;
-        private Dictionary<INoiseDataFactory, INoiseGenerator> noiseGenerators = new();
+        private readonly NoiseGeneratorCache generatorCache;
 
         private int sizeOfLastCache = -1;
         private NoiseGenerator mainJob;
 
-        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed)
+        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, NoiseGeneratorCache generatorCache)
         {
             this.compositeNoiseData = compositeNoiseData;
             this.baseSeed = baseSeed;
+            this.generatorCache = generatorCache;
         }
 
         public JobHandle Schedule(int size, int offsetX, int offsetZ, int batchCount = 32)
@@ -50,7 +53,7 @@ namespace DCL.Landscape
             {
                 if (noise is INoiseDataFactory noiseDataFactory)
                 {
-                    INoiseGenerator generator = GetGenerator(noiseDataFactory);
+                    INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
                     jobHandle = generator.Compose(ref targetArray, NoiseJobOperation.ADD, size, offsetX, offsetZ, batchCount);
                     jobHandle.Complete();
                 }
@@ -60,7 +63,7 @@ namespace DCL.Landscape
             {
                 if (noise is INoiseDataFactory noiseDataFactory)
                 {
-                    INoiseGenerator generator = GetGenerator(noiseDataFactory);
+                    INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
                     jobHandle = generator.Compose(ref targetArray, NoiseJobOperation.MULTIPLY, size, offsetX, offsetZ, batchCount);
                     jobHandle.Complete();
                 }
@@ -70,23 +73,13 @@ namespace DCL.Landscape
             {
                 if (noise is INoiseDataFactory noiseDataFactory)
                 {
-                    INoiseGenerator generator = GetGenerator(noiseDataFactory);
+                    INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
                     jobHandle = generator.Compose(ref targetArray, NoiseJobOperation.SUBTRACT, size, offsetX, offsetZ, batchCount);
                     jobHandle.Complete();
                 }
             }
 
             return jobHandle;
-        }
-
-        private INoiseGenerator GetGenerator(INoiseDataFactory noiseDataFactory)
-        {
-            if (noiseGenerators.TryGetValue(noiseDataFactory, out var result))
-                return result;
-
-            var generator = noiseDataFactory.GetGenerator(baseSeed);
-            noiseGenerators.Add(noiseDataFactory, generator);
-            return generator;
         }
 
         private void CheckCache(int size)
@@ -108,9 +101,6 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            foreach (KeyValuePair<INoiseDataFactory,INoiseGenerator> noiseGenerator in noiseGenerators)
-                noiseGenerator.Value.Dispose();
-
             noiseResults.Dispose();
             mainJob.Dispose();
         }

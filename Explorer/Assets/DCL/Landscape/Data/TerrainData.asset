@@ -25,7 +25,7 @@ MonoBehaviour:
   - {fileID: 8574412962073106934, guid: 717087acc9c59af41995f7a1854878e3, type: 2}
   layerNoise:
   - {fileID: 0}
-  - {fileID: 11400000, guid: 996aca5b4ef949f428e646374ebd7025, type: 2}
+  - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
   treeAssets:
   - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
   - {fileID: 11400000, guid: 9956eed88c3da1140a63203ad3e7e00b, type: 2}
@@ -36,5 +36,11 @@ MonoBehaviour:
   detailScatterMode: 0
   detailAssets:
   - {fileID: 11400000, guid: 99c54104723c0fc4981215d1af8497c5, type: 2}
+  - {fileID: 11400000, guid: b2f25ceffa3921e41931611c7dd08a18, type: 2}
+  - {fileID: 11400000, guid: 4362537cefadf584c8a7ea303794690c, type: 2}
+  - {fileID: 11400000, guid: 86b29852bc6b6aa4ab76c26e069e5c8b, type: 2}
+  - {fileID: 11400000, guid: 3d26b9b86d046ce4da3e824b5c7e0630, type: 2}
+  - {fileID: 11400000, guid: 6a157539381d5e6448873190ac732d1f, type: 2}
+  - {fileID: 11400000, guid: 94cc20bd7b07499479cde28f9c375233, type: 2}
   cliffSide: {fileID: 919132149155446097, guid: c771be5f50b31304fa9980668f783ee3, type: 3}
   cliffCorner: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}

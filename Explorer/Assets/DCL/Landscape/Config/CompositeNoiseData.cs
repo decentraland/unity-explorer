@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Landscape.NoiseGeneration;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Landscape.Config
@@ -10,7 +11,7 @@ namespace DCL.Landscape.Config
         public List<NoiseData> multiply;
         public List<NoiseData> subtract;
 
-        public override INoiseGenerator GetGenerator(uint baseSeed) =>
-            new CompositeNoiseGenerator(this, baseSeed);
+        public override INoiseGenerator GetGenerator(uint baseSeed, NoiseGeneratorCache cache) =>
+            new CompositeNoiseGenerator(this, baseSeed, cache);
     }
 }

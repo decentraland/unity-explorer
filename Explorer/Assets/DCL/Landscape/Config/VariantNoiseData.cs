@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.Landscape.NoiseGeneration;
+using UnityEngine;
 
 namespace DCL.Landscape.Config
 {
@@ -8,7 +9,7 @@ namespace DCL.Landscape.Config
         public uint seed;
         public NoiseDataBase other;
 
-        public override INoiseGenerator GetGenerator(uint baseSeed) =>
-            other.GetGenerator(baseSeed + seed);
+        public override INoiseGenerator GetGenerator(uint baseSeed, NoiseGeneratorCache cache) =>
+            other.GetGenerator(baseSeed + seed, cache);
     }
 }

@@ -1,10 +1,11 @@
-﻿using System;
+﻿using DCL.Landscape.NoiseGeneration;
+using System;
 using UnityEngine;
 
 namespace DCL.Landscape.Config
 {
     public abstract class NoiseDataBase : ScriptableObject, INoiseDataFactory
     {
-        public abstract INoiseGenerator GetGenerator(uint baseSeed);
+        public abstract INoiseGenerator GetGenerator(uint baseSeed, NoiseGeneratorCache cache);
     }
 }
