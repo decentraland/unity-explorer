@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using ECS.Unity.Transforms.Components;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -13,6 +14,7 @@ namespace ECS.SceneLifeCycle.Systems
     ///     Calculates parcels in range and cache them in component for future usage in the current frame
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
+    [Obsolete("No longer used by Increasing Radius Systems")]
     public partial class CalculateParcelsInRangeSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;

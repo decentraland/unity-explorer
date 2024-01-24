@@ -138,11 +138,11 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
-            CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
             // Archaic systems
+            //CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
             //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
 
