@@ -26,9 +26,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal float scrollModifier { get; private set; }
         [field: SerializeField] internal float rotationModifier { get; private set; }
 
-
         [field: SerializeField] internal float maxHorizontalOffset { get; private set; }
-
         [field: SerializeField] internal float minVerticalOffset { get; private set; }
         [field: SerializeField] internal float maxVerticalOffset { get; private set; }
 

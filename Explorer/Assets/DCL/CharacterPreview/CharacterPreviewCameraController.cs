@@ -45,11 +45,11 @@ namespace DCL.CharacterPreview
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-            //TODO: Fran -> When zooming we will need to adjust the max positions vertically as now we are in an angle and it fucks up the field of view.
             var position = characterPreviewContainer.cameraTarget.localPosition;
             position.z -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
             if (position.z < characterPreviewContainer.depthLimits.y) position.z = characterPreviewContainer.depthLimits.y;
             else if (position.z > characterPreviewContainer.depthLimits.x) position.z = characterPreviewContainer.depthLimits.x;
+
             characterPreviewContainer.cameraTarget.localPosition = position;
         }
 
