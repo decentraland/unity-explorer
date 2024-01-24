@@ -171,7 +171,7 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
-                new VideoPlayerPlugin(componentsContainer.ComponentPoolsRegistry, container.CacheCleaner),
+                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

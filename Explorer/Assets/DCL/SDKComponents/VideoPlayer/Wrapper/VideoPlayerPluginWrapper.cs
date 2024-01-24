@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.VideoPlayer.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -10,19 +11,25 @@ using ECS.ComponentsPooling.Systems;
 using RenderHeads.Media.AVProVideo;
 #endif
 
-namespace DCL.SDKComponents.AudioStream.Wrapper
+namespace DCL.SDKComponents.VideoPlayer.Wrapper
 {
-    public class AudioStreamPluginWrapper
+    public class VideoPlayerPluginWrapper
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public AudioStreamPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, CacheCleaner cacheCleaner)
+        public VideoPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, CacheCleaner cacheCleaner)
         {
 #if AV_PRO_PRESENT
             this.componentPoolsRegistry = componentPoolsRegistry;
 
-            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
+            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: OnRelease);
+
             cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
+
+            void OnRelease(MediaPlayer mp)
+            {
+                // mp.CloseCurrentStream();
+            }
 #endif
         }
 
@@ -30,10 +37,11 @@ namespace DCL.SDKComponents.AudioStream.Wrapper
         {
 #if AV_PRO_PRESENT
             var mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
+            VideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool);
 
-            AudioStreamSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
-            CleanUpAudioStreamSystem.InjectToWorld(ref builder, mediaPlayerPool);
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, AudioStreamComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            // AudioStreamSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
+            // CleanUpAudioStreamSystem.InjectToWorld(ref builder, mediaPlayerPool);
+            // finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, AudioStreamComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
         }
     }
