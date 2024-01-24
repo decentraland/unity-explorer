@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: SceneLoadingDefaultImages Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: SceneLoadingDefaultImages
+  m_TableCollectionNameGuidString: 8202382ae456247869a9b5cc2c01ff12
+  m_Entries:
+  - m_Id: 46148870144
+    m_Key: IMAGE-0
+    m_Metadata:
+      m_Items: []
+  - m_Id: 69079130112
+    m_Key: IMAGE-1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 85537579008
+    m_Key: IMAGE-2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 94622441472
+    m_Key: IMAGE-3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 104160288768
+    m_Key: IMAGE-4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 114549579776
+    m_Key: IMAGE-5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 125765148672
+    m_Key: IMAGE-6
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items:
+    - rid: 4107643858754469895
+  m_KeyGenerator:
+    rid: 4107643858754469894
+  references:
+    version: 2
+    RefIds:
+    - rid: 4107643858754469894
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1705350695843
+    - rid: 4107643858754469895
+      type: {class: AssetTypeMetadata, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries:
+        - m_KeyId: 46148870144
+          m_TableCodes:
+          - en
+          - it
+          - es
+        - m_KeyId: 69079130112
+          m_TableCodes:
+          - en
+          - it
+          - es
+        - m_KeyId: 85537579008
+          m_TableCodes:
+          - en
+          - it
+          - es
+        - m_KeyId: 94622441472
+          m_TableCodes:
+          - en
+          - it
+          - es
+        - m_KeyId: 104160288768
+          m_TableCodes:
+          - en
+          - it
+          - es
+        - m_KeyId: 114549579776
+          m_TableCodes:
+          - en
+          - it
+          - es
+        - m_KeyId: 125765148672
+          m_TableCodes:
+          - en
+          - it
+          - es
+        m_TypeString: UnityEngine.Texture2D, UnityEngine.CoreModule, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null

@@ -4,28 +4,6 @@ import { Color3, Quaternion } from '@dcl/sdk/math'
 export function startParty() {
   startMusicStream()
   createVideoShapes()
-
-  // #1
-  const screen = engine.addEntity()
-  MeshRenderer.setPlane(screen)
-  Transform.create(screen, { position: { x: 4, y: 1, z: 4 } })
-
-// #2
-  VideoPlayer.create(screen, {
-    src: 'https://player.vimeo.com/external/552481870.m3u8?s=c312c8533f97e808fccc92b0510b085c8122a875',
-    playing: true,
-  })
-
-// #3
-  const videoTexture = Material.Texture.Video({ videoPlayerEntity: screen })
-
-// #4
-  Material.setPbrMaterial(screen, {
-    texture: videoTexture,
-    roughness: 1.0,
-    specularIntensity: 0,
-    metallic: 0,
-  })
 }
 
 function startMusicStream() {

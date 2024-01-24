@@ -50,6 +50,6 @@ namespace ECS.StreamableLoading.AudioClips
         }
 
         public bool CanBeDisposed() =>
-            referencesCount == 0;
+            referencesCount <= 0;
     }
 }

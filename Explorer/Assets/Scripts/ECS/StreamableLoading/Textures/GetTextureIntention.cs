@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.Textures
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetTextureIntention other) =>
-            IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && CommonArguments.URL == other.CommonArguments.URL
+            IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && this.AreUrlEquals(other)
             && IsVideoTexture == other.IsVideoTexture && VideoPlayerEntity == other.VideoPlayerEntity;
 
         public override bool Equals(object obj) =>
