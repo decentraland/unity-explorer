@@ -3,9 +3,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Profiles;
 using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.Utilities;
 using ECS.Abstract;
@@ -29,11 +29,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         public AvatarAttachHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
-            globalWorld.Query(new QueryDescription().WithAll<Profile, AvatarBase>(), (ref Profile profile, ref AvatarBase avatarBase) =>
-            {
-                if (profile.UserId == "fakeOwnUserId") // TODO: improve
-                    ownPlayerAvatarBase = avatarBase;
-            });
+            globalWorld.Query(new QueryDescription().WithAll<PlayerComponent, AvatarBase>(), (ref PlayerComponent playerComponent, ref AvatarBase avatarBase) => { ownPlayerAvatarBase = avatarBase; });
         }
 
         protected override void Update(float t)
