@@ -2,6 +2,7 @@ using DCL.CharacterPreview;
 using DCL.UI;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Backpack
 {
@@ -12,6 +13,12 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public BackpackSortDropdownView BackpackSortView { get; private set; }
+
+        [field: SerializeField]
+        public Button TipsButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject TipsPanel { get; private set; }
 
         [field: SerializeField]
         internal BackpackCharacterPreviewView backpackCharacterPreviewView { get; private set; }

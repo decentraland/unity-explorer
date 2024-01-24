@@ -87,6 +87,12 @@ namespace DCL.Backpack
                         });
                 }
                 backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus, poolsRegistry, inputEventBus);
+                view.TipsButton.onClick.AddListener(ToggleTipsContent);
+            }
+
+            private void ToggleTipsContent()
+            {
+                view.TipsPanel.SetActive(!view.TipsPanel.activeInHierarchy);
             }
 
             public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
