@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Stone03
   m_EditorClassIdentifier: 
   asset: {fileID: 919132149155446097, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
-  radius: 3
+  radius: 1
   density: 0
   randomization:
     randomRotationX: {x: 0, y: 360}

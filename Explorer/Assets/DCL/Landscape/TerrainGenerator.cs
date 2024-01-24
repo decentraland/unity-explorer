@@ -23,14 +23,14 @@ namespace DCL.Landscape
         private Dictionary<NoiseData, NativeArray<float2>> octaves = new ();
         private List<Terrain> terrains;
         private TreePrototype[] treePrototypes;
-        private NativeHashMap<Vector2Int, EmptyParcelData> emptyParcelResult;
-        private NativeArray<Vector2Int> emptyParcels;
-        private NativeHashSet<Vector2Int> ownedParcels;
+        private NativeHashMap<int2, EmptyParcelData> emptyParcelResult;
+        private NativeArray<int2> emptyParcels;
+        private NativeHashSet<int2> ownedParcels;
         private int maxHeightIndex;
         private Random random;
         private Dictionary<INoiseDataFactory, INoiseGenerator> cachedGenerators;
 
-        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<Vector2Int> emptyParcels, ref NativeHashSet<Vector2Int> ownedParcels)
+        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -65,31 +65,92 @@ namespace DCL.Landscape
                 if (rootGo != null) Object.DestroyImmediate(rootGo);
                 rootGo = new GameObject("Generated Terrain");
 
+                GenerateCliffs();
+
                 if (centerTerrain)
                     rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
 
                 //rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
 
-                Dictionary<Vector2Int, TerrainData> terrainDatas = new ();
+                Dictionary<int2, TerrainData> terrainDatas = new ();
 
                 for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
                 for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
-                    terrainDatas.Add(new Vector2Int(x, z), GenerateTerrainData(x, z, worldSeed));
+                    terrainDatas.Add(new int2(x, z), GenerateTerrainData(x, z, worldSeed));
 
                 if (withHoles)
                     DigHoles(terrainDatas);
 
                 GenerateChunks(terrainDatas);
+
+
             }
             catch (Exception e) { Debug.LogException(e); }
         }
 
-        private void SetupEmptyParcelData(NativeArray<Vector2Int> emptyParcels, NativeHashSet<Vector2Int> ownedParcels)
-        {
-            emptyParcelResult = new NativeHashMap<Vector2Int, EmptyParcelData>(emptyParcels.Length, Allocator.Persistent);
+        //           size,size
+        //      N
+        //    W + E
+        //      S
+        //0,0
 
-            foreach (Vector2Int emptyParcel in emptyParcels)
-                emptyParcelResult.Add(emptyParcel, new EmptyParcelData());
+        private void GenerateCliffs()
+        {
+            if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
+                return;
+
+            CreateCliffCornerAt(new Vector3(terrainGenData.terrainSize, 0, terrainGenData.terrainSize), Quaternion.identity);
+            CreateCliffCornerAt(new Vector3(terrainGenData.terrainSize, 0, 0), Quaternion.Euler(0, 90, 0));
+            CreateCliffCornerAt(new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
+            CreateCliffCornerAt(new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(terrainGenData.terrainSize, 0, i + 16);
+                side.rotation = Quaternion.Euler(0, 90, 0);
+                side.SetParent(rootGo.transform, true);
+            }
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(i, 0, terrainGenData.terrainSize);
+                side.rotation = Quaternion.identity;
+                side.SetParent(rootGo.transform, true);
+            }
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(0, 0, i);
+                side.rotation = Quaternion.Euler(0, 270, 0);
+                side.SetParent(rootGo.transform, true);
+            }
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += 16)
+            {
+                Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
+                side.position = new Vector3(i + 16, 0, 0);
+                side.rotation = Quaternion.Euler(0, 180, 0);
+                side.SetParent(rootGo.transform, true);
+            }
+        }
+
+        private void CreateCliffCornerAt(Vector3 position, Quaternion rotation)
+        {
+            Transform neCorner = Object.Instantiate(terrainGenData.cliffCorner).transform;
+            neCorner.position = position;
+            neCorner.rotation = rotation;
+            neCorner.SetParent(rootGo.transform, true);
+        }
+
+        private void SetupEmptyParcelData(NativeArray<int2> emptyParcels, NativeHashSet<int2> ownedParcels)
+        {
+            emptyParcelResult = new NativeHashMap<int2, EmptyParcelData>(emptyParcels.Length, Allocator.Persistent);
+
+            foreach (int2 emptyParcel in emptyParcels)
+                emptyParcelResult.Add(new int2(emptyParcel.x, emptyParcel.y), new EmptyParcelData());
 
             var job = new SetupEmptyParcels(in emptyParcels, in ownedParcels, ref emptyParcelResult) { heightNerf = terrainGenData.heightScaleNerf };
             JobHandle handle = job.Schedule();
@@ -97,12 +158,12 @@ namespace DCL.Landscape
 
             maxHeightIndex = 0;
 
-            foreach (KVPair<Vector2Int, EmptyParcelData> pair in emptyParcelResult)
+            foreach (KVPair<int2, EmptyParcelData> pair in emptyParcelResult)
                 if (pair.Value.minIndex > maxHeightIndex)
                     maxHeightIndex = pair.Value.minIndex;
         }
 
-        private void GenerateChunks(Dictionary<Vector2Int, TerrainData> terrainDatas)
+        private void GenerateChunks(Dictionary<int2, TerrainData> terrainDatas)
         {
             var index = 0;
             terrains = new List<Terrain>();
@@ -110,13 +171,13 @@ namespace DCL.Landscape
             for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
             for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
             {
-                TerrainData terrainData = terrainDatas[new Vector2Int(x, z)];
+                TerrainData terrainData = terrainDatas[new int2(x, z)];
                 terrains.Add(GenerateTerrainChunk(x, z, terrainData, terrainGenData.terrainMaterial));
                 index++;
             }
         }
 
-        private void DigHoles(Dictionary<Vector2Int, TerrainData> terrainDatas)
+        private void DigHoles(Dictionary<int2, TerrainData> terrainDatas)
         {
             int resolution = terrainGenData.chunkSize;
             var failedHoles = 0;
@@ -128,7 +189,7 @@ namespace DCL.Landscape
             for (var j = 0; j < 16; j++)
                 parcelSizeHole[i, j] = false;
 
-            foreach (Vector2Int ownedParcel in ownedParcels)
+            foreach (int2 ownedParcel in ownedParcels)
             {
                 int parcelGlobalX = (150 + ownedParcel.x) * 16;
                 int parcelGlobalY = (150 + ownedParcel.y) * 16;
@@ -143,7 +204,7 @@ namespace DCL.Landscape
 
                 try
                 {
-                    TerrainData terrainData = terrainDatas[new Vector2Int(chunkX * resolution, chunkY * resolution)];
+                    TerrainData terrainData = terrainDatas[new int2(chunkX * resolution, chunkY * resolution)];
                     terrainData.SetHoles(localX, localY, parcelSizeHole);
                     goodHoles++;
                 }
@@ -300,21 +361,23 @@ namespace DCL.Landscape
 
             cachedGenerators ??= new Dictionary<INoiseDataFactory, INoiseGenerator>();
 
-            if (noiseData is not INoiseDataFactory bridge)
-                throw new Exception("INoiseDataFactory not implemented?");
+            if (noiseData is INoiseDataFactory bridge)
+            {
+                if (cachedGenerators.TryGetValue(bridge, out INoiseGenerator noiseGen))
+                    return noiseGen;
 
-            if (cachedGenerators.TryGetValue(bridge, out INoiseGenerator noiseGen))
-                return noiseGen;
+                INoiseGenerator generator = bridge.GetGenerator(baseSeed);
+                cachedGenerators.Add(bridge, generator);
 
-            var generator = bridge.GetGenerator(baseSeed);
-            cachedGenerators.Add(bridge, generator);
+                return cachedGenerators[bridge];
+            }
 
-            return cachedGenerators[bridge];
+            throw new Exception("INoiseDataFactory not implemented?");
         }
 
         private void SetTrees(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
         {
-            var treeInstances = new NativeList<TreeInstance>(5000, Allocator.Persistent);
+            var treeInstances = new NativeHashMap<int2, TreeInstance>(5000, Allocator.Persistent);
 
             for (var treeAssetIndex = 0; treeAssetIndex < terrainGenData.treeAssets.Length; treeAssetIndex++)
             {
@@ -351,10 +414,15 @@ namespace DCL.Landscape
             }
 
             // We do a horrible array copy because that's what the terrain API expects, it is what it is
-            var array = new TreeInstance[treeInstances.Length];
+            var array = new TreeInstance[treeInstances.Count];
 
-            for (var i = 0; i < treeInstances.Length; i++)
-                array[i] = treeInstances[i];
+            var index = 0;
+
+            foreach (KVPair<int2, TreeInstance> treeInstance in treeInstances)
+            {
+                array[index] = treeInstance.Value;
+                index++;
+            }
 
             terrainData.SetTreeInstances(array, true);
             treeInstances.Dispose();

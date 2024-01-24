@@ -13,6 +13,7 @@ using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
@@ -26,8 +27,8 @@ namespace DCL.PluginSystem.Global
         private readonly LandscapeAssetPoolManager poolManager;
         private ProvidedAsset<TextAsset> emptyParcelsData;
         private ProvidedAsset<TextAsset> ownedParcelsData;
-        private NativeArray<Vector2Int> emptyParcels;
-        private NativeHashSet<Vector2Int> ownedParcels;
+        private NativeArray<int2> emptyParcels;
+        private NativeHashSet<int2> ownedParcels;
         private TerrainGenerator terrainGenerator;
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, MapRendererTextureContainer textureContainer)
@@ -65,8 +66,8 @@ namespace DCL.PluginSystem.Global
             LandscapeParcelUnloadSystem.InjectToWorld(ref builder, poolManager);
 
             // Create all empty parcels
-            foreach (Vector2Int emptyParcel in emptyParcels)
-                builder.World.Create(new LandscapeParcel(ParcelMathHelper.GetPositionByParcelPosition(emptyParcel), 0), new LandscapeParcelInitialization());
+            foreach (int2 emptyParcel in emptyParcels)
+                builder.World.Create(new LandscapeParcel(ParcelMathHelper.GetPositionByParcelPosition(new Vector2Int(emptyParcel.x, emptyParcel.y)), 0), new LandscapeParcelInitialization());
 
             builder.World.Create(new SatelliteView(), new LandscapeParcelInitialization());
         }
@@ -76,15 +77,15 @@ namespace DCL.PluginSystem.Global
             string[] ownedParcelsRaw = ownedParcelsData.Value.text.Split('\n');
             string[] emptyParcelsRaw = emptyParcelsData.Value.text.Split('\n');
 
-            ownedParcels = new NativeHashSet<Vector2Int>(ownedParcelsRaw.Length, Allocator.Persistent);
-            emptyParcels = new NativeArray<Vector2Int>(emptyParcelsRaw.Length, Allocator.Persistent);
+            ownedParcels = new NativeHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
+            emptyParcels = new NativeArray<int2>(emptyParcelsRaw.Length, Allocator.Persistent);
 
             foreach (string ownedParcel in ownedParcelsRaw)
             {
                 string[] coordinates = ownedParcel.Trim().Split(',');
 
                 if (TryParse(coordinates, out int x, out int y))
-                    ownedParcels.Add(new Vector2Int(x, y));
+                    ownedParcels.Add(new int2(x, y));
                 else
                     Debug.LogWarning("Invalid line: " + ownedParcel);
             }
@@ -95,7 +96,7 @@ namespace DCL.PluginSystem.Global
                 string[] coordinates = emptyParcel.Trim().Split(',');
 
                 if (TryParse(coordinates, out int x, out int y))
-                    emptyParcels[i] = new Vector2Int(x, y);
+                    emptyParcels[i] = new int2(x, y);
                 else
                     Debug.LogWarning("Invalid line: " + emptyParcel);
             }

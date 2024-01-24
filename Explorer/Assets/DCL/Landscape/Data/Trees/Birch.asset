@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Birch
   m_EditorClassIdentifier: 
   asset: {fileID: 919132149155446097, guid: 49f6b5c1fa632624bb986c443a29dec7, type: 3}
-  radius: 16
+  radius: 12
   density: 3
   randomization:
     randomRotationX: {x: -5, y: 5}
@@ -28,4 +28,3 @@ MonoBehaviour:
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: 0, y: 0}
   noiseData: {fileID: 11400000, guid: bc9385e02c4ba5c41ba7d980d6e12a1e, type: 2}
-  poolPreWarmCount: 0

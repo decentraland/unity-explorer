@@ -14,16 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   settings:
     invert: 0
-    normalize: 1
-    scale: 79.8
-    octaves: 3
-    persistance: 0.89
-    lacunarity: 40.34
-    seed: 1
+    normalize: 0
+    scale: 27.45
+    octaves: 2
+    persistance: 1
+    lacunarity: 2.79
+    seed: 34
     offset: {x: 0, y: 0}
-    cutoff: 0.8
+    cutoff: 0.35
     noiseType: 1
   add: []
-  multiply:
-  - {fileID: 11400000, guid: b2d9f65dd060ad643876b5c080de30fa, type: 2}
+  multiply: []
   subtract: []

@@ -13,14 +13,14 @@ namespace DCL.Landscape.Jobs
     public struct ModifyTerrainHeightJob : IJobParallelFor
     {
         private NativeArray<float> heights;
-        [ReadOnly] private NativeHashMap<Vector2Int, EmptyParcelData> emptyParcelData;
+        [ReadOnly] private NativeHashMap<int2, EmptyParcelData> emptyParcelData;
         public int terrainWidth;
         public int offsetX;
         public int offsetZ;
         public int maxHeight;
         public float terrainScale;
 
-        public ModifyTerrainHeightJob(ref NativeArray<float> heights, in NativeHashMap<Vector2Int, EmptyParcelData> emptyParcelData) : this()
+        public ModifyTerrainHeightJob(ref NativeArray<float> heights, in NativeHashMap<int2, EmptyParcelData> emptyParcelData) : this()
         {
             this.heights = heights;
             this.emptyParcelData = emptyParcelData;
@@ -37,7 +37,7 @@ namespace DCL.Landscape.Jobs
             int parcelX = worldX / 16;
             int parcelZ = worldZ / 16;
 
-            var coord = new Vector2Int(-150 + parcelX, -150 + parcelZ);
+            var coord = new int2(-150 + parcelX, -150 + parcelZ);
 
             if (emptyParcelData.TryGetValue(coord, out EmptyParcelData data))
             {
