@@ -71,6 +71,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         public override void Dispose()
         {
+            // We can't dispose collections used in jobs, first ensure job is finished
+            partitionJobHandle.Complete();
+
             partitions.Dispose();
 
             // not sure if the parcelCorners.Dispose() will dispose its children as well so we explicitly do so here

@@ -47,7 +47,7 @@ namespace DCL.LOD
             if (key == null)
                 return;
 
-            Assert.IsFalse(vacantInstances.ContainsKey(key)); // 1 to 1 - relation, if it is true then we have a problem in our logic
+            Assert.IsFalse(vacantInstances.ContainsKey(key), key); // 1 to 1 - relation, if it is true then we have a problem in our logic
 
             vacantInstances[key] = asset;
             unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);

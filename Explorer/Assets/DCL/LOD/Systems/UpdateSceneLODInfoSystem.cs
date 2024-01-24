@@ -7,19 +7,13 @@ using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
-using SceneRunner.Scene;
 using UnityEngine;
-using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -67,8 +61,7 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
+        public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
