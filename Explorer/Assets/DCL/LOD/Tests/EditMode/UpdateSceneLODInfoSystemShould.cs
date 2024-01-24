@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Arch.Core;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD.Components;
@@ -39,7 +40,7 @@ namespace DCL.LOD.Tests
             InitializeSceneLODInfo();
             partitionComponent = new PartitionComponent();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new Vector2Int[] { new (1, 3), new (3, 5) },
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new List<int> { 1, 2, 5 },
                 frameCapBudget,
                 memoryBudget);
         }

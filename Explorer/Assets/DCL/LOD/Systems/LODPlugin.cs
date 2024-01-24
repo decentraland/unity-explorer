@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Arch.Core;
 using Arch.SystemGroups;
@@ -19,8 +21,7 @@ namespace DCL.LOD
 {
     public class LODPlugin : IDCLGlobalPlugin<LODSettings>
     {
-        private int sceneLodLimit;
-        private Vector2Int[]? lodBucketLimits;
+        private List<int> lodBucketThresholds;
 
         private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
@@ -42,19 +43,18 @@ namespace DCL.LOD
 
         public UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
         {
-            lodBucketLimits = settings.LodBucketLimits;
-            sceneLodLimit = settings.SceneLODLimit;
+            lodBucketThresholds = settings.LodPartitionBucketThresholds.ToList();
             return default;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, sceneLodLimit);
+            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodBucketThresholds[0]);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool);
             ResolveSceneLODInfo.InjectToWorld(ref builder, lodAssetsPool);
 
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodBucketLimits!, frameCapBudget,
-                memoryBudget);
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodBucketThresholds, memoryBudget,
+                frameCapBudget);
 
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool);
         }
@@ -71,8 +71,6 @@ namespace DCL.LOD
         [field: Header(nameof(LODPlugin) + "." + nameof(LODSettings))]
         [field: Space]
         [field: SerializeField]
-        public int SceneLODLimit { get; private set; } = 1;
-
-        [field: SerializeField] public Vector2Int[] LodBucketLimits = { new(1, 2), new(2, 5) };
+        public int[] LodPartitionBucketThresholds = { 1, 2, 5 };
     }
 }

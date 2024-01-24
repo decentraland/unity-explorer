@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using System.Collections.Generic;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
@@ -32,19 +33,20 @@ namespace DCL.LOD.Systems
     {
         private readonly ILODAssetsPool lodCache;
 
-        private readonly Vector2Int[] lodBucketLimits;
+        private readonly List<int> lodBucketThresholds;
 
-        private readonly IPerformanceBudget frameCapBudget;
+        public readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, Vector2Int[] lodBucketLimits,
-            IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, List<int> lodBucketThresholds,
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget) : base(world)
         {
             this.lodCache = lodCache;
-            this.lodBucketLimits = lodBucketLimits;
-            this.frameCapBudget = frameCapBudget;
+            this.lodBucketThresholds = lodBucketThresholds;
             this.memoryBudget = memoryBudget;
+            this.frameCapBudget = frameCapBudget;
         }
+
 
         protected override void Update(float t)
         {
@@ -103,11 +105,11 @@ namespace DCL.LOD.Systems
             //Therefore, lod0 will be shown
             var sceneLODCandidate = 0;
 
-            if (partitionComponent.Bucket > lodBucketLimits[0][0] &&
-                partitionComponent.Bucket <= lodBucketLimits[0][1])
-                sceneLODCandidate = 1;
-            else if (partitionComponent.Bucket > lodBucketLimits[1][0])
-                sceneLODCandidate = 2;
+            for (var i = 0; i < lodBucketThresholds.Count; i++)
+            {
+                if (partitionComponent.Bucket >= lodBucketThresholds[i])
+                    sceneLODCandidate = i;
+            }
 
             if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
                 UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);
@@ -153,5 +155,7 @@ namespace DCL.LOD.Systems
                         partitionComponent);
             }
         }
+
+       
     }
 }
