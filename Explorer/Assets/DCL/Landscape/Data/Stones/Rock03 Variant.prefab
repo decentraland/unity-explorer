@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7369123423404295514}
-  - component: {fileID: 5589534595196527871}
   - component: {fileID: 4856761998340017837}
   m_Layer: 0
   m_Name: ree
@@ -33,14 +32,6 @@ Transform:
   m_Father: {fileID: 4212383612877878602}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &5589534595196527871
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5074339169815867990}
-  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!136 &4856761998340017837
 CapsuleCollider:
   m_ObjectHideFlags: 0
