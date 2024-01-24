@@ -1,4 +1,5 @@
 ﻿using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Unity.ColorComponent;
 using UnityEngine;
 using Font = DCL.ECSComponents.Font;
@@ -22,7 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Defaults
         public static int GetSelectedIndex(this PBUiDropdown self) =>
             self.SelectedIndex <= -1 ? (self.AcceptEmpty ? -1 : 0) : self.SelectedIndex;
 
-        public static TextAlignMode GetTextAlign(this PBUiDropdown self) =>
-            self.HasTextAlign ? self.TextAlign : TextAlignMode.TamMiddleCenter;
+        public static TextAnchor GetTextAlign(this PBUiDropdown self) =>
+            (self.HasTextAlign ? self.TextAlign : TextAlignMode.TamMiddleCenter).ToUnityTextAlign();
     }
 }

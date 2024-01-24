@@ -178,7 +178,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownToSetup.DropdownField.SetValueWithoutNotify(dropdownToSetup.DropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
             dropdownToSetup.DropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
             dropdownToSetup.DropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
-            dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign().ToUnityTextAlign();
+            dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

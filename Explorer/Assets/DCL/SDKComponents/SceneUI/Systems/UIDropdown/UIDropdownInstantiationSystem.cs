@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     {
         private readonly IComponentPool<DCLDropdown> dropdownsPool;
 
-        private UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             dropdownsPool = poolsRegistry.GetReferenceTypePool<DCLDropdown>();
         }
