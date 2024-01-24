@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.AudioClips;
+using DCL.WebRequests.GenericHead;
 using System.Threading;
 
 namespace DCL.WebRequests
@@ -36,6 +37,13 @@ namespace DCL.WebRequests
         UniTask<GenericPatchRequest> PatchAsync(
             CommonArguments commonArguments,
             GenericPatchArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null);
+
+        UniTask<GenericHeadRequest> HeadAsync(CommonArguments commonArguments,
+            GenericHeadArguments arguments,
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,

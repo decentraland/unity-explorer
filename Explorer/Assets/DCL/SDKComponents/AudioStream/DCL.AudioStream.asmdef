@@ -1,0 +1,28 @@
+{
+    "name": "DCL.AudioStream",
+    "rootNamespace": "",
+    "references": [
+        "GUID:275e22790c04e9b47a5085d7b0c4432a",
+        "GUID:3c7b57a14671040bd8c549056adc04f5",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:f9230a6d57b1a8c4989caddf10b56fc7",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:15bc5ce9b9f747c8a365e7dff4e2ebd7",
+        "GUID:3ca842002c51d0a43b73e45298809a13"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AV_PRO_PRESENT"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

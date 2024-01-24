@@ -1,4 +1,6 @@
-﻿using ECS.Unity.Textures.Components;
+﻿using DCL.ECSComponents;
+using ECS.Unity.Materials.Components.Defaults;
+using ECS.Unity.Textures.Components;
 using UnityEngine;
 
 namespace ECS.Unity.Materials.Components
@@ -63,6 +65,30 @@ namespace ECS.Unity.Materials.Components
                 alphaTest, castShadows, defaultColor, diffuseColor, defaultColor, defaultColor, MaterialTransparencyMode.Auto,
                 0, 0, 0, 0, 0);
         }
+
+        internal static MaterialData CreatePBRMaterial(in PBMaterial pbMaterial,
+            in TextureComponent? albedoTexture,
+            in TextureComponent? alphaTexture,
+            in TextureComponent? emissiveTexture,
+            in TextureComponent? bumpTexture
+        ) =>
+            CreatePBRMaterial(
+                albedoTexture,
+                alphaTexture,
+                emissiveTexture,
+                bumpTexture,
+                pbMaterial.GetAlphaTest(),
+                pbMaterial.GetCastShadows(),
+                pbMaterial.GetAlbedoColor(),
+                pbMaterial.GetEmissiveColor(),
+                pbMaterial.GetReflectiveColor(),
+                pbMaterial.GetTransparencyMode(),
+                pbMaterial.GetMetallic(),
+                pbMaterial.GetRoughness(),
+                pbMaterial.GetSpecularIntensity(),
+                pbMaterial.GetEmissiveIntensity(),
+                pbMaterial.GetDirectIntensity()
+            );
 
         internal static MaterialData CreatePBRMaterial(
             TextureComponent? albedoTexture,

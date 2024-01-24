@@ -53,8 +53,6 @@ namespace ECS.StreamableLoading.AssetBundles
             ProfilingCounters.AssetBundlesInCache.Value = cache.Count;
         }
 
-        public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
-
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
             listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);

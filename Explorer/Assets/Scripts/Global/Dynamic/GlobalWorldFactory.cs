@@ -113,8 +113,7 @@ namespace Global.Dynamic
             Entity playerEntity = world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
-                new TransformComponent { Transform = characterObject.Transform },
-                new OwnPlayerComponent());
+                new TransformComponent { Transform = characterObject.Transform });
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 

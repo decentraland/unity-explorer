@@ -125,7 +125,7 @@ namespace Global
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
-                return (null, false);
+                return (null, false)!;
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -157,6 +157,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
+                new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 textureResolvePlugin,
@@ -169,6 +170,8 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

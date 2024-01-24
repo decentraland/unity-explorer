@@ -15,7 +15,6 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
@@ -152,12 +151,12 @@ namespace Global.Dynamic
 
                 await ChangeRealmAsync(ct);
 
-                await WaitUntilSplashAnimationEnds(ct);
+                await WaitUntilSplashAnimationEndsAsync(ct);
                 splashRoot.SetActive(false);
 
-                await ShowAuthenticationScreen(ct);
+                await ShowAuthenticationScreenAsync(ct);
 
-                await UniTask.WhenAll(ShowLoadingScreen(ct), LoadCharacterAndWorld(ct));
+                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(ct));
             }
             catch (OperationCanceledException)
             {
@@ -171,27 +170,27 @@ namespace Global.Dynamic
             }
         }
 
-        private async Task WaitUntilSplashAnimationEnds(CancellationToken ct)
+        private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
         {
             await UniTask.WaitUntil(() => splashAnimation.frame >= (long)(splashAnimation.frameCount - 1),
                 cancellationToken: ct);
         }
 
-        private async UniTask LoadCharacterAndWorld(CancellationToken ct)
+        private async UniTask LoadCharacterAndWorldAsync(CancellationToken ct)
         {
-            Profile ownProfile = await GetOwnProfile(ct);
+            Profile ownProfile = await GetOwnProfileAsync(ct);
 
             loadReport!.ProgressCounter.Value = 0.2f;
 
             globalWorld!.EcsWorld.SetProfileToOwnPlayer(ownProfile);
 
-            await TeleportToSpawnPoint(ct);
+            await TeleportToSpawnPointAsync(ct);
 
             loadReport.ProgressCounter.Value = 1f;
             loadReport.CompletionSource.TrySetResult();
         }
 
-        private async UniTask<Profile> GetOwnProfile(CancellationToken ct)
+        private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
         {
             if (identityCache!.Identity == null) return CreateRandomProfile();
 
@@ -208,7 +207,7 @@ namespace Global.Dynamic
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
-        private async UniTask TeleportToSpawnPoint(CancellationToken ct)
+        private async UniTask TeleportToSpawnPointAsync(CancellationToken ct)
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
@@ -217,7 +216,7 @@ namespace Global.Dynamic
                     settings.StartPosition, teleportLoadReport, ct));
         }
 
-        private async UniTask ShowLoadingScreen(CancellationToken ct)
+        private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
         {
             var timeout = TimeSpan.FromMinutes(2);
 
@@ -225,7 +224,7 @@ namespace Global.Dynamic
                                         .AttachExternalCancellation(ct);
         }
 
-        private async UniTask ShowAuthenticationScreen(CancellationToken ct)
+        private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
             await dynamicWorldContainer!.MvcManager.ShowAsync(AuthenticationScreenController.IssueCommand())
                                         .AttachExternalCancellation(ct);
