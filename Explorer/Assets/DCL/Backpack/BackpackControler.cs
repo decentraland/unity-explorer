@@ -88,11 +88,15 @@ namespace DCL.Backpack
                 }
                 backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus, poolsRegistry, inputEventBus);
                 view.TipsButton.onClick.AddListener(ToggleTipsContent);
+                view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
             }
 
             private void ToggleTipsContent()
             {
-                view.TipsPanel.SetActive(!view.TipsPanel.activeInHierarchy);
+                if (!view.TipsPanelDeselectable.gameObject.activeInHierarchy)
+                    view.TipsPanelDeselectable.SelectElement();
+
+                view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
             }
 
             public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
@@ -154,6 +158,7 @@ namespace DCL.Backpack
 
             public void Dispose()
             {
+                view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
                 avatarController?.Dispose();
                 animationCts.SafeCancelAndDispose();
                 profileLoadingCts.SafeCancelAndDispose();

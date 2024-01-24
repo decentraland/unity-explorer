@@ -1,5 +1,6 @@
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Backpack
@@ -10,6 +11,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public DeselectableUiElement SortContentDeselectable { get; private set; }
 
         [field: SerializeField]
         internal Toggle sortNewest { get; private set; }
@@ -35,24 +39,23 @@ namespace DCL.Backpack
         [field: SerializeField]
         internal Button sortDropdownButton { get; private set; }
 
-        [field: SerializeField]
-        internal RectTransform sortContent { get; private set; }
-
         private void Start()
         {
             sortDropdownButton.onClick.AddListener(OnSortDropdownClick);
-            sortContent.gameObject.SetActive(false);
+            SortContentDeselectable.gameObject.SetActive(false);
+            SortContentDeselectable.OnDeselectEvent += OnSortDropdownClick;
         }
 
         private void OnSortDropdownClick()
         {
-            if (sortContent.gameObject.activeInHierarchy)
+            if (SortContentDeselectable.gameObject.activeInHierarchy)
             {
-                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => sortContent.gameObject.SetActive(false));
+                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false));
             }
             else
             {
-                sortContent.gameObject.SetActive(true);
+                SortContentDeselectable.gameObject.SetActive(true);
+                SortContentDeselectable.SelectElement();
                 CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
 

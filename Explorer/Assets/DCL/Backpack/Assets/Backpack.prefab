@@ -2553,6 +2553,7 @@ GameObject:
   - component: {fileID: 1607833245240669017}
   - component: {fileID: 7951235473519186336}
   - component: {fileID: 3711309420874497427}
+  - component: {fileID: 8484032604503467888}
   m_Layer: 5
   m_Name: TipsContainer
   m_TagString: Untagged
@@ -2623,6 +2624,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &8484032604503467888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5898578589335052306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3b122bc11d594de3908385febf441da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6337626077737958813
 GameObject:
   m_ObjectHideFlags: 0
@@ -3005,7 +3018,7 @@ MonoBehaviour:
     <Section>k__BackingField: 1
   <BackpackSortView>k__BackingField: {fileID: 6128057872158891546}
   <TipsButton>k__BackingField: {fileID: 8027559671807818544}
-  <TipsPanel>k__BackingField: {fileID: 5898578589335052306}
+  <TipsPanelDeselectable>k__BackingField: {fileID: 8484032604503467888}
   <backpackCharacterPreviewView>k__BackingField: {fileID: 510879829811813369}
 --- !u!1 &8581277015346495855
 GameObject:
@@ -6406,7 +6419,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1904905778137936545, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 68.854996
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1904905778137936545, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
       propertyPath: m_AnchoredPosition.y

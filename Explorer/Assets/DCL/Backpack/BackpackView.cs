@@ -18,7 +18,7 @@ namespace DCL.Backpack
         public Button TipsButton { get; private set; }
 
         [field: SerializeField]
-        public GameObject TipsPanel { get; private set; }
+        public DeselectableUiElement TipsPanelDeselectable { get; private set; }
 
         [field: SerializeField]
         internal BackpackCharacterPreviewView backpackCharacterPreviewView { get; private set; }
