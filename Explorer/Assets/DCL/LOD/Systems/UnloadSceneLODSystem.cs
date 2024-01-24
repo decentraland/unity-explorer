@@ -7,11 +7,12 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
-using System;
+using DCL.Diagnostics;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.LOD)]
     public partial class UnloadSceneLODSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodAssetsPool;

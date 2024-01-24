@@ -53,6 +53,7 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         public void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent)
         {
             if (sceneLODInfo.IsDirty)
@@ -67,8 +68,8 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
+        [None(typeof(DeleteEntityIntention))]
+        public void ResolveCurrentLODPromise(in Entity entity, ref SceneLODInfo sceneLODInfo)
         {
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
@@ -76,7 +77,6 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                var lodKey = sceneLODInfo.GenerateCurrentLodKey();
                 if (result.Succeeded)
                 {
                     lodCache.Release(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
@@ -84,11 +84,13 @@ namespace DCL.LOD.Systems
                         Quaternion.identity);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
                         in sceneLODInfo.SceneCircumscribedPlanes);
-                    sceneLODInfo.CurrentLOD = new LODAsset(lodKey, instantiatedLOD, result.Asset);
+                    sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash,
+                        instantiatedLOD, result.Asset);
                 }
                 else
                 {
-                    ReportHub.LogWarning(GetReportCategory(), $"LOD request for {lodKey} failed");
+                    ReportHub.LogWarning(GetReportCategory(),
+                        $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     //TODO: Add a default LOD so we dont have to fail the promise every time
                 }
             }
@@ -115,9 +117,12 @@ namespace DCL.LOD.Systems
             int sceneLODCandidate)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-
             sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            string newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+            var newLODKey = $"{sceneLODInfo.SceneHash}_{sceneLODInfo.CurrentLODLevel}";
+
+            //If the current LOD is the candidate, no need to make a new promise or set anything new
+            if (newLODKey.Equals(sceneLODInfo.CurrentLOD.LodKey)) return;
+            
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
@@ -131,18 +136,14 @@ namespace DCL.LOD.Systems
                      Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
                     sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                 {
-                    sceneLODInfo.SceneHash = "FAIL_THIS_REQUEST_IN_MAC";
-                    newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+                    return;
                 }
 
                 //TODO: TEMP, infinite floor sceene
                 if (sceneLODInfo.SceneHash.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
                 {
-                    sceneLODInfo.SceneHash = "FAIL_THIS_INFINTIE_FLOOR_REQUEST";
-                    newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+                    return;
                 }
-
-
 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,

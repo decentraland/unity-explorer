@@ -23,9 +23,6 @@ namespace DCL.LOD.Components
             lodAssetsPool.Release(CurrentLOD.LodKey, CurrentLOD);
             CurrentLOD = default;
         }
-
-        public string GenerateCurrentLodKey() =>
-            SceneHash.ToLower() + "_" + CurrentLODLevel;
     }
 
 }
