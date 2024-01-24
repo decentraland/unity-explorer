@@ -58,15 +58,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         [Test]
         public async Task SetupAndUpdateAvatarPositionAnchorPointCorrectly()
         {
-            // Workaround for Unity's bug not awaiting async Setup correctly
+            // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
             var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
-
-            // world.TryGet(entity, out TransformComponent entityTransform);
-            Assert.IsNotNull(entityTransform);
-            Assert.IsNotNull(playerAvatarBase);
-
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransform.position);
@@ -91,15 +86,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         [Test]
         public async Task SetupAndUpdateAvatarLeftHandAnchorPointCorrectly()
         {
-            // Workaround for Unity's bug not awaiting async Setup correctly
+            // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
             var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand };
-
-            // world.TryGet(entity, out TransformComponent entityTransform);
-            Assert.IsNotNull(entityTransform);
-            Assert.IsNotNull(playerAvatarBase);
-
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransform.position);
@@ -124,15 +114,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         [Test]
         public async Task SetupAndUpdateAvatarRightHandAnchorPointCorrectly()
         {
-            // Workaround for Unity's bug not awaiting async Setup correctly
+            // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
             var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptRightHand };
-
-            // world.TryGet(entity, out TransformComponent entityTransform);
-            Assert.IsNotNull(entityTransform);
-            Assert.IsNotNull(playerAvatarBase);
-
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransform.position);
@@ -155,9 +140,36 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         }
 
         [Test]
-        public async Task UpdateAnchorPointCorrectly() { }
+        public async Task UpdateAnchorPointCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Attach to left hand
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            Assert.AreEqual(Vector3.zero, entityTransform.position);
+            Assert.AreNotEqual(playerAvatarBase.LeftHandAnchorPoint.position, entityTransform.position);
+
+            system.Update(0);
+            Assert.AreEqual(playerAvatarBase.LeftHandAnchorPoint.position, entityTransform.position);
+
+            // Change attachment to right hand
+            Assert.AreNotEqual(playerAvatarBase.LeftHandAnchorPoint.position, playerAvatarBase.RightHandAnchorPoint.position);
+
+            pbAvatarAttachComponent.AnchorPointId = AvatarAnchorPointType.AaptRightHand;
+            pbAvatarAttachComponent.IsDirty = true;
+            world.Set(entity, pbAvatarAttachComponent);
+
+            system.Update(0);
+            Assert.AreEqual(playerAvatarBase.RightHandAnchorPoint.position, entityTransform.position);
+        }
 
         [Test]
         public async Task OverrideTransformValuesExceptScale() { }
+
+        [Test]
+        public async Task StopUpdatingTransformAfterComponentRemoval() { }
     }
 }
