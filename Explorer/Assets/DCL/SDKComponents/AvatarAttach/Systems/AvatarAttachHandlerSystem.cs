@@ -11,9 +11,9 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
-using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
@@ -65,6 +65,33 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
                 World.Set(entity, avatarAttachComponent);
         }
 
+        [Query]
+        [All(typeof(AvatarAttachComponent))]
+        [None(typeof(PBAvatarAttach), typeof(DeleteEntityIntention))]
+        private void HandleComponentRemoval(in Entity entity)
+        {
+            World.Remove<AvatarAttachComponent>(entity);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention), typeof(AvatarAttachComponent))]
+        private void HandleEntityDestruction(in Entity entity)
+        {
+            World.Remove<AvatarAttachComponent>(entity);
+        }
+
+        [Query]
+        [All(typeof(AvatarAttachComponent))]
+        private void FinalizeComponents(in Entity entity)
+        {
+            World.Remove<AvatarAttachComponent>(entity);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeComponentsQuery(World);
+        }
+
         private Transform GetAnchorPointTransform(AvatarAnchorPointType anchorPointType)
         {
             switch (anchorPointType)
@@ -100,11 +127,6 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             }
 
             return modifiedComponent;
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            throw new NotImplementedException();
         }
     }
 }
