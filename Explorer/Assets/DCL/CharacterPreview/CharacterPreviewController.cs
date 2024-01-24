@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -53,7 +54,7 @@ namespace DCL.CharacterPreview
 
             avatarShape.SkinColor = model.SkinColor;
             avatarShape.HairColor = model.HairColor;
-            avatarShape.BodyShape = model.BodyShape;
+            avatarShape.BodyShape = BodyShape.FromStringSafe(model.BodyShape);
 
             if (!avatarShape.WearablePromise.IsConsumed)
                 avatarShape.WearablePromise.ForgetLoading(globalWorld);
