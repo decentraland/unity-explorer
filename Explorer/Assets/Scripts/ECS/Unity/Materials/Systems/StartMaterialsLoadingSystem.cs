@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
@@ -180,6 +181,8 @@ namespace ECS.Unity.Materials.Systems
                         World.Add(videoPlayerEntity, new VideoTextureComponent(videoTexture));
                     }
                 }
+                else
+                    ReportHub.LogError(ReportCategory.VIDEO_PLAYER, $"Entity {textureComponent.Value.VideoPlayerEntity} not found!. VideoTexture will not be created.");
 
                 StreamableLoadingResult<Texture2D>? result = new StreamableLoadingResult<Texture2D>(videoTexture);
 
