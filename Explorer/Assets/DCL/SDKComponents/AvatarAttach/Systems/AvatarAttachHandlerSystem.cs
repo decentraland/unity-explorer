@@ -13,14 +13,11 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
-using ECS.Unity.Transforms.Systems;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateAfter(typeof(UpdateTransformSystem))]
-    [UpdateAfter(typeof(ParentingTransformSystem))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.SDK_COMPONENT)]
     [ThrottlingEnabled]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
@@ -46,7 +43,9 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
             component.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
 
-            ApplyAnchorPointTransformValues(transformComponent.Transform, component);
+            ApplyAnchorPointTransformValues(transformComponent, component);
+            transformComponent.UpdateCache();
+            World.Set(entity, transformComponent);
 
             World.Add(entity, component);
         }
@@ -54,10 +53,17 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         [Query]
         private void UpdateAvatarAttachTransform(in Entity entity, ref PBAvatarAttach pbAvatarAttach, ref AvatarAttachComponent avatarAttachComponent, ref TransformComponent transformComponent)
         {
-            if (pbAvatarAttach.IsDirty) { avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId); }
-
-            if (ApplyAnchorPointTransformValues(transformComponent.Transform, avatarAttachComponent))
+            if (pbAvatarAttach.IsDirty)
+            {
+                avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
                 World.Set(entity, avatarAttachComponent);
+            }
+
+            if (ApplyAnchorPointTransformValues(transformComponent, avatarAttachComponent))
+            {
+                transformComponent.UpdateCache();
+                World.Set(entity, transformComponent);
+            }
         }
 
         [Query]
@@ -101,23 +107,21 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             }
         }
 
-        private bool ApplyAnchorPointTransformValues(Transform targetTransform, AvatarAttachComponent avatarAttachComponent)
+        private bool ApplyAnchorPointTransformValues(TransformComponent targetTransform, AvatarAttachComponent avatarAttachComponent)
         {
             Vector3 anchorPointPosition = avatarAttachComponent.anchorPointTransform.position;
             Quaternion anchorPointRotation = avatarAttachComponent.anchorPointTransform.rotation;
             var modifiedComponent = false;
 
-            if (anchorPointPosition != avatarAttachComponent.lastAnchorPointPosition)
+            if (anchorPointPosition != targetTransform.Cached.WorldPosition)
             {
-                targetTransform.position = anchorPointPosition;
-                avatarAttachComponent.lastAnchorPointPosition = anchorPointPosition;
+                targetTransform.Transform.position = anchorPointPosition;
                 modifiedComponent = true;
             }
 
-            if (anchorPointRotation != avatarAttachComponent.lastAnchorPointRotation)
+            if (anchorPointRotation != targetTransform.Cached.WorldRotation)
             {
-                targetTransform.rotation = anchorPointRotation;
-                avatarAttachComponent.lastAnchorPointRotation = anchorPointRotation;
+                targetTransform.Transform.rotation = anchorPointRotation;
                 modifiedComponent = true;
             }
 
