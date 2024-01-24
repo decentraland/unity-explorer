@@ -82,7 +82,7 @@ namespace DCL.Tests.Editor
         }
 
         [Test]
-        public void CheckScriptableObjectsForMissingReferences()
+        public void CheckUnityObjectsForMissingReferences()
         {
             IEnumerable<ScriptableObject> scriptableObjects = GetAllScriptableObjectsInFolder("Assets/DCL");
 
