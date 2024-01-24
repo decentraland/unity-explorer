@@ -19,6 +19,7 @@ namespace DCL.ParcelsService
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private IRetrieveScene? retrieveScene;
         private World? world;
+        private readonly AsyncLoadProcessReport[] reportsBuffer = new AsyncLoadProcessReport[9];
 
         public IRetrieveScene SceneProviderStrategy
         {
@@ -60,7 +61,7 @@ namespace DCL.ParcelsService
 
                 targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
-                List<IpfsTypes.SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
+                List<IpfsTypes.SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
 
                 if (spawnPoints is { Count: > 0 })
                 {
@@ -101,13 +102,32 @@ namespace DCL.ParcelsService
                 return;
             }
 
+            for (var i = 0; i < reportsBuffer.Length; i++)
+                reportsBuffer[i] = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
             // Add report to the queue so it will be grabbed by the actual scene
-            sceneReadinessReportQueue.Enqueue(parcel, loadReport);
+            sceneReadinessReportQueue.Enqueue(parcel, reportsBuffer[0]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(1, 0), reportsBuffer[1]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(1, 1), reportsBuffer[2]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(0, 1), reportsBuffer[3]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(-1, 0), reportsBuffer[4]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(-1, -1), reportsBuffer[5]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(0, -1), reportsBuffer[6]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(1, -1), reportsBuffer[7]);
+            sceneReadinessReportQueue.Enqueue(parcel + new Vector2Int(-1, 1), reportsBuffer[8]);
+
+            const float FACTOR = 1f / 9f;
 
             try
             {
-                // add timeout in case of a trouble
-                await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+                await UniTask.WhenAll(reportsBuffer.Select((report, i) =>
+                    report.PropagateAsync(loadReport, ct,
+                        FACTOR * i, (FACTOR * i) + FACTOR,
+
+                        // add timeout in case of a trouble
+                        TimeSpan.FromSeconds(30))));
+
+                loadReport.CompletionSource.TrySetResult();
             }
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
