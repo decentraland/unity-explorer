@@ -21,15 +21,13 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewContainer characterPreviewContainer;
         private readonly CharacterPreviewCameraController cameraController;
         private readonly IComponentPoolsRegistry poolsRegistry;
-        private readonly Entity playerEntity;
 
-        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPoolsRegistry poolsRegistry, Entity playerEntity)
+        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPoolsRegistry poolsRegistry)
         {
             globalWorld = world;
             characterPreviewContainer = container;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewContainer);
             this.poolsRegistry = poolsRegistry;
-            this.playerEntity = playerEntity;
 
             // See the logic of AvatarInstantiatorSystem
             // We should provide the following components:
@@ -61,7 +59,7 @@ namespace DCL.CharacterPreview
 
             avatarShape.WearablePromise = AssetPromise<IWearable[], GetWearablesByPointersIntention>.Create(
                 globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, model.Wearables, globalWorld.Get<Profile>(playerEntity).Avatar.ForceRender),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, model.Wearables, model.ForceRender),
                 PartitionComponent.TOP_PRIORITY
             );
 

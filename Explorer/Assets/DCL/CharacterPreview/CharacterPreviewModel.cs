@@ -11,5 +11,6 @@ namespace DCL.CharacterPreview
         public Color HairColor;
 
         public List<string> Wearables;
+        public HashSet<string> ForceRender;
     }
 }

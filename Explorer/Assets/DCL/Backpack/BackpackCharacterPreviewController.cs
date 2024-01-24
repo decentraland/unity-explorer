@@ -26,7 +26,6 @@ namespace DCL.CharacterPreview
         private World world;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
-        private Entity myPlayerEntity;
 
         public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, IComponentPoolsRegistry poolsRegistry, CharacterPreviewInputEventBus inputEventBus)
         {
@@ -39,6 +38,7 @@ namespace DCL.CharacterPreview
             this.backpackEventBus.EquipEvent += OnEquipped;
             this.backpackEventBus.UnEquipEvent += OnUnequipped;
             this.backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
+            this.backpackEventBus.ForceRenderEvent += OnForceRenderChange;
 
             view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
@@ -52,20 +52,19 @@ namespace DCL.CharacterPreview
 
         private void InitializePreviewModel(Entity playerEntity)
         {
-            myPlayerEntity = playerEntity;
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
             previewModel.BodyShape = avatar.BodyShape;
             previewModel.HairColor = avatar.HairColor;
             previewModel.SkinColor = avatar.SkinColor;
+            previewModel.ForceRender = new HashSet<string>(avatar.ForceRender);
         }
 
         public void Initialize()
         {
-            previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus, myPlayerEntity);
+            previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus);
             OnModelUpdated();
         }
-
 
         private void OnScroll(PointerEventData pointerEventData)
         {
@@ -80,6 +79,12 @@ namespace DCL.CharacterPreview
         private void OnChangeCategory(AvatarSlotCategoryEnum categoryEnum)
         {
             inputEventBus.OnChangeCategoryFocus(categoryEnum);
+        }
+
+        private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
+        {
+            previewModel.ForceRender = new HashSet<string>(forceRender);
+            OnModelUpdated();
         }
 
         public void OnShow()
