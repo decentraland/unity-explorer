@@ -2045,10 +2045,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2645e75a453f6954f8aa7b950093750d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   avatarAnimator: {fileID: 6654053651110562472}
-  playerAnimator: {fileID: 9100000, guid: 3662049975e2d0549a312769ab17ad07, type: 2}
-  randomAnimator: {fileID: 9100000, guid: aab64a77806b44a43b6f5d0da6de94c6, type: 2}
+  <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
+  <FeetIKRig>k__BackingField: {fileID: 0}
+  <RightLegConstraint>k__BackingField: {fileID: 0}
+  <RightLegIKTarget>k__BackingField: {fileID: 0}
+  <LeftLegConstraint>k__BackingField: {fileID: 0}
+  <LeftLegIKTarget>k__BackingField: {fileID: 0}
+  <RightLegIK>k__BackingField: {fileID: 0}
+  <LeftLegIK>k__BackingField: {fileID: 0}
+  <HipsConstraint>k__BackingField: {fileID: 0}
+  <HandsIKRig>k__BackingField: {fileID: 0}
+  <LeftHandIK>k__BackingField: {fileID: 0}
+  <LeftHandSubTarget>k__BackingField: {fileID: 0}
+  <LeftHandRaycast>k__BackingField: {fileID: 0}
+  <RightHandIK>k__BackingField: {fileID: 0}
+  <RightHandSubTarget>k__BackingField: {fileID: 0}
+  <RightHandRaycast>k__BackingField: {fileID: 0}
+  <HeadIKRig>k__BackingField: {fileID: 0}
+  <HeadLookAtTargetHorizontal>k__BackingField: {fileID: 0}
+  <HeadLookAtTargetVertical>k__BackingField: {fileID: 0}
+  <HeadPositionConstraint>k__BackingField: {fileID: 0}
+  <LeftHandAnchorPoint>k__BackingField: {fileID: 8257500666133283372}
+  <RightHandAnchorPoint>k__BackingField: {fileID: 481221082041237366}
 --- !u!1 &8230367895675129645
 GameObject:
   m_ObjectHideFlags: 0
