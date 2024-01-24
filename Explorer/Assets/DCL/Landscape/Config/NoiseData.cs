@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Landscape.NoiseGeneration;
+using System;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
@@ -14,7 +15,7 @@ namespace DCL.Landscape.Config
             persistance = 0.3f,
         };
 
-        public override INoiseGenerator GetGenerator(uint baseSeed) =>
+        public override INoiseGenerator GetGenerator(uint baseSeed, NoiseGeneratorCache cache) =>
             new NoiseGenerator(this, baseSeed);
 
     }

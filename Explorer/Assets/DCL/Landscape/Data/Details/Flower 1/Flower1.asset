@@ -28,7 +28,7 @@ MonoBehaviour:
     positionOffsetZ: {x: 0, y: 0}
   radius: 1
   TerrainDetailSettings:
-    alignToGround: 100
+    alignToGround: 15.9
     positionJitter: 50
     minWidth: 1
     maxWidth: 1
@@ -37,5 +37,5 @@ MonoBehaviour:
     noiseSeed: 85
     noiseSpread: 193.5
     holeEdgePadding: 75
-    detailDensity: 2
+    detailDensity: 0.84
     affectedByGlobalDensityScale: 1

@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b39548ec45c44975b040d8b293a22a79, type: 3}
   m_Name: VariantNoiseData 4
   m_EditorClassIdentifier: 
-  seed: 81
+  seed: 4
   other: {fileID: 11400000, guid: e8037df2c354cc94f9d1f7729844ae93, type: 2}

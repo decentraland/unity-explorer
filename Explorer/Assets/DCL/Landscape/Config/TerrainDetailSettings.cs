@@ -16,7 +16,7 @@ namespace DCL.Landscape.Config
         public float maxWidth = 1;
         public float minHeight = 1;
         public float maxHeight = 1;
-        public float noiseSeed = 1;
+        public int noiseSeed = 1;
         public float noiseSpread = 100;
 
         [Range(0f, 100f)]

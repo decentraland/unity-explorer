@@ -14,7 +14,7 @@ namespace DCL.Landscape.Config.Editor
             if (serializedObject.targetObject is not INoiseDataFactory data)
                 return default(JobHandle);
 
-            generator = data.GetGenerator(1);
+            generator = data.GetGenerator(1, noiseGeneratorCache);
             return generator.Schedule(textureSize, 0, 0);
         }
 

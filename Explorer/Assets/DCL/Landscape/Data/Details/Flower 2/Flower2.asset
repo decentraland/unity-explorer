@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: Flower2
   m_EditorClassIdentifier: 
   asset: {fileID: 919132149155446097, guid: 89227a181e00c094a9400dde1b20ff56, type: 3}
-  radius: 1
-  density: 0
+  noiseData: {fileID: 11400000, guid: 6406502bce6346d42874c1caffa6720c, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}
     randomRotationY: {x: 0, y: 0}
@@ -27,4 +26,16 @@ MonoBehaviour:
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: 0, y: 0}
     positionOffsetZ: {x: 0, y: 0}
-  noiseData: {fileID: 11400000, guid: ac02c60789c885b4aa821f48b78ee6f8, type: 2}
+  radius: 1
+  TerrainDetailSettings:
+    alignToGround: 15.9
+    positionJitter: 50
+    minWidth: 1
+    maxWidth: 1
+    minHeight: 1
+    maxHeight: 2.6
+    noiseSeed: 1
+    noiseSpread: 193.5
+    holeEdgePadding: 75
+    detailDensity: 1.1
+    affectedByGlobalDensityScale: 1

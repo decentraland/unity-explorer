@@ -6,7 +6,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Random = Unity.Mathematics.Random;
 
-namespace DCL.Landscape
+namespace DCL.Landscape.NoiseGeneration
 {
     public class NoiseGenerator : INoiseGenerator
     {

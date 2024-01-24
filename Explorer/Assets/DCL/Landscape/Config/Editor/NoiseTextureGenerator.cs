@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using DCL.Landscape.NoiseGeneration;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEditor;
 using UnityEngine;
@@ -15,15 +16,18 @@ namespace DCL.Landscape.Config.Editor
         private JobHandle handle;
         private ComputeShader computeShader;
         private ComputeBuffer resultBuffer;
+        protected NoiseGeneratorCache noiseGeneratorCache;
 
         private void OnEnable()
         {
             computeShader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/DCL/Landscape/Shaders/CS_NoiseTexture.compute");
+            noiseGeneratorCache = new NoiseGeneratorCache();
         }
 
         private void OnDestroy()
         {
             resultBuffer?.Dispose();
+            noiseGeneratorCache?.Dispose();
             DisposeNativeArrays();
         }
 
