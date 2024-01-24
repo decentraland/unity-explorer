@@ -1,13 +1,10 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
-using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -34,7 +31,6 @@ namespace Global.Dynamic
 
         [Space]
         [SerializeField] private SkyBoxSceneData skyBoxSceneData;
-        [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
 
@@ -45,7 +41,6 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            realmLauncher.Initialize(settings.Realms);
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -70,7 +65,6 @@ namespace Global.Dynamic
                 web3Authenticator?.Dispose();
             }
 
-            realmLauncher.OnRealmSelected = null;
             DisposeAsync().Forget();
         }
 
@@ -147,8 +141,6 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
-
-                realmLauncher.OnRealmSelected += ChangeRealm;
             }
             catch (OperationCanceledException)
             {
@@ -170,23 +162,5 @@ namespace Global.Dynamic
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor()));
-
-        private void ChangeRealm(string selectedRealm)
-        {
-            async UniTask ChangeRealmAsync(CancellationToken ct)
-            {
-                IRealmController realmController = dynamicWorldContainer!.RealmController;
-
-                await UniTask.SwitchToMainThread();
-
-                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-                await UniTask.WhenAll(dynamicWorldContainer.MvcManager.ShowAsync(
-                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                    realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), settings.StartPosition, loadReport, ct));
-            }
-
-            ChangeRealmAsync(destroyCancellationToken).Forget();
-        }
     }
 }
