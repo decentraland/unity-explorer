@@ -26,6 +26,7 @@ namespace DCL.CharacterPreview
         private World world;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
+        private Entity myPlayerEntity;
 
         public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, IComponentPoolsRegistry poolsRegistry, CharacterPreviewInputEventBus inputEventBus)
         {
@@ -51,6 +52,7 @@ namespace DCL.CharacterPreview
 
         private void InitializePreviewModel(Entity playerEntity)
         {
+            myPlayerEntity = playerEntity;
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
             previewModel.BodyShape = avatar.BodyShape;
@@ -60,7 +62,7 @@ namespace DCL.CharacterPreview
 
         public void Initialize()
         {
-            previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus);
+            previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus, myPlayerEntity);
             OnModelUpdated();
         }
 

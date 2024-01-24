@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -115,7 +116,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     CalculateVisibleWearables(resolvedWereables.ToArray(), wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
 
                 successfulResults += (wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count);
-
                 for (int i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
                 {
                     IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
@@ -144,13 +144,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         }
 
-        private IWearable[] CalculateVisibleWearables(IWearable[] results, BodyShape bodyShape, ref HideWearablesResolution hideWearablesResolution)
+        private void CalculateVisibleWearables(IWearable[] results, BodyShape bodyShape, ref HideWearablesResolution hideWearablesResolution)
         {
             List<IWearable> visibleWearables = new List<IWearable>();
-
             WearableComponentsUtils.ExtractVisibleWearables(bodyShape, results, results.Length, visibleWearables, ref hideWearablesResolution);
-
-            return visibleWearables.ToArray();
         }
 
         [Query]

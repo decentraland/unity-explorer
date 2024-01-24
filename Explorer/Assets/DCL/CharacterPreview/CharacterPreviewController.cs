@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -19,12 +20,15 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewContainer characterPreviewContainer;
         private readonly CharacterPreviewCameraController cameraController;
         private readonly IComponentPoolsRegistry poolsRegistry;
-        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPoolsRegistry poolsRegistry)
+        private readonly Entity playerEntity;
+
+        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPoolsRegistry poolsRegistry, Entity playerEntity)
         {
             globalWorld = world;
             characterPreviewContainer = container;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewContainer);
             this.poolsRegistry = poolsRegistry;
+            this.playerEntity = playerEntity;
 
             // See the logic of AvatarInstantiatorSystem
             // We should provide the following components:
@@ -56,7 +60,7 @@ namespace DCL.CharacterPreview
 
             avatarShape.WearablePromise = AssetPromise<IWearable[], GetWearablesByPointersIntention>.Create(
                 globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, model.Wearables, Array.Empty<string>()),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, model.Wearables, globalWorld.Get<Profile>(playerEntity).Avatar.ForceRender),
                 PartitionComponent.TOP_PRIORITY
             );
 
