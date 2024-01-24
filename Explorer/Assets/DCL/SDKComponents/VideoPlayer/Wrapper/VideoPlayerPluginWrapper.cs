@@ -1,13 +1,13 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.VideoPlayer.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 
 #if AV_PRO_PRESENT
 using ECS.ComponentsPooling.Systems;
+using DCL.SDKComponents.VideoPlayer.Systems;
 using RenderHeads.Media.AVProVideo;
 #endif
 
