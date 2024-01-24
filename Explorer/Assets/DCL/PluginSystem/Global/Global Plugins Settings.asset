@@ -214,7 +214,7 @@ MonoBehaviour:
       data:
         <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
     - rid: 8593314843508867075
-      type: {class: NftShapePluginSettings, ns: DCL.SDKComponents.NftShape.Frame, asm: DCL.Plugins}
+      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
         <MaxSizeOfNftForDownload>k__BackingField:
