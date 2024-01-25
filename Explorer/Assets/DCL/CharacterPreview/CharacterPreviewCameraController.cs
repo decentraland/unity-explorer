@@ -21,36 +21,30 @@ namespace DCL.CharacterPreview
 
         private void OnChangePreviewCategory(AvatarSlotCategoryEnum categoryEnum)
         {
-            switch (categoryEnum)
+            int positions = characterPreviewContainer.cameraPositions.Length;
+
+            for (var i = 0; i < positions; i++)
             {
-                case AvatarSlotCategoryEnum.Top:
-                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.topPositionTransform.position;
+                if (characterPreviewContainer.cameraPositions[i].slotCategoryEnum == categoryEnum)
+                {
+                    characterPreviewContainer.SetCameraPosition(characterPreviewContainer.cameraPositions[i]);
                     break;
-                case AvatarSlotCategoryEnum.Bottom:
-                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.bottomPositionTransform.position;
-                    break;
-                case AvatarSlotCategoryEnum.Shoes:
-                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.shoesPositionTransform.position;
-                    break;
-                case AvatarSlotCategoryEnum.Head:
-                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.headPositionTransform.position;
-                    break;
-                case AvatarSlotCategoryEnum.Body:
-                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.defaultPositionTransform.position;
-                    break;
-                default: throw new ArgumentOutOfRangeException(nameof(categoryEnum), categoryEnum, null);
+                }
             }
         }
 
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-            var position = characterPreviewContainer.cameraTarget.localPosition;
-            position.z -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
-            if (position.z < characterPreviewContainer.depthLimits.y) position.z = characterPreviewContainer.depthLimits.y;
-            else if (position.z > characterPreviewContainer.depthLimits.x) position.z = characterPreviewContainer.depthLimits.x;
 
-            characterPreviewContainer.cameraTarget.localPosition = position;
+
+            var newFieldOfView = characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView;
+
+            newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
+            //if (position.z < characterPreviewContainer.depthLimits.y) position.z = characterPreviewContainer.depthLimits.y;
+            //else if (position.z > characterPreviewContainer.depthLimits.x) position.z = characterPreviewContainer.depthLimits.x;
+
+            characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
         }
 
         private void OnDrag(PointerEventData pointerEventData)
