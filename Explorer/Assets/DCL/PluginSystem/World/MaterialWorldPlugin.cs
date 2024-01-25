@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiling;
 using ECS.LifeCycle;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
@@ -53,19 +52,11 @@ namespace DCL.PluginSystem.World
 
             basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
             pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
-            videoTexturePool = new ExtendedObjectPool<Texture2D>(CreateVideoTexture, actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            videoTexturePool = new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1, TextureFormat.BGRA32, false, false), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
-            return;
-
-            Texture2D CreateVideoTexture()
-            {
-                var texture = new Texture2D(1, 1, TextureFormat.BGRA32, false, false);
-                texture.SetDebugName($"VideoTexture {ProfilingCounters.TexturesAmount}");
-                return texture;
-            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)

@@ -1,20 +1,15 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Textures
@@ -41,7 +36,5 @@ namespace ECS.StreamableLoading.Textures
 
             return new StreamableLoadingResult<Texture2D>(request.CreateTexture(intention.WrapMode, intention.FilterMode));
         }
-
-
     }
 }

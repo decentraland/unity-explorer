@@ -21,7 +21,6 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
     [LogCategory(ReportCategory.VIDEO_PLAYER)]
     public partial class VideoPlayerSystem : BaseUnityLoopSystem
     {
-        // Refs VideoPlayerHandler, AvProVideoPlayer : IVideoPlayer, VideoPluginWrapper_AVPro, DCLVideoTexture
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
 
