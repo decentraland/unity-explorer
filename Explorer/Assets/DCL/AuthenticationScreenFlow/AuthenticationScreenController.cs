@@ -81,7 +81,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            CheckValidIdentityAndStartInitialFlow().Forget();
+            CheckValidIdentityAndStartInitialFlowAsync().Forget();
         }
 
         protected override void OnViewClose()
@@ -92,7 +92,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
         }
 
-        private async UniTaskVoid CheckValidIdentityAndStartInitialFlow()
+        private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
