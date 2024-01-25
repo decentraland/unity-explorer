@@ -257,10 +257,12 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
-  productionRealmUrl: https://peer.decentraland.org
-  developmentRealmUrl: https://peer.decentraland.zone
+  realmUrl: https://peer.decentraland.org
   splashRoot: {fileID: 7722564697705550552}
   splashAnimation: {fileID: 4327321310632415857}
+  showSplash: 1
+  showAuthentication: 1
+  showLoading: 1
 --- !u!108 &705507994 stripped
 Light:
   m_CorrespondingSourceObject: {fileID: 7432390511473013031, guid: ff887d043bcc0b94a8782b218200d650, type: 3}
@@ -1084,8 +1086,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 461083453953300887}
   <raycaster>k__BackingField: {fileID: 6063382712672796138}
-  <SplashContainer>k__BackingField: {fileID: 5004780420321179409}
-  <SplashVideoPlayer>k__BackingField: {fileID: 4327321310632415857}
   <LoginContainer>k__BackingField: {fileID: 0}
   <LoginButton>k__BackingField: {fileID: 0}
   <ConnectingToServerContainer>k__BackingField: {fileID: 0}

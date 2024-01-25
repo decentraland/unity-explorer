@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
@@ -34,6 +35,9 @@ namespace Global.Dynamic
         [SerializeField] private string realmUrl = "https://peer.decentraland.org";
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
+        [SerializeField] private bool showSplash;
+        [SerializeField] private bool showAuthentication;
+        [SerializeField] private bool showLoading;
 
         private AsyncLoadProcessReport? loadReport;
         private StaticContainer? staticContainer;
@@ -77,7 +81,7 @@ namespace Global.Dynamic
         {
             try
             {
-                splashRoot.SetActive(true);
+                splashRoot.SetActive(showSplash);
 
                 loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
@@ -143,7 +147,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
+                Entity playerEntity;
+
+                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer!.CharacterObject);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
@@ -151,12 +157,18 @@ namespace Global.Dynamic
 
                 await ChangeRealmAsync(ct);
 
-                await WaitUntilSplashAnimationEndsAsync(ct);
+                if (showSplash)
+                    await WaitUntilSplashAnimationEndsAsync(ct);
+
                 splashRoot.SetActive(false);
 
-                await ShowAuthenticationScreenAsync(ct);
+                if (showAuthentication)
+                    await ShowAuthenticationScreenAsync(ct);
 
-                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(ct));
+                if (showLoading)
+                    await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(playerEntity, ct));
+                else
+                    await LoadCharacterAndWorldAsync(playerEntity, ct);
             }
             catch (OperationCanceledException)
             {
@@ -176,13 +188,14 @@ namespace Global.Dynamic
                 cancellationToken: ct);
         }
 
-        private async UniTask LoadCharacterAndWorldAsync(CancellationToken ct)
+        private async UniTask LoadCharacterAndWorldAsync(Entity playerEntity, CancellationToken ct)
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
             loadReport!.ProgressCounter.Value = 0.2f;
 
-            globalWorld!.EcsWorld.SetProfileToOwnPlayer(ownProfile);
+            // Add the profile into the player entity so it will create the avatar in world
+            globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
 
             await TeleportToSpawnPointAsync(ct);
 
