@@ -35,6 +35,9 @@ namespace Global.Dynamic
         [SerializeField] private string realmUrl = "https://peer.decentraland.org";
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
+        [SerializeField] private bool showSplash;
+        [SerializeField] private bool showAuthentication;
+        [SerializeField] private bool showLoading;
 
         private AsyncLoadProcessReport? loadReport;
         private StaticContainer? staticContainer;
@@ -78,7 +81,7 @@ namespace Global.Dynamic
         {
             try
             {
-                splashRoot.SetActive(true);
+                splashRoot.SetActive(showSplash);
 
                 loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
@@ -154,12 +157,18 @@ namespace Global.Dynamic
 
                 await ChangeRealmAsync(ct);
 
-                await WaitUntilSplashAnimationEndsAsync(ct);
+                if (showSplash)
+                    await WaitUntilSplashAnimationEndsAsync(ct);
+
                 splashRoot.SetActive(false);
 
-                await ShowAuthenticationScreenAsync(ct);
+                if (showAuthentication)
+                    await ShowAuthenticationScreenAsync(ct);
 
-                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(playerEntity, ct));
+                if (showLoading)
+                    await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(playerEntity, ct));
+                else
+                    await LoadCharacterAndWorldAsync(playerEntity, ct);
             }
             catch (OperationCanceledException)
             {
