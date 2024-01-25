@@ -68,10 +68,10 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
+                sceneLODInfo.CurrentLOD.TryRelease(lodCache);
+
                 if (result.Succeeded)
                 {
-                    sceneLODInfo.CurrentLOD.TryRelease(lodCache);
-
                     GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
