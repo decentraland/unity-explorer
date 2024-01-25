@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
                 //Create LODInfo
-                var sceneLODInfo = new SceneLODInfo { IsDirty = true };
+                var sceneLODInfo = SceneLODInfo.Create();
 
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
@@ -86,10 +86,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
-                var sceneLODInfo = new SceneLODInfo
-                {
-                    IsDirty = true
-                };
+                var sceneLODInfo = SceneLODInfo.Create();
 
                 //Dispose Promise
                 promise.ForgetLoading(World);

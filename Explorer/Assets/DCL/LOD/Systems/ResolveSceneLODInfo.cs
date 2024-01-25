@@ -29,16 +29,8 @@ namespace DCL.LOD.Systems
 
         protected override void Update(float t)
         {
-            ResolveLODInfoQuery(World);
+            //ResolveLODInfoQuery(World);
         }
 
-        //TODO: Once we have manifest ABS, it will be resolved in this system
-        [Query]
-        private void ResolveLODInfo(ref SceneLODInfo sceneLODInfo)
-        {
-            if (!sceneLODInfo.IsDirty) return;
-
-            sceneLODInfo.CurrentLODLevel = byte.MaxValue;
-        }
     }
 }

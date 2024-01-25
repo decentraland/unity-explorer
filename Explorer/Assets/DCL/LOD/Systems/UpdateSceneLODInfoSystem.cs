@@ -51,14 +51,10 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.IsDirty)
-            {
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
-                sceneLODInfo.IsDirty = false;
-                return;
-            }
-
             if (partitionComponent.IsDirty)
+                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+
+            if (sceneLODInfo.CurrentLODLevel.Equals(byte.MaxValue))
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
@@ -66,9 +62,9 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+            if (!sceneLODInfo.IsDirty) return;
 
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
@@ -91,6 +87,8 @@ namespace DCL.LOD.Systems
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
+
+                sceneLODInfo.IsDirty = false;
             }
         }
 
@@ -148,6 +146,8 @@ namespace DCL.LOD.Systems
                             permittedSources: AssetSource.EMBEDDED,
                             customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
                         partitionComponent);
+
+                sceneLODInfo.IsDirty = true;
             }
         }
 

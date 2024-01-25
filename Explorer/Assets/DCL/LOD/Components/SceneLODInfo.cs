@@ -28,6 +28,10 @@ namespace DCL.LOD.Components
         {
             CurrentLOD?.ToggleDebugColors();
         }
+
+        public static SceneLODInfo Create() =>
+            new()
+                { CurrentLODLevel = byte.MaxValue };
     }
 
 }
