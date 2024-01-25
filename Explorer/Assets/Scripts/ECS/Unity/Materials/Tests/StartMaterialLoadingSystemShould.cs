@@ -47,7 +47,7 @@ namespace ECS.Unity.Materials.Tests
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
                 sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>()
-                , new ExtendedObjectPool<Texture2D>(null));
+                , new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1)));
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
