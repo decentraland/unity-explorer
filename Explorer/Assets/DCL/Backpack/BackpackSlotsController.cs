@@ -5,6 +5,7 @@ using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
@@ -109,7 +110,15 @@ namespace DCL.Backpack
             AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarSlots["body_shape"].Item1.SlotWearableUrn, null, equippedWearables, hidingList);
 
             foreach (var avatarSlotView in avatarSlots.Values)
+            {
                 avatarSlotView.Item1.OverrideHideContainer.SetActive(false);
+
+                string hiderTextText = AvatarWearableHide.GetCategoryHider(avatarSlots["body_shape"].Item1.SlotWearableUrn, avatarSlotView.Item1.Category, equippedWearables);
+                avatarSlotView.Item1.HiderText.gameObject.SetActive(!string.IsNullOrEmpty(hiderTextText));
+
+                if(hiderTextText != null && AvatarWearableHide.CategoriesToReadable.TryGetValue(hiderTextText, out string readableCategoryHider))
+                    avatarSlotView.Item1.HiderText.text = $"Hidden by <b>{readableCategoryHider}</b>";
+            }
 
             foreach (string category in hidingList)
             {

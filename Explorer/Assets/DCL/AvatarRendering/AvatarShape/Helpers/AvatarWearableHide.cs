@@ -10,6 +10,30 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 {
     public class AvatarWearableHide
     {
+        public static readonly Dictionary<string, string> CategoriesToReadable = new ()
+        {
+            { WearablesConstants.Categories.HEAD, "Head" },
+            { WearablesConstants.Categories.UPPER_BODY, "Upper body" },
+            { WearablesConstants.Categories.LOWER_BODY, "Lower body" },
+            { WearablesConstants.Categories.HANDS, "Hands" },
+            { WearablesConstants.Categories.FEET, "Feet" },
+            { WearablesConstants.Categories.EYES, "Eyes" },
+            { WearablesConstants.Categories.EYEBROWS, "Eyebrows" },
+            { WearablesConstants.Categories.MOUTH, "Mouth" },
+            { WearablesConstants.Categories.HAT, "Hat" },
+            { WearablesConstants.Categories.MASK, "Mask" },
+            { WearablesConstants.Categories.HAIR, "Hair" },
+            { WearablesConstants.Categories.FACIAL_HAIR, "Facial hair" },
+            { WearablesConstants.Categories.SKIN, "Skin" },
+            { WearablesConstants.Categories.HANDS_WEAR, "Handwear" },
+            { WearablesConstants.Categories.TIARA, "Tiara" },
+            { WearablesConstants.Categories.HELMET, "Helmet" },
+            { WearablesConstants.Categories.EARRING, "Earring" },
+            { WearablesConstants.Categories.EYEWEAR, "Eyewear" },
+            { WearablesConstants.Categories.TOP_HEAD, "Top head" },
+            { WearablesConstants.Categories.BODY_SHAPE, "Body shape" },
+        };
+
         private static readonly Dictionary<string, string> bodyPartsMapping = new ()
         {
             { "head", WearablesConstants.Categories.HEAD },
@@ -21,6 +45,28 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             { "eyebrows", WearablesConstants.Categories.EYEBROWS },
             { "mouth", WearablesConstants.Categories.MOUTH },
         };
+
+        public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
+        {
+            var wearablesByCategory = new Dictionary<string, IWearable>();
+
+            for (var i = 0; i < equippedWearables.Count; i++)
+                wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
+
+            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
+            {
+                if (wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                {
+                    HashSet<string> hideCategories = HashSetPool<string>.Get();
+                    wearable.GetHidingList(bodyShapeId, hideCategories);
+
+                    if (hideCategories.Contains(hiddenCategory.ToLower()))
+                        return wearable.GetCategory();
+                }
+            }
+
+            return string.Empty;
+        }
 
         public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
         {

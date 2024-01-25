@@ -550,11 +550,13 @@ MonoBehaviour:
   <OverrideHide>k__BackingField: {fileID: 7015445653465098593}
   <NoOverride>k__BackingField: {fileID: 5111178573828489163}
   <CategoryText>k__BackingField: {fileID: 3491566857406547017}
+  <HiderText>k__BackingField: {fileID: 556676770789666314}
   <SlotWearableUrn>k__BackingField: 
   <SlotWearableThumbnail>k__BackingField: {fileID: 6615436191762671025}
   <SlotWearableRarityBackground>k__BackingField: {fileID: 2319109405909261016}
   <LoadingView>k__BackingField: {fileID: 2069050160429817371}
   <NftContainer>k__BackingField: {fileID: 7919142331980974852}
+  CategoryEnum: 0
 --- !u!1 &1315728735672877397
 GameObject:
   m_ObjectHideFlags: 0

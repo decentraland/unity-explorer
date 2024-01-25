@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -52,6 +53,9 @@ namespace DCL.Backpack
         public TMP_Text CategoryText { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text HiderText { get; private set; }
+
+        [field: SerializeField]
         public string SlotWearableUrn { get; set; }
 
         [field: SerializeField]
@@ -71,7 +75,8 @@ namespace DCL.Backpack
 
         public void Start()
         {
-            CategoryText.text = Category;
+            AvatarWearableHide.CategoriesToReadable.TryGetValue(Category.ToLower(), out string readableCategoryHider);
+            CategoryText.text = readableCategoryHider;
             SlotButton.onClick.AddListener(InvokeSlotButtonPressed);
         }
 
