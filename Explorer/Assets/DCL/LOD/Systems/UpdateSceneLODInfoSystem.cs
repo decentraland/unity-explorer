@@ -4,6 +4,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AssetsProvision;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
@@ -27,17 +28,15 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-
-        private readonly IReadOnlyList<int> lodBucketThresholds;
-
+        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
         public readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, IReadOnlyList<int> lodBucketThresholds,
+        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ProvidedAsset<LODSettingsAsset> lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget) : base(world)
         {
             this.lodCache = lodCache;
-            this.lodBucketThresholds = lodBucketThresholds;
+            this.lodSettingsAsset = lodSettingsAsset;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
         }
@@ -83,7 +82,7 @@ namespace DCL.LOD.Systems
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        instantiatedLOD, result.Asset);
+                        instantiatedLOD, result.Asset, lodSettingsAsset);
                 }
                 else
                 {
@@ -101,10 +100,10 @@ namespace DCL.LOD.Systems
             //Therefore, lod0 will be shown
             byte sceneLODCandidate = 0;
 
-            for (byte i = 0; i < lodBucketThresholds.Count; i++)
+            for (byte i = 0; i < lodSettingsAsset.Value.LodPartitionBucketThresholds.Length; i++)
             {
-                if (partitionComponent.Bucket >= lodBucketThresholds[i])
-                    sceneLODCandidate = i;
+                if (partitionComponent.Bucket >= lodSettingsAsset.Value.LodPartitionBucketThresholds[i])
+                    sceneLODCandidate = (byte)(i + 1);
             }
 
             if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)

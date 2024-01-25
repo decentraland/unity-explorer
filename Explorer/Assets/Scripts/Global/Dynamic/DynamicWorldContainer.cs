@@ -92,7 +92,7 @@ namespace Global.Dynamic
                 profileCache);
 
             IScenesCache scenesCache = new ScenesCache();
-            
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
@@ -125,7 +125,7 @@ namespace Global.Dynamic
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    scenesCache)
+                    scenesCache, debugBuilder, staticContainer.AssetsProvisioner),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

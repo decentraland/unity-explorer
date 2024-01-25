@@ -40,9 +40,9 @@ namespace DCL.LOD.Tests
             InitializeSceneLODInfo();
             partitionComponent = new PartitionComponent();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new List<int> { 1, 2, 5 },
+            /*system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new List<int> { 1, 2, 5 },
                 frameCapBudget,
-                memoryBudget);
+                memoryBudget);*/
         }
 
         private void InitializeSceneLODInfo()

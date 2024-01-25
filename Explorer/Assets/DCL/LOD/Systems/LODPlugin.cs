@@ -5,58 +5,63 @@ using System.Threading;
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.DebugUtilities;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
 using ECS;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.LOD
 {
     public class LODPlugin : IDCLGlobalPlugin<LODSettings>
     {
-        private List<int> lodBucketThresholds;
+        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
-        private IRealmData realmData;
+        private readonly IRealmData realmData;
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
-
+        private readonly IDebugContainerBuilder debugBuilder;
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
-            IPerformanceBudget frameCapBudget, IScenesCache scenesCache)
+            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder, IAssetsProvisioner assetsProvisioner)
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
+
             this.realmData = realmData;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
+            this.debugBuilder = debugBuilder;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
-        public UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
         {
-            lodBucketThresholds = settings.LodPartitionBucketThresholds.ToList();
-            return default;
+            lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LodSettingAsset, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodBucketThresholds[0]);
+            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool);
             ResolveSceneLODInfo.InjectToWorld(ref builder, lodAssetsPool);
 
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodBucketThresholds, memoryBudget,
-                frameCapBudget);
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget);
 
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool);
+
+            LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
         }
 
         public void Dispose()
@@ -71,6 +76,6 @@ namespace DCL.LOD
         [field: Header(nameof(LODPlugin) + "." + nameof(LODSettings))]
         [field: Space]
         [field: SerializeField]
-        public int[] LodPartitionBucketThresholds = { 1, 2, 5 };
+        public StaticSettings.LODSettingsRef LodSettingAsset { get; set; }
     }
 }

@@ -36,10 +36,11 @@ MonoBehaviour:
     - rid: 728480684080103426
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:
-        <SceneLODLimit>k__BackingField: 1
-        LodBucketLimits:
-        - {x: 1, y: 2}
-        - {x: 2, y: 5}
+        <LodSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

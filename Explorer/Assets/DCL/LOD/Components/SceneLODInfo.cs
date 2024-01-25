@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -21,6 +22,11 @@ namespace DCL.LOD.Components
                 CurrentLOD.TryRelease(lodAssetsPool);
 
             CurrentLOD = null;
+        }
+
+        public void ToggleDebugColors()
+        {
+            CurrentLOD?.ToggleDebugColors();
         }
     }
 

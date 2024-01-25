@@ -2,7 +2,9 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AssetsProvision;
 using DCL.Diagnostics;
+using DCL.LOD;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using ECS.Abstract;
@@ -24,11 +26,11 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(UpdateSceneLODInfoSystem))]
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        private readonly int sceneLODLimit;
+        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
 
-        public ResolveVisualSceneStateSystem(World world, int sceneLODLimit) : base(world)
+        public ResolveVisualSceneStateSystem(World world, ProvidedAsset<LODSettingsAsset> lodSettingsAsset) : base(world)
         {
-            this.sceneLODLimit = sceneLODLimit;
+            this.lodSettingsAsset = lodSettingsAsset;
         }
 
         protected override void Update(float t)
@@ -37,7 +39,7 @@ namespace ECS.SceneLifeCycle.Systems
             AddSceneVisualStateQuery(World);
             UpdateVisualStateQuery(World);
         }
-        
+
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
         private void AddSceneVisualState(in Entity entity, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
@@ -47,7 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
-        
+
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [Any(typeof(SceneLODInfo), typeof(SceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
@@ -73,7 +75,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                var candidateState = partition.Bucket <= sceneLODLimit
+                VisualSceneStateEnum candidateState = partition.Bucket < lodSettingsAsset.Value.LodPartitionBucketThresholds[0]
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
                 if (candidateState != visualSceneState.CurrentVisualSceneState)
