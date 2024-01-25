@@ -17,6 +17,12 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
+            characterPreviewInputEventBus.OnPointerUpEvent += OnPointerUp;
+        }
+
+        private void OnPointerUp(PointerEventData pointerEventData)
+        {
+            characterPreviewContainer.SetCursor(CharacterPreviewCameraMovementType.Default);
         }
 
         private void OnChangePreviewCategory(AvatarSlotCategoryEnum categoryEnum)
@@ -36,8 +42,6 @@ namespace DCL.CharacterPreview
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-
-
             var newFieldOfView = characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView;
 
             newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
@@ -55,6 +59,7 @@ namespace DCL.CharacterPreview
             {
                 case PointerEventData.InputButton.Right:
                 {
+                    characterPreviewContainer.SetCursor(CharacterPreviewCameraMovementType.Pan);
                     var position = characterPreviewContainer.cameraTarget.localPosition;
                     float dragModifier = Time.deltaTime * characterPreviewContainer.dragMovementModifier;
 
@@ -67,6 +72,7 @@ namespace DCL.CharacterPreview
                 }
                 case PointerEventData.InputButton.Left:
                 {
+                    characterPreviewContainer.SetCursor(CharacterPreviewCameraMovementType.Rotate);
                     var rotation = characterPreviewContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * characterPreviewContainer.rotationModifier;
 
@@ -87,6 +93,8 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
             characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
+            characterPreviewInputEventBus.OnPointerUpEvent -= OnPointerUp;
+
         }
     }
 }

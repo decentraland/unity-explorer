@@ -7,6 +7,7 @@ namespace DCL.CharacterPreview
     {
         public event Action<PointerEventData> OnDraggingEvent;
         public event Action<PointerEventData> OnScrollEvent;
+        public event Action<PointerEventData> OnPointerUpEvent;
         public event Action<AvatarSlotCategoryEnum> OnChangePreviewFocusEvent;
 
         public void OnDrag(PointerEventData eventData) =>
@@ -17,6 +18,11 @@ namespace DCL.CharacterPreview
 
         public void OnChangeCategoryFocus(AvatarSlotCategoryEnum category) =>
             OnChangePreviewFocusEvent?.Invoke(category);
+
+        public void OnPointerUp(PointerEventData pointerEventData)
+        {
+            OnPointerUpEvent?.Invoke(pointerEventData);
+        }
     }
 
     public enum AvatarSlotCategoryEnum

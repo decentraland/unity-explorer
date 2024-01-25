@@ -39,6 +39,7 @@ namespace DCL.CharacterPreview
 
             view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
+            view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
@@ -61,6 +62,11 @@ namespace DCL.CharacterPreview
         {
             previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus);
             OnModelUpdated();
+        }
+
+        private void OnPointerUp(PointerEventData pointerEventData)
+        {
+            inputEventBus.OnPointerUp(pointerEventData);
         }
 
         private void OnScroll(PointerEventData pointerEventData)
@@ -125,6 +131,7 @@ namespace DCL.CharacterPreview
             backpackEventBus.UnEquipEvent -= OnUnequipped;
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
+            view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             previewController.Dispose();
         }
     }

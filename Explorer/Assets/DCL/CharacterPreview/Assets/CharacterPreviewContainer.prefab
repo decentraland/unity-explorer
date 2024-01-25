@@ -1110,7 +1110,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3999747275875192527}
-  m_LocalRotation: {x: 0.000000002456391, y: 0.9897573, z: -0.14276046, w: 0.00000001703014}
+  m_LocalRotation: {x: -0.0000000024563913, y: 0.9897573, z: -0.14276046, w: -0.000000017030143}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1372,6 +1372,10 @@ MonoBehaviour:
   <maxVerticalOffset>k__BackingField: 0.5
   <depthLimits>k__BackingField: {x: 10, y: -3}
   <freeLookCamera>k__BackingField: {fileID: 1653081050115794389}
+  <rotateCursor>k__BackingField: {fileID: 2800000, guid: d34aedda08e64344091b34deada8211e, type: 3}
+  <rotateCursorCenter>k__BackingField: {x: 32, y: 21}
+  <panCursor>k__BackingField: {fileID: 2800000, guid: a0dd824ee2daadd46a4437a4e3145c9e, type: 3}
+  <panCursorCenter>k__BackingField: {x: 27.5, y: 28}
 --- !u!1 &4857768151630023528
 GameObject:
   m_ObjectHideFlags: 3

@@ -5,6 +5,14 @@ using UnityEngine;
 
 namespace DCL.CharacterPreview
 {
+    public enum CharacterPreviewCameraMovementType
+    {
+        Pan,
+        Rotate,
+        Default
+    }
+
+
     [Serializable]
     public struct CharacterPreviewCameraPreset
     {
@@ -36,7 +44,13 @@ namespace DCL.CharacterPreview
 
         [field: SerializeField] internal Vector2 depthLimits { get; private set; }
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
+        [field: SerializeField] internal Texture2D rotateCursor { get; private set; }
+        [field: SerializeField] internal Vector2 rotateCursorCenter { get; private set; }
+        [field: SerializeField] internal Texture2D panCursor { get; private set; }
+        [field: SerializeField] internal Vector2 panCursorCenter { get; private set; }
 
+
+        internal Texture2D defaultCursor { get; private set; }
 
         private Tween fovTween;
 
@@ -73,6 +87,22 @@ namespace DCL.CharacterPreview
         public void Dispose()
         {
             StopCameraTween();
+        }
+
+        public void SetCursor(CharacterPreviewCameraMovementType movementType)
+        {
+            switch (movementType)
+            {
+                case CharacterPreviewCameraMovementType.Pan:
+                    Cursor.SetCursor(panCursor, panCursorCenter, CursorMode.Auto);
+                    break;
+                case CharacterPreviewCameraMovementType.Rotate:
+                    Cursor.SetCursor(rotateCursor, rotateCursorCenter, CursorMode.Auto);
+                    break;
+                case CharacterPreviewCameraMovementType.Default:
+                    Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+                    break;
+            }
         }
     }
 
