@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -10,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
@@ -102,23 +99,18 @@ namespace DCL.CharacterPreview
             previewModel.Wearables ??= new List<string>();
 
             if (i.IsBodyShape())
-            {
                 previewModel.BodyShape = i.GetUrn();
-            }
             else if (!previewModel.Wearables.Contains(i.GetUrn()))
-            {
                 previewModel.Wearables.Add(i.GetUrn());
-            }
-            
+
             OnModelUpdated();
         }
 
         private void OnUnequipped(IWearable i)
         {
             if (previewModel.Wearables.Contains(i.GetUrn()))
-            {
                 previewModel.Wearables.Remove(i.GetUrn());
-            }
+
             OnModelUpdated();
         }
 
