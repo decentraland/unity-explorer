@@ -52,19 +52,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             cachedWearable.Instance.transform.ResetLocalTRS();
             cachedWearable.Instance.gameObject.layer = parent.gameObject.layer;
 
-            foreach (var child in cachedWearable.Instance.GetComponentsInChildren<Transform>())
+            PoolExtensions.Scope<List<Transform>> children = cachedWearable.Instance.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            for (var index = 0; index < children.Value.Count; index++)
             {
+                Transform child = children.Value[index];
                 child.gameObject.layer = parent.gameObject.layer;
             }
-
-            //TODO: Fran -> This code can be probably improved, check if we can get the list of children from somewhere else to avoid allocations.
-            //We tried this, but it did not work correctly (not all wearables were correctly layered) so it might need some more work to get all children
-            /*int renderersCount = cachedWearable.Renderers.Count;
-            for (var index = 0; index < renderersCount; index++)
-            {
-                Renderer renderer = cachedWearable.Renderers[index];
-                renderer.gameObject.layer = parent.gameObject.layer;
-            }*/
 
             cachedWearable.Instance.gameObject.SetActive(true);
             return cachedWearable;

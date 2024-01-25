@@ -79,8 +79,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
 
             //TODO: Fran -> This code can be probably improved, check if we can get the list of children from somewhere else to avoid allocations.
-            foreach (var child in avatarTransform.GetComponentsInChildren<Transform>())
+            PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            for (var index = 0; index < children.Value.Count; index++)
             {
+                Transform child = children.Value[index];
                 child.gameObject.layer = transformComponent.Transform.gameObject.layer;
             }
 

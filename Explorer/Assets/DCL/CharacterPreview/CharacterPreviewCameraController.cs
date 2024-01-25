@@ -45,8 +45,8 @@ namespace DCL.CharacterPreview
             var newFieldOfView = characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView;
 
             newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
-            //if (position.z < characterPreviewContainer.depthLimits.y) position.z = characterPreviewContainer.depthLimits.y;
-            //else if (position.z > characterPreviewContainer.depthLimits.x) position.z = characterPreviewContainer.depthLimits.x;
+            if (newFieldOfView < characterPreviewContainer.depthLimits.y) newFieldOfView = characterPreviewContainer.depthLimits.y;
+            else if (newFieldOfView > characterPreviewContainer.depthLimits.x) newFieldOfView = characterPreviewContainer.depthLimits.x;
 
             characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
             characterPreviewContainer.StopCameraTween();
@@ -94,7 +94,7 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
             characterPreviewInputEventBus.OnPointerUpEvent -= OnPointerUp;
-
+            characterPreviewContainer.Dispose();
         }
     }
 }
