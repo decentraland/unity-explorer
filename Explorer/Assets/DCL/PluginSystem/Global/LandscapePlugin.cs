@@ -56,13 +56,14 @@ namespace DCL.PluginSystem.Global
 
             // prepare for the hiccup
             terrainGenerator.GenerateTerrain();
+            terrainGenerator.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems) { }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
-            LandscapeParcelInitializerSystem.InjectToWorld(ref builder, landscapeData.Value, poolManager, textureContainer, terrainGenerator);
+            LandscapeParcelInitializerSystem.InjectToWorld(ref builder, landscapeData.Value, poolManager, textureContainer);
             LandscapeParcelUnloadSystem.InjectToWorld(ref builder, poolManager);
 
             // Create all empty parcels

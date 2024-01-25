@@ -69,8 +69,6 @@ namespace DCL.Landscape
                     DigHoles(terrainDatas);
 
                 GenerateChunks(terrainDatas);
-
-
             }
             catch (Exception e) { Debug.LogException(e); }
         }
@@ -448,6 +446,7 @@ namespace DCL.Landscape
             emptyParcelResult.Dispose();
             emptyParcels.Dispose();
             ownedParcels.Dispose();
+            noiseGenCache.Dispose();
         }
     }
 

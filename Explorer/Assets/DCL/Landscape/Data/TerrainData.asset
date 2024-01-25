@@ -15,7 +15,7 @@ MonoBehaviour:
   parcelLimitX: {x: -150, y: 150}
   parcelLimitZ: {x: -150, y: 150}
   terrainSize: 4800
-  chunkSize: 512
+  chunkSize: 1024
   terrainScale: 15
   heightScaleNerf: 0.5
   seed: 97
@@ -28,6 +28,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
   treeAssets:
   - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
+  - {fileID: 11400000, guid: 6359eb473a83b5242a3626151eff94e4, type: 2}
   - {fileID: 11400000, guid: 9956eed88c3da1140a63203ad3e7e00b, type: 2}
   - {fileID: 11400000, guid: b2b6204bf7bc3f642ab69b0abfb41215, type: 2}
   - {fileID: 11400000, guid: 4040beb28607f7a4ba895a7b0bd80cab, type: 2}

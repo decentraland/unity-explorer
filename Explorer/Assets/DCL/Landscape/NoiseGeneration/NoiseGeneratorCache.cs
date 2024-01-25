@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Config;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace DCL.Landscape.NoiseGeneration
@@ -24,6 +25,7 @@ namespace DCL.Landscape.NoiseGeneration
 
         public void Dispose()
         {
+            Debug.Log("Disposing noise cache");
             foreach (KeyValuePair<INoiseDataFactory, INoiseGenerator> cachedGenerator in cachedGenerators)
                 cachedGenerator.Value.Dispose();
         }
