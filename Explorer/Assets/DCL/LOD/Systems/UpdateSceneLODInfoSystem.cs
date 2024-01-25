@@ -11,16 +11,11 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
-using SceneRunner.Scene;
 using UnityEngine;
-using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -33,12 +28,12 @@ namespace DCL.LOD.Systems
     {
         private readonly ILODAssetsPool lodCache;
 
-        private readonly List<int> lodBucketThresholds;
+        private readonly IReadOnlyList<int> lodBucketThresholds;
 
         public readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, List<int> lodBucketThresholds,
+        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, IReadOnlyList<int> lodBucketThresholds,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget) : base(world)
         {
             this.lodCache = lodCache;
@@ -46,7 +41,6 @@ namespace DCL.LOD.Systems
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
         }
-
 
         protected override void Update(float t)
         {
@@ -95,7 +89,8 @@ namespace DCL.LOD.Systems
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-                    //TODO: Add a default LOD so we dont have to fail the promise every time
+
+                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
             }
         }

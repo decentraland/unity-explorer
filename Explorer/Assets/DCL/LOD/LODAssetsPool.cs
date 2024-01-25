@@ -30,10 +30,7 @@ namespace DCL.LOD
         {
             if (vacantInstances.Remove(key, out asset))
             {
-                ProfilingCounters.LODInstantiatedInCache.Value--;
-
-                asset.Root.SetActive(true);
-                asset.Root.transform.SetParent(null);
+                asset.EnableAsset();
                 return true;
             }
 
@@ -47,14 +44,7 @@ namespace DCL.LOD
 
             vacantInstances[key] = asset;
             unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
-
-            ProfilingCounters.LODInstantiatedInCache.Value++;
-
-            // This logic should not be executed if the application is quitting
-            if (UnityObjectUtils.IsQuitting) return;
-
-            asset.Root.SetActive(false);
-            asset.Root.transform.SetParent(parentContainer);
+            asset.DisableAsset(parentContainer);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
@@ -68,8 +58,6 @@ namespace DCL.LOD
                 unloadedAmount++;
                 asset.Dispose();
             }
-
-            ProfilingCounters.LODInstantiatedInCache.Value -= unloadedAmount;
         }
     }
 }
