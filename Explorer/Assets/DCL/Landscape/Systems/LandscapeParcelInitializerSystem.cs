@@ -25,32 +25,25 @@ namespace DCL.Landscape.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LandscapeParcelInitializerSystem : BaseUnityLoopSystem
     {
-        private const int MAX_JOB_CONCURRENCY = 600;
-        private const int MAX_OWNED_PARCELS_CREATED_PER_FRAME = 600;
         private const int PARCEL_SIZE = 16;
         private const int CHUNK_SIZE = 40;
-        private const float MATERIAL_TILING = 0.025f;
         private readonly LandscapeData landscapeData;
         private readonly LandscapeAssetPoolManager poolManager;
         private readonly MapRendererTextureContainer textureContainer;
-        private readonly ITerrainGenerator terrainGenerator;
         private readonly Transform landscapeParentObject;
         private int concurrentJobs;
         private int parcelsCreated;
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
-        private static readonly int BASE_MAP_ST = Shader.PropertyToID("_BaseMap_ST");
 
         private LandscapeParcelInitializerSystem(World world,
             LandscapeData landscapeData,
             LandscapeAssetPoolManager poolManager,
-            MapRendererTextureContainer textureContainer,
-            ITerrainGenerator terrainGenerator) : base(world)
+            MapRendererTextureContainer textureContainer) : base(world)
         {
             this.landscapeData = landscapeData;
             this.poolManager = poolManager;
             this.textureContainer = textureContainer;
-            this.terrainGenerator = terrainGenerator;
             landscapeParentObject = new GameObject("Landscape").transform;
             materialPropertyBlock = new MaterialPropertyBlock();
         }

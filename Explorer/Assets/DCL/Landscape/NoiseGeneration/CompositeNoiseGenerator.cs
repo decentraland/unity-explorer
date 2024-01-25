@@ -1,8 +1,6 @@
 ﻿using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
-using System;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -45,9 +43,10 @@ namespace DCL.Landscape
         private JobHandle Execute(ref NativeArray<float> targetArray, NoiseJobOperation operation, int size, int offsetX, int offsetZ,
             int batchCount = 32)
         {
-            mainJob = new NoiseGenerator(compositeNoiseData, baseSeed);
-            JobHandle jobHandle = mainJob.Compose(ref targetArray, operation, size, offsetX, offsetZ, batchCount);
+            var tempNoiseGenerator = new NoiseGenerator(compositeNoiseData, baseSeed);
+            JobHandle jobHandle = tempNoiseGenerator.Compose(ref targetArray, operation, size, offsetX, offsetZ, batchCount);
             jobHandle.Complete();
+            tempNoiseGenerator.Dispose();
 
             foreach (NoiseData noise in compositeNoiseData.add)
             {
@@ -102,7 +101,6 @@ namespace DCL.Landscape
         public void Dispose()
         {
             noiseResults.Dispose();
-            mainJob.Dispose();
         }
     }
 }

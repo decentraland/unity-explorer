@@ -23,8 +23,7 @@ namespace DCL.Landscape
             ParseParcels();
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
             gen.GenerateTerrain(worldSeed, digHoles, centerTerrain);
-            ownedParcels.Dispose();
-            emptyParcels.Dispose();
+            gen.Dispose();
         }
 
         private void ParseParcels()

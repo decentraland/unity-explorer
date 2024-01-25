@@ -15,16 +15,15 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 1
-    scale: 308.55
+    scale: 53.56
     octaves: 3
-    persistance: 0.672
-    lacunarity: 20.64
+    persistance: 0.895
+    lacunarity: 3.5
     seed: 1
     offset: {x: 0, y: 0}
     cutoff: 0.2
     noiseType: 1
   add: []
-  multiply:
-  - {fileID: 11400000, guid: 077f87068115be447910bf4b102f0efd, type: 2}
+  multiply: []
   subtract:
   - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
