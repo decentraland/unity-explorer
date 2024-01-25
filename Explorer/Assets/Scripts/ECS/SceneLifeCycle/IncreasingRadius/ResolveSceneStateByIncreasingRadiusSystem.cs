@@ -7,6 +7,7 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SceneFacade;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using Ipfs;
@@ -164,11 +165,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 // We can't save component to data as sorting is throttled and components could change
                 Components<SceneDefinitionComponent, PartitionComponent> components = World.Get<SceneDefinitionComponent, PartitionComponent>(data.Entity);
 
-                World.Add(data.Entity,
-                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(ipfsRealm, components.t0),
-                        components.t1.Value));
-
+                CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
                 promisesCreated++;
             }
         }

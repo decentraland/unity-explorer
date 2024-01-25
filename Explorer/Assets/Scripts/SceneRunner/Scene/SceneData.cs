@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using Ipfs;
 using JetBrains.Annotations;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -17,6 +18,7 @@ namespace SceneRunner.Scene
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
+        public IReadOnlyList<Vector2Int> Parcels { get; }
 
         public SceneData(
             ISceneContent sceneContent,
@@ -24,12 +26,14 @@ namespace SceneRunner.Scene
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
+            IReadOnlyList<Vector2Int> parcels,
             StaticSceneMessages staticSceneMessages)
         {
             this.sceneContent = sceneContent;
             this.sceneDefinition = sceneDefinition;
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
+            Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;
         }
