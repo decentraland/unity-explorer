@@ -2,7 +2,7 @@ Shader "DCL/UI/Blur"
 {
     Properties
     {
-        _Samples ("Samples", Float) = 1
+        _Samples ("Blur", Float) = 1
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
 
