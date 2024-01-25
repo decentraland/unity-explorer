@@ -56,22 +56,22 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (sceneLODInfo.IsDirty)
             {
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo);
+                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
                 sceneLODInfo.IsDirty = false;
                 return;
             }
 
             if (partitionComponent.IsDirty)
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo);
+                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo)
+        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
@@ -82,12 +82,13 @@ namespace DCL.LOD.Systems
                 if (result.Succeeded)
                 {
                     sceneLODInfo.CurrentLOD.TryRelease(lodCache);
-                    var instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition,
+
+                    GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
-                        in sceneLODInfo.SceneCircumscribedPlanes);
+                        in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
 
-                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneLODInfo.SceneHash, sceneLODInfo.CurrentLODLevel),
+                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                         instantiatedLOD, result.Asset);
                 }
                 else
@@ -99,8 +100,7 @@ namespace DCL.LOD.Systems
             }
         }
 
-
-        private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo)
+        private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //If we are in an SDK6 scene, this value will be kept.
             //Therefore, lod0 will be shown
@@ -113,15 +113,15 @@ namespace DCL.LOD.Systems
             }
 
             if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
-                UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);
+                UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate, sceneDefinitionComponent);
         }
 
         private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
-            byte sceneLODCandidate)
+            byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
             sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            var newLODKey = new LODKey(sceneLODInfo.SceneHash, sceneLODInfo.CurrentLODLevel);
+            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
             if (newLODKey.Equals(sceneLODInfo.CurrentLOD)) return;
@@ -137,13 +137,13 @@ namespace DCL.LOD.Systems
                 //TODO: TEMP, for some reason genesis plaza asset is crashing in mac
                 if ((Application.platform.Equals(RuntimePlatform.OSXPlayer) ||
                      Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
-                    sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    sceneDefinitionComponent.Definition.id.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                 {
                     return;
                 }
 
                 //TODO: TEMP, infinite floor sceene
-                if (sceneLODInfo.SceneHash.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
+                if (sceneDefinitionComponent.Definition.id.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
                 {
                     return;
                 }

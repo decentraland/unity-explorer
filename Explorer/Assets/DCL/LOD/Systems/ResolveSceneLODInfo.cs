@@ -34,15 +34,11 @@ namespace DCL.LOD.Systems
 
         //TODO: Once we have manifest ABS, it will be resolved in this system
         [Query]
-        private void ResolveLODInfo(ref SceneLODInfo sceneLODInfo,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void ResolveLODInfo(ref SceneLODInfo sceneLODInfo)
         {
             if (!sceneLODInfo.IsDirty) return;
 
             sceneLODInfo.CurrentLODLevel = byte.MaxValue;
-            sceneLODInfo.SceneHash = sceneDefinitionComponent.Definition.id;
-            sceneLODInfo.ParcelPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
-            sceneLODInfo.SceneCircumscribedPlanes = sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes;
         }
     }
 }
