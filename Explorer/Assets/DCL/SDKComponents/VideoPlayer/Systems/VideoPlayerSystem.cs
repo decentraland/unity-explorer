@@ -8,6 +8,7 @@ using DCL.SDKComponents.AudioStream;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.Groups;
+using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
@@ -98,10 +99,10 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         {
             if (avText == null) return;
 
-            if (assignedTexture.texture.HasEqualResolution(to: avText))
-                UpdateVideoTexture(avText, assignedTexture.texture);
+            if (assignedTexture.Texture.HasEqualResolution(to: avText))
+                UpdateVideoTexture(avText, assignedTexture.Texture);
             else
-                ResizeVideoTexture(avText, assignedTexture.texture); // will be updated on the next frame/update-loop
+                ResizeVideoTexture(avText, assignedTexture.Texture); // will be updated on the next frame/update-loop
         }
 
         private static void UpdateVideoTexture(Texture avText, Texture2D videoTexture)

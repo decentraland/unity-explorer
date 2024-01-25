@@ -2,6 +2,7 @@
 using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -45,7 +46,8 @@ namespace ECS.Unity.Materials.Tests
 
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>());
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>()
+                , new ExtendedObjectPool<Texture2D>(null));
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>

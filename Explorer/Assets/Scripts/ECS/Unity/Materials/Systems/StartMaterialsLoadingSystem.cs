@@ -6,9 +6,7 @@ using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
-using DCL.SDKComponents.VideoPlayer;
-using Decentraland.Common;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -20,10 +18,8 @@ using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
-using TextureWrapMode = UnityEngine.TextureWrapMode;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -40,15 +36,17 @@ namespace ECS.Unity.Materials.Systems
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
 
         public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
-            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap) : base(world)
+            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
             this.entitiesMap = entitiesMap;
+            this.videoTexturesPool = videoTexturesPool;
         }
 
         protected override void Update(float t)
@@ -168,29 +166,6 @@ namespace ECS.Unity.Materials.Systems
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
             if (textureComponent.Value.IsVideoTexture)
-            {
-                Texture2D videoTexture = null;
-
-                if (entitiesMap.TryGetValue(textureComponent.Value.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
-                {
-                    if (World.Has<VideoTextureComponent>(videoPlayerEntity))
-                        videoTexture = World.Get<VideoTextureComponent>(videoPlayerEntity).texture;
-                    else
-                    {
-                        videoTexture = CreateVideoTexture();
-                        World.Add(videoPlayerEntity, new VideoTextureComponent(videoTexture));
-                    }
-                }
-                else
-                    ReportHub.LogError(ReportCategory.VIDEO_PLAYER, $"Entity {textureComponent.Value.VideoPlayerEntity} not found!. VideoTexture will not be created.");
-
-                StreamableLoadingResult<Texture2D>? result = new StreamableLoadingResult<Texture2D>(videoTexture);
-
-                var loadingState = new StreamableLoadingState
-                {
-                    Value = StreamableLoadingState.Status.Finished,
-                };
-
                 promise = Promise.Create(World, new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
@@ -198,10 +173,8 @@ namespace ECS.Unity.Materials.Systems
                     FilterMode = textureComponentValue.FilterMode,
                     IsVideoTexture = textureComponentValue.IsVideoTexture,
                     VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
-                }, partitionComponent, result, loadingState);
-            }
+                }, partitionComponent, GetOrAddVideoTextureResult(textureComponentValue), new StreamableLoadingState { Value = StreamableLoadingState.Status.Finished, });
             else
-            {
                 promise = Promise.Create(World, new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
@@ -210,19 +183,30 @@ namespace ECS.Unity.Materials.Systems
                     IsVideoTexture = textureComponentValue.IsVideoTexture,
                     VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
                 }, partitionComponent);
-            }
 
             return true;
         }
 
-        private static Texture2D CreateVideoTexture()
+        private StreamableLoadingResult<Texture2D>? GetOrAddVideoTextureResult(TextureComponent textureComponent)
         {
-            var tex = new Texture2D(1, 1, TextureFormat.BGRA32, false, false);
+            Texture2D videoTexture = null;
 
-            tex.SetDebugName($"VideoTexture {ProfilingCounters.TexturesAmount.Value}");
-            ProfilingCounters.TexturesAmount.Value++;
+            if (entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
+            {
+                if (World.Has<VideoTextureComponent>(videoPlayerEntity))
+                    videoTexture = World.Get<VideoTextureComponent>(videoPlayerEntity).Texture;
+                else
+                {
+                    var videoTextureComponent = new VideoTextureComponent(videoTexturesPool);
+                    World.Add(videoPlayerEntity, videoTextureComponent);
 
-            return tex;
+                    videoTexture = videoTextureComponent.Texture;
+                }
+            }
+            else
+                ReportHub.LogError(ReportCategory.VIDEO_PLAYER, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.");
+
+            return new StreamableLoadingResult<Texture2D>(videoTexture);
         }
 
         private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)

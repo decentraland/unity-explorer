@@ -1,14 +1,24 @@
-﻿using UnityEngine;
+﻿using DCL.Optimization.Pools;
+using System;
+using UnityEngine;
 
-namespace DCL.SDKComponents.VideoPlayer
+namespace ECS.Unity.Textures.Components
 {
-    public struct VideoTextureComponent
+    public readonly struct VideoTextureComponent : IDisposable
     {
-        public readonly Texture2D texture;
+        public readonly Texture2D Texture;
 
-        public VideoTextureComponent(Texture2D texture)
+        private readonly IExtendedObjectPool<Texture2D> texturesPool;
+
+        public VideoTextureComponent(IExtendedObjectPool<Texture2D> texturesPool)
         {
-            this.texture = texture;
+            this.texturesPool = texturesPool;
+            Texture = texturesPool.Get();
+        }
+
+        public void Dispose()
+        {
+            texturesPool.Release(Texture);
         }
     }
 }

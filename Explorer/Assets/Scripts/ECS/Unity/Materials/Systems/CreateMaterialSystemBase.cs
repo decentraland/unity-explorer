@@ -38,8 +38,9 @@ namespace ECS.Unity.Materials.Systems
 
         protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, TextureComponent? textureComponent)
         {
-            if (textureResult.Succeeded)
-                material.SetTexture(propId, textureResult.Asset);
+            if (!textureResult.Succeeded) return;
+
+            material.SetTexture(propId, textureResult.Asset);
 
             if (textureComponent is { IsVideoTexture: true })
                 material.SetTextureScale(propId, VIDEO_TEXTURE_VERTICAL_FLIP);

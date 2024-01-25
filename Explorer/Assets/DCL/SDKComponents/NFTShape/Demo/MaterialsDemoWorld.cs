@@ -3,6 +3,7 @@ using CRDT;
 using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Pooling;
@@ -41,6 +42,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             IPerformanceBudget memoryBudget,
             DestroyMaterial destroyMaterial,
             ISceneData sceneData,
+            IExtendedObjectPool<Texture2D> videoTexturePool = null,
             int attemptLoad = 5
         )
         {
@@ -49,7 +51,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             demoWorld = new DemoWorld(
                 world,
                 w => { },
-                w => new StartMaterialsLoadingSystem(w, destroyMaterial, sceneData, attemptLoad, capFrameBudget, entityMap),
+                w => new StartMaterialsLoadingSystem(w, destroyMaterial, sceneData, attemptLoad, capFrameBudget, entityMap, videoTexturePool),
                 w => new CreateBasicMaterialSystem(w, materialsPool, capFrameBudget, memoryBudget),
                 w => new CreatePBRMaterialSystem(w, materialsPool, capFrameBudget, memoryBudget),
                 w => new ApplyMaterialSystem(w, sceneData),
