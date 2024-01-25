@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Systems;
 using DCL.Utilities;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -53,6 +54,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         public void Teardown()
         {
             Object.DestroyImmediate(playerAvatarBase.gameObject);
+            Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
         }
 
         [Test]
@@ -228,6 +230,53 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         }
 
         [Test]
-        public async Task StopUpdatingTransformAfterComponentRemoval() { }
+        public async Task StopUpdatingTransformOnComponentRemoval()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+
+            system.Update(0);
+            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+
+            playerAvatarBase.transform.position += Vector3.one * 5;
+            playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
+            world.Remove<PBAvatarAttach>(entity);
+            system.Update(0);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+        }
+
+        [Test]
+        public async Task StopUpdatingTransformOnEntityDeletion()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+
+            system.Update(0);
+            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+
+            world.Add<DeleteEntityIntention>(entity);
+            system.Update(0);
+
+            playerAvatarBase.transform.position += Vector3.one * 5;
+            playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
+            system.Update(0);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+        }
     }
 }

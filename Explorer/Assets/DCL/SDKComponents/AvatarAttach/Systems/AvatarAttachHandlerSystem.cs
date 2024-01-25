@@ -33,6 +33,8 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             SetupAvatarAttachQuery(World);
             UpdateAvatarAttachTransformQuery(World);
+            HandleComponentRemovalQuery(World);
+            HandleEntityDestructionQuery(World);
         }
 
         [Query]
@@ -79,6 +81,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         private void HandleEntityDestruction(in Entity entity)
         {
             World.Remove<AvatarAttachComponent>(entity);
+            World.Remove<PBAvatarAttach>(entity);
         }
 
         [Query]
