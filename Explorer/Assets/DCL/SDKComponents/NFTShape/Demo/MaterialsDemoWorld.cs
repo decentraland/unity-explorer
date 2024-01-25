@@ -8,7 +8,6 @@ using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Pooling;
 using ECS.Unity.Materials.Systems;
-using NSubstitute;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -46,7 +45,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             int attemptLoad = 5
         )
         {
-            IReadOnlyDictionary<CRDTEntity, Entity> entityMap = Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>();
+            IReadOnlyDictionary<CRDTEntity, Entity> entityMap = new Dictionary<CRDTEntity, Entity>();
 
             demoWorld = new DemoWorld(
                 world,
