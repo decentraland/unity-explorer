@@ -87,7 +87,8 @@ namespace Global.Dynamic
         {
             World world = globalWorld!.EcsWorld;
 
-            await UnloadCurrentRealmAsync();
+            try { await UnloadCurrentRealmAsync(); }
+            catch (ObjectDisposedException) { }
 
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
@@ -105,6 +106,8 @@ namespace Global.Dynamic
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;
+
+            teleportController.SceneProviderStrategy = sceneProviderStrategy;
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
