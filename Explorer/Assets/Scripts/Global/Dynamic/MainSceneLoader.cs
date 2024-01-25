@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
@@ -143,7 +144,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
+                Entity playerEntity;
+
+                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer!.CharacterObject);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
@@ -156,7 +159,7 @@ namespace Global.Dynamic
 
                 await ShowAuthenticationScreenAsync(ct);
 
-                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(ct));
+                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(playerEntity, ct));
             }
             catch (OperationCanceledException)
             {
@@ -176,13 +179,14 @@ namespace Global.Dynamic
                 cancellationToken: ct);
         }
 
-        private async UniTask LoadCharacterAndWorldAsync(CancellationToken ct)
+        private async UniTask LoadCharacterAndWorldAsync(Entity playerEntity, CancellationToken ct)
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
             loadReport!.ProgressCounter.Value = 0.2f;
 
-            globalWorld!.EcsWorld.SetProfileToOwnPlayer(ownProfile);
+            // Add the profile into the player entity so it will create the avatar in world
+            globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
 
             await TeleportToSpawnPointAsync(ct);
 

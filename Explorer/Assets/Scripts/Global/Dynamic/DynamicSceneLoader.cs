@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -134,10 +135,13 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
+                Entity playerEntity;
+
+                (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
-                globalWorld.EcsWorld.SetProfileToOwnPlayer(CreateRandomProfile());
+                // Add the profile into the player entity so it will create the avatar in world
+                globalWorld.EcsWorld.Add(playerEntity, CreateRandomProfile());
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
