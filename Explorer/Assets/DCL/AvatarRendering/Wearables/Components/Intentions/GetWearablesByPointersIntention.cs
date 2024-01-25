@@ -1,7 +1,6 @@
 using AssetManagement;
 using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,19 +8,6 @@ using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-
-    public struct HideWearablesResolution
-    {
-        public readonly IReadOnlyCollection<string> ForceRender;
-        [CanBeNull] public List<IWearable> VisibleWearables;
-
-        public HideWearablesResolution(IReadOnlyCollection<string> forceRender)
-        {
-            ForceRender = forceRender;
-            VisibleWearables = null;
-        }
-    }
-
     public struct GetWearablesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetWearablesByPointersIntention>
     {
         public readonly List<string> Pointers;
