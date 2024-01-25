@@ -104,19 +104,18 @@ namespace DCL.CharacterPreview
             if (i.IsBodyShape())
             {
                 previewModel.BodyShape = i.GetUrn();
-            }else if (!previewModel.Wearables.Contains(i.GetUrn()))
+            }
+            else if (!previewModel.Wearables.Contains(i.GetUrn()))
             {
                 previewModel.Wearables.Add(i.GetUrn());
             }
+            
             OnModelUpdated();
         }
 
         private void OnUnequipped(IWearable i)
         {
-            if (i.IsBodyShape())
-            {
-
-            }else if (previewModel.Wearables.Contains(i.GetUrn()))
+            if (previewModel.Wearables.Contains(i.GetUrn()))
             {
                 previewModel.Wearables.Remove(i.GetUrn());
             }
