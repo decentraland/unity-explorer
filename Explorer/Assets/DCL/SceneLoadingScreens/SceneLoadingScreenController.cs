@@ -80,6 +80,7 @@ namespace DCL.SceneLoadingScreens
             base.OnViewShow();
 
             viewInstance.RootCanvasGroup.alpha = 1f;
+            viewInstance.ContentCanvasGroup.alpha = 1f;
         }
 
         protected override void OnViewClose()
@@ -111,7 +112,9 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask FadeOutAsync(CancellationToken ct)
         {
-            await viewInstance.RootCanvasGroup.DOFade(0f, 0.6f).AsyncWaitForCompletion();
+            UniTask contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.3f).AsyncWaitForCompletion().AsUniTask();
+            UniTask rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.6f).AsyncWaitForCompletion().AsUniTask();
+            await UniTask.WhenAll(contentTask, rootTask);
             ct.ThrowIfCancellationRequested();
         }
 

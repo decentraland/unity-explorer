@@ -17,6 +17,9 @@ namespace DCL.SceneLoadingScreens
         public CanvasGroup RootCanvasGroup { get; private set; } = null!;
 
         [field: SerializeField]
+        public CanvasGroup ContentCanvasGroup { get; private set; } = null!;
+
+        [field: SerializeField]
         public Slider ProgressBar { get; private set; } = null!;
 
         [field: SerializeField]
