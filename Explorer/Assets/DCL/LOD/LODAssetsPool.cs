@@ -13,23 +13,22 @@ namespace DCL.LOD
 {
     public class LODAssetsPool : ILODAssetsPool
     {
-        internal readonly Dictionary<string, LODAsset> vacantInstances;
+        internal readonly Dictionary<LODKey, LODAsset> vacantInstances;
 
         private readonly Transform parentContainer;
-        private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
-        private IStreamableCache<LODAsset, string> streamableCacheImplementation;
+        private readonly SimplePriorityQueue<LODKey, long> unloadQueue = new ();
 
         public LODAssetsPool()
         {
             parentContainer = new GameObject("POOL_CONTAINER_LodCache").transform;
             parentContainer.gameObject.SetActive(false);
 
-            vacantInstances = new Dictionary<string, LODAsset>(StringComparer.CurrentCultureIgnoreCase);
+            vacantInstances = new Dictionary<LODKey, LODAsset>();
         }
 
-        public bool TryGet(in string key, out LODAsset asset)
+        public bool TryGet(in LODKey key, out LODAsset asset)
         {
-            if (key != null && vacantInstances.Remove(key, out asset))
+            if (vacantInstances.Remove(key, out asset))
             {
                 ProfilingCounters.LODInstantiatedInCache.Value--;
 
@@ -42,11 +41,8 @@ namespace DCL.LOD
             return false;
         }
 
-        public void Release(in string key, LODAsset asset)
+        public void Release(in LODKey key, LODAsset asset)
         {
-            if (key == null)
-                return;
-
             Assert.IsFalse(vacantInstances.ContainsKey(key)); // 1 to 1 - relation, if it is true then we have a problem in our logic
 
             vacantInstances[key] = asset;
@@ -67,11 +63,10 @@ namespace DCL.LOD
 
             while (frameTimeBudgetProvider.TrySpendBudget()
                    && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
-                   && unloadQueue.TryDequeue(out string key) && vacantInstances.TryGetValue(key, out LODAsset asset))
+                   && unloadQueue.TryDequeue(out LODKey key) && vacantInstances.Remove(key, out LODAsset asset))
             {
                 unloadedAmount++;
                 asset.Dispose();
-                vacantInstances.Remove(key);
             }
 
             ProfilingCounters.LODInstantiatedInCache.Value -= unloadedAmount;

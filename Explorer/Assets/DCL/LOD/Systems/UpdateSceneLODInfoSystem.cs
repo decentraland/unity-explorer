@@ -56,7 +56,7 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        public void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent)
         {
             if (sceneLODInfo.IsDirty)
             {
@@ -71,7 +71,7 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        public void ResolveCurrentLODPromise(in Entity entity, ref SceneLODInfo sceneLODInfo)
+        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo)
         {
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
@@ -81,12 +81,13 @@ namespace DCL.LOD.Systems
             {
                 if (result.Succeeded)
                 {
-                    lodCache.Release(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
+                    sceneLODInfo.CurrentLOD.TryRelease(lodCache);
                     var instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition,
                         Quaternion.identity);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
                         in sceneLODInfo.SceneCircumscribedPlanes);
-                    sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash,
+
+                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneLODInfo.SceneHash, sceneLODInfo.CurrentLODLevel),
                         instantiatedLOD, result.Asset);
                 }
                 else
@@ -103,9 +104,9 @@ namespace DCL.LOD.Systems
         {
             //If we are in an SDK6 scene, this value will be kept.
             //Therefore, lod0 will be shown
-            var sceneLODCandidate = 0;
+            byte sceneLODCandidate = 0;
 
-            for (var i = 0; i < lodBucketThresholds.Count; i++)
+            for (byte i = 0; i < lodBucketThresholds.Count; i++)
             {
                 if (partitionComponent.Bucket >= lodBucketThresholds[i])
                     sceneLODCandidate = i;
@@ -116,19 +117,19 @@ namespace DCL.LOD.Systems
         }
 
         private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
-            int sceneLODCandidate)
+            byte sceneLODCandidate)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
             sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            var newLODKey = $"{sceneLODInfo.SceneHash}_{sceneLODInfo.CurrentLODLevel}";
+            var newLODKey = new LODKey(sceneLODInfo.SceneHash, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.CurrentLOD.LodKey)) return;
-            
+            if (newLODKey.Equals(sceneLODInfo.CurrentLOD)) return;
+
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
-                lodCache.Release(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
+                sceneLODInfo.CurrentLOD.TryRelease(lodCache);
                 sceneLODInfo.CurrentLOD = cachedAsset;
             }
             else
@@ -149,13 +150,13 @@ namespace DCL.LOD.Systems
 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,
-                        GetAssetBundleIntention.FromHash(newLODKey,
+                        GetAssetBundleIntention.FromHash(newLODKey.ToString(),
                             permittedSources: AssetSource.EMBEDDED,
                             customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
                         partitionComponent);
             }
         }
 
-       
+
     }
 }

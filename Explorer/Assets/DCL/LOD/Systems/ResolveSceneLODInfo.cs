@@ -39,7 +39,7 @@ namespace DCL.LOD.Systems
         {
             if (!sceneLODInfo.IsDirty) return;
 
-            sceneLODInfo.CurrentLODLevel = -1;
+            sceneLODInfo.CurrentLODLevel = byte.MaxValue;
             sceneLODInfo.SceneHash = sceneDefinitionComponent.Definition.id;
             sceneLODInfo.ParcelPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
             sceneLODInfo.SceneCircumscribedPlanes = sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes;

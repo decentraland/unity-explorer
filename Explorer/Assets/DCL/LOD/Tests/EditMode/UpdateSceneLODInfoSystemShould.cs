@@ -47,7 +47,7 @@ namespace DCL.LOD.Tests
 
         private void InitializeSceneLODInfo()
         {
-            sceneLODInfo.CurrentLODLevel = -1;
+            sceneLODInfo.CurrentLODLevel = byte.MaxValue;
             sceneLODInfo.SceneHash = "FakeHash";
             sceneLODInfo.ParcelPosition = new Vector3(0, 0);
         }
@@ -90,10 +90,9 @@ namespace DCL.LOD.Tests
 
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-            Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD.Root);
-            Assert.AreEqual($"{sceneLODInfoRetrieved.SceneHash.ToLower()}_lod2",
-                sceneLODInfoRetrieved.CurrentLOD.LodKey);
-            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.AssetBundleReference);
+            Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
+            Assert.AreEqual(new LODKey(sceneLODInfoRetrieved.SceneHash, 2), sceneLODInfoRetrieved.CurrentLOD.Value.LodKey);
+            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.Value.AssetBundleReference);
         }
 
         [Test]

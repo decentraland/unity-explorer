@@ -8,11 +8,11 @@ namespace DCL.LOD
 {
     public struct LODAsset : IDisposable
     {
-        public string LodKey;
+        public LODKey LodKey;
         public GameObject Root;
         public AssetBundleData AssetBundleReference;
 
-        public LODAsset(string lodKey, GameObject root, AssetBundleData assetBundleReference)
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference)
         {
             LodKey = lodKey;
             Root = root;
