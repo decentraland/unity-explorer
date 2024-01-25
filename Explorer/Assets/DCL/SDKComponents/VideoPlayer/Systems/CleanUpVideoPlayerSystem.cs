@@ -26,16 +26,29 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         protected override void Update(float t)
         {
             HandleSdkComponentRemovalQuery(World);
+            HandleEntityDestructionQuery(World);
         }
 
         [Query]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkComponentRemoval(ref VideoTextureComponent textureComponent, ref VideoPlayerComponent component)
+        private void HandleSdkComponentRemoval(ref VideoTextureComponent textureComponent, ref VideoPlayerComponent videoPlayer)
+        {
+            CleanUpComponents(ref textureComponent, ref videoPlayer);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(ref VideoTextureComponent textureComponent, ref VideoPlayerComponent videoPlayer)
+        {
+            CleanUpComponents(ref textureComponent, ref videoPlayer);
+        }
+
+        private void CleanUpComponents(ref VideoTextureComponent textureComponent, ref VideoPlayerComponent videoPlayer)
         {
             textureComponent.Dispose();
 
-            component.Dispose();
-            mediaPlayerPool.Release(component.MediaPlayer);
+            videoPlayer.Dispose();
+            mediaPlayerPool.Release(videoPlayer.MediaPlayer);
         }
     }
 }

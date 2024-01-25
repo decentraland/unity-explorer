@@ -2,13 +2,12 @@
 using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.AudioStream;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 
 #if AV_PRO_PRESENT
+using DCL.SDKComponents.AudioStream;
 using DCL.SDKComponents.VideoPlayer.Systems;
 using RenderHeads.Media.AVProVideo;
 #endif
@@ -36,10 +35,8 @@ namespace DCL.SDKComponents.VideoPlayer.Wrapper
         {
 #if AV_PRO_PRESENT
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
-
             VideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
             CleanUpVideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool);
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, VideoPlayerComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
         }
     }
