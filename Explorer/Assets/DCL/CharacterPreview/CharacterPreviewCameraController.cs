@@ -78,8 +78,10 @@ namespace DCL.CharacterPreview
                 {
                     var rotation = characterPreviewContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * characterPreviewContainer.rotationModifier;
+                    //Disabled vertical rotation
+                    //rotation.x += pointerEventData.delta.y * rotationModifier;
+
                     rotation.y += pointerEventData.delta.x * rotationModifier;
-                    rotation.x += pointerEventData.delta.y * rotationModifier;
                     var quaternion = new Quaternion
                     {
                         eulerAngles = rotation,
