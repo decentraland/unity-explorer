@@ -209,8 +209,8 @@ namespace DCL.SceneLoadingScreens
                 int prevTip = currentTip;
                 currentTip = index;
 
-                await UniTask.WhenAll(viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct),
-                    viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct));
+                await viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct);
+                await viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct);
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
