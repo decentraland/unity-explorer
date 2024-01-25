@@ -21,8 +21,11 @@ namespace DCL.SDKComponents.AudioStream.Wrapper
 #if AV_PRO_PRESENT
             this.componentPoolsRegistry = componentPoolsRegistry;
 
-            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
-            cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
+            if (!componentPoolsRegistry.TryGetPool<MediaPlayer>(out _))
+            {
+                componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
+                cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
+            }
 #endif
         }
 

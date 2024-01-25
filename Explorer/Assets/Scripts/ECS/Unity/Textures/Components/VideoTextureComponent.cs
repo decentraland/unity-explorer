@@ -7,18 +7,17 @@ namespace ECS.Unity.Textures.Components
     public readonly struct VideoTextureComponent : IDisposable
     {
         public readonly Texture2D Texture;
+        private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
 
-        private readonly IExtendedObjectPool<Texture2D> texturesPool;
-
-        public VideoTextureComponent(IExtendedObjectPool<Texture2D> texturesPool)
+        public VideoTextureComponent(IExtendedObjectPool<Texture2D> videoTexturePool)
         {
-            this.texturesPool = texturesPool;
-            Texture = texturesPool.Get();
+            this.videoTexturePool = videoTexturePool;
+            Texture = this.videoTexturePool.Get();
         }
 
         public void Dispose()
         {
-            texturesPool.Release(Texture);
+            videoTexturePool.Release(Texture);
         }
     }
 }

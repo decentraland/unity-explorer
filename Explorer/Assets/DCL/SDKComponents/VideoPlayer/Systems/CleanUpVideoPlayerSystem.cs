@@ -7,6 +7,7 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 
 namespace DCL.SDKComponents.VideoPlayer.Systems
@@ -29,8 +30,10 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
 
         [Query]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkComponentRemoval(ref VideoPlayerComponent component)
+        private void HandleSdkComponentRemoval(ref VideoTextureComponent textureComponent, ref VideoPlayerComponent component)
         {
+            textureComponent.Dispose();
+
             component.Dispose();
             mediaPlayerPool.Release(component.MediaPlayer);
         }
