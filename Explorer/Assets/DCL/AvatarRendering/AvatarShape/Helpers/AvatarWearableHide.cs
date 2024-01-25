@@ -61,7 +61,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     wearable.GetHidingList(bodyShapeId, hideCategories);
 
                     if (hideCategories.Contains(hiddenCategory.ToLower()))
+                    {
+                        HashSetPool<string>.Release(hideCategories);
                         return wearable.GetCategory();
+                    }
+
+                    HashSetPool<string>.Release(hideCategories);
                 }
             }
 
