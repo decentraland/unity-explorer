@@ -16,6 +16,8 @@ namespace DCL.SDKComponents.VideoPlayer
         public readonly MediaPlayer MediaPlayer;
         public string URL;
 
+        public bool IsPlaying => MediaPlayer.Control.IsPlaying();
+
         MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => MediaPlayer;
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
 

@@ -1,5 +1,4 @@
 ﻿using DCL.ECSComponents;
-using Decentraland.Common;
 using ECS.Unity.ColorComponent;
 using UnityEngine;
 

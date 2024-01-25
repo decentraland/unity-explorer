@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         {
             UpdateVolume(ref playerComponent, sdkVideo, sceneStateProvider.IsCurrent);
 
-            if (sdkVideo.HasPlaying && sdkVideo.Playing)
+            if (playerComponent.IsPlaying)
                 UpdateVideoTexture(ref assignedTexture, playerComponent.MediaPlayer.TextureProducer.GetTexture());
 
             if (!sdkVideo.IsDirty || !sdkVideo.Src.IsValidUrl()) return;

@@ -220,7 +220,8 @@ namespace ECS.Unity.Materials.Systems
             return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
                    textureComponent.WrapMode == intention.WrapMode &&
                    textureComponent.FilterMode == intention.FilterMode &&
-                   textureComponent.IsVideoTexture == intention.IsVideoTexture;
+                   textureComponent.IsVideoTexture == intention.IsVideoTexture &&
+                   textureComponent.VideoPlayerEntity == intention.VideoPlayerEntity;
         }
     }
 }
