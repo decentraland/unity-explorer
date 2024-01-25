@@ -2,7 +2,6 @@ Shader "DCL/UI/Blur"
 {
     Properties
     {
-        _BlurSize ("Blur Size", Range (0, 5)) = 2.5
         _Samples ("Samples", Float) = 1
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
@@ -79,6 +78,7 @@ Shader "DCL/UI/Blur"
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_TexelSize;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
@@ -86,7 +86,6 @@ Shader "DCL/UI/Blur"
             float _UIMaskSoftnessX;
             float _UIMaskSoftnessY;
             int _UIVertexColorAlwaysGammaSpace;
-            float _BlurSize;
             float _Samples;
 
             half4 SampleSpriteTexture(float2 uv, sampler2D tex)
@@ -133,18 +132,25 @@ Shader "DCL/UI/Blur"
                 const half invAlphaPrecision = half(1.0 / alphaPrecision);
                 IN.color.a = round(IN.color.a * alphaPrecision) * invAlphaPrecision;
 
-                half4 blurColor;
+                half4 blurColor = half4(0, 0, 0, 0);
 
-                for (half i = 0; i <= _Samples; i++)
-                {
-                    blurColor += SampleSpriteTexture(IN.texcoord + fixed2(-_BlurSize, -_BlurSize) * i, _MainTex) +
-                        SampleSpriteTexture(IN.texcoord + fixed2(_BlurSize, -_BlurSize) * i, _MainTex) +
-                        SampleSpriteTexture(IN.texcoord + fixed2(-_BlurSize, _BlurSize) * i, _MainTex) +
-                        SampleSpriteTexture(IN.texcoord + fixed2(_BlurSize, _BlurSize) * i, _MainTex);
-                }
+                int upper = (_Samples - 1) / 2;
+                int lower = -upper;
+                int samples = 0;
 
-                blurColor += SampleSpriteTexture(IN.texcoord, _MainTex);
-                blurColor /= _Samples * 4 + 1;
+                for (int x = lower; x <= upper; ++x)
+	            {
+		            for (int y = lower; y <= upper; ++y)
+		            {
+			            samples++;
+
+		                float2 offset = float2(_MainTex_TexelSize.x * x, _MainTex_TexelSize.y * y);
+		                blurColor += SampleSpriteTexture(IN.texcoord + offset, _MainTex);
+		            }
+	            }
+                
+                blurColor /= samples;
+
                 half4 color = IN.color * (blurColor + _TextureSampleAdd);
 
                 #ifdef UNITY_UI_CLIP_RECT

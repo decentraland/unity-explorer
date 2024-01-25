@@ -31,7 +31,7 @@ Material:
     m_Floats:
     - _BlurSize: 0.001
     - _ColorMask: 15
-    - _Samples: 8
+    - _Samples: 30
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
