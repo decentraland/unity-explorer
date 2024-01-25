@@ -121,7 +121,7 @@ namespace DCL.ParcelsService
             try
             {
                 await UniTask.WhenAll(reportsBuffer.Select((report, i) =>
-                    report.PropagateProgressCounterAsync(loadReport, ct,
+                    report.PropagateAsync(loadReport, ct,
                         FACTOR * i, (FACTOR * i) + FACTOR,
 
                         // add timeout in case of a trouble
