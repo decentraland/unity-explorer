@@ -45,21 +45,18 @@ namespace DCL.CharacterPreview
             //else if (position.z > characterPreviewContainer.depthLimits.x) position.z = characterPreviewContainer.depthLimits.x;
 
             characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
+            characterPreviewContainer.StopCameraTween();
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
+            characterPreviewContainer.StopCameraTween();
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
                 {
                     var position = characterPreviewContainer.cameraTarget.localPosition;
                     float dragModifier = Time.deltaTime * characterPreviewContainer.dragMovementModifier;
-
-                    //Disabled horizontal panning for now
-                    //position.x += pointerEventData.delta.x * dragModifier;
-                    //if (position.x < -characterPreviewContainer.maxHorizontalOffset) position.x = -characterPreviewContainer.maxHorizontalOffset;
-                    //else if (position.x > characterPreviewContainer.maxHorizontalOffset) position.x = characterPreviewContainer.maxHorizontalOffset;
 
                     position.y -= pointerEventData.delta.y * dragModifier;
                     if (position.y < characterPreviewContainer.minVerticalOffset) position.y = characterPreviewContainer.minVerticalOffset;
@@ -72,8 +69,6 @@ namespace DCL.CharacterPreview
                 {
                     var rotation = characterPreviewContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * characterPreviewContainer.rotationModifier;
-                    //Disabled vertical rotation
-                    //rotation.x += pointerEventData.delta.y * rotationModifier;
 
                     rotation.y += pointerEventData.delta.x * rotationModifier;
                     var quaternion = new Quaternion

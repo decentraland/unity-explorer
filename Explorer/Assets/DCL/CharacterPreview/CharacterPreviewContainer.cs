@@ -1,5 +1,5 @@
 using Cinemachine;
-using DCL.CharacterCamera.Settings;
+using DG.Tweening;
 using System;
 using UnityEngine;
 
@@ -17,7 +17,7 @@ namespace DCL.CharacterPreview
     ///     Contains serialized data only needed for the character preview
     ///     See CharacterPreviewController in the old renderer
     /// </summary>
-    public class CharacterPreviewContainer : MonoBehaviour
+    public class CharacterPreviewContainer : MonoBehaviour, IDisposable
     {
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
 
@@ -37,18 +37,42 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Vector2 depthLimits { get; private set; }
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
 
+
+        private Tween fovTween;
+
         public void Initialize(RenderTexture targetTexture)
         {
             this.transform.position = new Vector3(0, 5000, 0);
             camera.targetTexture = targetTexture;
+            camera.clearFlags = CameraClearFlags.Depth; // or CameraClearFlags.SolidColor
+            camera.backgroundColor = new Color(0f, 0f, 0f, 0f); // Transparent background color
             rotationTarget.rotation = Quaternion.identity;
-            SetCameraPosition(cameraPositions[0]);
+
+            if (cameraPositions.Length > 0)
+            {
+                SetCameraPosition(cameraPositions[0]);
+            }
         }
 
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)
         {
             cameraTarget.localPosition = preset.verticalPosition;
-            freeLookCamera.m_Lens.FieldOfView = preset.cameraFieldOfView; //We need to animate FOV setting from previous to next
+
+            StopCameraTween();
+
+            fovTween = DOTween.To(() => freeLookCamera.m_Lens.FieldOfView, x => freeLookCamera.m_Lens.FieldOfView = x, preset.cameraFieldOfView, 1)
+                   .SetEase(Ease.OutQuad)
+                   .OnComplete(() => fovTween = null);
+        }
+
+        public void StopCameraTween()
+        {
+            fovTween?.Kill();
+        }
+
+        public void Dispose()
+        {
+            StopCameraTween();
         }
     }
 
