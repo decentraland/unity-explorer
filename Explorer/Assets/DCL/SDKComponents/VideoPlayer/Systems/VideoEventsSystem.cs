@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Groups;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -15,15 +16,13 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.VIDEO_PLAYER)]
-    public partial class VideoEventsSystem: BaseUnityLoopSystem
+    public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
-        private static readonly PBVideoEvent PB_VIDEO_EVENT = new ();
-
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IComponentPool<PBVideoEvent> componentPool;
 
-        public VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IComponentPool<PBVideoEvent> componentPool) : base(world)
+        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IComponentPool<PBVideoEvent> componentPool) : base(world)
         {
             ecsToCRDTWriter = ecsToCrdtWriter;
             this.sceneStateProvider = sceneStateProvider;
@@ -39,18 +38,19 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         [All(typeof(PBVideoPlayer))]
         private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref VideoPlayerComponent videoPlayer)
         {
-            Debug.Log($"VV video event for {sdkEntity}");
+            if (!videoPlayer.StateHasChanged()) return;
 
-            PB_VIDEO_EVENT.State = VideoState.VsPlaying;
+            using PoolExtensions.Scope<PBVideoEvent> scope = componentPool.AutoScope();
+            PBVideoEvent pbVideoEvent = scope.Value;
 
-            PB_VIDEO_EVENT.Timestamp = sceneStateProvider.TickNumber;
-            PB_VIDEO_EVENT.TickNumber = sceneStateProvider.TickNumber;
+            pbVideoEvent.State = videoPlayer.CurrentState;
+            pbVideoEvent.CurrentOffset = videoPlayer.CurrentTime;
+            pbVideoEvent.VideoLength = videoPlayer.Duration;
 
-            PB_VIDEO_EVENT.VideoLength = (float)videoPlayer.MediaPlayer.Info.GetDuration();
-            PB_VIDEO_EVENT.CurrentOffset = (float)videoPlayer.MediaPlayer.Control.GetCurrentTime();
+            pbVideoEvent.Timestamp = sceneStateProvider.TickNumber;
+            pbVideoEvent.TickNumber = sceneStateProvider.TickNumber;
 
-            // ecsToCRDTWriter.PutMessage(sdkEntity, pbVideoEvent);
-            ecsToCRDTWriter.AppendMessage(sdkEntity, PB_VIDEO_EVENT, (int)PB_VIDEO_EVENT.Timestamp);
+            ecsToCRDTWriter.AppendMessage(sdkEntity, pbVideoEvent, (int)pbVideoEvent.Timestamp);
         }
     }
 }
