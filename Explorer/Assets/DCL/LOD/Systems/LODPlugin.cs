@@ -54,7 +54,7 @@ namespace DCL.LOD
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset);
             ResolveSceneLODInfo.InjectToWorld(ref builder, lodAssetsPool);
 
             UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget);
