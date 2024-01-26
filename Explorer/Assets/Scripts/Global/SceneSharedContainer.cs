@@ -25,6 +25,7 @@ namespace Global
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
                 exposedGlobalDataContainer.ExposedCameraData,
+                staticContainer.SceneReadinessReportQueue,
                 staticContainer.ECSWorldPlugins);
 
             return new SceneSharedContainer

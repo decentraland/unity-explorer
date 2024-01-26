@@ -14,11 +14,13 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
+using GatherGltfAssetsSystem = ECS.SceneLifeCycle.Systems.GatherGltfAssetsSystem;
 
 namespace SceneRunner.ECSWorld
 {
@@ -29,10 +31,12 @@ namespace SceneRunner.ECSWorld
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IExposedCameraData exposedCameraData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData,
             IExposedCameraData exposedCameraData,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
             IReadOnlyList<IDCLWorldPlugin> plugins)
         {
             this.plugins = plugins;
@@ -40,6 +44,7 @@ namespace SceneRunner.ECSWorld
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.exposedCameraData = exposedCameraData;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)
@@ -77,6 +82,8 @@ namespace SceneRunner.ECSWorld
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+
+            GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, args.SceneData);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));

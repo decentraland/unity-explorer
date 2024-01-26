@@ -38,7 +38,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
-        internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
+        public InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget instantiationFrameTimeBudget, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;

@@ -57,7 +57,7 @@ namespace DCL.WebRequests
         }
 
         public static async UniTask<T> CreateFromJsonAsync<TRequest, T>(this TRequest typedWebRequest, WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread, CreateExceptionOnParseFail createCustomExceptionOnFailure = null)
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread, CreateExceptionOnParseFail? createCustomExceptionOnFailure = null)
             where TRequest: ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             UnityWebRequest webRequest = typedWebRequest.UnityWebRequest;

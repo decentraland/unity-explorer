@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             URL = url;
             CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
