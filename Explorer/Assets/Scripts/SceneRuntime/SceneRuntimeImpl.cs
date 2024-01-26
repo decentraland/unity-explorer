@@ -1,4 +1,4 @@
-using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3;
@@ -128,10 +128,10 @@ namespace SceneRuntime
 
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
-            ArraySegment<byte> result = engineApi.api.CrdtSendToRenderer(data, false);
+            PoolableByteArray result = engineApi.api.CrdtSendToRenderer(data, false);
 
             // Initial messages are not expected to return anything
-            Assert.IsTrue(result.Count == 0);
+            Assert.IsTrue(result.IsEmpty());
         }
 
         public ITypedArray<byte> CreateUint8Array(int length) =>

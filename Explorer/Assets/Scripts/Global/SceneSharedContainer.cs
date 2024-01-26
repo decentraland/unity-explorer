@@ -1,5 +1,6 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using DCL.PluginSystem.World.Dependencies;
 using SceneRunner;
 using SceneRunner.ECSWorld;
