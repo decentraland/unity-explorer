@@ -92,16 +92,16 @@ namespace ECS.SceneLifeCycle.Systems
                 ref Entity entityFirstElement = ref chunk.Entity(0);
                 ref VisualSceneState visualscenestateFirstElement = ref chunk.GetFirst<VisualSceneState>();
                 ref SceneDefinitionComponent scenedefinitioncomponentFirstElement = ref chunk.GetFirst<SceneDefinitionComponent>();
-                ref T? customComponentFirstElement = ref chunk.GetFirst<T>();
-                ref PartitionComponent? partitioncomponentFirstElement = ref chunk.GetFirst<PartitionComponent>();
+                ref T customComponentFirstElement = ref chunk.GetFirst<T>();
+                ref PartitionComponent partitioncomponentFirstElement = ref chunk.GetFirst<PartitionComponent>();
 
                 foreach (int entityIndex in chunk)
                 {
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref VisualSceneState visualSceneStateComponent = ref Unsafe.Add(ref visualscenestateFirstElement, entityIndex);
                     ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref scenedefinitioncomponentFirstElement, entityIndex);
-                    ref T? customComponent = ref Unsafe.Add(ref customComponentFirstElement, entityIndex);
-                    ref PartitionComponent? partitionComponent = ref Unsafe.Add(ref partitioncomponentFirstElement, entityIndex);
+                    ref T customComponent = ref Unsafe.Add(ref customComponentFirstElement, entityIndex);
+                    ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitioncomponentFirstElement, entityIndex);
 
                     // embed checking is dirty here as it's a starting point
                     if (partitioncomponentFirstElement.IsDirty)
