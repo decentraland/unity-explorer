@@ -42,10 +42,17 @@ namespace DCL.ParcelsService
             debugContainerBuilder.AddWidget("Teleport")
                                  .AddControl(new DebugVector2IntFieldDef(binding), null)
                                  .AddControl(
-                                      new DebugButtonDef("To Parcel", () => teleportController.TeleportToParcel(binding.Value)),
+                                      new DebugButtonDef("To Parcel", () =>
+                                      {
+                                          var loadReport = AsyncLoadProcessReport.Create();
+
+                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
+                                                      teleportController.TeleportToParcelAsync(binding.Value, loadReport, CancellationToken.None))
+                                                 .Forget();
+                                      }),
                                       new DebugButtonDef("To Spawn Point", () =>
                                       {
-                                          var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+                                          var loadReport = AsyncLoadProcessReport.Create();
 
                                           UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
                                                       teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))

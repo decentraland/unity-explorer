@@ -9,6 +9,6 @@ namespace DCL.ParcelsService
     {
         UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
 
-        void TeleportToParcel(Vector2Int parcel);
+        UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
     }
 }
