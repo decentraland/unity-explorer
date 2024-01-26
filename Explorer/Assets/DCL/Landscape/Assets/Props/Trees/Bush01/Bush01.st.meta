@@ -26,17 +26,17 @@ SpeedTreeImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Default_LOD0
-    second: {fileID: 2100000, guid: a12579d9a69fb9446a50680055d797c1, type: 2}
+    second: {fileID: 2100000, guid: d94bf56d5523da642bce2fe5c122a150, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Default_LOD1
-    second: {fileID: 2100000, guid: 560ee027bbc02fc4381a01e4bfb14fbc, type: 2}
+    second: {fileID: 2100000, guid: d94bf56d5523da642bce2fe5c122a150, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Default_LOD2
-    second: {fileID: 2100000, guid: 9c9f1b695f8511f4fa1c580a1f833e3c, type: 2}
+    second: {fileID: 2100000, guid: d94bf56d5523da642bce2fe5c122a150, type: 2}
   serializedVersion: 6
   mainColor: {r: 1, g: 1, b: 1, a: 1}
   hueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}

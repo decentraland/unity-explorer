@@ -31,12 +31,12 @@ SpeedTreeImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Trunk_LOD1
-    second: {fileID: 2100000, guid: ceb075fed3293d44dbd0c51ec9deedc5, type: 2}
+    second: {fileID: 2100000, guid: d94bf56d5523da642bce2fe5c122a150, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Trunk_LOD2
-    second: {fileID: 2100000, guid: 0a163f533b7a1e140903873ef1bcf6b1, type: 2}
+    second: {fileID: 2100000, guid: d94bf56d5523da642bce2fe5c122a150, type: 2}
   serializedVersion: 6
   mainColor: {r: 1, g: 1, b: 1, a: 1}
   hueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}
