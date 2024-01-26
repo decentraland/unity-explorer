@@ -95,7 +95,7 @@ namespace DCL.SceneLoadingScreens
         {
             try
             {
-                await LoadTips(ct).Timeout(inputData.Timeout);
+                await LoadTipsAsync(ct).Timeout(inputData.Timeout);
 
                 ShowTip(0);
 
@@ -132,7 +132,7 @@ namespace DCL.SceneLoadingScreens
             }
         }
 
-        private async UniTask LoadTips(CancellationToken ct)
+        private async UniTask LoadTipsAsync(CancellationToken ct)
         {
             tips = await sceneTipsProvider.GetAsync(ct);
 
