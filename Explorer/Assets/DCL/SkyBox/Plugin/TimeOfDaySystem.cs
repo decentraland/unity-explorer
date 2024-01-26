@@ -86,12 +86,12 @@ namespace DCL.SkyBox
             Color ambientSkyColor = new Color((float)125 / 255, (float)136 / 255, (float)159 / 255);
             Color ambientEquatorColor = new Color((float)170 / 255, (float)197 / 255, (float)178 / 255);
             Color ambientGroundColor = new Color((float)12 / 255, (float)9 / 255, (float)3 / 255);
-            RenderSettings.ambientSkyColor = ambientSkyColor * output.LightIntensity;
-            RenderSettings.ambientEquatorColor = ambientEquatorColor * output.LightIntensity;
-            RenderSettings.ambientGroundColor = ambientGroundColor * output.LightIntensity;
-
-            RenderSettings.fogDensity = output.LightIntensity * 0.001f;
-            RenderSettings.fogColor = RenderSettings.ambientEquatorColor;
+            // RenderSettings.ambientSkyColor = ambientSkyColor * output.LightIntensity;
+            // RenderSettings.ambientEquatorColor = ambientEquatorColor * output.LightIntensity;
+            // RenderSettings.ambientGroundColor = ambientGroundColor * output.LightIntensity;
+            //
+            // RenderSettings.fogDensity = output.LightIntensity * 0.001f;
+            // RenderSettings.fogColor = RenderSettings.ambientEquatorColor;
 
             // Update the model
             model.SetStellarPositions(output.SunPos, output.MoonPos);
