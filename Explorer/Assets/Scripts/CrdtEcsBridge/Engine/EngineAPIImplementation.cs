@@ -149,6 +149,10 @@ namespace CrdtEcsBridge.Engine
 
             try
             {
+                // Apply outgoing messages straight-away so they are reflected in the current CRDT state
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                    SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
+
                 // Create CRDT Messages from the current state
                 // we know exactly how big the array should be
                 int messagesCount = crdtProtocol.GetMessagesCount();
@@ -156,16 +160,8 @@ namespace CrdtEcsBridge.Engine
 
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
-                // Sync block ensures that no messages are added while they are being processed
-                // By the end of the block messages are flushed and adding is unblocked
-                using OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
-
-                int outgoingCRDTMessagesPayloadLength = outgoingMessagesSyncBlock.PayloadLength;
-
-                int totalPayloadLength = currentStatePayloadLength + outgoingCRDTMessagesPayloadLength;
-
                 // We know exactly how many bytes we need to serialize
-                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
+                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
 
                 // Serialize the current state
                 Span<byte> currentStateSpan = lastSerializationBuffer.AsSpan()[..currentStatePayloadLength];
@@ -176,11 +172,8 @@ namespace CrdtEcsBridge.Engine
                 // Messages are serialized, we no longer need them in the managed form
                 sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
 
-                // Serialize outgoing messages
-                SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength, outgoingCRDTMessagesPayloadLength));
-
                 // Return the buffer to the caller
-                return new ArraySegment<byte>(lastSerializationBuffer, 0, totalPayloadLength);
+                return new ArraySegment<byte>(lastSerializationBuffer, 0, currentStatePayloadLength);
             }
             catch (Exception e)
             {
