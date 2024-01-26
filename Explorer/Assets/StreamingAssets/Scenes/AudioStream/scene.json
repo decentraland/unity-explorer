@@ -2,8 +2,8 @@
   "ecs7": true,
   "runtimeVersion": "7",
   "display": {
-    "title": "Party-Time",
-    "description": "Time API scene with SDK7",
+    "title": "media-streaming",
+    "description": "Media streaming on the test",
     "navmapThumbnail": "images/screenshot.png",
     "favicon": "favicon_asset"
   },
@@ -46,5 +46,5 @@
     }
   ],
   "featureToggles": {},
-  "name": "Party-Time"
+  "name": "media-streaming"
 }

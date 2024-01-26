@@ -1,9 +1,50 @@
-import { engine, AudioStream, MeshRenderer, Transform, VideoPlayer, Material, Schemas } from '@dcl/sdk/ecs'
+import {
+  ColliderLayer,
+  engine,
+  InputAction,
+  MeshCollider,
+  AudioStream,
+  MeshRenderer,
+  Transform,
+  VideoPlayer,
+  pointerEventsSystem,
+  videoEventsSystem,
+  VideoState,
+  TextShape,
+  Material,
+  Schemas
+} from '@dcl/sdk/ecs'
 import { Color3, Quaternion } from '@dcl/sdk/math'
 
 export function startParty() {
   startMusicStream()
   createVideoShapes()
+
+  // create screen for another video stream
+  const screen = engine.addEntity()
+  MeshRenderer.setPlane(screen)
+  Transform.create(screen, { position: { x: 4, y: 1, z: 4 }, scale : { x: 2, y: 2, z: 2 }})
+
+  // Create another video stream for it
+  VideoPlayer.create(screen, {
+    src: 'https://player.vimeo.com/external/878776548.m3u8?s=e6e54ac3862fe71ac3ecbdb2abbfdd7ca7daafaf&logging=false',
+    playing: true,
+    loop: false
+  })
+// By reusing this texture we keep memory usage low
+  const videoTexture = Material.Texture.Video({ videoPlayerEntity: screen })
+
+  // Material settings
+  const videoMaterial = {
+    texture: videoTexture,
+    roughness: 1.0,
+    specularIntensity: 0,
+    metallic: 0,
+    emissiveTexture: videoTexture,
+    emissiveIntensity: 1,
+    emissiveColor: Color3.White()
+  }
+  Material.setPbrMaterial(screen, videoMaterial)
 }
 
 function startMusicStream() {
@@ -23,6 +64,56 @@ function createVideoShapes() {
     loop: true
   })
 
+  // Create text-shape for video events
+  const sign = engine.addEntity()
+  Transform.create(sign, {position: { x: 2, y: 1, z: 2 }})
+  TextShape.create(sign, {text: 'Hello World'})
+  const mutableText = TextShape.getMutable(sign)
+  mutableText.text = 'new string'
+
+  // register to video events
+  videoEventsSystem.registerVideoEventsEntity(
+    videoPlayer,
+    function (videoEvent) {
+      const mutableText = TextShape.getMutable(sign)
+      mutableText.text =
+        'video event - state: ' +
+        videoEvent.state +
+        '\ncurrent offset:' +
+        videoEvent.currentOffset +
+        '\nvideo length:' +
+        videoEvent.videoLength
+
+
+      switch (videoEvent.state) {
+        case VideoState.VS_READY:
+          mutableText.text = ('video event - video is READY')
+          break
+        case VideoState.VS_NONE:
+          mutableText.text = ('video event - video is in NO STATE')
+          break
+        case VideoState.VS_ERROR:
+          mutableText.text = ('video event - video ERROR')
+          break
+        case VideoState.VS_SEEKING:
+          mutableText.text = ('video event - video is SEEKING')
+          break
+        case VideoState.VS_LOADING:
+          mutableText.text = ('video event - video is LOADING')
+          break
+        case VideoState.VS_BUFFERING:
+          mutableText.text = ('video event - video is BUFFERING')
+          break
+        case VideoState.VS_PLAYING:
+          mutableText.text = ('video event - video started PLAYING')
+          break
+        case VideoState.VS_PAUSED:
+          mutableText.text = ('video event - video is PAUSED')
+          break
+      }
+    }
+  )
+
   // By reusing this texture we keep memory usage low
   const videoTexture = Material.Texture.Video({ videoPlayerEntity: videoPlayer })
 
@@ -40,12 +131,27 @@ function createVideoShapes() {
   // Floor
   const floor = engine.addEntity()
   MeshRenderer.setPlane(floor)
+  MeshCollider.setPlane(floor, ColliderLayer.CL_POINTER | ColliderLayer.CL_PHYSICS)
   Transform.create(floor, {
     position: { x: 8, y: 0.05, z: 8 },
     rotation: Quaternion.fromEulerDegrees(90, 0, 0),
     scale: { x: 16, y: 16, z: 16 }
   })
   Material.setPbrMaterial(floor, videoMaterial)
+
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: floor,
+      opts: {
+        button: InputAction.IA_POINTER,
+        hoverText: 'Play/pause'
+      }
+    },
+    () => {
+      const vp = VideoPlayer.getMutable(videoPlayer)
+      vp.playing = !vp.playing
+    }
+  )
 
   // Big Cube
   const bigCube = engine.addEntity()
