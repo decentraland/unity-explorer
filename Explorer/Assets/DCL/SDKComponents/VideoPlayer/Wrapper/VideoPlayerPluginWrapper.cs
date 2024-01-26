@@ -1,10 +1,10 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using ECS.LifeCycle;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 
 #if AV_PRO_PRESENT
 using DCL.SDKComponents.AudioStream;
@@ -31,12 +31,15 @@ namespace DCL.SDKComponents.VideoPlayer.Wrapper
 #endif
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneStateProvider sceneStateProvider, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter EcsToCrdtWriter)
         {
 #if AV_PRO_PRESENT
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
+
             VideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
             CleanUpVideoPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool);
+
+            VideoEventsSystem.InjectToWorld(ref builder, EcsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>());
 #endif
         }
     }
