@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
         {
-            var wearablesByCategory = new Dictionary<string, IWearable>();
+            var wearablesByCategory = DictionaryPool<string, IWearable>.Get();
 
             for (var i = 0; i < equippedWearables.Count; i++)
                 wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
@@ -69,6 +69,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     HashSetPool<string>.Release(hideCategories);
                 }
             }
+            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
 
             return string.Empty;
         }
