@@ -14,7 +14,7 @@ namespace DCL.Landscape.Config.Editor
             if (serializedObject.targetObject is not INoiseDataFactory data)
                 return default(JobHandle);
 
-            generator = data.GetGenerator(1, noiseGeneratorCache);
+            generator = data.GetGenerator(1, 0, noiseGeneratorCache);
             return generator.Schedule(textureSize, 0, 0);
         }
 
@@ -27,7 +27,7 @@ namespace DCL.Landscape.Config.Editor
         private void ClearOctaves() { }
 
         protected override NativeArray<float> GetResultNoise() =>
-            generator.GetResultCopy();
+            generator.GetResult();
 
         protected override void SetupNoiseArray(int textureSize) { }
     }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Birch
   m_EditorClassIdentifier: 
   asset: {fileID: 8336709437150543695, guid: ce2371175990d184a820800a4d92a8fc, type: 3}
-  noiseData: {fileID: 11400000, guid: bc9385e02c4ba5c41ba7d980d6e12a1e, type: 2}
+  noiseData: {fileID: 11400000, guid: 0429db70c8952b8439d3fc344f503cc9, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
     randomRotationY: {x: 0, y: 360}

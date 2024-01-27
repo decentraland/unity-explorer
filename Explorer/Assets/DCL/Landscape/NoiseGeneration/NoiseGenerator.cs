@@ -16,13 +16,15 @@ namespace DCL.Landscape.NoiseGeneration
         private NativeArray<float> noiseResults;
         private int sizeOfLastCache = -1;
         private bool isDisposed = false;
+        private uint variantSeed;
 
-        public NoiseGenerator(NoiseData noiseData, uint baseSeed)
+        public NoiseGenerator(NoiseData noiseData, uint variantSeed, uint baseSeed)
         {
+            this.variantSeed = variantSeed;
             this.noiseData = noiseData;
             var noiseSettings = noiseData.settings;
             offsets = new NativeArray<float2>(noiseData.settings.octaves, Allocator.Persistent);
-            var random = new Random(baseSeed + noiseData.settings.seed);
+            var random = new Random(baseSeed + noiseData.settings.seed + variantSeed);
             maxHeight = Noise.CalculateOctaves(ref random, ref noiseSettings, ref offsets);
         }
 
@@ -56,8 +58,11 @@ namespace DCL.Landscape.NoiseGeneration
         public float GetValue(int index) =>
             noiseResults[index];
 
-        public NativeArray<float> GetResultCopy() =>
-            noiseResults;
+        public ref NativeArray<float> GetResult() =>
+            ref noiseResults;
+
+        public bool IsRecursive(NoiseDataBase otherNoiseData) =>
+            noiseData == otherNoiseData;
 
         public void Dispose()
         {

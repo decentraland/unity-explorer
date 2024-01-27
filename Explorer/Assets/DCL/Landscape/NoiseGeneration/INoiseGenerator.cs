@@ -1,4 +1,5 @@
-﻿using DCL.Landscape.Jobs;
+﻿using DCL.Landscape.Config;
+using DCL.Landscape.Jobs;
 using System;
 using Unity.Collections;
 using Unity.Jobs;
@@ -21,6 +22,8 @@ namespace DCL.Landscape
 
         float GetValue(int index);
 
-        NativeArray<float> GetResultCopy();
+        ref NativeArray<float> GetResult();
+
+        bool IsRecursive(NoiseDataBase otherNoiseData);
     }
 }

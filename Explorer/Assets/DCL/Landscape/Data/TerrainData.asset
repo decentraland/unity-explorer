@@ -12,20 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49ee1f2493e44e029443e1a749da5565, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  parcelLimitX: {x: -150, y: 150}
-  parcelLimitZ: {x: -150, y: 150}
   terrainSize: 4800
   chunkSize: 1024
-  terrainScale: 15
-  heightScaleNerf: 0.5
+  heightScaleNerf: 0.25
   seed: 97
+  terrainHoleEdgeSize: 0.5
+  minHeight: 10
+  pondDepth: 2
+  terrainHeightNoise: {fileID: 11400000, guid: f1828e41f6f44394c8807749fc57c5bd, type: 2}
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:
   - {fileID: 8574412962073106934, guid: dc4e1ba31adc87647bf8f733af6ab483, type: 2}
   - {fileID: 8574412962073106934, guid: 717087acc9c59af41995f7a1854878e3, type: 2}
+  - {fileID: 8574412962073106934, guid: 525a9b047f93e814b841b47be03b17aa, type: 2}
   layerNoise:
   - {fileID: 0}
   - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
+  - {fileID: 11400000, guid: 4caf4b28cdb32fa408e08915effbb6bb, type: 2}
   treeAssets:
   - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
   - {fileID: 11400000, guid: 6359eb473a83b5242a3626151eff94e4, type: 2}
