@@ -8,8 +8,9 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: StylizedWater2_Lowpoly
-  m_Shader: {fileID: -6465566751694194690, guid: d7b0192b9bf19c949900035fa781fdc4,
-    type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: d7b0192b9bf19c949900035fa781fdc4, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ADVANCED_SHADING
   - _FLAT_SHADING
@@ -28,6 +29,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -233,12 +235,12 @@ Material:
     - _VertexColorDepth: 0
     - _VertexColorFoam: 0
     - _VertexColorWaveFlattening: 0
-    - _WaveCount: 1
-    - _WaveDistance: 0.574
-    - _WaveHeight: 0.15
+    - _WaveCount: 4
+    - _WaveDistance: 0.659
+    - _WaveHeight: 3.18
     - _WaveNormalStr: 1
-    - _WaveSpeed: 3
-    - _WaveSteepness: 0.1
+    - _WaveSpeed: 4.2999988
+    - _WaveSteepness: 0.92
     - _WaveTint: 0
     - _WavesOn: 1
     - _WorkflowMode: 1
@@ -257,7 +259,7 @@ Material:
     - _HorizonColor: {r: 0.41037738, g: 0.71931076, b: 1, a: 0}
     - _IntersectionColor: {r: 1, g: 1, b: 1, a: 1}
     - _NormalTiling: {r: 0.1, g: 0.1, b: 0, a: 0}
-    - _ShallowColor: {r: 0, g: 2, b: 1.9607843, a: 1}
+    - _ShallowColor: {r: 0, g: 1.9999999, b: 0.6486034, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _WaveDirection: {r: 1, g: 1, b: 1, a: 1}
     - _WaveFadeDistance: {r: 150, g: 300, b: 0, a: 0}

@@ -1,21 +1,22 @@
 ﻿using DCL.Landscape.Config;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Landscape.Settings
 {
+    [Serializable]
     public class TerrainGenerationData : ScriptableObject
     {
-        [Header("Boundaries")]
-        public Vector2Int parcelLimitX;
-        public Vector2Int parcelLimitZ;
-
         [Header("Terrain Settings")]
         public int terrainSize = 4800;
         public int chunkSize = 512;
-        public int terrainScale = 15;
         public float heightScaleNerf = 1;
         public int seed;
+        public float terrainHoleEdgeSize;
+        public float minHeight = 1f;
+        public float pondDepth = 5;
+        public NoiseDataBase terrainHeightNoise;
 
         [Header("Textures")]
         public Material terrainMaterial;

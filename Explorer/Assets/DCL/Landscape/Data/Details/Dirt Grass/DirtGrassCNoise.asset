@@ -23,7 +23,10 @@ MonoBehaviour:
     offset: {x: 0, y: 0}
     cutoff: 0.2
     noiseType: 2
-  add: []
-  multiply:
-  - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
-  subtract: []
+    baseValue: 0
+    multiplyValue: 0
+    divideValue: 0
+  operations:
+  - operation: 2
+    noise: {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
+  finalCutOff: 0

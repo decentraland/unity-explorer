@@ -23,7 +23,17 @@ MonoBehaviour:
     offset: {x: 0, y: 0}
     cutoff: 0
     noiseType: 2
-  add: []
-  multiply: []
-  subtract:
-  - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
+    baseValue: 0
+    multiplyValue: 0
+    divideValue: 0
+  operations:
+  - operation: 2
+    noise: {fileID: 11400000, guid: 9c77fb8d5e4c2f34aa2299f12ba5920f, type: 2}
+    disable: 0
+  - operation: 3
+    noise: {fileID: 11400000, guid: 9dbb02f48d405874a9fe4653d97c12d3, type: 2}
+    disable: 0
+  - operation: 3
+    noise: {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
+    disable: 0
+  finalCutOff: 0

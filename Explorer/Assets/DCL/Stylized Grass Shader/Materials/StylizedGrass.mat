@@ -16,7 +16,9 @@ Material:
   - _ENVIRONMENTREFLECTIONS_OFF
   - _FADING
   - _SPECULARHIGHLIGHTS_OFF
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _ALPHATOCOVERAGE_ON
+  - _FADINGON_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0

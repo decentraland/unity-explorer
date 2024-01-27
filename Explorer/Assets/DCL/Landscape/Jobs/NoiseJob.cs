@@ -89,6 +89,10 @@ namespace DCL.Landscape.Jobs
 
             float tempValue = NoiseSettings.invert ? -noiseHeight : noiseHeight;
 
+            tempValue += NoiseSettings.baseValue;
+            tempValue *= math.max(NoiseSettings.multiplyValue, 1);
+            tempValue /= math.max(NoiseSettings.divideValue, 1);
+
             if (NoiseSettings.normalize)
             {
                 float normalizedHeight = (tempValue + 1) / MaxHeight;

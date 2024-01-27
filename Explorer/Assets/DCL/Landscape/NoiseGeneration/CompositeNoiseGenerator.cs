@@ -1,8 +1,11 @@
 ﻿using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
+using System;
+using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine;
 
 namespace DCL.Landscape
 {
@@ -11,15 +14,17 @@ namespace DCL.Landscape
         private NativeArray<float> noiseResults;
         private readonly CompositeNoiseData compositeNoiseData;
         private readonly uint baseSeed;
+        private readonly uint variantSeed;
         private readonly NoiseGeneratorCache generatorCache;
 
         private int sizeOfLastCache = -1;
         private NoiseGenerator mainJob;
 
-        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, NoiseGeneratorCache generatorCache)
+        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, uint variantSeed, NoiseGeneratorCache generatorCache)
         {
             this.compositeNoiseData = compositeNoiseData;
             this.baseSeed = baseSeed;
+            this.variantSeed = variantSeed;
             this.generatorCache = generatorCache;
         }
 
@@ -43,41 +48,50 @@ namespace DCL.Landscape
         private JobHandle Execute(ref NativeArray<float> targetArray, NoiseJobOperation operation, int size, int offsetX, int offsetZ,
             int batchCount = 32)
         {
-            var tempNoiseGenerator = new NoiseGenerator(compositeNoiseData, baseSeed);
-            JobHandle jobHandle = tempNoiseGenerator.Compose(ref targetArray, operation, size, offsetX, offsetZ, batchCount);
+            var tempNoiseGenerator = new NoiseGenerator(compositeNoiseData, baseSeed, variantSeed);
+            JobHandle jobHandle = tempNoiseGenerator.Schedule(size, offsetX, offsetZ, batchCount);
             jobHandle.Complete();
+
+            foreach (var op in compositeNoiseData.operations)
+            {
+                if (op.disable) continue;
+
+                if (compositeNoiseData == op.noise)
+                {
+                    Debug.LogError("Please do not try to do recursiveness");
+                    continue;
+                }
+
+                if (op.noise is not INoiseDataFactory noiseDataFactory) continue;
+
+                INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
+
+                if (generator.IsRecursive(compositeNoiseData))
+                {
+                    Debug.LogError("Please do not try to do recursiveness");
+                    continue;
+                }
+                jobHandle = generator.Compose(ref tempNoiseGenerator.GetResult(), op.operation, size, offsetX, offsetZ, batchCount);
+                jobHandle.Complete();
+            }
+
+            foreach (var op in compositeNoiseData.simpleOperations)
+            {
+                if (op.disable) continue;
+                var noiseSimpleOp = new NoiseSimpleOperation(ref tempNoiseGenerator.GetResult(), op.value, op.operation);
+                var h = noiseSimpleOp.Schedule(tempNoiseGenerator.GetResult().Length, 32);
+                h.Complete();
+            }
+
+            var cutoffJob = new NoiseCutOffJob(ref tempNoiseGenerator.GetResult(), compositeNoiseData.finalCutOff);
+            var handle = cutoffJob.Schedule(tempNoiseGenerator.GetResult().Length, 32);
+            handle.Complete();
+
+            var composeJob = new NoiseComposeJob(ref targetArray, in tempNoiseGenerator.GetResult(), operation);
+            var cHandle = composeJob.Schedule(tempNoiseGenerator.GetResult().Length, 32);
+            cHandle.Complete();
+
             tempNoiseGenerator.Dispose();
-
-            foreach (NoiseData noise in compositeNoiseData.add)
-            {
-                if (noise is INoiseDataFactory noiseDataFactory)
-                {
-                    INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
-                    jobHandle = generator.Compose(ref targetArray, NoiseJobOperation.ADD, size, offsetX, offsetZ, batchCount);
-                    jobHandle.Complete();
-                }
-            }
-
-            foreach (NoiseData noise in compositeNoiseData.multiply)
-            {
-                if (noise is INoiseDataFactory noiseDataFactory)
-                {
-                    INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
-                    jobHandle = generator.Compose(ref targetArray, NoiseJobOperation.MULTIPLY, size, offsetX, offsetZ, batchCount);
-                    jobHandle.Complete();
-                }
-            }
-
-            foreach (NoiseData noise in compositeNoiseData.subtract)
-            {
-                if (noise is INoiseDataFactory noiseDataFactory)
-                {
-                    INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
-                    jobHandle = generator.Compose(ref targetArray, NoiseJobOperation.SUBTRACT, size, offsetX, offsetZ, batchCount);
-                    jobHandle.Complete();
-                }
-            }
-
             return jobHandle;
         }
 
@@ -95,8 +109,11 @@ namespace DCL.Landscape
         public float GetValue(int index) =>
             noiseResults[index];
 
-        public NativeArray<float> GetResultCopy() =>
-            noiseResults;
+        public ref NativeArray<float> GetResult() =>
+            ref noiseResults;
+
+        public bool IsRecursive(NoiseDataBase otherNoiseData) =>
+            this.compositeNoiseData.operations.Any(operation => operation.noise == otherNoiseData);
 
         public void Dispose()
         {

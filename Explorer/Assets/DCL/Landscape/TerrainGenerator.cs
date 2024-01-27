@@ -29,6 +29,8 @@ namespace DCL.Landscape
         private int maxHeightIndex;
         private Random random;
         private readonly NoiseGeneratorCache noiseGenCache;
+        private bool hideTrees;
+        private bool hideDetails;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
         {
@@ -38,8 +40,10 @@ namespace DCL.Landscape
             noiseGenCache = new NoiseGeneratorCache();
         }
 
-        public void GenerateTerrain(uint worldSeed = 1, bool withHoles = true, bool centerTerrain = true)
+        public void GenerateTerrain(uint worldSeed = 1, bool withHoles = true, bool centerTerrain = true, bool hideTrees = false, bool hideDetails = false)
         {
+            this.hideDetails = hideDetails;
+            this.hideTrees = hideTrees;
             random = new Random((uint)terrainGenData.seed);
 
             SetupEmptyParcelData(emptyParcels, ownedParcels);
@@ -210,7 +214,7 @@ namespace DCL.Landscape
             terrain.materialTemplate = material;
             terrain.detailObjectDistance = 200;
             terrain.enableHeightmapRayTracing = false;
-            terrainObject.transform.position = new Vector3(offsetX, 0, offsetZ);
+            terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
             return terrain;
         }
@@ -235,11 +239,11 @@ namespace DCL.Landscape
 
             terrainData.SetDetailResolution(chunkSize, 32);
 
-            SetHeights(offsetX, offsetZ, terrainData);
+            SetHeights(offsetX, offsetZ, terrainData, baseSeed);
             SetTextures(offsetX, offsetZ, resolution, terrainData, baseSeed);
 
-            SetTrees(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
-            SetDetails(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
+            if(!hideTrees) SetTrees(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
+            if(!hideDetails) SetDetails(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
 
             return terrainData;
         }
@@ -278,41 +282,51 @@ namespace DCL.Landscape
 
             for (int i = 0; i < terrainGenData.detailAssets.Length; i++)
             {
-                var detailLayer = terrainData.GetDetailLayer(0, 0, terrainData.detailWidth, terrainData.detailHeight, i);
-
                 LandscapeAsset detailAsset = terrainGenData.detailAssets[i];
 
-                INoiseGenerator noiseGenerator = noiseGenCache.GetGeneratorFor(detailAsset.noiseData, baseSeed);
-
-                JobHandle handle = noiseGenerator.Schedule(detailSize, offsetX, offsetZ);
-                handle.Complete();
-
-                for (var y = 0; y < detailSize; y++)
+                try
                 {
-                    for (var x = 0; x < detailSize; x++)
+                    var detailLayer = terrainData.GetDetailLayer(0, 0, terrainData.detailWidth, terrainData.detailHeight, i);
+
+                    INoiseGenerator noiseGenerator = noiseGenCache.GetGeneratorFor(detailAsset.noiseData, baseSeed);
+                    JobHandle handle = noiseGenerator.Schedule(detailSize, offsetX, offsetZ);
+                    handle.Complete();
+
+                    for (var y = 0; y < detailSize; y++)
                     {
-                        var f = terrainGenData.detailScatterMode == DetailScatterMode.CoverageMode ? 255 : 16;
-                        var index = x + (y * detailSize);
-                        var value = noiseGenerator.GetValue(index);
-                        detailLayer[y, x] = Mathf.FloorToInt(value * f); //random.NextInt(0,255);
+                        for (var x = 0; x < detailSize; x++)
+                        {
+                            var f = terrainGenData.detailScatterMode == DetailScatterMode.CoverageMode ? 255 : 16;
+                            var index = x + (y * detailSize);
+                            var value = noiseGenerator.GetValue(index);
+                            detailLayer[y, x] = Mathf.FloorToInt(value * f); //random.NextInt(0,255);
+                        }
                     }
+
+                    terrainData.SetDetailLayer(0, 0, i, detailLayer);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to set detail layer for {detailAsset.name}");
                 }
 
-                terrainData.SetDetailLayer(0, 0, i, detailLayer);
             }
         }
 
-        private void SetHeights(int offsetX, int offsetZ, TerrainData terrainData)
+        private void SetHeights(int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed)
         {
             int resolution = terrainGenData.chunkSize + 1;
             var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
 
-            var modifyJob = new ModifyTerrainHeightJob(ref heights, in emptyParcelResult)
+            var terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
+            var handle = terrainHeightNoise.Schedule(resolution, offsetX, offsetZ);
+            handle.Complete();
+
+            var modifyJob = new ModifyTerrainHeightJob(ref heights, in emptyParcelResult, in terrainHeightNoise.GetResult(), terrainGenData.terrainHoleEdgeSize, terrainGenData.minHeight, terrainGenData.pondDepth)
             {
                 terrainWidth = resolution,
                 offsetX = offsetX,
                 offsetZ = offsetZ,
-                terrainScale = terrainGenData.terrainScale,
                 maxHeight = maxHeightIndex,
             };
 
@@ -327,6 +341,7 @@ namespace DCL.Landscape
         {
             Debug.Log($"{offsetX}, {offsetZ}");
 
+            List<INoiseGenerator> noiseGenerators = new List<INoiseGenerator>();
             for (var i = 0; i < terrainGenData.layerNoise.Count; i++)
             {
                 NoiseData noiseData = terrainGenData.layerNoise[i];
@@ -336,10 +351,11 @@ namespace DCL.Landscape
                 JobHandle handle = noiseGenerator.Schedule(chunkSize, offsetX, offsetZ);
 
                 handle.Complete();
-
-                float[,,] result3D = ConvertTo3DArray(noiseGenerator.GetResultCopy(), chunkSize, chunkSize);
-                terrainData.SetAlphamaps(0, 0, result3D);
+                noiseGenerators.Add(noiseGenerator);
             }
+
+            float[,,] result3D = GenerateAlphaMaps(noiseGenerators.Select(ng => ng.GetResult()).ToArray(), chunkSize, chunkSize);
+            terrainData.SetAlphamaps(0, 0, result3D);
         }
 
 
@@ -359,7 +375,7 @@ namespace DCL.Landscape
                 // TODO: NOT IDEAL!
                 handle.Complete();
 
-                NativeArray<float> resultCopy = generator.GetResultCopy();
+                NativeArray<float> resultCopy = generator.GetResult();
 
                 var treeInstancesJob = new GenerateTreeInstancesJob(
                     in resultCopy,
@@ -424,18 +440,40 @@ namespace DCL.Landscape
             return result;
         }
 
-        // TODO: RE DO THIS TO SUPPORT MORE LAYERS
-        private float[,,] ConvertTo3DArray(NativeArray<float> array, int width, int height)
+        /// <summary>
+        /// Here we convert the result of the noise generation of the terrain texture layers
+        /// </summary>
+        private float[,,] GenerateAlphaMaps(NativeArray<float>[] textureResults, int width, int height)
         {
             var result = new float[width, height, terrainGenData.terrainLayers.Length];
+            var valueHolder = new float[textureResults.Length];
 
-            for (var i = 0; i < array.Length; i++)
+            // every layer has the same direction, so we use the first
+            int length = textureResults[0].Length;
+            for (var i = 0; i < length; i++)
             {
                 int x = i % width;
                 int z = i / width;
 
-                result[z, x, 0] = 1 - array[i];
-                result[z, x, 1] = array[i];
+                float summary = 0;
+                // Get the texture value for each layer at this spot
+                for (var j = 0; j < textureResults.Length; j++)
+                {
+                    float f = textureResults[j][i];
+                    valueHolder[j] = f;
+                    summary += f;
+                }
+
+                // base value is always the unfilled spot where other layers didn't draw texture
+                float baseValue = Mathf.Max(0, 1 - summary);
+                summary += baseValue;
+
+                // we set the base value manually since its not part of the textureResults list
+                result[z, x, 0] = baseValue / summary;
+
+                // set the rest of the values
+                for (var j = 0; j < textureResults.Length; j++)
+                    result[z, x, j+1] = textureResults[j][i] / summary;
             }
 
             return result;
