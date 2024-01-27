@@ -18,7 +18,7 @@ using UnityEngine;
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
-    [LogCategory(ReportCategory.SDK_COMPONENT)]
+    [LogCategory(ReportCategory.AVATAR_ATTACH)]
     [ThrottlingEnabled]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

@@ -150,9 +150,9 @@
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
         /// <summary>
-        ///     Generic SDK components category
+        ///     AvatarAttach SDK component
         /// </summary>
-        public const string SDK_COMPONENT = nameof(SDK_COMPONENT);
+        public const string AVATAR_ATTACH = nameof(AVATAR_ATTACH);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
