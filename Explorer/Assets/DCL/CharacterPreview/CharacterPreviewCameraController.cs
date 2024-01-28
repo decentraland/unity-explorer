@@ -36,23 +36,26 @@ namespace DCL.CharacterPreview
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-            var newFieldOfView = characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView;
+            float newFieldOfView = characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView;
+            float originalFieldOfView = newFieldOfView;
 
             newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
             if (newFieldOfView < characterPreviewContainer.depthLimits.y) newFieldOfView = characterPreviewContainer.depthLimits.y;
             else if (newFieldOfView > characterPreviewContainer.depthLimits.x) newFieldOfView = characterPreviewContainer.depthLimits.x;
 
 
-            //We need a FOV after which we re-center the view vertically
-            if (newFieldOfView > 12f)
+            if (newFieldOfView > originalFieldOfView && newFieldOfView > characterPreviewContainer.fieldOfViewThresholdForReCentering)
             {
                 var position = characterPreviewContainer.cameraTarget.localPosition;
-                float dragModifier = Time.deltaTime * characterPreviewContainer.dragMovementModifier;
-                position.y -= pointerEventData.delta.y * dragModifier;
-                var vertPos = characterPreviewContainer.cameraPositions[0].verticalPosition.y;
+                float t = Mathf.InverseLerp(characterPreviewContainer.depthLimits.y, characterPreviewContainer.depthLimits.x, newFieldOfView);
+                float smoothedT = Mathf.SmoothStep(0f, 1f, t);
 
-                if (position.y < vertPos) position.y = vertPos;
-                else if (position.y > vertPos) position.y = vertPos;
+                float vertPos = Mathf.SmoothStep(position.y,
+                    characterPreviewContainer.cameraPositions[0].verticalPosition.y,
+                    smoothedT
+                );
+
+                position.y = vertPos;
 
                 characterPreviewContainer.cameraTarget.localPosition = position;
             }
@@ -62,19 +65,25 @@ namespace DCL.CharacterPreview
 
         private void OnDrag(PointerEventData pointerEventData)
         {
+            if (pointerEventData.button == PointerEventData.InputButton.Middle) return;
+
             characterPreviewContainer.StopCameraTween();
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
                 {
-                    var position = characterPreviewContainer.cameraTarget.localPosition;
-                    float dragModifier = Time.deltaTime * characterPreviewContainer.dragMovementModifier;
+                    if (characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView < characterPreviewContainer.fieldOfViewThresholdForPanning)
+                    {
+                        var position = characterPreviewContainer.cameraTarget.localPosition;
+                        float dragModifier = Time.deltaTime * characterPreviewContainer.dragMovementModifier;
 
-                    position.y -= pointerEventData.delta.y * dragModifier;
-                    if (position.y < characterPreviewContainer.minVerticalOffset) position.y = characterPreviewContainer.minVerticalOffset;
-                    else if (position.y > characterPreviewContainer.maxVerticalOffset) position.y = characterPreviewContainer.maxVerticalOffset;
+                        position.y -= pointerEventData.delta.y * dragModifier;
 
-                    characterPreviewContainer.cameraTarget.localPosition = position;
+                        if (position.y < characterPreviewContainer.minVerticalOffset) position.y = characterPreviewContainer.minVerticalOffset;
+                        else if (position.y > characterPreviewContainer.maxVerticalOffset) position.y = characterPreviewContainer.maxVerticalOffset;
+
+                        characterPreviewContainer.cameraTarget.localPosition = position;
+                    }
                     break;
                 }
                 case PointerEventData.InputButton.Left:
@@ -83,10 +92,7 @@ namespace DCL.CharacterPreview
                     float rotationModifier = Time.deltaTime * characterPreviewContainer.rotationModifier;
 
                     rotation.y += pointerEventData.delta.x * rotationModifier;
-                    var quaternion = new Quaternion
-                    {
-                        eulerAngles = rotation,
-                    };
+                    var quaternion = Quaternion.Euler(rotation);
 
                     characterPreviewContainer.rotationTarget.rotation = quaternion;
                     break;

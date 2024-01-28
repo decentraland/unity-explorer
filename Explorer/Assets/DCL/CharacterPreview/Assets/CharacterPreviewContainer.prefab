@@ -1369,8 +1369,10 @@ MonoBehaviour:
   <scrollModifier>k__BackingField: 6
   <rotationModifier>k__BackingField: 10
   <maxHorizontalOffset>k__BackingField: 0.4
-  <minVerticalOffset>k__BackingField: -1
+  <minVerticalOffset>k__BackingField: -0.84
   <maxVerticalOffset>k__BackingField: 0.5
+  <fieldOfViewThresholdForPanning>k__BackingField: 18
+  <fieldOfViewThresholdForReCentering>k__BackingField: 10
   <depthLimits>k__BackingField: {x: 27, y: 8}
   <freeLookCamera>k__BackingField: {fileID: 1653081050115794389}
 --- !u!1 &4857768151630023528

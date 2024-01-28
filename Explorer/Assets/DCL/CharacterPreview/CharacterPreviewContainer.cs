@@ -31,7 +31,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
 
         [field: SerializeField] internal Transform avatarParent { get; private set; }
-        [field: SerializeField] internal new Camera camera { get; private set; }
+        [field: SerializeField] internal Camera camera { get; private set; }
         [field: SerializeField] internal Transform cameraTarget { get; private set; }
         [field: SerializeField] internal Transform rotationTarget { get; private set; }
         [field: SerializeField] internal CharacterPreviewCameraPreset[] cameraPositions { get; private set; }
@@ -43,6 +43,10 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal float minVerticalOffset { get; private set; }
         [field: SerializeField] internal float maxVerticalOffset { get; private set; }
 
+        [field: SerializeField] internal float fieldOfViewThresholdForPanning { get; private set; }
+
+        [field: SerializeField] internal float fieldOfViewThresholdForReCentering { get; private set; }
+
         [field: SerializeField] internal Vector2 depthLimits { get; private set; }
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
 
@@ -52,8 +56,8 @@ namespace DCL.CharacterPreview
         {
             this.transform.position = new Vector3(0, 5000, 0);
             camera.targetTexture = targetTexture;
-            camera.clearFlags = CameraClearFlags.Depth; // or CameraClearFlags.SolidColor
-            camera.backgroundColor = new Color(0f, 0f, 0f, 0f); // Transparent background color
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
             rotationTarget.rotation = Quaternion.identity;
 
             if (cameraPositions.Length > 0)
