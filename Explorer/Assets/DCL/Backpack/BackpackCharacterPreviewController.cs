@@ -14,6 +14,7 @@ namespace DCL.CharacterPreview
 {
     public class BackpackCharacterPreviewController : IDisposable
     {
+
         private readonly BackpackCharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly BackpackEventBus backpackEventBus;
@@ -23,6 +24,7 @@ namespace DCL.CharacterPreview
         private World world;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
+        private readonly BackpackCharacterPreviewCursorController cursorController;
 
         public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, IComponentPoolsRegistry poolsRegistry, CharacterPreviewInputEventBus inputEventBus)
         {
@@ -32,14 +34,17 @@ namespace DCL.CharacterPreview
             this.poolsRegistry = poolsRegistry;
             this.inputEventBus = inputEventBus;
 
-            this.backpackEventBus.EquipEvent += OnEquipped;
-            this.backpackEventBus.UnEquipEvent += OnUnequipped;
-            this.backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
-            this.backpackEventBus.ForceRenderEvent += OnForceRenderChange;
+            backpackEventBus.EquipEvent += OnEquipped;
+            backpackEventBus.UnEquipEvent += OnUnequipped;
+            backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
+            backpackEventBus.ForceRenderEvent += OnForceRenderChange;
 
             view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
+            view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
+
+            cursorController = new BackpackCharacterPreviewCursorController(view.CharacterPreviewCursorView, inputEventBus);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
@@ -68,6 +73,12 @@ namespace DCL.CharacterPreview
         {
             inputEventBus.OnPointerUp(pointerEventData);
         }
+
+        private void OnPointerDown(PointerEventData pointerEventData)
+        {
+            inputEventBus.OnPointerDown(pointerEventData);
+        }
+
 
         private void OnScroll(PointerEventData pointerEventData)
         {
@@ -132,7 +143,9 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
+            view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
             previewController.Dispose();
+            cursorController.Dispose();
         }
     }
 }

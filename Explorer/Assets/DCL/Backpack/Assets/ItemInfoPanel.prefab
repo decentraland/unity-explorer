@@ -1459,7 +1459,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72586a42cf441ff84e93576d0da1d6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <HideCategoryGridView>k__BackingField: {fileID: 0}
+  <HideCategoryGridView>k__BackingField: {fileID: 2552612508868533306}
   <EmptyPanel>k__BackingField: {fileID: 1432505136072087043}
   <FullPanel>k__BackingField: {fileID: 5337124909112307158}
   <WearableThumbnail>k__BackingField: {fileID: 6761031925246617703}

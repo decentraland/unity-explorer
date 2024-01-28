@@ -8,6 +8,7 @@ namespace DCL.CharacterPreview
         public event Action<PointerEventData> OnDraggingEvent;
         public event Action<PointerEventData> OnScrollEvent;
         public event Action<PointerEventData> OnPointerUpEvent;
+        public event Action<PointerEventData> OnPointerDownEvent;
         public event Action<AvatarSlotCategoryEnum> OnChangePreviewFocusEvent;
 
         public void OnDrag(PointerEventData eventData) =>
@@ -22,6 +23,11 @@ namespace DCL.CharacterPreview
         public void OnPointerUp(PointerEventData pointerEventData)
         {
             OnPointerUpEvent?.Invoke(pointerEventData);
+        }
+
+        public void OnPointerDown(PointerEventData pointerEventData)
+        {
+            OnPointerDownEvent?.Invoke(pointerEventData);
         }
     }
 

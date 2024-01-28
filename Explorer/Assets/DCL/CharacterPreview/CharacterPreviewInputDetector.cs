@@ -9,6 +9,7 @@ namespace DCL.CharacterPreview
         public event Action<PointerEventData> OnDraggingEvent;
         public event Action<PointerEventData> OnScrollEvent;
         public event Action<PointerEventData> OnPointerUpEvent;
+        public event Action<PointerEventData> OnPointerDownEvent;
 
         public void OnPointerUp(PointerEventData eventData)
         {
@@ -22,6 +23,7 @@ namespace DCL.CharacterPreview
 
         public void OnPointerDown(PointerEventData eventData)
         {
+            OnPointerDownEvent?.Invoke(eventData);
         }
     }
 }
