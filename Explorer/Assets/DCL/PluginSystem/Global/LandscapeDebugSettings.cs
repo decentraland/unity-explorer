@@ -7,5 +7,9 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(LandscapeSettings))] [field: Space]
         [field: SerializeField]
         public StaticSettings.RealmPartitionSettingsRef realmPartitionSettings;
+
+        [field: Header(nameof(LandscapeSettings))]
+        [field: Space]
+        [field: SerializeField] internal LandscapeSettings.LandscapeDataRef landscapeData { get; }
     }
 }

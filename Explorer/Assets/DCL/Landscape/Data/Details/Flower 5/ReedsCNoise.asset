@@ -15,7 +15,7 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 1
-    scale: 50.2
+    scale: 20.42
     octaves: 3
     persistance: 0.76
     lacunarity: 3
@@ -32,6 +32,6 @@ MonoBehaviour:
     disable: 0
   simpleOperations:
   - operation: 2
-    value: 0.19
+    value: 1
     disable: 0
   finalCutOff: 0
