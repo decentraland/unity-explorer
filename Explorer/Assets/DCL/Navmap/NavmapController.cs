@@ -10,6 +10,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -43,7 +44,8 @@ namespace DCL.Navmap
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
             ITeleportController teleportController,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IMVCManager mvcManager)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -51,7 +53,7 @@ namespace DCL.Navmap
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = new NavmapZoomController(navmapView.zoomView);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController, webRequestController);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController, webRequestController, mvcManager);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, navmapView.floatingPanelView);
             searchBarController.OnResultClicked += OnResultClicked;
