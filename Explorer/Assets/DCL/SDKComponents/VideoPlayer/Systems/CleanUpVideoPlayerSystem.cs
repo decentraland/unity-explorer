@@ -9,6 +9,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
+using UnityEngine;
 
 namespace DCL.SDKComponents.VideoPlayer.Systems
 {
@@ -17,10 +18,12 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
     public partial class CleanUpVideoPlayerSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
 
-        private CleanUpVideoPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool) : base(world)
+        private CleanUpVideoPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
         {
             this.mediaPlayerPool = mediaPlayerPool;
+            this.videoTexturesPool = videoTexturesPool;
         }
 
         protected override void Update(float t)
@@ -43,9 +46,12 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
             CleanUpComponents(ref textureComponent, ref videoPlayer);
         }
 
+
         private void CleanUpComponents(ref VideoTextureComponent textureComponent, ref VideoPlayerComponent videoPlayer)
         {
+            var videoTexture = textureComponent.Texture;
             textureComponent.Dispose();
+            videoTexturesPool.Release(videoTexture);
 
             videoPlayer.Dispose();
             mediaPlayerPool.Release(videoPlayer.MediaPlayer);

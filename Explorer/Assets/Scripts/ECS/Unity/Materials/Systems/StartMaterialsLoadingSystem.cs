@@ -171,8 +171,6 @@ namespace ECS.Unity.Materials.Systems
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                     WrapMode = textureComponentValue.WrapMode,
                     FilterMode = textureComponentValue.FilterMode,
-                    IsVideoTexture = textureComponentValue.IsVideoTexture,
-                    VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
                 }, GetOrAddVideoTextureResult(textureComponentValue));
             else
                 promise = Promise.Create(World, new GetTextureIntention
@@ -180,8 +178,6 @@ namespace ECS.Unity.Materials.Systems
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                     WrapMode = textureComponentValue.WrapMode,
                     FilterMode = textureComponentValue.FilterMode,
-                    IsVideoTexture = textureComponentValue.IsVideoTexture,
-                    VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
                 }, partitionComponent);
 
             return true;
@@ -194,7 +190,7 @@ namespace ECS.Unity.Materials.Systems
                 if (World.Has<VideoTextureComponent>(videoPlayerEntity))
                     return new StreamableLoadingResult<Texture2D>(World.Get<VideoTextureComponent>(videoPlayerEntity).Texture);
 
-                var videoTextureComponent = new VideoTextureComponent(videoTexturesPool);
+                var videoTextureComponent = new VideoTextureComponent(videoTexturesPool.Get());
                 World.Add(videoPlayerEntity, videoTextureComponent);
                 return new StreamableLoadingResult<Texture2D>(videoTextureComponent.Texture);
             }
@@ -213,9 +209,7 @@ namespace ECS.Unity.Materials.Systems
 
             return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
                    textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode &&
-                   textureComponent.IsVideoTexture == intention.IsVideoTexture &&
-                   textureComponent.VideoPlayerEntity == intention.VideoPlayerEntity;
+                   textureComponent.FilterMode == intention.FilterMode;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using DCL.Optimization.Pools;
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace ECS.Unity.Textures.Components
@@ -7,18 +6,15 @@ namespace ECS.Unity.Textures.Components
     public struct VideoTextureComponent : IDisposable
     {
         public Texture2D Texture { get; private set; }
-        private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
 
-        public VideoTextureComponent(IExtendedObjectPool<Texture2D> videoTexturePool)
+        public VideoTextureComponent(Texture2D texture)
         {
-            this.videoTexturePool = videoTexturePool;
-            Texture = this.videoTexturePool.Get();
+            Texture = texture;
         }
 
         public void Dispose()
         {
-            videoTexturePool.Release(Texture);
-            Texture = null;
+            Texture = null!;
         }
     }
 }
