@@ -44,8 +44,9 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateCharacterPreviewPoolAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
-            CharacterPreviewContainer characterPreviewContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewComponentPrefab, ct: ct)).Value.GetComponent<CharacterPreviewContainer>();
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewContainer, Vector3.zero, Quaternion.identity));
+            CharacterPreviewContainer characterPreviewContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
+            GameObject parentContainer = new GameObject("CharacterPreviewContainerPool");
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewContainer,parentContainer.transform));
             characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewContainer>();
         }
 
@@ -54,7 +55,13 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(CharacterPreviewPlugin) + "." + nameof(CharacterPreviewSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject CharacterPreviewComponentPrefab;
+            public CharacterPreviewContainerReference CharacterPreviewContainerReference;
+        }
+
+        [Serializable]
+        public class CharacterPreviewContainerReference : ComponentReference<CharacterPreviewContainer>
+        {
+            public CharacterPreviewContainerReference(string guid) : base(guid) { }
         }
     }
 }

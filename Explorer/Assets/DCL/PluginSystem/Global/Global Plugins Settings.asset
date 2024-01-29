@@ -123,7 +123,7 @@ MonoBehaviour:
     - rid: 5121844448145178627
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        CharacterPreviewComponentPrefab:
+        CharacterPreviewContainerReference:
           m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
           m_SubObjectName: 
           m_SubObjectType: 
