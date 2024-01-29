@@ -121,7 +121,7 @@ MonoBehaviour:
     _kSamples: 2
     _MIE_G: -0.99
     _MIE_G2: 0.9801
-    _SKY_GROUND_THRESHOLD: 0.1
+    _SKY_GROUND_THRESHOLD: 1
   m_ShaderSkyBoxGenerate: {fileID: 4800000, guid: de48828283988c74c9208518bd8ba1f2, type: 3}
   m_ShaderStarBoxGenerate: {fileID: 4800000, guid: 008fbe32680b8d54bb9326b1b1ddb6de, type: 3}
   m_ShaderDraw: {fileID: 4800000, guid: 136edacbbf6e1a94591da23fd878aa59, type: 3}
