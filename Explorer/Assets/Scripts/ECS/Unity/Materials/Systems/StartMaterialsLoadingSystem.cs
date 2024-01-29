@@ -189,24 +189,18 @@ namespace ECS.Unity.Materials.Systems
 
         private StreamableLoadingResult<Texture2D>? GetOrAddVideoTextureResult(TextureComponent textureComponent)
         {
-            Texture2D videoTexture = null;
-
             if (entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
             {
                 if (World.Has<VideoTextureComponent>(videoPlayerEntity))
-                    videoTexture = World.Get<VideoTextureComponent>(videoPlayerEntity).Texture;
-                else
-                {
-                    var videoTextureComponent = new VideoTextureComponent(videoTexturesPool);
-                    World.Add(videoPlayerEntity, videoTextureComponent);
+                    return new StreamableLoadingResult<Texture2D>(World.Get<VideoTextureComponent>(videoPlayerEntity).Texture);
 
-                    videoTexture = videoTextureComponent.Texture;
-                }
+                var videoTextureComponent = new VideoTextureComponent(videoTexturesPool);
+                World.Add(videoPlayerEntity, videoTextureComponent);
+                return new StreamableLoadingResult<Texture2D>(videoTextureComponent.Texture);
             }
-            else
-                ReportHub.LogError(ReportCategory.VIDEO_PLAYER, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.");
 
-            return new StreamableLoadingResult<Texture2D>(videoTexture);
+            var ecsSystemException = CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created."));
+            return new StreamableLoadingResult<Texture2D>(ecsSystemException);
         }
 
         private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
