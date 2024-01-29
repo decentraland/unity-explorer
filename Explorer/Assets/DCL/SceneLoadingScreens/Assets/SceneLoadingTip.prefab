@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2284083862230481757}
   - component: {fileID: 4723243602018727282}
+  - component: {fileID: 7340090979886718802}
   m_Layer: 0
   m_Name: SceneLoadingTip
   m_TagString: Untagged
@@ -55,6 +56,19 @@ MonoBehaviour:
   <TitleLabel>k__BackingField: {fileID: 7510907615130953338}
   <BodyLabel>k__BackingField: {fileID: 7665032451036235611}
   <Image>k__BackingField: {fileID: 1483179501148298399}
+  <RootCanvasGroup>k__BackingField: {fileID: 7340090979886718802}
+--- !u!225 &7340090979886718802
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 543383342138890165}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3262375314198734061
 GameObject:
   m_ObjectHideFlags: 0

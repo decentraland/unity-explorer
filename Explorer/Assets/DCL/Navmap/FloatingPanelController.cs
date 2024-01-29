@@ -1,9 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
+using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,23 +20,26 @@ namespace DCL.Navmap
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ITeleportController teleportController;
+        private readonly IMVCManager mvcManager;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
-
         private CancellationTokenSource cts;
 
         private readonly Vector2 rectTransformLocalPosition = new Vector3(1702, 480);
         private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(2100, 480);
         private readonly ImageController placeImageController;
 
-        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService, ITeleportController teleportController, IWebRequestController webRequestController)
+        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
+            ITeleportController teleportController, IWebRequestController webRequestController,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.teleportController = teleportController;
+            this.mvcManager = mvcManager;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -62,12 +68,13 @@ namespace DCL.Navmap
         private void HideWithSlide()
         {
             view.rectTransform.localPosition = rectTransformLocalPosition;
-            view.rectTransform.DOLocalMove(rectTransformLocalPositionOutside, 0.5f).SetEase(Ease.Linear).OnComplete(() => view.gameObject.SetActive(false));;
+            view.rectTransform.DOLocalMove(rectTransformLocalPositionOutside, 0.5f).SetEase(Ease.Linear).OnComplete(() => view.gameObject.SetActive(false));
         }
 
         public void HandlePanelVisibility(Vector2Int parcel, bool popAnimation = true)
         {
             view.rectTransform.localPosition = rectTransformLocalPosition;
+
             if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
             else { ShowPanel(parcel, popAnimation); }
         }
@@ -88,6 +95,7 @@ namespace DCL.Navmap
                 view.rectTransform.localPosition = rectTransformLocalPositionOutside;
                 view.rectTransform.DOLocalMove(rectTransformLocalPosition, 0.5f).SetEase(Ease.Linear);
             }
+
             cts = new CancellationTokenSource();
             GetPlaceInfoAsync(parcel).Forget();
         }
@@ -97,12 +105,30 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => teleportController.TeleportToParcel(parcel));
+                view.jumpInButton.onClick.AddListener(() => TeleportToParcel(parcel));
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
             catch (Exception ex) { SetEmptyParcelInfo(parcel); }
+        }
+
+        private void TeleportToParcel(Vector2Int parcel)
+        {
+            async UniTaskVoid ShowLoadingAndTeleportAsync(CancellationToken ct)
+            {
+                var timeout = TimeSpan.FromSeconds(30);
+                var loadReport = AsyncLoadProcessReport.Create();
+
+                async UniTask TeleportAsync() =>
+                    await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+
+                await UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
+                                                .AttachExternalCancellation(ct),
+                    TeleportAsync());
+            }
+
+            ShowLoadingAndTeleportAsync(cts.Token).Forget();
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
@@ -141,12 +167,14 @@ namespace DCL.Navmap
             }
 
             var hasVisibleCategories = false;
+
             foreach (string placeInfoCategory in placeInfo.categories)
                 if (categoriesDictionary.TryGetValue(placeInfoCategory, out GameObject categoryGameObject))
                 {
                     hasVisibleCategories = true;
                     categoryGameObject.SetActive(true);
                 }
+
             view.appearsIn.SetActive(hasVisibleCategories);
         }
 
