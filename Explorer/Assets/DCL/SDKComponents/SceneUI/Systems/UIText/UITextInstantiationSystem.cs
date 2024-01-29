@@ -17,6 +17,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UITextInstantiationSystem : BaseUnityLoopSystem
     {
+        private const string COMPONENT_NAME = "UIText";
+
         private readonly IComponentPool<Label> labelsPool;
 
         public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -36,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var label = labelsPool.Get();
-            label.name = $"UIText (Entity {entity.Id})";
+            label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
             UiElementUtils.SetElementDefaultStyle(label.style);
             uiTransformComponent.Transform.Add(label);

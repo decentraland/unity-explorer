@@ -4,7 +4,7 @@ using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
-using Decentraland.Common;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System;
@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            Assert.AreEqual($"UIDropdown (Entity {entity.Id})", uiDropdownComponent.Dropdown.DropdownField.name);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIDropdown", entity), uiDropdownComponent.Dropdown.DropdownField.name);
             Assert.IsTrue(uiDropdownComponent.Dropdown.DropdownField.ClassListContains("dcl-dropdown"));
             Assert.AreEqual(PickingMode.Position, uiDropdownComponent.Dropdown.DropdownField.pickingMode);
             Assert.IsTrue(uiTransformComponent.Transform.Contains(uiDropdownComponent.Dropdown.DropdownField));

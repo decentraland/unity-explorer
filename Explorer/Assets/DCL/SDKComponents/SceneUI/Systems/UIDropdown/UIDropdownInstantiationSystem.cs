@@ -16,6 +16,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UIDropdownInstantiationSystem : BaseUnityLoopSystem
     {
+        private const string COMPONENT_NAME = "UIDropdown";
+
         private readonly IComponentPool<DCLDropdown> dropdownsPool;
 
         public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -35,7 +37,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private void InstantiateUIDropdown(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var dropdown = dropdownsPool.Get();
-            dropdown.Initialize($"UIDropdown (Entity {entity.Id})", "dcl-dropdown", "unity-base-popup-field__text");
+            dropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
             uiTransformComponent.Transform.Add(dropdown.DropdownField);
             var uiDropdownComponent = new UIDropdownComponent();
             uiDropdownComponent.Dropdown = dropdown;

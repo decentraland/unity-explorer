@@ -1,3 +1,4 @@
+using Arch.Core;
 using UnityEngine.UIElements;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
@@ -324,6 +325,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 default:
                     return Align.Auto;
             }
+        }
+
+        public static string BuildElementName(string prefix, in Entity entity)
+        {
+#if UNITY_EDITOR
+            return $"{prefix} (Entity {entity.Id})";
+#else
+            return prefix;
+#endif
         }
     }
 }
