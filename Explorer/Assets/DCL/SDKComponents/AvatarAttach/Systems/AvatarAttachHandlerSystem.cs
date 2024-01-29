@@ -22,6 +22,8 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     [ThrottlingEnabled]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
+        private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarAttachComponent>().WithNone<DeleteEntityIntention, PBAvatarAttach>();
         private AvatarBase ownPlayerAvatarBase;
 
         public AvatarAttachHandlerSystem(World world, WorldProxy globalWorld) : base(world)
@@ -33,8 +35,9 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             SetupAvatarAttachQuery(World);
             UpdateAvatarAttachTransformQuery(World);
-            HandleComponentRemovalQuery(World);
-            HandleEntityDestructionQuery(World);
+
+            World.Remove<AvatarAttachComponent>(COMPONENT_REMOVAL_QUERY);
+            World.Remove<AvatarAttachComponent, PBAvatarAttach>(ENTITY_DESTRUCTION_QUERY);
         }
 
         [Query]
@@ -47,41 +50,18 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
             ApplyAnchorPointTransformValues(transformComponent, component);
             transformComponent.UpdateCache();
-            World.Set(entity, transformComponent);
 
             World.Add(entity, component);
         }
 
         [Query]
-        private void UpdateAvatarAttachTransform(in Entity entity, ref PBAvatarAttach pbAvatarAttach, ref AvatarAttachComponent avatarAttachComponent, ref TransformComponent transformComponent)
+        private void UpdateAvatarAttachTransform(ref PBAvatarAttach pbAvatarAttach, ref AvatarAttachComponent avatarAttachComponent, ref TransformComponent transformComponent)
         {
             if (pbAvatarAttach.IsDirty)
-            {
                 avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
-                World.Set(entity, avatarAttachComponent);
-            }
 
             if (ApplyAnchorPointTransformValues(transformComponent, avatarAttachComponent))
-            {
                 transformComponent.UpdateCache();
-                World.Set(entity, transformComponent);
-            }
-        }
-
-        [Query]
-        [All(typeof(AvatarAttachComponent))]
-        [None(typeof(PBAvatarAttach), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity entity)
-        {
-            World.Remove<AvatarAttachComponent>(entity);
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention), typeof(AvatarAttachComponent))]
-        private void HandleEntityDestruction(in Entity entity)
-        {
-            World.Remove<AvatarAttachComponent>(entity);
-            World.Remove<PBAvatarAttach>(entity);
         }
 
         [Query]
