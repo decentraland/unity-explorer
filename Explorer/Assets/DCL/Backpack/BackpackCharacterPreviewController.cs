@@ -4,10 +4,12 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
+using Org.BouncyCastle.Bcpg.Attr;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Experimental.Rendering;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
@@ -65,7 +67,33 @@ namespace DCL.CharacterPreview
 
         public void Initialize()
         {
-            previewController = previewFactory.Create(world, poolsRegistry, (RenderTexture)view.RawImage.texture, inputEventBus);
+            //Temporal solution to fix issue with render format in Mac VS Windows
+            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+            {
+                var sizeDelta = view.RawImage.rectTransform.sizeDelta;
+
+                var newTexture = new RenderTexture((int)sizeDelta.x,(int)sizeDelta.y, 0, GraphicsFormat.A2B10G10R10_SIntPack32)
+                {
+                    name = "Preview Texture",
+                };
+                newTexture.Create();
+
+                view.RawImage.texture = newTexture;
+                previewController = previewFactory.Create(world, poolsRegistry, newTexture, inputEventBus);
+            }
+            else
+            {
+                var sizeDelta = view.RawImage.rectTransform.sizeDelta;
+
+                var newTexture = new RenderTexture((int)sizeDelta.x,(int)sizeDelta.y, 0, GraphicsFormat.R32G32B32A32_SInt)
+                {
+                    name = "Preview Texture",
+                };
+                newTexture.Create();
+                view.RawImage.texture = newTexture;
+                previewController = previewFactory.Create(world, poolsRegistry, newTexture, inputEventBus);
+            }
+
             OnModelUpdated();
         }
 
