@@ -26,14 +26,12 @@ MonoBehaviour:
     baseValue: 0
     multiplyValue: 0
     divideValue: 0
-  add: []
-  multiply: []
-  subtract:
-  - {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
-  - {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
   operations:
   - operation: 3
     noise: {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
+    disable: 1
   - operation: 3
     noise: {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
+    disable: 1
+  simpleOperations: []
   finalCutOff: 0

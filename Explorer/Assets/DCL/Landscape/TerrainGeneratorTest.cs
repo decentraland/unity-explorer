@@ -1,4 +1,5 @@
-﻿using DCL.Landscape.Settings;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Landscape.Settings;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -20,12 +21,12 @@ namespace DCL.Landscape
         private NativeArray<int2> emptyParcels;
 
         [ContextMenu("Generate")]
-        public void Generate()
+        public async UniTask Generate()
         {
             ParseParcels();
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
-            gen.GenerateTerrain(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
-            gen.Dispose();
+            await gen.GenerateTerrain(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
+            gen.FreeMemory();
         }
 
         private void ParseParcels()

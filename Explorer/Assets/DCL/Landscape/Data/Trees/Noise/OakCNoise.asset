@@ -15,7 +15,7 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 1
-    scale: 59.33
+    scale: 34.96
     octaves: 3
     persistance: 0.548
     lacunarity: 2.79
@@ -23,14 +23,15 @@ MonoBehaviour:
     offset: {x: 0, y: 0}
     cutoff: 0
     noiseType: 1
-    baseValue: 1.2
+    baseValue: 0
     multiplyValue: 10
     divideValue: 1
   operations:
   - operation: 2
     noise: {fileID: 11400000, guid: f1828e41f6f44394c8807749fc57c5bd, type: 2}
-    disable: 0
+    disable: 1
   - operation: 3
     noise: {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
     disable: 1
+  simpleOperations: []
   finalCutOff: 0.63

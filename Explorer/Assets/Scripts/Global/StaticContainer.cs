@@ -81,9 +81,6 @@ namespace Global
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
 
-        public MapRendererTextureContainer MapRendererTextureContainer { get; private set; }
-
-
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
@@ -153,7 +150,6 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
             container.PhysicsTickProvider = new PhysicsTickProvider();
-            container.MapRendererTextureContainer = new MapRendererTextureContainer();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
@@ -180,7 +176,6 @@ namespace Global
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
-                new LandscapePlugin(addressablesProvisioner, container.MapRendererTextureContainer),
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]

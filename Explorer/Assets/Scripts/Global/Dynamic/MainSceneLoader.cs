@@ -15,7 +15,9 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
@@ -25,6 +27,11 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
+        private const float LOADING_PROGRESS_PROFILE = 0.1f;
+        private const float LOADING_PROGRESS_LANDSCAPE = 0.6f;
+        private const float LOADING_PROGRESS_TELEPORT = 0.8f;
+        private const float LOADING_PROGRESS_COMPLETE = 1f;
+
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
@@ -199,15 +206,26 @@ namespace Global.Dynamic
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
-            loadReport!.ProgressCounter.Value = 0.2f;
+            loadReport!.ProgressCounter.Value = LOADING_PROGRESS_PROFILE;
 
             // Add the profile into the player entity so it will create the avatar in world
             globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
 
+            await LoadLandscape(ct);
+
             await TeleportToSpawnPointAsync(ct);
 
-            loadReport.ProgressCounter.Value = 1f;
+            loadReport.ProgressCounter.Value = LOADING_PROGRESS_COMPLETE;
             loadReport.CompletionSource.TrySetResult();
+        }
+
+        private async UniTask LoadLandscape(CancellationToken ct)
+        {
+            var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+            var landscapeDebugPlugin = dynamicWorldContainer!.GlobalPlugins.First(p => p is LandscapePlugin) as LandscapePlugin;
+
+            await UniTask.WhenAny(landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_LANDSCAPE),
+                landscapeDebugPlugin!.InitializeLoadingProgress(landscapeLoadReport, ct));
         }
 
         private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
@@ -231,7 +249,7 @@ namespace Global.Dynamic
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, 0.8f),
+            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_TELEPORT),
                 dynamicWorldContainer!.ParcelServiceContainer.TeleportController.TeleportToSceneSpawnPointAsync(
                     settings.StartPosition, teleportLoadReport, ct));
         }

@@ -33,5 +33,11 @@ namespace DCL.Landscape.Settings
         [Header("Cliffs")]
         public GameObject cliffSide;
         public GameObject cliffCorner;
+
+        [Header("Water")]
+        public GameObject ocean;
+
+        [Header("Wind")]
+        public GameObject wind;
     }
 }

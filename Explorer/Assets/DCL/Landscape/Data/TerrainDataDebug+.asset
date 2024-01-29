@@ -14,21 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrainSize: 1024
   chunkSize: 512
-  heightScaleNerf: 0.25
+  heightScaleNerf: 0.5
   seed: 134
   terrainHoleEdgeSize: 0.5
-  minHeight: 10
-  pondDepth: 2
+  minHeight: 0
+  pondDepth: 0
   terrainHeightNoise: {fileID: 11400000, guid: f1828e41f6f44394c8807749fc57c5bd, type: 2}
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:
   - {fileID: 8574412962073106934, guid: dc4e1ba31adc87647bf8f733af6ab483, type: 2}
   - {fileID: 8574412962073106934, guid: 717087acc9c59af41995f7a1854878e3, type: 2}
-  - {fileID: 8574412962073106934, guid: 525a9b047f93e814b841b47be03b17aa, type: 2}
   layerNoise:
   - {fileID: 0}
   - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
-  - {fileID: 11400000, guid: 4caf4b28cdb32fa408e08915effbb6bb, type: 2}
   treeAssets:
   - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
   - {fileID: 11400000, guid: 6359eb473a83b5242a3626151eff94e4, type: 2}
@@ -44,7 +42,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4362537cefadf584c8a7ea303794690c, type: 2}
   - {fileID: 11400000, guid: 86b29852bc6b6aa4ab76c26e069e5c8b, type: 2}
   - {fileID: 11400000, guid: 3d26b9b86d046ce4da3e824b5c7e0630, type: 2}
-  - {fileID: 11400000, guid: 6a157539381d5e6448873190ac732d1f, type: 2}
   - {fileID: 11400000, guid: 94cc20bd7b07499479cde28f9c375233, type: 2}
   cliffSide: {fileID: 919132149155446097, guid: c771be5f50b31304fa9980668f783ee3, type: 3}
   cliffCorner: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
+  ocean: {fileID: 415458433285659128, guid: 196e941e9062ac244a7ab5bd86e2c48a, type: 3}
+  wind: {fileID: 4984400270765111023, guid: 4ced4aac10a193c41ba708f28429b518, type: 3}
