@@ -173,7 +173,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
 
     // Get the ray from the camera to the fragment and its length (which is the far point of the ray passing through the atmosphere)
     float3 vEyeRay = normalize(IN.direction);
-    if(vEyeRay.y >= -0.02) // Sky
+    if(vEyeRay.y >= -0.03) // Sky
     {
         float fUp = vEyeRay.y;
         // Calculate the length of the "atmosphere"
@@ -287,7 +287,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
     half y = vEyeRay.y / _SKY_GROUND_THRESHOLD;
     half3 vCol = lerp(vSkyColor, vGroundColor, saturate(-y));
 
-    if(y > 0.0)
+    if(y > -0.03)
     {
         vCol += vSunColour_Intensity * calcSunAttenuation(vSunPos.xyz, vEyeRay, _SunSize, _SunSizeConvergence);
         vCol += calcSunAttenuation(vMoonPos.xyz, vEyeRay, _MoonSize, _MoonSizeConvergence);
