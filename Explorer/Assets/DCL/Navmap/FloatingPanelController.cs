@@ -121,7 +121,7 @@ namespace DCL.Navmap
                 var loadReport = AsyncLoadProcessReport.Create();
 
                 async UniTask TeleportAsync() =>
-                    await teleportController.TeleportToParcelAsync(parcel, loadReport, ct);
+                    await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
 
                 await UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
                                                 .AttachExternalCancellation(ct),
