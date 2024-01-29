@@ -21,7 +21,7 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly ISceneData sceneData;
 
-        internal ApplyMaterialSystem(World world, ISceneData sceneData) : base(world)
+        public ApplyMaterialSystem(World world, ISceneData sceneData) : base(world)
         {
             this.sceneData = sceneData;
         }

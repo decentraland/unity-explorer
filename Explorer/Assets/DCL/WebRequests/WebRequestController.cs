@@ -4,6 +4,7 @@ using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.AudioClips;
+using DCL.WebRequests.GenericHead;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GenericPostArguments, GenericPostRequest> POST_GENERIC = GenericPostRequest.Initialize;
         private static readonly InitializeRequest<GenericPutArguments, GenericPutRequest> PUT_GENERIC = GenericPutRequest.Initialize;
         private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
+        private static readonly InitializeRequest<GenericHeadArguments, GenericHeadRequest> HEAD_GENERIC = GenericHeadRequest.Initialize;
 
         private static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
@@ -66,6 +68,15 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
             SendAsync(PATCH_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
+
+        public UniTask<GenericHeadRequest> HeadAsync(
+            CommonArguments commonArguments,
+            GenericHeadArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            SendAsync(HEAD_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GetTextureWebRequest> GetTextureAsync(
             CommonArguments commonArguments,

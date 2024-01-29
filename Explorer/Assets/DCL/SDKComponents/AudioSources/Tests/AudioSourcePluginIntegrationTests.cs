@@ -75,9 +75,9 @@ namespace DCL.SDKComponents.AudioSources.Tests
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
-            Assert.That(afterUpdate.Result, Is.Not.Null);
-            Assert.That(afterUpdate.Result.clip, Is.Not.Null);
-            Assert.That(afterUpdate.Result.clip.length, Is.EqualTo(TestAudioClip.length).Within(0.1f));
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource.clip, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource.clip.length, Is.EqualTo(TestAudioClip.length).Within(0.1f));
         }
     }
 }

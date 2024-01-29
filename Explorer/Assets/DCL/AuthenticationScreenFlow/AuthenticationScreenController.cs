@@ -55,7 +55,7 @@ namespace DCL.AuthenticationScreenFlow
 
             profileNameLabel = (StringVariable)viewInstance.ProfileNameLabel.StringReference["profileName"];
 
-            viewInstance.LoginButton.onClick.AddListener(StartFlow);
+            viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
             viewInstance.UseAnotherAccountButton.onClick.AddListener(ChangeAccount);
@@ -81,7 +81,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            ShowSplashAndThenSwitchToLoginAsync().Forget();
+            CheckValidIdentityAndStartInitialFlowAsync().Forget();
         }
 
         protected override void OnViewClose()
@@ -92,17 +92,8 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
         }
 
-        private async UniTaskVoid ShowSplashAndThenSwitchToLoginAsync()
+        private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
         {
-            SwitchState(ViewState.Splash);
-
-            // videoPlayer.Play() gets stuck the 2nd time
-            viewInstance.SplashVideoPlayer.enabled = false;
-            viewInstance.SplashVideoPlayer.playOnAwake = true;
-            viewInstance.SplashVideoPlayer.enabled = true;
-
-            await UniTask.WaitUntil(() => viewInstance.SplashVideoPlayer.frame >= (long)(viewInstance.SplashVideoPlayer.frameCount - 1));
-
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
             if (storedIdentity is { IsExpired: false })
@@ -119,12 +110,12 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             (lifeCycleTask ??= new UniTaskCompletionSource()).Task.AttachExternalCancellation(ct);
 
-        private void StartFlow()
+        private void StartLoginFlowUntilEnd()
         {
-            async UniTaskVoid StartFlowAsync(CancellationToken ct)
+            async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
             {
                 try
                 {
@@ -148,7 +139,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
-            StartFlowAsync(loginCancellationToken.Token).Forget();
+            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
         }
 
         private async UniTask FetchProfileAsync(IWeb3Identity web3Identity, CancellationToken ct)
@@ -181,18 +172,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             switch (state)
             {
-                case ViewState.Splash:
-                    viewInstance.SplashContainer.SetActive(true);
-                    viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.ProgressContainer.SetActive(false);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.LoginButton.interactable = true;
-                    break;
                 case ViewState.Login:
-                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -202,7 +182,6 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginButton.interactable = true;
                     break;
                 case ViewState.LoginInProgress:
-                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -212,7 +191,6 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginButton.interactable = false;
                     break;
                 case ViewState.Loading:
-                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(true);
@@ -222,7 +200,6 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginButton.interactable = false;
                     break;
                 case ViewState.Finalize:
-                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -256,7 +233,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private enum ViewState
         {
-            Splash,
             Login,
             LoginInProgress,
             Loading,
