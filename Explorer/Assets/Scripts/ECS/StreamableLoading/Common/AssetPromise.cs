@@ -40,12 +40,11 @@ namespace ECS.StreamableLoading.Common
                 Entity = world.Reference(world.Create(loadingIntention, partition, new StreamableLoadingState())),
             };
 
-        public static AssetPromise<TAsset, TLoadingIntention> CreateFinalized(World world, TLoadingIntention loadingIntention, IPartitionComponent partition,
-            StreamableLoadingResult<TAsset>? result) =>
+        public static AssetPromise<TAsset, TLoadingIntention> CreateFinalized(TLoadingIntention loadingIntention, StreamableLoadingResult<TAsset>? result) =>
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention, partition, new StreamableLoadingState { Value = StreamableLoadingState.Status.Finished })),
+                Entity = EntityReference.Null,
                 Result = result,
             };
 

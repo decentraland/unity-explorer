@@ -166,14 +166,14 @@ namespace ECS.Unity.Materials.Systems
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
             if (textureComponent.Value.IsVideoTexture)
-                promise = Promise.CreateFinalized(World, new GetTextureIntention
+                promise = Promise.CreateFinalized(new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                     WrapMode = textureComponentValue.WrapMode,
                     FilterMode = textureComponentValue.FilterMode,
                     IsVideoTexture = textureComponentValue.IsVideoTexture,
                     VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
-                }, partitionComponent, GetOrAddVideoTextureResult(textureComponentValue));
+                }, GetOrAddVideoTextureResult(textureComponentValue));
             else
                 promise = Promise.Create(World, new GetTextureIntention
                 {
