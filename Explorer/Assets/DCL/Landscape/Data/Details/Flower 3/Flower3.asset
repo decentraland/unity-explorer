@@ -37,5 +37,5 @@ MonoBehaviour:
     noiseSeed: 1
     noiseSpread: 49.6
     holeEdgePadding: 75
-    detailDensity: 0.5
+    detailDensity: 1
     affectedByGlobalDensityScale: 1

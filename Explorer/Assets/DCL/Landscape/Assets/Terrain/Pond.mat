@@ -16,6 +16,7 @@ Material:
   - _CAUSTICS
   - _NORMALMAP
   - _REFRACTION
+  - _TRANSLUCENCY
   m_InvalidKeywords:
   - ADVANCED_LIGHTING
   - _DEPTHEXP_ON
@@ -200,7 +201,7 @@ Material:
     - _NormalMap: 1
     - _NormalMapOn: 1
     - _NormalSpeed: 0.2
-    - _NormalStrength: 0.223
+    - _NormalStrength: 0.654
     - _NormalSubSpeed: -0.5
     - _NormalSubTiling: 0.4100001
     - _NormalTiling: 0.39999992
@@ -243,15 +244,15 @@ Material:
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SparkleIntensity: 0
-    - _SparkleSize: 0.236
+    - _SparkleSize: 0
     - _SpecularHighlights: 1
     - _SpecularReflectionsOn: 1
     - _Speed: 1
     - _SrcBlend: 1
-    - _SunReflectionDistortion: 0.691
+    - _SunReflectionDistortion: 0.979
     - _SunReflectionPerturbance: 0.707
-    - _SunReflectionSize: 0.932
-    - _SunReflectionStrength: 0.28
+    - _SunReflectionSize: 0.982
+    - _SunReflectionStrength: 0.92
     - _Surface: 0
     - _TEXTURE_INTERSECTIONOn: 1
     - _Texture_IntersectionOn: 0
@@ -259,7 +260,7 @@ Material:
     - _Translucency: 0
     - _TranslucencyCurvatureMask: 0
     - _TranslucencyExp: 4
-    - _TranslucencyOn: 0
+    - _TranslucencyOn: 1
     - _TranslucencyReflectionMask: 0
     - _TranslucencyStrength: 1
     - _TranslucencyStrengthDirect: 0.05

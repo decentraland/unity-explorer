@@ -1,4 +1,9 @@
-﻿namespace DCL.Landscape.Components
+﻿using UnityEngine;
+
+namespace DCL.Landscape.Components
 {
-    public struct SatelliteView { }
+    public struct SatelliteView
+    {
+        public Renderer[] renderers;
+    }
 }

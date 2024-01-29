@@ -482,8 +482,6 @@ namespace DCL.Landscape
         public void Dispose()
         {
             emptyParcelResult.Dispose();
-            emptyParcels.Dispose();
-            ownedParcels.Dispose();
             noiseGenCache.Dispose();
         }
     }

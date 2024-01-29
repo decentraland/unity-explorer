@@ -35,6 +35,7 @@ namespace DCL.Landscape.Systems
         private int parcelsCreated;
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
+        private bool disableSatellite;
 
         private LandscapeParcelInitializerSystem(World world,
             LandscapeData landscapeData,
@@ -54,39 +55,33 @@ namespace DCL.Landscape.Systems
         {
             InitializeMapChunksQuery(World);
 
-            //InitializeOwnedParcelFacadesQuery(World);
-            parcelsCreated = 0;
-
-            // This first query gets all LandscapeParcel and creates a Job which calculates what's going to spawn inside them
-            Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeJobs");
-            //InitializeLandscapeJobsQuery(World);
-            Profiler.EndSample();
-
-            if (concurrentJobs > 0)
-                b = false;
-
-            if (concurrentJobs == 0 && !b)
+            if (disableSatellite != landscapeData.disableSatelliteView)
             {
-                poolManager.Print();
-                b = true;
+                Debug.Log("Checking");
+                disableSatellite = landscapeData.disableSatelliteView;
+                UpdateSatelliteViewsQuery(World);
             }
-
-            // This second query get's the job result and spawns all the needed objects
-            Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities");
-            //InitializeLandscapeSubEntitiesQuery(World);
-            Profiler.EndSample();
-
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(LandscapeParcelInitialization), typeof(SatelliteView))]
-        private void InitializeMapChunks(in Entity entity)
+        private void UpdateSatelliteViews(ref SatelliteView satelliteView)
+        {
+            for (var i = 0; i < satelliteView.renderers.Length; i++)
+                satelliteView.renderers[i].forceRenderingOff = landscapeData.disableSatelliteView;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        [All(typeof(LandscapeParcelInitialization))]
+        private void InitializeMapChunks(in Entity entity, ref SatelliteView satelliteView)
         {
             var genesisCityOffset = new Vector3(150 * PARCEL_SIZE, 0, 150 * PARCEL_SIZE);
             var mapOffset = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
             var quadCenter = new Vector3(320, 0, 320);
             Vector3 zFightPrevention = Vector3.down * 0.015f;
+
+            satelliteView.renderers = new Renderer[8 * 8];
 
             for (var x = 0; x < 8; x++)
             {
@@ -103,8 +98,11 @@ namespace DCL.Landscape.Systems
                     groundTile.transform.eulerAngles = new Vector3(90, 0, 0);
 
                     materialPropertyBlock.SetTexture(BASE_MAP, textureContainer.GetChunk(new Vector2Int(x, 7 - y)));
-                    groundTile.GetComponent<Renderer>().SetPropertyBlock(materialPropertyBlock);
+                    Renderer satelliteRenderer = groundTile.GetComponent<Renderer>();
+                    satelliteRenderer.SetPropertyBlock(materialPropertyBlock);
                     groundTile.name = $"CHUNK {x},{y}";
+
+                    satelliteView.renderers[x + (y * 8)] = satelliteRenderer;
                 }
             }
 
