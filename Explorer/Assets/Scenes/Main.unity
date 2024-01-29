@@ -781,7 +781,7 @@ VideoPlayer:
   m_DirectAudioMutes: 
   m_ControlledAudioTrackCount: 0
   m_PlayOnAwake: 1
-  m_SkipOnDrop: 1
+  m_SkipOnDrop: 0
   m_Looping: 1
   m_WaitForFirstFrame: 0
   m_FrameReadyEventEnabled: 0
@@ -1072,35 +1072,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &6245460668420032761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7722564697705550552}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11560c96ccf142eab9ae39a4729d920c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <canvas>k__BackingField: {fileID: 461083453953300887}
-  <raycaster>k__BackingField: {fileID: 6063382712672796138}
-  <LoginContainer>k__BackingField: {fileID: 0}
-  <LoginButton>k__BackingField: {fileID: 0}
-  <ConnectingToServerContainer>k__BackingField: {fileID: 0}
-  <PendingAuthentication>k__BackingField: {fileID: 0}
-  <CancelAuthenticationProcess>k__BackingField: {fileID: 0}
-  <ProgressContainer>k__BackingField: {fileID: 0}
-  <FinalizeContainer>k__BackingField: {fileID: 0}
-  <JumpIntoWorldButton>k__BackingField: {fileID: 0}
-  <UseAnotherAccountButton>k__BackingField: {fileID: 0}
-  <ProfileNameLabel>k__BackingField: {fileID: 0}
-  <VerificationCodeLabel>k__BackingField: {fileID: 0}
-  <VerificationCodeHintButton>k__BackingField: {fileID: 0}
-  <VerificationCodeHintContainer>k__BackingField: {fileID: 0}
-  <DiscordButton>k__BackingField: {fileID: 0}
-  countdownLabel: {fileID: 0}
 --- !u!222 &6583871705109680749
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1172,7 +1143,6 @@ GameObject:
   - component: {fileID: 461083453953300887}
   - component: {fileID: 5776215482542905213}
   - component: {fileID: 6063382712672796138}
-  - component: {fileID: 6245460668420032761}
   m_Layer: 0
   m_Name: Splash
   m_TagString: Untagged
