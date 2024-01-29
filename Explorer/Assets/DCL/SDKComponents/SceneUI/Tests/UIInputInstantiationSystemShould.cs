@@ -4,6 +4,7 @@ using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System;
@@ -45,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-            Assert.AreEqual($"UIInput (Entity {entity.Id})", uiInputComponent.Input.TextField.name);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.Input.TextField.name);
             Assert.IsTrue(uiInputComponent.Input.TextField.ClassListContains("dcl-input"));
             Assert.AreEqual(PickingMode.Position, uiInputComponent.Input.TextField.pickingMode);
             Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.Input.TextField));
