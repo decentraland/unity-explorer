@@ -129,14 +129,11 @@ namespace DCL.SceneLoadingScreens
 
             UniTask tipFadeTask = tips[index]
                                  .RootCanvasGroup.DOFade(1f, duration)
-                                 .AsyncWaitForCompletion()
-                                 .AsUniTask();
+                                 .ToUniTask(cancellationToken: ct);
 
             UniTask backgroundFadeTask = backgrounds[index]
                                         .RootCanvasGroup.DOFade(1f, duration)
-                                        .AsyncWaitForCompletion()
-                                        .AsUniTask()
-                                        .AttachExternalCancellation(ct);
+                                        .ToUniTask(cancellationToken: ct);
 
             await UniTask.WhenAll(tipFadeTask, backgroundFadeTask);
         }
@@ -145,14 +142,11 @@ namespace DCL.SceneLoadingScreens
         {
             UniTask tipFadeTask = tips[index]
                                  .RootCanvasGroup.DOFade(0f, duration)
-                                 .AsyncWaitForCompletion()
-                                 .AsUniTask();
+                                 .ToUniTask(cancellationToken: ct);
 
             UniTask backgroundFadeTask = backgrounds[index]
                                         .RootCanvasGroup.DOFade(0f, duration)
-                                        .AsyncWaitForCompletion()
-                                        .AsUniTask()
-                                        .AttachExternalCancellation(ct);
+                                        .ToUniTask(cancellationToken: ct);
 
             await UniTask.WhenAll(tipFadeTask, backgroundFadeTask);
 
