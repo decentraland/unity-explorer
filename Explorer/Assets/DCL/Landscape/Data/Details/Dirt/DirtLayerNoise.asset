@@ -32,5 +32,6 @@ MonoBehaviour:
     disable: 0
   - operation: 3
     noise: {fileID: 11400000, guid: 4caf4b28cdb32fa408e08915effbb6bb, type: 2}
-    disable: 0
+    disable: 1
+  simpleOperations: []
   finalCutOff: 0

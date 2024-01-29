@@ -128,7 +128,7 @@ namespace Global.Dynamic
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
-                new LandscapeDebugPlugin(staticContainer.AssetsProvisioner, debugBuilder),
+                new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

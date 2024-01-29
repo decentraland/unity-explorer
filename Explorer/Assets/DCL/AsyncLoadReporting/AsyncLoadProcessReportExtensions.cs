@@ -11,7 +11,7 @@ namespace DCL.AsyncLoadReporting
         {
             while (report.ProgressCounter.Value < 1f && !ct.IsCancellationRequested)
             {
-                UniTask<float> task = destination.ProgressCounter.WaitAsync(ct);
+                UniTask<float> task = report.ProgressCounter.WaitAsync(ct);
 
                 if (timeout != null)
                     task = task.Timeout(timeout.Value);
@@ -20,6 +20,7 @@ namespace DCL.AsyncLoadReporting
                 destination.ProgressCounter.Value = offset + (progress * (until - offset));
             }
         }
+
 
         public static async UniTask PropagateAsync(this AsyncLoadProcessReport report, AsyncLoadProcessReport destination, CancellationToken ct,
             float offset = 0f, float until = 1f, TimeSpan? timeout = null)

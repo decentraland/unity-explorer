@@ -86,8 +86,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync);
 
-            // initialize Atlas but don't block the flow (to accelerate loading time)
-            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
+            await chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow();
 
             layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
             return;

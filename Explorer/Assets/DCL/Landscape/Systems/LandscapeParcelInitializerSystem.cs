@@ -4,19 +4,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.Landscape.Components;
-using DCL.Landscape.Config;
-using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using System.Collections.Generic;
-using Unity.Collections;
-using Unity.Jobs;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Profiling;
-using Utility;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Landscape.Systems
@@ -27,37 +19,31 @@ namespace DCL.Landscape.Systems
     {
         private const int PARCEL_SIZE = 16;
         private const int CHUNK_SIZE = 40;
+        private const int GENESIS_HALF_PARCEL_WIDTH = 150;
         private readonly LandscapeData landscapeData;
-        private readonly LandscapeAssetPoolManager poolManager;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly Transform landscapeParentObject;
-        private int concurrentJobs;
-        private int parcelsCreated;
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
         private bool disableSatellite;
 
         private LandscapeParcelInitializerSystem(World world,
             LandscapeData landscapeData,
-            LandscapeAssetPoolManager poolManager,
             MapRendererTextureContainer textureContainer) : base(world)
         {
             this.landscapeData = landscapeData;
-            this.poolManager = poolManager;
             this.textureContainer = textureContainer;
             landscapeParentObject = new GameObject("Landscape").transform;
             materialPropertyBlock = new MaterialPropertyBlock();
         }
 
-        private bool b;
-
         protected override void Update(float t)
         {
-            InitializeMapChunksQuery(World);
+            if (textureContainer.IsComplete())
+                InitializeMapChunksQuery(World);
 
             if (disableSatellite != landscapeData.disableSatelliteView)
             {
-                Debug.Log("Checking");
                 disableSatellite = landscapeData.disableSatelliteView;
                 UpdateSatelliteViewsQuery(World);
             }
@@ -76,8 +62,8 @@ namespace DCL.Landscape.Systems
         [All(typeof(LandscapeParcelInitialization))]
         private void InitializeMapChunks(in Entity entity, ref SatelliteView satelliteView)
         {
-            var genesisCityOffset = new Vector3(150 * PARCEL_SIZE, 0, 150 * PARCEL_SIZE);
-            var mapOffset = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
+            var genesisCityOffset = new Vector3(GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE, 0, GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE);
+            var mapTextureMargins = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
             var quadCenter = new Vector3(320, 0, 320);
             Vector3 zFightPrevention = Vector3.down * 0.015f;
 
@@ -90,146 +76,21 @@ namespace DCL.Landscape.Systems
                     int posX = x * CHUNK_SIZE * PARCEL_SIZE;
                     int posZ = y * CHUNK_SIZE * PARCEL_SIZE;
 
-                    Vector3 coord = new Vector3(posX, 0, posZ) - genesisCityOffset + quadCenter + mapOffset + zFightPrevention;
+                    Vector3 coord = new Vector3(posX, 0, posZ) - genesisCityOffset + quadCenter + mapTextureMargins + zFightPrevention;
 
-                    Transform groundTile = poolManager.Get(landscapeData.mapChunk);
-                    groundTile.SetParent(landscapeParentObject);
-                    groundTile.transform.position = coord;
-                    groundTile.transform.eulerAngles = new Vector3(90, 0, 0);
+                    Transform groundTile = Object.Instantiate(landscapeData.mapChunk, landscapeParentObject, true);
+                    groundTile.position = coord;
+                    groundTile.eulerAngles = new Vector3(90, 0, 0);
 
                     materialPropertyBlock.SetTexture(BASE_MAP, textureContainer.GetChunk(new Vector2Int(x, 7 - y)));
                     Renderer satelliteRenderer = groundTile.GetComponent<Renderer>();
                     satelliteRenderer.SetPropertyBlock(materialPropertyBlock);
                     groundTile.name = $"CHUNK {x},{y}";
-
                     satelliteView.renderers[x + (y * 8)] = satelliteRenderer;
                 }
             }
 
             World.Remove<LandscapeParcelInitialization>(entity);
         }
-
-        /*[Query]
-        [None(typeof(DeleteEntityIntention))]
-        [All(typeof(LandscapeParcelInitialization))]
-        private void InitializeLandscapeJobs(in Entity entity, in LandscapeParcel landscapeParcel)
-        {
-            // This prevents a fatal crash caused by creating too much parallel jobs, it also prevents overloading the CPU too much
-            if (concurrentJobs > MAX_JOB_CONCURRENCY) return;
-
-            foreach (LandscapeAsset landscapeAsset in landscapeData.assets)
-            {
-                NoiseSettings noiseSettings = landscapeAsset.noiseData.settings;
-
-                var octaveOffsets = new NativeArray<float2>(noiseSettings.octaves, Allocator.Persistent);
-                float maxPossibleHeight = Noise.CalculateOctaves(ref landscapeParcel.Random, ref noiseSettings, ref octaveOffsets);
-
-                var parcelNoiseJob = new LandscapeParcelNoiseJob
-                {
-                    Parcel = entity,
-                    Results = new NativeArray<float>(landscapeData.density * landscapeData.density, Allocator.Persistent),
-                    OctaveOffsets = octaveOffsets,
-                    MaxPossibleHeight = maxPossibleHeight,
-                    LandscapeAsset = landscapeAsset,
-                };
-
-                var offset = new float2(landscapeParcel.Position.x, landscapeParcel.Position.z);
-
-                var noiseJob = new NoiseJob(
-                    ref parcelNoiseJob.Results,
-                    in octaveOffsets,
-                    landscapeData.density,
-                    landscapeData.density,
-                    in noiseSettings,
-                    maxPossibleHeight,
-                    offset,
-                    NoiseJobOperation.SET
-                );
-
-                parcelNoiseJob.Handle = noiseJob.Schedule(landscapeData.density * landscapeData.density, 32);
-
-                World.Create(parcelNoiseJob);
-                concurrentJobs++;
-            }
-
-            World.Remove<LandscapeParcelInitialization>(entity);
-        }*/
-
-        /*[Query]
-        private void InitializeLandscapeSubEntities(in Entity entity, ref LandscapeParcelNoiseJob landscapeParcelNoiseJob)
-        {
-            if (!landscapeParcelNoiseJob.Handle.IsCompleted) return;
-            landscapeParcelNoiseJob.Handle.Complete();
-            concurrentJobs--;
-
-            // This means that the job ended and our parcel entity does not exist anymore
-            if (!World.Has<LandscapeParcel>(landscapeParcelNoiseJob.Parcel))
-            {
-                DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
-                return;
-            }
-
-            LandscapeParcel landscapeParcel = World.Get<LandscapeParcel>(landscapeParcelNoiseJob.Parcel);
-            float dist = 16f / landscapeData.density;
-            Vector3 basePos = landscapeParcel.Position;
-            Vector3 parcelMargin = (Vector3.right * dist / 2) + (Vector3.forward * dist / 2);
-
-            for (var i = 0; i < landscapeData.density; i++)
-            {
-                for (var j = 0; j < landscapeData.density; j++)
-                {
-                    int index = i + (j * landscapeData.density);
-
-                    // This slow, can we find a workaround?
-                    float objHeight = landscapeParcelNoiseJob.Results[index];
-
-                    // We probably want to setup some thresholds for this instead of bigger than zero
-                    if (objHeight > 0)
-                    {
-                        // TODO: draw them with BatchRenderer
-
-                        Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities.SpawnObject");
-                        Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
-                        Vector3 finalPosition = basePos + parcelMargin + subEntityPos;
-
-                        LandscapeAsset landscapeAsset = landscapeParcelNoiseJob.LandscapeAsset;
-                        int randomIndex = landscapeParcel.Random.Next(0, landscapeAsset.assets.Length - 1);
-                        Transform prefab = landscapeAsset.assets[randomIndex];
-
-                        Transform objTransform = poolManager.Get(prefab);
-                        objTransform.SetParent(landscapeParentObject);
-                        objTransform.transform.position = finalPosition;
-                        landscapeAsset.randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
-
-                        // can we avoid this allocation? we need to keep track of them
-                        if (!landscapeParcel.Assets.ContainsKey(prefab))
-                            landscapeParcel.Assets.Add(prefab, new List<Transform>());
-
-                        landscapeParcel.Assets[prefab].Add(objTransform);
-                        Profiler.EndSample();
-
-                    }
-                }
-            }
-
-            // TODO: Add to unload list
-            Transform groundTile = poolManager.Get(landscapeData.groundTile);
-            groundTile.SetParent(landscapeParentObject);
-            groundTile.transform.position = basePos + new Vector3(8, 0, 8);
-            groundTile.transform.eulerAngles = new Vector3(0, -180, 0);
-
-            //UpdateMaterialPropertyBlock(basePos);
-            //groundTile.GetComponent<Renderer>().SetPropertyBlock(materialPropertyBlock);
-            groundTile.name = $"Empty {basePos.x / 16:F0},{basePos.z / 16:F0}";
-
-            DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
-
-            void DisposeEntityAndJob(in Entity entity, ref LandscapeParcelNoiseJob landscapeParcelNoiseJob)
-            {
-                landscapeParcelNoiseJob.Results.Dispose();
-                landscapeParcelNoiseJob.OctaveOffsets.Dispose();
-                World.Destroy(entity);
-            }
-        }*/
     }
 }
