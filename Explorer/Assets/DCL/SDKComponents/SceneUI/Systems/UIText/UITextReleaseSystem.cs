@@ -20,11 +20,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
     [ThrottlingEnabled]
     public partial class UITextReleaseSystem : BaseUnityLoopSystem
     {
-        private IComponentPool componentPool;
+        private readonly IComponentPool componentPool;
 
         private UITextReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(Label), out IComponentPool componentPool);
+            poolsRegistry.TryGetPool(typeof(Label), out componentPool);
         }
 
         protected override void Update(float t)

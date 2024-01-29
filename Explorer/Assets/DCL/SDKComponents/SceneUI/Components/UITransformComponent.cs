@@ -13,6 +13,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public EntityReference Parent;
         public HashSet<EntityReference> Children;
         public bool IsHidden;
+        public int RightOf;
 
         VisualElement IPoolableComponentProvider<VisualElement>.PoolableComponent => Transform;
         Type IPoolableComponentProvider<VisualElement>.PoolableComponentType => typeof(VisualElement);

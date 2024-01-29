@@ -5,7 +5,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioSourceExtensions
     {
-        public static void FromPBAudioSource(this AudioSource audioSource, AudioClip clip, PBAudioSource pbAudioSource)
+        public static void FromPBAudioSourceWithClip(this AudioSource audioSource, PBAudioSource pbAudioSource, AudioClip clip)
         {
             audioSource.clip = clip;
 
@@ -35,6 +35,9 @@ namespace DCL.SDKComponents.AudioSources
             bool PlayingChanged() =>
                 pbAudioSource.HasPlaying && pbAudioSource.Playing != audioSource.isPlaying && audioSource.clip != null;
         }
+
+        public static float GetVolume(this PBAudioSource pbAudioSource) =>
+            pbAudioSource.HasVolume ? pbAudioSource.Volume : Default.VOLUME;
 
         /// <summary>
         ///     Default constant values for audio source properties, that rewrite protobuf defaults

@@ -19,6 +19,8 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -76,6 +78,8 @@ namespace Global
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
+        public IScenesCache ScenesCache { get; private set; }
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
 
         public MapRendererTextureContainer MapRendererTextureContainer { get; private set; }
 
@@ -116,6 +120,8 @@ namespace Global
             var container = new StaticContainer();
 
             container.EthereumApi = ethereumApi;
+            container.ScenesCache = new ScenesCache();
+            container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
@@ -123,7 +129,7 @@ namespace Global
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
-                return (null, false);
+                return (null, false)!;
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -156,6 +162,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
+                new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 textureResolvePlugin,
@@ -168,6 +175,8 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

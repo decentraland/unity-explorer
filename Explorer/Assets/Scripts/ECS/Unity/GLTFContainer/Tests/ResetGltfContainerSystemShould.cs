@@ -20,14 +20,14 @@ namespace ECS.Unity.GLTFContainer.Tests
 {
     public class ResetGltfContainerSystemShould : UnitySystemTestBase<ResetGltfContainerSystem>
     {
-        private IStreamableCache<GltfContainerAsset, string> cache;
+        private IDereferencableCache<GltfContainerAsset, string> cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
 
         [SetUp]
         public void SetUp()
         {
             system = new ResetGltfContainerSystem(world,
-                cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>(),
+                cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>(),
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 

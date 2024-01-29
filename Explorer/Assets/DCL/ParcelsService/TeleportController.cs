@@ -1,10 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Cysharp.Threading.Tasks;
-using DCL.Character;
+using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using ECS.SceneLifeCycle.Reporting;
 using Ipfs;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,13 +16,23 @@ namespace DCL.ParcelsService
 {
     public partial class TeleportController : ITeleportController
     {
-        private readonly ICharacterObject characterObject;
-        private IRetrieveScene retrieveScene;
-        private World world;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private IRetrieveScene? retrieveScene;
+        private World? world;
 
-        public TeleportController(ICharacterObject characterObject)
+        public IRetrieveScene SceneProviderStrategy
         {
-            this.characterObject = characterObject;
+            set => retrieveScene = value;
+        }
+
+        public World World
+        {
+            set => world = value;
+        }
+
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
+        {
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public void InvalidateRealm()
@@ -28,23 +40,13 @@ namespace DCL.ParcelsService
             retrieveScene = null;
         }
 
-        public void OnWorldLoaded(World world)
+        public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            this.world = world;
-        }
-
-        public void OnRealmLoaded(IRetrieveScene retrieveScene)
-        {
-            this.retrieveScene = retrieveScene;
-            this.retrieveScene.World = world;
-        }
-
-        public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, CancellationToken ct)
-        {
-            // If type of retrieval is not set yet
             if (retrieveScene == null)
             {
-                TeleportToParcel(parcel);
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel));
+                loadReport.ProgressCounter.Value = 1f;
+                loadReport.CompletionSource.TrySetResult();
                 return;
             }
 
@@ -54,11 +56,14 @@ namespace DCL.ParcelsService
 
             if (sceneDef != null)
             {
-                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(sceneDef.metadata.scene.DecodedBase);
+                // Override parcel as it's a new target
+                parcel = sceneDef.metadata.scene.DecodedBase;
+
+                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
                 List<IpfsTypes.SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
 
-                if (spawnPoints.Count > 0)
+                if (spawnPoints is { Count: > 0 })
                 {
                     // TODO transfer obscure logic of how to pick the desired spawn point from the array
                     // For now just pick default/first
@@ -86,7 +91,68 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            AddTeleportIntentQuery(retrieveScene.World, targetPosition);
+            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel));
+
+            if (sceneDef == null)
+            {
+                // Instant completion for empty parcels
+                loadReport.ProgressCounter.Value = 1;
+                loadReport.CompletionSource.TrySetResult();
+
+                return;
+            }
+
+            // Add report to the queue so it will be grabbed by the actual scene
+            sceneReadinessReportQueue.Enqueue(parcel, loadReport);
+
+            try
+            {
+                // add timeout in case of a trouble
+                await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+            }
+            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
+        }
+
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        {
+            if (retrieveScene == null)
+            {
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel));
+                loadReport.ProgressCounter.Value = 1f;
+                loadReport.CompletionSource.TrySetResult();
+                return;
+            }
+
+            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+            IpfsTypes.SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+
+            if (sceneDef != null)
+
+                // Override parcel as it's a new target
+                parcel = sceneDef.metadata.scene.DecodedBase;
+
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+
+            // Add report to the queue so it will be grabbed by the actual scene
+            sceneReadinessReportQueue.Enqueue(parcel, loadReport);
+
+            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel));
+
+            if (sceneDef == null)
+            {
+                // Instant completion for empty parcels
+                loadReport.ProgressCounter.Value = 1;
+                loadReport.CompletionSource.TrySetResult();
+
+                return;
+            }
+
+            try
+            {
+                // add timeout in case of a trouble
+                await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+            }
+            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
         private static Vector3 GetOffsetFromSpawnPoint(IpfsTypes.SceneMetadata.SpawnPoint spawnPoint)
@@ -117,17 +183,11 @@ namespace DCL.ParcelsService
             return new Vector3(ParcelMathHelper.PARCEL_SIZE / 2f, 0, ParcelMathHelper.PARCEL_SIZE / 2f);
         }
 
-        public void TeleportToParcel(Vector2Int parcel)
-        {
-            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            AddTeleportIntentQuery(world, characterPos);
-        }
-
         [Query]
         [All(typeof(PlayerComponent))]
-        private void AddTeleportIntent([Data] Vector3 position, in Entity entity)
+        private void AddTeleportIntent([Data] PlayerTeleportIntent intent, in Entity entity)
         {
-            world.Add(entity, new PlayerTeleportIntent(position));
+            world?.Add(entity, intent);
         }
     }
 }

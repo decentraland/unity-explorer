@@ -19,11 +19,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformReleaseSystem : BaseUnityLoopSystem
     {
-        private IComponentPool componentPool;
+        private readonly IComponentPool componentPool;
 
         private UITransformReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(VisualElement), out IComponentPool componentPool);
+            poolsRegistry.TryGetPool(typeof(VisualElement), out componentPool);
         }
 
         protected override void Update(float t)
