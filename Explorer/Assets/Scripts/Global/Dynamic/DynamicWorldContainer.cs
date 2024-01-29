@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
@@ -11,6 +12,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SkyBox;
 using DCL.Profiles;
+using DCL.SceneLoadingScreens;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -19,11 +21,13 @@ using ECS.Prioritization.Components;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
 {
@@ -44,6 +48,8 @@ namespace Global.Dynamic
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
         public IProfileRepository ProfileRepository { get; private set; }
+
+        public ParcelServiceContainer ParcelServiceContainer { get; private set; }
 
         public void Dispose()
         {
@@ -78,6 +84,7 @@ namespace Global.Dynamic
             container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
+            container.ParcelServiceContainer = parcelServiceContainer;
 
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
@@ -138,6 +145,8 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
+            BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder);
+
             return (container, true);
         }
 
@@ -145,6 +154,22 @@ namespace Global.Dynamic
         {
             DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
             return UniTask.CompletedTask;
+        }
+
+        private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,
+            IDebugContainerBuilder debugContainerBuilder)
+        {
+            async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
+            {
+                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+                await UniTask.WhenAll(mvcManager.ShowAsync(
+                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
+                    realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct));
+            }
+
+            debugContainerBuilder.AddWidget("Realm")
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { ChangeRealmAsync(realm, CancellationToken.None).Forget(); });
         }
     }
 }
