@@ -339,8 +339,6 @@ namespace DCL.Landscape
 
         private void SetTextures(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
         {
-            Debug.Log($"{offsetX}, {offsetZ}");
-
             List<INoiseGenerator> noiseGenerators = new List<INoiseGenerator>();
             for (var i = 0; i < terrainGenData.layerNoise.Count; i++)
             {

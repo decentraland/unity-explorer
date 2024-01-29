@@ -25,7 +25,7 @@ MonoBehaviour:
   - rid: 8147919132522971138
   - rid: 56198586647707649
   - rid: 1095376790733193218
-  - rid: 3022169693460627458
+  - rid: 3022170005336752130
   references:
     version: 2
     RefIds:
@@ -119,7 +119,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 3022169693460627458
+    - rid: 3022170005336752130
       type: {class: LandscapeDebugSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         realmPartitionSettings:
@@ -127,7 +127,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <landscapeData>k__BackingField:
+        landscapeData:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
