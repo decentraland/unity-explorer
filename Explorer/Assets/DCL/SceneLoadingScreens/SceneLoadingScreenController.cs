@@ -102,7 +102,7 @@ namespace DCL.SceneLoadingScreens
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
 
-                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.6f, ct), WaitTimeThresholdAsync(0.4f, ct))
+                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, ct), WaitTimeThresholdAsync(0.2f, ct))
                              .Timeout(inputData.Timeout);
             }
             catch (TimeoutException) { }
@@ -123,10 +123,10 @@ namespace DCL.SceneLoadingScreens
 
             while (t < 1f && !ct.IsCancellationRequested)
             {
-                float now = Time.realtimeSinceStartup;
-                await UniTask.NextFrame(ct);
-                float dt = Time.realtimeSinceStartup - now;
-                t += dt / (float)minimumDisplayDuration.TotalSeconds;
+                float time = Time.realtimeSinceStartup;
+                await UniTask.NextFrame(cancellationToken: ct);
+                float dt = (Time.realtimeSinceStartup - time) / (float)minimumDisplayDuration.TotalSeconds;
+                t += dt;
                 AddLoadProgress(dt * progressProportion);
             }
         }
