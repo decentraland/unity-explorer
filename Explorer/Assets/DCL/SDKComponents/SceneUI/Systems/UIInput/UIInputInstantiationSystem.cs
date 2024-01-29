@@ -16,6 +16,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UIInputInstantiationSystem : BaseUnityLoopSystem
     {
+        private const string COMPONENT_NAME = "UIInput";
+
         private readonly IComponentPool<DCLInputText> inputTextsPool;
 
         public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -35,7 +37,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private void InstantiateUIInput(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var inputText = inputTextsPool.Get();
-            inputText.Initialize($"UIInput (Entity {entity.Id})", "dcl-input");
+            inputText.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
             uiTransformComponent.Transform.Add(inputText.TextField);
             var uiInputComponent = new UIInputComponent();
             uiInputComponent.Input = inputText;
