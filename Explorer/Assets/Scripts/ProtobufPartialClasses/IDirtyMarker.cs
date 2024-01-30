@@ -102,12 +102,15 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBVideoPlayer : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public static class DirtyMarkerExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNotDirty(this IDirtyMarker dirtyMarker)
-        {
-            return dirtyMarker.IsDirty == false;
-        }
+        public static bool IsNotDirty(this IDirtyMarker dirtyMarker) =>
+            dirtyMarker.IsDirty == false;
     }
 }
