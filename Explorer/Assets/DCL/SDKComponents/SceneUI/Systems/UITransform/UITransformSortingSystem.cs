@@ -33,24 +33,28 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [All(typeof(PBUiTransform), typeof(UITransformComponent))]
         private void DoUITransformSorting(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
 
-            SortUITransform(ref sdkModel, ref uiTransformComponent);
+            SortUITransform(ref uiTransformComponent);
 
             if (uiTransformComponent.Parent == EntityReference.Null)
                 return;
 
             foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Parent).Children)
-                SortUITransform(ref sdkModel, ref World.Get<UITransformComponent>(brotherEntity));
+            {
+                if (!brotherEntity.IsAlive(World))
+                    continue;
+
+                SortUITransform(ref World.Get<UITransformComponent>(brotherEntity));
+            }
         }
 
-        private void SortUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransform)
+        private void SortUITransform(ref UITransformComponent uiTransform)
         {
-            if (!entitiesMap.TryGetValue(sdkModel.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
+            if (!entitiesMap.TryGetValue(uiTransform.RightOf, out var entityOnLeft) || entityOnLeft == sceneRoot)
                 return;
 
             var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);

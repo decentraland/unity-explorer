@@ -22,10 +22,11 @@ namespace ECS.Unity.GLTFContainer.Systems
     [ThrottlingEnabled]
     public partial class ResetGltfContainerSystem : BaseUnityLoopSystem
     {
-        private readonly IStreamableCache<GltfContainerAsset, string> cache;
+        private readonly IDereferencableCache<GltfContainerAsset, string> cache;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        internal ResetGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+        internal ResetGltfContainerSystem(World world, IDereferencableCache<GltfContainerAsset, string> cache,
+            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;

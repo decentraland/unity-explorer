@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Utilities.Extensions
 {

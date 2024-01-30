@@ -53,9 +53,8 @@ namespace DCL.PluginSystem.World
             InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
-            var releasePoolableComponentSystem = ReleasePoolableComponentSystem<ITextShapeRenderer, TextShapeRendererComponent>
-               .InjectToWorld(ref builder, componentPoolsRegistry);
-            finalizeWorldSystems.Add(releasePoolableComponentSystem);
+            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<ITextShapeRenderer, TextShapeRendererComponent>(
+                ref builder, componentPoolsRegistry);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)

@@ -8,7 +8,7 @@ using Utility.Primitives;
 
 namespace ECS.Unity.SceneBoundsChecker
 {
-    internal static class ConfigureSceneMaterial
+    public static class ConfigureSceneMaterial
     {
         internal static readonly int PLANE_CLIPPING_ID = Shader.PropertyToID("_PlaneClipping");
 
@@ -22,7 +22,8 @@ namespace ECS.Unity.SceneBoundsChecker
         /// <summary>
         ///     Enables Scene Bounds Checking
         /// </summary>
-        internal static void EnableSceneBounds(in GltfContainerAsset asset, in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
+        public static void EnableSceneBounds(in GltfContainerAsset asset,
+            in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
         {
             var vector = new Vector4(sceneCircumscribedPlanes.MinX, sceneCircumscribedPlanes.MaxX, sceneCircumscribedPlanes.MinZ, sceneCircumscribedPlanes.MaxZ);
 
@@ -58,7 +59,8 @@ namespace ECS.Unity.SceneBoundsChecker
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void EnableSceneBounds(Material material, in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
+        public static void EnableSceneBounds(Material material,
+            in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
         {
             var vector = new Vector4(sceneCircumscribedPlanes.MinX, sceneCircumscribedPlanes.MaxX, sceneCircumscribedPlanes.MinZ, sceneCircumscribedPlanes.MaxZ);
             material.SetVector(PLANE_CLIPPING_ID, vector);

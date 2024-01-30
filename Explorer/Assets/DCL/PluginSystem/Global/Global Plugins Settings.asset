@@ -25,7 +25,8 @@ MonoBehaviour:
   - rid: 8147919132522971138
   - rid: 56198586647707649
   - rid: 1095376790733193218
-  - rid: 728480684080103426
+  - rid: 8593314843508867075
+  - rid: 4107643854440628226
   references:
     version: 2
     RefIds:
@@ -33,14 +34,6 @@ MonoBehaviour:
       type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
         <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
-    - rid: 728480684080103426
-      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
-      data:
-        <LodSettingAsset>k__BackingField:
-          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -127,6 +120,18 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 4107643854440628226
+      type: {class: LoadingScreenPlugin/LoadingScreenPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <LoadingScreenPrefab>k__BackingField:
+          m_AssetGUID: 605506dac7ec04ed09953980478e93d4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
+        <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
+        <TipDisplayDuration>k__BackingField: 10
+        <MinimumScreenDisplayDuration>k__BackingField: 3
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -208,3 +213,9 @@ MonoBehaviour:
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:
         <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
+    - rid: 8593314843508867075
+      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
+        <MaxSizeOfNftForDownload>k__BackingField:
+          maxSizeInBytes: 2097152

@@ -75,8 +75,10 @@ namespace DCL.ExplorePanel
                 exploreSectionsValue.Deactivate();
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
-            viewInstance.CloseButton.OnClickAsync(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            return viewInstance.CloseButton.OnClickAsync(ct);
+        }
     }
 
     public readonly struct ExplorePanelParameter

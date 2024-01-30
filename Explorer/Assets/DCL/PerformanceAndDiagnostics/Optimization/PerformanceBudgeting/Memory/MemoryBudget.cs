@@ -1,4 +1,6 @@
-﻿using DCL.Profiling;
+﻿#nullable enable
+
+using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
@@ -71,6 +73,32 @@ namespace DCL.Optimization.PerformanceBudgeting
             // ReSharper disable once PossibleLossOfFraction
             ulong CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
                 (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * 1.1f));
+        }
+
+        public class Default : IPerformanceBudget
+        {
+            public static readonly IReadOnlyDictionary<MemoryUsageStatus, float> MEMORY_THRESHOLD =
+                new Dictionary<MemoryUsageStatus, float>
+                {
+                    { Warning, 0.8f },
+                    { Full, 0.95f }
+                };
+
+            private readonly IPerformanceBudget performanceBudget;
+
+            public Default()
+            {
+                performanceBudget = new MemoryBudget(
+                    new StandaloneSystemMemory(),
+                    new ProfilingProvider(),
+                    MEMORY_THRESHOLD
+                );
+            }
+
+            public bool TrySpendBudget()
+            {
+                return performanceBudget.TrySpendBudget();
+            }
         }
     }
 }

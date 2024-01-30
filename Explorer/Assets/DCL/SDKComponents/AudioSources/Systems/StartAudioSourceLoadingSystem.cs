@@ -42,14 +42,10 @@ namespace DCL.SDKComponents.AudioSources
         private void CreateAudioSourceComponentWithPromise(in Entity entity, ref PBAudioSource sdkAudioSource, ref PartitionComponent partitionComponent)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
-            if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
+            if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, sdkAudioSource.AudioClipUrl, partitionComponent,
+                    out Promise? assetPromise)) return;
 
-            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource, Promise.Create(World, new GetAudioClipIntention
-            {
-                CommonArguments = new CommonLoadingArguments(audioClipUrl),
-                AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
-            }, partitionComponent));
-
+            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource, assetPromise!.Value);
             World.Add(entity, audioSourceComponent);
         }
     }
