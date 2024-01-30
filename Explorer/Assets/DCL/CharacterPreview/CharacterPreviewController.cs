@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.Pools;
-using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -20,21 +19,15 @@ namespace DCL.CharacterPreview
         private readonly Entity characterPreviewEntity;
         private readonly CharacterPreviewContainer characterPreviewContainer;
         private readonly CharacterPreviewCameraController cameraController;
-        private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly IComponentPool<CharacterPreviewContainer> characterPreviewContainerPool;
 
-        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPoolsRegistry poolsRegistry)
+        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewContainer> characterPreviewContainerPool)
         {
             globalWorld = world;
             characterPreviewContainer = container;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewContainer);
-            this.poolsRegistry = poolsRegistry;
+            this.characterPreviewContainerPool = characterPreviewContainerPool;
 
-            // See the logic of AvatarInstantiatorSystem
-            // We should provide the following components:
-            // TransformComponent
-            // AvatarShapeComponent (isDirty = true)
-
-            // Create and store AvatarShapeComponent straight-away but don't mark it as dirty so it is not grabbed by the system
             // TODO add meaningful ID and Name
 
             characterPreviewEntity = world.Create(
@@ -81,9 +74,8 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
-            // Add DeleteEntityIntention to release resources of the instantiated avatar
             globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
-            poolsRegistry.GetPool(typeof(CharacterPreviewContainer)).Release(characterPreviewContainer);
+            characterPreviewContainerPool.Release(characterPreviewContainer);
             cameraController.Dispose();
         }
     }

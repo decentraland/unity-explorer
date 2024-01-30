@@ -87,7 +87,7 @@ namespace DCL.Backpack
                             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
                         });
                 }
-                backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, characterPreviewFactory , backpackEventBus, poolsRegistry, inputEventBus);
+                backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, characterPreviewFactory , backpackEventBus, inputEventBus);
                 view.TipsButton.onClick.AddListener(ToggleTipsContent);
                 view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
             }

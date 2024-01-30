@@ -2,9 +2,7 @@
 using Arch.SystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
-using DCL.Optimization.Pools;
 using DCL.Profiles;
-using Org.BouncyCastle.Bcpg.Attr;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,19 +19,17 @@ namespace DCL.CharacterPreview
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly BackpackEventBus backpackEventBus;
         private readonly CharacterPreviewInputEventBus inputEventBus;
-        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private World world;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
         private readonly BackpackCharacterPreviewCursorController cursorController;
 
-        public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, IComponentPoolsRegistry poolsRegistry, CharacterPreviewInputEventBus inputEventBus)
+        public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, CharacterPreviewInputEventBus inputEventBus)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.backpackEventBus = backpackEventBus;
-            this.poolsRegistry = poolsRegistry;
             this.inputEventBus = inputEventBus;
 
             backpackEventBus.EquipEvent += OnEquipped;
@@ -79,7 +75,7 @@ namespace DCL.CharacterPreview
                 newTexture.Create();
 
                 view.RawImage.texture = newTexture;
-                previewController = previewFactory.Create(world, poolsRegistry, newTexture, inputEventBus);
+                previewController = previewFactory.Create(world, newTexture, inputEventBus);
             }
             else
             {
@@ -91,7 +87,7 @@ namespace DCL.CharacterPreview
                 };
                 newTexture.Create();
                 view.RawImage.texture = newTexture;
-                previewController = previewFactory.Create(world, poolsRegistry, newTexture, inputEventBus);
+                previewController = previewFactory.Create(world, newTexture, inputEventBus);
             }
 
             OnModelUpdated();
