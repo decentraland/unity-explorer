@@ -36,7 +36,7 @@ namespace ECS.Unity.Materials.Systems
             return promise.Value.TryGetResult(World, out textureResult);
         }
 
-        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, TextureComponent? textureComponent)
+        protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, in TextureComponent? textureComponent)
         {
             if (!textureResult.Succeeded) return;
 

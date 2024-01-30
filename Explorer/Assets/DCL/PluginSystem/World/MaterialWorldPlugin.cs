@@ -25,6 +25,8 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly IAssetsProvisioner assetsProvisioner;
 
+        private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
+
         private IObjectPool<Material> basicMatPool;
         private IObjectPool<Material> pbrMatPool;
         private IExtendedObjectPool<Texture2D> videoTexturePool;
@@ -34,11 +36,12 @@ namespace DCL.PluginSystem.World
         private int loadingAttemptsCount;
         private readonly MemoryBudget memoryBudgetProvider;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner, IExtendedObjectPool<Texture2D> videoTexturePool)
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
             this.assetsProvisioner = assetsProvisioner;
+            this.videoTexturePool = videoTexturePool;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }

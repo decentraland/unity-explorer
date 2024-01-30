@@ -166,22 +166,18 @@ namespace ECS.Unity.Materials.Systems
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
             if (textureComponent.Value.IsVideoTexture)
-                promise = Promise.CreateFinalized(World, new GetTextureIntention
+                promise = Promise.CreateFinalized(new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                     WrapMode = textureComponentValue.WrapMode,
                     FilterMode = textureComponentValue.FilterMode,
-                    IsVideoTexture = textureComponentValue.IsVideoTexture,
-                    VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
-                }, partitionComponent, GetOrAddVideoTextureResult(textureComponentValue));
+                }, GetOrAddVideoTextureResult(textureComponentValue));
             else
                 promise = Promise.Create(World, new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                     WrapMode = textureComponentValue.WrapMode,
                     FilterMode = textureComponentValue.FilterMode,
-                    IsVideoTexture = textureComponentValue.IsVideoTexture,
-                    VideoPlayerEntity = textureComponentValue.VideoPlayerEntity,
                 }, partitionComponent);
 
             return true;
@@ -189,24 +185,18 @@ namespace ECS.Unity.Materials.Systems
 
         private StreamableLoadingResult<Texture2D>? GetOrAddVideoTextureResult(TextureComponent textureComponent)
         {
-            Texture2D videoTexture = null;
-
             if (entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
             {
                 if (World.Has<VideoTextureComponent>(videoPlayerEntity))
-                    videoTexture = World.Get<VideoTextureComponent>(videoPlayerEntity).Texture;
-                else
-                {
-                    var videoTextureComponent = new VideoTextureComponent(videoTexturesPool);
-                    World.Add(videoPlayerEntity, videoTextureComponent);
+                    return new StreamableLoadingResult<Texture2D>(World.Get<VideoTextureComponent>(videoPlayerEntity).Texture);
 
-                    videoTexture = videoTextureComponent.Texture;
-                }
+                var videoTextureComponent = new VideoTextureComponent(videoTexturesPool.Get());
+                World.Add(videoPlayerEntity, videoTextureComponent);
+                return new StreamableLoadingResult<Texture2D>(videoTextureComponent.Texture);
             }
-            else
-                ReportHub.LogError(ReportCategory.VIDEO_PLAYER, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created.");
 
-            return new StreamableLoadingResult<Texture2D>(videoTexture);
+            var ecsSystemException = CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created."));
+            return new StreamableLoadingResult<Texture2D>(ecsSystemException);
         }
 
         private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
@@ -219,9 +209,7 @@ namespace ECS.Unity.Materials.Systems
 
             return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
                    textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode &&
-                   textureComponent.IsVideoTexture == intention.IsVideoTexture &&
-                   textureComponent.VideoPlayerEntity == intention.VideoPlayerEntity;
+                   textureComponent.FilterMode == intention.FilterMode;
         }
     }
 }
