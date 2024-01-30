@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.MapRenderer.ComponentsFactory
@@ -14,5 +15,10 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         public Texture2D GetChunk(Vector2Int position) =>
             chunks[position];
+
+        public bool IsComplete()
+        {
+            return chunks.Count >= 64;
+        }
     }
 }

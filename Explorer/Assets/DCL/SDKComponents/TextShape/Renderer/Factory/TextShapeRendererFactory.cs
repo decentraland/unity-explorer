@@ -11,7 +11,6 @@ namespace DCL.SDKComponents.TextShape.Renderer.Factory
     {
         private readonly PBTextShape textShape = Default();
         private readonly IFontsStorage fontsStorage;
-        private readonly Quaternion backward = Quaternion.Euler(0, 180, 0);
 
         public TextShapeRendererFactory(IFontsStorage fontsStorage)
         {
@@ -22,7 +21,6 @@ namespace DCL.SDKComponents.TextShape.Renderer.Factory
         {
             var text = new GameObject($"text component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
             text.transform.SetParent(parent);
-            text.transform.localRotation = backward;
             var tmp = text.AddComponent<TextMeshPro>()!;
             var renderer = new TMPTextShapeRenderer(tmp, fontsStorage);
             renderer.Apply(textShape);

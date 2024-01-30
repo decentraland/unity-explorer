@@ -10,14 +10,17 @@ namespace DCL.Landscape.Config
         /// <summary>
         ///     This radius is used by the placement system, to avoid overlapping with nearby owned scenes
         /// </summary>
-        public float radius;
+        public NoiseDataBase noiseData;
 
         /// <summary>
         ///     The more density, the more assets inside a chunk
         /// </summary>
-        public float density;
+        [Header("Settings when used as tree")]
         public ObjectRandomization randomization;
 
-        public NoiseData noiseData;
+        public float radius;
+
+        [Header("Settings when used as detail")]
+        public TerrainDetailSettings TerrainDetailSettings;
     }
 }

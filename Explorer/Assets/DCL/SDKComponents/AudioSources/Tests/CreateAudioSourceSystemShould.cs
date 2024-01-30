@@ -2,13 +2,16 @@
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Tests.Editor;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using UnityEngine;
 using static DCL.SDKComponents.AudioSources.Tests.AudioSourceTestsUtils;
 
@@ -50,7 +53,13 @@ namespace DCL.SDKComponents.AudioSources.Tests
             var budgetProvider = Substitute.For<IPerformanceBudget>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            return new UpdateAudioSourceSystem(world, poolsRegistry, budgetProvider, budgetProvider);
+            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            IDereferencableCache<AudioClip, GetAudioClipIntention> cache =
+                Substitute.For<IDereferencableCache<AudioClip, GetAudioClipIntention>>();
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), sceneStateProvider, cache,
+                poolsRegistry, budgetProvider, budgetProvider);
         }
 
         [TearDown]
@@ -68,7 +77,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
-            Assert.That(afterUpdate.Result, Is.Null);
+            Assert.That(afterUpdate.AudioSource, Is.Null);
         }
 
         [Test]
@@ -83,8 +92,8 @@ namespace DCL.SDKComponents.AudioSources.Tests
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
-            Assert.That(afterUpdate.Result, Is.Not.Null);
-            Assert.That(afterUpdate.Result.clip, Is.EqualTo(TestAudioClip));
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource.clip, Is.EqualTo(TestAudioClip));
         }
     }
 }

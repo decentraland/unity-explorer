@@ -22,7 +22,9 @@ namespace MVC
             viewInstance.Text.text = component.Value;
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
             throw new NotImplementedException();
+        }
     }
 }

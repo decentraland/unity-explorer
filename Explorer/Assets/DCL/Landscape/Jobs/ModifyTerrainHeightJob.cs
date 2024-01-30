@@ -13,21 +13,37 @@ namespace DCL.Landscape.Jobs
     public struct ModifyTerrainHeightJob : IJobParallelFor
     {
         private NativeArray<float> heights;
+        [ReadOnly] private NativeArray<float> terrainNoise;
         [ReadOnly] private NativeHashMap<int2, EmptyParcelData> emptyParcelData;
         public int terrainWidth;
         public int offsetX;
         public int offsetZ;
         public int maxHeight;
-        public float terrainScale;
+        public float edgeRadius;
+        private readonly float minHeight;
+        private readonly float pondDepth;
 
-        public ModifyTerrainHeightJob(ref NativeArray<float> heights, in NativeHashMap<int2, EmptyParcelData> emptyParcelData) : this()
+        public ModifyTerrainHeightJob(
+            ref NativeArray<float> heights,
+            in NativeHashMap<int2, EmptyParcelData> emptyParcelData,
+            in NativeArray<float> terrainNoise,
+            float edgeRadius,
+            float minHeight,
+            float pondDepth) : this()
         {
             this.heights = heights;
             this.emptyParcelData = emptyParcelData;
+            this.terrainNoise = terrainNoise;
+            this.edgeRadius = edgeRadius;
+            this.minHeight = minHeight;
+            this.pondDepth = pondDepth;
         }
 
         public void Execute(int index)
         {
+            var rMinHeight = minHeight / maxHeight;
+            var radius = edgeRadius;
+
             int x = index % terrainWidth;
             int z = index / terrainWidth;
 
@@ -41,55 +57,63 @@ namespace DCL.Landscape.Jobs
 
             if (emptyParcelData.TryGetValue(coord, out EmptyParcelData data))
             {
-                float noise = Mathf.PerlinNoise((x + offsetX) * 1f / terrainScale, (z + offsetZ) * 1f / terrainScale);
+                //float noise = Mathf.PerlinNoise((x + offsetX) * 1f / terrainScale, (z + offsetZ) * 1f / terrainScale);
+                var noise = terrainNoise[index];
                 float currentHeight = data.minIndex;
 
+                // get the pixel position within the parcel coords
                 float lx = x % 16 / 16f;
                 float lz = z % 16 / 16f;
 
-                float lxRight = (lx - 0.5f) * 2;
+                var lxRight = (lx - radius) * 2;
                 float lxLeft = lx * 2;
 
-                float lzUp = (lz - 0.5f) * 2;
+                var lzUp = (lz - radius) * 2;
                 float lzDown = lz * 2;
 
-                float xLerp = lx >= 0.5f
+                var xLerp = lx >= radius
                     ? math.lerp(currentHeight, data.rightHeight, lxRight)
                     : math.lerp(data.leftHeight, currentHeight, lxLeft);
 
-                float zLerp = lz >= 0.5f
+                var zLerp = lz >= radius
                     ? math.lerp(currentHeight, data.upHeight, lzUp)
                     : math.lerp(data.downHeight, currentHeight, lzDown);
 
                 float corner = currentHeight;
 
-                if (lx >= 0.5f && lz >= 0.5f) // up right
+                if (lx >= radius && lz >= radius) // up right
                     corner = math.min(
                         math.lerp(currentHeight, data.upRigthHeight, lxRight),
                         math.lerp(currentHeight, data.upRigthHeight, lzUp));
 
-                if (lx < 0.5f && lz >= 0.5f) // up left
+                if (lx < radius && lz >= radius) // up left
                     corner = math.min(
                         math.lerp(data.upLeftHeight, currentHeight, lxLeft),
                         math.lerp(currentHeight, data.upLeftHeight, lzUp));
 
-                if (lx >= 0.5f && lz < 0.5f) // down right
+                if (lx >= radius && lz < radius) // down right
                     corner = math.min(
                         math.lerp(currentHeight, data.downRightHeight, lxRight),
                         math.lerp(data.downRightHeight, currentHeight, lzDown));
 
-                if (lx < 0.5f && lz < 0.5f) // down left
+                if (lx < radius && lz < radius) // down left
                     corner = math.min(
                         math.lerp(data.downLeftHeight, currentHeight, lxLeft),
                         math.lerp(data.downLeftHeight, currentHeight, lzDown));
 
                 float finalHeight = math.max(math.max(corner, math.max(xLerp, zLerp)), currentHeight);
-                heights[index] = finalHeight * noise / maxHeight;
+
+                if (noise < 0)
+                {
+                    noise *= pondDepth;
+                }
+
+                heights[index] = rMinHeight + finalHeight * noise / maxHeight;
 
                 //heights[index] = currentHeight / maxHeight;
             }
             else
-                heights[index] = 0;
+                heights[index] = rMinHeight;
         }
     }
 }

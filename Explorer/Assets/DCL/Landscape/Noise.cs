@@ -41,6 +41,9 @@ namespace DCL.Landscape.Config
         public Vector2 offset;
         public float cutoff;
         public NoiseType noiseType;
+        public float baseValue;
+        [Range(1, 10)] public float multiplyValue;
+        [Range(1, 10)] public float divideValue;
 
         public void ValidateValues()
         {

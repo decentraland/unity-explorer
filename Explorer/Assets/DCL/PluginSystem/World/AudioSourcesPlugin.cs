@@ -7,7 +7,6 @@ using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,7 +40,9 @@ namespace DCL.PluginSystem.World
         {
             StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
-            UpdateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
+            UpdateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData,
+                sharedDependencies.SceneStateProvider, audioClipsCache, componentPoolsRegistry, frameTimeBudgetProvider,
+                memoryBudgetProvider);
 
             finalizeWorldSystems.Add(CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry));
         }

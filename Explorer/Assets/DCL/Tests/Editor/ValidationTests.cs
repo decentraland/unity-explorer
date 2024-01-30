@@ -6,11 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using UnityEditor;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests.Editor
 {
+    [Category(VALIDATION)]
     public class ValidationTests
     {
         private static readonly HashSet<string> DEBUG_METHOD_NAMES = new () { "Log", "LogError", "LogWarning", "LogException" };
@@ -19,7 +22,6 @@ namespace DCL.Tests.Editor
         private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs" };
         private readonly string[] fileNameExclusionKeywords = { "Test", "Sentry" };
 
-        [Category(VALIDATION)]
         [Test]
         public void ProjectShouldNotContainEmptyFolders()
         {
@@ -77,6 +79,50 @@ namespace DCL.Tests.Editor
 
                 Assert.IsEmpty(debugLogStatements, $"Debug usage found in file: {file}");
             }
+        }
+
+        [Test]
+        public void CheckUnityObjectsForMissingReferences()
+        {
+            var scriptableObjects = GetAllScriptableObjectsInFolder("Assets/DCL");
+
+            foreach (var scriptableObject in scriptableObjects)
+            {
+                if (!SerializationUtility.HasManagedReferencesWithMissingTypes(scriptableObject))
+                    continue;
+
+                var missingTypes = SerializationUtility.GetManagedReferencesWithMissingTypes(scriptableObject);
+
+                var report = new StringBuilder();
+                var missingClasses = new HashSet<string>();
+
+                foreach (var missingType in missingTypes)
+                    missingClasses.Add(MissingClassFullName(missingType));
+
+                foreach (var missingClass in missingClasses)
+                    report.Append("\t").Append(missingClass).AppendLine();
+
+                Assert.Fail(
+                    $"Missing references found in the following ScriptableObjects:\n{string.Join("\n", scriptableObject)}, {report}");
+            }
+        }
+
+        private static string MissingClassFullName(ManagedReferenceMissingType missingType)
+        {
+            var description = new StringBuilder();
+
+            if (missingType.namespaceName.Length > 0)
+                description.Append(missingType.namespaceName).Append(".");
+
+            description.AppendFormat("{0}, {1}", missingType.className, missingType.assemblyName);
+            return description.ToString();
+        }
+
+        private static IEnumerable<ScriptableObject> GetAllScriptableObjectsInFolder(string folderPath)
+        {
+            return AssetDatabase.FindAssets("t:Object", new[] { folderPath })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(guid)))
+                .ToArray();
         }
 
         private static bool IsDirectoryEmpty(string path) =>

@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Bush
   m_EditorClassIdentifier: 
-  asset: {fileID: 919132149155446097, guid: 35e3765a2b6217b40aff311113c2d6fd, type: 3}
-  radius: 2
-  density: 5
+  asset: {fileID: 8554576065431432432, guid: a5823f9a4fd6c5e4296e01fa25321c12, type: 3}
+  noiseData: {fileID: 11400000, guid: 09c98a00165e56e46ac78f8a5d9a6b1c, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
     randomRotationY: {x: 0, y: 360}
@@ -27,4 +26,16 @@ MonoBehaviour:
     positionOffsetX: {x: -0.5, y: 0.5}
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: -0.5, y: 0.5}
-  noiseData: {fileID: 11400000, guid: 8df0e28ce585dc64aab84e8d5cf3db78, type: 2}
+  radius: 2
+  TerrainDetailSettings:
+    alignToGround: 100
+    positionJitter: 50
+    minWidth: 1
+    maxWidth: 1
+    minHeight: 1
+    maxHeight: 1
+    noiseSeed: 1
+    noiseSpread: 100
+    holeEdgePadding: 75
+    detailDensity: 1
+    affectedByGlobalDensityScale: 1

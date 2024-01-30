@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using JetBrains.Annotations;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -19,10 +18,10 @@ namespace DCL.WebRequests
 
         public readonly int Timeout;
 
-        [CanBeNull]
-        public readonly DownloadHandler CustomDownloadHandler;
+        public readonly DownloadHandler? CustomDownloadHandler;
 
-        public CommonArguments(URLAddress url, [CanBeNull] DownloadHandler customDownloadHandler = null, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT)
+        public CommonArguments(URLAddress url, DownloadHandler? customDownloadHandler = null,
+            int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT)
         {
             URL = url;
             CustomDownloadHandler = customDownloadHandler;

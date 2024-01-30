@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using UnityEngine.Pool;
@@ -18,6 +19,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformInstantiationSystem : BaseUnityLoopSystem
     {
+        private const string COMPONENT_NAME = "UITransform";
+
         private readonly UIDocument canvas;
         private readonly IComponentPool<VisualElement> transformsPool;
 
@@ -33,18 +36,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [All(typeof(PBUiTransform))]
         [None(typeof(UITransformComponent))]
-        private void InstantiateUITransform(in Entity entity)
+        private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
             VisualElement newTransform = transformsPool.Get();
-            newTransform.name = $"UITransform (Entity {entity.Id})";
+            newTransform.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             canvas.rootVisualElement.Add(newTransform);
             var transformComponent = new UITransformComponent();
             transformComponent.Transform = newTransform;
             transformComponent.Parent = EntityReference.Null;
             transformComponent.Children = HashSetPool<EntityReference>.Get();
             transformComponent.IsHidden = false;
+            transformComponent.RightOf = sdkModel.RightOf;
             World.Add(entity, transformComponent);
         }
     }

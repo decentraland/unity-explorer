@@ -1,16 +1,19 @@
-﻿using DCL.Landscape.Settings;
-using System;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Landscape.Settings;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.Landscape
 {
+    [ExecuteInEditMode]
     public class TerrainGeneratorTest : MonoBehaviour
     {
         public uint worldSeed = 1;
         public bool digHoles;
         public bool centerTerrain;
+        public bool hideTrees;
+        public bool hideDetails;
         public TerrainGenerationData genData;
         public TextAsset emptyParcelsData;
         public TextAsset ownedParcelsData;
@@ -18,13 +21,12 @@ namespace DCL.Landscape
         private NativeArray<int2> emptyParcels;
 
         [ContextMenu("Generate")]
-        private void Generate()
+        public async UniTask Generate()
         {
             ParseParcels();
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
-            gen.GenerateTerrain(worldSeed, digHoles, centerTerrain);
-            ownedParcels.Dispose();
-            emptyParcels.Dispose();
+            await gen.GenerateTerrain(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
+            gen.FreeMemory();
         }
 
         private void ParseParcels()

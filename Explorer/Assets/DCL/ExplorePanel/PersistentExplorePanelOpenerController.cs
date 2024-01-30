@@ -16,8 +16,10 @@ namespace DCL.ExplorePanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
-            UniTask.CompletedTask;
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            return UniTask.CompletedTask;
+        }
 
         protected override void OnViewShow()
         {

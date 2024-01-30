@@ -43,14 +43,14 @@ namespace DCL.Optimization.Pools
         public void ClearThrottled(int maxChunkSize) =>
             gameObjectPool.ClearThrottled(maxChunkSize);
 
-        private T HandleCreation()
+        private static T HandleCreation()
         {
             var go = new GameObject(DEFAULT_COMPONENT_NAME);
             go.gameObject.SetActive(false);
             return go.TryAddComponent<T>();
         }
 
-        private void HandleGet(T component)
+        private static void HandleGet(T component)
         {
             component.gameObject.SetActive(true);
         }

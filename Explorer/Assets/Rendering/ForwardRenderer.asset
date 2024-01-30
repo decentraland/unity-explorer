@@ -37,7 +37,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 3744200642740411402}
   - {fileID: -1469935332951457073}
-  m_RendererFeatureMap: 0adc549ea512f633cf02a24c9abd99eb
+  - {fileID: 7902639752765073045}
+  m_RendererFeatureMap: 0adc549ea512f633cf02a24c9abd99eb95667133fcd0ab6d
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -120,8 +121,28 @@ MonoBehaviour:
     _kSamples: 2
     _MIE_G: -0.99
     _MIE_G2: 0.9801
-    _SKY_GROUND_THRESHOLD: 0.1
+    _SKY_GROUND_THRESHOLD: 1
   m_ShaderSkyBoxGenerate: {fileID: 4800000, guid: de48828283988c74c9208518bd8ba1f2, type: 3}
   m_ShaderStarBoxGenerate: {fileID: 4800000, guid: 008fbe32680b8d54bb9326b1b1ddb6de, type: 3}
   m_ShaderDraw: {fileID: 4800000, guid: 136edacbbf6e1a94591da23fd878aa59, type: 3}
   m_SpaceCubemap: {fileID: 8900000, guid: 8c71081e0d4570b4da67dc7fae4a45dd, type: 3}
+--- !u!114 &7902639752765073045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2086e3e143e14a2abcd3b0dbc77a10ac, type: 3}
+  m_Name: StylizedWaterRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  screenSpaceReflectionSettings:
+    enable: 1
+  directionalCaustics: 1
+  displacementPrePassSettings:
+    enable: 0
+    range: 500
+    cellSize: 0.25

@@ -7,6 +7,7 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SceneFacade;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using Ipfs;
@@ -168,16 +169,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
 
                 if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-                {
                     World.Add(data.Entity, new SceneLODInfo { IsDirty = true });
-                }
                 else
-                {
-                    World.Add(data.Entity,
-                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(ipfsRealm, components.t0),
-                            components.t1.Value));
-                }
+                    CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
 
                 promisesCreated++;
             }

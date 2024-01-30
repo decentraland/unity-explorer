@@ -80,7 +80,7 @@ namespace SceneRunner
             };
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
-                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
@@ -105,7 +105,8 @@ namespace SceneRunner
             };
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
-                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(),
+                StaticSceneMessages.EMPTY);
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }

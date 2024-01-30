@@ -16,7 +16,7 @@ namespace DCL.Landscape.Config.Editor
 
             data.settings.ValidateValues();
 
-            generator = data.GetGenerator(1);
+            generator = data.GetGenerator(1, 0, noiseGeneratorCache);
             return generator.Schedule(textureSize, 0, 0);
         }
 
@@ -32,7 +32,7 @@ namespace DCL.Landscape.Config.Editor
         }
 
         protected override NativeArray<float> GetResultNoise() =>
-            generator.GetResultCopy();
+            generator.GetResult();
 
         protected override void SetupNoiseArray(int textureSize)
         {

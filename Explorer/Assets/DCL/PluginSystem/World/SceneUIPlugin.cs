@@ -1,9 +1,16 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Systems.UIBackground;
+using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
+using DCL.SDKComponents.SceneUI.Systems.UIInput;
+using DCL.SDKComponents.SceneUI.Systems.UIText;
+using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
@@ -12,13 +19,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UITextInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextInstantiationSystem;
-using UITextReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextReleaseSystem;
-using UITransformInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformInstantiationSystem;
-using UITransformParentingSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformParentingSystem;
-using UITransformReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformReleaseSystem;
-using UITransformSortingSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformSortingSystem;
-using UITransformUpdateSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformUpdateSystem;
 
 namespace DCL.PluginSystem.World
 {
@@ -28,6 +28,8 @@ namespace DCL.PluginSystem.World
 
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly FrameTimeCapBudget frameTimeBudgetProvider;
+        private readonly MemoryBudget memoryBudgetProvider;
 
         public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
@@ -35,6 +37,14 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+            componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
+            componentPoolsRegistry.AddComponentPool<DCLInputText>(onRelease: UiElementUtils.ReleaseDCLInput,
+                maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<DCLDropdown>(onRelease: UiElementUtils.ReleaseDCLDropdown,
+                maxSize: 50);
+
+            frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
+            memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -56,9 +66,25 @@ namespace DCL.PluginSystem.World
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry,
+                sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
+            UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(
+                ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder,
+                    componentPoolsRegistry));
+            finalizeWorldSystems.Add(
+                ReleasePoolableComponentSystem<DCLInputText, UIInputComponent>.InjectToWorld(ref builder,
+                    componentPoolsRegistry));
+            finalizeWorldSystems.Add(
+                ReleasePoolableComponentSystem<DCLDropdown, UIDropdownComponent>.InjectToWorld(ref builder,
+                    componentPoolsRegistry));
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

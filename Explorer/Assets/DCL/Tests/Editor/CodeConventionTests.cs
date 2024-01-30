@@ -33,7 +33,7 @@ namespace DCL.Tests
                                                .OfType<ClassDeclarationSyntax>()
                                                .Where(classDeclaration =>
                                                     !classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)) &&
-                                                    !classDeclaration.Ancestors().OfType<NamespaceDeclarationSyntax>().Any() &&
+                                                    !classDeclaration.Ancestors().Any(e => e is NamespaceDeclarationSyntax or CompilationUnitSyntax) &&
                                                     classDeclaration.Parent is CompilationUnitSyntax)
                                                .ToList();
 

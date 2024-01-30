@@ -1,6 +1,7 @@
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Renderer;
+using System;
 
 namespace DCL.SDKComponents.TextShape.Component
 {
@@ -31,5 +32,7 @@ namespace DCL.SDKComponents.TextShape.Component
         }
 
         public ITextShapeRenderer PoolableComponent => textShape;
+
+        public Type PoolableComponentType => typeof(ITextShapeRenderer);
     }
 }

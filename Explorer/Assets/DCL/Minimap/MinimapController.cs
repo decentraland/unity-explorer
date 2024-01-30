@@ -149,8 +149,10 @@ namespace DCL.Minimap
             cts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
-            UniTask.Never(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            return UniTask.Never(ct);
+        }
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
