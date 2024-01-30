@@ -11,7 +11,7 @@ namespace DCL.AsyncLoadReporting
         {
             while (report.ProgressCounter.Value < 1f && !ct.IsCancellationRequested)
             {
-                UniTask<float> task = destination.ProgressCounter.WaitAsync(ct);
+                UniTask<float> task = report.ProgressCounter.WaitAsync(ct);
 
                 if (timeout != null)
                     task = task.Timeout(timeout.Value);
