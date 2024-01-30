@@ -104,7 +104,7 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
                 ResizeVideoTexture(avText, assignedTexture.Texture); // will be updated on the next frame/update-loop
         }
 
-        private static void UpdateVideoTexture(Texture avText, Texture2D videoTexture)
+        private static void UpdateVideoTexture(Texture avText, Texture videoTexture)
         {
             Graphics.CopyTexture(avText, videoTexture);
         }
