@@ -37,10 +37,8 @@ namespace DCL.CharacterPreview
 
         public void UpdateAvatar(CharacterPreviewModel model)
         {
-            if (globalWorld == null || model.Wearables == null || model.Wearables.Count <= 0)
-            {
-                return;
-            }
+            if (globalWorld == null || model.Wearables == null || model.Wearables.Count <= 0) return;
+
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
             avatarShape.SkinColor = model.SkinColor;
@@ -61,15 +59,17 @@ namespace DCL.CharacterPreview
 
         public void Hide()
         {
-            //ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
-            //if (!avatarShape.WearablePromise.IsConsumed)
-             //   avatarShape.WearablePromise.ForgetLoading(globalWorld);
-             if(characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(false);
+            if (globalWorld != null)
+            {
+                ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
+                if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
+            }
+            if (characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(false);
         }
 
         public void Show()
         {
-            if(characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(true);
+            if (characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(true);
         }
 
         public void Dispose()

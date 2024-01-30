@@ -121,13 +121,20 @@ namespace DCL.CharacterPreview
 
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
         {
-            previewModel.ForceRender = new HashSet<string>(forceRender);
+            previewModel.ForceRender.Clear();
+            
+            foreach (string wearable in forceRender)
+            {
+                previewModel.ForceRender.Add(wearable);
+            }
+            
             OnModelUpdated();
         }
 
         public void OnShow()
         {
             previewController.Show();
+            OnModelUpdated();
         }
 
         public void OnHide()
@@ -141,17 +148,14 @@ namespace DCL.CharacterPreview
 
             if (i.IsBodyShape())
                 previewModel.BodyShape = i.GetUrn();
-            else if (!previewModel.Wearables.Contains(i.GetUrn()))
-                previewModel.Wearables.Add(i.GetUrn());
+            else previewModel.Wearables.Add(i.GetUrn());
 
             OnModelUpdated();
         }
 
         private void OnUnequipped(IWearable i)
         {
-            if (previewModel.Wearables.Contains(i.GetUrn()))
-                previewModel.Wearables.Remove(i.GetUrn());
-
+            previewModel.Wearables.Remove(i.GetUrn());
             OnModelUpdated();
         }
 

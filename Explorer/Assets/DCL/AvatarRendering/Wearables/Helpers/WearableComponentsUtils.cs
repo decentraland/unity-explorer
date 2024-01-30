@@ -61,7 +61,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {
-                    CommonArguments = new CommonLoadingArguments(URL_BUILDER.Build())
+                    CommonArguments = new CommonLoadingArguments(URL_BUILDER.Build()),
                 },
                 partitionComponent);
 
@@ -70,19 +70,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static void ExtractVisibleWearables(string bodyShapeId, IWearable[] wearables, int wearableCount, List<IWearable> visibleWearables, ref HideWearablesResolution hideWearablesResolution)
         {
-            var wearablesByCategory = new Dictionary<string, IWearable>();
+            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
 
-            for (var i = 0; i < wearableCount; i++)
-            {
-                wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
-            }
+            for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i].GetCategory()] = wearables[i]; }
 
             HashSet<string> hidingList = HashSetPool<string>.Get();
+            HashSet<string> combinedHidingList = HashSetPool<string>.Get();
 
-            HashSet<string> combinedHidingList = new HashSet<string>();
-
-            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
+            for (var index = 0; index < WearablesConstants.CATEGORIES_PRIORITY.Count; index++)
             {
+                string priorityCategory = WearablesConstants.CATEGORIES_PRIORITY[index];
                 hidingList.Clear();
 
                 //If the category is already on the hidden list, then we dont care about what its trying to hide. This avoid possible cyclic hidden categories
@@ -98,15 +95,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (hideWearablesResolution.ForceRender != null)
                 foreach (string category in hideWearablesResolution.ForceRender) { combinedHidingList.Remove(category); }
 
-            foreach (var wearable in wearables)
+            foreach (IWearable wearable in wearables)
             {
-                if(!combinedHidingList.Contains(wearable.GetCategory()))
+                if (!combinedHidingList.Contains(wearable.GetCategory()))
                     visibleWearables.Add(wearable);
             }
 
             hideWearablesResolution.VisibleWearables = visibleWearables;
 
             HashSetPool<string>.Release(hidingList);
+            HashSetPool<string>.Release(combinedHidingList);
+            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
         }
     }
 }
