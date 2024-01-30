@@ -16,6 +16,7 @@ using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
+using Unity.Collections;
 using UnityEngine;
 
 namespace DCL.LOD

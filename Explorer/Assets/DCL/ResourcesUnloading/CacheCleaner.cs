@@ -1,6 +1,5 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -12,6 +11,7 @@ using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System.Collections.Generic;
+using DCL.LOD;
 using UnityEngine;
 
 namespace DCL.ResourcesUnloading
@@ -33,17 +33,17 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
-        private ILODAssetsPool lodCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
 
         private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache =
-            new IStreamableCache<Texture2D, A>.Fake();
+            new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
 
+        private ILODAssetsPool lodCache;
         public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
             this.fpsCapBudget = fpsCapBudget;
@@ -76,11 +76,6 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void Register(ILODAssetsPool lodAssetsPool)
-        {
-            lodCache = lodAssetsPool;
-        }
-
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>
             this.assetBundleCache = assetBundleCache;
 
@@ -103,6 +98,11 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IWearableCatalog catalog) =>
             wearableCatalog = catalog;
+
+        public void Register(ILODAssetsPool lodAssetsPool)
+        {
+            lodCache = lodAssetsPool;
+        }
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             avatarPools.Add(extendedObjectPool);

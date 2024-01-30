@@ -27,6 +27,7 @@ MonoBehaviour:
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
+  - rid: 1730793610196287490
   references:
     version: 2
     RefIds:
@@ -109,6 +110,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         MinimapPrefab:
           m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 1730793610196287490
+      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
+      data:
+        <LodSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
