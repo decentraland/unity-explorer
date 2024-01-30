@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.VideoPlayer
         public readonly MediaPlayer MediaPlayer;
 
         public string URL;
-        public VideoState CurrentState;
+        public VideoState State;
 
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
 
@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.VideoPlayer
         {
             URL = sdkComponent.Src;
             MediaPlayer = mediaPlayer;
-            CurrentState = VideoState.VsLoading;
+            State = VideoState.VsLoading;
 
             if (sdkComponent.Src.IsValidUrl())
             {
@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.VideoPlayer
                     mediaPlayer.Play();
             }
             else
-                CurrentState = VideoState.VsError;
+                State = VideoState.VsError;
 
             mediaPlayer.Loop = sdkComponent.HasLoop && sdkComponent.Loop; // default: loop = false
             mediaPlayer.Control.SetPlaybackRate(sdkComponent.HasPlaybackRate ? sdkComponent.PlaybackRate : DEFAULT_PLAYBACK_RATE);

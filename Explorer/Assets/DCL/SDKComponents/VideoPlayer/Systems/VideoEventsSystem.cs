@@ -37,27 +37,19 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         [All(typeof(PBVideoPlayer))]
         private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref VideoPlayerComponent videoPlayer)
         {
-            VideoState newState = CheckPlayerState(videoPlayer.MediaPlayer);
+            VideoState newState = GetCurrentVideoState(videoPlayer.MediaPlayer);
 
-            if (videoPlayer.CurrentState == newState)
-                return;
-
-            videoPlayer.CurrentState = newState;
+            if (videoPlayer.State == newState) return;
+            videoPlayer.State = newState;
 
             using PoolExtensions.Scope<PBVideoEvent> scope = componentPool.AutoScope();
-            PBVideoEvent pbVideoEvent = scope.Value;
-
-            pbVideoEvent.State = videoPlayer.CurrentState;
-            pbVideoEvent.CurrentOffset = videoPlayer.CurrentTime;
-            pbVideoEvent.VideoLength = videoPlayer.Duration;
-
-            pbVideoEvent.Timestamp = sceneStateProvider.TickNumber;
-            pbVideoEvent.TickNumber = sceneStateProvider.TickNumber;
+            PBVideoEvent pbVideoEvent = scope.Value
+                                             .WithData(in videoPlayer, sceneStateProvider);
 
             ecsToCRDTWriter.AppendMessage(sdkEntity, pbVideoEvent, (int)pbVideoEvent.Timestamp);
         }
 
-        private static VideoState CheckPlayerState(MediaPlayer mediaPlayer)
+        private static VideoState GetCurrentVideoState(MediaPlayer mediaPlayer)
         {
             if (mediaPlayer.Control.IsPlaying()) return VideoState.VsPlaying;
             if (mediaPlayer.Control.IsPaused()) return VideoState.VsPaused;
@@ -68,6 +60,21 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
             if (mediaPlayer.Control.GetLastError() != ErrorCode.None) return VideoState.VsError;
 
             return VideoState.VsNone;
+        }
+    }
+
+    public static class PBVideoEventExtensions
+    {
+        public static PBVideoEvent WithData(this PBVideoEvent pbVideoEvent, in VideoPlayerComponent videoPlayer, ISceneStateProvider sceneStateProvider)
+        {
+            pbVideoEvent.State = videoPlayer.State;
+            pbVideoEvent.CurrentOffset = videoPlayer.CurrentTime;
+            pbVideoEvent.VideoLength = videoPlayer.Duration;
+
+            pbVideoEvent.Timestamp = sceneStateProvider.TickNumber;
+            pbVideoEvent.TickNumber = sceneStateProvider.TickNumber;
+
+            return pbVideoEvent;
         }
     }
 }
