@@ -19,7 +19,6 @@ namespace DCL.SDKComponents.VideoPlayer
         public VideoState State;
 
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
-
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
         public float Duration => (float)MediaPlayer.Info.GetDuration();
 
@@ -30,7 +29,7 @@ namespace DCL.SDKComponents.VideoPlayer
         {
             URL = sdkComponent.Src;
             MediaPlayer = mediaPlayer;
-            State = VideoState.VsLoading;
+            State = VideoState.VsNone;
 
             if (sdkComponent.Src.IsValidUrl())
             {

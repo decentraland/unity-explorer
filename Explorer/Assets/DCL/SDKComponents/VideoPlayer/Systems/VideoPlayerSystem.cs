@@ -99,12 +99,12 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
             if (avText == null) return;
 
             if (assignedTexture.Texture.HasEqualResolution(to: avText))
-                UpdateVideoTexture(avText, assignedTexture.Texture);
+                CopyVideoTexture(avText, assignedTexture.Texture);
             else
                 ResizeVideoTexture(avText, assignedTexture.Texture); // will be updated on the next frame/update-loop
         }
 
-        private static void UpdateVideoTexture(Texture avText, Texture videoTexture)
+        private static void CopyVideoTexture(Texture avText, Texture videoTexture)
         {
             Graphics.CopyTexture(avText, videoTexture);
         }

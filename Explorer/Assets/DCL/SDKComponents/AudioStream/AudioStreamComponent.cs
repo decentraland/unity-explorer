@@ -9,9 +9,7 @@ namespace DCL.SDKComponents.AudioStream
     public struct AudioStreamComponent : IPoolableComponentProvider<MediaPlayer>
     {
         public const float DEFAULT_VOLUME = 1f;
-
         public string URL;
-
         public MediaPlayer MediaPlayer { get; }
 
         MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => MediaPlayer;

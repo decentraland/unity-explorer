@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
 
             using PoolExtensions.Scope<PBVideoEvent> scope = componentPool.AutoScope();
             PBVideoEvent pbVideoEvent = scope.Value
-                                             .WithData(in videoPlayer, sceneStateProvider);
+                                             .WithData(in videoPlayer, sceneStateProvider.TickNumber);
 
             ecsToCRDTWriter.AppendMessage(sdkEntity, pbVideoEvent, (int)pbVideoEvent.Timestamp);
         }
@@ -65,14 +65,14 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
 
     public static class PBVideoEventExtensions
     {
-        public static PBVideoEvent WithData(this PBVideoEvent pbVideoEvent, in VideoPlayerComponent videoPlayer, ISceneStateProvider sceneStateProvider)
+        public static PBVideoEvent WithData(this PBVideoEvent pbVideoEvent, in VideoPlayerComponent videoPlayer, uint tickNumber)
         {
             pbVideoEvent.State = videoPlayer.State;
             pbVideoEvent.CurrentOffset = videoPlayer.CurrentTime;
             pbVideoEvent.VideoLength = videoPlayer.Duration;
 
-            pbVideoEvent.Timestamp = sceneStateProvider.TickNumber;
-            pbVideoEvent.TickNumber = sceneStateProvider.TickNumber;
+            pbVideoEvent.Timestamp = tickNumber;
+            pbVideoEvent.TickNumber = tickNumber;
 
             return pbVideoEvent;
         }
