@@ -16,6 +16,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.LOD.Components;
+using System;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -169,7 +170,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
 
                 if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-                    World.Add(data.Entity, new SceneLODInfo { IsDirty = true });
+                    World.Add(data.Entity, SceneLODInfo.Create());
                 else
                     CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
 

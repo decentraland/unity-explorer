@@ -1,8 +1,10 @@
-﻿using Arch.Core;
+﻿using System.Collections.Generic;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AssetsProvision;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
@@ -10,16 +12,11 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
-using SceneRunner.Scene;
 using UnityEngine;
-using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -31,19 +28,17 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-
-        private readonly Vector2Int[] lodBucketLimits;
-
-        private readonly IPerformanceBudget frameCapBudget;
+        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        public readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, Vector2Int[] lodBucketLimits,
-            IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ProvidedAsset<LODSettingsAsset> lodSettingsAsset,
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget) : base(world)
         {
             this.lodCache = lodCache;
-            this.lodBucketLimits = lodBucketLimits;
-            this.frameCapBudget = frameCapBudget;
+            this.lodSettingsAsset = lodSettingsAsset;
             this.memoryBudget = memoryBudget;
+            this.frameCapBudget = frameCapBudget;
         }
 
         protected override void Update(float t)
@@ -53,75 +48,77 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        public void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent)
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.IsDirty)
-            {
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo);
-                sceneLODInfo.IsDirty = false;
-                return;
-            }
-
-            if (partitionComponent.IsDirty)
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo);
+            if (partitionComponent.IsDirty || sceneLODInfo.CurrentLODLevel == byte.MaxValue)
+                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
         [Query]
-        public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
+        [None(typeof(DeleteEntityIntention))]
+        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+            if (!sceneLODInfo.IsDirty) return;
 
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                var lodKey = sceneLODInfo.GenerateCurrentLodKey();
+                sceneLODInfo.CurrentLOD.TryRelease(lodCache);
+
                 if (result.Succeeded)
                 {
-                    lodCache.Release(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
-                    var instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition,
+                    GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
-                        in sceneLODInfo.SceneCircumscribedPlanes);
-                    sceneLODInfo.CurrentLOD = new LODAsset(lodKey, instantiatedLOD, result.Asset);
+                        in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
+
+                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                        instantiatedLOD, result.Asset, lodSettingsAsset);
                 }
                 else
                 {
-                    ReportHub.LogWarning(GetReportCategory(), $"LOD request for {lodKey} failed");
-                    //TODO: Add a default LOD so we dont have to fail the promise every time
+                    ReportHub.LogWarning(GetReportCategory(),
+                        $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
+
+                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
+
+                sceneLODInfo.IsDirty = false;
             }
         }
 
-
-        private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo)
+        private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //If we are in an SDK6 scene, this value will be kept.
             //Therefore, lod0 will be shown
-            var sceneLODCandidate = 0;
+            byte sceneLODCandidate = 0;
 
-            if (partitionComponent.Bucket > lodBucketLimits[0][0] &&
-                partitionComponent.Bucket <= lodBucketLimits[0][1])
-                sceneLODCandidate = 1;
-            else if (partitionComponent.Bucket > lodBucketLimits[1][0])
-                sceneLODCandidate = 2;
+            for (byte i = 0; i < lodSettingsAsset.Value.LodPartitionBucketThresholds.Length; i++)
+            {
+                if (partitionComponent.Bucket >= lodSettingsAsset.Value.LodPartitionBucketThresholds[i])
+                    sceneLODCandidate = (byte)(i + 1);
+            }
 
             if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
-                UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);
+                UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate, sceneDefinitionComponent);
         }
 
         private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
-            int sceneLODCandidate)
+            byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-
             sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            string newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
+
+            //If the current LOD is the candidate, no need to make a new promise or set anything new
+            if (newLODKey.Equals(sceneLODInfo.CurrentLOD)) return;
+
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
-                lodCache.Release(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
+                sceneLODInfo.CurrentLOD.TryRelease(lodCache);
                 sceneLODInfo.CurrentLOD = cachedAsset;
             }
             else
@@ -129,28 +126,28 @@ namespace DCL.LOD.Systems
                 //TODO: TEMP, for some reason genesis plaza asset is crashing in mac
                 if ((Application.platform.Equals(RuntimePlatform.OSXPlayer) ||
                      Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
-                    sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    sceneDefinitionComponent.Definition.id.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                 {
-                    sceneLODInfo.SceneHash = "FAIL_THIS_REQUEST_IN_MAC";
-                    newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+                    return;
                 }
 
                 //TODO: TEMP, infinite floor sceene
-                if (sceneLODInfo.SceneHash.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
+                if (sceneDefinitionComponent.Definition.id.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
                 {
-                    sceneLODInfo.SceneHash = "FAIL_THIS_INFINTIE_FLOOR_REQUEST";
-                    newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+                    return;
                 }
-
-
 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,
-                        GetAssetBundleIntention.FromHash(newLODKey,
+                        GetAssetBundleIntention.FromHash(newLODKey.ToString(),
                             permittedSources: AssetSource.EMBEDDED,
                             customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
                         partitionComponent);
+
+                sceneLODInfo.IsDirty = true;
             }
         }
+
+
     }
 }

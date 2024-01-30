@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -8,24 +9,29 @@ namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
-        public int CurrentLODLevel;
-        public LODAsset CurrentLOD;
+        public byte CurrentLODLevel;
+        public LODAsset? CurrentLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
-
-        public string SceneHash;
-        public Vector3 ParcelPosition;
         public bool IsDirty;
-        public ParcelMathHelper.SceneCircumscribedPlanes SceneCircumscribedPlanes;
 
         public void Dispose(World world, ILODAssetsPool lodAssetsPool)
         {
             CurrentLODPromise.ForgetLoading(world);
-            lodAssetsPool.Release(CurrentLOD.LodKey, CurrentLOD);
-            CurrentLOD = default;
+
+            if (CurrentLOD != null)
+                CurrentLOD.TryRelease(lodAssetsPool);
+
+            CurrentLOD = null;
         }
 
-        public string GenerateCurrentLodKey() =>
-            SceneHash.ToLower() + "_" + CurrentLODLevel;
+        public void ToggleDebugColors()
+        {
+            CurrentLOD?.ToggleDebugColors();
+        }
+
+        public static SceneLODInfo Create() =>
+            new()
+                { CurrentLODLevel = byte.MaxValue };
     }
 
 }

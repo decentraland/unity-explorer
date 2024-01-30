@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Arch.Core;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD.Components;
@@ -39,16 +40,14 @@ namespace DCL.LOD.Tests
             InitializeSceneLODInfo();
             partitionComponent = new PartitionComponent();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new Vector2Int[] { new (1, 3), new (3, 5) },
+            /*system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, new List<int> { 1, 2, 5 },
                 frameCapBudget,
-                memoryBudget);
+                memoryBudget);*/
         }
 
         private void InitializeSceneLODInfo()
         {
-            sceneLODInfo.CurrentLODLevel = -1;
-            sceneLODInfo.SceneHash = "FakeHash";
-            sceneLODInfo.ParcelPosition = new Vector3(0, 0);
+            sceneLODInfo.CurrentLODLevel = byte.MaxValue;
         }
 
 
@@ -89,10 +88,9 @@ namespace DCL.LOD.Tests
 
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-            Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD.Root);
-            Assert.AreEqual($"{sceneLODInfoRetrieved.SceneHash.ToLower()}_lod2",
-                sceneLODInfoRetrieved.CurrentLOD.LodKey);
-            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.AssetBundleReference);
+            Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
+            Assert.AreEqual(new LODKey("FAKE HASH", 2), sceneLODInfoRetrieved.CurrentLOD.Value.LodKey);
+            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.Value.AssetBundleReference);
         }
 
         [Test]

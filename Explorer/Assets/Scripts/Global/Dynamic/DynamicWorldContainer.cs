@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.DebugUtilities;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -26,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
+using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -102,7 +102,7 @@ namespace Global.Dynamic
                 profileCache);
 
             IScenesCache scenesCache = new ScenesCache();
-            
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
@@ -136,16 +136,13 @@ namespace Global.Dynamic
                     storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
-                new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder,
-                    mapRendererContainer.TextureContainer),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    scenesCache)
+                    scenesCache, debugBuilder, staticContainer.AssetsProvisioner),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
-
 
             container.RealmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,
@@ -168,7 +165,6 @@ namespace Global.Dynamic
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
         {
-            Debug.Log("Initializing DebugContainer");
             DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
             return UniTask.CompletedTask;
         }

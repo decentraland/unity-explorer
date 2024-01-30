@@ -27,7 +27,7 @@ MonoBehaviour:
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
-  - rid: 3022170012058910723
+  - rid: 1730793610196287490
   references:
     version: 2
     RefIds:
@@ -113,34 +113,19 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 1730793610196287490
+      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
+      data:
+        <LodSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         MinimapPrefab:
           m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 3022170012058910723
-      type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        realmPartitionSettings:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        landscapeData:
-          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        emptyParcels:
-          m_AssetGUID: 35bedc705b5a3bc48a2801dc62a3f2b1
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        ownedParcels:
-          m_AssetGUID: a160048636f0c6a43b91e491836f503b
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

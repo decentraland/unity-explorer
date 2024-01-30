@@ -44,17 +44,18 @@ namespace DCL.Tests.Editor
             string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
 
             var sourceFiles = allSourceFiles
-                             .Where(file =>
-                              {
-                                  string fileName = Path.GetFileName(file);
-                                  string[] parts = file.Split(Path.DirectorySeparatorChar);
+                .Where(file =>
+                {
+                    var fileName = Path.GetFileName(file);
+                    var parts = file.Split(Path.DirectorySeparatorChar);
 
-                                  bool isFolderExcluded = excludedFolders.Any(folder => parts.Contains(folder));
-                                  bool isFileNameExcluded = fileNameExclusionKeywords.Any(keyword => fileName.Contains(keyword)) || excludedFileNames.Contains(fileName);
+                    var isFolderExcluded = excludedFolders.Any(folder => parts.Contains(folder));
+                    var isFileNameExcluded = fileNameExclusionKeywords.Any(keyword => fileName.Contains(keyword)) ||
+                                             excludedFileNames.Contains(fileName);
 
-                                  return !isFolderExcluded && !isFileNameExcluded;
-                              })
-                             .ToList();
+                    return !isFolderExcluded && !isFileNameExcluded;
+                })
+                .ToList();
 
             foreach (string file in sourceFiles)
             {
