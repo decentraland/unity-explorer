@@ -46,7 +46,8 @@ namespace DCL.Backpack
                 IWearableCatalog wearableCatalog,
                 PageButtonView pageButtonView,
                 IComponentPoolsRegistry poolsRegistry,
-                CharacterPreviewInputEventBus inputEventBus)
+                CharacterPreviewInputEventBus inputEventBus,
+                ICharacterPreviewFactory characterPreviewFactory)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
@@ -86,7 +87,7 @@ namespace DCL.Backpack
                             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
                         });
                 }
-                backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus, poolsRegistry, inputEventBus);
+                backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, characterPreviewFactory , backpackEventBus, poolsRegistry, inputEventBus);
                 view.TipsButton.onClick.AddListener(ToggleTipsContent);
                 view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
             }
