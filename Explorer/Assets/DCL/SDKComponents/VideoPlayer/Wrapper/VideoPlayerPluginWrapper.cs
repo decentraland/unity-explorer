@@ -2,15 +2,10 @@
 using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using ECS.LifeCycle;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using UnityEngine;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
-using DCL.ResourcesUnloading;
-using SceneRunner.Scene;
 
 #if AV_PRO_PRESENT
 using DCL.SDKComponents.AudioStream;

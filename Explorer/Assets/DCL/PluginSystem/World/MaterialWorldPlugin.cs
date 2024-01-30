@@ -29,7 +29,6 @@ namespace DCL.PluginSystem.World
 
         private IObjectPool<Material> basicMatPool;
         private IObjectPool<Material> pbrMatPool;
-        private IExtendedObjectPool<Texture2D> videoTexturePool;
 
         private DestroyMaterial destroyMaterial;
 
@@ -55,7 +54,6 @@ namespace DCL.PluginSystem.World
 
             basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
             pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
-            videoTexturePool = new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1, TextureFormat.BGRA32, false, false), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
