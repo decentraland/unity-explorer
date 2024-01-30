@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
@@ -28,13 +29,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2D> result))
             {
-                if (result.Succeeded)
-                {
-                    wearable.WearableThumbnail =
-                        new StreamableLoadingResult<Sprite>(
-                            Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false));
-                }
-                else { wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(result.Exception); }
+                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(
+                    result.Succeeded
+                        ? Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height),
+                            VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)
+                        : WearableComponentsUtils.DEFAULT_THUMBNAIL);
 
                 World.Destroy(entity);
             }
