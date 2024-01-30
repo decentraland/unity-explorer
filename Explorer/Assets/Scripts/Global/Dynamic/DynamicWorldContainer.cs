@@ -140,6 +140,8 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     scenesCache, debugBuilder, staticContainer.AssetsProvisioner),
+                new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder,
+                    mapRendererContainer.TextureContainer)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
