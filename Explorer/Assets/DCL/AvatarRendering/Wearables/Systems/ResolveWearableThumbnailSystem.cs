@@ -2,18 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
-using ECS;
 using ECS.Abstract;
-using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
 using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
-
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -21,7 +16,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class ResolveWearableThumbnailSystem : BaseUnityLoopSystem
     {
-
         public ResolveWearableThumbnailSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -32,11 +26,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         private void CompleteWearableThumbnailDownload(in Entity entity, ref IWearable wearable, ref Promise promise)
         {
-            if (promise.TryConsume(World, out var result))
+            if (promise.TryConsume(World, out StreamableLoadingResult<Texture2D> result))
             {
-                wearable.WearableThumbnail =
-                    new StreamableLoadingResult<Sprite>(
-                        Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false));
+                if (result.Succeeded)
+                {
+                    wearable.WearableThumbnail =
+                        new StreamableLoadingResult<Sprite>(
+                            Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false));
+                }
+                else { wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(result.Exception); }
+
                 World.Destroy(entity);
             }
         }
