@@ -72,7 +72,7 @@ namespace DCL.CharacterPreview
             {
                 var sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-                var newTexture = new RenderTexture((int)sizeDelta.x,(int)sizeDelta.y, 0, GraphicsFormat.A2B10G10R10_SIntPack32)
+                var newTexture = new RenderTexture((int)sizeDelta.x,(int)sizeDelta.y, 0, GraphicsFormat.A2R10G10B10_UNormPack32)
                 {
                     name = "Preview Texture",
                 };
