@@ -35,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly JobScheduler.JobScheduler jobScheduler;
 
         // These lists are static because of a compile issue when passing the references to the Query as [Data], code-gen wont find Unity.Collections
-        private static NativeArray<PartitionData> partitions;
+        protected static NativeArray<PartitionData> partitions;
         private static UnsafeList<ParcelCornersData> parcelCorners;
 
         private ScenePartitionParallelJob partitionJob;
@@ -117,22 +117,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (definition.InternalJobIndex < 0)
             {
-                var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
-
-                for (var i = 0; i < definition.ParcelsCorners.Count; i++)
-                    corners[i] = definition.ParcelsCorners[i];
-
-                parcelCorners.Add(new ParcelCornersData(in corners));
-
-                definition.InternalJobIndex = currentPartitionIndex;
-
-                partitions[currentPartitionIndex] = new PartitionData
-                {
-                    IsDirty = readOnlyCameraSamplingData.IsDirty,
-                    RawSqrDistance = -1,
-                };
-
-                currentPartitionIndex++;
+                ScheduleSceneDefinition(ref definition);
             }
             else
             {
@@ -144,6 +129,30 @@ namespace ECS.SceneLifeCycle.Systems
                 partitionComponent.RawSqrDistance = partition.RawSqrDistance;
                 World.Add(entity, partitionComponent);
             }
+        }
+
+        protected void ScheduleSceneDefinition(ref SceneDefinitionComponent definition)
+        {
+            AddCorners(ref definition);
+
+            partitions[currentPartitionIndex] = new PartitionData
+            {
+                IsDirty = readOnlyCameraSamplingData.IsDirty,
+                RawSqrDistance = -1,
+            };
+
+            currentPartitionIndex++;
+        }
+
+        protected void AddCorners(ref SceneDefinitionComponent definition)
+        {
+            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
+
+            for (var i = 0; i < definition.ParcelsCorners.Count; i++)
+                corners[i] = definition.ParcelsCorners[i];
+
+            parcelCorners.Add(new ParcelCornersData(in corners));
+            definition.InternalJobIndex = currentPartitionIndex;
         }
 
         [Query]
