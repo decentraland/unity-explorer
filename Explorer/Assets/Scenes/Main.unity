@@ -263,6 +263,7 @@ MonoBehaviour:
   showSplash: 1
   showAuthentication: 1
   showLoading: 1
+  loadLandscape: 1
 --- !u!108 &705507994 stripped
 Light:
   m_CorrespondingSourceObject: {fileID: 7432390511473013031, guid: ff887d043bcc0b94a8782b218200d650, type: 3}

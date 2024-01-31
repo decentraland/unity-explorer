@@ -19,12 +19,12 @@ namespace DCL.Landscape.Jobs
     [BurstCompile(CompileSynchronously = true)]
     public struct NoiseJob : IJobParallelFor
     {
-        public NativeArray<float> Result;
-        [ReadOnly] public NativeArray<float2> OctaveOffsets;
-        [ReadOnly] public int Width;
-        [ReadOnly] public int Height;
-        [ReadOnly] public NoiseSettings NoiseSettings;
-        [ReadOnly] public float MaxHeight;
+        private NativeArray<float> result;
+        [ReadOnly] private NativeArray<float2> octaveOffsets;
+        [ReadOnly] private readonly int width;
+        [ReadOnly] private readonly int height;
+        [ReadOnly] private readonly NoiseSettings noiseSettings;
+        [ReadOnly] private readonly float maxHeight;
         [ReadOnly] private readonly float2 offset;
         [ReadOnly] private readonly NoiseJobOperation operation;
 
@@ -39,34 +39,34 @@ namespace DCL.Landscape.Jobs
         {
             this.offset = offset;
             this.operation = operation;
-            Result = result;
-            OctaveOffsets = octaveOffsets;
-            Width = width;
-            Height = height;
-            NoiseSettings = noiseSettings;
-            MaxHeight = maxHeight;
+            this.result = result;
+            this.octaveOffsets = octaveOffsets;
+            this.width = width;
+            this.height = height;
+            this.noiseSettings = noiseSettings;
+            this.maxHeight = maxHeight;
         }
 
         public void Execute(int index)
         {
-            int x = index % Width;
-            int y = index / Width;
+            int x = index % width;
+            int y = index / width;
 
-            float halfWidth = Width / 2f;
-            float halfHeight = Height / 2f;
+            float halfWidth = width / 2f;
+            float halfHeight = height / 2f;
 
             float amplitude = 1;
             float frequency = 1;
             float noiseHeight = 0;
 
-            for (var i = 0; i < NoiseSettings.octaves; i++)
+            for (var i = 0; i < noiseSettings.octaves; i++)
             {
-                float sampleX = (x - halfWidth + OctaveOffsets[i].x + offset.x) / NoiseSettings.scale * frequency;
-                float sampleY = (y - halfHeight + OctaveOffsets[i].y + offset.y) / NoiseSettings.scale * frequency;
+                float sampleX = (x - halfWidth + octaveOffsets[i].x + offset.x) / noiseSettings.scale * frequency;
+                float sampleY = (y - halfHeight + octaveOffsets[i].y + offset.y) / noiseSettings.scale * frequency;
 
                 float noiseValue = 0;
 
-                switch (NoiseSettings.noiseType)
+                switch (noiseSettings.noiseType)
                 {
                     case NoiseType.PERLIN:
                         noiseValue = noise.cnoise(new float2(sampleX, sampleY));
@@ -83,38 +83,38 @@ namespace DCL.Landscape.Jobs
                 noiseValue = (noiseValue * 2) - 1;
                 noiseHeight += noiseValue * amplitude;
 
-                amplitude *= NoiseSettings.persistance;
-                frequency *= NoiseSettings.lacunarity;
+                amplitude *= noiseSettings.persistance;
+                frequency *= noiseSettings.lacunarity;
             }
 
-            float tempValue = NoiseSettings.invert ? -noiseHeight : noiseHeight;
+            float tempValue = noiseSettings.invert ? -noiseHeight : noiseHeight;
 
-            tempValue += NoiseSettings.baseValue;
-            tempValue *= math.max(NoiseSettings.multiplyValue, 1);
-            tempValue /= math.max(NoiseSettings.divideValue, 1);
+            tempValue += noiseSettings.baseValue;
+            tempValue *= math.max(noiseSettings.multiplyValue, 1);
+            tempValue /= math.max(noiseSettings.divideValue, 1);
 
-            if (NoiseSettings.normalize)
+            if (noiseSettings.normalize)
             {
-                float normalizedHeight = (tempValue + 1) / MaxHeight;
+                float normalizedHeight = (tempValue + 1) / maxHeight;
                 tempValue = Mathf.Clamp(normalizedHeight, 0, 1);
             }
 
-            if (tempValue < NoiseSettings.cutoff)
+            if (tempValue < noiseSettings.cutoff)
                 tempValue = 0;
 
             switch (operation)
             {
                 case NoiseJobOperation.SET:
-                    Result[index] = tempValue;
+                    result[index] = tempValue;
                     break;
                 case NoiseJobOperation.ADD:
-                    Result[index] += tempValue;
+                    result[index] += tempValue;
                     break;
                 case NoiseJobOperation.MULTIPLY:
-                    Result[index] *= tempValue;
+                    result[index] *= tempValue;
                     break;
                 case NoiseJobOperation.SUBTRACT:
-                    Result[index] -= tempValue;
+                    result[index] -= tempValue;
                     break;
             }
         }

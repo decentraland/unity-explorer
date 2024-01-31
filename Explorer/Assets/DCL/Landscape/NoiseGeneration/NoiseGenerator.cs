@@ -15,12 +15,10 @@ namespace DCL.Landscape.NoiseGeneration
         private NativeArray<float2> offsets;
         private NativeArray<float> noiseResults;
         private int sizeOfLastCache = -1;
-        private bool isDisposed = false;
-        private uint variantSeed;
+        private bool isDisposed;
 
         public NoiseGenerator(NoiseData noiseData, uint variantSeed, uint baseSeed)
         {
-            this.variantSeed = variantSeed;
             this.noiseData = noiseData;
             var noiseSettings = noiseData.settings;
             offsets = new NativeArray<float2>(noiseData.settings.octaves, Allocator.Persistent);

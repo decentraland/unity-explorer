@@ -8,7 +8,7 @@ namespace DCL.Landscape.Jobs
     public struct NoiseSimpleOperation : IJobParallelFor
     {
         private NativeArray<float> targetArray;
-        private readonly float value;
+        [ReadOnly] private readonly float value;
         [ReadOnly] private readonly NoiseJobOperation operation;
 
         public NoiseSimpleOperation(ref NativeArray<float> targetArray, float value, NoiseJobOperation operation)

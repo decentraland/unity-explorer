@@ -18,8 +18,10 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct GenerateTreeInstancesJob : IJob
     {
-        [ReadOnly] private NativeArray<float> treeNoise;
         private NativeHashMap<int2, TreeInstance> treeInstances;
+        private Random random;
+
+        [ReadOnly] private NativeArray<float> treeNoise;
         [ReadOnly] private NativeHashMap<int2, EmptyParcelData> emptyParcelResult;
         [ReadOnly] private ObjectRandomization treeRandomization;
         [ReadOnly] private readonly float treeRadius;
@@ -28,7 +30,6 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly int offsetZ;
         [ReadOnly] private readonly int chunkSize;
         [ReadOnly] private readonly int chunkDensity;
-        private Random random;
 
         private readonly int2 UP;
         private readonly int2 RIGHT;
@@ -68,15 +69,10 @@ namespace DCL.Landscape.Jobs
 
         public void Execute()
         {
-            var bailOut = false;
-            var count = 0;
             for (int y = 0; y < chunkDensity; y++)
             {
                 for (int x = 0; x < chunkDensity; x++)
                 {
-                    if (bailOut)
-                        break;
-
                     int index = x + (y * chunkDensity);
                     float value = treeNoise[index];
 
@@ -125,20 +121,14 @@ namespace DCL.Landscape.Jobs
                     if (canAssetSpawn)
                     {
                         var intRadius = (int)math.ceil(radius);
-                        var isValid = true;
 
-                        isValid = CheckAssetSpatialAvailability(intRadius, x, y);
+                        bool isValid = CheckAssetSpatialAvailability(intRadius, x, y);
 
                         if (!isValid)
                             continue;
 
                         treeInstances.Add(new int2(x, y), treeInstance);
-                        count++;
                     }
-
-                    //if (count > 3)
-
-                    //    bailOut = true;
                 }
             }
         }

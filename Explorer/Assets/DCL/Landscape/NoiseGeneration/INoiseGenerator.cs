@@ -4,7 +4,7 @@ using System;
 using Unity.Collections;
 using Unity.Jobs;
 
-namespace DCL.Landscape
+namespace DCL.Landscape.NoiseGeneration
 {
     public interface INoiseGenerator : IDisposable
     {

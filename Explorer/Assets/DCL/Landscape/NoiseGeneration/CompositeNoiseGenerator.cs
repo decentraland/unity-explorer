@@ -1,13 +1,11 @@
 ﻿using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
-using DCL.Landscape.NoiseGeneration;
-using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
-namespace DCL.Landscape
+namespace DCL.Landscape.NoiseGeneration
 {
     public class CompositeNoiseGenerator : INoiseGenerator
     {

@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -26,7 +25,6 @@ namespace DCL.Landscape
     {
         private readonly TerrainGenerationData terrainGenData;
         private GameObject rootGo;
-        private List<Terrain> terrains;
         private TreePrototype[] treePrototypes;
         private NativeHashMap<int2, EmptyParcelData> emptyParcelResult;
         private NativeArray<int2> emptyParcels;
@@ -56,11 +54,10 @@ namespace DCL.Landscape
                 this.hideTrees = hideTrees;
                 random = new Random((uint)terrainGenData.seed);
 
-                await SetupEmptyParcelData(emptyParcels, ownedParcels);
+                await SetupEmptyParcelData();
 
                 if (processReport != null) processReport.ProgressCounter.Value = 0.1f;
 
-                // Remove this debug thing
                 rootGo = GameObject.Find("Generated Terrain");
                 if (rootGo != null) Object.DestroyImmediate(rootGo);
                 rootGo = new GameObject("Generated Terrain");
@@ -167,14 +164,14 @@ namespace DCL.Landscape
             neCorner.SetParent(rootGo.transform, true);
         }
 
-        private async UniTask SetupEmptyParcelData(NativeArray<int2> emptyParcels, NativeHashSet<int2> ownedParcels)
+        private async UniTask SetupEmptyParcelData()
         {
             emptyParcelResult = new NativeHashMap<int2, EmptyParcelData>(emptyParcels.Length, Allocator.Persistent);
 
             foreach (int2 emptyParcel in emptyParcels)
                 emptyParcelResult.Add(new int2(emptyParcel.x, emptyParcel.y), new EmptyParcelData());
 
-            var job = new SetupEmptyParcels(in emptyParcels, in ownedParcels, ref emptyParcelResult) { heightNerf = terrainGenData.heightScaleNerf };
+            var job = new SetupEmptyParcels(in emptyParcels, in ownedParcels, ref emptyParcelResult, terrainGenData.heightScaleNerf);
             JobHandle handle = job.Schedule();
 
             await handle.ToUniTask(PlayerLoopTiming.Update);
@@ -188,15 +185,11 @@ namespace DCL.Landscape
 
         private void GenerateChunks(Dictionary<int2, TerrainData> terrainDatas)
         {
-            var index = 0;
-            terrains = new List<Terrain>();
-
             for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
             for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
             {
                 TerrainData terrainData = terrainDatas[new int2(x, z)];
-                terrains.Add(GenerateTerrainChunk(x, z, terrainData, terrainGenData.terrainMaterial));
-                index++;
+                GenerateTerrainChunk(x, z, terrainData, terrainGenData.terrainMaterial);
             }
         }
 
@@ -239,9 +232,8 @@ namespace DCL.Landscape
             if (failedHoles > 0) { Debug.LogError($"Failed to set {failedHoles} holes"); }
         }
 
-        private Terrain GenerateTerrainChunk(int offsetX, int offsetZ, TerrainData terrainData, Material material)
+        private void GenerateTerrainChunk(int offsetX, int offsetZ, TerrainData terrainData, Material material)
         {
-            //terrainData.SyncTexture(TerrainData.HolesTextureName);
             GameObject terrainObject = Terrain.CreateTerrainGameObject(terrainData);
             Terrain terrain = terrainObject.GetComponent<Terrain>();
             terrain.shadowCastingMode = ShadowCastingMode.Off;
@@ -250,10 +242,8 @@ namespace DCL.Landscape
             terrain.enableHeightmapRayTracing = false;
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
-            return terrain;
         }
 
-        // not completely optimized
         private async UniTask<TerrainData> GenerateTerrainData(int offsetX, int offsetZ, uint baseSeed)
         {
             int resolution = terrainGenData.chunkSize;
@@ -265,8 +255,6 @@ namespace DCL.Landscape
                 alphamapResolution = resolution,
                 size = new Vector3(chunkSize, maxHeightIndex, chunkSize),
                 terrainLayers = terrainGenData.terrainLayers,
-
-                //enableHolesTextureCompression = true,
                 treePrototypes = GetTreePrototypes(),
                 detailPrototypes = GetDetailPrototypes(),
             };
@@ -286,24 +274,24 @@ namespace DCL.Landscape
         {
             return terrainGenData.detailAssets.Select(a =>
                                   {
-                                      var detailPrototype = new DetailPrototype();
-
-                                      // TODO: CONFIGURE THIS FOR EACH PROTOTYPE
-                                      detailPrototype.usePrototypeMesh = true;
-                                      detailPrototype.prototype = a.asset;
-                                      detailPrototype.useInstancing = true;
-                                      detailPrototype.renderMode = DetailRenderMode.VertexLit;
-                                      detailPrototype.density = a.TerrainDetailSettings.detailDensity;
-                                      detailPrototype.alignToGround = a.TerrainDetailSettings.alignToGround / 100f;
-                                      detailPrototype.holeEdgePadding = a.TerrainDetailSettings.holeEdgePadding / 100f;
-                                      detailPrototype.minWidth = a.TerrainDetailSettings.minWidth;
-                                      detailPrototype.maxWidth = a.TerrainDetailSettings.maxWidth;
-                                      detailPrototype.minHeight = a.TerrainDetailSettings.minHeight;
-                                      detailPrototype.maxHeight = a.TerrainDetailSettings.maxHeight;
-                                      detailPrototype.noiseSeed = a.TerrainDetailSettings.noiseSeed;
-                                      detailPrototype.noiseSpread = a.TerrainDetailSettings.noiseSpread;
-                                      detailPrototype.useDensityScaling = a.TerrainDetailSettings.affectedByGlobalDensityScale;
-                                      detailPrototype.positionJitter = a.TerrainDetailSettings.positionJitter / 100f;
+                                      var detailPrototype = new DetailPrototype
+                                      {
+                                          usePrototypeMesh = true,
+                                          prototype = a.asset,
+                                          useInstancing = true,
+                                          renderMode = DetailRenderMode.VertexLit,
+                                          density = a.TerrainDetailSettings.detailDensity,
+                                          alignToGround = a.TerrainDetailSettings.alignToGround / 100f,
+                                          holeEdgePadding = a.TerrainDetailSettings.holeEdgePadding / 100f,
+                                          minWidth = a.TerrainDetailSettings.minWidth,
+                                          maxWidth = a.TerrainDetailSettings.maxWidth,
+                                          minHeight = a.TerrainDetailSettings.minHeight,
+                                          maxHeight = a.TerrainDetailSettings.maxHeight,
+                                          noiseSeed = a.TerrainDetailSettings.noiseSeed,
+                                          noiseSpread = a.TerrainDetailSettings.noiseSpread,
+                                          useDensityScaling = a.TerrainDetailSettings.affectedByGlobalDensityScale,
+                                          positionJitter = a.TerrainDetailSettings.positionJitter / 100f,
+                                      };
                                       return detailPrototype;
                                   })
                                  .ToArray();
@@ -313,7 +301,7 @@ namespace DCL.Landscape
         {
             terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
 
-            var detailSize = chunkSize;
+            int detailSize = chunkSize;
 
             for (int i = 0; i < terrainGenData.detailAssets.Length; i++)
             {
@@ -321,7 +309,7 @@ namespace DCL.Landscape
 
                 try
                 {
-                    var detailLayer = terrainData.GetDetailLayer(0, 0, terrainData.detailWidth, terrainData.detailHeight, i);
+                    int[,] detailLayer = terrainData.GetDetailLayer(0, 0, terrainData.detailWidth, terrainData.detailHeight, i);
 
                     INoiseGenerator noiseGenerator = noiseGenCache.GetGeneratorFor(detailAsset.noiseData, baseSeed);
                     JobHandle handle = noiseGenerator.Schedule(detailSize, offsetX, offsetZ);
@@ -331,16 +319,16 @@ namespace DCL.Landscape
                     {
                         for (var x = 0; x < detailSize; x++)
                         {
-                            var f = terrainGenData.detailScatterMode == DetailScatterMode.CoverageMode ? 255 : 16;
-                            var index = x + (y * detailSize);
-                            var value = noiseGenerator.GetValue(index);
+                            int f = terrainGenData.detailScatterMode == DetailScatterMode.CoverageMode ? 255 : 16;
+                            int index = x + (y * detailSize);
+                            float value = noiseGenerator.GetValue(index);
                             detailLayer[y, x] = Mathf.FloorToInt(value * f); //random.NextInt(0,255);
                         }
                     }
 
                     terrainData.SetDetailLayer(0, 0, i, detailLayer);
                 }
-                catch (Exception e) { Debug.LogError($"Failed to set detail layer for {detailAsset.name}"); }
+                catch (Exception) { Debug.LogError($"Failed to set detail layer for {detailAsset.name}"); }
             }
         }
 
@@ -353,13 +341,17 @@ namespace DCL.Landscape
             var handle = terrainHeightNoise.Schedule(resolution, offsetX, offsetZ);
             await handle.ToUniTask(PlayerLoopTiming.Update);
 
-            var modifyJob = new ModifyTerrainHeightJob(ref heights, in emptyParcelResult, in terrainHeightNoise.GetResult(), terrainGenData.terrainHoleEdgeSize, terrainGenData.minHeight, terrainGenData.pondDepth)
-            {
-                terrainWidth = resolution,
-                offsetX = offsetX,
-                offsetZ = offsetZ,
-                maxHeight = maxHeightIndex,
-            };
+            var modifyJob = new ModifyTerrainHeightJob(
+                ref heights,
+                in emptyParcelResult,
+                in terrainHeightNoise.GetResult(),
+                terrainGenData.terrainHoleEdgeSize,
+                terrainGenData.minHeight,
+                terrainGenData.pondDepth,
+                resolution,
+                offsetX,
+                offsetZ,
+                maxHeightIndex);
 
             JobHandle jobHandle = modifyJob.Schedule(heights.Length, 64);
             await jobHandle.ToUniTask(PlayerLoopTiming.Update);
@@ -397,10 +389,8 @@ namespace DCL.Landscape
                 LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
                 NoiseDataBase treeNoiseData = treeAsset.noiseData;
 
-                int chunkDensity = chunkSize; //Mathf.FloorToInt(chunkSize / 16f * treeAsset.density);
-
                 INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
-                JobHandle generatorHandle = generator.Schedule(chunkDensity, offsetX, offsetZ);
+                JobHandle generatorHandle = generator.Schedule(chunkSize, offsetX, offsetZ);
                 await generatorHandle.ToUniTask(PlayerLoopTiming.Update);
 
                 NativeArray<float> resultCopy = generator.GetResult();
@@ -415,7 +405,7 @@ namespace DCL.Landscape
                     offsetX,
                     offsetZ,
                     chunkSize,
-                    chunkDensity,
+                    chunkSize,
                     ref random);
 
                 JobHandle instancingHandle = treeInstancesJob.Schedule();
@@ -506,7 +496,7 @@ namespace DCL.Landscape
             return result;
         }
 
-        // This should free up all the NativeArrays used for random generation
+        // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
         public void FreeMemory()
         {
             emptyParcelResult.Dispose();
