@@ -16,8 +16,6 @@ namespace ECS.Unity.SceneBoundsChecker
         ///     We can use this shared instance as this API is single-threaded
         /// </summary>
         private static readonly List<Material> TEMP_MATERIALS = new (3);
-
-        private static readonly Shader CACHED_SHADER = Shader.Find("DCL/Scene");
         
         /// <summary>
         ///     Enables Scene Bounds Checking
@@ -37,7 +35,7 @@ namespace ECS.Unity.SceneBoundsChecker
         }
 
         /// <summary>
-        ///     Enables Scene Bounds Checking
+        ///     Enables Scene Bounds Checking for GameObjects
         /// </summary>
         internal static void EnableSceneBounds(in GameObject asset,
             in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
@@ -48,8 +46,6 @@ namespace ECS.Unity.SceneBoundsChecker
             var componentsInChildren = asset.GetComponentsInChildren<MeshRenderer>();
             for (var i = 0; i < componentsInChildren.Length; i++)
             {
-                //TODO: Fix in ABConverter. Assets should already come with the scene shader
-                componentsInChildren[i].material.shader = CACHED_SHADER;
                 componentsInChildren[i].SafeGetMaterials(TEMP_MATERIALS);
 
                 for (var j = 0; j < TEMP_MATERIALS.Count; j++)

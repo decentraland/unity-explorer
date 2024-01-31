@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
+using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
