@@ -14,16 +14,15 @@ namespace DCL.CharacterPreview
 {
     public class BackpackCharacterPreviewController : IDisposable
     {
-
         private readonly BackpackCharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly BackpackEventBus backpackEventBus;
         private readonly CharacterPreviewInputEventBus inputEventBus;
+        private readonly BackpackCharacterPreviewCursorController cursorController;
 
         private World world;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
-        private readonly BackpackCharacterPreviewCursorController cursorController;
 
         public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, CharacterPreviewInputEventBus inputEventBus)
         {
@@ -45,33 +44,23 @@ namespace DCL.CharacterPreview
             cursorController = new BackpackCharacterPreviewCursorController(view.CharacterPreviewCursorView, inputEventBus);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
+        public void Initialize(Avatar avatar)
         {
-            world = builder.World;
-            InitializePreviewModel(playerEntity);
-        }
-
-        private void InitializePreviewModel(Entity playerEntity)
-        {
-            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
-
             previewModel.BodyShape = avatar.BodyShape;
             previewModel.HairColor = avatar.HairColor;
             previewModel.SkinColor = avatar.SkinColor;
             previewModel.ForceRender = new HashSet<string>(avatar.ForceRender);
-        }
 
-        public void Initialize()
-        {
             //Temporal solution to fix issue with render format in Mac VS Windows
             if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
             {
-                var sizeDelta = view.RawImage.rectTransform.sizeDelta;
+                Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-                var newTexture = new RenderTexture((int)sizeDelta.x,(int)sizeDelta.y, 0, GraphicsFormat.A2R10G10B10_UNormPack32)
+                var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, GraphicsFormat.A2R10G10B10_UNormPack32)
                 {
                     name = "Preview Texture",
                 };
+
                 newTexture.Create();
 
                 view.RawImage.texture = newTexture;
@@ -79,18 +68,36 @@ namespace DCL.CharacterPreview
             }
             else
             {
-                var sizeDelta = view.RawImage.rectTransform.sizeDelta;
+                Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-                var newTexture = new RenderTexture((int)sizeDelta.x,(int)sizeDelta.y, 0, GraphicsFormat.R32G32B32A32_SInt)
+                var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, GraphicsFormat.R32G32B32A32_SInt)
                 {
                     name = "Preview Texture",
                 };
+
                 newTexture.Create();
                 view.RawImage.texture = newTexture;
                 previewController = previewFactory.Create(world, newTexture, inputEventBus);
             }
 
             OnModelUpdated();
+        }
+
+        public void Dispose()
+        {
+            backpackEventBus.EquipEvent -= OnEquipped;
+            backpackEventBus.UnEquipEvent -= OnUnequipped;
+            view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
+            view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
+            view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
+            view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
+            previewController.Dispose();
+            cursorController.Dispose();
+        }
+
+        public void SetWorld(World world)
+        {
+            this.world = world;
         }
 
         private void OnPointerUp(PointerEventData pointerEventData)
@@ -102,7 +109,6 @@ namespace DCL.CharacterPreview
         {
             inputEventBus.OnPointerDown(pointerEventData);
         }
-
 
         private void OnScroll(PointerEventData pointerEventData)
         {
@@ -122,12 +128,9 @@ namespace DCL.CharacterPreview
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
         {
             previewModel.ForceRender.Clear();
-            
-            foreach (string wearable in forceRender)
-            {
-                previewModel.ForceRender.Add(wearable);
-            }
-            
+
+            foreach (string wearable in forceRender) { previewModel.ForceRender.Add(wearable); }
+
             OnModelUpdated();
         }
 
@@ -162,18 +165,6 @@ namespace DCL.CharacterPreview
         private void OnModelUpdated()
         {
             previewController.UpdateAvatar(previewModel);
-        }
-
-        public void Dispose()
-        {
-            backpackEventBus.EquipEvent -= OnEquipped;
-            backpackEventBus.UnEquipEvent -= OnUnequipped;
-            view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
-            view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
-            view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
-            view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
-            previewController.Dispose();
-            cursorController.Dispose();
         }
     }
 }
