@@ -4,8 +4,6 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -14,14 +12,12 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Character.Plugin
 {
@@ -38,6 +34,11 @@ namespace DCL.Character.Plugin
 
         private ProvidedInstance<CharacterObject> characterObject;
 
+        /// <summary>
+        ///     Character Object exists in a single instance
+        /// </summary>
+        public ICharacterObject CharacterObject => characterObject.Value;
+
         public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -45,11 +46,6 @@ namespace DCL.Character.Plugin
 
             exposedTransform = new ExposedTransform();
         }
-
-        /// <summary>
-        ///     Character Object exists in a single instance
-        /// </summary>
-        public ICharacterObject CharacterObject => characterObject.Value;
 
         public void Dispose()
         {
@@ -74,15 +70,8 @@ namespace DCL.Character.Plugin
         public Entity CreatePlayerEntity(World world) =>
             world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
-                new PlayerComponent(CharacterObject.CameraFocus),
-                new CharacterTransform(CharacterObject.Transform),
-                new Profile("fakeOwnUserId", "Player",
-                    new Avatar(
-                        BodyShape.MALE,
-                        WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                        WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                        WearablesConstants.DefaultColors.GetRandomHairColor(),
-                        WearablesConstants.DefaultColors.GetRandomSkinColor())));
+                new PlayerComponent(characterObject.Value.CameraFocus),
+                new CharacterTransform(characterObject.Value.Transform));
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {

@@ -99,8 +99,7 @@ namespace Global.Dynamic
         }
 
         public (GlobalWorld world, Entity playerEntity) Create(ISceneFactory sceneFactory,
-            IEmptyScenesWorldFactory emptyScenesWorldFactory,
-            ICharacterObject characterObject)
+            IEmptyScenesWorldFactory emptyScenesWorldFactory)
         {
             var world = World.Create();
 
