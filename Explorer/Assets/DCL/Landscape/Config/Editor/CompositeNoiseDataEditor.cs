@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using DCL.Landscape.NoiseGeneration;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEditor;
 
@@ -22,21 +23,10 @@ namespace DCL.Landscape.Config.Editor
 
         protected override void DisposeNativeArrays()
         {
-            ClearOctaves();
             generator?.Dispose();
-        }
-
-        private void ClearOctaves()
-        {
-
         }
 
         protected override NativeArray<float> GetResultNoise() =>
             generator.GetResult();
-
-        protected override void SetupNoiseArray(int textureSize)
-        {
-
-        }
     }
 }

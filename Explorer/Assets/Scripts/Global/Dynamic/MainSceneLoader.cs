@@ -45,6 +45,7 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
+        [SerializeField] private bool loadLandscape;
 
         private AsyncLoadProcessReport? loadReport;
         private StaticContainer? staticContainer;
@@ -211,7 +212,8 @@ namespace Global.Dynamic
             // Add the profile into the player entity so it will create the avatar in world
             globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
 
-            await LoadLandscape(ct);
+            if (loadLandscape)
+                await LoadLandscape(ct);
 
             await TeleportToSpawnPointAsync(ct);
 

@@ -7,27 +7,28 @@ using Unity.Mathematics;
 namespace DCL.Landscape.Jobs
 {
     /// <summary>
-    /// TODO: DOCUMENT THIS JOB's PURPOSE
+    /// This job iterates every empty parcel and checks its neighbouring owned parcels to determine which max height could the terrain have
+    /// NOTE: this not a parallel job since NativeHashMap does not support parallel write, we need to figure out a better way of doing this
     /// </summary>
     [BurstCompile]
-    public struct SetupEmptyParcels : IJob     // not a parallel job since NativeHashMap does not support parallel write, we need to figure out a better way of doing this
+    public struct SetupEmptyParcels : IJob
     {
+        private NativeHashMap<int2, EmptyParcelData> result;
+
         [ReadOnly] private readonly NativeArray<int2> emptyParcels;
         [ReadOnly] private NativeHashSet<int2> ownedParcels;
-        private NativeHashMap<int2, EmptyParcelData> result;
-        public float heightNerf;
+        [ReadOnly] private readonly float heightNerf;
+        [ReadOnly] private readonly int2 UP;
+        [ReadOnly] private readonly int2 RIGHT;
+        [ReadOnly] private readonly int2 DOWN;
+        [ReadOnly] private readonly int2 LEFT;
 
-        private readonly int2 UP;
-        private readonly int2 RIGHT;
-        private readonly int2 DOWN;
-        private readonly int2 LEFT;
-
-        public SetupEmptyParcels(in NativeArray<int2> emptyParcels, in NativeHashSet<int2> ownedParcels, ref NativeHashMap<int2, EmptyParcelData> result)
+        public SetupEmptyParcels(in NativeArray<int2> emptyParcels, in NativeHashSet<int2> ownedParcels, ref NativeHashMap<int2, EmptyParcelData> result, float heightScaleNerf)
         {
             this.emptyParcels = emptyParcels;
             this.ownedParcels = ownedParcels;
             this.result = result;
-            heightNerf = 0;
+            heightNerf = heightScaleNerf;
             UP = new int2(0, 1);
             RIGHT = new int2(1, 0);
             DOWN = new int2(0, -1);
@@ -41,7 +42,7 @@ namespace DCL.Landscape.Jobs
             {
                 EmptyParcelData data = result[position];
 
-                data.minIndex = (int)Empower(GetNearestParcelDistance(position, 1));
+                data.minIndex = (int)(GetNearestParcelDistance(position, 1) / heightNerf);
                 result[position] = data;
             }
 
@@ -64,11 +65,7 @@ namespace DCL.Landscape.Jobs
             }
         }
 
-        private float Empower(float height) =>
-            height / heightNerf;
-
-        //math.pow(height, 2f) / heightNerf;
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int SafeGet(int2 pos)
         {
             if (IsOutOfBounds(pos.x) || IsOutOfBounds(pos.y) || ownedParcels.Contains(pos))
@@ -77,6 +74,7 @@ namespace DCL.Landscape.Jobs
             return result[pos].minIndex;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetNearestParcelDistance(int2 emptyParcelCoords, int radius)
         {
             for (int x = -radius; x <= radius; x++)

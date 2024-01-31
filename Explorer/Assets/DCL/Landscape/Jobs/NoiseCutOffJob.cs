@@ -23,7 +23,6 @@ namespace DCL.Landscape.Jobs
             if (value < finalCutOff)
                 value = 0;
 
-
             targetArray[index] = value;
         }
     }

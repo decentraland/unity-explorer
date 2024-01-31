@@ -64,8 +64,6 @@ namespace DCL.Landscape.Config.Editor
                     texture = new RenderTexture(textureSize, textureSize, 32);
                     texture.enableRandomWrite = true;
                     texture.Create();
-
-                    SetupNoiseArray(textureSize);
                     resultBuffer?.Dispose();
                     resultBuffer = new ComputeBuffer(textureSize * textureSize, sizeof(float));
                     targetShader.SetTexture(0, NoiseEditorUtils.CS_RESULT, texture);
@@ -98,8 +96,6 @@ namespace DCL.Landscape.Config.Editor
         }
 
         protected abstract NativeArray<float> GetResultNoise();
-
-        protected abstract void SetupNoiseArray(int textureSize);
 
         protected abstract JobHandle ScheduleJobs(int textureSize);
 

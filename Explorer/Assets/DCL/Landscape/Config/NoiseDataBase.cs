@@ -1,5 +1,4 @@
 ﻿using DCL.Landscape.NoiseGeneration;
-using System;
 using UnityEngine;
 
 namespace DCL.Landscape.Config

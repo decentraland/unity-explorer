@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using Cysharp.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Landscape.Config.Editor
@@ -11,7 +12,7 @@ namespace DCL.Landscape.Config.Editor
             if (GUILayout.Button("Generate"))
             {
                 TerrainGeneratorTest generator = (TerrainGeneratorTest)target;
-                generator.Generate();
+                generator.Generate().Forget();
             }
 
             base.OnInspectorGUI();

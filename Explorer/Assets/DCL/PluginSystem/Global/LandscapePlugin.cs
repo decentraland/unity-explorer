@@ -19,6 +19,7 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>
     {
+        private readonly TerrainGenerator terrainGenerator;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -28,10 +29,10 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<TextAsset> ownedParcelsData;
         private NativeArray<int2> emptyParcels;
         private NativeHashSet<int2> ownedParcels;
-        private TerrainGenerator terrainGenerator;
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer)
         {
+            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
@@ -64,8 +65,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeLoadingProgress(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
-
             await terrainGenerator.GenerateTerrain(processReport: loadReport);
 
             // immediately dispose to free all memory used for generating the terrain

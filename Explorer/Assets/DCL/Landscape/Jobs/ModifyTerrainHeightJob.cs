@@ -2,12 +2,12 @@
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace DCL.Landscape.Jobs
 {
     /// <summary>
-    /// TODO: DOCUMENT THIS JOB's PURPOSE
+    /// This jobs checks every pixel from the terrain heightmap and set's up its noise value based on the EmptyParcelData as well
+    ///     it also checks the sides and corners so the height variation blends in
     /// </summary>
     [BurstCompile]
     public struct ModifyTerrainHeightJob : IJobParallelFor
@@ -15,13 +15,13 @@ namespace DCL.Landscape.Jobs
         private NativeArray<float> heights;
         [ReadOnly] private NativeArray<float> terrainNoise;
         [ReadOnly] private NativeHashMap<int2, EmptyParcelData> emptyParcelData;
-        public int terrainWidth;
-        public int offsetX;
-        public int offsetZ;
-        public int maxHeight;
-        public float edgeRadius;
-        private float minHeight;
-        private float pondDepth;
+        [ReadOnly] private readonly int terrainWidth;
+        [ReadOnly] private readonly int offsetX;
+        [ReadOnly] private readonly int offsetZ;
+        [ReadOnly] private readonly int maxHeight;
+        [ReadOnly] private readonly float edgeRadius;
+        [ReadOnly] private readonly float minHeight;
+        [ReadOnly] private readonly float pondDepth;
 
         public ModifyTerrainHeightJob(
             ref NativeArray<float> heights,
@@ -29,7 +29,11 @@ namespace DCL.Landscape.Jobs
             in NativeArray<float> terrainNoise,
             float edgeRadius,
             float minHeight,
-            float pondDepth) : this()
+            float pondDepth,
+            int resolution,
+            int offsetX,
+            int offsetZ,
+            int maxHeightIndex) : this()
         {
             this.heights = heights;
             this.emptyParcelData = emptyParcelData;
@@ -37,18 +41,23 @@ namespace DCL.Landscape.Jobs
             this.edgeRadius = edgeRadius;
             this.minHeight = minHeight;
             this.pondDepth = pondDepth;
+
+            terrainWidth = resolution;
+            this.offsetX = offsetX;
+            this.offsetZ = offsetZ;
+            maxHeight = maxHeightIndex;
         }
 
         public void Execute(int index)
         {
             float rMinHeight = minHeight / maxHeight;
-            var radius = edgeRadius;
+            float radius = edgeRadius;
 
             int x = index % terrainWidth;
             int z = index / terrainWidth;
 
-            int worldX = x + offsetX; // * 1f / terrainScale;
-            int worldZ = z + offsetZ; // * 1f / terrainScale;
+            int worldX = x + offsetX;
+            int worldZ = z + offsetZ;
 
             int parcelX = worldX / 16;
             int parcelZ = worldZ / 16;
@@ -57,7 +66,6 @@ namespace DCL.Landscape.Jobs
 
             if (emptyParcelData.TryGetValue(coord, out EmptyParcelData data))
             {
-                //float noise = Mathf.PerlinNoise((x + offsetX) * 1f / terrainScale, (z + offsetZ) * 1f / terrainScale);
                 float noise = terrainNoise[index];
                 float currentHeight = data.minIndex;
 
@@ -104,12 +112,9 @@ namespace DCL.Landscape.Jobs
                 float finalHeight = math.max(math.max(corner, math.max(xLerp, zLerp)), currentHeight);
 
                 if (noise < 0)
-                {
                     noise *= pondDepth;
-                }
-                heights[index] = rMinHeight + (finalHeight * noise / maxHeight);
 
-                //heights[index] = currentHeight / maxHeight;
+                heights[index] = rMinHeight + (finalHeight * noise / maxHeight);
             }
             else
                 heights[index] = rMinHeight;
