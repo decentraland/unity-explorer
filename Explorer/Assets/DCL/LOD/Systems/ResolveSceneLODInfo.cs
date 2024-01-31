@@ -27,6 +27,7 @@ namespace DCL.LOD.Systems
             this.lodCache = lodCache;
         }
 
+        //TODO: This system will resolve the ABManifest when its uploaded
         protected override void Update(float t)
         {
             //ResolveLODInfoQuery(World);
