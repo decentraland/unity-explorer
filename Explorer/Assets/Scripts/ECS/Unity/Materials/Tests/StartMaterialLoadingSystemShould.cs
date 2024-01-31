@@ -1,6 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -11,10 +13,11 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Components.Defaults;
+using ECS.Unity.Textures.Components.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility.Primitives;
 using Entity = Arch.Core.Entity;
@@ -43,7 +46,8 @@ namespace ECS.Unity.Materials.Tests
 
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget);
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>()
+                , new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1)));
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>

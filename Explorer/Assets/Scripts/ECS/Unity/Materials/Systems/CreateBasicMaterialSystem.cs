@@ -18,7 +18,7 @@ namespace ECS.Unity.Materials.Systems
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
+        public CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
         {
             this.capFrameBudget = capFrameBudget;
             this.memoryBudgetProvider = memoryBudgetProvider;
@@ -55,7 +55,7 @@ namespace ECS.Unity.Materials.Systems
 
                 SetUp(materialComponent.Result, materialComponent.Data.AlphaTest, materialComponent.Data.DiffuseColor);
 
-                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, materialComponent.Data.AlbedoTexture);
 
                 DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
             }

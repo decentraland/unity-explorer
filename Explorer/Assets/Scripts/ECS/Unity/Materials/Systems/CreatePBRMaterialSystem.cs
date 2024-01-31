@@ -19,7 +19,7 @@ namespace ECS.Unity.Materials.Systems
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
+        public CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
             IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
         {
             this.capFrameBudget = capFrameBudget;
@@ -63,10 +63,10 @@ namespace ECS.Unity.Materials.Systems
                 SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
                 SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, materialComponent.Data.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
 
-                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
-                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap);
-                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture);
-                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, materialComponent.Data.AlbedoTexture);
+                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap, materialComponent.Data.EmissiveTexture);
+                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, materialComponent.Data.AlphaTexture);
+                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, materialComponent.Data.BumpTexture);
 
                 DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
                 DestroyEntityReference(ref materialComponent.EmissiveTexPromise);

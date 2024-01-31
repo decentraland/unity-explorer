@@ -7,6 +7,7 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SceneFacade;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using Ipfs;
@@ -46,8 +47,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private NativeList<OrderedData> orderedData;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings)
-            : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
 
@@ -174,10 +174,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
                 else
                 {
-                    World.Add(data.Entity,
-                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(ipfsRealm, components.t0),
-                            components.t1.Value));
+                    CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
                 }
 
                 promisesCreated++;

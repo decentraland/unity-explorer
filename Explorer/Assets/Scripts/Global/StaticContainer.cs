@@ -12,12 +12,15 @@ using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -32,6 +35,7 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public WorldProxy GlobalWorld = new ();
+
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -75,6 +79,8 @@ namespace Global
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
+        public IScenesCache ScenesCache { get; private set; }
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
 
         public void Dispose()
         {
@@ -112,6 +118,8 @@ namespace Global
             var container = new StaticContainer();
 
             container.EthereumApi = ethereumApi;
+            container.ScenesCache = new ScenesCache();
+            container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
@@ -119,7 +127,7 @@ namespace Global
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
-                return (null, false);
+                return (null, false)!;
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
@@ -147,12 +155,15 @@ namespace Global
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
+            var videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
+                new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
-                new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
+                new MaterialsPlugin(sharedDependencies, addressablesProvisioner, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
@@ -163,6 +174,9 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
+
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

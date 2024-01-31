@@ -2,13 +2,15 @@
 
 namespace DCL.CharacterMotion.Components
 {
-    public struct PlayerTeleportIntent
+    public readonly struct PlayerTeleportIntent
     {
-        public Vector3 Position;
+        public readonly Vector2Int Parcel;
+        public readonly Vector3 Position;
 
-        public PlayerTeleportIntent(Vector3 position)
+        public PlayerTeleportIntent(Vector3 position, Vector2Int parcel)
         {
             Position = position;
+            Parcel = parcel;
         }
     }
 }

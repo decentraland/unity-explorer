@@ -52,5 +52,8 @@ namespace ECS.StreamableLoading.Common.Components
             ca.CurrentSource = currentSource;
             loadingIntention.CommonArguments = ca;
         }
+
+        public static bool AreUrlEquals<TIntention>(this TIntention intention, TIntention other) where TIntention: struct, ILoadingIntention =>
+            intention.CommonArguments.URL == other.CommonArguments.URL;
     }
 }

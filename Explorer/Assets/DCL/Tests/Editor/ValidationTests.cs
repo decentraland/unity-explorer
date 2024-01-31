@@ -6,16 +6,22 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using UnityEditor;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests.Editor
 {
+    [Category(VALIDATION)]
     public class ValidationTests
     {
         private static readonly HashSet<string> DEBUG_METHOD_NAMES = new () { "Log", "LogError", "LogWarning", "LogException" };
 
-        [Category(VALIDATION)]
+        private readonly string[] excludedFolders = { "Editor" };
+        private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs" };
+        private readonly string[] fileNameExclusionKeywords = { "Test", "Sentry" };
+
         [Test]
         public void ProjectShouldNotContainEmptyFolders()
         {
@@ -36,13 +42,22 @@ namespace DCL.Tests.Editor
         public void CheckForDebugUsage()
         {
             string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
-            var sourceFiles = allSourceFiles.Where(file => !file.Split(Path.DirectorySeparatorChar).Any(part => part.Contains("Test") || part.Contains("Sentry"))).ToList();
+
+            var sourceFiles = allSourceFiles
+                             .Where(file =>
+                              {
+                                  string fileName = Path.GetFileName(file);
+                                  string[] parts = file.Split(Path.DirectorySeparatorChar);
+
+                                  bool isFolderExcluded = excludedFolders.Any(folder => parts.Contains(folder));
+                                  bool isFileNameExcluded = fileNameExclusionKeywords.Any(keyword => fileName.Contains(keyword)) || excludedFileNames.Contains(fileName);
+
+                                  return !isFolderExcluded && !isFileNameExcluded;
+                              })
+                             .ToList();
 
             foreach (string file in sourceFiles)
             {
-                if (Path.GetFileName(file).Equals("JsonUtils.cs")) continue;
-                if (Path.GetFileName(file).Equals("WorldSyncCommandBufferCollectionsPool.cs")) continue;
-
                 string code = File.ReadAllText(file);
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(code);
                 SyntaxNode root = syntaxTree.GetRoot();
@@ -65,6 +80,46 @@ namespace DCL.Tests.Editor
                 Assert.IsEmpty(debugLogStatements, $"Debug usage found in file: {file}");
             }
         }
+
+        [Test]
+        public void CheckUnityObjectsForMissingReferences()
+        {
+            IEnumerable<ScriptableObject> scriptableObjects = GetAllScriptableObjectsInFolder("Assets/DCL");
+
+            foreach (ScriptableObject scriptableObject in scriptableObjects)
+            {
+                if (!SerializationUtility.HasManagedReferencesWithMissingTypes(scriptableObject))
+                    continue;
+
+                ManagedReferenceMissingType[] missingTypes = SerializationUtility.GetManagedReferencesWithMissingTypes(scriptableObject);
+
+                var report = new StringBuilder();
+                var missingClasses = new HashSet<string>();
+
+                foreach (ManagedReferenceMissingType missingType in missingTypes)
+                    missingClasses.Add(MissingClassFullName(missingType));
+
+                foreach (string missingClass in missingClasses)
+                    report.Append("\t").Append(missingClass).AppendLine();
+
+                Assert.Fail($"Missing references found in the following ScriptableObjects:\n{string.Join("\n", scriptableObject)}, {report}");
+            }
+        }
+
+        private static string MissingClassFullName(ManagedReferenceMissingType missingType)
+        {
+            var description = new StringBuilder();
+
+            if (missingType.namespaceName.Length > 0)
+                description.Append(missingType.namespaceName).Append(".");
+
+            description.AppendFormat("{0}, {1}", missingType.className, missingType.assemblyName);
+            return description.ToString();
+        }
+
+        private static IEnumerable<ScriptableObject> GetAllScriptableObjectsInFolder(string folderPath) =>
+            AssetDatabase.FindAssets("t:Object", new[] { folderPath })
+                         .Select(guid => AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(guid)));
 
         private static bool IsDirectoryEmpty(string path) =>
             !Directory.EnumerateFileSystemEntries(path).Any();

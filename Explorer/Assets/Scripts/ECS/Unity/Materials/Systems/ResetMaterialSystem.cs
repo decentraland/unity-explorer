@@ -22,7 +22,7 @@ namespace ECS.Unity.Materials.Systems
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
 
-        internal ResetMaterialSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData) : base(world)
+        public ResetMaterialSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;

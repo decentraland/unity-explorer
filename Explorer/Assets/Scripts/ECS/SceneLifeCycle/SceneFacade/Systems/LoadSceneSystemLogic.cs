@@ -119,4 +119,3 @@ namespace ECS.SceneLifeCycle.Systems
         }
     }
 }
-

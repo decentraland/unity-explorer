@@ -2,8 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -11,8 +14,11 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Components.Defaults;
+using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
+using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
@@ -29,13 +35,18 @@ namespace ECS.Unity.Materials.Systems
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
+            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
+            this.entitiesMap = entitiesMap;
+            this.videoTexturesPool = videoTexturesPool;
         }
 
         protected override void Update(float t)
@@ -84,34 +95,17 @@ namespace ECS.Unity.Materials.Systems
             World.Add(entity, materialComponent);
         }
 
-        private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
-        {
-            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
-
-            if (materialComponent.Data.IsPbrMaterial)
-            {
-                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
-            }
-        }
-
         private MaterialData CreateMaterialData(ref PBMaterial material)
         {
-            // TODO Video Textures
+            if (material.Unlit != null)
+                return CreateBasicMaterialData(material, albedoTexture: material.Unlit.Texture.CreateTextureComponent(sceneData));
 
-            TextureComponent? albedoTexture = (material.Pbr?.Texture ?? material.Unlit?.Texture).CreateTextureComponent(sceneData);
+            TextureComponent? albedoTexture = material.Pbr.Texture.CreateTextureComponent(sceneData);
+            TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
+            TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
+            TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
 
-            if (material.Pbr != null)
-            {
-                TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
-                TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
-                TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
-
-                return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
-            }
-
-            return CreateBasicMaterialData(material, albedoTexture);
+            return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
         }
 
         private static MaterialData CreatePBRMaterialData(
@@ -119,9 +113,8 @@ namespace ECS.Unity.Materials.Systems
             in TextureComponent? albedoTexture,
             in TextureComponent? alphaTexture,
             in TextureComponent? emissiveTexture,
-            in TextureComponent? bumpTexture)
-        {
-            var materialData = MaterialData.CreatePBRMaterial(
+            in TextureComponent? bumpTexture) =>
+            MaterialData.CreatePBRMaterial(
                 albedoTexture,
                 alphaTexture,
                 emissiveTexture,
@@ -138,7 +131,16 @@ namespace ECS.Unity.Materials.Systems
                 pbMaterial.GetEmissiveIntensity(),
                 pbMaterial.GetDirectIntensity());
 
-            return materialData;
+        private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
+        {
+            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
+
+            if (materialComponent.Data.IsPbrMaterial)
+            {
+                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
+            }
         }
 
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
@@ -163,14 +165,38 @@ namespace ECS.Unity.Materials.Systems
             // If component is being reused forget the previous promise
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention
-            {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
-                WrapMode = textureComponentValue.WrapMode,
-                FilterMode = textureComponentValue.FilterMode,
-            }, partitionComponent);
+            if (textureComponent.Value.IsVideoTexture)
+                promise = Promise.CreateFinalized(new GetTextureIntention
+                {
+                    CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                    WrapMode = textureComponentValue.WrapMode,
+                    FilterMode = textureComponentValue.FilterMode,
+                }, GetOrAddVideoTextureResult(textureComponentValue));
+            else
+                promise = Promise.Create(World, new GetTextureIntention
+                {
+                    CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                    WrapMode = textureComponentValue.WrapMode,
+                    FilterMode = textureComponentValue.FilterMode,
+                }, partitionComponent);
 
             return true;
+        }
+
+        private StreamableLoadingResult<Texture2D>? GetOrAddVideoTextureResult(TextureComponent textureComponent)
+        {
+            if (entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoPlayerEntity) && World.IsAlive(videoPlayerEntity))
+            {
+                if (World.Has<VideoTextureComponent>(videoPlayerEntity))
+                    return new StreamableLoadingResult<Texture2D>(World.Get<VideoTextureComponent>(videoPlayerEntity).Texture);
+
+                var videoTextureComponent = new VideoTextureComponent(videoTexturesPool.Get());
+                World.Add(videoPlayerEntity, videoTextureComponent);
+                return new StreamableLoadingResult<Texture2D>(videoTextureComponent.Texture);
+            }
+
+            var ecsSystemException = CreateException(new EcsEntityNotFoundException(textureComponent.VideoPlayerEntity, $"Entity {textureComponent.VideoPlayerEntity} not found!. VideoTexture will not be created."));
+            return new StreamableLoadingResult<Texture2D>(ecsSystemException);
         }
 
         private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)

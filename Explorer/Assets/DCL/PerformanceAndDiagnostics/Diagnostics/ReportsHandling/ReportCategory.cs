@@ -66,6 +66,11 @@
         public const string TEXTURE_WEB_REQUEST = nameof(TEXTURE_WEB_REQUEST);
 
         /// <summary>
+        ///     Texture related web request
+        /// </summary>
+        public const string NFT_SHAPE_WEB_REQUEST = nameof(NFT_SHAPE_WEB_REQUEST);
+
+        /// <summary>
         ///     Audio clip related web request
         /// </summary>
         public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);
@@ -111,6 +116,11 @@
         public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
 
         /// <summary>
+        ///     Everything related to Scenes audio source components
+        /// </summary>
+        public const string AUDIO_STREAM = nameof(AUDIO_STREAM);
+
+        /// <summary>
         ///     Everything related to prioritization
         /// </summary>
         public const string PRIORITIZATION = nameof(PRIORITIZATION);
@@ -140,6 +150,11 @@
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
         public const string LOD = nameof(LOD);
+
+        /// <summary>
+        ///     Everything related to Scenes audio source components
+        /// </summary>
+        public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
