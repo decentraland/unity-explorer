@@ -18,33 +18,33 @@ namespace DCL.LOD.Systems
     public partial class LODDebugToolsSystem : BaseUnityLoopSystem
     {
         private IDebugContainerBuilder debugBuilder;
-        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
-        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ProvidedAsset<LODSettingsAsset> lodSettingsAsset) : base(world)
+        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset) : base(world)
         {
             this.debugBuilder = debugBuilder;
             this.lodSettingsAsset = lodSettingsAsset;
-            lodSettingsAsset.Value.IsColorDebuging = false;
+            lodSettingsAsset.IsColorDebuging = false;
 
             debugBuilder.AddWidget("LOD")
                         .AddSingleButton("Toggle lod color", ToggleLODColor)
-                        .AddIntFieldWithConfirmation(lodSettingsAsset.Value.LodPartitionBucketThresholds[0], "LOD 1 Threshold", SetLOD1)
-                        .AddIntFieldWithConfirmation(lodSettingsAsset.Value.LodPartitionBucketThresholds[1], "LOD 2 Threshold", SetLOD2);
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold", SetLOD1)
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold", SetLOD2);
         }
 
         private void SetLOD1(int value)
         {
-            lodSettingsAsset.Value.LodPartitionBucketThresholds[0] = value;
+            lodSettingsAsset.LodPartitionBucketThresholds[0] = value;
         }
 
         private void SetLOD2(int value)
         {
-            lodSettingsAsset.Value.LodPartitionBucketThresholds[1] = value;
+            lodSettingsAsset.LodPartitionBucketThresholds[1] = value;
         }
 
         private void ToggleLODColor()
         {
-            lodSettingsAsset.Value.IsColorDebuging = !lodSettingsAsset.Value.IsColorDebuging;
+            lodSettingsAsset.IsColorDebuging = !lodSettingsAsset.IsColorDebuging;
 
             World.Query(in new QueryDescription().WithAll<SceneLODInfo>(),
                 (ref SceneLODInfo sceneLODInfo) => { sceneLODInfo.ToggleDebugColors(); });

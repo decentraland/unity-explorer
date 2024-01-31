@@ -16,9 +16,9 @@ namespace DCL.LOD
         private readonly bool LoadingFailed;
 
         private readonly LODDebugInfo LODDebugInfo;
-        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ProvidedAsset<LODSettingsAsset> lodSettingsAsset)
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODSettingsAsset lodSettingsAsset)
         {
             LodKey = lodKey;
             Root = root;
@@ -28,8 +28,8 @@ namespace DCL.LOD
             this.lodSettingsAsset = lodSettingsAsset;
 
             //This includes list that shouldnt be filled unless we are on debug mode
-            if (lodSettingsAsset.Value.IsColorDebuging)
-                LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset.Value);
+            if (lodSettingsAsset.IsColorDebuging)
+                LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset);
 
             ProfilingCounters.LODAssetAmount.Value++;
         }
@@ -40,7 +40,7 @@ namespace DCL.LOD
             LoadingFailed = true;
             Root = null;
             AssetBundleReference = null;
-            lodSettingsAsset = default(ProvidedAsset<LODSettingsAsset>);
+            lodSettingsAsset = default(LODSettingsAsset);
             LODDebugInfo = default(LODDebugInfo);
         }
 
@@ -65,8 +65,8 @@ namespace DCL.LOD
             Root.SetActive(true);
             Root.transform.SetParent(null);
 
-            if (lodSettingsAsset.Value.IsColorDebuging)
-                LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset.Value);
+            if (lodSettingsAsset.IsColorDebuging)
+                LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset);
         }
 
         public void DisableAsset(Transform parentContainer)
@@ -85,7 +85,7 @@ namespace DCL.LOD
         public void ToggleDebugColors()
         {
             if (LoadingFailed) return;
-            LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset.Value);
+            LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset);
         }
     }
 }

@@ -26,9 +26,9 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(UpdateSceneLODInfoSystem))]
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
-        public ResolveVisualSceneStateSystem(World world, ProvidedAsset<LODSettingsAsset> lodSettingsAsset) : base(world)
+        public ResolveVisualSceneStateSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
         }

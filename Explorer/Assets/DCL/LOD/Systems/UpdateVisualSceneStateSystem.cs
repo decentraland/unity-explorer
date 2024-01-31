@@ -27,7 +27,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
         private readonly ILODAssetsPool lodAssetsPool;
-        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
         private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
                                                                            .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ProvidedAsset<LODSettingsAsset> lodSettingsAsset) : base(world)
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;

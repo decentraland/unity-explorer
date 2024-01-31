@@ -5,6 +5,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using Ipfs;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -15,13 +16,13 @@ namespace DCL.LOD.Tests
         [SetUp]
         public void Setup()
         {
-            var lodSettingsAsset = ScriptableObject.CreateInstance<LODSettingsAsset>();
-            lodSettingsAsset.LodPartitionBucketThresholds = new []
+            var lodSettings = Substitute.For<ILODSettingsAsset>();
+            int[] bucketThresholds =
             {
                 2, 4
             };
-            var providedAsset = new ProvidedAsset<LODSettingsAsset>(lodSettingsAsset);
-            system = new ResolveVisualSceneStateSystem(world, providedAsset);
+            lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
+            system = new ResolveVisualSceneStateSystem(world, lodSettings);
         }
 
         [Test]

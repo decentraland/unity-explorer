@@ -8,7 +8,7 @@ namespace DCL.LOD.Systems
     public static class VisualSceneStateUtils
     {
         public static void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition,
-            SceneDefinitionComponent sceneDefinitionComponent, ProvidedAsset<LODSettingsAsset> lodSettingsAsset)
+            SceneDefinitionComponent sceneDefinitionComponent, ILODSettingsAsset lodSettingsAsset)
         {
             //If the scene is empty, no lods are possible
             if (sceneDefinitionComponent.IsEmpty) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE; }
@@ -17,7 +17,7 @@ namespace DCL.LOD.Systems
             else if (!sceneDefinitionComponent.IsSDK7) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD; }
             else
             {
-                VisualSceneStateEnum candidateState = partition.Bucket < lodSettingsAsset.Value.LodPartitionBucketThresholds[0]
+                var candidateState = partition.Bucket < lodSettingsAsset.LodPartitionBucketThresholds[0]
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
 

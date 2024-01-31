@@ -26,16 +26,16 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     private PartitionComponent partitionComponent;
     private SceneDefinitionComponent sceneDefinitionComponent;
     private VisualSceneState visualSceneState;
-    
+
     [SetUp]
     public void Setup()
     {
-        var lodSettingsAsset = ScriptableObject.CreateInstance<LODSettingsAsset>();
-        lodSettingsAsset.LodPartitionBucketThresholds = new []
+        var lodSettings = Substitute.For<ILODSettingsAsset>();
+        int[] bucketThresholds =
         {
             2, 4
         };
-        var providedAsset = new ProvidedAsset<LODSettingsAsset>(lodSettingsAsset);
+        lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
         var scenesCahce = Substitute.For<IScenesCache>();
         var lodAssetsPool = Substitute.For<ILODAssetsPool>();
@@ -61,7 +61,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsTypes.IpfsPath());
         visualSceneState = new VisualSceneState();
 
-        system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, providedAsset );
+        system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings);
     }
 
     [Test]

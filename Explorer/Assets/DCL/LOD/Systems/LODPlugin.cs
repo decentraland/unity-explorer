@@ -22,7 +22,7 @@ namespace DCL.LOD
 {
     public class LODPlugin : IDCLGlobalPlugin<LODSettings>
     {
-        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private ILODSettingsAsset lodSettingsAsset;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly LODAssetsPool lodAssetsPool;
@@ -48,7 +48,7 @@ namespace DCL.LOD
 
         public async UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
         {
-            lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LodSettingAsset, ct: ct);
+            lodSettingsAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.LodSettingAsset, ct: ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -66,7 +66,6 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            // TODO release managed resources here
         }
     }
 

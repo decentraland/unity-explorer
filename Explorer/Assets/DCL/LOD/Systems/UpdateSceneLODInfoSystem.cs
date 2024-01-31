@@ -28,11 +28,11 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-        private readonly ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
         public readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ProvidedAsset<LODSettingsAsset> lodSettingsAsset,
+        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget) : base(world)
         {
             this.lodCache = lodCache;
@@ -95,9 +95,9 @@ namespace DCL.LOD.Systems
             //Therefore, lod0 will be shown
             byte sceneLODCandidate = 0;
 
-            for (byte i = 0; i < lodSettingsAsset.Value.LodPartitionBucketThresholds.Length; i++)
+            for (byte i = 0; i < lodSettingsAsset.LodPartitionBucketThresholds.Length; i++)
             {
-                if (partitionComponent.Bucket >= lodSettingsAsset.Value.LodPartitionBucketThresholds[i])
+                if (partitionComponent.Bucket >= lodSettingsAsset.LodPartitionBucketThresholds[i])
                     sceneLODCandidate = (byte)(i + 1);
             }
 

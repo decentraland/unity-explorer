@@ -34,6 +34,13 @@ namespace DCL.LOD.Tests
         [SetUp]
         public void Setup()
         {
+            var lodSettings = Substitute.For<ILODSettingsAsset>();
+            int[] bucketThresholds =
+            {
+                2, 4
+            };
+            lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
+            
             var frameCapBudget = Substitute.For<IPerformanceBudget>();
             frameCapBudget.TrySpendBudget().Returns(true);
 
@@ -66,7 +73,7 @@ namespace DCL.LOD.Tests
             };
             var lodSettingsProvidedAsset = new ProvidedAsset<LODSettingsAsset>(lodSettingsAsset);
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettingsProvidedAsset, memoryBudget, frameCapBudget);
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget);
         }
 
 
