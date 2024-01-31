@@ -85,8 +85,6 @@ namespace DCL.PluginSystem.Global
 
                 if (TryParse(coordinates, out int x, out int y))
                     ownedParcels.Add(new int2(x, y));
-                else
-                    Debug.LogWarning("Invalid line: " + ownedParcel);
             }
 
             for (var i = 0; i < emptyParcelsRaw.Length; i++)
@@ -96,8 +94,6 @@ namespace DCL.PluginSystem.Global
 
                 if (TryParse(coordinates, out int x, out int y))
                     emptyParcels[i] = new int2(x, y);
-                else
-                    Debug.LogWarning("Invalid line: " + emptyParcel);
             }
 
             bool TryParse(string[] coords, out int x, out int y)

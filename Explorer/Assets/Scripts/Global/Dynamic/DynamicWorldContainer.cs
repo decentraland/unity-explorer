@@ -154,7 +154,6 @@ namespace Global.Dynamic
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
         {
-            Debug.Log("Initializing DebugContainer");
             DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
             return UniTask.CompletedTask;
         }

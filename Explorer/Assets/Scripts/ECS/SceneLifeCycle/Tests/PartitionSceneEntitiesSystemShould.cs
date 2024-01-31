@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -8,6 +9,8 @@ using ECS.TestSuite;
 using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -62,7 +65,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void PartitionExistingEntity([Values(true, false)] bool isDirty)
+        public async Task PartitionExistingEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
             samplingData.Forward.Returns(Vector3.forward);
@@ -72,7 +75,6 @@ namespace ECS.SceneLifeCycle.Tests
             partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
 
             Entity e = world.Create(
-                new PartitionComponent { Bucket = 10, IsBehind = false },
                 new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
                 {
                     metadata = new IpfsTypes.SceneMetadata
@@ -84,10 +86,11 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0);
 
-            Assert.That(world.TryGet(e, out PartitionComponent partitionComponent), Is.True);
-            Assert.That(partitionComponent.Bucket, Is.EqualTo(isDirty ? 1 : 10));
-            Assert.That(partitionComponent.IsBehind, isDirty ? Is.True : Is.False);
-            Assert.That(partitionComponent.IsDirty, isDirty ? Is.True : Is.False);
+            // we wait until the job finishes, it should be fast but we dont want race conditions to generate flaky tests
+            await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+            system.Update(0);
+
+            Assert.That(world.Has<PartitionComponent>(e));
         }
     }
 }

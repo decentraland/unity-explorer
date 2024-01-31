@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Diagnostics;
 using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
@@ -34,6 +35,7 @@ namespace DCL.Landscape
         private readonly NoiseGeneratorCache noiseGenCache;
         private bool hideTrees;
         private bool hideDetails;
+        private readonly ReportData reportData;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
         {
@@ -41,6 +43,7 @@ namespace DCL.Landscape
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
             noiseGenCache = new NoiseGeneratorCache();
+            reportData = new ReportData("TERRAIN_GENERATOR");
         }
 
         public async UniTask GenerateTerrain(uint worldSeed = 1, bool withHoles = true, bool centerTerrain = true, bool hideTrees = false, bool hideDetails = false,
@@ -93,9 +96,9 @@ namespace DCL.Landscape
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
 
                 time.Stop();
-                Debug.Log($"Terrain generation was done in {time.ElapsedMilliseconds / 1000f:F2} seconds");
+                ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {time.ElapsedMilliseconds / 1000f:F2} seconds");
             }
-            catch (Exception e) { Debug.LogException(e); }
+            catch (Exception e) { ReportHub.LogException(e, reportData); }
         }
 
         private async UniTask SpawnMisc()
@@ -227,9 +230,8 @@ namespace DCL.Landscape
                 catch (Exception e) { failedHoles++; }
             }
 
-            Debug.Log($"Holes digged {goodHoles}");
-
-            if (failedHoles > 0) { Debug.LogError($"Failed to set {failedHoles} holes"); }
+            if (failedHoles > 0)
+                ReportHub.LogError(reportData, $"Failed to set {failedHoles} holes");
         }
 
         private void GenerateTerrainChunk(int offsetX, int offsetZ, TerrainData terrainData, Material material)
@@ -328,7 +330,7 @@ namespace DCL.Landscape
 
                     terrainData.SetDetailLayer(0, 0, i, detailLayer);
                 }
-                catch (Exception) { Debug.LogError($"Failed to set detail layer for {detailAsset.name}"); }
+                catch (Exception) { ReportHub.LogError(reportData, $"Failed to set detail layer for {detailAsset.name}"); }
             }
         }
 

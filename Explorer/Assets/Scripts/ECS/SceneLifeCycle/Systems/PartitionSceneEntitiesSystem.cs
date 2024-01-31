@@ -71,6 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         public override void Dispose()
         {
+            partitionJobHandle.Complete();
             partitions.Dispose();
 
             // not sure if the parcelCorners.Dispose() will dispose its children as well so we explicitly do so here
@@ -127,7 +128,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 partitions[currentPartitionIndex] = new PartitionData
                 {
-                    IsDirty = true,
+                    IsDirty = readOnlyCameraSamplingData.IsDirty,
                     RawSqrDistance = -1,
                 };
 

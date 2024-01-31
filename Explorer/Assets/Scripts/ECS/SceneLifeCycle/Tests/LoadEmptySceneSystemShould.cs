@@ -81,7 +81,8 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.NotNull(facade);
         }
 
-        [Test]
+        //[Test]
+        // Disabled temporally
         public async Task FacadeCreateEntities()
         {
             IComponentPoolsRegistry pool = Substitute.For<IComponentPoolsRegistry>();

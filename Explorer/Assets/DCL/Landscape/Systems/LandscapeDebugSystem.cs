@@ -31,7 +31,6 @@ namespace DCL.Landscape.Systems
         private void OnSatelliteViewToggle(ChangeEvent<bool> evt)
         {
             landscapeData.disableSatelliteView = evt.newValue;
-            Debug.Log(landscapeData.disableSatelliteView);
         }
 
         private void OnLoadRadiusConfirm(int value)
