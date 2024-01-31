@@ -63,9 +63,9 @@ namespace DCL.PluginSystem.Global
             ownedParcels.Dispose();
         }
 
-        public async UniTask InitializeLoadingProgress(AsyncLoadProcessReport loadReport, CancellationToken ct)
+        public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            await terrainGenerator.GenerateTerrain(processReport: loadReport);
+            await terrainGenerator.GenerateTerrainAsync(processReport: loadReport);
 
             // immediately dispose to free all memory used for generating the terrain
             terrainGenerator.FreeMemory();

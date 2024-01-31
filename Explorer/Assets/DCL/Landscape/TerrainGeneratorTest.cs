@@ -21,11 +21,11 @@ namespace DCL.Landscape
         private NativeArray<int2> emptyParcels;
 
         [ContextMenu("Generate")]
-        public async UniTask Generate()
+        public async UniTask GenerateAsync()
         {
             ParseParcels();
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
-            await gen.GenerateTerrain(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
+            await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
             gen.FreeMemory();
         }
 
