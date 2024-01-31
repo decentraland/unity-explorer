@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.Components;
+﻿using Arch.Core;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
@@ -34,6 +35,7 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public WorldProxy GlobalWorld = new ();
+        public Entity playerEntity = new ();
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;

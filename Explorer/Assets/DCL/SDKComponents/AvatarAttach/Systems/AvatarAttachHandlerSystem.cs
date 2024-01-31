@@ -24,11 +24,12 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     {
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
         private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarAttachComponent>().WithNone<DeleteEntityIntention, PBAvatarAttach>();
-        private AvatarBase ownPlayerAvatarBase;
+        private static AvatarBase mainPlayerAvatarBase;
 
         public AvatarAttachHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
-            globalWorld.Query(new QueryDescription().WithAll<PlayerComponent, AvatarBase>(), (ref PlayerComponent playerComponent, ref AvatarBase avatarBase) => { ownPlayerAvatarBase = avatarBase; });
+            if (mainPlayerAvatarBase == null)
+                mainPlayerAvatarBase = globalWorld.GetWorld().Get<AvatarBase>(globalWorld.GetMainPlayerEntity().Value);
         }
 
         protected override void Update(float t)
@@ -81,12 +82,12 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             switch (anchorPointType)
             {
                 case AvatarAnchorPointType.AaptLeftHand:
-                    return ownPlayerAvatarBase.LeftHandAnchorPoint;
+                    return mainPlayerAvatarBase.LeftHandAnchorPoint;
                 case AvatarAnchorPointType.AaptRightHand:
-                    return ownPlayerAvatarBase.RightHandAnchorPoint;
+                    return mainPlayerAvatarBase.RightHandAnchorPoint;
                 case AvatarAnchorPointType.AaptNameTag:
                 default: // AvatarAnchorPointType.AaptPosition
-                    return ownPlayerAvatarBase.transform;
+                    return mainPlayerAvatarBase.transform;
             }
         }
 
