@@ -41,8 +41,6 @@ namespace DCL.SDKComponents.MediaStream
             {
                 UpdateStreamUrl(ref component, sdkComponent.Url);
                 component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
-
-                sdkComponent.IsDirty = false;
             }
         }
 
@@ -55,9 +53,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 UpdateStreamUrl(ref component, sdkComponent.Src);
                 component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing)
-                              .UpdatePlaybackProperties(sdkComponent);
-
-                sdkComponent.IsDirty = false;
+                         .UpdatePlaybackProperties(sdkComponent);
             }
         }
 

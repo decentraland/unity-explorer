@@ -11,8 +11,7 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
 
-        public readonly MediaPlayer MediaPlayer;
-
+        public MediaPlayer MediaPlayer;
         public string URL;
         public VideoState State;
 
@@ -22,14 +21,6 @@ namespace DCL.SDKComponents.MediaStream
 
         MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => MediaPlayer;
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
-
-        public MediaPlayerComponent(MediaPlayer mediaPlayer, string url)
-        {
-            MediaPlayer = mediaPlayer;
-            URL = url;
-
-            State = VideoState.VsNone;
-        }
 
         public void Dispose()
         {

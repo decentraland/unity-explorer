@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(PBVideoPlayer))]
         private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
-            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer);
+            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control);
 
             if (mediaPlayer.State == newState) return;
             mediaPlayer.State = newState;
@@ -48,15 +48,15 @@ namespace DCL.SDKComponents.MediaStream
             ecsToCRDTWriter.AppendMessage(sdkEntity, pbVideoEvent, (int)pbVideoEvent.Timestamp);
         }
 
-        private static VideoState GetCurrentVideoState(MediaPlayer mediaPlayer)
+        private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl)
         {
-            if (mediaPlayer.Control.IsPlaying()) return VideoState.VsPlaying;
-            if (mediaPlayer.Control.IsPaused()) return VideoState.VsPaused;
-            if (mediaPlayer.Control.IsFinished()) return VideoState.VsNone;
-            if (mediaPlayer.Control.IsBuffering()) return VideoState.VsBuffering;
-            if (mediaPlayer.Control.IsSeeking()) return VideoState.VsSeeking;
+            if (mediaPlayerControl.IsPlaying()) return VideoState.VsPlaying;
+            if (mediaPlayerControl.IsPaused()) return VideoState.VsPaused;
+            if (mediaPlayerControl.IsFinished()) return VideoState.VsNone;
+            if (mediaPlayerControl.IsBuffering()) return VideoState.VsBuffering;
+            if (mediaPlayerControl.IsSeeking()) return VideoState.VsSeeking;
 
-            if (mediaPlayer.Control.GetLastError() != ErrorCode.None) return VideoState.VsError;
+            if (mediaPlayerControl.GetLastError() != ErrorCode.None) return VideoState.VsError;
 
             return VideoState.VsNone;
         }

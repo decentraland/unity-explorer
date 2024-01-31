@@ -10,6 +10,7 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -36,11 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            var component = new MediaPlayerComponent(mediaPlayerPool.Get(), sdkComponent.Url);
-
-            OpenAndPlayMediaIfValid(component, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
-            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
-
+            var component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
             World.Add(entity, component);
         }
 
@@ -49,26 +46,25 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, ref PBVideoPlayer sdkComponent)
         {
-            var component = new MediaPlayerComponent(mediaPlayerPool.Get(), sdkComponent.Src);
-
-            OpenAndPlayMediaIfValid(component, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing);
-            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume)
-                     .UpdatePlaybackProperties(sdkComponent);
-
+            var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+            component.MediaPlayer.SetPlaybackProperties(sdkComponent);
             World.Add(entity, component);
         }
 
-        private static void OpenAndPlayMediaIfValid(MediaPlayerComponent component, string url, bool hasPlaying, bool playing)
+        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool autoPlay)
         {
-            if (url.IsValidUrl())
+            var component = new MediaPlayerComponent
             {
-                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay: false);
+                MediaPlayer = mediaPlayerPool.Get(),
+                URL = url,
+                State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
+            };
 
-                if (hasPlaying && playing)
-                    component.MediaPlayer.Play();
-            }
-            else
-                component.State = VideoState.VsError;
+            component.MediaPlayer
+                     .OpenMediaIfValid(component.URL, autoPlay)
+                     .UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
+
+            return component;
         }
     }
 }

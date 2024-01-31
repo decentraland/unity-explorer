@@ -1,38 +1,73 @@
 using DCL.ECSComponents;
+using DCL.Utilities.Extensions;
 using RenderHeads.Media.AVProVideo;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
     public static class MediaPlayerExtensions
     {
-        public static MediaPlayer UpdateVolume(this MediaPlayer mediaPlayer, bool isCurrentScene, bool hasVolume, float volume)
+        public static MediaPlayer OpenMediaIfValid(this MediaPlayer mediaPlayer, string url, bool autoPlay)
         {
-            if (isCurrentScene)
-                mediaPlayer.AudioVolume = hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME;
-            else
-                mediaPlayer.AudioVolume = 0f;
+            if (url.IsValidUrl())
+                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay);
 
             return mediaPlayer;
         }
 
-        public static MediaPlayer UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
+        public static void UpdateVolume(this MediaPlayer mediaPlayer, bool isCurrentScene, bool hasVolume, float volume)
         {
-            if (hasPlaying && playing != mediaPlayer.Control.IsPlaying())
+            if (!isCurrentScene)
+                mediaPlayer.AudioVolume = 0f;
+            else
             {
-                if (playing)
-                    mediaPlayer.Play();
-                else
-                    mediaPlayer.Stop();
+                if (!hasVolume)
+                    mediaPlayer.AudioVolume = MediaPlayerComponent.DEFAULT_VOLUME;
+                else if (!Mathf.Approximately(mediaPlayer.AudioVolume, volume))
+                    mediaPlayer.AudioVolume = volume;
             }
+        }
 
-            return mediaPlayer;
+        public static void SetPlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
+        {
+            IMediaControl control = mediaPlayer.Control;
+
+            control.SetLooping(sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop); // default: false
+            control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
+            control.Seek(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
         }
 
         public static void UpdatePlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
         {
-            mediaPlayer.Loop = sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop; // default: loop = false
-            mediaPlayer.Control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
-            mediaPlayer.Control.Seek(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
+            IMediaControl control = mediaPlayer.Control;
+
+            if (sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop != control.IsLooping())
+                control.SetLooping(sdkVideoPlayer.Loop);
+
+            if (sdkVideoPlayer.HasPlaybackRate && !Mathf.Approximately(control.GetPlaybackRate(), sdkVideoPlayer.PlaybackRate))
+                control.SetPlaybackRate(sdkVideoPlayer.PlaybackRate);
+
+            if (sdkVideoPlayer.HasPosition)
+                control.Seek(sdkVideoPlayer.Position);
+        }
+
+        public static MediaPlayer UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
+        {
+            if (hasPlaying)
+            {
+                IMediaControl control = mediaPlayer.Control;
+                if (playing != control.IsPlaying())
+                {
+                    if (playing)
+                        control.Play();
+                    else
+                        control.Pause();
+                }
+            }
+            else if (mediaPlayer.Control.IsPlaying())
+                mediaPlayer.Control.Stop();
+
+            return mediaPlayer;
         }
 
         public static void CloseCurrentStream(this MediaPlayer mediaPlayer)

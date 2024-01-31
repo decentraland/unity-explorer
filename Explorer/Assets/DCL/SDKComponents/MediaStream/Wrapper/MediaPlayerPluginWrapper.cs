@@ -6,6 +6,7 @@ using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -41,6 +42,9 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool);
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>());
+
+            ResetDirtyFlagSystem<PBAudioStream>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBVideoPlayer>.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, MediaPlayerComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
