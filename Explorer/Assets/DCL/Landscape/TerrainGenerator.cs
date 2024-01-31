@@ -15,7 +15,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
-using Debug = UnityEngine.Debug;
 using JobHandle = Unity.Jobs.JobHandle;
 using Object = UnityEngine.Object;
 using Random = Unity.Mathematics.Random;
@@ -46,7 +45,7 @@ namespace DCL.Landscape
             reportData = new ReportData("TERRAIN_GENERATOR");
         }
 
-        public async UniTask GenerateTerrain(uint worldSeed = 1, bool withHoles = true, bool centerTerrain = true, bool hideTrees = false, bool hideDetails = false,
+        public async UniTask GenerateTerrainAsync(uint worldSeed = 1, bool withHoles = true, bool centerTerrain = true, bool hideTrees = false, bool hideDetails = false,
             AsyncLoadProcessReport processReport = null)
         {
             try
@@ -57,7 +56,7 @@ namespace DCL.Landscape
                 this.hideTrees = hideTrees;
                 random = new Random((uint)terrainGenData.seed);
 
-                await SetupEmptyParcelData();
+                await SetupEmptyParcelDataAsync();
 
                 if (processReport != null) processReport.ProgressCounter.Value = 0.1f;
 
@@ -65,7 +64,7 @@ namespace DCL.Landscape
                 if (rootGo != null) Object.DestroyImmediate(rootGo);
                 rootGo = new GameObject("Generated Terrain");
 
-                await SpawnMisc();
+                await SpawnMiscAsync();
 
                 GenerateCliffs();
 
@@ -81,7 +80,7 @@ namespace DCL.Landscape
                 for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
                 {
                     progress++;
-                    terrainDatas.Add(new int2(x, z), await GenerateTerrainData(x, z, worldSeed));
+                    terrainDatas.Add(new int2(x, z), await GenerateTerrainDataAsync(x, z, worldSeed));
 
                     if (processReport != null) processReport.ProgressCounter.Value = 0.1f + (progress / total * 0.7f);
                 }
@@ -101,7 +100,7 @@ namespace DCL.Landscape
             catch (Exception e) { ReportHub.LogException(e, reportData); }
         }
 
-        private async UniTask SpawnMisc()
+        private async UniTask SpawnMiscAsync()
         {
             Transform ocean = Object.Instantiate(terrainGenData.ocean).transform;
             ocean.SetParent(rootGo.transform, true);
@@ -167,7 +166,7 @@ namespace DCL.Landscape
             neCorner.SetParent(rootGo.transform, true);
         }
 
-        private async UniTask SetupEmptyParcelData()
+        private async UniTask SetupEmptyParcelDataAsync()
         {
             emptyParcelResult = new NativeHashMap<int2, EmptyParcelData>(emptyParcels.Length, Allocator.Persistent);
 
@@ -246,7 +245,7 @@ namespace DCL.Landscape
             terrainObject.transform.SetParent(rootGo.transform, false);
         }
 
-        private async UniTask<TerrainData> GenerateTerrainData(int offsetX, int offsetZ, uint baseSeed)
+        private async UniTask<TerrainData> GenerateTerrainDataAsync(int offsetX, int offsetZ, uint baseSeed)
         {
             int resolution = terrainGenData.chunkSize;
             int chunkSize = terrainGenData.chunkSize;
@@ -263,11 +262,11 @@ namespace DCL.Landscape
 
             terrainData.SetDetailResolution(chunkSize, 32);
 
-            await SetHeights(offsetX, offsetZ, terrainData, baseSeed);
-            await SetTextures(offsetX, offsetZ, resolution, terrainData, baseSeed);
+            await SetHeightsAsync(offsetX, offsetZ, terrainData, baseSeed);
+            await SetTexturesAsync(offsetX, offsetZ, resolution, terrainData, baseSeed);
 
-            if (!hideTrees) await SetTrees(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
-            if (!hideDetails) await SetDetails(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
+            if (!hideTrees) await SetTreesAsync(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
+            if (!hideDetails) await SetDetailsAsync(offsetX, offsetZ, chunkSize, terrainData, baseSeed);
 
             return terrainData;
         }
@@ -299,7 +298,7 @@ namespace DCL.Landscape
                                  .ToArray();
         }
 
-        private async UniTask SetDetails(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
+        private async UniTask SetDetailsAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
         {
             terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
 
@@ -334,7 +333,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask SetHeights(int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed)
+        private async UniTask SetHeightsAsync(int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed)
         {
             int resolution = terrainGenData.chunkSize + 1;
             var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
@@ -363,7 +362,7 @@ namespace DCL.Landscape
             heights.Dispose();
         }
 
-        private async UniTask SetTextures(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
+        private async UniTask SetTexturesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
         {
             List<INoiseGenerator> noiseGenerators = new List<INoiseGenerator>();
 
@@ -382,7 +381,7 @@ namespace DCL.Landscape
             terrainData.SetAlphamaps(0, 0, result3D);
         }
 
-        private async UniTask SetTrees(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
+        private async UniTask SetTreesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed)
         {
             var treeInstances = new NativeHashMap<int2, TreeInstance>(5000, Allocator.Persistent);
 

@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
@@ -213,7 +212,7 @@ namespace Global.Dynamic
             globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
 
             if (loadLandscape)
-                await LoadLandscape(ct);
+                await LoadLandscapeAsync(ct);
 
             await TeleportToSpawnPointAsync(ct);
 
@@ -221,13 +220,13 @@ namespace Global.Dynamic
             loadReport.CompletionSource.TrySetResult();
         }
 
-        private async UniTask LoadLandscape(CancellationToken ct)
+        private async UniTask LoadLandscapeAsync(CancellationToken ct)
         {
             var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
             var landscapeDebugPlugin = dynamicWorldContainer!.GlobalPlugins.First(p => p is LandscapePlugin) as LandscapePlugin;
 
             await UniTask.WhenAny(landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_LANDSCAPE),
-                landscapeDebugPlugin!.InitializeLoadingProgress(landscapeLoadReport, ct));
+                landscapeDebugPlugin!.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
         }
 
         private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)

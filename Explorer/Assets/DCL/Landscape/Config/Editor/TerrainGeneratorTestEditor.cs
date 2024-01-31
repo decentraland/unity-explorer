@@ -12,7 +12,7 @@ namespace DCL.Landscape.Config.Editor
             if (GUILayout.Button("Generate"))
             {
                 TerrainGeneratorTest generator = (TerrainGeneratorTest)target;
-                generator.Generate().Forget();
+                generator.GenerateAsync().Forget();
             }
 
             base.OnInspectorGUI();
