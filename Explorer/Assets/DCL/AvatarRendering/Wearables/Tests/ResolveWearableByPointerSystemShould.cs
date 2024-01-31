@@ -69,6 +69,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 assetBundleData[BodyShape.MALE] = mockedDefaultAB;
 
             wearable.WearableAssetResults.Returns(assetBundleData);
+            wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
             return wearable;
         }
 
