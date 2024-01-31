@@ -3,7 +3,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
 using DCL.Optimization.ThreadSafePool;
-using NSubstitute.ClearExtensions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
