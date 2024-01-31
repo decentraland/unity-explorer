@@ -23,7 +23,7 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly IMaterialsCache materialsCache;
 
-        internal LoadMaterialFromCacheSystem(World world, IMaterialsCache materialsCache) : base(world)
+        public LoadMaterialFromCacheSystem(World world, IMaterialsCache materialsCache) : base(world)
         {
             this.materialsCache = materialsCache;
         }

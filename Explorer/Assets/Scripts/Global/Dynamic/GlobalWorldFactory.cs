@@ -4,8 +4,6 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Character.Plugin;
@@ -14,7 +12,6 @@ using DCL.GlobalPartitioning;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.Systems;
 using DCL.Time;
 using DCL.Time.Systems;
@@ -43,7 +40,6 @@ using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace Global.Dynamic
 {
@@ -102,7 +98,9 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory)
+        public (GlobalWorld world, Entity playerEntity) Create(ISceneFactory sceneFactory,
+            IEmptyScenesWorldFactory emptyScenesWorldFactory,
+            ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -180,7 +178,7 @@ namespace Global.Dynamic
 
             staticContainer.GlobalWorld.SetWorld(world);
 
-            return globalWorld;
+            return (globalWorld, playerEntity);
         }
     }
 }

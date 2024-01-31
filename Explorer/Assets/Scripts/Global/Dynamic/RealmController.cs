@@ -69,11 +69,26 @@ namespace Global.Dynamic
         /// </summary>
         public async UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            World world = globalWorld!.EcsWorld;
-
-            await UnloadCurrentRealmAsync();
+            await SetRealmAsync(realm, ct);
 
             loadReport.ProgressCounter.Value = 0.1f;
+
+            var sceneLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+            try
+            {
+                await UniTask.WhenAll(sceneLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
+                    teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct));
+            }
+            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
+        }
+
+        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
+        {
+            World world = globalWorld!.EcsWorld;
+
+            try { await UnloadCurrentRealmAsync(); }
+            catch (ObjectDisposedException) { }
 
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
@@ -91,16 +106,8 @@ namespace Global.Dynamic
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;
+
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
-
-            var sceneLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-            try
-            {
-                await UniTask.WhenAll(sceneLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, TimeSpan.FromSeconds(30)),
-                    teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct));
-            }
-            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)

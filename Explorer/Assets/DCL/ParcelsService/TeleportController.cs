@@ -42,10 +42,11 @@ namespace DCL.ParcelsService
 
         public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            // If type of retrieval is not set yet
             if (retrieveScene == null)
             {
-                TeleportToParcel(parcel);
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel));
+                loadReport.ProgressCounter.Value = 1f;
+                loadReport.CompletionSource.TrySetResult();
                 return;
             }
 
@@ -112,6 +113,48 @@ namespace DCL.ParcelsService
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        {
+            if (retrieveScene == null)
+            {
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel));
+                loadReport.ProgressCounter.Value = 1f;
+                loadReport.CompletionSource.TrySetResult();
+                return;
+            }
+
+            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+            IpfsTypes.SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+
+            if (sceneDef != null)
+
+                // Override parcel as it's a new target
+                parcel = sceneDef.metadata.scene.DecodedBase;
+
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+
+            // Add report to the queue so it will be grabbed by the actual scene
+            sceneReadinessReportQueue.Enqueue(parcel, loadReport);
+
+            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel));
+
+            if (sceneDef == null)
+            {
+                // Instant completion for empty parcels
+                loadReport.ProgressCounter.Value = 1;
+                loadReport.CompletionSource.TrySetResult();
+
+                return;
+            }
+
+            try
+            {
+                // add timeout in case of a trouble
+                await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+            }
+            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
+        }
+
         private static Vector3 GetOffsetFromSpawnPoint(IpfsTypes.SceneMetadata.SpawnPoint spawnPoint)
         {
             if (spawnPoint.SP != null)
@@ -138,12 +181,6 @@ namespace DCL.ParcelsService
 
             // Center
             return new Vector3(ParcelMathHelper.PARCEL_SIZE / 2f, 0, ParcelMathHelper.PARCEL_SIZE / 2f);
-        }
-
-        public void TeleportToParcel(Vector2Int parcel)
-        {
-            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel));
         }
 
         [Query]

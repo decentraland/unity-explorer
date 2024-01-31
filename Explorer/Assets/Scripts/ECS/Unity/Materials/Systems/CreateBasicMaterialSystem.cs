@@ -55,7 +55,7 @@ namespace ECS.Unity.Materials.Systems
 
                 SetUp(materialComponent.Result, materialComponent.Data.AlphaTest, materialComponent.Data.DiffuseColor);
 
-                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, materialComponent.Data.AlbedoTexture);
 
                 DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
             }

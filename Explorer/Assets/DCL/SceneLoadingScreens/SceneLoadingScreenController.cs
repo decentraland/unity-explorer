@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace DCL.SceneLoadingScreens
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
+        private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
@@ -37,6 +39,7 @@ namespace DCL.SceneLoadingScreens
             base.Dispose();
 
             tipsRotationCancellationToken?.SafeCancelAndDispose();
+            tipsFadeCancellationToken?.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -45,19 +48,19 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.ShowNextButton.onClick.AddListener(() =>
             {
-                ShowTip(currentTip + 1);
+                ShowTipWithFade(currentTip + 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
             viewInstance.ShowPreviousButton.onClick.AddListener(() =>
             {
-                ShowTip(currentTip - 1);
+                ShowTipWithFade(currentTip - 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
-            viewInstance.OnBreadcrumbClicked += ShowTip;
+            viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
 
             progressLabel = (IntVariable)viewInstance.ProgressLabel.StringReference["progressValue"];
         }
@@ -66,8 +69,18 @@ namespace DCL.SceneLoadingScreens
         {
             base.OnBeforeViewShow();
 
+            tipsFadeCancellationToken = tipsFadeCancellationToken.SafeRestart();
+
             SetLoadProgress(0);
             viewInstance.ClearTips();
+        }
+
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+
+            viewInstance.RootCanvasGroup.alpha = 1f;
+            viewInstance.ContentCanvasGroup.alpha = 1f;
         }
 
         protected override void OnViewClose()
@@ -75,21 +88,33 @@ namespace DCL.SceneLoadingScreens
             base.OnViewClose();
 
             tipsRotationCancellationToken?.SafeCancelAndDispose();
+            tipsFadeCancellationToken?.SafeCancelAndDispose();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             try
             {
-                await ShowTipsAsync(ct).Timeout(inputData.Timeout);
+                await LoadTipsAsync(ct).Timeout(inputData.Timeout);
+
+                ShowTip(0);
 
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
 
-                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.6f, ct), WaitTimeThresholdAsync(0.4f, ct))
+                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, ct), WaitTimeThresholdAsync(0.2f, ct))
                              .Timeout(inputData.Timeout);
             }
             catch (TimeoutException) { }
+
+            await FadeOutAsync(ct);
+        }
+
+        private async UniTask FadeOutAsync(CancellationToken ct)
+        {
+            var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.3f).ToUniTask(cancellationToken: ct);
+            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.6f).ToUniTask(cancellationToken: ct);
+            await UniTask.WhenAll(contentTask, rootTask);
         }
 
         private async UniTask WaitTimeThresholdAsync(float progressProportion, CancellationToken ct)
@@ -98,15 +123,15 @@ namespace DCL.SceneLoadingScreens
 
             while (t < 1f && !ct.IsCancellationRequested)
             {
-                float now = Time.realtimeSinceStartup;
-                await UniTask.NextFrame(ct);
-                float dt = Time.realtimeSinceStartup - now;
-                t += dt / (float)minimumDisplayDuration.TotalSeconds;
+                float time = Time.realtimeSinceStartup;
+                await UniTask.NextFrame(cancellationToken: ct);
+                float dt = (Time.realtimeSinceStartup - time) / (float)minimumDisplayDuration.TotalSeconds;
+                t += dt;
                 AddLoadProgress(dt * progressProportion);
             }
         }
 
-        private async UniTask ShowTipsAsync(CancellationToken ct)
+        private async UniTask LoadTipsAsync(CancellationToken ct)
         {
             tips = await sceneTipsProvider.GetAsync(ct);
 
@@ -119,9 +144,6 @@ namespace DCL.SceneLoadingScreens
 
             foreach (SceneTips.Tip tip in list)
                 viewInstance.AddTip(tip);
-
-            currentTip = 0;
-            viewInstance.ShowTip(currentTip);
 
             ListPool<SceneTips.Tip>.Release(list);
         }
@@ -168,9 +190,29 @@ namespace DCL.SceneLoadingScreens
 
             index %= tips.Tips.Count;
 
+            viewInstance.HideAllTips();
             viewInstance.ShowTip(index);
 
             currentTip = index;
+        }
+
+        private void ShowTipWithFade(int index)
+        {
+            async UniTaskVoid ShowTipWithFadeAsync(CancellationToken ct)
+            {
+                if (index < 0)
+                    index = tips.Tips.Count - 1;
+
+                index %= tips.Tips.Count;
+
+                int prevTip = currentTip;
+                currentTip = index;
+
+                await viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct);
+                await viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct);
+            }
+
+            ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
         }
 
         private async UniTaskVoid RotateTipsOverTimeAsync(TimeSpan frequency, CancellationToken ct)
@@ -181,7 +223,7 @@ namespace DCL.SceneLoadingScreens
                 {
                     await UniTask.Delay(frequency, cancellationToken: ct);
 
-                    ShowTip(currentTip + 1);
+                    ShowTipWithFade(currentTip + 1);
                 }
             }
             catch (OperationCanceledException) { }
