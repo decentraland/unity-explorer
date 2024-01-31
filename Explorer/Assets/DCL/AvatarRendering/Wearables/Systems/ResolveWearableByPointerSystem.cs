@@ -18,6 +18,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -112,8 +113,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
 
-                if(hideWearablesResolution.VisibleWearables == null)
-                    CalculateVisibleWearables(resolvedWereables.ToArray(), wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
+                if (hideWearablesResolution.VisibleWearables == null)
+                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedWereables, resolvedWereables.Count, ref hideWearablesResolution);
 
                 successfulResults += (wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count);
                 for (int i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
@@ -142,12 +143,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)
                 World.Add(entity, new StreamableLoadingResult<IWearable[]>(wearablesByPointersIntention.Results));
 
-        }
-
-        private void CalculateVisibleWearables(IWearable[] results, BodyShape bodyShape, ref HideWearablesResolution hideWearablesResolution)
-        {
-            List<IWearable> visibleWearables = new List<IWearable>();
-            WearableComponentsUtils.ExtractVisibleWearables(bodyShape, results, results.Length, visibleWearables, ref hideWearablesResolution);
         }
 
         [Query]

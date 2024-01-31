@@ -68,10 +68,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             world.Create(wearable, promise, partitionComponent);
         }
 
-        public static void ExtractVisibleWearables(string bodyShapeId, IWearable[] wearables, int wearableCount, List<IWearable> visibleWearables, ref HideWearablesResolution hideWearablesResolution)
+        public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)
         {
             Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
-
+            List<IWearable> visibleWearables = ListPool<IWearable>.Get();
             for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i].GetCategory()] = wearables[i]; }
 
             HashSet<string> hidingList = HashSetPool<string>.Get();
@@ -101,10 +101,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     visibleWearables.Add(wearable);
             }
 
-            hideWearablesResolution.VisibleWearables = visibleWearables;
+            hideWearablesResolution.VisibleWearables = new List<IWearable>(visibleWearables);
 
             HashSetPool<string>.Release(hidingList);
             HashSetPool<string>.Release(combinedHidingList);
+            ListPool<IWearable>.Release(visibleWearables);
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
         }
     }
