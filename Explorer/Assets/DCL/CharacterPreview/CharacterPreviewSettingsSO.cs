@@ -25,13 +25,13 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal CharacterPreviewCameraPreset[] cameraPositions { get; private set; }
 
         [field: Header("Drag Settings")]
-        [field: SerializeField] internal bool dragEnabled { get; private set; }
+        [field: SerializeField] public bool dragEnabled { get; private set; }
         [field: SerializeField] internal float dragMovementModifier { get; private set; }
         [field: SerializeField] internal float minVerticalOffset { get; private set; }
         [field: SerializeField] internal float maxVerticalOffset { get; private set; }
 
         [field: Header("Scroll Settings")]
-        [field: SerializeField] internal bool scrollEnabled { get; private set; }
+        [field: SerializeField] public bool scrollEnabled { get; private set; }
         [field: SerializeField] internal float scrollModifier { get; private set; }
         [field: SerializeField] internal float fieldOfViewThresholdForPanning { get; private set; }
         [field: SerializeField] internal float fieldOfViewThresholdForReCentering { get; private set; }

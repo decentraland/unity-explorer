@@ -19,6 +19,8 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
+
+            OnChangePreviewCategory(AvatarWearableCategoryEnum.Body);
         }
 
         private void OnChangePreviewCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -37,6 +39,8 @@ namespace DCL.CharacterPreview
 
         private void OnScroll(PointerEventData pointerEventData)
         {
+            if (!cameraSettings.scrollEnabled) return;
+
             float newFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
             float originalFieldOfView = newFieldOfView;
 
@@ -75,6 +79,8 @@ namespace DCL.CharacterPreview
             {
                 case PointerEventData.InputButton.Right:
                 {
+                    if (!cameraSettings.dragEnabled) return;
+
                     if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
                     {
                         Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
@@ -92,6 +98,8 @@ namespace DCL.CharacterPreview
                 }
                 case PointerEventData.InputButton.Left:
                 {
+                    if (!cameraSettings.rotationEnabled) return;
+
                     Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
 
