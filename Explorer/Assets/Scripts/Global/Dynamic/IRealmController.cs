@@ -15,6 +15,8 @@ namespace Global.Dynamic
         /// </summary>
         UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport loadReport, CancellationToken ct);
 
+        UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
+
         /// <summary>
         ///     Gracefully unload the current realm
         /// </summary>

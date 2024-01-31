@@ -16,5 +16,8 @@ namespace DCL.AsyncLoadReporting
             CompletionSource = completionSource;
             ProgressCounter = progressCounter;
         }
+
+        public static AsyncLoadProcessReport Create() =>
+            new (new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0f));
     }
 }

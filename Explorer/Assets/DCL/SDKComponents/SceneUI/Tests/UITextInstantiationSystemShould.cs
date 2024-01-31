@@ -3,6 +3,7 @@ using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
+using DCL.SDKComponents.SceneUI.Utils;
 using Decentraland.Common;
 using ECS.TestSuite;
 using NUnit.Framework;
@@ -46,7 +47,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Assert
             ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
             Assert.IsNotNull(uiTextComponent.Label);
-            Assert.AreEqual($"UIText (Entity {entity.Id})", uiTextComponent.Label.name);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIText", entity), uiTextComponent.Label.name);
             Assert.AreEqual(PickingMode.Ignore, uiTextComponent.Label.pickingMode);
             Assert.IsTrue(uiTransformComponent.Transform.Contains(uiTextComponent.Label));
         }

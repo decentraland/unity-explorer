@@ -14,5 +14,8 @@ namespace DCL.SceneLoadingScreens
 
         [field: SerializeField]
         public Image Image { get; private set; } = null!;
+
+        [field: SerializeField]
+        public CanvasGroup RootCanvasGroup { get; private set; } = null!;
     }
 }

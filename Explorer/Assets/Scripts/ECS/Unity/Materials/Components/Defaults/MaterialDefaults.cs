@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ECS.Unity.Materials.Components.Defaults
 {
-    public static class MaterialDefaults
+    public static class PBMaterialExtensions
     {
         public static float GetAlphaTest(this PBMaterial self)
         {
