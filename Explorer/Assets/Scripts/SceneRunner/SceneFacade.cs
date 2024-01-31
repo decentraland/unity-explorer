@@ -15,7 +15,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Utility.Multithreading;
-using Debug = UnityEngine.Debug;
 
 namespace SceneRunner
 {
@@ -72,7 +71,6 @@ namespace SceneRunner
 
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
-
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
@@ -214,6 +212,5 @@ namespace SceneRunner
 
             sceneStateProvider.State = SceneState.Disposed;
         }
-
     }
 }
