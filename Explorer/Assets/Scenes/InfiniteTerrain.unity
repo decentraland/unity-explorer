@@ -271,7 +271,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   worldSeed: 111
-  digHoles: 1
+  digHoles: 0
   centerTerrain: 1
   hideTrees: 0
   hideDetails: 0
