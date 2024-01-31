@@ -2,12 +2,13 @@
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using ECS.LifeCycle;
+using SceneRunner.Scene;
+using System.Collections.Generic;
+
 #if AV_PRO_PRESENT
 using ECS.ComponentsPooling.Systems;
 using RenderHeads.Media.AVProVideo;
 #endif
-using SceneRunner.Scene;
-using System.Collections.Generic;
 
 namespace DCL.SDKComponents.AudioStream.Wrapper
 {
@@ -20,8 +21,11 @@ namespace DCL.SDKComponents.AudioStream.Wrapper
 #if AV_PRO_PRESENT
             this.componentPoolsRegistry = componentPoolsRegistry;
 
-            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
-            cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
+            if (!componentPoolsRegistry.TryGetPool<MediaPlayer>(out _))
+            {
+                componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
+                cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
+            }
 #endif
         }
 
