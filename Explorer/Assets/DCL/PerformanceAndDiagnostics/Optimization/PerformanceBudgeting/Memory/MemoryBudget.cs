@@ -26,7 +26,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly bool isReleaseBuild = !Debug.isDebugBuild;
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
-        private ulong ActualSystemMemory { get; }
+        internal ulong ActualSystemMemory;
 
         public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
