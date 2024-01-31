@@ -76,15 +76,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
             Transform avatarTransform = avatarBase.transform;
-            avatarTransform.SetParent(transformComponent.Transform, false);
 
-            //TODO: Fran -> This code can be probably improved, check if we can get the list of children from somewhere else to avoid allocations.
-            PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
-
-            for (var index = 0; index < children.Value.Count; index++)
+            if (transformComponent.Transform != null)
             {
-                Transform child = children.Value[index];
-                child.gameObject.layer = transformComponent.Transform.gameObject.layer;
+                avatarTransform.SetParent(transformComponent.Transform, false);
+
+                PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+                for (var index = 0; index < children.Value.Count; index++)
+                {
+                    Transform child = children.Value[index];
+                    if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
+                }
             }
 
             avatarTransform.ResetLocalTRS();
