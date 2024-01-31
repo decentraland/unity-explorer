@@ -128,7 +128,16 @@ namespace Global.Dynamic
                     characterPreviewInputEventBus),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
+                new Web3AuthenticationPlugin(
+                    staticContainer.AssetsProvisioner,
+                    web3Authenticator,
+                    debugBuilder,
+                    container.MvcManager,
+                    container.ProfileRepository,
+                    new UnityAppWebBrowser(),
+                    realmData,
+                    storedIdentityProvider,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
             };

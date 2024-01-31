@@ -3,7 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.DebugUtilities;
+using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -26,8 +28,10 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private CancellationTokenSource? cancellationTokenSource;
+        private AuthenticationScreenController authenticationScreenController;
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -37,7 +41,8 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
             IRealmData realmData,
-            IWeb3IdentityCache storedIdentityProvider)
+            IWeb3IdentityCache storedIdentityProvider,
+            IComponentPoolsRegistry poolsRegistry)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
@@ -47,6 +52,7 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.realmData = realmData;
             this.storedIdentityProvider = storedIdentityProvider;
+            this.poolsRegistry = poolsRegistry;
         }
 
         public void Dispose() { }
@@ -57,13 +63,16 @@ namespace DCL.PluginSystem.Global
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository,
-                webBrowser, storedIdentityProvider));
+            ICharacterPreviewFactory characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
+
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository, webBrowser, storedIdentityProvider, characterPreviewFactory);
+            mvcManager.RegisterController(authenticationScreenController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
+            authenticationScreenController.SetWorld(builder.World, arguments.PlayerEntity);
         }
     }
 
