@@ -9,7 +9,6 @@ using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.MapRenderer.ComponentsFactory;
 using ECS.Prioritization;
-using System;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -19,7 +18,7 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>
     {
-        private readonly TerrainGenerator terrainGenerator;
+        private TerrainGenerator terrainGenerator = null!;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -32,7 +31,6 @@ namespace DCL.PluginSystem.Global
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer)
         {
-            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
@@ -47,6 +45,8 @@ namespace DCL.PluginSystem.Global
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+
+            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
