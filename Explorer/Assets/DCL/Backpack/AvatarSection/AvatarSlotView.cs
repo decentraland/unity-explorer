@@ -71,7 +71,7 @@ namespace DCL.Backpack
         public GameObject NftContainer { get; private set; }
 
         [field: SerializeField]
-        public AvatarSlotCategoryEnum CategoryEnum;
+        public AvatarWearableCategoryEnum CategoryEnum;
 
         public void Start()
         {

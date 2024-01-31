@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.CharacterPreview
 {
-    public struct CharacterPreviewModel
+    public struct CharacterPreviewAvatarModel
     {
         public string BodyShape;
 

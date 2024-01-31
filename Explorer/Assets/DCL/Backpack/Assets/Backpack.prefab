@@ -3155,7 +3155,7 @@ MonoBehaviour:
   <BackpackSortView>k__BackingField: {fileID: 6128057872158891546}
   <TipsButton>k__BackingField: {fileID: 8027559671807818544}
   <TipsPanelDeselectable>k__BackingField: {fileID: 8484032604503467888}
-  <backpackCharacterPreviewView>k__BackingField: {fileID: 510879829811813369}
+  <characterPreviewView>k__BackingField: {fileID: 510879829811813369}
 --- !u!1 &8581277015346495855
 GameObject:
   m_ObjectHideFlags: 0
@@ -5074,6 +5074,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 816873455510436537}
     m_Modifications:
+    - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: <CharacterPreviewSettingsSo>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 5ef5ad65d6df9cc4a90512012d6ca99a, type: 2}
     - target: {fileID: 6064998454780672223, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

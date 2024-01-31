@@ -31,10 +31,18 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.OnSearchMessageReceived += HandleSearchCommand;
         }
 
+        public void Dispose()
+        {
+            backpackCommandBus.OnEquipMessageReceived -= HandleEquipCommand;
+            backpackCommandBus.OnUnEquipMessageReceived -= HandleUnEquipCommand;
+            backpackCommandBus.OnHideMessageReceived -= HandleHideCommand;
+            backpackCommandBus.OnSelectMessageReceived -= HandleSelectCommand;
+        }
+
         private void HandleSearchCommand(BackpackSearchCommand command)
         {
-            if(!string.IsNullOrEmpty(command.SearchText))
-                backpackEventBus.SendFilterCategory(string.Empty, AvatarSlotCategoryEnum.Body);
+            if (!string.IsNullOrEmpty(command.SearchText))
+                backpackEventBus.SendFilterCategory(string.Empty, AvatarWearableCategoryEnum.Body);
 
             backpackEventBus.SendSearch(command.SearchText);
         }
@@ -74,14 +82,6 @@ namespace DCL.Backpack.BackpackBus
         private void HandleHideCommand(BackpackHideCommand command)
         {
             backpackEventBus.SendForceRender(command.ForceRender);
-        }
-
-        public void Dispose()
-        {
-            backpackCommandBus.OnEquipMessageReceived -= HandleEquipCommand;
-            backpackCommandBus.OnUnEquipMessageReceived -= HandleUnEquipCommand;
-            backpackCommandBus.OnHideMessageReceived -= HandleHideCommand;
-            backpackCommandBus.OnSelectMessageReceived -= HandleSelectCommand;
         }
     }
 }

@@ -17,40 +17,42 @@ namespace DCL.CharacterPreview
     {
         private readonly World globalWorld;
         private readonly Entity characterPreviewEntity;
-        private readonly CharacterPreviewContainer characterPreviewContainer;
+        private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly CharacterPreviewCameraController cameraController;
-        private readonly IComponentPool<CharacterPreviewContainer> characterPreviewContainerPool;
+        private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
 
-        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewContainer> characterPreviewContainerPool)
+        public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
+            CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
+            CharacterPreviewCameraSettings cameraSettings)
         {
             globalWorld = world;
-            characterPreviewContainer = container;
-            cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewContainer);
+            characterPreviewAvatarContainer = avatarContainer;
+            cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
             // TODO add meaningful ID and Name
 
             characterPreviewEntity = world.Create(
-                new TransformComponent(container.avatarParent),
+                new TransformComponent(avatarContainer.avatarParent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
         }
 
-        public void UpdateAvatar(CharacterPreviewModel model)
+        public void UpdateAvatar(CharacterPreviewAvatarModel avatarModel)
         {
-            if (globalWorld == null || model.Wearables == null || model.Wearables.Count <= 0) return;
+            if (globalWorld == null || avatarModel.Wearables == null || avatarModel.Wearables.Count <= 0) return;
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
-            avatarShape.SkinColor = model.SkinColor;
-            avatarShape.HairColor = model.HairColor;
-            avatarShape.BodyShape = BodyShape.FromStringSafe(model.BodyShape);
+            avatarShape.SkinColor = avatarModel.SkinColor;
+            avatarShape.HairColor = avatarModel.HairColor;
+            avatarShape.BodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
 
             if (!avatarShape.WearablePromise.IsConsumed)
                 avatarShape.WearablePromise.ForgetLoading(globalWorld);
 
             avatarShape.WearablePromise = AssetPromise<IWearable[], GetWearablesByPointersIntention>.Create(
                 globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, model.Wearables, model.ForceRender),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, avatarModel.Wearables, avatarModel.ForceRender),
                 PartitionComponent.TOP_PRIORITY
             );
 
@@ -64,18 +66,19 @@ namespace DCL.CharacterPreview
                 ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
                 if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
             }
-            if (characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(false);
+
+            if (characterPreviewAvatarContainer != null) characterPreviewAvatarContainer.gameObject.SetActive(false);
         }
 
         public void Show()
         {
-            if (characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(true);
+            if (characterPreviewAvatarContainer != null) { characterPreviewAvatarContainer.gameObject.SetActive(true); }
         }
 
         public void Dispose()
         {
             globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
-            characterPreviewContainerPool.Release(characterPreviewContainer);
+            characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
     }

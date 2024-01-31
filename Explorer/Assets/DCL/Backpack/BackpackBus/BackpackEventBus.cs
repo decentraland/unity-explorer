@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 namespace DCL.Backpack.BackpackBus
 {
-
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable> SelectEvent;
@@ -13,7 +12,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> UnEquipEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
-        public event Action<AvatarSlotCategoryEnum> FilterCategoryByEnumEvent;
+        public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
 
         public event Action<string> SearchEvent;
 
@@ -29,7 +28,7 @@ namespace DCL.Backpack.BackpackBus
         public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
             ForceRenderEvent?.Invoke(forceRender);
 
-        public void SendFilterCategory(string category, AvatarSlotCategoryEnum categoryEnum)
+        public void SendFilterCategory(string category, AvatarWearableCategoryEnum categoryEnum)
         {
             FilterCategoryEvent?.Invoke(category);
             FilterCategoryByEnumEvent?.Invoke(categoryEnum);

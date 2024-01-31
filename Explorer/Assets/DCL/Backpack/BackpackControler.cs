@@ -92,7 +92,7 @@ namespace DCL.Backpack
                     });
             }
 
-            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, characterPreviewFactory, backpackEventBus, inputEventBus);
+            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus);
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }

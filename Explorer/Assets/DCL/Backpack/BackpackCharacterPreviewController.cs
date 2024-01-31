@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
-using Arch.SystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
-using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,24 +10,29 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
 {
+    public abstract class CharacterPreviewControllerBase : IDisposable
+    {
+        public void Dispose() { }
+    }
+
     public class BackpackCharacterPreviewController : IDisposable
     {
-        private readonly BackpackCharacterPreviewView view;
+        private readonly CharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly BackpackEventBus backpackEventBus;
         private readonly CharacterPreviewInputEventBus inputEventBus;
-        private readonly BackpackCharacterPreviewCursorController cursorController;
+        private readonly CharacterPreviewCursorController cursorController;
 
         private World world;
         private CharacterPreviewController previewController;
-        private CharacterPreviewModel previewModel;
+        private CharacterPreviewAvatarModel previewAvatarModel;
 
-        public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, CharacterPreviewInputEventBus inputEventBus)
+        public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.backpackEventBus = backpackEventBus;
-            this.inputEventBus = inputEventBus;
+            inputEventBus = new CharacterPreviewInputEventBus();
 
             backpackEventBus.EquipEvent += OnEquipped;
             backpackEventBus.UnEquipEvent += OnUnequipped;
@@ -41,15 +44,15 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
 
-            cursorController = new BackpackCharacterPreviewCursorController(view.CharacterPreviewCursorView, inputEventBus);
+            cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
         }
 
         public void Initialize(Avatar avatar)
         {
-            previewModel.BodyShape = avatar.BodyShape;
-            previewModel.HairColor = avatar.HairColor;
-            previewModel.SkinColor = avatar.SkinColor;
-            previewModel.ForceRender = new HashSet<string>(avatar.ForceRender);
+            previewAvatarModel.BodyShape = avatar.BodyShape;
+            previewAvatarModel.HairColor = avatar.HairColor;
+            previewAvatarModel.SkinColor = avatar.SkinColor;
+            previewAvatarModel.ForceRender = new HashSet<string>(avatar.ForceRender);
 
             //Temporal solution to fix issue with render format in Mac VS Windows
             if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
@@ -64,7 +67,7 @@ namespace DCL.CharacterPreview
                 newTexture.Create();
 
                 view.RawImage.texture = newTexture;
-                previewController = previewFactory.Create(world, newTexture, inputEventBus);
+                previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
             }
             else
             {
@@ -77,7 +80,7 @@ namespace DCL.CharacterPreview
 
                 newTexture.Create();
                 view.RawImage.texture = newTexture;
-                previewController = previewFactory.Create(world, newTexture, inputEventBus);
+                previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
             }
 
             OnModelUpdated();
@@ -120,16 +123,16 @@ namespace DCL.CharacterPreview
             inputEventBus.OnDrag(pointerEventData);
         }
 
-        private void OnChangeCategory(AvatarSlotCategoryEnum categoryEnum)
+        private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
         {
-            inputEventBus.OnChangeCategoryFocus(categoryEnum);
+            inputEventBus.OnChangePreviewFocus(categoryEnum);
         }
 
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
         {
-            previewModel.ForceRender.Clear();
+            previewAvatarModel.ForceRender.Clear();
 
-            foreach (string wearable in forceRender) { previewModel.ForceRender.Add(wearable); }
+            foreach (string wearable in forceRender) { previewAvatarModel.ForceRender.Add(wearable); }
 
             OnModelUpdated();
         }
@@ -137,6 +140,7 @@ namespace DCL.CharacterPreview
         public void OnShow()
         {
             previewController.Show();
+            inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
             OnModelUpdated();
         }
 
@@ -147,24 +151,24 @@ namespace DCL.CharacterPreview
 
         private void OnEquipped(IWearable i)
         {
-            previewModel.Wearables ??= new List<string>();
+            previewAvatarModel.Wearables ??= new List<string>();
 
             if (i.IsBodyShape())
-                previewModel.BodyShape = i.GetUrn();
-            else previewModel.Wearables.Add(i.GetUrn());
+                previewAvatarModel.BodyShape = i.GetUrn();
+            else previewAvatarModel.Wearables.Add(i.GetUrn());
 
             OnModelUpdated();
         }
 
         private void OnUnequipped(IWearable i)
         {
-            previewModel.Wearables.Remove(i.GetUrn());
+            previewAvatarModel.Wearables.Remove(i.GetUrn());
             OnModelUpdated();
         }
 
         private void OnModelUpdated()
         {
-            previewController.UpdateAvatar(previewModel);
+            previewController.UpdateAvatar(previewAvatarModel);
         }
     }
 }

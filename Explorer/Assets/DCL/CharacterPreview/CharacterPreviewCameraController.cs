@@ -7,28 +7,29 @@ namespace DCL.CharacterPreview
     public readonly struct CharacterPreviewCameraController : IDisposable
     {
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
-        private readonly CharacterPreviewContainer characterPreviewContainer;
+        private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
+        private readonly CharacterPreviewCameraSettings cameraSettings;
 
-        public CharacterPreviewCameraController(CharacterPreviewInputEventBus characterPreviewInputEventBus, CharacterPreviewContainer characterPreviewContainer)
+        public CharacterPreviewCameraController(CharacterPreviewInputEventBus characterPreviewInputEventBus, CharacterPreviewAvatarContainer characterPreviewAvatarContainer, CharacterPreviewCameraSettings cameraSettings)
         {
             this.characterPreviewInputEventBus = characterPreviewInputEventBus;
-            this.characterPreviewContainer = characterPreviewContainer;
+            this.characterPreviewAvatarContainer = characterPreviewAvatarContainer;
+            this.cameraSettings = cameraSettings;
 
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
         }
 
-
-        private void OnChangePreviewCategory(AvatarSlotCategoryEnum categoryEnum)
+        private void OnChangePreviewCategory(AvatarWearableCategoryEnum categoryEnum)
         {
-            int positions = characterPreviewContainer.cameraPositions.Length;
+            int positions = cameraSettings.cameraPositions.Length;
 
             for (var i = 0; i < positions; i++)
             {
-                if (characterPreviewContainer.cameraPositions[i].slotCategoryEnum == categoryEnum)
+                if (cameraSettings.cameraPositions[i].wearableCategoryEnum == categoryEnum)
                 {
-                    characterPreviewContainer.SetCameraPosition(characterPreviewContainer.cameraPositions[i]);
+                    characterPreviewAvatarContainer.SetCameraPosition(cameraSettings.cameraPositions[i]);
                     break;
                 }
             }
@@ -36,65 +37,68 @@ namespace DCL.CharacterPreview
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-            float newFieldOfView = characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView;
+            float newFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
             float originalFieldOfView = newFieldOfView;
 
-            newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * characterPreviewContainer.scrollModifier;
-            if (newFieldOfView < characterPreviewContainer.depthLimits.y) newFieldOfView = characterPreviewContainer.depthLimits.y;
-            else if (newFieldOfView > characterPreviewContainer.depthLimits.x) newFieldOfView = characterPreviewContainer.depthLimits.x;
+            newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * cameraSettings.scrollModifier;
 
+            if (newFieldOfView < cameraSettings.fieldOfViewLimits.y) newFieldOfView = cameraSettings.fieldOfViewLimits.y;
+            else if (newFieldOfView > cameraSettings.fieldOfViewLimits.x) newFieldOfView = cameraSettings.fieldOfViewLimits.x;
 
-            if (newFieldOfView > originalFieldOfView && newFieldOfView > characterPreviewContainer.fieldOfViewThresholdForReCentering)
+            if (newFieldOfView > originalFieldOfView && newFieldOfView > cameraSettings.fieldOfViewThresholdForReCentering)
             {
-                var position = characterPreviewContainer.cameraTarget.localPosition;
-                float t = Mathf.InverseLerp(characterPreviewContainer.depthLimits.y, characterPreviewContainer.depthLimits.x, newFieldOfView);
+                Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
+                float t = Mathf.InverseLerp(cameraSettings.fieldOfViewLimits.y, cameraSettings.fieldOfViewLimits.x, newFieldOfView);
                 float smoothedT = Mathf.SmoothStep(0f, 1f, t);
 
                 float vertPos = Mathf.SmoothStep(position.y,
-                    characterPreviewContainer.cameraPositions[0].verticalPosition.y,
+                    cameraSettings.cameraPositions[0].verticalPosition.y,
                     smoothedT
                 );
 
                 position.y = vertPos;
 
-                characterPreviewContainer.cameraTarget.localPosition = position;
+                characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
-            characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
-            characterPreviewContainer.StopCameraTween();
+
+            characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
+            characterPreviewAvatarContainer.StopCameraTween();
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
             if (pointerEventData.button == PointerEventData.InputButton.Middle) return;
 
-            characterPreviewContainer.StopCameraTween();
+            characterPreviewAvatarContainer.StopCameraTween();
+
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
                 {
-                    if (characterPreviewContainer.freeLookCamera.m_Lens.FieldOfView < characterPreviewContainer.fieldOfViewThresholdForPanning)
+                    if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
                     {
-                        var position = characterPreviewContainer.cameraTarget.localPosition;
-                        float dragModifier = Time.deltaTime * characterPreviewContainer.dragMovementModifier;
+                        Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
+                        float dragModifier = Time.deltaTime * cameraSettings.dragMovementModifier;
 
                         position.y -= pointerEventData.delta.y * dragModifier;
 
-                        if (position.y < characterPreviewContainer.minVerticalOffset) position.y = characterPreviewContainer.minVerticalOffset;
-                        else if (position.y > characterPreviewContainer.maxVerticalOffset) position.y = characterPreviewContainer.maxVerticalOffset;
+                        if (position.y < cameraSettings.minVerticalOffset) position.y = cameraSettings.minVerticalOffset;
+                        else if (position.y > cameraSettings.maxVerticalOffset) position.y = cameraSettings.maxVerticalOffset;
 
-                        characterPreviewContainer.cameraTarget.localPosition = position;
+                        characterPreviewAvatarContainer.cameraTarget.localPosition = position;
                     }
+
                     break;
                 }
                 case PointerEventData.InputButton.Left:
                 {
-                    var rotation = characterPreviewContainer.rotationTarget.rotation.eulerAngles;
-                    float rotationModifier = Time.deltaTime * characterPreviewContainer.rotationModifier;
+                    Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
+                    float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
 
                     rotation.y += pointerEventData.delta.x * rotationModifier;
                     var quaternion = Quaternion.Euler(rotation);
 
-                    characterPreviewContainer.rotationTarget.rotation = quaternion;
+                    characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
                     break;
                 }
             }
@@ -105,7 +109,7 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
             characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
-            characterPreviewContainer.Dispose();
+            characterPreviewAvatarContainer.Dispose();
         }
     }
 }
