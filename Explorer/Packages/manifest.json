@@ -26,6 +26,7 @@
     "com.unity.textmeshpro": "3.0.6",
     "com.unity.timeline": "1.7.5",
     "com.unity.toolchain.win-x86_64-linux-x86_64": "2.0.6",
+    "com.unity.toonshader": "0.9.5-preview",
     "com.unity.ugui": "1.0.0",
     "com.unity.visualscripting": "1.8.0",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#1.6.0",
