@@ -245,10 +245,10 @@ namespace DCL.Landscape
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
 
-            GrassColorMapRenderer colorMapRenderer = terrainObject.AddComponent<GrassColorMapRenderer>();
+            /*GrassColorMapRenderer colorMapRenderer = terrainObject.AddComponent<GrassColorMapRenderer>();
             colorMapRenderer.terrainObjects.Add(terrainObject);
             colorMapRenderer.RecalculateBounds();
-            colorMapRenderer.Render();
+            colorMapRenderer.Render();*/
         }
 
         private async UniTask<TerrainData> GenerateTerrainDataAsync(int offsetX, int offsetZ, uint baseSeed)
