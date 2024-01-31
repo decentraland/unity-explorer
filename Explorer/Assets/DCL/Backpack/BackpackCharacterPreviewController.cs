@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
@@ -53,12 +54,12 @@ namespace DCL.CharacterPreview
 
         private void InitializePreviewModel(Entity playerEntity)
         {
-            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
+            //Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
-            previewModel.BodyShape = avatar.BodyShape;
-            previewModel.HairColor = avatar.HairColor;
-            previewModel.SkinColor = avatar.SkinColor;
-            previewModel.ForceRender = new HashSet<string>(avatar.ForceRender);
+            previewModel.BodyShape = BodyShape.MALE;//avatar.BodyShape;
+            previewModel.HairColor = Color.black; //avatar.HairColor;
+            previewModel.SkinColor = Color.cyan;//avatar.SkinColor;
+            previewModel.ForceRender = new HashSet<string>(); //avatar.ForceRender);
         }
 
         public void Initialize()
@@ -122,12 +123,12 @@ namespace DCL.CharacterPreview
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
         {
             previewModel.ForceRender.Clear();
-            
+
             foreach (string wearable in forceRender)
             {
                 previewModel.ForceRender.Add(wearable);
             }
-            
+
             OnModelUpdated();
         }
 
