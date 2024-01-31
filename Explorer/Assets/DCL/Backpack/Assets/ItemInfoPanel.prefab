@@ -1463,8 +1463,8 @@ MonoBehaviour:
   <EmptyPanel>k__BackingField: {fileID: 1432505136072087043}
   <FullPanel>k__BackingField: {fileID: 5337124909112307158}
   <WearableThumbnail>k__BackingField: {fileID: 6761031925246617703}
-  <RarityBackgroundPanel>k__BackingField: {fileID: 0}
-  <RarityName>k__BackingField: {fileID: 0}
+  <RarityBackgroundPanel>k__BackingField: {fileID: 2370507472744769670}
+  <RarityName>k__BackingField: {fileID: 8169169408293198386}
   <CategoryImage>k__BackingField: {fileID: 5700207190427280376}
   <LoadingSpinner>k__BackingField: {fileID: 3239992010578180074}
   <RarityBackground>k__BackingField: {fileID: 1865890770055487935}
