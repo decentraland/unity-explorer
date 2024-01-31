@@ -7,6 +7,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using Ipfs;
+using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -21,6 +22,7 @@ namespace ECS.SceneLifeCycle.Tests
         private IPartitionSettings partitionSettings;
         private IReadOnlyCameraSamplingData samplingData;
         private IComponentPool<PartitionComponent> componentPool;
+        private PartitionSceneEntitiesSystemMock mockSystem;
 
         [SetUp]
         public void SetUp()
@@ -29,23 +31,23 @@ namespace ECS.SceneLifeCycle.Tests
             partitionSettings.AngleTolerance.Returns(0);
             partitionSettings.PositionSqrTolerance.Returns(0);
             partitionSettings.FastPathSqrDistance.Returns(int.MaxValue);
+            partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
 
             samplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
 
-            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData);
+            system = new PartitionSceneEntitiesSystemMock(world, componentPool, partitionSettings, samplingData);
+            mockSystem = system as PartitionSceneEntitiesSystemMock;
         }
 
         [Test]
-        public void PartitionNewEntity([Values(true, false)] bool isDirty)
+        public async Task PartitionNewEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
             samplingData.Forward.Returns(Vector3.forward);
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
-
-            partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
 
             Entity e = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
             {
@@ -56,6 +58,10 @@ namespace ECS.SceneLifeCycle.Tests
                 },
             }, new IpfsTypes.IpfsPath()));
 
+            system.Update(0);
+
+            // we wait until the job finishes, it should be fast but we dont want race conditions to generate flaky tests
+            await UniTask.Delay(TimeSpan.FromSeconds(0.1f));
             system.Update(0);
 
             Assert.That(world.TryGet(e, out PartitionComponent partitionComponent), Is.True);
@@ -72,25 +78,42 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
-            partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
-
-            Entity e = world.Create(
-                new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            var sceneDefinitionComponent = new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            {
+                metadata = new IpfsTypes.SceneMetadata
                 {
-                    metadata = new IpfsTypes.SceneMetadata
-                    {
-                        scene = new IpfsTypes.SceneMetadataScene
-                            { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
-                    },
-                }, new IpfsTypes.IpfsPath()));
+                    scene = new IpfsTypes.SceneMetadataScene
+                        { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
+                },
+            }, new IpfsTypes.IpfsPath()) { InternalJobIndex = 0 };
+
+            Entity e = world.Create(new PartitionComponent { Bucket = 10, IsBehind = false }, sceneDefinitionComponent);
+            mockSystem.AddPartitionData(0, ref sceneDefinitionComponent, new ScenesPartitioningUtils.PartitionData { Bucket = 10, IsBehind = false, IsDirty = isDirty });
 
             system.Update(0);
 
             // we wait until the job finishes, it should be fast but we dont want race conditions to generate flaky tests
-            await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+            await UniTask.Delay(TimeSpan.FromSeconds(0.1f));
             system.Update(0);
 
-            Assert.That(world.Has<PartitionComponent>(e));
+            Assert.That(world.TryGet(e, out PartitionComponent partitionComponent), Is.True);
+            Assert.That(partitionComponent.Bucket, Is.EqualTo(1));
+            Assert.That(partitionComponent.IsBehind, Is.True);
+            Assert.That(partitionComponent.IsDirty, Is.True);
+        }
+    }
+
+    public class PartitionSceneEntitiesSystemMock : PartitionSceneEntitiesSystem
+    {
+        internal PartitionSceneEntitiesSystemMock([NotNull] World world,
+            [NotNull] [ItemNotNull] IComponentPool<PartitionComponent> partitionComponentPool,
+            [NotNull] IPartitionSettings partitionSettings,
+            [NotNull] IReadOnlyCameraSamplingData readOnlyCameraSamplingData) : base(world, partitionComponentPool, partitionSettings, readOnlyCameraSamplingData) { }
+
+        public void AddPartitionData(int index, ref SceneDefinitionComponent sceneDefinitionComponent, ScenesPartitioningUtils.PartitionData data)
+        {
+            ScheduleSceneDefinition(ref sceneDefinitionComponent);
+            partitions[index] = data;
         }
     }
 }
