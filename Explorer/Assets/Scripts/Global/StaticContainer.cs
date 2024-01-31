@@ -13,6 +13,7 @@ using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
@@ -35,6 +36,7 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public WorldProxy GlobalWorld = new ();
+
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -154,13 +156,15 @@ namespace Global
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
+            var videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
-                new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
+                new MaterialsPlugin(sharedDependencies, addressablesProvisioner, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
@@ -172,6 +176,7 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

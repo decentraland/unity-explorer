@@ -36,7 +36,5 @@ namespace DCL.SDKComponents.AudioStream
         {
             MediaPlayer.CloseCurrentStream();
         }
-
-
     }
 }
