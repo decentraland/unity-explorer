@@ -9,6 +9,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIBackground;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
+using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -70,6 +71,7 @@ namespace DCL.PluginSystem.World
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
