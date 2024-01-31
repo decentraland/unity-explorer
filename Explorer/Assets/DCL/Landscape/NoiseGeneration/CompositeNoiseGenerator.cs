@@ -55,20 +55,15 @@ namespace DCL.Landscape.NoiseGeneration
                 if (op.disable) continue;
 
                 if (compositeNoiseData == op.noise)
-                {
-                    Debug.LogError("Please do not try to do recursiveness");
                     continue;
-                }
 
                 if (op.noise is not INoiseDataFactory noiseDataFactory) continue;
 
                 INoiseGenerator generator = generatorCache.GetGeneratorFor(noiseDataFactory, baseSeed);
 
                 if (generator.IsRecursive(compositeNoiseData))
-                {
-                    Debug.LogError("Please do not try to do recursiveness");
                     continue;
-                }
+
                 jobHandle = generator.Compose(ref tempNoiseGenerator.GetResult(), op.operation, size, offsetX, offsetZ, batchCount);
                 jobHandle.Complete();
             }
