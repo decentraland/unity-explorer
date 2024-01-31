@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -46,6 +47,8 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             { "mouth", WearablesConstants.Categories.MOUTH },
         };
 
+        private static readonly HashSet<string> hideCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
         {
             var wearablesByCategory = DictionaryPool<string, IWearable>.Get();
@@ -57,16 +60,11 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             {
                 if (wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
                 {
-                    HashSet<string> hideCategories = HashSetPool<string>.Get();
+                    hideCategories.Clear();
                     wearable.GetHidingList(bodyShapeId, hideCategories);
 
-                    if (hideCategories.Contains(hiddenCategory.ToLower()))
-                    {
-                        HashSetPool<string>.Release(hideCategories);
+                    if (hideCategories.Contains(hiddenCategory))
                         return wearable.GetCategory();
-                    }
-
-                    HashSetPool<string>.Release(hideCategories);
                 }
             }
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
