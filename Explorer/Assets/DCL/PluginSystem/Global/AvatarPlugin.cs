@@ -89,7 +89,16 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
-            celShadingMaterialPool = new ExtendedObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
+
+            celShadingMaterialPool = new ExtendedObjectPool<Material>(
+                () => new Material(providedMaterial.Value),
+                actionOnRelease: mat =>
+                {
+                    // reset material so it does not contain any old properties
+                    mat.CopyPropertiesFromMaterial(providedMaterial.Value);
+                },
+                actionOnDestroy: UnityObjectUtils.SafeDestroy,
+                defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < settings.defaultMaterialCapacity; i++)
             {
