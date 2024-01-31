@@ -174,8 +174,7 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
-                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
-                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
+                new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

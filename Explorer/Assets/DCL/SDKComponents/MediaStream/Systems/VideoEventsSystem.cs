@@ -1,5 +1,4 @@
-﻿using ECS.Abstract;
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -7,14 +6,15 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using ECS.Abstract;
 using ECS.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 
-namespace DCL.SDKComponents.VideoPlayer.Systems
+namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
-    [LogCategory(ReportCategory.VIDEO_PLAYER)]
+    [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -35,16 +35,15 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
 
         [Query]
         [All(typeof(PBVideoPlayer))]
-        private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref VideoPlayerComponent videoPlayer)
+        private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
-            VideoState newState = GetCurrentVideoState(videoPlayer.MediaPlayer);
+            VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer);
 
-            if (videoPlayer.State == newState) return;
-            videoPlayer.State = newState;
+            if (mediaPlayer.State == newState) return;
+            mediaPlayer.State = newState;
 
             using PoolExtensions.Scope<PBVideoEvent> scope = componentPool.AutoScope();
-            PBVideoEvent pbVideoEvent = scope.Value
-                                             .WithData(in videoPlayer, sceneStateProvider.TickNumber);
+            PBVideoEvent pbVideoEvent = scope.Value.WithData(in mediaPlayer, sceneStateProvider.TickNumber);
 
             ecsToCRDTWriter.AppendMessage(sdkEntity, pbVideoEvent, (int)pbVideoEvent.Timestamp);
         }
@@ -60,21 +59,6 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
             if (mediaPlayer.Control.GetLastError() != ErrorCode.None) return VideoState.VsError;
 
             return VideoState.VsNone;
-        }
-    }
-
-    public static class PBVideoEventExtensions
-    {
-        public static PBVideoEvent WithData(this PBVideoEvent pbVideoEvent, in VideoPlayerComponent videoPlayer, uint tickNumber)
-        {
-            pbVideoEvent.State = videoPlayer.State;
-            pbVideoEvent.CurrentOffset = videoPlayer.CurrentTime;
-            pbVideoEvent.VideoLength = videoPlayer.Duration;
-
-            pbVideoEvent.Timestamp = tickNumber;
-            pbVideoEvent.TickNumber = tickNumber;
-
-            return pbVideoEvent;
         }
     }
 }

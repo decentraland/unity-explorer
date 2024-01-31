@@ -116,9 +116,9 @@
         public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
 
         /// <summary>
-        ///     Everything related to Scenes audio source components
+        ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
         /// </summary>
-        public const string AUDIO_STREAM = nameof(AUDIO_STREAM);
+        public const string MEDIA_STREAM = nameof(MEDIA_STREAM);
 
         /// <summary>
         ///     Everything related to prioritization
@@ -148,11 +148,6 @@
         public const string WEARABLE = nameof(WEARABLE);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
-
-        /// <summary>
-        ///     Everything related to Scenes audio source components
-        /// </summary>
-        public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
