@@ -45,9 +45,10 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         [None(typeof(AvatarAttachComponent))]
         private void SetupAvatarAttach(in Entity entity, ref TransformComponent transformComponent, ref PBAvatarAttach pbAvatarAttach)
         {
-            var component = new AvatarAttachComponent();
-
-            component.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
+            var component = new AvatarAttachComponent
+            {
+                anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId),
+            };
 
             ApplyAnchorPointTransformValues(transformComponent, component);
             transformComponent.UpdateCache();
