@@ -23,7 +23,6 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveSceneLODInfo))]
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
@@ -75,7 +74,7 @@ namespace DCL.LOD.Systems
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        instantiatedLOD, result.Asset, lodSettingsAsset);
+                        instantiatedLOD, result.Asset);
                 }
                 else
                 {

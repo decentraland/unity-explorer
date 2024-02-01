@@ -13,23 +13,14 @@ namespace DCL.LOD
         public LODKey LodKey;
         public GameObject Root;
         public AssetBundleData AssetBundleReference;
-        private readonly bool LoadingFailed;
+        public readonly bool LoadingFailed;
 
-        private readonly LODDebugInfo LODDebugInfo;
-        private readonly ILODSettingsAsset lodSettingsAsset;
-
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODSettingsAsset lodSettingsAsset)
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference)
         {
             LodKey = lodKey;
             Root = root;
             AssetBundleReference = assetBundleReference;
             LoadingFailed = false;
-            LODDebugInfo = new LODDebugInfo();
-            this.lodSettingsAsset = lodSettingsAsset;
-
-            //This includes list that shouldnt be filled unless we are on debug mode
-            if (lodSettingsAsset.IsColorDebuging)
-                LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset);
 
             ProfilingCounters.LODAssetAmount.Value++;
         }
@@ -40,8 +31,6 @@ namespace DCL.LOD
             LoadingFailed = true;
             Root = null;
             AssetBundleReference = null;
-            lodSettingsAsset = default(LODSettingsAsset);
-            LODDebugInfo = default(LODDebugInfo);
         }
 
         public void Dispose()
@@ -65,8 +54,6 @@ namespace DCL.LOD
             Root.SetActive(true);
             Root.transform.SetParent(null);
 
-            if (lodSettingsAsset.IsColorDebuging)
-                LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset);
         }
 
         public void DisableAsset(Transform parentContainer)
@@ -82,10 +69,5 @@ namespace DCL.LOD
             Root.transform.SetParent(parentContainer);
         }
 
-        public void ToggleDebugColors()
-        {
-            if (LoadingFailed) return;
-            LODDebugInfo.Update(Root, LodKey.Level, lodSettingsAsset);
-        }
     }
 }

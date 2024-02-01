@@ -10,6 +10,9 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using System;
+using Arch.System;
+using NSubstitute.ReturnsExtensions;
+using UnityEngine;
 
 namespace DCL.LOD.Systems
 {
@@ -19,6 +22,12 @@ namespace DCL.LOD.Systems
     {
         private IDebugContainerBuilder debugBuilder;
         private readonly ILODSettingsAsset lodSettingsAsset;
+
+        private static readonly QueryDescription ADD_QUERY = new QueryDescription()
+            .WithAll<SceneLODInfo>();
+
+        private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
+            .WithAll<SceneLODInfoDebug>();
 
         public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset) : base(world)
         {
@@ -46,10 +55,58 @@ namespace DCL.LOD.Systems
         {
             lodSettingsAsset.IsColorDebuging = !lodSettingsAsset.IsColorDebuging;
 
-            World.Query(in new QueryDescription().WithAll<SceneLODInfo>(),
-                (ref SceneLODInfo sceneLODInfo) => { sceneLODInfo.ToggleDebugColors(); });
+            if (lodSettingsAsset.IsColorDebuging)
+                World.Query(ADD_QUERY,
+                    entity => { World.Add(entity, SceneLODInfoDebug.Create()); });
+            else
+            {
+                World.Query(REMOVE_QUERY,
+                    (Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug) =>
+                    {
+                        sceneLODInfoDebug.Dispose();
+                        World.Remove<SceneLODInfoDebug>(entity);
+                    });
+            }
         }
 
-        protected override void Update(float t) { }
+        protected override void Update(float t)
+        {
+            if (lodSettingsAsset.IsColorDebuging)
+            {
+                AddSceneLODInfoDebugQuery(World);
+                RemoveSceneLODInfoQuery(World);
+                UpdateLODDebugInfoQuery(World);
+            }
+        }
+
+        [Query]
+        [All(typeof(SceneLODInfoDebug))]
+        [None(typeof(SceneLODInfo))]
+        private void RemoveSceneLODInfo(in Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug)
+        {
+            sceneLODInfoDebug.Dispose();
+            World.Remove<SceneLODInfoDebug>(entity);
+        }
+
+        [Query]
+        [All(typeof(SceneLODInfo))]
+        [None(typeof(SceneLODInfoDebug))]
+        private void AddSceneLODInfoDebug(in Entity entity)
+        {
+            World.Add(entity, SceneLODInfoDebug.Create());
+        }
+
+        [Query]
+        private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
+        {
+            if (sceneLODInfo.CurrentLOD == null) return;
+
+            if (sceneLODInfo.CurrentLOD.Value.LoadingFailed) return;
+
+            if (!sceneLODInfo.CurrentLOD.Value.LodKey.Equals(sceneLODInfoDebug.CurrentLODKey))
+            {
+                sceneLODInfoDebug.Update(sceneLODInfo.CurrentLOD!.Value, lodSettingsAsset);
+            }
+        }
     }
 }

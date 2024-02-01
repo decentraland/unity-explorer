@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: LODSettings
   m_EditorClassIdentifier: 
   <IsColorDebuging>k__BackingField: 1
-  <LodPartitionBucketThresholds>k__BackingField: 0400000006000000
+  <LodPartitionBucketThresholds>k__BackingField: 0100000005000000
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
