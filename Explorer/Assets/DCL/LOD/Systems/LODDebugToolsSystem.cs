@@ -1,18 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using DCL.AssetsProvision;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using ECS.Abstract;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle;
-using System;
 using Arch.System;
-using NSubstitute.ReturnsExtensions;
-using UnityEngine;
 
 namespace DCL.LOD.Systems
 {
