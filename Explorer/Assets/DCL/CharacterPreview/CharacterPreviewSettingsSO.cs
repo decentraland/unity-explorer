@@ -19,6 +19,14 @@ namespace DCL.CharacterPreview
     }
 
     [Serializable]
+    public struct CharacterPreviewCameraPreset
+    {
+        [field: SerializeField] internal Vector3 verticalPosition { get; private set; }
+        [field: SerializeField] internal float cameraFieldOfView { get; private set; }
+        [field: SerializeField] internal AvatarWearableCategoryEnum wearableCategoryEnum { get; private set; }
+    }
+
+    [Serializable]
     public struct CharacterPreviewCameraSettings
     {
         [field: Header("Camera Settings")]

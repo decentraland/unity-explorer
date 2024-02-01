@@ -55,7 +55,6 @@ namespace DCL.CharacterPreview
 
             previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
 
-
             OnModelUpdated();
         }
 

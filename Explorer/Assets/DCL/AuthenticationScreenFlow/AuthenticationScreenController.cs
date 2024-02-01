@@ -178,6 +178,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             lifeCycleTask!.TrySetResult();
             lifeCycleTask = null;
+            characterPreviewController.Dispose();
         }
 
         private void SwitchState(ViewState state)

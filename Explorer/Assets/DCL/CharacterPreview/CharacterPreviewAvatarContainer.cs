@@ -5,14 +5,6 @@ using UnityEngine;
 
 namespace DCL.CharacterPreview
 {
-    [Serializable]
-    public struct CharacterPreviewCameraPreset
-    {
-        [field: SerializeField] internal Vector3 verticalPosition { get; private set; }
-        [field: SerializeField] internal float cameraFieldOfView { get; private set; }
-        [field: SerializeField] internal AvatarWearableCategoryEnum wearableCategoryEnum { get; private set; }
-    }
-
     /// <summary>
     ///     Contains serialized data only needed for the character preview
     ///     See CharacterPreviewController in the old renderer
