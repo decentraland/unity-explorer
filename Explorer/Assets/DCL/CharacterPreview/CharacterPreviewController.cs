@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.Components;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -32,7 +33,7 @@ namespace DCL.CharacterPreview
             // TODO add meaningful ID and Name
 
             characterPreviewEntity = world.Create(
-                new TransformComponent(container.avatarParent),
+                new CharacterTransform(container.avatarParent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
         }
 
