@@ -41,12 +41,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
                 pointersRequest[BodyShape.VALUES[i]] = new List<string>(defaultWearableDefinition.Value.Count);
 
-            var state = new DefaultWearablesComponent(new AssetPromise<IWearable[], GetWearablesByPointersIntention>[BodyShape.COUNT]);
+            var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
 
             for (var i = 0; i < defaultWearableDefinition.Value.Count; i++)
             {
                 WearableDTO dto = defaultWearableDefinition.Value[i];
-                var wearable = wearableCatalog.GetOrAddWearableByDTO(dto, false);
+                IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(dto, false);
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
                 pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
@@ -57,21 +57,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 BodyShape bodyShape = BodyShape.VALUES[i];
                 List<string> pointers = pointersRequest[bodyShape];
 
-                state.PromisePerBodyShape[bodyShape] = AssetPromise<IWearable[], GetWearablesByPointersIntention>
-                   .Create(World, new GetWearablesByPointersIntention(pointers, new IWearable[pointers.Count], bodyShape, Array.Empty<string>(),AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
+                state.PromisePerBodyShape[bodyShape] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
+                   .Create(World, new GetWearablesByPointersIntention(pointers, bodyShape, Array.Empty<string>(), AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
             }
-
 
             // Add empty default wearable
             var wearableDTO = new WearableDTO
             {
                 metadata = new WearableDTO.WearableMetadataDto
                 {
-                    id = WearablesConstants.EMPTY_DEFAULT_WEARABLE
-                }
+                    id = WearablesConstants.EMPTY_DEFAULT_WEARABLE,
+                },
             };
 
-            var emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO, false);
+            IWearable emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO, false);
             var wearableAsset = new WearableAsset(emptyDefaultWearable, new List<WearableAsset.RendererInfo>(), null);
             wearableAsset.AddReference();
 
@@ -100,10 +99,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             for (var i = 0; i < defaultWearablesComponent.PromisePerBodyShape.Length; i++)
             {
-                ref AssetPromise<IWearable[], GetWearablesByPointersIntention> promise = ref defaultWearablesComponent.PromisePerBodyShape[i];
+                ref AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = ref defaultWearablesComponent.PromisePerBodyShape[i];
                 if (promise.IsConsumed) continue;
 
-                if (promise.TryConsume(World, out StreamableLoadingResult<IWearable[]> result))
+                if (promise.TryConsume(World, out StreamableLoadingResult<WearablesResolution> result))
                 {
                     if (!result.Succeeded)
                         finalState = DefaultWearablesComponent.State.Fail;

@@ -1,4 +1,3 @@
-using DCL.CharacterPreview;
 using DCL.UI;
 using UnityEngine;
 
@@ -14,6 +13,5 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         internal SearchBarView backpackSearchBar { get; private set; }
-
     }
 }

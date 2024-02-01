@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -63,12 +64,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        [None(typeof(StreamableLoadingResult<IWearable[]>))]
+        [None(typeof(StreamableResult))]
         private void ResolveWearablePromise([Data] bool defaultWearablesResolved, in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                World.Add(entity, new StreamableLoadingResult<IWearable[]>(new Exception("Pointer request cancelled")));
+                World.Add(entity, new StreamableResult(new Exception("Pointer request cancelled")));
                 return;
             }
 
@@ -78,7 +79,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return; // Wait for default wearables to be resolved
 
             List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
-            List<IWearable> resolvedWereables = new List<IWearable>();
+            List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get();
+
             var successfulResults = 0;
             var successfulDtos = 0;
 
@@ -96,9 +98,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (wearable.WearableDTO.Succeeded)
                 {
                     successfulDtos++;
-                    resolvedWereables.Add(wearable);
+                    resolvedDTOs.Add(wearable);
                 }
-
             }
 
             if (missingPointers.Count > 0)
@@ -107,40 +108,42 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
+            ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
+
             if (successfulDtos == wearablesByPointersIntention.Pointers.Count)
             {
-                ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
-
                 if (hideWearablesResolution.VisibleWearables == null)
-                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedWereables, resolvedWereables.Count, ref hideWearablesResolution);
+                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, resolvedDTOs.Count, ref hideWearablesResolution);
 
-                successfulResults += (wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count);
-                for (int i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
+                successfulResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
+
+                for (var i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
                 {
                     IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
 
                     if (visibleWearable.IsLoading) continue;
                     if (CreateAssetBundlePromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
+
                     if (visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                     {
                         successfulResults++;
 
-                        if (wearablesByPointersIntention.Results[i] == null)
-                        {
+                        // Reference must be added only once when the wearable is resolved
+                        if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
+
                             // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
                             visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
-                            wearablesByPointersIntention.Results[i] = visibleWearable;
-                        }
                     }
                 }
             }
+
+            WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDTOs);
 
             // If there are no missing pointers, we release the list
             WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)
-                World.Add(entity, new StreamableLoadingResult<IWearable[]>(wearablesByPointersIntention.Results));
-
+                World.Add(entity, new StreamableResult(new WearablesResolution(hideWearablesResolution.VisibleWearables, hideWearablesResolution.HiddenCategories)));
         }
 
         [Query]
@@ -292,11 +295,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
 
-            var defaultWearable = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory(),
-                out var hasEmptyDefaultWearableAB);
+            IWearable defaultWearable = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory(),
+                out bool hasEmptyDefaultWearableAB);
+
             if (wearable.IsUnisex())
             {
                 wearable.WearableAssetResults[BodyShape.MALE] = defaultWearable.WearableAssetResults[BodyShape.MALE];
+
                 wearable.WearableAssetResults[BodyShape.FEMALE] =
                     defaultWearable.WearableAssetResults[BodyShape.FEMALE];
             }

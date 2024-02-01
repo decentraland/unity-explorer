@@ -24,7 +24,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -67,12 +67,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                     { "skin", "hair" }, Array.Empty<string>()),
                 new PartitionComponent());
 
-            world.Add(promise.Entity, new StreamableLoadingResult<IWearable[]>(new[]
+            world.Add(promise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {
                 GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE),
                 GetMockWearable("skin", WearablesConstants.Categories.UPPER_BODY),
                 GetMockWearable("hair", WearablesConstants.Categories.HAIR),
-            }));
+            })));
 
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
                 randomSkinColor, randomHairColor);
@@ -150,7 +150,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
                 new PartitionComponent());
 
-            world.Add(newPromise.Entity, new StreamableLoadingResult<IWearable[]>(new[] { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) }));
+            world.Add(newPromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newPromise;

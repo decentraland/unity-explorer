@@ -10,16 +10,17 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.Unity.Transforms.Components;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewController : IDisposable
     {
-        private readonly World globalWorld;
-        private readonly Entity characterPreviewEntity;
-        private readonly CharacterPreviewContainer characterPreviewContainer;
         private readonly CharacterPreviewCameraController cameraController;
+        private readonly CharacterPreviewContainer characterPreviewContainer;
         private readonly IComponentPool<CharacterPreviewContainer> characterPreviewContainerPool;
+        private readonly Entity characterPreviewEntity;
+        private readonly World globalWorld;
 
         public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewContainer> characterPreviewContainerPool)
         {
@@ -35,6 +36,13 @@ namespace DCL.CharacterPreview
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
         }
 
+        public void Dispose()
+        {
+            globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
+            characterPreviewContainerPool.Release(characterPreviewContainer);
+            cameraController.Dispose();
+        }
+
         public void UpdateAvatar(CharacterPreviewModel model)
         {
             if (globalWorld == null || model.Wearables == null || model.Wearables.Count <= 0) return;
@@ -47,7 +55,7 @@ namespace DCL.CharacterPreview
 
             avatarShape.WearablePromise.ForgetLoading(globalWorld);
 
-            avatarShape.WearablePromise = AssetPromise<IWearable[], GetWearablesByPointersIntention>.Create(
+            avatarShape.WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, model.Wearables, model.ForceRender),
                 PartitionComponent.TOP_PRIORITY
@@ -63,19 +71,13 @@ namespace DCL.CharacterPreview
                 ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
                 if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
             }
+
             if (characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(false);
         }
 
         public void Show()
         {
             if (characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(true);
-        }
-
-        public void Dispose()
-        {
-            globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
-            characterPreviewContainerPool.Release(characterPreviewContainer);
-            cameraController.Dispose();
         }
     }
 }
