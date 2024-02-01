@@ -23,9 +23,6 @@ namespace DCL.LOD.Systems
         private IDebugContainerBuilder debugBuilder;
         private readonly ILODSettingsAsset lodSettingsAsset;
 
-        private static readonly QueryDescription ADD_QUERY = new QueryDescription()
-            .WithAll<SceneLODInfo>();
-
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
             .WithAll<SceneLODInfoDebug>();
 
@@ -55,18 +52,13 @@ namespace DCL.LOD.Systems
         {
             lodSettingsAsset.IsColorDebuging = !lodSettingsAsset.IsColorDebuging;
 
-            if (lodSettingsAsset.IsColorDebuging)
-                World.Query(ADD_QUERY,
-                    entity => { World.Add(entity, SceneLODInfoDebug.Create()); });
-            else
-            {
+            if (!lodSettingsAsset.IsColorDebuging)
                 World.Query(REMOVE_QUERY,
                     (Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug) =>
                     {
                         sceneLODInfoDebug.Dispose();
                         World.Remove<SceneLODInfoDebug>(entity);
                     });
-            }
         }
 
         protected override void Update(float t)
