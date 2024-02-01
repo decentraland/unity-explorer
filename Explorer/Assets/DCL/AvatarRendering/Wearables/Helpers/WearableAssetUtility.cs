@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             cachedWearable.Instance.transform.ResetLocalTRS();
             cachedWearable.Instance.gameObject.layer = parent.gameObject.layer;
 
-            PoolExtensions.Scope<List<Transform>> children = cachedWearable.Instance.GetComponentsInChildrenIntoPooledList<Transform>(true);
+            using PoolExtensions.Scope<List<Transform>> children = cachedWearable.Instance.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
             for (var index = 0; index < children.Value.Count; index++)
             {
