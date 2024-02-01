@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.Textures.Components;
@@ -18,10 +19,12 @@ namespace DCL.SDKComponents.MediaStream
     public partial class UpdateMediaPlayerSystem: BaseUnityLoopSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IPerformanceBudget frameTimeBudget;
 
-        private UpdateMediaPlayerSystem(World world, ISceneStateProvider sceneStateProvider) : base(world)
+        private UpdateMediaPlayerSystem(World world, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
+            this.frameTimeBudget = frameTimeBudget;
         }
 
         protected override void Update(float t)
@@ -37,10 +40,12 @@ namespace DCL.SDKComponents.MediaStream
         {
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
 
-            if (sdkComponent.IsDirty && sdkComponent.Url.IsValidUrl())
+            if (sdkComponent.IsDirty && sdkComponent.Url.IsValidUrl() && frameTimeBudget.TrySpendBudget())
             {
                 UpdateStreamUrl(ref component, sdkComponent.Url);
                 component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+
+                sdkComponent.IsDirty = false;
             }
         }
 
@@ -49,19 +54,22 @@ namespace DCL.SDKComponents.MediaStream
         {
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
 
-            if (sdkComponent.IsDirty && sdkComponent.Src.IsValidUrl())
+            if (sdkComponent.IsDirty && sdkComponent.Src.IsValidUrl() && frameTimeBudget.TrySpendBudget())
             {
                 UpdateStreamUrl(ref component, sdkComponent.Src);
+
                 component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing)
                          .UpdatePlaybackProperties(sdkComponent);
+
+                sdkComponent.IsDirty = false;
             }
         }
 
         [Query]
         [All(typeof(PBVideoPlayer))]
-        private static void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureComponent assignedTexture)
+        private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureComponent assignedTexture)
         {
-            if (!playerComponent.IsPlaying) return;
+            if (!playerComponent.IsPlaying || !frameTimeBudget.TrySpendBudget()) return;
 
             Texture avText = playerComponent.MediaPlayer.TextureProducer.GetTexture();
             if (avText == null) return;

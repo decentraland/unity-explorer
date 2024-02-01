@@ -1,4 +1,5 @@
 ﻿using Arch.SystemGroups;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
@@ -13,9 +14,9 @@ namespace DCL.PluginSystem.World
     {
         private readonly MediaPlayerPluginWrapper mediaPlayerPluginWrapper;
 
-        public MediaPlayerPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool)
+        public MediaPlayerPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool, IPerformanceBudget frameTimeBudget)
         {
-            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, cacheCleaner, videoTexturePool);
+            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, cacheCleaner, videoTexturePool, frameTimeBudget);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems)

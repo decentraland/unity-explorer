@@ -2,11 +2,11 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Systems;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -18,13 +18,15 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
+        private readonly IPerformanceBudget frameTimeBudget;
 
-        public MediaPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool)
+        public MediaPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool, IPerformanceBudget frameTimeBudget)
         {
 #if AV_PRO_PRESENT
             this.componentPoolsRegistry = componentPoolsRegistry;
 
             this.videoTexturePool = videoTexturePool;
+            this.frameTimeBudget = frameTimeBudget;
             cacheCleaner.Register(videoTexturePool);
 
             componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
@@ -37,14 +39,11 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #if AV_PRO_PRESENT
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
 
-            CreateMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider);
-            UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneStateProvider);
+            CreateMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
+            UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneStateProvider, frameTimeBudget);
             CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool);
 
-            VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>());
-
-            ResetDirtyFlagSystem<PBAudioStream>.InjectToWorld(ref builder);
-            ResetDirtyFlagSystem<PBVideoPlayer>.InjectToWorld(ref builder);
+            VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, MediaPlayerComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif

@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
@@ -18,11 +19,13 @@ namespace DCL.SDKComponents.MediaStream
     public partial class CreateMediaPlayerSystem : BaseUnityLoopSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
 
-        private CreateMediaPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider) : base(world)
+        private CreateMediaPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
+            this.frameTimeBudget = frameTimeBudget;
             this.mediaPlayerPool = mediaPlayerPool;
         }
 
@@ -36,6 +39,8 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
+            if(!frameTimeBudget.TrySpendBudget()) return;
+
             var component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
             World.Add(entity, component);
         }
@@ -45,6 +50,8 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, ref PBVideoPlayer sdkComponent)
         {
+            if(!frameTimeBudget.TrySpendBudget()) return;
+
             var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
             component.MediaPlayer.SetPlaybackProperties(sdkComponent);
             World.Add(entity, component);

@@ -1,10 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -15,17 +17,20 @@ namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
+    [ThrottlingEnabled]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IComponentPool<PBVideoEvent> componentPool;
+        private readonly IPerformanceBudget frameTimeBudget;
 
-        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IComponentPool<PBVideoEvent> componentPool) : base(world)
+        private VideoEventsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneStateProvider sceneStateProvider, IComponentPool<PBVideoEvent> componentPool, IPerformanceBudget frameTimeBudget) : base(world)
         {
             ecsToCRDTWriter = ecsToCrdtWriter;
             this.sceneStateProvider = sceneStateProvider;
             this.componentPool = componentPool;
+            this.frameTimeBudget = frameTimeBudget;
         }
 
         protected override void Update(float t)
@@ -37,6 +42,8 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(PBVideoPlayer))]
         private void PropagateVideoEvents(ref CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
         {
+            if (!frameTimeBudget.TrySpendBudget()) return;
+
             VideoState newState = GetCurrentVideoState(mediaPlayer.MediaPlayer.Control);
 
             if (mediaPlayer.State == newState) return;
