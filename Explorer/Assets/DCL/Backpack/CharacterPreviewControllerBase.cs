@@ -43,33 +43,18 @@ namespace DCL.CharacterPreview
             previewAvatarModel.ForceRender = new HashSet<string>(avatar.ForceRender);
 
             //Temporal solution to fix issue with render format in Mac VS Windows
-            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+            Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
+            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, TextureUtilities.GetColorSpaceFormat())
             {
-                Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
+                name = "Preview Texture",
+            };
 
-                var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, GraphicsFormat.A2R10G10B10_UNormPack32)
-                {
-                    name = "Preview Texture",
-                };
+            newTexture.Create();
 
-                newTexture.Create();
+            view.RawImage.texture = newTexture;
 
-                view.RawImage.texture = newTexture;
-                previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
-            }
-            else
-            {
-                Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
+            previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
 
-                var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, GraphicsFormat.R32G32B32A32_SInt)
-                {
-                    name = "Preview Texture",
-                };
-
-                newTexture.Create();
-                view.RawImage.texture = newTexture;
-                previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
-            }
 
             OnModelUpdated();
         }

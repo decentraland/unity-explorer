@@ -30,8 +30,6 @@ namespace DCL.CharacterPreview
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
-            // TODO add meaningful ID and Name
-
             characterPreviewEntity = world.Create(
                 new TransformComponent(avatarContainer.avatarParent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
@@ -47,8 +45,7 @@ namespace DCL.CharacterPreview
             avatarShape.HairColor = avatarModel.HairColor;
             avatarShape.BodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
 
-            if (!avatarShape.WearablePromise.IsConsumed)
-                avatarShape.WearablePromise.ForgetLoading(globalWorld);
+            avatarShape.WearablePromise.ForgetLoading(globalWorld);
 
             avatarShape.WearablePromise = AssetPromise<IWearable[], GetWearablesByPointersIntention>.Create(
                 globalWorld,

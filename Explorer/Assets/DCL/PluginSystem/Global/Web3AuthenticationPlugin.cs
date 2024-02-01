@@ -14,7 +14,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -72,7 +71,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
-            authenticationScreenController.SetWorld(builder.World, arguments.PlayerEntity);
+            authenticationScreenController.SetWorld(builder.World);
         }
     }
 

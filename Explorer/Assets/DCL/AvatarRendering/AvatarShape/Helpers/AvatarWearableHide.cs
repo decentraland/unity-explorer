@@ -9,9 +9,9 @@ using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
 {
-    public class AvatarWearableHide
+    public static class AvatarWearableHide
     {
-        public static readonly Dictionary<string, string> CategoriesToReadable = new ()
+        public static readonly Dictionary<string, string> CATEGORIES_TO_READABLE = new ()
         {
             { WearablesConstants.Categories.HEAD, "Head" },
             { WearablesConstants.Categories.UPPER_BODY, "Upper body" },
@@ -35,23 +35,23 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             { WearablesConstants.Categories.BODY_SHAPE, "Body shape" },
         };
 
-        private static readonly Dictionary<string, string> bodyPartsMapping = new ()
+        private static readonly (string, string)[] BODY_PARTS_MAPPING =
         {
-            { "head", WearablesConstants.Categories.HEAD },
-            { "ubody", WearablesConstants.Categories.UPPER_BODY },
-            { "lbody", WearablesConstants.Categories.LOWER_BODY },
-            { "hands", WearablesConstants.Categories.HANDS },
-            { "feet", WearablesConstants.Categories.FEET },
-            { "eyes", WearablesConstants.Categories.EYES },
-            { "eyebrows", WearablesConstants.Categories.EYEBROWS },
-            { "mouth", WearablesConstants.Categories.MOUTH },
+            ("head", WearablesConstants.Categories.HEAD),
+            ("ubody", WearablesConstants.Categories.UPPER_BODY),
+            ("lbody", WearablesConstants.Categories.LOWER_BODY),
+            ("hands", WearablesConstants.Categories.HANDS),
+            ("feet", WearablesConstants.Categories.FEET),
+            ("eyes", WearablesConstants.Categories.EYES),
+            ("eyebrows", WearablesConstants.Categories.EYEBROWS),
+            ("mouth", WearablesConstants.Categories.MOUTH),
         };
 
-        private static readonly HashSet<string> hideCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> HIDE_CATEGORIES = new (StringComparer.OrdinalIgnoreCase);
 
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
         {
-            var wearablesByCategory = DictionaryPool<string, IWearable>.Get();
+            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
 
             for (var i = 0; i < equippedWearables.Count; i++)
                 wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
@@ -60,13 +60,14 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             {
                 if (wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
                 {
-                    hideCategories.Clear();
-                    wearable.GetHidingList(bodyShapeId, hideCategories);
+                    HIDE_CATEGORIES.Clear();
+                    wearable.GetHidingList(bodyShapeId, HIDE_CATEGORIES);
 
-                    if (hideCategories.Contains(hiddenCategory))
+                    if (HIDE_CATEGORIES.Contains(hiddenCategory))
                         return wearable.GetCategory();
                 }
             }
+
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
 
             return string.Empty;
@@ -75,7 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
         public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
         {
             combinedHidingList.Clear();
-            var wearablesByCategory = new Dictionary<string, IWearable>();
+            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
 
             for (var i = 0; i < wearables.Count; i++)
                 wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
@@ -99,6 +100,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             if (forceRender != null)
                 foreach (string category in forceRender) { combinedHidingList.Remove(category); }
 
+            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
             HashSetPool<string>.Release(hidingList);
         }
 
@@ -108,33 +110,32 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             if (bodyShape == null)
                 return;
 
-            using (PoolExtensions.Scope<List<Renderer>> pooledList = bodyShape.GetComponentsInChildrenIntoPooledList<Renderer>(true))
+            using PoolExtensions.Scope<List<Renderer>> pooledList = bodyShape.GetComponentsInChildrenIntoPooledList<Renderer>(true);
+
+            for (var i = 0; i < pooledList.Value.Count; i++)
             {
-                for (var i = 0; i < pooledList.Value.Count; i++)
+                Renderer renderer = pooledList.Value[i];
+
+                string name = renderer.name;
+
+                // Support for the old gltf hierarchy for ABs
+                if (name.Contains("primitive", StringComparison.OrdinalIgnoreCase))
+                    name = renderer.transform.parent.name;
+
+                var isPartMapped = false;
+
+                foreach ((string key, string value) in BODY_PARTS_MAPPING)
                 {
-                    Renderer renderer = pooledList.Value[i];
-
-                    string name = renderer.name.ToLower();
-
-                    // Support for the old gltf hierarchy for ABs
-                    if (name.Contains("primitive"))
-                        name = renderer.transform.parent.name.ToLower();
-
-                    var isPartMapped = false;
-
-                    foreach (KeyValuePair<string, string> kvp in bodyPartsMapping)
+                    if (name.Contains(key, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (name.Contains(kvp.Key))
-                        {
-                            renderer.gameObject.SetActive(!(hidingList.Contains(kvp.Value) || usedCategories.Contains(kvp.Value)));
-                            isPartMapped = true;
-                            break;
-                        }
+                        renderer.gameObject.SetActive(!(hidingList.Contains(value) || usedCategories.Contains(value)));
+                        isPartMapped = true;
+                        break;
                     }
-
-                    if (!isPartMapped)
-                        ReportHub.LogWarning(ReportCategory.WEARABLE, $"{name} has not been set-up as a valid body part");
                 }
+
+                if (!isPartMapped)
+                    ReportHub.LogWarning(ReportCategory.WEARABLE, $"{name} has not been set-up as a valid body part");
             }
         }
     }

@@ -251,10 +251,9 @@ namespace DCL.AuthenticationScreenFlow
             Finalize,
         }
 
-        public void SetWorld(World world, Entity playerEntity)
+        public void SetWorld(World world)
         {
             this.world = world;
-            this.playerEntity = playerEntity;
         }
     }
 }

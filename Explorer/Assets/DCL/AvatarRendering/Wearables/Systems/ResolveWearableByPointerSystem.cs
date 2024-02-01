@@ -17,8 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
