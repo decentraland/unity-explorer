@@ -1,11 +1,10 @@
 ﻿using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using RenderHeads.Media.AVProVideo;
 using System;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public struct MediaPlayerComponent : IPoolableComponentProvider<MediaPlayer>
+    public struct MediaPlayerComponent : IDisposable
     {
         public const float DEFAULT_VOLUME = 1f;
         public const float DEFAULT_PLAYBACK_RATE = 1f;
@@ -18,9 +17,6 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
         public float Duration => (float)MediaPlayer.Info.GetDuration();
-
-        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => MediaPlayer;
-        Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
 
         public void Dispose()
         {

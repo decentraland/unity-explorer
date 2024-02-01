@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -16,6 +17,7 @@ namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
+    [ThrottlingEnabled]
     public partial class UpdateMediaPlayerSystem: BaseUnityLoopSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;

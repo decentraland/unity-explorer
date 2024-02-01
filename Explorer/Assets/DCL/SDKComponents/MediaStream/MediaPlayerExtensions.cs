@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.MediaStream
 
             control.SetLooping(sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop); // default: false
             control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
-            control.Seek(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
+            control.SeekFast(sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION);
         }
 
         public static void UpdatePlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
@@ -48,15 +48,15 @@ namespace DCL.SDKComponents.MediaStream
                 control.SetPlaybackRate(sdkVideoPlayer.PlaybackRate);
 
             if (sdkVideoPlayer.HasPosition)
-                control.Seek(sdkVideoPlayer.Position);
+                control.SeekFast(sdkVideoPlayer.Position);
         }
 
         public static MediaPlayer UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
         {
+            IMediaControl control = mediaPlayer.Control;
+
             if (hasPlaying)
             {
-                IMediaControl control = mediaPlayer.Control;
-
                 if (playing != control.IsPlaying())
                 {
                     if (playing)
@@ -65,8 +65,8 @@ namespace DCL.SDKComponents.MediaStream
                         control.Pause();
                 }
             }
-            else if (mediaPlayer.Control.IsPlaying())
-                mediaPlayer.Control.Stop();
+            else if (control.IsPlaying())
+                control.Stop();
 
             return mediaPlayer;
         }

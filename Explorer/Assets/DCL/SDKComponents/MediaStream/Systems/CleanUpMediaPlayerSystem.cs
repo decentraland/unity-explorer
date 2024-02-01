@@ -29,9 +29,9 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             HandleSdkAudioStreamComponentRemovalQuery(World);
-            HandleAudioEntityDestructionQuery(World);
-
             HandleSdkVideoPlayerComponentRemovalQuery(World);
+
+            HandleAudioEntityDestructionQuery(World);
             HandleVideoEntityDestructionQuery(World);
         }
 
@@ -41,19 +41,18 @@ namespace DCL.SDKComponents.MediaStream
         {
             CleanUpMediaPlayer(ref mediaPlayer);
         }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention), typeof(VideoTextureComponent))]
-        private void HandleAudioEntityDestruction(ref MediaPlayerComponent mediaPlayer)
-        {
-            CleanUpMediaPlayer(ref mediaPlayer);
-        }
-
         [Query]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
         private void HandleSdkVideoPlayerComponentRemoval(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpVideoTexture(ref textureComponent);
+            CleanUpMediaPlayer(ref mediaPlayer);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention), typeof(VideoTextureComponent))]
+        private void HandleAudioEntityDestruction(ref MediaPlayerComponent mediaPlayer)
+        {
             CleanUpMediaPlayer(ref mediaPlayer);
         }
 
