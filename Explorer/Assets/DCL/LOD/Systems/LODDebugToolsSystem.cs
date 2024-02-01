@@ -96,9 +96,7 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.CurrentLOD.Value.LoadingFailed) return;
 
             if (!sceneLODInfo.CurrentLOD.Value.LodKey.Equals(sceneLODInfoDebug.CurrentLODKey))
-            {
                 sceneLODInfoDebug.Update(sceneLODInfo.CurrentLOD!.Value, lodSettingsAsset);
-            }
         }
     }
 }
