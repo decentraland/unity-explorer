@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b0b2609fd084bb696d6821c99c000c1, type: 3}
   m_Name: LODSettings
   m_EditorClassIdentifier: 
-  <IsColorDebuging>k__BackingField: 1
-  <LodPartitionBucketThresholds>k__BackingField: 0100000005000000
+  <IsColorDebuging>k__BackingField: 0
+  <LodPartitionBucketThresholds>k__BackingField: 040000000a000000
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
