@@ -40,10 +40,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             SortUITransform(ref uiTransformComponent);
 
-            if (uiTransformComponent.Parent == EntityReference.Null)
+            if (uiTransformComponent.Transform.Parent == EntityReference.Null)
                 return;
 
-            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Parent).Children)
+            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Transform.Parent).Transform.Children)
             {
                 if (!brotherEntity.IsAlive(World))
                     continue;
@@ -54,15 +54,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private void SortUITransform(ref UITransformComponent uiTransform)
         {
-            if (!entitiesMap.TryGetValue(uiTransform.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
+            if (!entitiesMap.TryGetValue(uiTransform.Transform.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
                 return;
 
             var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);
 
-            if (uiTransform.Transform.parent != uiTransformOnLeft.Transform.parent)
+            if (uiTransform.Transform.VisualElement.parent != uiTransformOnLeft.Transform.VisualElement.parent)
                 return;
 
-            uiTransform.Transform.PlaceInFront(uiTransformOnLeft.Transform);
+            uiTransform.Transform.VisualElement.PlaceInFront(uiTransformOnLeft.Transform.VisualElement);
         }
     }
 }

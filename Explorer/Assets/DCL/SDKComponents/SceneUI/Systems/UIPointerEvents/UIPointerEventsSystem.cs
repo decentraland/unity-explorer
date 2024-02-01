@@ -21,8 +21,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
     [ThrottlingEnabled]
     public partial class UIPointerEventsSystem : BaseUnityLoopSystem
     {
-        private static readonly PBPointerEventsResult SHARED_POINTER_EVENTS_RESULT = new ();
-
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -38,42 +36,38 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         }
 
         [Query]
-        private void CheckPointerEvents(ref PBPointerEvents pointerEventsModel, ref UITransformComponent uiTransformComponent, CRDTEntity sdkEntity)
+        private void CheckPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, CRDTEntity sdkEntity)
         {
-            if (!pointerEventsModel.IsDirty)
+            if (!sdkModel.IsDirty)
                 return;
 
-            foreach (var pEvent in pointerEventsModel.PointerEvents)
+            foreach (var pEvent in sdkModel.PointerEvents)
             {
                 switch (pEvent.EventType)
                 {
                     case PointerEventType.PetDown:
-                        EventCallback<PointerDownEvent> onPointerDownCallback = null;
-                        onPointerDownCallback += _ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetDown);
-                        uiTransformComponent.Transform.UnregisterCallback(onPointerDownCallback);
-                        uiTransformComponent.Transform.RegisterCallback(onPointerDownCallback);
+                        uiTransformComponent.Transform.RegisterPointerDownCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetDown));
                         break;
                     case PointerEventType.PetUp:
-                        EventCallback<PointerUpEvent> onPointerUpCallback = null;
-                        onPointerUpCallback += _ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetUp);
-                        uiTransformComponent.Transform.UnregisterCallback(onPointerUpCallback);
-                        uiTransformComponent.Transform.RegisterCallback(onPointerUpCallback);
+                        uiTransformComponent.Transform.RegisterPointerUpCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetUp));
                         break;
                 }
             }
 
-            uiTransformComponent.Transform.pickingMode = PickingMode.Position;
-            pointerEventsModel.IsDirty = false;
+            uiTransformComponent.Transform.VisualElement.pickingMode = PickingMode.Position;
+            sdkModel.IsDirty = false;
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
-            PBPointerEventsResult result = SHARED_POINTER_EVENTS_RESULT;
-            result.Hit = null;
-            result.Button = button;
-            result.State = eventType;
-            result.Timestamp = sceneStateProvider.TickNumber;
-            result.TickNumber = sceneStateProvider.TickNumber;
+            PBPointerEventsResult result = new()
+            {
+                Hit = null,
+                Button = button,
+                State = eventType,
+                Timestamp = sceneStateProvider.TickNumber,
+                TickNumber = sceneStateProvider.TickNumber,
+            };
 
             ecsToCRDTWriter.AppendMessage(sdkEntity, result, (int)result.Timestamp);
         }

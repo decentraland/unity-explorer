@@ -137,7 +137,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
-            if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
+            if (uiTransformComponent.Transform.VisualElement.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.VisualElement.style.height.keyword == StyleKeyword.Auto)
                 labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
 
             labelToSetup.text = model.Value;
@@ -197,6 +197,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ReleaseUIElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
+
+        public static void ReleaseDCLTransform(DCLTransform transform)
+        {
+            transform.Dispose();
+            ReleaseUIElement(transform.VisualElement);
+        }
 
         public static void ReleaseDCLImage(DCLImage image) =>
             image.Dispose();

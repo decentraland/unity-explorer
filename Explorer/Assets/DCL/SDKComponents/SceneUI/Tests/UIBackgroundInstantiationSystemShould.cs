@@ -80,7 +80,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 system.Update(0);
 
                 // Assert
-                Assert.IsTrue(input.GetColor() == uiTransformComponent.Transform.style.backgroundColor);
+                Assert.IsTrue(input.GetColor() == uiTransformComponent.Transform.VisualElement.style.backgroundColor);
             }
         }
     }

@@ -38,10 +38,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [All(typeof(PBUiTransform), typeof(UITransformComponent), typeof(DeleteEntityIntention))]
         private void OrphanChildrenOfDeletedEntity(ref UITransformComponent uiTransformComponentToBeDeleted)
         {
-            foreach (EntityReference childEntity in uiTransformComponentToBeDeleted.Children)
+            foreach (EntityReference childEntity in uiTransformComponentToBeDeleted.Transform.Children)
                 SetNewChild(ref World.Get<UITransformComponent>(childEntity.Entity), childEntity, sceneRoot);
 
-            uiTransformComponentToBeDeleted.Children.Clear();
+            uiTransformComponentToBeDeleted.Transform.Children.Clear();
         }
 
         [Query]
@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 parentReference = newParentEntity;
 
                 //We have to remove the child from the old parent
-                if (uiTransformComponent.Parent != parentReference)
+                if (uiTransformComponent.Transform.Parent != parentReference)
                     RemoveFromParent(uiTransformComponent, World.Reference(entity));
 
                 if (parentReference != sceneRoot)
@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private void SetNewChild(ref UITransformComponent childComponent, EntityReference childEntityReference, Entity parentEntity)
         {
-            if (childComponent.Parent == parentEntity)
+            if (childComponent.Transform.Parent == parentEntity)
                 return;
 
             if (!World.IsAlive(parentEntity))
@@ -81,15 +81,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (parentComponent.Transform == childComponent.Transform)
                 return;
 
-            parentComponent.Transform.Add(childComponent.Transform);
-            childComponent.Parent = World.Reference(parentEntity);
-            parentComponent.Children.Add(childEntityReference);
+            parentComponent.Transform.VisualElement.Add(childComponent.Transform.VisualElement);
+            childComponent.Transform.Parent = World.Reference(parentEntity);
+            parentComponent.Transform.Children.Add(childEntityReference);
         }
 
         private void RemoveFromParent(UITransformComponent childComponent, EntityReference childEntityReference)
         {
-            if (childComponent.Parent.IsAlive(World))
-                World.Get<UITransformComponent>(childComponent.Parent.Entity).Children.Remove(childEntityReference);
+            if (childComponent.Transform.Parent.IsAlive(World))
+                World.Get<UITransformComponent>(childComponent.Transform.Parent.Entity).Transform.Children.Remove(childEntityReference);
         }
     }
 }

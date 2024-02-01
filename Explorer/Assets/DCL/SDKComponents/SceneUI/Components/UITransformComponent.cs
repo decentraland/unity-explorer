@@ -1,26 +1,22 @@
 ﻿using Arch.Core;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.SceneUI.Classes;
 using System;
-using System.Collections.Generic;
 using UnityEngine.Pool;
-using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
-    public struct UITransformComponent : IPoolableComponentProvider<VisualElement>
+    public struct UITransformComponent : IPoolableComponentProvider<DCLTransform>
     {
-        public VisualElement Transform;
-        public EntityReference Parent;
-        public HashSet<EntityReference> Children;
-        public bool IsHidden;
-        public int RightOf;
+        public DCLTransform Transform;
 
-        VisualElement IPoolableComponentProvider<VisualElement>.PoolableComponent => Transform;
-        Type IPoolableComponentProvider<VisualElement>.PoolableComponentType => typeof(VisualElement);
+        DCLTransform IPoolableComponentProvider<DCLTransform>.PoolableComponent => Transform;
+        Type IPoolableComponentProvider<DCLTransform>.PoolableComponentType => typeof(DCLTransform);
 
         public void Dispose()
         {
-            HashSetPool<EntityReference>.Release(Children);
+            HashSetPool<EntityReference>.Release(Transform.Children);
+            Transform.Dispose();
         }
     }
 }
