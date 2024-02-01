@@ -10,7 +10,6 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using System;
 
 namespace DCL.SDKComponents.MediaStream
 {

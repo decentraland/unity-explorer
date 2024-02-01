@@ -56,6 +56,7 @@ namespace DCL.SDKComponents.MediaStream
             if (hasPlaying)
             {
                 IMediaControl control = mediaPlayer.Control;
+
                 if (playing != control.IsPlaying())
                 {
                     if (playing)
@@ -74,7 +75,9 @@ namespace DCL.SDKComponents.MediaStream
         {
             mediaPlayer.Stop();
             mediaPlayer.CloseMedia();
-            mediaPlayer.Events.RemoveAllListeners();
+
+            if (mediaPlayer.Events.HasListeners())
+                mediaPlayer.Events.RemoveAllListeners();
         }
     }
 }

@@ -29,9 +29,10 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             HandleSdkAudioStreamComponentRemovalQuery(World);
+            HandleAudioEntityDestructionQuery(World);
 
-            HandleSdkComponentRemovalQuery(World);
-            HandleEntityDestructionQuery(World);
+            HandleSdkVideoPlayerComponentRemovalQuery(World);
+            HandleVideoEntityDestructionQuery(World);
         }
 
         [Query]
@@ -42,8 +43,15 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
+        [All(typeof(DeleteEntityIntention), typeof(VideoTextureComponent))]
+        private void HandleAudioEntityDestruction(ref MediaPlayerComponent mediaPlayer)
+        {
+            CleanUpMediaPlayer(ref mediaPlayer);
+        }
+
+        [Query]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkComponentRemoval(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
+        private void HandleSdkVideoPlayerComponentRemoval(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpVideoTexture(ref textureComponent);
             CleanUpMediaPlayer(ref mediaPlayer);
@@ -51,23 +59,22 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
+        private void HandleVideoEntityDestruction(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpVideoTexture(ref textureComponent);
             CleanUpMediaPlayer(ref mediaPlayer);
         }
 
-        private void CleanUpVideoTexture(ref VideoTextureComponent textureComponent)
+        private void CleanUpVideoTexture(ref VideoTextureComponent videoTextureComponent)
         {
-            var videoTexture = textureComponent.Texture;
-            textureComponent.Dispose();
-            videoTexturesPool.Release(videoTexture);
+            videoTexturesPool.Release(videoTextureComponent.Texture);
+            videoTextureComponent.Dispose();
         }
 
-        private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayer)
+        private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
         {
-            mediaPlayer.Dispose();
-            mediaPlayerPool.Release(mediaPlayer.MediaPlayer);
+            mediaPlayerPool.Release(mediaPlayerComponent.MediaPlayer);
+            mediaPlayerComponent.Dispose();
         }
     }
 }

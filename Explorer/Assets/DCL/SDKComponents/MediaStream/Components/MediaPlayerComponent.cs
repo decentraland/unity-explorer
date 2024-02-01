@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void Dispose()
         {
-            MediaPlayer.CloseCurrentStream();
+            MediaPlayer = null;
         }
     }
 }

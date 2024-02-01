@@ -29,6 +29,7 @@ export function startParty() {
   VideoPlayer.create(screen, {
     src: 'https://player.vimeo.com/external/878776548.m3u8?s=e6e54ac3862fe71ac3ecbdb2abbfdd7ca7daafaf&logging=false',
     playing: true,
+    volume: 0.0,
     loop: false
   })
 // By reusing this texture we keep memory usage low
@@ -52,7 +53,7 @@ function startMusicStream() {
   AudioStream.create(streamEntity, {
     url: 'http://ice3.somafm.com/dronezone-128-mp3',
     playing: true,
-    volume: 0.8
+    volume: 0.3
   })
 }
 function createVideoShapes() {
@@ -156,6 +157,7 @@ function createVideoShapes() {
   // Big Cube
   const bigCube = engine.addEntity()
   MeshRenderer.setBox(bigCube)
+  MeshCollider.setBox(bigCube, ColliderLayer.CL_POINTER | ColliderLayer.CL_PHYSICS)
   Transform.create(bigCube, {
     position: { x: 8, y: 5, z: 8 },
     rotation: Quaternion.fromEulerDegrees(45, 0, 45),
@@ -164,9 +166,24 @@ function createVideoShapes() {
   RotationComponent.create(bigCube, { speed: 1 })
   Material.setPbrMaterial(bigCube, videoMaterial)
 
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: bigCube,
+      opts: {
+        button: InputAction.IA_POINTER,
+        hoverText: 'Change clip'
+      }
+    },
+    () => {
+      const vp = VideoPlayer.getMutable(videoPlayer)
+      vp.src =  'https://player.vimeo.com/external/878776548.m3u8?s=e6e54ac3862fe71ac3ecbdb2abbfdd7ca7daafaf&logging=false'
+    }
+  )
+
   // Small Cube 1
   const smallCube1 = engine.addEntity()
   MeshRenderer.setBox(smallCube1)
+  MeshCollider.setBox(smallCube1, ColliderLayer.CL_POINTER | ColliderLayer.CL_PHYSICS)
   Transform.create(smallCube1, {
     position: { x: 3, y: 2, z: 3 },
     rotation: Quaternion.fromEulerDegrees(45, 0, 45),
@@ -175,9 +192,25 @@ function createVideoShapes() {
   RotationComponent.create(smallCube1, { speed: 0.4 })
   Material.setPbrMaterial(smallCube1, videoMaterial)
 
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: smallCube1,
+      opts: {
+        button: InputAction.IA_POINTER,
+        hoverText: 'x2 playback'
+      }
+    },
+    () => {
+      const vp = VideoPlayer.getMutable(videoPlayer)
+      if(vp.playbackRate)
+        vp.playbackRate = 2.0*vp.playbackRate;
+    }
+  )
+
   // Small Cube 2
   const smallCube2 = engine.addEntity()
   MeshRenderer.setBox(smallCube2)
+  MeshCollider.setBox(smallCube2, ColliderLayer.CL_POINTER | ColliderLayer.CL_PHYSICS)
   Transform.create(smallCube2, {
     position: { x: 13, y: 4, z: 13 },
     rotation: Quaternion.fromEulerDegrees(45, 0, 45),
@@ -186,6 +219,21 @@ function createVideoShapes() {
   RotationComponent.create(smallCube2, { speed: 0.4 })
   Material.setPbrMaterial(smallCube2, videoMaterial)
 
+  pointerEventsSystem.onPointerDown(
+    {
+      entity: smallCube2,
+      opts: {
+        button: InputAction.IA_POINTER,
+        hoverText: 'x2 Position'
+      }
+    },
+    () => {
+      const vp = VideoPlayer.getMutable(videoPlayer)
+      if(vp.position)
+        vp.position = vp.position + vp.position;
+    }
+  )
+
   // Cone
   const cone = engine.addEntity()
   MeshRenderer.setCylinder(
@@ -193,6 +241,7 @@ function createVideoShapes() {
     0, // radius bottom
     1 // radius top
   )
+
   Transform.create(cone, {
     position: { x: 13, y: 8, z: 3 },
     rotation: Quaternion.fromEulerDegrees(55, 42, 38.7),
