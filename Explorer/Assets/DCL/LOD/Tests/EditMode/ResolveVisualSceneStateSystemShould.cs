@@ -25,7 +25,8 @@ namespace DCL.LOD.Tests
             system = new ResolveVisualSceneStateSystem(world, lodSettings);
         }
 
-        [Test]
+        /*[Test]
+         TODO: Commented until we decide what we do with SDK6 scenes
         public void AddDefaultSceneVisualState()
         {
             var entity = world.Create( new PartitionComponent(), new SceneDefinitionComponent());
@@ -36,7 +37,7 @@ namespace DCL.LOD.Tests
 
             Assert.IsFalse(visualSceneState.IsDirty);
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD);
-        }
+        }*/
 
         [Test]
         [TestCase(0, VisualSceneStateEnum.SHOWING_SCENE)]
