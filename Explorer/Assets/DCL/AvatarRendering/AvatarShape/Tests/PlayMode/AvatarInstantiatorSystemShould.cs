@@ -8,6 +8,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
@@ -127,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             await UniTask.WaitUntil(() => system != null && avatarMesh != null);
 
             //Arrange
-            avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new TransformComponent());
+            avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new CharacterTransform());
 
             //Act
             system.Update(0);

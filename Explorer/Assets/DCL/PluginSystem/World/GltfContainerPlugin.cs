@@ -14,8 +14,8 @@ namespace DCL.PluginSystem.World
 {
     public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings
     {
-        private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly GltfContainerAssetsCache assetsCache;
+        private readonly ECSWorldSingletonSharedDependencies globalDeps;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner)
         {
@@ -43,7 +43,7 @@ namespace DCL.PluginSystem.World
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
-            WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, globalDeps.ComponentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
+            WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

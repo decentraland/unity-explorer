@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using ECS.Unity.Transforms.Components;
@@ -24,7 +25,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            Vector3 position = World.Get<TransformComponent>(playerEntity).Transform.position;
+            Vector3 position = World.Get<CharacterTransform>(playerEntity).Transform.position;
 
             ForEachRealmQuery(World, position);
         }
