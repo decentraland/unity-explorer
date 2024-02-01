@@ -110,7 +110,7 @@ namespace Utility
                 *(TTo*)(pResult + sizeof(TEnum)) = default(TTo);
             }
 
-            MemoryMarshal.Write(span, ref value);
+            MemoryMarshal.Write(span, ref result);
             span = span[sizeof(TTo)..];
         }
 

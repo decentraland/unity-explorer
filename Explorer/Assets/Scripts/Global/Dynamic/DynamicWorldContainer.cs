@@ -37,19 +37,19 @@ namespace Global.Dynamic
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
 
-        public MVCManager MvcManager { get; private set; }
+        public MVCManager MvcManager { get; private set; } = null!;
 
-        public DebugUtilitiesContainer DebugContainer { get; private set; }
+        public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
 
-        public IRealmController RealmController { get; private set; }
+        public IRealmController RealmController { get; private set; } = null!;
 
-        public GlobalWorldFactory GlobalWorldFactory { get; private set; }
+        public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; }
+        public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; } = null!;
 
-        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
+        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
-        public IProfileRepository ProfileRepository { get; private set; }
+        public IProfileRepository ProfileRepository { get; private set; } = null!;
 
         public ParcelServiceContainer ParcelServiceContainer { get; private set; }
 
@@ -58,7 +58,7 @@ namespace Global.Dynamic
             MvcManager.Dispose();
         }
 
-        public static async UniTask<(DynamicWorldContainer container, bool success)> CreateAsync(
+        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
@@ -80,6 +80,7 @@ namespace Global.Dynamic
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
+
             var realmData = new RealmData();
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
@@ -95,6 +96,7 @@ namespace Global.Dynamic
             var backpackEventBus = new BackpackEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
+
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
@@ -102,7 +104,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
@@ -134,6 +136,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     scenesCache, debugBuilder, staticContainer.AssetsProvisioner),
+                staticContainer.CharacterContainer.CreateGlobalPlugin(),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -145,9 +148,15 @@ namespace Global.Dynamic
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
                 sceneLoadRadius, staticLoadPositions, realmData, staticContainer.ScenesCache);
 
-            container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
-                exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins,
-                debugBuilder, staticContainer.ScenesCache);
+            container.GlobalWorldFactory = new GlobalWorldFactory(
+                in staticContainer,
+                exposedGlobalDataContainer.CameraSamplingData,
+                realmSamplingData,
+                ASSET_BUNDLES_URL,
+                realmData,
+                globalPlugins,
+                debugBuilder,
+                staticContainer.ScenesCache);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);

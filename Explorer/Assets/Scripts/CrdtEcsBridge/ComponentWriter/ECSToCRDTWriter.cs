@@ -1,65 +1,34 @@
 using CRDT;
-using CRDT.Memory;
-using CRDT.Protocol;
-using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.OutgoingMessages;
-using DCL.Diagnostics;
 using Google.Protobuf;
-using System.Buffers;
+using System;
 
 namespace CrdtEcsBridge.ComponentWriter
 {
     public class ECSToCRDTWriter : IECSToCRDTWriter
     {
-        private readonly ICRDTProtocol crdtProtocol;
         private readonly IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider;
-        private readonly ISDKComponentsRegistry componentsRegistry;
-        private readonly ICRDTMemoryAllocator memoryAllocator;
 
-        public ECSToCRDTWriter(ICRDTProtocol crdtProtocol, IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider,
-            ISDKComponentsRegistry componentsRegistry, ICRDTMemoryAllocator memoryAllocator)
+        public ECSToCRDTWriter(IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider)
         {
-            this.crdtProtocol = crdtProtocol;
             this.outgoingCRDTMessageProvider = outgoingCRDTMessageProvider;
-            this.componentsRegistry = componentsRegistry;
-            this.memoryAllocator = memoryAllocator;
         }
 
-        public void PutMessage<T>(CRDTEntity crdtID, T model) where T: IMessage
-        {
-            if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
+        public TMessage PutMessage<TMessage, TData>(Action<TMessage, TData> prepareMessage, CRDTEntity entity, TData data) where TMessage: class, IMessage =>
+            outgoingCRDTMessageProvider.AddPutMessage(prepareMessage, entity, data);
 
-            IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
-            componentBridge.Serializer.SerializeInto(model, memory.Memory.Span);
-            outgoingCRDTMessageProvider.AddLwwMessage(crdtProtocol.CreatePutMessage(crdtID, componentBridge.Id, memory));
+        public void PutMessage<TMessage>(TMessage message, CRDTEntity entity) where TMessage: class, IMessage
+        {
+            outgoingCRDTMessageProvider.AddPutMessage(message, entity);
         }
 
-        private bool TryGetComponentBridge<T>(out SDKComponentBridge componentBridge) where T: IMessage
+        public TMessage AppendMessage<TMessage, TData>(Action<TMessage, TData> prepareMessage, CRDTEntity entity, int timestamp, TData data) where TMessage: class, IMessage =>
+            outgoingCRDTMessageProvider.AppendMessage(prepareMessage, entity, timestamp, data);
+
+        public void DeleteMessage<T>(CRDTEntity crdtID) where T: class, IMessage
         {
-            if (!componentsRegistry.TryGet<T>(out componentBridge))
-            {
-                ReportHub.LogWarning(new ReportData(ReportCategory.CRDT_ECS_BRIDGE, ReportHint.AssemblyStatic), $"SDK Component {typeof(T)} is not registered");
-                return false;
-            }
-
-            return true;
-        }
-
-        public void AppendMessage<T>(CRDTEntity crdtID, T model, int timestamp = 0) where T: IMessage
-        {
-            if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
-
-            IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
-            componentBridge.Serializer.SerializeInto(model, memory.Memory.Span);
-            outgoingCRDTMessageProvider.AppendMessage(crdtProtocol.CreateAppendMessage(crdtID, componentBridge.Id, timestamp, memory));
-        }
-
-        public void DeleteMessage<T>(CRDTEntity crdtID) where T: IMessage
-        {
-            if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
-
-            outgoingCRDTMessageProvider.AddLwwMessage(crdtProtocol.CreateDeleteMessage(crdtID, componentBridge.Id));
+            outgoingCRDTMessageProvider.AddDeleteMessage<T>(crdtID);
         }
     }
 }

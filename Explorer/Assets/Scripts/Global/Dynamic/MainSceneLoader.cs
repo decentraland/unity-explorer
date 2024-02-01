@@ -38,14 +38,14 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
-
-        private AsyncLoadProcessReport? loadReport;
-        private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-        private IWeb3VerifiedAuthenticator? web3Authenticator;
-        private SceneSharedContainer? sceneSharedContainer;
         private IWeb3IdentityCache? identityCache;
+
+        private AsyncLoadProcessReport? loadReport;
+        private SceneSharedContainer? sceneSharedContainer;
+        private StaticContainer? staticContainer;
+        private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
 
         private void Awake()
@@ -157,7 +157,7 @@ namespace Global.Dynamic
                 Entity playerEntity;
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer!.CharacterObject);
+                    dynamicWorldContainer.EmptyScenesWorldFactory);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CrdtEcsBridge.PoolsProviders;
+using System;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -11,10 +12,10 @@ namespace SceneRuntime.Apis.Modules
         /// <param name="dataMemory"></param>
         /// <param name="returnData"></param>
         /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true);
+        public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true);
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
-        public ArraySegment<byte> CrdtGetState();
+        public PoolableByteArray CrdtGetState();
 
         /// <summary>
         ///     Prevents handling messages while the scene runtime is being disposed

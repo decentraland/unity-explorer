@@ -18,6 +18,11 @@ namespace CRDT.Protocol
         CRDTReconciliationResult ProcessMessage(in CRDTMessage message);
 
         /// <summary>
+        ///     Enforce LWW state update, it must be guaranteed that the message is PUT_COMPONENT or DELETE_COMPONENT
+        /// </summary>
+        CRDTReconciliationResult UpdateLWWState(in CRDTMessage message);
+
+        /// <summary>
         ///     <inheritdoc cref="CRDTMessagesFactory.CreateMessagesFromTheCurrentState" />
         /// </summary>
         /// <returns>
