@@ -45,8 +45,7 @@ namespace DCL.CharacterPreview
             avatarShape.HairColor = model.HairColor;
             avatarShape.BodyShape = BodyShape.FromStringSafe(model.BodyShape);
 
-            if (!avatarShape.WearablePromise.IsConsumed)
-                avatarShape.WearablePromise.ForgetLoading(globalWorld);
+            avatarShape.WearablePromise.ForgetLoading(globalWorld);
 
             avatarShape.WearablePromise = AssetPromise<IWearable[], GetWearablesByPointersIntention>.Create(
                 globalWorld,
