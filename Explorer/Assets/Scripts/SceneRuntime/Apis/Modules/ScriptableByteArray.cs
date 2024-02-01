@@ -35,7 +35,7 @@ namespace SceneRuntime.Apis.Modules
 
         public bool MoveNext()
         {
-            if (array.IsDisposed())
+            if (array.IsDisposed)
             {
                 ReportHub.LogError(ReportCategory.CRDT_ECS_BRIDGE, "Trying to move next on a disposed ScriptableByteArray");
                 return false;
@@ -43,7 +43,6 @@ namespace SceneRuntime.Apis.Modules
 
             return enumerator.MoveNext();
         }
-
 
         public void Reset()
         {

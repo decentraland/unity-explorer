@@ -131,7 +131,7 @@ namespace SceneRuntime
             PoolableByteArray result = engineApi.api.CrdtSendToRenderer(data, false);
 
             // Initial messages are not expected to return anything
-            Assert.IsTrue(result.IsEmpty());
+            Assert.IsTrue(result.IsEmpty);
         }
 
         public ITypedArray<byte> CreateUint8Array(int length) =>

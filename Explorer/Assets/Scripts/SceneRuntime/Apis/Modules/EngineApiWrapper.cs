@@ -65,7 +65,7 @@ namespace SceneRuntime.Apis.Modules
 
                 Profiler.EndThreadProfiling();
 
-                return result.IsEmpty() ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
+                return result.IsEmpty ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
             }
             catch (Exception e)
             {
@@ -81,7 +81,7 @@ namespace SceneRuntime.Apis.Modules
             try
             {
                 PoolableByteArray result = api.CrdtGetState();
-                return result.IsEmpty() ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
+                return result.IsEmpty ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
             }
             catch (Exception e)
             {

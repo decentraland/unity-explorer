@@ -12,30 +12,25 @@ namespace CrdtEcsBridge.PoolsProviders
         public readonly int Length;
         public readonly ISharedPoolsProvider PoolsProvider;
 
-        private bool isDisposed;
-
         public PoolableByteArray(byte[] array, int length, ISharedPoolsProvider poolsProvider)
         {
             Array = array;
             Length = length;
             PoolsProvider = poolsProvider;
-            isDisposed = false;
+            IsDisposed = false;
         }
 
-        public bool IsDisposed() =>
-            isDisposed;
+        public bool IsDisposed { get; private set; }
 
-        public bool IsEmpty() =>
-            Length == 0;
+        public bool IsEmpty => Length == 0;
 
         public void Dispose()
         {
-            if (IsEmpty()) return;
-            if (isDisposed) return;
+            if (IsEmpty || IsDisposed) return;
 
             PoolsProvider.ReleaseSerializedStateBytesPool(Array);
 
-            isDisposed = true;
+            IsDisposed = true;
         }
 
         public IEnumerator<byte> GetEnumerator() =>
