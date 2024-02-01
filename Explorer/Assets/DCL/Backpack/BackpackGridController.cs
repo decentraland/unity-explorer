@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -168,7 +169,7 @@ namespace DCL.Backpack
             BuildRequestParameters("0", "0");
 
             var wearablesPromise = ParamPromise.Create(world,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results, totalAmount),
+                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
 
             AwaitWearablesPromiseForSizeAsync(wearablesPromise, cts.Token).Forget();
@@ -224,7 +225,7 @@ namespace DCL.Backpack
             results.Clear();
 
             var wearablesPromise = ParamPromise.Create(world,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results, totalAmount),
+                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
 
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
