@@ -65,7 +65,7 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            IWeb3IdentityCache storedIdentityProvider)
+            IWeb3IdentityCache web3IdentityCache)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -95,7 +95,9 @@ namespace Global.Dynamic
             IProfileCache profileCache = new DefaultProfileCache();
 
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
-                profileCache);
+                profileCache, web3IdentityCache);
+
+            await container.ProfileRepository.SetAsync(null, ct);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -120,11 +122,11 @@ namespace Global.Dynamic
                     backpackCommandBus,
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    storedIdentityProvider,
+                    web3IdentityCache,
                     wearableCatalog),
 
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
             };

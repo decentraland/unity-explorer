@@ -1,32 +1,131 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using Ipfs;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace DCL.Profiles
 {
-    public class RealmProfileRepository : IProfileRepository
+    public partial class RealmProfileRepository : IProfileRepository
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
 
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly URLBuilder urlBuilder = new ();
+        private readonly List<IMultipartFormSection> multipartFormSections = new ();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
             this.profileCache = profileCache;
+            this.web3IdentityCache = web3IdentityCache;
+        }
+
+        public async UniTask SetAsync(Profile profile, CancellationToken ct)
+        {
+            // string result = Base32.Encode(Encoding.UTF8.GetBytes("bleh"));
+            // List<string> bleh = new List<string>();
+            //
+            // foreach (var hashingAlgorithm in HashingAlgorithm.All)
+            // {
+            //     MultiHash hash = MultiHash.ComputeHash(Encoding.UTF8.GetBytes("bleh"), hashingAlgorithm.Name);
+            //     bleh.Add(hash.ToString());
+            //     bleh.Add(hash.ToBase32());
+            //     bleh.Add(hash.ToBase58());
+            // }
+
+            // using (var ms = new MemoryStream(MultiBase.Decode(input), false))
+            // {
+            //     var v = ms.ReadVarint32();
+            //     if (v != 1)
+            //     {
+            //         throw new InvalidDataException($"Unknown CID version '{v}'.");
+            //     }
+            //     return new Cid
+            //     {
+            //         Version = v,
+            //         Encoding = Registry.MultiBaseAlgorithm.Codes[input[0]].Name,
+            //         ContentType = ms.ReadMultiCodec().Name,
+            //         Hash = new MultiHash(ms)
+            //     };
+            // }
+
+            var hash = MultiHash.ComputeHash(Encoding.UTF8.GetBytes("bleh"));
+
+            // string base32 = hash.ToBase32();
+            // string hashStr = hash.ToString();
+            // Cid cid = Cid.Decode(hashStr);
+            // Cid cid = hash;
+            // string s = cid.ToString();
+
+            // Result from hashV1(new TextEncoder().encode('bleh'))
+            var cid = Cid.Decode("bafkreifqbsjvx7fa34z5md73yoi6z7jktxl35e3ga6pvjfansr2ehyx6aq");
+
+            return;
+
+            var profileDto = GetProfileJsonRootDto.Create();
+            profileDto.CopyFrom(profile);
+
+            var entity = new Entity
+            {
+                version = "v3",
+                content = new List<Entity.Files>(),
+                pointers = new List<string> { web3IdentityCache.Identity!.Address },
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                type = "profile",
+                metadata = profileDto,
+            };
+
+            byte[] entityFile = Encoding.UTF8.GetBytes(JsonUtility.ToJson(entity));
+            string entityId = Base32.Encode(entityFile);
+            AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
+
+            multipartFormSections.Clear();
+
+            multipartFormSections.Add(new MultipartFormDataSection("entityId", entityId));
+
+            var i = 0;
+
+            foreach (AuthLink link in authChain)
+            {
+                multipartFormSections.Add(new MultipartFormDataSection($"authChain[{i}][type]", link.type.ToString()));
+                multipartFormSections.Add(new MultipartFormDataSection($"authChain[{i}][payload]", link.payload));
+                multipartFormSections.Add(new MultipartFormDataSection($"authChain[{i}][signature]", link.signature));
+                i++;
+            }
+
+            multipartFormSections.Add(new MultipartFormDataSection(entityId, entityFile));
+
+            IIpfsRealm ipfs = realm.Ipfs;
+
+            urlBuilder.Clear();
+
+            URLAddress url = urlBuilder.AppendDomain(ipfs.ContentBaseUrl)
+                                       .AppendPath(URLPath.FromString("entities"))
+                                       .Build();
+
+            try { await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateMultipartForm(multipartFormSections), ct); }
+            finally
+            {
+                multipartFormSections.Clear();
+                profileDto.Dispose();
+            }
         }
 
         public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
@@ -74,130 +173,22 @@ namespace DCL.Profiles
             }
         }
 
-        private class ProfileJsonRootDtoConverter : JsonConverter<GetProfileJsonRootDto>
+        [Serializable]
+        private struct Entity
         {
-            public override void WriteJson(JsonWriter writer, GetProfileJsonRootDto? value, JsonSerializer serializer)
+            [Serializable]
+            public struct Files
             {
-                throw new NotImplementedException();
+                public string file;
+                public string hash;
             }
 
-            public override GetProfileJsonRootDto? ReadJson(JsonReader reader, Type objectType, GetProfileJsonRootDto? existingValue,
-                bool hasExistingValue, JsonSerializer serializer)
-            {
-                if (reader.TokenType == JsonToken.Null)
-                    return null;
-
-                var jObject = JObject.Load(reader);
-                existingValue ??= GetProfileJsonRootDto.Create();
-                DeserializeProfileList(jObject["avatars"], ref existingValue.avatars);
-                return existingValue;
-            }
-
-            private void DeserializeProfileList(JToken? root, ref List<ProfileJsonDto>? list)
-            {
-                if (root is { Type: JTokenType.Array })
-                {
-                    list ??= new List<ProfileJsonDto>();
-                    list.Clear();
-
-                    foreach (JToken? item in root.Children())
-                        list.Add(DeserializeProfile(item, ProfileJsonDto.Create()));
-                }
-                else
-                    list?.Clear();
-            }
-
-            private ProfileJsonDto DeserializeProfile(JToken? jObject, ProfileJsonDto profile)
-            {
-                if (jObject == null) return profile;
-
-                profile.hasClaimedName = jObject["hasClaimedName"]?.Value<bool>() ?? false;
-                profile.description = jObject["description"]?.Value<string>() ?? "";
-                profile.tutorialStep = jObject["tutorialStep"]?.Value<int>() ?? 0;
-                profile.name = jObject["name"]?.Value<string>() ?? "";
-                profile.userId = jObject["userId"]?.Value<string>() ?? "";
-                profile.email = jObject["email"]?.Value<string>() ?? "";
-                profile.ethAddress = jObject["ethAddress"]?.Value<string>() ?? "";
-                profile.version = jObject["version"]?.Value<int>() ?? 0;
-                profile.unclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "";
-                profile.hasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
-                profile.avatar = DeserializeAvatar(jObject["avatar"]!, profile.avatar);
-                DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
-                DeserializeArrayToList(jObject["interests"], ref profile.interests);
-
-                return profile;
-            }
-
-            private AvatarJsonDto DeserializeAvatar(JToken jObject, AvatarJsonDto avatar)
-            {
-                avatar.eyes.color = DeserializeColor(jObject["eyes"]?["color"], new AvatarColorJsonDto());
-                avatar.hair.color = DeserializeColor(jObject["hair"]?["color"], new AvatarColorJsonDto());
-                avatar.skin.color = DeserializeColor(jObject["skin"]?["color"], new AvatarColorJsonDto());
-
-                avatar.bodyShape = jObject["bodyShape"]?.Value<string>() ?? "";
-
-                DeserializeArrayToList(jObject["wearables"], ref avatar.wearables);
-                DeserializeEmoteList(jObject["emotes"], ref avatar.emotes);
-
-                avatar.snapshots.face256 = jObject["snapshots"]?["face256"]?.Value<string>() ?? "";
-                avatar.snapshots.body = jObject["snapshots"]?["body"]?.Value<string>() ?? "";
-
-                DeserializeArrayToList(jObject["forceRender"], ref avatar.forceRender);
-
-                return avatar;
-            }
-
-            private void DeserializeEmoteList(JToken? root, ref List<EmoteJsonDto>? list)
-            {
-                if (root is { Type: JTokenType.Array })
-                {
-                    list ??= new List<EmoteJsonDto>();
-                    list.Clear();
-
-                    foreach (JToken? item in root.Children())
-                        list.Add(DeserializeEmote(item, new EmoteJsonDto()));
-                }
-                else
-                    list?.Clear();
-            }
-
-            private EmoteJsonDto DeserializeEmote(JToken item, EmoteJsonDto emote)
-            {
-                emote.slot = item["slot"]?.Value<int>() ?? 0;
-                emote.urn = item["urn"]?.Value<string>() ?? "";
-                return emote;
-            }
-
-            private AvatarColorJsonDto DeserializeColor(JToken? jObject, AvatarColorJsonDto color)
-            {
-                if (jObject == null) return color;
-
-                color.r = jObject["r"]?.Value<float>() ?? 0;
-                color.g = jObject["g"]?.Value<float>() ?? 0;
-                color.b = jObject["b"]?.Value<float>() ?? 0;
-                color.a = jObject["a"]?.Value<float>() ?? 0;
-
-                return color;
-            }
-
-            private void DeserializeArrayToList(JToken? token, ref List<string>? list)
-            {
-                if (token is { Type: JTokenType.Array })
-                {
-                    list ??= new List<string>();
-                    list.Clear();
-
-                    foreach (JToken? item in token.Children())
-                    {
-                        string? s = item.ToObject<string>();
-
-                        if (s != null)
-                            list.Add(s);
-                    }
-                }
-                else
-                    list?.Clear();
-            }
+            public string version;
+            public string type;
+            public List<string> pointers;
+            public long timestamp;
+            public GetProfileJsonRootDto metadata;
+            public List<Files> content;
         }
     }
 }

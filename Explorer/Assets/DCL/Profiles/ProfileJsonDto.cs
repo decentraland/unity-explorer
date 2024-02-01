@@ -236,5 +236,7 @@ namespace DCL.Profiles
 
             POOL.Release(this);
         }
+
+        public void CopyFrom(Profile profile) { }
     }
 }
