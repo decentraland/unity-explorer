@@ -8,6 +8,7 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -29,29 +30,28 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {
-        private static readonly PBPointerEventsResult SHARED_POINTER_EVENTS_RESULT = new ();
-        private static readonly RaycastHit SHARED_RAYCAST_HIT = new RaycastHit().Reset();
-
-        private readonly Entity sceneRoot;
+        private readonly ISceneData sceneData;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalInputEvents globalInputEvents;
 
-        internal WritePointerEventResultsSystem(World world, Entity sceneRoot, IECSToCRDTWriter ecsToCRDTWriter,
-            ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents) : base(world)
+        private readonly IComponentPool<RaycastHit> raycastHitPool;
+
+        internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
+            ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool) : base(world)
         {
-            this.sceneRoot = sceneRoot;
+            this.sceneData = sceneData;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
 
             this.sceneStateProvider = sceneStateProvider;
             this.globalInputEvents = globalInputEvents;
+            this.raycastHitPool = raycastHitPool;
         }
 
         protected override void Update(float t)
         {
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-            WriteResultsQuery(World, scenePosition);
+            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
             WriteGlobalEvents();
         }
 
@@ -76,10 +76,12 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[validIndex];
                 PBPointerEvents.Types.Info info = entry.EventInfo;
 
-                SHARED_RAYCAST_HIT.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
+                RaycastHit raycastHit = raycastHitPool.Get();
+
+                raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
-                AppendMessage(sdkEntity, SHARED_RAYCAST_HIT, info.Button, entry.EventType);
+                AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
             }
 
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
@@ -87,14 +89,15 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
         {
-            PBPointerEventsResult result = SHARED_POINTER_EVENTS_RESULT;
-            result.Hit = sdkHit;
-            result.Button = button;
-            result.State = eventType;
-            result.Timestamp = sceneStateProvider.TickNumber;
-            result.TickNumber = sceneStateProvider.TickNumber;
-
-            ecsToCRDTWriter.AppendMessage(sdkEntity, result, (int)result.Timestamp);
+            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
+                static (result, data) =>
+                {
+                    result.Hit = data.sdkHit;
+                    result.Button = data.button;
+                    result.State = data.eventType;
+                    result.Timestamp = data.sceneStateProvider.TickNumber;
+                    result.TickNumber = data.sceneStateProvider.TickNumber;
+                }, sdkEntity, (int)sceneStateProvider.TickNumber, (sdkHit, button, eventType, sceneStateProvider));
         }
     }
 }

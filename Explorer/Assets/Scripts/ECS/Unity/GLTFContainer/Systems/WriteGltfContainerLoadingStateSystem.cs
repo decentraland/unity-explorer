@@ -19,13 +19,11 @@ namespace ECS.Unity.GLTFContainer.Systems
     public partial class WriteGltfContainerLoadingStateSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<PBGltfContainerLoadingState> componentPool;
 
-        public WriteGltfContainerLoadingStateSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBGltfContainerLoadingState> componentPool)
+        public WriteGltfContainerLoadingStateSystem(World world, IECSToCRDTWriter ecsToCRDTWriter)
             : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.componentPool = componentPool;
         }
 
         protected override void Update(float t)
@@ -41,10 +39,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!component.State.ChangedThisFrame())
                 return;
 
-            using PoolExtensions.Scope<PBGltfContainerLoadingState> scope = componentPool.AutoScope();
-            PBGltfContainerLoadingState sdkComponent = scope.Value;
-            sdkComponent.CurrentState = component.State;
-            ecsToCRDTWriter.PutMessage(sdkEntity, sdkComponent);
+            ecsToCRDTWriter.PutMessage<PBGltfContainerLoadingState, LoadingState>(
+                static (component, loadingState) => component.CurrentState = loadingState, sdkEntity, component.State.Value);
         }
 
         [Query]
