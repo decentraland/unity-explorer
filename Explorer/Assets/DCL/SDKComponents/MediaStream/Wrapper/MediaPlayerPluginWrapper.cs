@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #endif
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter)
         {
 #if AV_PRO_PRESENT
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
@@ -44,8 +44,6 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool);
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
-
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, MediaPlayerComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
         }
     }
