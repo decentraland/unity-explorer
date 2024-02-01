@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -70,7 +71,7 @@ namespace DCL.Systems
         [Query]
         [Any(typeof(PBAvatarShape), typeof(Profile))]
         [None(typeof(PartitionComponent))]
-        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref TransformComponent transformComponent)
+        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref CharacterTransform transformComponent)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
@@ -81,7 +82,7 @@ namespace DCL.Systems
         [Query]
         [Any(typeof(PBAvatarShape), typeof(Profile))]
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
-            ref TransformComponent transformComponent, ref PartitionComponent partitionComponent)
+            ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
         }
