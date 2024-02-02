@@ -229,7 +229,7 @@ namespace DCL.Profiles
             profile.Language = language;
             profile.Profession = profession;
             profile.RealName = realName;
-            profile.Birthdate = DateTimeOffset.FromUnixTimeSeconds(birthdate).DateTime;
+            profile.Birthdate = birthdate != 0 ? DateTimeOffset.FromUnixTimeSeconds(birthdate).DateTime : null;
             profile.Hobbies = hobbies;
             profile.Avatar ??= new Avatar();
             avatar.CopyTo(profile.Avatar);
@@ -293,7 +293,7 @@ namespace DCL.Profiles
             language = profile.Language;
             profession = profile.Profession;
             realName = profile.RealName;
-            birthdate = new DateTimeOffset(profile.Birthdate).ToUnixTimeSeconds();
+            birthdate = profile.Birthdate != null ? new DateTimeOffset(profile.Birthdate.Value).ToUnixTimeSeconds() : 0;
             hobbies = profile.Hobbies;
 
             if (profile.blocked != null)

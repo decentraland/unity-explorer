@@ -26,7 +26,7 @@ namespace DCL.Profiles
         public string Profession { get; internal set; }
         public string RealName { get; internal set; }
         public string Hobbies { get; internal set; }
-        public DateTime Birthdate { get; internal set; }
+        public DateTime? Birthdate { get; internal set; }
         public int Version { get; internal set; }
         public Avatar Avatar { get; internal set; }
 
