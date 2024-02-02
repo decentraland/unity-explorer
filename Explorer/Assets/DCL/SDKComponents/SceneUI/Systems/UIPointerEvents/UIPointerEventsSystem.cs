@@ -60,16 +60,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         private void AppendMessage(CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
-            PBPointerEventsResult result = new()
-            {
-                Hit = null,
-                Button = button,
-                State = eventType,
-                Timestamp = sceneStateProvider.TickNumber,
-                TickNumber = sceneStateProvider.TickNumber,
-            };
-
-            ecsToCRDTWriter.AppendMessage(sdkEntity, result, (int)result.Timestamp);
+            ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
+                static (result, data) =>
+                {
+                    result.Hit = data.sdkHit;
+                    result.Button = data.button;
+                    result.State = data.eventType;
+                    result.Timestamp = data.sceneStateProvider.TickNumber;
+                    result.TickNumber = data.sceneStateProvider.TickNumber;
+                }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
     }
 }
