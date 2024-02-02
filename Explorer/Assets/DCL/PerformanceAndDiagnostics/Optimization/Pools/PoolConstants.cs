@@ -36,5 +36,10 @@ namespace DCL.Optimization.Pools
         ///     Target simultaneous Avatars Count
         /// </summary>
         public const int AVATARS_COUNT = 100;
+
+        /// <summary>
+        ///     The base number of wearables on a single avatar
+        /// </summary>
+        public const int WEARABLES_PER_AVATAR_COUNT = 15;
     }
 }

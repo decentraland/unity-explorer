@@ -1,14 +1,21 @@
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.CharacterPreview;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Backpack.BackpackBus
 {
+
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable> SelectEvent;
         public event Action<IWearable> EquipEvent;
         public event Action<IWearable> UnEquipEvent;
-        public event Action<string[]> HideEvent;
+        public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
+        public event Action<string> FilterCategoryEvent;
+        public event Action<AvatarSlotCategoryEnum> FilterCategoryByEnumEvent;
+
+        public event Action<string> SearchEvent;
 
         public void SendSelect(IWearable equipWearable) =>
             SelectEvent?.Invoke(equipWearable);
@@ -19,7 +26,16 @@ namespace DCL.Backpack.BackpackBus
         public void SendUnEquip(IWearable unEquipWearable) =>
             UnEquipEvent?.Invoke(unEquipWearable);
 
-        public void SendHide(string[] hideWearableCategories) =>
-            HideEvent?.Invoke(hideWearableCategories);
+        public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
+            ForceRenderEvent?.Invoke(forceRender);
+
+        public void SendFilterCategory(string category, AvatarSlotCategoryEnum categoryEnum)
+        {
+            FilterCategoryEvent?.Invoke(category);
+            FilterCategoryByEnumEvent?.Invoke(categoryEnum);
+        }
+
+        public void SendSearch(string searchText) =>
+            SearchEvent?.Invoke(searchText);
     }
 }
