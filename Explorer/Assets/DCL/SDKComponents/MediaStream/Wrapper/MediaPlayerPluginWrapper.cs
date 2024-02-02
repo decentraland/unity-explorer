@@ -1,16 +1,19 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.ECSToCRDTWriter;
-using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
+using SceneRunner.Scene;
+using UnityEngine;
+
+#if AV_PRO_PRESENT
+using DCL.ECSComponents;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using RenderHeads.Media.AVProVideo;
-using SceneRunner.Scene;
 using System.Collections.Generic;
-using UnityEngine;
+#endif
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
