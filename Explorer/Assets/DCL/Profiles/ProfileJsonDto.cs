@@ -144,8 +144,11 @@ namespace DCL.Profiles
                 emotes.Add(emoteDto);
             }
 
-            snapshots.face256 = avatar.FaceSnapshotUrl;
-            snapshots.body = avatar.BodySnapshotUrl;
+            // We GET the profile with full snapshot url information but the profile is saved just with the cid :/
+            int faceUrlPathIndex = avatar.FaceSnapshotUrl.Value.LastIndexOf('/');
+            snapshots.face256 = faceUrlPathIndex != -1 ? avatar.FaceSnapshotUrl.Value[(faceUrlPathIndex + 1)..] : avatar.FaceSnapshotUrl;
+            int bodyUrlPathIndex = avatar.BodySnapshotUrl.Value.LastIndexOf('/');
+            snapshots.body = bodyUrlPathIndex != -1 ? avatar.BodySnapshotUrl.Value[(bodyUrlPathIndex + 1)..] : avatar.BodySnapshotUrl;
 
             eyes.color.CopyFrom(avatar.EyesColor);
             hair.color.CopyFrom(avatar.HairColor);
