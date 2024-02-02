@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        private UIPointerEventsSystem(World world, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        public UIPointerEventsSystem(World world, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
@@ -32,11 +32,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
-            CheckPointerEventsQuery(World);
+            UpdatePointerEventsQuery(World);
         }
 
         [Query]
-        private void CheckPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, CRDTEntity sdkEntity)
+        private void UpdatePointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, CRDTEntity sdkEntity)
         {
             if (!sdkModel.IsDirty)
                 return;

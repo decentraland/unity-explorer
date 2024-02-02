@@ -15,9 +15,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private EventCallback<PointerDownEvent> currentOnPointerDownCallback;
         private EventCallback<PointerUpEvent> currentOnPointerUpCallback;
 
+        public bool HasAnyPointerDownCallback => currentOnPointerDownCallback != null;
+        public bool HasAnyPointerUpCallback => currentOnPointerUpCallback != null;
+
         public void RegisterPointerDownCallback(EventCallback<PointerDownEvent> newOnPointerDownCallback)
         {
-            if (currentOnPointerDownCallback != null)
+            if (HasAnyPointerDownCallback)
                 VisualElement.UnregisterCallback(currentOnPointerDownCallback);
 
             VisualElement.RegisterCallback(newOnPointerDownCallback);
@@ -26,7 +29,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public void RegisterPointerUpCallback(EventCallback<PointerUpEvent> newOnPointerUpCallback)
         {
-            if (currentOnPointerUpCallback != null)
+            if (HasAnyPointerUpCallback)
                 VisualElement.UnregisterCallback(currentOnPointerUpCallback);
 
             VisualElement.RegisterCallback(newOnPointerUpCallback);
@@ -35,10 +38,10 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public void UnregisterAllCallbacks()
         {
-            if (currentOnPointerDownCallback != null)
+            if (HasAnyPointerDownCallback)
                 VisualElement.UnregisterCallback(currentOnPointerDownCallback);
 
-            if (currentOnPointerUpCallback != null)
+            if (HasAnyPointerUpCallback)
                 VisualElement.UnregisterCallback(currentOnPointerUpCallback);
         }
 
