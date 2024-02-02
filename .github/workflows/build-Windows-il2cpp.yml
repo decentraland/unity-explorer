@@ -119,7 +119,7 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
-          gitPrivateToken: ${{ secrets.GIT_CREDENTIALS_2 }}
+          gitPrivateToken: ${{ secrets.GITHUB_TOKEN }}
 
       # Upload artifact
       - name: Upload windows artifact
