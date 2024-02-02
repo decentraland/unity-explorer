@@ -111,6 +111,12 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.5.2
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+
       - uses: decentraland/unity-builder@0.7
         id: build
         timeout-minutes: 120
@@ -120,6 +126,7 @@ jobs:
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
           gitPrivateToken: ${{ secrets.GITHUB_TOKEN }}
+          sshAgent: ${{ env.SSH_AUTH_SOCK }}
 
       # Upload artifact
       - name: Upload windows artifact
