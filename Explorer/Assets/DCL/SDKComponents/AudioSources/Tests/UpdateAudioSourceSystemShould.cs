@@ -17,7 +17,7 @@ using static DCL.SDKComponents.AudioSources.Tests.AudioSourceTestsUtils;
 
 namespace DCL.SDKComponents.AudioSources.Tests
 {
-    public class CreateAudioSourceSystemShould : UnitySystemTestBase<UpdateAudioSourceSystem>
+    public class UpdateAudioSourceSystemShould : UnitySystemTestBase<UpdateAudioSourceSystem>
     {
         private AudioSourceComponent component;
         private Entity entity;

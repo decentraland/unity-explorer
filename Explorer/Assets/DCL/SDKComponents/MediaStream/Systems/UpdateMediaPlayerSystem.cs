@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
 
-        private UpdateMediaPlayerSystem(World world, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public UpdateMediaPlayerSystem(World world, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;

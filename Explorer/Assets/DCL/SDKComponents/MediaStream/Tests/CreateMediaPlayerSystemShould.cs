@@ -10,6 +10,7 @@ using NUnit.Framework;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
@@ -44,6 +45,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
             }
         }
 
+        [TearDown]
+        public void DisposeMediaPlayer()
+        {
+            UnityObjectUtils.SafeDestroy(mediaPlayerGameObject.gameObject);
+        }
 
         [TestCase("http://ice3.somafm.com/dronezone-128-mp3", 0.5f)]
         [TestCase("http://ice3.somafm.com/defcon-128-mp3", 1f)]
