@@ -112,8 +112,8 @@ jobs:
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
           
       - uses: de-vri-es/setup-git-credentials@v2
-      with:
-        credentials: ${{secrets.GIT_CREDENTIALS}}
+        with:
+          credentials: ${{secrets.GIT_CREDENTIALS}}
 
       - uses: decentraland/unity-builder@0.7
         id: build
