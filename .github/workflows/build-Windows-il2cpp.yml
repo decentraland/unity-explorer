@@ -110,10 +110,6 @@ jobs:
             !Explorer/Library/Bee/**
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
-          
-      - uses: de-vri-es/setup-git-credentials@v2
-        with:
-          credentials: ${{secrets.GIT_CREDENTIALS}}
 
       - uses: decentraland/unity-builder@0.7
         id: build
@@ -123,6 +119,7 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
+          gitPrivateToken: ${{ secrets.GIT_CREDENTIALS_2 }}
 
       # Upload artifact
       - name: Upload windows artifact
