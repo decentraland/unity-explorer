@@ -129,7 +129,8 @@ namespace DCL.Billboard.Demo.World
             billboard.Apply(RandomBool(), RandomBool(), RandomBool());
             return billboard;
 
-            static bool RandomBool() => Random.value > 0.5f;
+            static bool RandomBool() =>
+                Random.value > 0.5f;
         }
     }
 }

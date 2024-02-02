@@ -17,7 +17,7 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
-    public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, IWearable[], GetWearableByParamIntention>
+    public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
     {
         private WearableCatalog wearableCatalog;
         private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
@@ -26,6 +26,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
         private string failPath => $"file://{Application.dataPath}/../TestResources/Wearables/non_existing";
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        private int totalAmount => 0;
 
         protected override LoadWearablesByParamSystem CreateSystem()
         {
@@ -38,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
         }
 
-        protected override void AssertSuccess(IWearable[] asset)
+        protected override void AssertSuccess(WearablesResponse asset)
         {
             base.AssertSuccess(asset);
 
@@ -66,13 +67,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             system.urlBuilder = urlBuilder;
 
-            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>());
+            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>(), totalAmount);
         }
 
         protected override GetWearableByParamIntention CreateNotFoundIntention() =>
-            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>());
+            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>(), totalAmount);
 
         protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
-            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>());
+            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>(), totalAmount);
     }
 }

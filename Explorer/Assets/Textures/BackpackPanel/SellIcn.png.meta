@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/Textures/BackpackPanel/WearablesIcn.png.meta
+guid: fbd8ab1095b184feb89e2963e0d53d6b
+========
 guid: aef0c5d78a72a485aaf82db1e04acd9e
+>>>>>>>> feat/backpack:Explorer/Assets/Textures/BackpackPanel/SellIcn.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}

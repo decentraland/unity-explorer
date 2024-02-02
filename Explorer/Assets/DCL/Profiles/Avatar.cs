@@ -13,12 +13,14 @@ namespace DCL.Profiles
 
         internal readonly HashSet<URN> uniqueWearables = new ();
 
+        internal readonly HashSet<string> forceRender = new ();
+
         internal readonly Dictionary<string, Emote> emotes = new ();
 
         public IReadOnlyCollection<URN> SharedWearables => sharedWearables;
         public IReadOnlyCollection<URN> UniqueWearables => uniqueWearables;
 
-        public IReadOnlyCollection<string> ForceRender { get; internal set; } = null!;
+        public IReadOnlyCollection<string> ForceRender => forceRender;
         public IReadOnlyDictionary<string, Emote> Emotes => emotes;
         public URLAddress FaceSnapshotUrl { get; internal set; }
         public URLAddress BodySnapshotUrl { get; internal set; }

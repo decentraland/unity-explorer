@@ -10,26 +10,39 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
     public struct GetWearablesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetWearablesByPointersIntention>
     {
-        public readonly List<string> Pointers;
-        public readonly IWearable[] Results;
-
-        public readonly AssetSource PermittedSources;
+        public HideWearablesResolution HideWearablesResolution;
         public readonly BodyShape BodyShape;
         public readonly bool FallbackToDefaultWearables;
 
-        public CancellationTokenSource CancellationTokenSource { get; }
+        public readonly AssetSource PermittedSources;
+        public readonly List<string> Pointers;
 
-        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL,
+        /// <summary>
+        ///     Instead of storing a separate collection for the resolved wearables, we store the indices of the resolved wearables in the WearableAssetResults array.
+        /// </summary>
+        public long ResolvedWearablesIndices;
+
+        internal GetWearablesByPointersIntention(List<string> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL,
             bool fallbackToDefaultWearables = true)
         {
             Pointers = pointers;
-            Results = result;
             BodyShape = bodyShape;
+            HideWearablesResolution = new HideWearablesResolution(forceRender);
             FallbackToDefaultWearables = fallbackToDefaultWearables;
             PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();
+            ResolvedWearablesIndices = 0;
 
             ProfilingCounters.GetWearablesIntentionAmount.Value++;
+        }
+
+        public CancellationTokenSource CancellationTokenSource { get; }
+
+        public void Dispose()
+        {
+            POINTERS_POOL.Release(Pointers);
+
+            ProfilingCounters.GetWearablesIntentionAmount.Value--;
         }
 
         public bool Equals(GetWearablesByPointersIntention other) =>
@@ -40,13 +53,5 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public override int GetHashCode() =>
             HashCode.Combine(Pointers);
-
-        public void Dispose()
-        {
-            POINTERS_POOL.Release(Pointers);
-            RESULTS_POOL.Return(Results, clearArray: true);
-
-            ProfilingCounters.GetWearablesIntentionAmount.Value--;
-        }
     }
 }

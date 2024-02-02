@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
@@ -92,6 +93,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
+            var characterPreviewInputEventBus = new CharacterPreviewInputEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -122,8 +124,10 @@ namespace Global.Dynamic
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     storedIdentityProvider,
-                    wearableCatalog),
-
+                    wearableCatalog,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    characterPreviewInputEventBus),
+                new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),

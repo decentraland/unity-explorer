@@ -1,3 +1,8 @@
+using DCL.CharacterPreview;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
 namespace DCL.Backpack.BackpackBus
 {
     public readonly struct BackpackEquipCommand
@@ -32,13 +37,33 @@ namespace DCL.Backpack.BackpackBus
 
     public readonly struct BackpackHideCommand
     {
-        public readonly string Category;
-        public readonly bool? IsHidden;
+        public readonly IReadOnlyCollection<string> ForceRender;
 
-        public BackpackHideCommand(string category, bool? isHidden)
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender)
+        {
+            ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
+        }
+    }
+
+    public readonly struct BackpackFilterCategoryCommand
+    {
+        public readonly string Category;
+        public readonly AvatarSlotCategoryEnum CategoryEnum;
+
+        public BackpackFilterCategoryCommand(string category, AvatarSlotCategoryEnum categoryEnum = AvatarSlotCategoryEnum.Body)
         {
             Category = category;
-            IsHidden = isHidden;
+            CategoryEnum = categoryEnum;
+        }
+    }
+
+    public readonly struct BackpackSearchCommand
+    {
+        public readonly string SearchText;
+
+        public BackpackSearchCommand(string searchText)
+        {
+            SearchText = searchText;
         }
     }
 }
