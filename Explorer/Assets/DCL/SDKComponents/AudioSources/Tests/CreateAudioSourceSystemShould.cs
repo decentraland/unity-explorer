@@ -60,12 +60,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), sceneStateProvider, cache, poolsRegistry, budgetProvider, budgetProvider);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            system.Dispose();
-        }
-
         [Test]
         public void NotCreateAudioSourceIfClipNotFinishedLoading()
         {
