@@ -184,6 +184,18 @@ namespace DCL.Profiles
         public List<string> interests;
         public string unclaimedName;
         public bool hasConnectedWeb3;
+        public string country;
+        public string employmentStatus;
+        public string gender;
+        public string pronouns;
+        public string relationshipStatus;
+        public string sexualOrientation;
+        public string language;
+        public string profession;
+        public string realName;
+        public string hobbies;
+        public long birthdate;
+        public List<string> links;
 
         public static ProfileJsonDto Create()
         {
@@ -203,10 +215,22 @@ namespace DCL.Profiles
             profile.Name = name;
             profile.UnclaimedName = unclaimedName;
             profile.HasClaimedName = hasClaimedName;
+            profile.HasConnectedWeb3 = hasConnectedWeb3;
             profile.Description = description;
             profile.TutorialStep = tutorialStep;
             profile.Email = email;
             profile.Version = version;
+            profile.Country = country;
+            profile.EmploymentStatus = employmentStatus;
+            profile.Gender = gender;
+            profile.Pronouns = pronouns;
+            profile.RelationshipStatus = relationshipStatus;
+            profile.SexualOrientation = sexualOrientation;
+            profile.Language = language;
+            profile.Profession = profession;
+            profile.RealName = realName;
+            profile.Birthdate = DateTimeOffset.FromUnixTimeSeconds(birthdate).DateTime;
+            profile.Hobbies = hobbies;
             profile.Avatar ??= new Avatar();
             avatar.CopyTo(profile.Avatar);
 
@@ -233,11 +257,24 @@ namespace DCL.Profiles
                 ListPool<string>.Release(profile.interests);
                 profile.interests = null;
             }
+
+            if (links != null)
+            {
+                profile.links ??= ListPool<string>.Get();
+                profile.links.Clear();
+                profile.links.AddRange(links);
+            }
+            else if (profile.links != null)
+            {
+                ListPool<string>.Release(profile.links);
+                profile.links = null;
+            }
         }
 
         public void CopyFrom(Profile profile)
         {
             userId = profile.UserId;
+            ethAddress = profile.UserId;
             name = profile.Name;
             unclaimedName = profile.UnclaimedName;
             hasClaimedName = profile.HasClaimedName;
@@ -246,6 +283,18 @@ namespace DCL.Profiles
             email = profile.Email;
             version = profile.Version;
             avatar.CopyFrom(profile.Avatar);
+            hasConnectedWeb3 = profile.HasConnectedWeb3;
+            country = profile.Country;
+            employmentStatus = profile.EmploymentStatus;
+            gender = profile.Gender;
+            pronouns = profile.Pronouns;
+            relationshipStatus = profile.RelationshipStatus;
+            sexualOrientation = profile.SexualOrientation;
+            language = profile.Language;
+            profession = profile.Profession;
+            realName = profile.RealName;
+            birthdate = new DateTimeOffset(profile.Birthdate).ToUnixTimeSeconds();
+            hobbies = profile.Hobbies;
 
             if (profile.blocked != null)
             {
@@ -270,6 +319,18 @@ namespace DCL.Profiles
                 ListPool<string>.Release(interests);
                 interests = null;
             }
+
+            if (profile.links != null)
+            {
+                links ??= ListPool<string>.Get();
+                links.Clear();
+                links.AddRange(profile.links);
+            }
+            else if (links != null)
+            {
+                ListPool<string>.Release(links);
+                links = null;
+            }
         }
 
         private void Reset()
@@ -287,6 +348,18 @@ namespace DCL.Profiles
             interests?.Clear();
             unclaimedName = default(string);
             hasConnectedWeb3 = default(bool);
+            country = default(string);
+            employmentStatus = default(string);
+            gender = default(string);
+            pronouns = default(string);
+            relationshipStatus = default(string);
+            sexualOrientation = default(string);
+            language = default(string);
+            profession = default(string);
+            realName = default(string);
+            birthdate = default(long);
+            hobbies = default(string);
+            links?.Clear();
         }
     }
 

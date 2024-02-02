@@ -1,21 +1,32 @@
-#nullable disable
-
-using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.Profiles
 {
     public class Profile
     {
-        internal HashSet<string> blocked;
-        internal List<string> interests;
+        internal HashSet<string>? blocked;
+        internal List<string>? interests;
+        internal List<string>? links;
         public string UserId { get; internal set; }
         public string Name { get; internal set; }
         public string UnclaimedName { get; internal set; }
         public bool HasClaimedName { get; internal set; }
+        public bool HasConnectedWeb3 { get; internal set; }
         public string Description { get; internal set; }
         public int TutorialStep { get; internal set; }
         public string Email { get; internal set; }
+        public string Country { get; internal set; }
+        public string EmploymentStatus { get; internal set; }
+        public string Gender { get; internal set; }
+        public string Pronouns { get; internal set; }
+        public string RelationshipStatus { get; internal set; }
+        public string SexualOrientation { get; internal set; }
+        public string Language { get; internal set; }
+        public string Profession { get; internal set; }
+        public string RealName { get; internal set; }
+        public string Hobbies { get; internal set; }
+        public DateTime Birthdate { get; internal set; }
         public int Version { get; internal set; }
         public Avatar Avatar { get; internal set; }
 
@@ -24,8 +35,9 @@ namespace DCL.Profiles
         /// </summary>
         public bool IsDirty { get; set; }
 
-        [CanBeNull] public IReadOnlyCollection<string> Blocked => blocked;
-        [CanBeNull] public IReadOnlyCollection<string> Interests => interests;
+        public IReadOnlyCollection<string>? Blocked => blocked;
+        public IReadOnlyCollection<string>? Interests => interests;
+        public IReadOnlyCollection<string>? Links => links;
 
         internal Profile() { }
 
