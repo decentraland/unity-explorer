@@ -112,7 +112,7 @@ jobs:
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
       - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.5.2
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -125,7 +125,6 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
-          gitPrivateToken: ${{ secrets.GITHUB_TOKEN }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
 
       # Upload artifact
