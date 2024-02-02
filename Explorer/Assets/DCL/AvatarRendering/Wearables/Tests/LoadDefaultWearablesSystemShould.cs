@@ -23,6 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
         private WearableCatalog wearableCatalog;
         private GameObject emptyDefaultWearable;
+
         [SetUp]
         public void Setup()
         {
@@ -41,7 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             system.Initialize();
 
-            AssetPromise<IWearable[], GetWearablesByPointersIntention>[] promises = world.CacheDefaultWearablesState().GetDefaultWearablesState(world).PromisePerBodyShape;
+            AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] promises = world.CacheDefaultWearablesState().GetDefaultWearablesState(world).PromisePerBodyShape;
             Assert.That(promises.Length, Is.EqualTo(BodyShape.COUNT));
 
             for (var i = 0; i < promises.Length; i++)
@@ -63,15 +64,15 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             for (var i = 0; i < state.PromisePerBodyShape.Length; i++)
             {
-                AssetPromise<IWearable[], GetWearablesByPointersIntention> promise = state.PromisePerBodyShape[i];
-                world.Add(promise.Entity, new StreamableLoadingResult<IWearable[]>(Array.Empty<IWearable>()));
+                AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = state.PromisePerBodyShape[i];
+                world.Add(promise.Entity, new StreamableLoadingResult<WearablesResolution>(WearablesResolution.EMPTY));
             }
 
             system.Update(0);
 
             for (var i = 0; i < state.PromisePerBodyShape.Length; i++)
             {
-                AssetPromise<IWearable[], GetWearablesByPointersIntention> promise = state.PromisePerBodyShape[i];
+                AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = state.PromisePerBodyShape[i];
                 Assert.That(promise.IsConsumed, Is.True);
             }
 
@@ -84,17 +85,20 @@ namespace DCL.AvatarRendering.Wearables.Tests
             system.Initialize();
 
             //Look for an empty and a non-empty default wearable
-            var tiaraDefaultWearable =
+            IWearable tiaraDefaultWearable =
                 wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA,
-                    out var shouldBeEmpty);
-            var upperBodyDefaultWearable =
+                    out bool shouldBeEmpty);
+
+            IWearable upperBodyDefaultWearable =
                 wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY,
-                    out var shouldntBeEmpty);
+                    out bool shouldntBeEmpty);
 
             Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject,
                 emptyDefaultWearable);
+
             Assert.AreEqual(tiaraDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
             Assert.IsTrue(shouldBeEmpty);
+
             //In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
             //So, to confirm that the default wearable is not loaded, we check that the asset is null and that the urn is not from the empty default wearable
             Assert.AreEqual(upperBodyDefaultWearable.WearableAssetResults[BodyShape.MALE], null);
@@ -107,11 +111,11 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             system.Initialize();
 
-            var defaultWearableCount = wearableCatalog.wearablesCache.Keys.Count;
+            int defaultWearableCount = wearableCatalog.wearablesCache.Keys.Count;
             wearableCatalog.AddEmptyWearable("Wearable_To_Be_Unloaded");
             Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount + 1);
 
-            var concurrentBudgetProvider = Substitute.For<IReleasablePerformanceBudget>();
+            IReleasablePerformanceBudget concurrentBudgetProvider = Substitute.For<IReleasablePerformanceBudget>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
             wearableCatalog.Unload(concurrentBudgetProvider);
 

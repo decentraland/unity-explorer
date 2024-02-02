@@ -14,6 +14,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     public class Wearable : IWearable
     {
         private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
+        private const string DEFAULT_RARITY = "base";
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
@@ -81,7 +82,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             "";
 
         public string GetRarity() =>
-            WearableDTO.Asset.metadata.rarity ?? "common";
+            WearableDTO.Asset.metadata.rarity ?? DEFAULT_RARITY;
 
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;
