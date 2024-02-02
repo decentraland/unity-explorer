@@ -98,8 +98,6 @@ namespace Global.Dynamic
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache, web3IdentityCache);
 
-            await container.ProfileRepository.SetAsync(null, ct);
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),

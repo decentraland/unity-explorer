@@ -39,46 +39,6 @@ namespace DCL.Profiles
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
-            // string result = Base32.Encode(Encoding.UTF8.GetBytes("bleh"));
-            // List<string> bleh = new List<string>();
-            //
-            // foreach (var hashingAlgorithm in HashingAlgorithm.All)
-            // {
-            //     MultiHash hash = MultiHash.ComputeHash(Encoding.UTF8.GetBytes("bleh"), hashingAlgorithm.Name);
-            //     bleh.Add(hash.ToString());
-            //     bleh.Add(hash.ToBase32());
-            //     bleh.Add(hash.ToBase58());
-            // }
-
-            // using (var ms = new MemoryStream(MultiBase.Decode(input), false))
-            // {
-            //     var v = ms.ReadVarint32();
-            //     if (v != 1)
-            //     {
-            //         throw new InvalidDataException($"Unknown CID version '{v}'.");
-            //     }
-            //     return new Cid
-            //     {
-            //         Version = v,
-            //         Encoding = Registry.MultiBaseAlgorithm.Codes[input[0]].Name,
-            //         ContentType = ms.ReadMultiCodec().Name,
-            //         Hash = new MultiHash(ms)
-            //     };
-            // }
-
-            var hash = MultiHash.ComputeHash(Encoding.UTF8.GetBytes("bleh"));
-
-            // string base32 = hash.ToBase32();
-            // string hashStr = hash.ToString();
-            // Cid cid = Cid.Decode(hashStr);
-            // Cid cid = hash;
-            // string s = cid.ToString();
-
-            // Result from hashV1(new TextEncoder().encode('bleh'))
-            var cid = Cid.Decode("bafkreifqbsjvx7fa34z5md73yoi6z7jktxl35e3ga6pvjfansr2ehyx6aq");
-
-            return;
-
             var profileDto = GetProfileJsonRootDto.Create();
             profileDto.CopyFrom(profile);
 
@@ -92,8 +52,9 @@ namespace DCL.Profiles
                 metadata = profileDto,
             };
 
-            byte[] entityFile = Encoding.UTF8.GetBytes(JsonUtility.ToJson(entity));
-            string entityId = Base32.Encode(entityFile);
+            string entityJson = JsonUtility.ToJson(entity);
+            byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
+            string entityId = HashV1(entityFile);
             AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
             multipartFormSections.Clear();
@@ -171,6 +132,17 @@ namespace DCL.Profiles
 
                 throw;
             }
+        }
+
+        private string HashV1(byte[] content)
+        {
+            // Result from hashV1(new TextEncoder().encode('bleh'))
+            // var cid = Cid.Decode("bafkreifqbsjvx7fa34z5md73yoi6z7jktxl35e3ga6pvjfansr2ehyx6aq");
+
+            var sha2256MultiHash = MultiHash.ComputeHash(content);
+            var cid = new Cid { Encoding = "base32", ContentType = "raw", Hash = sha2256MultiHash, Version = 1 };
+            var hash = cid.ToString();
+            return hash;
         }
 
         [Serializable]

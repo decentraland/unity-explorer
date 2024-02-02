@@ -19,6 +19,12 @@ namespace DCL.Profiles
 
         public Emote ToEmote() =>
             new (slot, urn);
+
+        public void CopyFrom(Emote emote)
+        {
+            slot = emote.Slot;
+            urn = emote.Urn;
+        }
     }
 
     [Serializable]
@@ -38,6 +44,14 @@ namespace DCL.Profiles
             g = 1;
             b = 1;
             a = 1;
+        }
+
+        public void CopyFrom(Color color)
+        {
+            r = color.r;
+            g = color.g;
+            b = color.b;
+            a = color.a;
         }
     }
 
@@ -69,7 +83,7 @@ namespace DCL.Profiles
     [Serializable]
     public struct AvatarJsonDto
     {
-        private static readonly ThreadSafeListPool<URN> wearablePool = new (10, 10);
+        private static readonly ThreadSafeListPool<URN> wearableUrnPool = new (10, 10);
 
         public string bodyShape;
         public List<string> wearables;
@@ -84,7 +98,7 @@ namespace DCL.Profiles
         {
             const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
 
-            List<URN> wearableUrns = wearablePool.Get();
+            List<URN> wearableUrns = wearableUrnPool.Get();
 
             foreach (string w in wearables)
                 wearableUrns.Add(w);
@@ -107,7 +121,35 @@ namespace DCL.Profiles
             avatar.HairColor = hair!.color!.ToColor();
             avatar.SkinColor = skin!.color!.ToColor();
 
-            wearablePool.Release(wearableUrns);
+            wearableUrnPool.Release(wearableUrns);
+        }
+
+        public void CopyFrom(Avatar avatar)
+        {
+            wearables ??= new List<string>();
+            wearables.Clear();
+
+            foreach (string w in avatar.uniqueWearables)
+                wearables.Add(w);
+
+            bodyShape = BodyShape.FromStringSafe(avatar.BodyShape);
+
+            emotes ??= new List<EmoteJsonDto>();
+            emotes.Clear();
+
+            foreach ((string urn, Emote emote) in avatar.emotes)
+            {
+                var emoteDto = new EmoteJsonDto();
+                emoteDto.CopyFrom(emote);
+                emotes.Add(emoteDto);
+            }
+
+            snapshots.face256 = avatar.FaceSnapshotUrl;
+            snapshots.body = avatar.BodySnapshotUrl;
+
+            eyes.color.CopyFrom(avatar.EyesColor);
+            hair.color.CopyFrom(avatar.HairColor);
+            skin.color.CopyFrom(avatar.SkinColor);
         }
 
         public void Reset()
@@ -193,6 +235,43 @@ namespace DCL.Profiles
             }
         }
 
+        public void CopyFrom(Profile profile)
+        {
+            userId = profile.UserId;
+            name = profile.Name;
+            unclaimedName = profile.UnclaimedName;
+            hasClaimedName = profile.HasClaimedName;
+            description = profile.Description;
+            tutorialStep = profile.TutorialStep;
+            email = profile.Email;
+            version = profile.Version;
+            avatar.CopyFrom(profile.Avatar);
+
+            if (profile.blocked != null)
+            {
+                blocked ??= ListPool<string>.Get();
+                blocked.Clear();
+                blocked.AddRange(profile.blocked);
+            }
+            else if (blocked != null)
+            {
+                ListPool<string>.Release(blocked);
+                blocked = null;
+            }
+
+            if (profile.interests != null)
+            {
+                interests ??= ListPool<string>.Get();
+                interests.Clear();
+                interests.AddRange(profile.interests);
+            }
+            else if (interests != null)
+            {
+                ListPool<string>.Release(interests);
+                interests = null;
+            }
+        }
+
         private void Reset()
         {
             hasClaimedName = default(bool);
@@ -216,7 +295,6 @@ namespace DCL.Profiles
     {
         private static readonly ThreadSafeObjectPool<GetProfileJsonRootDto> POOL = new (() => new GetProfileJsonRootDto());
 
-        public long timestamp;
         public List<ProfileJsonDto> avatars;
 
         public static GetProfileJsonRootDto Create()
@@ -237,6 +315,13 @@ namespace DCL.Profiles
             POOL.Release(this);
         }
 
-        public void CopyFrom(Profile profile) { }
+        public void CopyFrom(Profile profile)
+        {
+            avatars ??= new List<ProfileJsonDto>();
+            avatars.Clear();
+            var profileDto = new ProfileJsonDto();
+            profileDto.CopyFrom(profile);
+            avatars.Add(profileDto);
+        }
     }
 }
