@@ -611,6 +611,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 6cd1ff1fbe82f9745b9e1017475768e8, type: 2}
+    - target: {fileID: 3096291468108386061, guid: 8bdde6d988737594b9625a6085ae5bc8, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: a8101246813ec844fbb8d8d2d30b2b6c, type: 2}
     - target: {fileID: 3509339072761066770, guid: 8bdde6d988737594b9625a6085ae5bc8, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -631,6 +635,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 6cd1ff1fbe82f9745b9e1017475768e8, type: 2}
+    - target: {fileID: 8185758955163912333, guid: 8bdde6d988737594b9625a6085ae5bc8, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: a8101246813ec844fbb8d8d2d30b2b6c, type: 2}
     - target: {fileID: 8771091787928289351, guid: 8bdde6d988737594b9625a6085ae5bc8, type: 3}
       propertyPath: m_Name
       value: Mill
