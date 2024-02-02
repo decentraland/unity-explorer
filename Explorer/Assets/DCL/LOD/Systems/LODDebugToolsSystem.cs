@@ -86,10 +86,11 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.CurrentLOD == null) return;
 
-            if (sceneLODInfo.CurrentLOD.Value.LoadingFailed) return;
+            var lodAsset = sceneLODInfo.CurrentLOD.Value;
+            if (lodAsset.LoadingFailed) return;
 
-            if (!sceneLODInfo.CurrentLOD.Value.LodKey.Equals(sceneLODInfoDebug.CurrentLODKey))
-                sceneLODInfoDebug.Update(sceneLODInfo.CurrentLOD!.Value, lodSettingsAsset);
+            if (!lodAsset.LodKey.Level.Equals(sceneLODInfoDebug.CurrentLODLevel))
+                sceneLODInfoDebug.Update(sceneLODInfo.CurrentLOD.Value, lodSettingsAsset);
         }
     }
 }

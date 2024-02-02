@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NBitcoin.Scripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.LOD
 {
@@ -9,14 +10,16 @@ namespace DCL.LOD
     {
         private Dictionary<string, Color[]> OriginalColors;
         private Dictionary<string, Renderer[]> Renderers;
-        public LODKey? CurrentLODKey;
 
-        private void RefreshLODColors(Renderer[] renderers, Color[] originalColors, LODKey newKey, ILODSettingsAsset lodSettingsAsset)
+        [FormerlySerializedAs("CurrentLODKey")]
+        public byte CurrentLODLevel;
+
+        private void RefreshLODColors(Renderer[] renderers, Color[] originalColors, byte newLevel, ILODSettingsAsset lodSettingsAsset)
         {
             if (lodSettingsAsset.IsColorDebuging)
             {
                 for (int i = 0; i < renderers.Length; i++)
-                    renderers[i].material.color = lodSettingsAsset.LODDebugColors[newKey.Level];
+                    renderers[i].material.color = lodSettingsAsset.LODDebugColors[newLevel];
             }
             else
             {
@@ -24,7 +27,7 @@ namespace DCL.LOD
                     renderers[i].material.color = originalColors[i];
             }
 
-            CurrentLODKey = newKey;
+            CurrentLODLevel = newLevel;
         }
 
         public void Update(LODAsset lodAsset, ILODSettingsAsset lodSettingsAsset)
@@ -40,11 +43,11 @@ namespace DCL.LOD
                 OriginalColors[lodKey] = originalColors;
                 Renderers[lodKey] = renderers;
 
-                RefreshLODColors(renderers, originalColors, lodAsset.LodKey, lodSettingsAsset);
+                RefreshLODColors(renderers, originalColors, lodAsset.LodKey.Level, lodSettingsAsset);
             }
             else
             {
-                RefreshLODColors(Renderers[lodKey], OriginalColors[lodKey], lodAsset.LodKey, lodSettingsAsset);
+                RefreshLODColors(Renderers[lodKey], OriginalColors[lodKey], lodAsset.LodKey.Level, lodSettingsAsset);
             }
         }
 
@@ -52,7 +55,7 @@ namespace DCL.LOD
         {
             return new SceneLODInfoDebug
             {
-                OriginalColors = new Dictionary<string, Color[]>(), Renderers = new Dictionary<string, Renderer[]>(), CurrentLODKey = null
+                OriginalColors = new Dictionary<string, Color[]>(), Renderers = new Dictionary<string, Renderer[]>(), CurrentLODLevel = byte.MaxValue
             };
         }
 
