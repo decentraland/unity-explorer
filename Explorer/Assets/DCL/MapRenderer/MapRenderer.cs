@@ -81,10 +81,7 @@ namespace DCL.MapRenderer
             {
                 // just ignore
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.TEXTURES));
-            }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.TEXTURES)); }
         }
 
         public IMapCameraController RentCamera(in MapCameraInput cameraInput)

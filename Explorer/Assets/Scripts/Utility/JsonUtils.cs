@@ -16,10 +16,7 @@ namespace Utility
             if (!string.IsNullOrEmpty(json))
             {
                 try { returningValue = JsonUtility.FromJson<T>(json); }
-                catch (ArgumentException e)
-                {
-                    Debug.LogError(string.Format("ArgumentException Fail!... Json = {0} {1}", json, e));
-                }
+                catch (ArgumentException e) { Debug.LogError(string.Format("ArgumentException Fail!... Json = {0} {1}", json, e)); }
             }
 
             return returningValue;

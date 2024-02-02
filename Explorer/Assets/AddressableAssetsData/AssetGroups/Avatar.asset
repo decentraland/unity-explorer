@@ -27,11 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 19373184c73f36042a55739551bb8298
-    m_Address: Avatar_CelShading
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aab64a77806b44a43b6f5d0da6de94c6
     m_Address: RandomAnimator
     m_ReadOnly: 0

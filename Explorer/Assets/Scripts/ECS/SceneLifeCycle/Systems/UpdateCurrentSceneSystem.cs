@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Character.Components;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -41,7 +42,7 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
-            Vector3 playerPos = World.Get<TransformComponent>(playerEntity).Transform.position;
+            Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
 
             if (lastParcelProcessed == parcel) return;

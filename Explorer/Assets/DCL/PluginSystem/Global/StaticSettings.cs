@@ -15,12 +15,6 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
         [field: SerializeField]
-        public CharacterObjectRef CharacterObject { get; private set; }
-
-        [field: SerializeField]
-        public float StartYPosition { get; private set; } = 1.0f;
-
-        [field: SerializeField]
         public ReportHandlingSettingsRef ReportHandlingSettings { get; private set; }
 
         [field: SerializeField]
@@ -45,12 +39,6 @@ namespace DCL.PluginSystem.Global
             { MemoryUsageStatus.Warning, 0.8f },
             { MemoryUsageStatus.Full, 0.95f },
         };
-
-        [Serializable]
-        public class CharacterObjectRef : ComponentReference<CharacterObject>
-        {
-            public CharacterObjectRef(string guid) : base(guid) { }
-        }
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>

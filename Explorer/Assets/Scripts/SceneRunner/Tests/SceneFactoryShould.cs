@@ -2,7 +2,7 @@ using Arch.Core;
 using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Web3;

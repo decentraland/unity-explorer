@@ -27,6 +27,8 @@ MonoBehaviour:
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
+  - rid: 1841402216112979969
+  - rid: 4340256219339423747
   references:
     version: 2
     RefIds:
@@ -112,6 +114,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 1841402216112979969
+      type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
+      data:
+        <CharacterObject>k__BackingField:
+          m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <StartYPosition>k__BackingField: 1
+        <sceneBucketPropagationLimit>k__BackingField: 3
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -132,6 +144,14 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
+    - rid: 4340256219339423747
+      type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        CharacterPreviewContainerReference:
+          m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -167,12 +187,6 @@ MonoBehaviour:
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <CharacterObject>k__BackingField:
-          m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <StartYPosition>k__BackingField: 1
         <ReportHandlingSettings>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
           m_SubObjectName: 

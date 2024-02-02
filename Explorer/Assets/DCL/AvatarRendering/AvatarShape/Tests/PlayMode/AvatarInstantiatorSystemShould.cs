@@ -8,6 +8,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
@@ -17,12 +18,14 @@ using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using Object = UnityEngine.Object;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -62,15 +65,15 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             var promise = Promise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>
-                    { "skin", "hair" }),
+                    { "skin", "hair" }, Array.Empty<string>()),
                 new PartitionComponent());
 
-            world.Add(promise.Entity, new StreamableLoadingResult<IWearable[]>(new[]
+            world.Add(promise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {
                 GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE),
                 GetMockWearable("skin", WearablesConstants.Categories.UPPER_BODY),
                 GetMockWearable("hair", WearablesConstants.Categories.HAIR),
-            }));
+            })));
 
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
                 randomSkinColor, randomHairColor);
@@ -125,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             await UniTask.WaitUntil(() => system != null && avatarMesh != null);
 
             //Arrange
-            avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new TransformComponent());
+            avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new CharacterTransform());
 
             //Act
             system.Update(0);
@@ -145,10 +148,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Act
             var newPromise = Promise.Create(world,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>()),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
                 new PartitionComponent());
 
-            world.Add(newPromise.Entity, new StreamableLoadingResult<IWearable[]>(new[] { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) }));
+            world.Add(newPromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newPromise;
