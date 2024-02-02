@@ -1,3 +1,6 @@
+using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.CharacterPreview;
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -14,6 +17,9 @@ namespace DCL.Backpack
         public event Action<AvatarSlotView> OnSlotButtonPressed;
 
         [field: SerializeField]
+        public bool BlockUnEquip { get; private set; }
+
+        [field: SerializeField]
         internal Image focusedImage { get; private set; }
 
         [field: SerializeField]
@@ -21,6 +27,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Button SlotButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject EmptyOverlay { get; private set; }
 
         [field: SerializeField]
         public GameObject HoverTootlip { get; private set; }
@@ -32,6 +41,9 @@ namespace DCL.Backpack
         public Button UnequipButton { get; private set; }
 
         [field: SerializeField]
+        public GameObject OverrideHideContainer { get; private set; }
+
+        [field: SerializeField]
         public Button OverrideHide { get; private set; }
 
         [field: SerializeField]
@@ -39,6 +51,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public TMP_Text CategoryText { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text HiderText { get; private set; }
 
         [field: SerializeField]
         public string SlotWearableUrn { get; set; }
@@ -55,9 +70,13 @@ namespace DCL.Backpack
         [field: SerializeField]
         public GameObject NftContainer { get; private set; }
 
+        [field: SerializeField]
+        public AvatarSlotCategoryEnum CategoryEnum;
+
         public void Start()
         {
-            CategoryText.text = Category;
+            AvatarWearableHide.CATEGORIES_TO_READABLE.TryGetValue(Category.ToLower(), out string readableCategoryHider);
+            CategoryText.text = readableCategoryHider;
             SlotButton.onClick.AddListener(InvokeSlotButtonPressed);
         }
 
@@ -71,7 +90,7 @@ namespace DCL.Backpack
         {
             HoverTootlip.SetActive(true);
             focusedImage.enabled = true;
-            UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn));
+            UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn) && !BlockUnEquip);
             ScaleUpAnimation(focusedImage.transform);
         }
 

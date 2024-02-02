@@ -94,7 +94,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9043033216114609522
 RectTransform:
   m_ObjectHideFlags: 0
@@ -293,7 +293,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1620984950020681931
 RectTransform:
   m_ObjectHideFlags: 0
@@ -343,7 +343,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f02af068e11cb4902a1a4faad10b890a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -538,20 +538,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c797954f92e54fecb656b9a0ecdecde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <BlockUnEquip>k__BackingField: 0
   <focusedImage>k__BackingField: {fileID: 6608887254494201105}
   <Category>k__BackingField: 
   <SlotButton>k__BackingField: {fileID: 6140505366549626883}
+  <EmptyOverlay>k__BackingField: {fileID: 778022788925054171}
   <HoverTootlip>k__BackingField: {fileID: 1939663090140278769}
   <SelectedBackground>k__BackingField: {fileID: 1565898462633254641}
   <UnequipButton>k__BackingField: {fileID: 974693733676106512}
+  <OverrideHideContainer>k__BackingField: {fileID: 390093675035885393}
   <OverrideHide>k__BackingField: {fileID: 7015445653465098593}
   <NoOverride>k__BackingField: {fileID: 5111178573828489163}
   <CategoryText>k__BackingField: {fileID: 3491566857406547017}
+  <HiderText>k__BackingField: {fileID: 556676770789666314}
   <SlotWearableUrn>k__BackingField: 
   <SlotWearableThumbnail>k__BackingField: {fileID: 6615436191762671025}
   <SlotWearableRarityBackground>k__BackingField: {fileID: 2319109405909261016}
   <LoadingView>k__BackingField: {fileID: 2069050160429817371}
   <NftContainer>k__BackingField: {fileID: 7919142331980974852}
+  CategoryEnum: 0
 --- !u!1 &1315728735672877397
 GameObject:
   m_ObjectHideFlags: 0
@@ -1394,7 +1399,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7322595626202064796
 RectTransform:
   m_ObjectHideFlags: 0

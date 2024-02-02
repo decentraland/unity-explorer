@@ -51,8 +51,7 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
-        public void DoNothingIfLoadingStarted([Values(StreamableLoading.LifeCycle.LoadingInProgress, StreamableLoading.LifeCycle.LoadingFinished, StreamableLoading.LifeCycle.Applied)]
-            StreamableLoading.LifeCycle status)
+        public void DoNothingIfLoadingStarted([Values(StreamableLoading.LifeCycle.LoadingInProgress, StreamableLoading.LifeCycle.LoadingFinished, StreamableLoading.LifeCycle.Applied)] StreamableLoading.LifeCycle status)
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
                 new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
