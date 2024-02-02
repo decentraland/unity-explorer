@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace DCL.Profiles
 {
@@ -24,7 +23,6 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly List<IMultipartFormSection> multipartFormSections = new ();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
@@ -57,36 +55,40 @@ namespace DCL.Profiles
             string entityId = HashV1(entityFile);
             AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
-            multipartFormSections.Clear();
+            var form = new WWWForm();
 
-            multipartFormSections.Add(new MultipartFormDataSection("entityId", entityId));
+            form.AddField("entityId", entityId);
 
             var i = 0;
 
             foreach (AuthLink link in authChain)
             {
-                multipartFormSections.Add(new MultipartFormDataSection($"authChain[{i}][type]", link.type.ToString()));
-                multipartFormSections.Add(new MultipartFormDataSection($"authChain[{i}][payload]", link.payload));
-                multipartFormSections.Add(new MultipartFormDataSection($"authChain[{i}][signature]", link.signature));
+                form.AddField($"authChain[{i}][type]", link.type.ToString());
+                form.AddField($"authChain[{i}][payload]", link.payload);
+                form.AddField($"authChain[{i}][signature]", link.signature ?? "");
                 i++;
             }
 
-            multipartFormSections.Add(new MultipartFormDataSection(entityId, entityFile));
+            form.AddBinaryData(entityId, entityFile);
 
             IIpfsRealm ipfs = realm.Ipfs;
 
             urlBuilder.Clear();
 
-            URLAddress url = urlBuilder.AppendDomain(ipfs.ContentBaseUrl)
-                                       .AppendPath(URLPath.FromString("entities"))
+            URLAddress url = urlBuilder.AppendDomain(ipfs.CatalystBaseUrl)
+                                       .AppendPath(URLPath.FromString("content/entities"))
                                        .Build();
 
-            try { await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateMultipartForm(multipartFormSections), ct); }
-            finally
+            try
             {
-                multipartFormSections.Clear();
-                profileDto.Dispose();
+                await webRequestController.PostAsync(new CommonArguments(url),
+                    GenericPostArguments.CreateWWWForm(form), ct);
             }
+            catch (Exception e)
+            {
+                throw;
+            }
+            finally { profileDto.Dispose(); }
         }
 
         public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
