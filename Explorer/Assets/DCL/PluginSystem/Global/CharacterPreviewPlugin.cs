@@ -19,7 +19,10 @@ namespace DCL.PluginSystem.Global
 
         private IComponentPool<CharacterPreviewAvatarContainer> characterPreviewPoolRegistry;
 
-        public CharacterPreviewPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public CharacterPreviewPlugin(
+            IComponentPoolsRegistry poolsRegistry,
+            IAssetsProvisioner assetsProvisioner,
+            CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;
@@ -42,7 +45,7 @@ namespace DCL.PluginSystem.Global
         {
             CharacterPreviewAvatarContainer characterPreviewAvatarContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
             var parentContainer = new GameObject("CharacterPreviewContainerPool");
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer, parentContainer.transform));
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
             characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
         }
 

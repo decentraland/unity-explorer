@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
-        private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController;
@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
-            IComponentPoolsRegistry poolsRegistry)
+            ICharacterPreviewFactory characterPreviewFactory)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.realmData = realmData;
             this.storedIdentityProvider = storedIdentityProvider;
-            this.poolsRegistry = poolsRegistry;
+            this.characterPreviewFactory = characterPreviewFactory;
         }
 
         public void Dispose() { }
@@ -61,8 +61,6 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
-
-            ICharacterPreviewFactory characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
 
             authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository, webBrowser, storedIdentityProvider, characterPreviewFactory);
             mvcManager.RegisterController(authenticationScreenController);

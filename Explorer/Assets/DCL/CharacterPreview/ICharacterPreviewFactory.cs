@@ -13,17 +13,19 @@ namespace DCL.CharacterPreview
         CharacterPreviewController Create(World world, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings);
     }
 
-    public readonly struct CharacterPreviewFactory : ICharacterPreviewFactory
+    public class CharacterPreviewFactory : ICharacterPreviewFactory
     {
-        private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewComponentPool;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private IComponentPool<CharacterPreviewAvatarContainer> characterPreviewComponentPool;
 
         public CharacterPreviewFactory(IComponentPoolsRegistry poolsRegistry)
         {
-            characterPreviewComponentPool = (IComponentPool<CharacterPreviewAvatarContainer>)poolsRegistry.GetPool(typeof(CharacterPreviewAvatarContainer));
+            componentPoolsRegistry = poolsRegistry;
         }
 
         public CharacterPreviewController Create(World world, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings)
         {
+            characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
             var container = (CharacterPreviewAvatarContainer)characterPreviewComponentPool.Rent();
             container.Initialize(targetTexture);
             return new CharacterPreviewController(world, container, inputEventBus, characterPreviewComponentPool, cameraSettings);

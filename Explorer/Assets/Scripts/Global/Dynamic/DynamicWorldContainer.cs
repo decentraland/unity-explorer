@@ -92,7 +92,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
-            var characterPreviewInputEventBus = new CharacterPreviewInputEventBus();
+            var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -124,9 +124,8 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     storedIdentityProvider,
                     wearableCatalog,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                    characterPreviewInputEventBus),
-                new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,staticContainer.CacheCleaner),
+                    characterPreviewFactory),
+                new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(
                     staticContainer.AssetsProvisioner,
@@ -137,7 +136,7 @@ namespace Global.Dynamic
                     new UnityAppWebBrowser(),
                     realmData,
                     storedIdentityProvider,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry),
+                    characterPreviewFactory),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
             };

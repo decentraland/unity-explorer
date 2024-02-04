@@ -45,8 +45,6 @@ namespace DCL.Backpack
             IWeb3IdentityCache web3IdentityCache,
             IWearableCatalog wearableCatalog,
             PageButtonView pageButtonView,
-            IComponentPoolsRegistry poolsRegistry,
-            CharacterPreviewInputEventBus inputEventBus,
             ICharacterPreviewFactory characterPreviewFactory)
         {
             this.view = view;
