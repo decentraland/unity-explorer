@@ -18,19 +18,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public static class WearableComponentsUtils
     {
         internal static readonly ListObjectPool<string> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
-        internal static readonly ArrayPool<IWearable> RESULTS_POOL = ArrayPool<IWearable>.Create(20, 20);
+
+        internal static readonly ListObjectPool<IWearable> WEARABLES_POOL =
+            new (listInstanceDefaultCapacity: PoolConstants.WEARABLES_PER_AVATAR_COUNT, defaultCapacity: PoolConstants.AVATARS_COUNT);
+
+        internal static readonly HashSetObjectPool<string> CATEGORIES_POOL = new (hashsetInstanceDefaultCapacity: WearablesConstants.CATEGORIES_PRIORITY.Count, defaultCapacity: PoolConstants.AVATARS_COUNT);
+
+        internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
 
         private static readonly URLBuilder URL_BUILDER = new ();
-        internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
             List<string> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);
             pointers.AddRange(wearables);
-
-            IWearable[] results = RESULTS_POOL.Rent(pointers.Count);
-            return new GetWearablesByPointersIntention(pointers, results, bodyShape, forceRender);
+            return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
@@ -41,8 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (URN urn in wearables)
                 pointers.Add(urn);
 
-            IWearable[] results = RESULTS_POOL.Rent(pointers.Count);
-            return new GetWearablesByPointersIntention(pointers, results, bodyShape, forceRender);
+            return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
         public static void CreateWearableThumbnailPromise(IRealmData realmData, IWearable wearable, World world, IPartitionComponent partitionComponent)
@@ -71,11 +73,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)
         {
             Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
-            List<IWearable> visibleWearables = ListPool<IWearable>.Get();
+            List<IWearable> visibleWearables = WEARABLES_POOL.Get();
+
             for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i].GetCategory()] = wearables[i]; }
 
-            HashSet<string> hidingList = HashSetPool<string>.Get();
-            HashSet<string> combinedHidingList = HashSetPool<string>.Get();
+            HashSet<string> hidingList = CATEGORIES_POOL.Get();
+            HashSet<string> combinedHidingList = CATEGORIES_POOL.Get();
 
             for (var index = 0; index < WearablesConstants.CATEGORIES_PRIORITY.Count; index++)
             {
@@ -101,11 +104,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     visibleWearables.Add(wearable);
             }
 
-            hideWearablesResolution.VisibleWearables = new List<IWearable>(visibleWearables);
+            hideWearablesResolution.VisibleWearables = visibleWearables;
+            hideWearablesResolution.HiddenCategories = combinedHidingList;
 
-            HashSetPool<string>.Release(hidingList);
-            HashSetPool<string>.Release(combinedHidingList);
-            ListPool<IWearable>.Release(visibleWearables);
+            CATEGORIES_POOL.Release(hidingList);
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
         }
     }

@@ -1,4 +1,6 @@
 using CRDT.Protocol.Factory;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 
@@ -9,6 +11,9 @@ namespace CrdtEcsBridge.OutgoingMessages
     /// </summary>
     public readonly struct OutgoingCRDTMessagesSyncBlock : IDisposable
     {
+        internal static readonly ThreadSafeListPool<ProcessedCRDTMessage> MESSAGES_SHARED_POOL =
+            new (64, PoolConstants.SCENES_COUNT);
+
         private readonly List<ProcessedCRDTMessage> messages;
 
         internal OutgoingCRDTMessagesSyncBlock(List<ProcessedCRDTMessage> messages)
@@ -28,15 +33,9 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         public int PayloadLength { get; }
 
-        /// <summary>
-        ///     Flushes the outgoing CRDT messages and releases the mutex
-        /// </summary>
         public void Dispose()
         {
-            for (var i = 0; i < messages.Count; i++)
-                messages[i].message.Data.Dispose();
-
-            OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.Release(messages);
+            MESSAGES_SHARED_POOL.Release(messages);
         }
     }
 }

@@ -1,13 +1,13 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Unity.Transforms.Components;
-using UnityEngine;
-using Utility;
+using ECS.Prioritization.Components;
+using ECS.Unity.Transforms;
+using SceneRunner.Scene;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -17,42 +17,45 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     public partial class WriteCameraComponentsSystem : BaseUnityLoopSystem
     {
-        private static readonly SDKTransform SHARED_TRANSFORM = new ();
-        private static readonly PBCameraMode SHARED_CAMERA_MODE = new ();
-        private static readonly PBPointerLock SHARED_POINTER_LOCK = new ();
-
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
         private readonly IExposedCameraData exposedCameraData;
-        private readonly Entity sceneRootEntity;
+        private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
+        private readonly byte propagationThreshold;
 
-        internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, Entity sceneRootEntity) : base(world)
+        internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
+            byte propagationThreshold) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
-            this.sceneRootEntity = sceneRootEntity;
+            this.sceneData = sceneData;
+            this.propagationThreshold = propagationThreshold;
+            this.scenePartition = scenePartition;
         }
 
         public override void Initialize()
         {
             // set camera position for a newly created scene
-            Update(0);
+            ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false);
+            PropagateCameraData(false);
         }
 
         protected override void Update(float t)
         {
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRootEntity).Cached.WorldPosition;
+            if (scenePartition.Bucket > propagationThreshold)
+                return;
 
-            SHARED_CAMERA_MODE.Mode = exposedCameraData.CameraType;
-            SHARED_POINTER_LOCK.IsPointerLocked = exposedCameraData.PointerIsLocked;
-            SHARED_TRANSFORM.Position = ParcelMathHelper.GetSceneRelativePosition(exposedCameraData.WorldPosition, scenePosition);
-            SHARED_TRANSFORM.Rotation = exposedCameraData.WorldRotation;
+            ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, true);
+            PropagateCameraData(true);
+        }
 
-            // TODO Access to CRDT LWW components is not synchronized, bi-directional access causes concurrency exceptions
-            // TODO Poor performance, should jobified
-            // TODO Uncommenting causes random APPEND/PUT [silent] failures
-            // ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_TRANSFORM);
-            //ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_CAMERA_MODE);
-            //ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_POINTER_LOCK);
+        private void PropagateCameraData(bool checkIsDirty)
+        {
+            if (!checkIsDirty || exposedCameraData.CameraType.IsDirty)
+                ecsToCrdtWriter.PutMessage<PBCameraMode, IExposedCameraData>(static (mode, data) => mode.Mode = data.CameraType, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
+
+            if (!checkIsDirty || exposedCameraData.PointerIsLocked.IsDirty)
+                ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(static (pointerLock, data) => pointerLock.IsPointerLocked = data.PointerIsLocked, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
         }
     }
 }

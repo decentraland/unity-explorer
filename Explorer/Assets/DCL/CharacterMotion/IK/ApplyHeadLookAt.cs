@@ -9,7 +9,7 @@ namespace DCL.CharacterMotion.IK
     {
         // This method updates the head IK targets (horizontal and vertical) based on a target look-at direction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
+        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
         {
             Transform reference = avatarBase.HeadPositionConstraint;
 
@@ -39,8 +39,6 @@ namespace DCL.CharacterMotion.IK
             UpdateVerticalRotation(avatarBase, dt, settings, referenceAngle, targetAngle, horizontalTargetRotation);
         }
 
-
-
         // In order to avoid moving the character hands backwards when bending the spine while looking up/down we implemented a second IK pass
         // This second pass contains the current horizontal target rotation and also applies the vertical rotation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,7 +52,5 @@ namespace DCL.CharacterMotion.IK
             currentVerticalRotation = Quaternion.RotateTowards(currentVerticalRotation, verticalRotation, dt * settings.HeadIKRotationSpeed);
             avatarBase.HeadLookAtTargetVertical.localRotation = currentVerticalRotation;
         }
-
-
     }
 }

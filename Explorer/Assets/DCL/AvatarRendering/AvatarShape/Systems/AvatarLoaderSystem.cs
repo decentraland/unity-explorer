@@ -12,8 +12,7 @@ using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
 using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<
-    DCL.AvatarRendering.Wearables.Components.IWearable[],
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems

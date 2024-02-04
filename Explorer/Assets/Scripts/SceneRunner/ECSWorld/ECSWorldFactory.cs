@@ -78,8 +78,6 @@ namespace SceneRunner.ECSWorld
             foreach (IDCLWorldPlugin worldPlugin in plugins)
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems);
 
-            WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sceneRootEntity);
-
             // Prioritization
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
