@@ -3122,7 +3122,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2618566666506401498}
-  - {fileID: 8199328878923945147}
+  - {fileID: 5358931100504236972}
   - {fileID: 2081082932129842408}
   - {fileID: 154018262731813276}
   - {fileID: 1988175003055257579}
@@ -3155,7 +3155,7 @@ MonoBehaviour:
   <BackpackSortView>k__BackingField: {fileID: 6128057872158891546}
   <TipsButton>k__BackingField: {fileID: 8027559671807818544}
   <TipsPanelDeselectable>k__BackingField: {fileID: 8484032604503467888}
-  <characterPreviewView>k__BackingField: {fileID: 510879829811813369}
+  <characterPreviewView>k__BackingField: {fileID: 4359593439648312558}
 --- !u!1 &8581277015346495855
 GameObject:
   m_ObjectHideFlags: 0
@@ -5066,7 +5066,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccba16ac233d430cae9f8130065c01d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1001 &2730005842897382500
+--- !u!1001 &2194814894411848563
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -5096,7 +5096,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6064998454780672223, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6064998454780672223, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_AnchorMin.x
@@ -5104,7 +5104,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6064998454780672223, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6064998454780672223, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_SizeDelta.x
@@ -5164,17 +5164,17 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6777088113676516343, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_Name
-      value: BackpackCharacterPreview
+      value: CharacterPreviewView
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
---- !u!114 &510879829811813369 stripped
+--- !u!114 &4359593439648312558 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
-  m_PrefabInstance: {fileID: 2730005842897382500}
+  m_PrefabInstance: {fileID: 2194814894411848563}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
@@ -5182,10 +5182,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6c678bd39b14c0d9495b8b5877916dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!224 &8199328878923945147 stripped
+--- !u!224 &5358931100504236972 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6064998454780672223, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
-  m_PrefabInstance: {fileID: 2730005842897382500}
+  m_PrefabInstance: {fileID: 2194814894411848563}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2733447670211797671
 PrefabInstance:

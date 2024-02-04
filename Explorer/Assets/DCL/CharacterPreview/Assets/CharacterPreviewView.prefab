@@ -75,11 +75,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <CursorOverrideImage>k__BackingField: {fileID: 787297597149262778}
-  <cursorSettings>k__BackingField:
-  - inputAction: 0
-    cursorSprite: {fileID: 21300000, guid: a0dd824ee2daadd46a4437a4e3145c9e, type: 3}
-  - inputAction: 1
-    cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}
 --- !u!1 &4772467093689829753
 GameObject:
   m_ObjectHideFlags: 0
@@ -147,7 +142,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 3adceed38e04c4f1480a7ca1014548c6, type: 3}
+  m_Texture: {fileID: 2800000, guid: feb17d16b84e84e55a6dc530923024ef, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -222,6 +217,7 @@ MonoBehaviour:
   <RawImage>k__BackingField: {fileID: 1124832982894223493}
   <CharacterPreviewInputDetector>k__BackingField: {fileID: 2460058156442629763}
   <CharacterPreviewCursorContainer>k__BackingField: {fileID: 8921462143626868842}
+  <CharacterPreviewSettingsSo>k__BackingField: {fileID: 0}
 --- !u!1 &6897458527996807904
 GameObject:
   m_ObjectHideFlags: 0
