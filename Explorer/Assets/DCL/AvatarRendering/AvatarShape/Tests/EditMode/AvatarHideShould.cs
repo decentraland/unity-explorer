@@ -12,7 +12,7 @@ namespace DCL.Tests
     public class AvatarHideShould
     {
         private readonly BodyShape TEST_BODY_SHAPE = BodyShape.MALE;
-        private IWearable[] mockWearables;
+        private List<IWearable> mockWearables;
         private IWearable upperMockWearable;
         private IWearable upperSkinWearable;
 
@@ -49,10 +49,10 @@ namespace DCL.Tests
         [Test]
         public void HideWearables()
         {
-            mockWearables = new[] { upperMockWearable };
+            mockWearables = new List<IWearable>() { upperMockWearable };
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, mockWearables.Length, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
@@ -62,10 +62,10 @@ namespace DCL.Tests
         [Test]
         public void HideHierarchyRespected()
         {
-            mockWearables = new[] { upperMockWearable, upperSkinWearable };
+            mockWearables = new List<IWearable>() { upperMockWearable, upperSkinWearable };
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, mockWearables.Length, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
@@ -76,13 +76,13 @@ namespace DCL.Tests
         [Test]
         public void ForceRenderRespected()
         {
-            mockWearables = new[] { upperMockWearable };
+            mockWearables = new List<IWearable>() { upperMockWearable };
 
             var forceRender = new HashSet<string>();
             forceRender.Add(WearablesConstants.Categories.LOWER_BODY);
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, forceRender, mockWearables, mockWearables.Length, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, forceRender, mockWearables, hidingList);
 
             Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
@@ -92,10 +92,10 @@ namespace DCL.Tests
         [Test]
         public void HideBodyShape()
         {
-            mockWearables = new[] { upperMockWearable };
+            mockWearables = new List<IWearable>() { upperMockWearable };
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, mockWearables.Length, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
             var usedCategories = new HashSet<string>();
             usedCategories.Add(WearablesConstants.Categories.HEAD);

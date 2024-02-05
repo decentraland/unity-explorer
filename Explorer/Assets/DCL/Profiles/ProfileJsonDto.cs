@@ -70,6 +70,7 @@ namespace DCL.Profiles
     public struct AvatarJsonDto
     {
         private static readonly ThreadSafeListPool<URN> wearablePool = new (10, 10);
+        private static readonly ThreadSafeListPool<string> forceRenderPool = new (15, 15);
 
         public string bodyShape;
         public List<string> wearables;
@@ -85,14 +86,23 @@ namespace DCL.Profiles
             const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
 
             List<URN> wearableUrns = wearablePool.Get();
+            List<string> forceRenderCategories = forceRenderPool.Get();
 
             foreach (string w in wearables)
                 wearableUrns.Add(w);
 
             avatar.sharedWearables.Clear();
+            avatar.forceRender.Clear();
+
+            if (forceRender != null)
+                foreach (string forceRenderCategory in forceRender)
+                    forceRenderCategories.Add(forceRenderCategory);
 
             foreach (URN wearable in wearableUrns)
                 avatar.sharedWearables.Add(wearable.Shorten(SHARED_WEARABLES_MAX_URN_PARTS));
+
+            foreach (string forceRenderCategory in forceRenderCategories)
+                avatar.forceRender.Add(forceRenderCategory);
 
             // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
             avatar.uniqueWearables.Clear();
@@ -108,6 +118,7 @@ namespace DCL.Profiles
             avatar.SkinColor = skin!.color!.ToColor();
 
             wearablePool.Release(wearableUrns);
+            forceRenderPool.Release(forceRenderCategories);
         }
 
         public void Reset()
@@ -143,16 +154,16 @@ namespace DCL.Profiles
         public string unclaimedName;
         public bool hasConnectedWeb3;
 
+        public void Dispose()
+        {
+            POOL.Release(this);
+        }
+
         public static ProfileJsonDto Create()
         {
             ProfileJsonDto profile = POOL.Get();
             profile.Reset();
             return profile;
-        }
-
-        public void Dispose()
-        {
-            POOL.Release(this);
         }
 
         public void CopyTo(Profile profile)
@@ -219,13 +230,6 @@ namespace DCL.Profiles
         public long timestamp;
         public List<ProfileJsonDto> avatars;
 
-        public static GetProfileJsonRootDto Create()
-        {
-            GetProfileJsonRootDto root = POOL.Get();
-            root.avatars?.Clear();
-            return root;
-        }
-
         private GetProfileJsonRootDto() { }
 
         public void Dispose()
@@ -235,6 +239,13 @@ namespace DCL.Profiles
                     avatar.Dispose();
 
             POOL.Release(this);
+        }
+
+        public static GetProfileJsonRootDto Create()
+        {
+            GetProfileJsonRootDto root = POOL.Get();
+            root.avatars?.Clear();
+            return root;
         }
     }
 }

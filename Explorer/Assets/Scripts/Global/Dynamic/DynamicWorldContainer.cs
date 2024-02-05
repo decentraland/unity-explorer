@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
@@ -94,13 +95,12 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
+            var characterPreviewInputEventBus = new CharacterPreviewInputEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
-
-            IScenesCache scenesCache = new ScenesCache();
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -114,7 +114,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService), new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -126,8 +126,10 @@ namespace Global.Dynamic
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     storedIdentityProvider,
-                    wearableCatalog),
-
+                    wearableCatalog,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    characterPreviewInputEventBus),
+                new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
@@ -135,7 +137,7 @@ namespace Global.Dynamic
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    scenesCache, debugBuilder, staticContainer.AssetsProvisioner),
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
             };
 
