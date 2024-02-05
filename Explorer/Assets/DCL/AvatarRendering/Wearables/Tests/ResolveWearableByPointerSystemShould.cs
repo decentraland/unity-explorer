@@ -6,10 +6,10 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 ResolvedState = DefaultWearablesComponent.State.Success,
             });
 
-            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new IpfsRealm(URLDomain.EMPTY)), URLSubdirectory.EMPTY);
+            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
         }
 
         private WearableCatalog wearableCatalog;

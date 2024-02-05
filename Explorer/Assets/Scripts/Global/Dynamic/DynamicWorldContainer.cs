@@ -134,6 +134,7 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             container.RealmController = new RealmController(
+                web3IdentityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,

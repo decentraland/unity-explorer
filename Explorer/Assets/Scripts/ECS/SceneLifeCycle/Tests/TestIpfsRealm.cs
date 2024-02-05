@@ -1,7 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using Ipfs;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -11,6 +14,12 @@ namespace ECS.SceneLifeCycle.Tests
         public URLDomain LambdasBaseUrl { get; }
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
+
+        public UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, IReadOnlyDictionary<string, byte[]> contentFiles, CancellationToken ct) =>
+            throw new NotSupportedException();
+
+        public async UniTask<string> GetFileHashAsync(byte[] file, CancellationToken ct) =>
+            file.IpfsHashV1();
 
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
