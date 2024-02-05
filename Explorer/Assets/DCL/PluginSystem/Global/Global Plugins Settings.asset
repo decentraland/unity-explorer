@@ -29,6 +29,7 @@ MonoBehaviour:
   - rid: 4107643854440628226
   - rid: 1841402216112979969
   - rid: 4340256219339423747
+  - rid: 4340256301410942981
   references:
     version: 2
     RefIds:
@@ -149,6 +150,14 @@ MonoBehaviour:
       data:
         CharacterPreviewContainerReference:
           m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 4340256301410942981
+      type: {class: ChatPlugin/ChatSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ChatPanelPrefab:
+          m_AssetGUID: f3b1d401bc50845629a6b982f9793f16
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
