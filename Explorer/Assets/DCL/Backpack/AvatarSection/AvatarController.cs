@@ -14,7 +14,6 @@ namespace DCL.Backpack
     public class AvatarController : ISection, IDisposable
     {
         private readonly RectTransform rectTransform;
-        private readonly AvatarView view;
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
@@ -28,18 +27,23 @@ namespace DCL.Backpack
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IBackpackEquipStatusController backpackEquipStatusController,
+            BackpackSortController backpackSortController,
+            PageButtonView pageButtonView)
         {
-            this.view = view;
-
+            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
-            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController);
-            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
+            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController, pageButtonView);
+            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds, rarityColors, backpackEquipStatusController);
+
             rectTransform = view.GetComponent<RectTransform>();
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        {
             await backpackGridController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            await backpackInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {
@@ -48,7 +52,7 @@ namespace DCL.Backpack
 
         public void RequestInitialWearablesPage()
         {
-            backpackGridController.RequestPage(0);
+            backpackGridController.RequestTotalNumber();
         }
 
         public void Activate()
