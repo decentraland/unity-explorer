@@ -19,20 +19,17 @@ namespace DCL.Profiles
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
         private readonly byte[] whiteTexturePng = Texture2D.whiteTexture.EncodeToPNG();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
-            IProfileCache profileCache,
-            IWeb3IdentityCache web3IdentityCache)
+            IProfileCache profileCache)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
             this.profileCache = profileCache;
-            this.web3IdentityCache = web3IdentityCache;
         }
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
@@ -40,10 +37,10 @@ namespace DCL.Profiles
             IIpfsRealm ipfs = realm.Ipfs;
 
             // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
-            byte[] snapshotTextureFile = whiteTexturePng;
+            byte[] faceSnapshotTextureFile = whiteTexturePng;
             byte[] bodySnapshotTextureFile = whiteTexturePng;
 
-            string faceHash = await ipfs.GetFileHashAsync(snapshotTextureFile, ct);
+            string faceHash = await ipfs.GetFileHashAsync(faceSnapshotTextureFile, ct);
             string bodyHash = await ipfs.GetFileHashAsync(bodySnapshotTextureFile, ct);
 
             using var profileDto = GetProfileJsonRootDto.Create();
@@ -59,7 +56,7 @@ namespace DCL.Profiles
                     new () { file = "body.png", hash = faceHash },
                     new () { file = "face256.png", hash = bodyHash },
                 },
-                pointers = new List<string> { web3IdentityCache.Identity!.Address },
+                pointers = new List<string> { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = "profile",
                 metadata = profileDto,
@@ -67,7 +64,7 @@ namespace DCL.Profiles
 
             files.Clear();
             files[bodyHash] = bodySnapshotTextureFile;
-            files[faceHash] = snapshotTextureFile;
+            files[faceHash] = faceSnapshotTextureFile;
 
             try
             {

@@ -98,7 +98,7 @@ namespace Global.Dynamic
             IProfileCache profileCache = new DefaultProfileCache();
 
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
-                profileCache, web3IdentityCache);
+                profileCache);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
