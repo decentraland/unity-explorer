@@ -11,7 +11,7 @@ namespace SceneRunner.Scene
             IReadOnlyList<Vector2Int> parcels)
         {
             sceneFacade.DisposeAsync().Forget();
-            scenesCache.Remove(parcels);
+            scenesCache.RemoveSceneFacade(parcels);
         }
     }
 }

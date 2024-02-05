@@ -136,7 +136,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                switchComponent.Dispose(World, lodAssetsPool);
+                switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
                 visualSceneState.IsDirty = false;
 
                 //Show Scene

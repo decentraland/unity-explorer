@@ -14,19 +14,19 @@ namespace DCL.LOD.Components
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
 
-        public void Dispose(World world, ILODAssetsPool lodAssetsPool)
+        public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
 
-            if (CurrentLOD != null)
-                CurrentLOD.TryRelease(lodAssetsPool);
-
+            CurrentLOD?.Release();
             CurrentLOD = null;
         }
 
         public static SceneLODInfo Create() =>
             new()
-                { CurrentLODLevel = byte.MaxValue };
+            {
+                CurrentLODLevel = byte.MaxValue
+            };
     }
 
 }

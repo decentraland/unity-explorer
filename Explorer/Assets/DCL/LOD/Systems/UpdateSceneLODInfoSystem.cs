@@ -5,6 +5,7 @@ using Arch.SystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
+using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
@@ -12,6 +13,8 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -28,16 +31,20 @@ namespace DCL.LOD.Systems
     {
         private readonly ILODAssetsPool lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
-        public readonly IPerformanceBudget frameCapBudget;
+        private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
+        private readonly IScenesCache scenesCache;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget) : base(world)
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
+            this.scenesCache = scenesCache;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         protected override void Update(float t)
@@ -64,7 +71,7 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                sceneLODInfo.CurrentLOD.TryRelease(lodCache);
+                sceneLODInfo.CurrentLOD?.Release();
 
                 if (result.Succeeded)
                 {
@@ -74,7 +81,7 @@ namespace DCL.LOD.Systems
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        instantiatedLOD, result.Asset);
+                        instantiatedLOD, result.Asset, lodCache);
                 }
                 else
                 {
@@ -83,6 +90,10 @@ namespace DCL.LOD.Systems
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
+
+                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+
+                CheckSceneReadiness(sceneDefinitionComponent);
 
                 sceneLODInfo.IsDirty = false;
             }
@@ -117,8 +128,9 @@ namespace DCL.LOD.Systems
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
-                sceneLODInfo.CurrentLOD.TryRelease(lodCache);
+                sceneLODInfo.CurrentLOD?.Release();
                 sceneLODInfo.CurrentLOD = cachedAsset;
+                CheckSceneReadiness(sceneDefinitionComponent);
             }
             else
             {
@@ -147,6 +159,17 @@ namespace DCL.LOD.Systems
             }
         }
 
-
+        private void CheckSceneReadiness(SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
+            {
+                for (int i = 0; i < reports!.Value.Count; i++)
+                {
+                    var report = reports.Value[i];
+                    report.ProgressCounter.Value = 1f;
+                    report.CompletionSource.TrySetResult();
+                }
+            }
+        }
     }
 }

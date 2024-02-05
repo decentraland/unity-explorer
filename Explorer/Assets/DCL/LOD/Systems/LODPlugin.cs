@@ -15,6 +15,7 @@ using DCL.ResourcesUnloading;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 
@@ -31,9 +32,10 @@ namespace DCL.LOD
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IDebugContainerBuilder debugBuilder;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
-            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder, IAssetsProvisioner assetsProvisioner)
+            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder, IAssetsProvisioner assetsProvisioner, ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
@@ -44,6 +46,7 @@ namespace DCL.LOD
             this.scenesCache = scenesCache;
             this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public async UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
@@ -56,9 +59,9 @@ namespace DCL.LOD
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset);
 
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget);
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue);
 
-            UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool);
+            UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
 
             LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
         }

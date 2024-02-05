@@ -14,13 +14,16 @@ namespace DCL.LOD
         public GameObject Root;
         public AssetBundleData AssetBundleReference;
         public readonly bool LoadingFailed;
+        private readonly ILODAssetsPool Pool;
 
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference)
+
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool)
         {
             LodKey = lodKey;
             Root = root;
             AssetBundleReference = assetBundleReference;
             LoadingFailed = false;
+            Pool = pool;
 
             ProfilingCounters.LODAssetAmount.Value++;
         }
@@ -31,6 +34,7 @@ namespace DCL.LOD
             LoadingFailed = true;
             Root = null;
             AssetBundleReference = null;
+            Pool = null;
         }
 
         public void Dispose()
@@ -69,5 +73,10 @@ namespace DCL.LOD
             Root.transform.SetParent(parentContainer);
         }
 
+        public void Release()
+        {
+            if (!LoadingFailed)
+                Pool.Release(LodKey, this);
+        }
     }
 }

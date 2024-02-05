@@ -14,8 +14,7 @@ namespace DCL.LOD.Systems
             if (sceneDefinitionComponent.IsEmpty) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE; }
 
             //For SDK6 scenes, we just show lod0
-            //Removing this if until we decide what to do with SDK6 scenes
-            //else if (!sceneDefinitionComponent.IsSDK7) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD; }
+            else if (!sceneDefinitionComponent.IsSDK7) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD; }
             else
             {
                 var candidateState = partition.Bucket < lodSettingsAsset.LodPartitionBucketThresholds[0]

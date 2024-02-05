@@ -8,6 +8,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using DCL.Diagnostics;
+using ECS.SceneLifeCycle.SceneDefinition;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -16,10 +17,12 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UnloadSceneLODSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodAssetsPool;
+        private readonly IScenesCache scenesCache;
 
-        public UnloadSceneLODSystem(World world, ILODAssetsPool lodAssetsPool) : base(world)
+        public UnloadSceneLODSystem(World world, ILODAssetsPool lodAssetsPool, IScenesCache scenesCache) : base(world)
         {
             this.lodAssetsPool = lodAssetsPool;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -29,9 +32,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo)
+        private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            sceneLODInfo.Dispose(World, lodAssetsPool);
+            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
             World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
         }
     }

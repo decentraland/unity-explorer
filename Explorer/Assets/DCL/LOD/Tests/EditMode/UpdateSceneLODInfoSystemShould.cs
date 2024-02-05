@@ -7,6 +7,8 @@ using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using Decentraland.Kernel.Comms.Rfc4;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -47,6 +49,8 @@ namespace DCL.LOD.Tests
             var memoryBudget = Substitute.For<IPerformanceBudget>();
             memoryBudget.TrySpendBudget().Returns(true);
 
+            var scenesCache = Substitute.For<IScenesCache>();
+            var sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
 
             partitionComponent = new PartitionComponent();
             var sceneEntityDefinition = new IpfsTypes.SceneEntityDefinition
@@ -66,14 +70,8 @@ namespace DCL.LOD.Tests
 
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
-            var lodSettingsAsset = ScriptableObject.CreateInstance<LODSettingsAsset>();
-            lodSettingsAsset.LodPartitionBucketThresholds = new []
-            {
-                2, 4
-            };
-            var lodSettingsProvidedAsset = new ProvidedAsset<LODSettingsAsset>(lodSettingsAsset);
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget);
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue);
         }
 
 

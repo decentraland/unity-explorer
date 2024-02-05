@@ -137,7 +137,7 @@ namespace Global.Dynamic
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner),
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
             };
 
