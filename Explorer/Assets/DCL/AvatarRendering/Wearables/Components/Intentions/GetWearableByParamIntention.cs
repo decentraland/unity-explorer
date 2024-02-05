@@ -19,12 +19,14 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         //Used for pooling
         public List<IWearable> Results;
+        public int TotalAmount;
 
-        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results)
+        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results, int totalAmount)
         {
             Params = requestParams;
             UserID = userID;
             Results = results;
+            TotalAmount = totalAmount;
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource());
         }
 

@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 namespace DCL.PluginSystem
 {
     /// <summary>
@@ -10,6 +8,6 @@ namespace DCL.PluginSystem
         /// <summary>
         ///     Get a typed settings object or throw an exception if it doesn't exist
         /// </summary>
-        [NotNull] T GetSettings<T>() where T: IDCLPluginSettings;
+        T GetSettings<T>() where T: IDCLPluginSettings;
     }
 }

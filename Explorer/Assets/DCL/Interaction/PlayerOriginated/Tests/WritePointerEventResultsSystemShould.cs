@@ -1,16 +1,19 @@
-﻿using Arch.Core;
-using CRDT;
-using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Special;
+﻿using CRDT;
+using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Systems;
+using DCL.Optimization.Pools;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using Utility;
+using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.Interaction.PlayerOriginated.Tests
 {
@@ -23,16 +26,20 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [SetUp]
         public void SetUp()
         {
-            Entity rootEntity = world.Create(new SceneRootComponent());
-            AddTransformToEntity(rootEntity);
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
 
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
 
-            system = new WritePointerEventResultsSystem(world, rootEntity,
+            IComponentPool<RaycastHit> pool = Substitute.For<IComponentPool<RaycastHit>>();
+            pool.Get().Returns(new RaycastHit().Reset());
+
+            system = new WritePointerEventResultsSystem(world, sceneData,
                 writer = Substitute.For<IECSToCRDTWriter>(),
                 sceneStateProvider,
-                globalInputEvents = Substitute.For<IGlobalInputEvents>());
+                globalInputEvents = Substitute.For<IGlobalInputEvents>(),
+                pool);
         }
 
         [TearDown]
@@ -44,8 +51,22 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void WriteGlobalEvents()
         {
-            writer.When(w => w.AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, Arg.Any<PBPointerEventsResult>(), Arg.Any<int>()))
-                  .Do(info => results.Add(info.Arg<PBPointerEventsResult>().Clone()));
+            writer.AppendMessage(
+                       Arg.Any<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(),
+                       Arg.Any<CRDTEntity>(),
+                       Arg.Any<int>(),
+                       Arg.Any<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>())
+                  .Returns(info =>
+                   {
+                       var res = new PBPointerEventsResult();
+
+                       info.ArgAt<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(0)
+                           .Invoke(res, info.ArgAt<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>(3));
+
+                       results.Add(res);
+
+                       return res;
+                   });
 
             globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
             {
@@ -91,8 +112,22 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             var sdkEntity = new CRDTEntity(100);
 
-            writer.When(w => w.AppendMessage(sdkEntity, Arg.Any<PBPointerEventsResult>(), Arg.Any<int>()))
-                  .Do(info => results.Add(info.Arg<PBPointerEventsResult>().Clone()));
+            writer.AppendMessage(
+                       Arg.Any<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(),
+                       Arg.Any<CRDTEntity>(),
+                       Arg.Any<int>(),
+                       Arg.Any<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>())
+                  .Returns(info =>
+                   {
+                       var res = new PBPointerEventsResult();
+
+                       info.ArgAt<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(0)
+                           .Invoke(res, info.ArgAt<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>(3));
+
+                       results.Add(res);
+
+                       return res;
+                   });
 
             world.Create(sdkEntity, sdkEvents);
 

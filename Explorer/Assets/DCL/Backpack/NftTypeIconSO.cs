@@ -7,6 +7,7 @@ namespace DCL.Backpack
     public class NftTypeIconSO : ScriptableObject
     {
         [SerializeField] public SerializableKeyValuePair<string, Sprite>[] nftIcons;
+        [SerializeField] public Sprite defaultIcon;
 
         public Sprite GetTypeImage(string nftType)
         {
@@ -16,7 +17,7 @@ namespace DCL.Backpack
                     return icon.value;
             }
 
-            return null;
+            return defaultIcon;
         }
     }
 }

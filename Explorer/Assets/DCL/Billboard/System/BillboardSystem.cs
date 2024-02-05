@@ -25,7 +25,7 @@ namespace DCL.Billboard.System
 
         protected override void Update(float t)
         {
-            Quaternion cameraRotationAxisZ = Quaternion.Euler(0, 0, exposedCameraData.WorldRotation.eulerAngles.z);
+            var cameraRotationAxisZ = Quaternion.Euler(0, 0, exposedCameraData.WorldRotation.Value.eulerAngles.z);
             Vector3 cameraPosition = exposedCameraData.WorldPosition;
             UpdateRotationQuery(World, cameraPosition, cameraRotationAxisZ);
         }

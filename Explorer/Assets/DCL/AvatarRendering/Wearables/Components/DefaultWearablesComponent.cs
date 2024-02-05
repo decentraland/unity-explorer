@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.Wearables.Components.Intentions;
 using ECS.StreamableLoading.Common;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -16,11 +17,11 @@ namespace DCL.AvatarRendering.Wearables.Components
             Success,
         }
 
-        public AssetPromise<IWearable[], GetWearablesByPointersIntention>[] PromisePerBodyShape;
+        public AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] PromisePerBodyShape;
 
         public State ResolvedState;
 
-        public DefaultWearablesComponent(AssetPromise<IWearable[], GetWearablesByPointersIntention>[] promisePerBodyShape)
+        public DefaultWearablesComponent(AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] promisePerBodyShape)
         {
             PromisePerBodyShape = promisePerBodyShape;
             ResolvedState = State.InProgress;

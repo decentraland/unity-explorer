@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.UI;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -19,5 +20,8 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceGameObject PageButtonView { get; private set; }
     }
 }

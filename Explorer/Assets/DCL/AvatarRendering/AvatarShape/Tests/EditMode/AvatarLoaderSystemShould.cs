@@ -10,7 +10,6 @@ using ECS.Unity.ColorComponent;
 using NUnit.Framework;
 using System.Collections.Generic;
 using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {

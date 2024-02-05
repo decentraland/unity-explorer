@@ -119,8 +119,7 @@ namespace DCL.Tests.Editor
 
         private static IEnumerable<ScriptableObject> GetAllScriptableObjectsInFolder(string folderPath) =>
             AssetDatabase.FindAssets("t:Object", new[] { folderPath })
-                         .Select(guid => AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(guid)))
-                         .ToArray();
+                         .Select(guid => AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(guid)));
 
         private static bool IsDirectoryEmpty(string path) =>
             !Directory.EnumerateFileSystemEntries(path).Any();

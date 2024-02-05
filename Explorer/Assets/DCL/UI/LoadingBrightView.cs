@@ -15,6 +15,7 @@ namespace DCL.UI
 
         public void StartLoadingAnimation(GameObject loadingHide)
         {
+            loadingTween.Kill();
             gameObject.SetActive(true);
             loadingHide.SetActive(false);
             loadingBrightObject.anchoredPosition = new Vector2(-referenceParent.rect.width, loadingBrightObject.anchoredPosition.y);

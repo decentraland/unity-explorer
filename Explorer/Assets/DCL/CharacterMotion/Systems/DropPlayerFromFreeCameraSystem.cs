@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using ECS.Abstract;
@@ -41,9 +42,9 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         private void Drop([Data] in CameraComponent cameraComponent, [Data] ref CameraInput cameraInput,
-            ref TransformComponent playerTransform, ref CharacterController characterController)
+            ref CharacterTransform playerTransform, ref CharacterController characterController)
         {
-            Vector3 delta = cameraComponent.Camera.transform.position - playerTransform.Transform.position;
+            Vector3 delta = cameraComponent.Camera.transform.position - playerTransform.Position;
             characterController.Move(delta);
 
             // Cheat camera input to switch to third person

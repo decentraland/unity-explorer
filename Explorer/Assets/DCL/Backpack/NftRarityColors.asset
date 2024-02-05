@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nftColors:
   - key: rare
-    value: {r: 0.23529412, g: 0.89411765, b: 0.5176471, a: 1}
+    value: {r: 0.20392157, g: 0.80784315, b: 0.4627451, a: 1}
   - key: epic
     value: {r: 0.26274514, g: 0.6907097, b: 1, a: 1}
   - key: uncommon

@@ -1,7 +1,8 @@
 using CRDT.Protocol.Factory;
+using System;
 using System.Buffers;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.PoolsProviders
 {
     public class SharedPoolsProvider : ISharedPoolsProvider
     {
@@ -30,7 +31,7 @@ namespace CrdtEcsBridge.Engine
 
         public void ReleaseSerializedStateBytesPool(byte[] bytes)
         {
-            lock (SERIALIZED_STATE_BYTES_POOL) { SERIALIZED_STATE_BYTES_POOL.Return(bytes); }
+            lock (SERIALIZED_STATE_BYTES_POOL) { SERIALIZED_STATE_BYTES_POOL.Return(bytes, true); }
         }
     }
 }

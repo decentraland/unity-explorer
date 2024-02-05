@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;

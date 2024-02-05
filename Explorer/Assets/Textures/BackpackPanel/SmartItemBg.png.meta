@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/Textures/BackpackPanel/BrightLoading.png.meta
+guid: b225edcd186224e19b5d8fdc24a08999
+========
 guid: 62b6d6de1659a428a9f0f806e7073a46
+>>>>>>>> feat/backpack:Explorer/Assets/Textures/BackpackPanel/SmartItemBg.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}

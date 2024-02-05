@@ -16,8 +16,6 @@ namespace ECS.Unity.EngineInfo
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
     public partial class WriteEngineInfoSystem : BaseUnityLoopSystem
     {
-        private static readonly PBEngineInfo ENGINE_INFO_SHARED = new ();
-
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -36,11 +34,12 @@ namespace ECS.Unity.EngineInfo
         [All(typeof(SceneRootComponent))]
         private void PropagateToScene(ref CRDTEntity sdkEntity)
         {
-            ENGINE_INFO_SHARED.TickNumber = sceneStateProvider.TickNumber;
-            ENGINE_INFO_SHARED.FrameNumber = (uint)(MultithreadingUtility.FrameCount - sceneStateProvider.EngineStartInfo.FrameNumber);
-            ENGINE_INFO_SHARED.TotalRuntime = (float)(DateTime.Now - sceneStateProvider.EngineStartInfo.Timestamp).TotalSeconds;
-
-            ecsToCRDTWriter.PutMessage(sdkEntity, ENGINE_INFO_SHARED);
+            ecsToCRDTWriter.PutMessage<PBEngineInfo, ISceneStateProvider>(static (component, provider) =>
+            {
+                component.TickNumber = provider.TickNumber;
+                component.FrameNumber = (uint)(MultithreadingUtility.FrameCount - provider.EngineStartInfo.FrameNumber);
+                component.TotalRuntime = (float)(DateTime.Now - provider.EngineStartInfo.Timestamp).TotalSeconds;
+            }, sdkEntity, sceneStateProvider);
         }
     }
 }

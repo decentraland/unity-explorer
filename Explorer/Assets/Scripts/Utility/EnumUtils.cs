@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Utility
@@ -8,25 +9,31 @@ namespace Utility
     /// </summary>
     public static class EnumUtils
     {
+        public static IEqualityComparer<T> GetEqualityComparer<T>() where T: unmanaged, Enum =>
+            EqualityComparer<T>.INSTANCE;
+
+        public static unsafe int GetHashCode<T>(T @enum) where T: unmanaged, Enum
+        {
+            return sizeof(T) switch
+                   {
+                       sizeof(byte) => *(byte*)&@enum,
+                       sizeof(short) => *(short*)&@enum,
+                       sizeof(int) => *(int*)&@enum,
+                       sizeof(long) => (*(long*)&@enum).GetHashCode(),
+                       _ => 0,
+                   };
+        }
+
         public static unsafe bool Equals<T>(T x, T y) where T: unmanaged, Enum
         {
-            switch (sizeof(T))
-            {
-                case sizeof(byte):
-                    return *(byte*)&x == *(byte*)&y;
-
-                case sizeof(short):
-                    return *(short*)&x == *(short*)&y;
-
-                case sizeof(int):
-                    return *(int*)&x == *(int*)&y;
-
-                case sizeof(long):
-                    return *(long*)&x == *(long*)&y;
-
-                default:
-                    return false;
-            }
+            return sizeof(T) switch
+                   {
+                       sizeof(byte) => *(byte*)&x == *(byte*)&y,
+                       sizeof(short) => *(short*)&x == *(short*)&y,
+                       sizeof(int) => *(int*)&x == *(int*)&y,
+                       sizeof(long) => *(long*)&x == *(long*)&y,
+                       _ => false,
+                   };
         }
 
         public static unsafe bool HasFlag<T>(T x, T y) where T: unmanaged, Enum
@@ -92,5 +99,16 @@ namespace Utility
 
         public static T[] Values<T>() =>
             (T[])Enum.GetValues(typeof(T));
+
+        private class EqualityComparer<T> : IEqualityComparer<T> where T: unmanaged, Enum
+        {
+            public static readonly EqualityComparer<T> INSTANCE = new ();
+
+            public bool Equals(T x, T y) =>
+                EnumUtils.Equals(x, y);
+
+            public int GetHashCode(T obj) =>
+                EnumUtils.GetHashCode(obj);
+        }
     }
 }

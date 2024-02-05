@@ -22,7 +22,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IWearableCatalog wearableCatalog;
         private IWearableAssetsCache wearableAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
-        private IStreamableCache<AudioClip,GetAudioClipIntention> audioClipsCache;
+        private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
