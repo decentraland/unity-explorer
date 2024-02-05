@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
+using TMPro;
 
 namespace DCL.Chat
 {
@@ -10,7 +11,8 @@ namespace DCL.Chat
 
         public ChatController(ViewFactoryMethod viewFactory) : base(viewFactory)
         {
-
+            TMP_InputField inputField;
+            //inputField.preferredHeight use this for the resize of the view
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

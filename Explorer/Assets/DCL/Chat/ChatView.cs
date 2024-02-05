@@ -4,5 +4,6 @@ namespace DCL.Chat
 {
     public class ChatView : ViewBase, IView
     {
+
     }
 }
