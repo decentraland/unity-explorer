@@ -3,7 +3,6 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using DCL.LOD.Components;
-using UnityEditor.Build.Content;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle
