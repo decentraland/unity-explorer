@@ -145,6 +145,10 @@ namespace DCL.Profiles
 
             bodyShape = BodyShape.FromStringSafe(avatar.BodyShape);
 
+            forceRender ??= new List<string>();
+            forceRender.Clear();
+            forceRender.AddRange(avatar.forceRender);
+
             emotes ??= new List<EmoteJsonDto>();
             emotes.Clear();
 
