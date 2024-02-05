@@ -29,7 +29,7 @@ namespace DCL.Minimap
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private CancellationTokenSource cts;
 
@@ -45,7 +45,7 @@ namespace DCL.Minimap
         public MinimapController(
             ViewFactoryMethod viewFactory,
             IMapRenderer mapRenderer,
-            MVCManager mvcManager,
+            IMVCManager mvcManager,
             IPlacesAPIService placesAPIService
         ) : base(viewFactory)
         {
