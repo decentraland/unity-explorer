@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ECS.Unity.Materials.Components.Defaults
 {
-    public static class MaterialDefaults
+    public static class PBMaterialExtensions
     {
         public static float GetAlphaTest(this PBMaterial self)
         {
@@ -60,7 +60,7 @@ namespace ECS.Unity.Materials.Components.Defaults
             self.Pbr?.HasDirectIntensity == true ? self.Pbr.DirectIntensity : Default.DIRECT_INTENSITY;
 
         /// <summary>
-        /// Default constant values for material properties, that rewrite protobuf defaults
+        ///     Default constant values for material properties, that rewrite protobuf defaults
         /// </summary>
         private static class Default
         {

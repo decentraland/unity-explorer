@@ -3,22 +3,26 @@ using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
+using System;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
@@ -45,6 +49,8 @@ namespace Global
 
         public ComponentsContainer ComponentsContainer { get; private set; }
 
+        public CharacterContainer CharacterContainer { get; private set; }
+
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
         public WebRequestsContainer WebRequestsContainer { get; private set; }
@@ -66,11 +72,6 @@ namespace Global
 
         public IAssetsProvisioner AssetsProvisioner { get; private set; }
 
-        /// <summary>
-        ///     Character Object exists in a single instance
-        /// </summary>
-        public ICharacterObject CharacterObject => characterObject.Value;
-
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
 
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
@@ -85,7 +86,6 @@ namespace Global
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
-            characterObject.Dispose();
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
@@ -95,15 +95,24 @@ namespace Global
         {
             StaticSettings = settings;
 
-            (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
+            (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
-                    AssetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
                     AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct),
                     AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct),
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(
+        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
+        {
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
+                settings.InitializePluginAsync(target, ct),
+                settings.InitializePluginAsync(target.CharacterContainer, ct)
+            );
+
+            return results.Item1.success && results.Item2.success;
+        }
+
+        public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
@@ -123,8 +132,9 @@ namespace Global
 
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
+            container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
 
-            (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
+            bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
                 return (null, false)!;
@@ -155,13 +165,15 @@ namespace Global
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
+            ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
-                new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
+                new MaterialsPlugin(sharedDependencies, addressablesProvisioner, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
@@ -171,9 +183,11 @@ namespace Global
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
-                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                container.CharacterContainer.CreateWorldPlugin(),
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

@@ -107,7 +107,7 @@ namespace CRDT.Protocol
         public ProcessedCRDTMessage CreateDeleteMessage(CRDTEntity entity, int componentId) =>
             crdtState.CreateDeleteMessage(entity, componentId);
 
-        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message)
+        public CRDTReconciliationResult UpdateLWWState(in CRDTMessage message)
         {
             bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
                 out bool componentExists, out EntityComponentData storedData);

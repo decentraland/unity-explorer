@@ -1,5 +1,4 @@
 ﻿using CommunicationData.URLHelpers;
-using DCL.ECSComponents;
 using Decentraland.Common;
 using SceneRunner.Scene;
 using UnityEngine;
@@ -8,28 +7,22 @@ using TextureWrapMode = UnityEngine.TextureWrapMode;
 
 namespace ECS.Unity.Textures.Components.Extensions
 {
-    public static class TextureDefaultsExtension
+    public static class TextureDefaultsExtensions
     {
-        public static TextureComponent? CreateTextureComponent(this PBNftShape? self, ISceneData data)
-        {
-            if (self == null)
-                return null;
-
-            if (!data.TryGetMediaUrl(self.Urn ?? string.Empty, out URLAddress url))
-                return null;
-
-            return new TextureComponent(url);
-        }
-
         public static TextureComponent? CreateTextureComponent(this TextureUnion? self, ISceneData data)
         {
             if (self == null)
                 return null;
 
-            if (!self.TryGetTextureUrl(data, out URLAddress url))
-                return null;
+            if (self.IsVideoTexture())
+            {
+                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture(), self.GetVideoTextureId());
+                return textureComponent;
+            }
 
-            return new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture());
+            return self.TryGetTextureUrl(data, out URLAddress url)
+                ? new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture())
+                : null;
         }
 
         public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url)
@@ -39,8 +32,7 @@ namespace ECS.Unity.Textures.Components.Extensions
                 case TextureUnion.TexOneofCase.AvatarTexture:
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    // Not implemented - just ignore to not break the loop
-                    url = URLAddress.EMPTY;
+                    url = URLAddress.EMPTY; // just ignore to not break the loop
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
@@ -48,12 +40,12 @@ namespace ECS.Unity.Textures.Components.Extensions
             }
         }
 
-        public static long GetVideoTextureId(this TextureUnion self)
+        public static int GetVideoTextureId(this TextureUnion self)
         {
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    return self.VideoTexture.VideoPlayerEntity;
+                    return (int) self.VideoTexture.VideoPlayerEntity;
                 default:
                     return 0;
             }

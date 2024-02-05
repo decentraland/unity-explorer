@@ -8,6 +8,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -24,7 +25,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             componentPool.Get().Returns(new PBGltfContainerLoadingState());
 
-            system = new WriteGltfContainerLoadingStateSystem(world, writer, componentPool);
+            system = new WriteGltfContainerLoadingStateSystem(world, writer);
         }
 
         [Test]
@@ -37,7 +38,11 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             system.Update(0);
 
-            writer.Received(1).PutMessage(Arg.Is<CRDTEntity>(c => c.Id == 100), Arg.Is<PBGltfContainerLoadingState>(t => t.CurrentState == LoadingState.Finished));
+            writer.Received(1)
+                  .PutMessage(
+                       Arg.Any<Action<PBGltfContainerLoadingState, LoadingState>>(),
+                       Arg.Is<CRDTEntity>(c => c.Id == 100),
+                       Arg.Is<LoadingState>(c => c == LoadingState.Finished));
         }
 
         [Test]

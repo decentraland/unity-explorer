@@ -1,12 +1,15 @@
 using Arch.Core;
+using CRDT;
 using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Pooling;
 using ECS.Unity.Materials.Systems;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -38,13 +41,16 @@ namespace DCL.SDKComponents.NFTShape.Demo
             IPerformanceBudget memoryBudget,
             DestroyMaterial destroyMaterial,
             ISceneData sceneData,
+            IExtendedObjectPool<Texture2D> videoTexturePool = null,
             int attemptLoad = 5
         )
         {
+            IReadOnlyDictionary<CRDTEntity, Entity> entityMap = new Dictionary<CRDTEntity, Entity>();
+
             demoWorld = new DemoWorld(
                 world,
                 w => { },
-                w => new StartMaterialsLoadingSystem(w, destroyMaterial, sceneData, attemptLoad, capFrameBudget),
+                w => new StartMaterialsLoadingSystem(w, destroyMaterial, sceneData, attemptLoad, capFrameBudget, entityMap, videoTexturePool),
                 w => new CreateBasicMaterialSystem(w, materialsPool, capFrameBudget, memoryBudget),
                 w => new CreatePBRMaterialSystem(w, materialsPool, capFrameBudget, memoryBudget),
                 w => new ApplyMaterialSystem(w, sceneData),

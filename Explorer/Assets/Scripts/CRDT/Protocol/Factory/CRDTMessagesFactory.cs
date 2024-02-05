@@ -91,7 +91,6 @@ namespace CRDT.Protocol.Factory
         {
             var timestamp = 0;
 
-            // TODO non-synchronized may throw exceptions
             if (state.TryGetLWWComponentState(entity, componentId, out _, out _, out CRDTProtocol.EntityComponentData storedData)) timestamp = storedData.Timestamp + 1;
             return new ProcessedCRDTMessage(new CRDTMessage(messageType, entity, componentId, timestamp, data), CRDTMessageSerializationUtils.GetMessageDataLength(messageType, in data));
         }

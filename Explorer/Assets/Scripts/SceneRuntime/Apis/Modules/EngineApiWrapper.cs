@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.Engine;
+﻿using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -61,11 +61,11 @@ namespace SceneRuntime.Apis.Modules
                     // otherwise use the existing one
                     data.Read(0, data.Length, lastInput, 0);
 
-                ArraySegment<byte> result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
+                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
 
                 Profiler.EndThreadProfiling();
 
-                return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+                return result.IsEmpty ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
             }
             catch (Exception e)
             {
@@ -80,8 +80,8 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                ArraySegment<byte> result = api.CrdtGetState();
-                return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+                PoolableByteArray result = api.CrdtGetState();
+                return result.IsEmpty ? ScriptableByteArray.EMPTY : new ScriptableByteArray(result);
             }
             catch (Exception e)
             {

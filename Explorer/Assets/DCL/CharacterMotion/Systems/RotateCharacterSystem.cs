@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
@@ -34,7 +35,7 @@ namespace DCL.CharacterMotion.Systems
             [Data] float dt,
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            ref TransformComponent transform,
+            ref CharacterTransform transform,
             ref CharacterPlatformComponent platformComponent,
             in StunComponent stunComponent)
         {
@@ -50,6 +51,5 @@ namespace DCL.CharacterMotion.Systems
             // If we are on a platform we save our local rotation
             PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
         }
-
     }
 }

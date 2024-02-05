@@ -79,6 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public struct LambdaResponse
         {
             public List<LambdaResponseElementDto> elements;
+            public int totalAmount;
         }
 
         [Serializable]
