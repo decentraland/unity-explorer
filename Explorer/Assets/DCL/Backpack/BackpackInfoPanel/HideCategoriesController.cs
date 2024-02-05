@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
@@ -96,8 +97,9 @@ namespace DCL.Backpack
                     usedHides.Add(hideCategoryView);
                     hideCategoryView.transform.parent = hideCategoryRowView.transform;
                     hideCategoryView.transform.SetAsLastSibling();
-                    hideCategoryView.categoryText.text = hidingList.ToArray()[itemIndex];
-                    hideCategoryView.categoryImage.sprite = categoryIcons.GetTypeImage(hidingList.ToArray()[itemIndex]);
+                    string[] hidingArray = hidingList.ToArray();
+                    hideCategoryView.categoryText.text = AvatarWearableHide.CATEGORIES_TO_READABLE[hidingArray[itemIndex]];
+                    hideCategoryView.categoryImage.sprite = categoryIcons.GetTypeImage(hidingArray[itemIndex]);
                 }
             }
         }
