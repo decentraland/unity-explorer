@@ -48,7 +48,13 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject ChatPanelPrefab;
+            public ChatViewRef ChatPanelPrefab;
+
+            [Serializable]
+            public class ChatViewRef : ComponentReference<ChatView>
+            {
+                public ChatViewRef(string guid) : base(guid) { }
+            }
         }
     }
 }
