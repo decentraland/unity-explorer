@@ -14,13 +14,13 @@ namespace DCL.PluginSystem.Global
     public class MinimapPlugin : IDCLGlobalPlugin<MinimapPlugin.MinimapSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
 
         private MinimapController minimapController;
 
-        public MinimapPlugin(IAssetsProvisioner assetsProvisioner, MVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService)
+        public MinimapPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
