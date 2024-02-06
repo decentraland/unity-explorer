@@ -28,8 +28,8 @@ namespace DCL.Navmap
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
 
-        private readonly Vector2 rectTransformLocalPosition = new Vector3(1702, 480);
-        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(2100, 480);
+        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
+        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
         private readonly ImageController placeImageController;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
