@@ -79,7 +79,7 @@ namespace Ipfs
             string entityJson = JsonUtility.ToJson(entity);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
             string entityId = entityFile.IpfsHashV1();
-            AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
+            using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
             var form = new WWWForm();
 
