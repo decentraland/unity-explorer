@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -112,7 +113,8 @@ namespace Ipfs
             try
             {
                 await webRequestController.PostAsync(new CommonArguments(url),
-                    GenericPostArguments.CreateWWWForm(form), ct);
+                    GenericPostArguments.CreateWWWForm(form), ct,
+                    ReportCategory.REALM);
             }
             finally
             {
