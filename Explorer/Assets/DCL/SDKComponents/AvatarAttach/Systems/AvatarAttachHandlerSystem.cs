@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         private void SetupAvatarAttach(in Entity entity, ref TransformComponent transformComponent, ref PBAvatarAttach pbAvatarAttach)
         {
             if (mainPlayerAvatarBase == null)
-                mainPlayerAvatarBase = globalWorld.GetWorld()?.Get<AvatarBase>(globalWorld.GetMainPlayerEntity().Value);
+                mainPlayerAvatarBase = globalWorld.GetWorld()?.Get<AvatarBase>(globalWorld.GetMainPlayerEntity());
 
             if (mainPlayerAvatarBase == null) return;
 

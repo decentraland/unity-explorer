@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             playerAvatarBase.gameObject.transform.position = new Vector3(8, 8, 8);
             globalWorld = World.Create();
 
-            globalWorld.Create(
+            Entity playerEntity = globalWorld.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(Substitute.For<Transform>()),
                 playerAvatarBase
@@ -44,6 +44,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Setup system
             var worldProxy = new WorldProxy();
             worldProxy.SetWorld(globalWorld);
+            worldProxy.SetMainPlayerEntity(playerEntity);
             system = new AvatarAttachHandlerSystem(world, worldProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
