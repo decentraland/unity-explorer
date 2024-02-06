@@ -17,20 +17,23 @@ namespace ECS.SceneLifeCycle.Tests
     {
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
+        private IPartitionSettings partitionSettings;
+
 
         [SetUp]
         public void SetUp()
         {
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
-                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>());
+                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
+                partitionSettings = Substitute.For<IPartitionSettings>());
+
+            realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
 
         [Test]
         public void StartLoading([Range(1, 10, 1)] int radius)
         {
-            realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
-
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
@@ -52,8 +55,6 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void NotStartLoadingProcessedParcels([Range(1, 10, 1)] int radius)
         {
-            realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
-
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 

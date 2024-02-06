@@ -23,14 +23,16 @@ namespace Utility
 
         public bool JobStarted { get; private set; }
 
-        public ref readonly NativeArray<ParcelInfo> LastSplit => ref rings;
+        public ref NativeArray<ParcelInfo> LastSplit => ref rings;
 
         private void EnsureRingsArraySize(int maxRadius)
         {
-            if (rings.Length != maxRadius)
+            int ringsArraySize = GetRingsArraySize(maxRadius);
+
+            if (rings.Length != ringsArraySize)
             {
                 rings.Dispose();
-                rings = new NativeArray<ParcelInfo>(GetRingsArraySize(maxRadius), Allocator.Persistent);
+                rings = new NativeArray<ParcelInfo>(ringsArraySize, Allocator.Persistent);
             }
         }
 
@@ -97,6 +99,8 @@ namespace Utility
             ///     we calculate it in parallel jobs
             /// </summary>
             public bool AlreadyProcessed;
+
+            public float RingSqrDistance;
         }
 
         [BurstCompile]
@@ -117,6 +121,7 @@ namespace Utility
                 int index = (4 * ringLevel * (ringLevel + 1)) + 1; // + 1 stands for 0 radius
 
                 ringLevel++;
+                float ringSqrDistance = ringLevel * ParcelMathHelper.PARCEL_SIZE * (ringLevel * ParcelMathHelper.PARCEL_SIZE);
 
                 for (int i = -ringLevel; i <= ringLevel; i++)
                 {
@@ -130,7 +135,10 @@ namespace Utility
                             var parcel = new int2(j, Center.y + i);
 
                             Rings[index] = new ParcelInfo
-                                { AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel };
+                            {
+                                AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
+                                RingSqrDistance = ringSqrDistance,
+                            };
 
                             index++;
                         }
@@ -140,13 +148,19 @@ namespace Utility
                         var parcel = new int2(minX, Center.y + i);
 
                         Rings[index] = new ParcelInfo
-                            { AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel };
+                        {
+                            AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
+                            RingSqrDistance = ringSqrDistance,
+                        };
 
                         index++;
                         parcel = new int2(maxX, Center.y + i);
 
                         Rings[index] = new ParcelInfo
-                            { AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel };
+                        {
+                            AlreadyProcessed = ProcessedParcels.Contains(parcel), Parcel = parcel,
+                            RingSqrDistance = ringSqrDistance,
+                        };
 
                         index++;
                     }

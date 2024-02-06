@@ -6,8 +6,8 @@ using UnityEngine.UI;
 
 namespace DCL.Minimap
 {
-    public class MinimapView : ViewBase, IView {
-
+    public class MinimapView : ViewBase, IView
+    {
         [field: SerializeField]
         internal RawImage mapRendererTargetImage { get; private set; }
 
