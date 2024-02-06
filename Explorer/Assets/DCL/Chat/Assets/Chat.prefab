@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5657801177157900856}
   - component: {fileID: 8143675807956903832}
   m_Layer: 5
-  m_Name: EmoteButton
+  m_Name: EmojiButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,8 +67,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 8bd41475d220948938047b7627d45244, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -232,8 +232,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -15, y: 0}
-  m_SizeDelta: {x: -30, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9096060037373147159
 CanvasRenderer:
@@ -463,7 +463,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0.000015258789, y: 0}
-  m_SizeDelta: {x: 20, y: 20}
+  m_SizeDelta: {x: 22, y: 22}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2702039162969337427
 CanvasRenderer:
@@ -493,12 +493,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ac6ac6c06a20c4eeaa5a43ef13336247, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7a4f43ee2fc72490da56f8ad37ce6d7d, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
-  m_FillAmount: 1
+  m_FillAmount: 0
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
@@ -845,8 +845,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -16, y: -0.5}
-  m_SizeDelta: {x: -60, y: -13}
+  m_AnchoredPosition: {x: -31, y: -0.5}
+  m_SizeDelta: {x: -90, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4639031066445956891
 MonoBehaviour:
@@ -1344,6 +1344,7 @@ GameObject:
   - component: {fileID: 1342985244613152163}
   - component: {fileID: 7549476700047211074}
   - component: {fileID: 6422468924913582311}
+  - component: {fileID: 5274648269416443391}
   m_Layer: 5
   m_Name: CharacterCounterCircle
   m_TagString: Untagged
@@ -1367,10 +1368,10 @@ RectTransform:
   m_Father: {fileID: 1115583169272015923}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 115.3, y: 0}
-  m_SizeDelta: {x: 20, y: 20}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -54.699997, y: 20}
+  m_SizeDelta: {x: 22, y: 22}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7549476700047211074
 CanvasRenderer:
@@ -1400,7 +1401,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ac6ac6c06a20c4eeaa5a43ef13336247, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7a4f43ee2fc72490da56f8ad37ce6d7d, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1410,6 +1411,22 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5274648269416443391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9110708796415647514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d52b8ae7e003f4dac8bc233a9bec4eff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <lowCountColor>k__BackingField: {r: 0.4509804, g: 1, b: 0.6862745, a: 1}
+  <halfCountColor>k__BackingField: {r: 1, g: 0.7882353, b: 0.35686275, a: 1}
+  <fullCountColor>k__BackingField: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
+  <fillerImage>k__BackingField: {fileID: 3719009483114855353}
 --- !u!1 &9152785347356188261
 GameObject:
   m_ObjectHideFlags: 0
@@ -1529,6 +1546,8 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
   <MessagesContainer>k__BackingField: {fileID: 3883551866913233001}
+  <InputField>k__BackingField: {fileID: 5622104160664987093}
+  <CharacterCounter>k__BackingField: {fileID: 5274648269416443391}
 --- !u!1001 &2267666244650082222
 PrefabInstance:
   m_ObjectHideFlags: 0
