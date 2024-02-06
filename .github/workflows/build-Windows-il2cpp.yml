@@ -116,6 +116,7 @@ jobs:
         id: build
         timeout-minutes: 120
         with:
+          gitPrivateToken: ${{ secrets.JUANI_TOKEN }}
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
