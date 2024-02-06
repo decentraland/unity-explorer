@@ -148,6 +148,7 @@ GameObject:
   - component: {fileID: 2341789866540637150}
   - component: {fileID: 2219143577964543550}
   - component: {fileID: 6639211208594049371}
+  - component: {fileID: 3437737820762208854}
   m_Layer: 5
   m_Name: AvatarImageMask
   m_TagString: Untagged
@@ -227,6 +228,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 1
+--- !u!114 &3437737820762208854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 649734263872341888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: 28
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &1627172424029066339
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,9 +3,10 @@ using UnityEngine;
 
 public class ChatContentRescaler : MonoBehaviour
 {
-    public TMP_InputField inputField;
-    public RectTransform inputFieldRectTransform;
-    public RectTransform contentRectTransform;
+    [SerializeField] private TMP_InputField inputField;
+    [SerializeField] private RectTransform inputFieldRectTransform;
+    [SerializeField] private RectTransform contentRectTransform;
+    [SerializeField] private float minimumHeight;
 
     private Vector2 inputFieldRectTransformSize;
     private Vector2 contentRectTransformSize;
@@ -24,8 +25,17 @@ public class ChatContentRescaler : MonoBehaviour
 
     private void OnInputValueChanged(string value)
     {
-        resizedInputFieldRectTransformSize.y = inputFieldRectTransformSize.y + inputField.preferredHeight;
-        resizedContentRectTransformSize.y = contentRectTransformSize.y - inputField.preferredHeight;
+        inputField.ForceLabelUpdate();
+
+        if (inputField.preferredHeight < minimumHeight)
+        {
+            inputFieldRectTransform.sizeDelta = inputFieldRectTransformSize;
+            contentRectTransform.sizeDelta = contentRectTransformSize;
+            return;
+        }
+
+        resizedInputFieldRectTransformSize.y = inputField.preferredHeight;
+        resizedContentRectTransformSize.y = contentRectTransformSize.y - inputField.preferredHeight + minimumHeight;
 
         inputFieldRectTransform.sizeDelta = resizedInputFieldRectTransformSize;
         contentRectTransform.sizeDelta = resizedContentRectTransformSize;
