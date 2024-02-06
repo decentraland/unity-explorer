@@ -6,6 +6,8 @@ namespace DCL.Profiles
     [Serializable]
     public struct IpfsRealmEntity<T>
     {
+        public const string DEFAULT_VERSION = "v3";
+
         [Serializable]
         public struct Files
         {
