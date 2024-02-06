@@ -16,6 +16,6 @@ namespace Ipfs
 
         UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, IReadOnlyDictionary<string, byte[]> contentFiles, CancellationToken ct);
 
-        UniTask<string> GetFileHashAsync(byte[] file, CancellationToken ct);
+        string GetFileHash(byte[] file);
     }
 }

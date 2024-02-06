@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using Ipfs;
@@ -40,8 +39,8 @@ namespace DCL.Profiles
             byte[] faceSnapshotTextureFile = whiteTexturePng;
             byte[] bodySnapshotTextureFile = whiteTexturePng;
 
-            string faceHash = await ipfs.GetFileHashAsync(faceSnapshotTextureFile, ct);
-            string bodyHash = await ipfs.GetFileHashAsync(bodySnapshotTextureFile, ct);
+            string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
+            string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
 
             using var profileDto = GetProfileJsonRootDto.Create();
             profileDto.CopyFrom(profile);

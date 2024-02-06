@@ -121,7 +121,7 @@ namespace Ipfs
             }
         }
 
-        public async UniTask<string> GetFileHashAsync(byte[] file, CancellationToken ct) =>
+        public string GetFileHash(byte[] file) =>
             file.IpfsHashV1();
     }
 }
