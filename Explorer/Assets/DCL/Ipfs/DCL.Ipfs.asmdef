@@ -1,18 +1,18 @@
 {
-    "name": "SceneRunner.Scene",
+    "name": "DCL.Ipfs",
     "rootNamespace": "",
     "references": [
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:8322ea9340a544c59ddc56d4793eac74",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "GUID:101b8b6ebaf64668909b49c4b7a1420d",
-      "GUID:275e22790c04e9b47a5085d7b0c4432a",
-      "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
-      "GUID:e25ef972de004615a22937e739de2def"
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": true,
+    "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
