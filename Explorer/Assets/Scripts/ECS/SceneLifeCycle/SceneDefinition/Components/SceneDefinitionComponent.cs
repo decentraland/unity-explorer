@@ -20,6 +20,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners;
         public readonly IpfsTypes.IpfsPath IpfsPath;
         public readonly bool IsEmpty;
+        public readonly bool IsSDK7;
+        public readonly ParcelMathHelper.SceneGeometry SceneGeometry; 
 
         public SceneDefinitionComponent(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath)
         {
@@ -28,6 +30,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IpfsPath = ipfsPath;
             Parcels = definition.metadata.scene.DecodedParcels;
             IsEmpty = false;
+            IsSDK7 = definition.metadata?.runtimeVersion == "7";
+            SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
         }
 
         /// <summary>
@@ -53,6 +57,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
                 // content will be filled by the loading system
             };
+            //No runtime version in metadata
+            IsSDK7 = false;
+            SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
         }
     }
 }

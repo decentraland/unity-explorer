@@ -12,6 +12,9 @@ namespace DCL.WebRequests
             if (arguments.MultipartFormSections != null)
                 return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections));
 
+            if (arguments.WWWForm != null)
+                return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.WWWForm));
+
             return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType));
         }
 
