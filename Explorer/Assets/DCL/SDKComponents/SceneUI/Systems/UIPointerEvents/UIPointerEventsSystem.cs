@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
