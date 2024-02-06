@@ -20,7 +20,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
-        private ISceneStateProvider sceneStateProvider;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
@@ -34,9 +33,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(DCLInputText), new ComponentPool<DCLInputText>() },
                 }, null);
 
-            sceneStateProvider = Substitute.For<ISceneStateProvider>();
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIInputInstantiationSystem(world, poolsRegistry, sceneStateProvider, ecsToCRDTWriter);
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }
