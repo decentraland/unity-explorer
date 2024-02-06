@@ -34,10 +34,14 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
+            ChatEntryView chatEntryView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryPrefab, ct: ct)).Value.GetComponent<ChatEntryView>();
+            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
+
             chatController = new ChatController(
                 ChatController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null)
-                );
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
+                chatEntryView,
+                chatEntryConfiguration);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
@@ -50,10 +54,22 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public ChatViewRef ChatPanelPrefab;
 
+            [field: SerializeField]
+            public ChatEntryViewRef ChatEntryPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
+
             [Serializable]
             public class ChatViewRef : ComponentReference<ChatView>
             {
                 public ChatViewRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class ChatEntryViewRef : ComponentReference<ChatEntryView>
+            {
+                public ChatEntryViewRef(string guid) : base(guid) { }
             }
         }
     }
