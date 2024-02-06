@@ -132,6 +132,12 @@ jobs:
         
           # Set proper permissions on the known_hosts file
           attrib.exe +R +H $knownHostsPath
+          
+      - name: Git Clone Test
+        run: |
+          git clone git@github.com:decentraland/unity-explorer-packages.git
+          cd unity-explorer-packages
+          ls
 
       - uses: decentraland/unity-builder@0.7
         id: build
@@ -142,7 +148,6 @@ jobs:
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
-          sshPublicKeysDirectoryPath: C:/Users/runneradmin/.ssh
 
       # Upload artifact
       - name: Upload windows artifact
