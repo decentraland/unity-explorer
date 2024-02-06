@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -32,6 +33,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
+        private ILODAssetsPool lodCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
@@ -60,6 +62,7 @@ namespace DCL.ResourcesUnloading
             assetBundleCache.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
             profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             profileIntentionCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
+            lodCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -69,6 +72,11 @@ namespace DCL.ResourcesUnloading
             foreach (IThrottledClearable pool in avatarPools)
                 if (fpsCapBudget.TrySpendBudget())
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
+        }
+
+        public void Register(ILODAssetsPool lodAssetsPool)
+        {
+            lodCache = lodAssetsPool;
         }
 
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>

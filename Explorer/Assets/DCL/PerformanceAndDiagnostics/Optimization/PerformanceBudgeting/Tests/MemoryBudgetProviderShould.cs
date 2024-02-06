@@ -35,7 +35,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(ulong systemMemoryInMB, ulong usedMemoryInMB, MemoryUsageStatus expectedUsage)
         {
             // Arrange
-            systemMemory.TotalSizeInMB.Returns(systemMemoryInMB);
+            memoryBudget.ActualSystemMemory = systemMemoryInMB;
             profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
 
             // Act-Assert
@@ -48,7 +48,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         {
             // Arrange
             profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
-            systemMemory.TotalSizeInMB.Returns(systemMemoryInMB);
+            memoryBudget.ActualSystemMemory = systemMemoryInMB;
 
             // Act-Assert
             Assert.That(memoryBudget.TrySpendBudget(), Is.EqualTo(canSpendBudget));
