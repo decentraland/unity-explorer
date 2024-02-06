@@ -91,6 +91,8 @@ namespace Global.Dynamic
             try { await UnloadCurrentRealmAsync(); }
             catch (ObjectDisposedException) { }
 
+            await UniTask.SwitchToMainThread();
+
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
@@ -134,7 +136,7 @@ namespace Global.Dynamic
 
             World world = globalWorld.EcsWorld;
 
-            FindLoadedScenes(world);
+            FindLoadedScenes();
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
@@ -154,9 +156,6 @@ namespace Global.Dynamic
 
             // Collect garbage, good moment to do it
             GC.Collect();
-
-            //TODO: WHY??
-            await UniTask.SwitchToMainThread();
         }
 
         public async UniTask DisposeGlobalWorldAsync()
@@ -164,7 +163,7 @@ namespace Global.Dynamic
             if (globalWorld != null)
             {
                 World world = globalWorld.EcsWorld;
-                FindLoadedScenes(world);
+                FindLoadedScenes();
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
                 // Destroy everything without awaiting as it's Application Quit
@@ -174,17 +173,13 @@ namespace Global.Dynamic
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
         }
 
-        private void FindLoadedScenes(World world)
+        private void FindLoadedScenes()
         {
             allScenes.Clear();
-            //TODO: WHY??
-            //allScenes.AddRange(scenesCache.Scenes);
+            allScenes.AddRange(scenesCache.Scenes);
 
             // Dispose all scenes
             scenesCache.Clear();
-
-            // find all loaded scenes
-            world.Query(in SCENES, (ref ISceneFacade scene) => allScenes.Add(scene));
         }
     }
 }
