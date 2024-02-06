@@ -16,6 +16,7 @@ env:
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
+  GIT_PRIVATE_TOKEN: ${{ secrets.JUANI_TOKEN }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -111,28 +112,6 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
-      - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: 'Add GitHub to the SSH known hosts file'
-        run: |
-          $sshPath = "$env:USERPROFILE\.ssh"
-          if (-not (Test-Path -Path $sshPath)) {
-            New-Item -Path $sshPath -ItemType Directory
-          }
-          
-          $knownHostsPath = Join-Path $sshPath 'known_hosts'
-          
-          # Download GitHub public keys and append them to the known_hosts file
-          (Invoke-WebRequest -Uri 'https://api.github.com/meta' | ConvertFrom-Json).ssh_keys | ForEach-Object {
-            Add-Content -Path $knownHostsPath -Value ("github.com " + $_)
-          }
-        
-          # Set proper permissions on the known_hosts file
-          attrib.exe +R +H $knownHostsPath
-
       - uses: decentraland/unity-builder@0.7
         id: build
         timeout-minutes: 120
@@ -141,8 +120,6 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
-          sshAgent: ${{ env.SSH_AUTH_SOCK }}
-          sshPublicKeysDirectoryPath: C:/Users/runneradmin/.ssh
 
       # Upload artifact
       - name: Upload windows artifact

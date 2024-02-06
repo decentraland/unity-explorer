@@ -1,8 +1,8 @@
 {
   "dependencies": {
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
-	"decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
-	"sc.stylizedwater2": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
+    "decentraland.grassshader": "https://github.com/decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
+    "sc.stylizedwater2": "https://github.com/decentraland/unity-explorer-packages.git?path=/StylizedWater2",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
     "com.atteneder.gltfast": "https://github.com/decentraland/glTFast.git",
