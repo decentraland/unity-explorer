@@ -24,12 +24,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
-            Assert.IsNotNull(uiTransformComponent.Transform);
-            Assert.AreEqual(UiElementUtils.BuildElementName("UITransform", entity), uiTransformComponent.Transform.VisualElement.name);
-            Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform.VisualElement));
-            Assert.AreEqual(EntityReference.Null, uiTransformComponent.Transform.Parent);
-            Assert.AreEqual(0, uiTransformComponent.Transform.Children.Count);
-            Assert.IsFalse(uiTransformComponent.Transform.IsHidden);
+            Assert.IsNotNull(uiTransformComponent);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UITransform", entity), uiTransformComponent.VisualElement.name);
+            Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.VisualElement));
+            Assert.AreEqual(EntityReference.Null, uiTransformComponent.Parent);
+            Assert.AreEqual(0, uiTransformComponent.Children.Count);
+            Assert.IsFalse(uiTransformComponent.IsHidden);
         }
     }
 }

@@ -51,8 +51,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             // Assert
-            Assert.IsTrue(uiTransformComponent.Transform.HasAnyPointerDownCallback);
-            Assert.IsTrue(uiTransformComponent.Transform.HasAnyPointerUpCallback);
+            Assert.IsTrue(uiTransformComponent.HasAnyPointerDownCallback);
+            Assert.IsTrue(uiTransformComponent.HasAnyPointerUpCallback);
         }
     }
 }

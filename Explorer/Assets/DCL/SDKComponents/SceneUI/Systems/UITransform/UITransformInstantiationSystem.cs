@@ -5,7 +5,6 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
@@ -23,12 +22,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private const string COMPONENT_NAME = "UITransform";
 
         private readonly UIDocument canvas;
-        private readonly IComponentPool<DCLTransform> transformsPool;
+        private readonly IComponentPool<UITransformComponent> transformsPool;
 
         public UITransformInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            transformsPool = poolsRegistry.GetReferenceTypePool<DCLTransform>();
+            transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
         }
 
         protected override void Update(float t)
@@ -40,7 +39,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
-            DCLTransform newTransform = transformsPool.Get();
+            UITransformComponent newTransform = transformsPool.Get();
             newTransform.VisualElement ??= new VisualElement();
             newTransform.VisualElement.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             newTransform.Parent = EntityReference.Null;
@@ -49,9 +48,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             newTransform.RightOf = sdkModel.RightOf;
             newTransform.UnregisterAllCallbacks();
             canvas.rootVisualElement.Add(newTransform.VisualElement);
-            var transformComponent = new UITransformComponent();
-            transformComponent.Transform = newTransform;
-            World.Add(entity, transformComponent);
+            World.Add(entity, newTransform);
         }
     }
 }

@@ -46,15 +46,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 switch (pEvent.EventType)
                 {
                     case PointerEventType.PetDown:
-                        uiTransformComponent.Transform.RegisterPointerDownCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetDown));
+                        uiTransformComponent.RegisterPointerDownCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetDown));
                         break;
                     case PointerEventType.PetUp:
-                        uiTransformComponent.Transform.RegisterPointerUpCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetUp));
+                        uiTransformComponent.RegisterPointerUpCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetUp));
                         break;
                 }
             }
 
-            uiTransformComponent.Transform.VisualElement.pickingMode = PickingMode.Position;
+            uiTransformComponent.VisualElement.pickingMode = PickingMode.Position;
             sdkModel.IsDirty = false;
         }
 
