@@ -85,8 +85,8 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            PageButtonView pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>();
-            CharacterPreviewFactory characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
+            var pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>();
+            var characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
             backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog, pageButtonView, poolsRegistry, characterPreviewInputEventBus, characterPreviewFactory);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 

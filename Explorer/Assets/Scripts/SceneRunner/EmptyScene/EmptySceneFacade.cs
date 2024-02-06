@@ -48,7 +48,7 @@ namespace SceneRunner.EmptyScene
 
             POOL.Release(this);
 
-            args = default(Args);
+            args = default;
         }
 
         public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
