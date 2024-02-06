@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsNotNull(uiTextComponent.Label);
             Assert.AreEqual(UiElementUtils.BuildElementName("UIText", entity), uiTextComponent.Label.name);
             Assert.AreEqual(PickingMode.Ignore, uiTextComponent.Label.pickingMode);
-            Assert.IsTrue(uiTransformComponent.VisualElement.Contains(uiTextComponent.Label));
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiTextComponent.Label));
         }
 
         [Test]

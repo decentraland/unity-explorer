@@ -81,7 +81,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (parentComponent == childComponent)
                 return;
 
-            parentComponent.VisualElement.Add(childComponent.VisualElement);
+            parentComponent.Transform.Add(childComponent.Transform);
             childComponent.Parent = World.Reference(parentEntity);
             parentComponent.Children.Add(childEntityReference);
         }

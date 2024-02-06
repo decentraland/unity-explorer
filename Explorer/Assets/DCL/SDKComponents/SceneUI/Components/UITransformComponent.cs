@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         UITransformComponent IPoolableComponentProvider<UITransformComponent>.PoolableComponent => this;
         Type IPoolableComponentProvider<UITransformComponent>.PoolableComponentType => typeof(UITransformComponent);
 
-        public VisualElement VisualElement;
+        public VisualElement Transform;
         public EntityReference Parent;
         public HashSet<EntityReference> Children;
         public bool IsHidden;
@@ -27,28 +27,28 @@ namespace DCL.SDKComponents.SceneUI.Components
         public void RegisterPointerDownCallback(EventCallback<PointerDownEvent> newOnPointerDownCallback)
         {
             if (HasAnyPointerDownCallback)
-                VisualElement.UnregisterCallback(currentOnPointerDownCallback);
+                Transform.UnregisterCallback(currentOnPointerDownCallback);
 
-            VisualElement.RegisterCallback(newOnPointerDownCallback);
+            Transform.RegisterCallback(newOnPointerDownCallback);
             currentOnPointerDownCallback = newOnPointerDownCallback;
         }
 
         public void RegisterPointerUpCallback(EventCallback<PointerUpEvent> newOnPointerUpCallback)
         {
             if (HasAnyPointerUpCallback)
-                VisualElement.UnregisterCallback(currentOnPointerUpCallback);
+                Transform.UnregisterCallback(currentOnPointerUpCallback);
 
-            VisualElement.RegisterCallback(newOnPointerUpCallback);
+            Transform.RegisterCallback(newOnPointerUpCallback);
             currentOnPointerUpCallback = newOnPointerUpCallback;
         }
 
         public void UnregisterAllCallbacks()
         {
             if (HasAnyPointerDownCallback)
-                VisualElement.UnregisterCallback(currentOnPointerDownCallback);
+                Transform.UnregisterCallback(currentOnPointerDownCallback);
 
             if (HasAnyPointerUpCallback)
-                VisualElement.UnregisterCallback(currentOnPointerUpCallback);
+                Transform.UnregisterCallback(currentOnPointerUpCallback);
         }
 
         public void Dispose()

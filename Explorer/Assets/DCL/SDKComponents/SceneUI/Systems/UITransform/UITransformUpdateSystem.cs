@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupVisualElement(ref uiTransformComponent.VisualElement, ref sdkModel);
+            UiElementUtils.SetupVisualElement(ref uiTransformComponent.Transform, ref sdkModel);
             sdkModel.IsDirty = false;
         }
 
@@ -62,11 +62,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             switch (sceneStateProvider.IsCurrent)
             {
                 case false when !uiTransformComponent.IsHidden:
-                    canvas.rootVisualElement.Remove(uiTransformComponent.VisualElement);
+                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
                     uiTransformComponent.IsHidden = true;
                     break;
                 case true when uiTransformComponent.IsHidden:
-                    canvas.rootVisualElement.Add(uiTransformComponent.VisualElement);
+                    canvas.rootVisualElement.Add(uiTransformComponent.Transform);
                     uiTransformComponent.IsHidden = false;
                     break;
             }

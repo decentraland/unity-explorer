@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         {
             var inputText = inputTextsPool.Get();
             inputText.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
-            uiTransformComponent.VisualElement.Add(inputText.TextField);
+            uiTransformComponent.Transform.Add(inputText.TextField);
             var uiInputComponent = new UIInputComponent();
             uiInputComponent.Input = inputText;
             World.Add(entity, uiInputComponent);

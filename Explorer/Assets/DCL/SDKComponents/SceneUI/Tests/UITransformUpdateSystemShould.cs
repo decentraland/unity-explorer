@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
-                Assert.AreEqual(UiElementUtils.GetDisplay(input.Display), uiTransformComponent.VisualElement.style.display);
+                Assert.AreEqual(UiElementUtils.GetDisplay(input.Display), uiTransformComponent.Transform.style.display);
             }
         }
 
@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             // Assert
-            Assert.AreEqual(isCurrentScene, canvas.rootVisualElement.Contains(uiTransformComponent.VisualElement));
+            Assert.AreEqual(isCurrentScene, canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
         }
     }
 }

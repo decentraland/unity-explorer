@@ -40,14 +40,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
             UITransformComponent newTransform = transformsPool.Get();
-            newTransform.VisualElement ??= new VisualElement();
-            newTransform.VisualElement.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
+            newTransform.Transform ??= new VisualElement();
+            newTransform.Transform.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             newTransform.Parent = EntityReference.Null;
             newTransform.Children = HashSetPool<EntityReference>.Get();
             newTransform.IsHidden = false;
             newTransform.RightOf = sdkModel.RightOf;
             newTransform.UnregisterAllCallbacks();
-            canvas.rootVisualElement.Add(newTransform.VisualElement);
+            canvas.rootVisualElement.Add(newTransform.Transform);
             World.Add(entity, newTransform);
         }
     }

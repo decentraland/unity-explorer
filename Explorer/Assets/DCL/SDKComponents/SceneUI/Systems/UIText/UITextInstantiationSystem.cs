@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
             label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
             UiElementUtils.SetElementDefaultStyle(label.style);
-            uiTransformComponent.VisualElement.Add(label);
+            uiTransformComponent.Transform.Add(label);
             var uiTextComponent = new UITextComponent();
             uiTextComponent.Label = label;
             World.Add(entity, uiTextComponent);

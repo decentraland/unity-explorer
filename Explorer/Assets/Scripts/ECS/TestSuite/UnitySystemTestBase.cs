@@ -29,7 +29,7 @@ namespace ECS.TestSuite
         protected UITransformComponent AddUITransformToEntity(in Entity entity, bool isDirty = false)
         {
             var uiTransformComponent = new UITransformComponent();
-            uiTransformComponent.VisualElement = new VisualElement { name = $"{entity.Id}",};
+            uiTransformComponent.Transform = new VisualElement { name = $"{entity.Id}",};
 
             world.Add(entity, uiTransformComponent, new PBUiTransform { IsDirty = isDirty });
             return uiTransformComponent;

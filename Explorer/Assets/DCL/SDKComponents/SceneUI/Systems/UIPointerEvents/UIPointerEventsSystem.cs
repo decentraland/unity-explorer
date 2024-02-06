@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }
             }
 
-            uiTransformComponent.VisualElement.pickingMode = PickingMode.Position;
+            uiTransformComponent.Transform.pickingMode = PickingMode.Position;
             sdkModel.IsDirty = false;
         }
 

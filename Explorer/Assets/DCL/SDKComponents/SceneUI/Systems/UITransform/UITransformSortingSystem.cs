@@ -59,10 +59,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);
 
-            if (uiTransform.VisualElement.parent != uiTransformOnLeft.VisualElement.parent)
+            if (uiTransform.Transform.parent != uiTransformOnLeft.Transform.parent)
                 return;
 
-            uiTransform.VisualElement.PlaceInFront(uiTransformOnLeft.VisualElement);
+            uiTransform.Transform.PlaceInFront(uiTransformOnLeft.Transform);
         }
     }
 }
