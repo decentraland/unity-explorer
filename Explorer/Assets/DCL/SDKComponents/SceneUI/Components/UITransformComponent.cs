@@ -9,14 +9,14 @@ namespace DCL.SDKComponents.SceneUI.Components
 {
     public class UITransformComponent : IPoolableComponentProvider<UITransformComponent>
     {
-        UITransformComponent IPoolableComponentProvider<UITransformComponent>.PoolableComponent => this;
-        Type IPoolableComponentProvider<UITransformComponent>.PoolableComponentType => typeof(UITransformComponent);
-
         public VisualElement Transform;
         public EntityReference Parent;
         public HashSet<EntityReference> Children;
         public bool IsHidden;
         public int RightOf;
+
+        UITransformComponent IPoolableComponentProvider<UITransformComponent>.PoolableComponent => this;
+        Type IPoolableComponentProvider<UITransformComponent>.PoolableComponentType => typeof(UITransformComponent);
 
         private EventCallback<PointerDownEvent> currentOnPointerDownCallback;
         private EventCallback<PointerUpEvent> currentOnPointerUpCallback;
