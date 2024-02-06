@@ -14,7 +14,7 @@ namespace Ipfs
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
 
-        UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, IReadOnlyDictionary<string, byte[]> contentFiles, CancellationToken ct);
+        UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null);
 
         string GetFileHash(byte[] file);
     }

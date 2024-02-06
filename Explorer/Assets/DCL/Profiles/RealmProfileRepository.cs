@@ -67,7 +67,7 @@ namespace DCL.Profiles
 
             try
             {
-                await ipfs.PublishAsync(entity, files, ct);
+                await ipfs.PublishAsync(entity, ct, files);
             }
             finally
             {

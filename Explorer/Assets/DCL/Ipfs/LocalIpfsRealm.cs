@@ -25,7 +25,7 @@ namespace Ipfs
             LambdasBaseUrl = URLDomain.FromString("https://peer.decentraland.org/explorer/");
         }
 
-        public UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, IReadOnlyDictionary<string, byte[]> contentFiles, CancellationToken ct) =>
+        public UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
             throw new NotSupportedException();
 
         public string GetFileHash(byte[] file) =>

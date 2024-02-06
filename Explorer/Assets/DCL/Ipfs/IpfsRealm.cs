@@ -30,7 +30,7 @@ namespace Ipfs
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            URLDomain realmName, IpfsTypes.ServerAbout serverAbout = null)
+            URLDomain realmName, IpfsTypes.ServerAbout? serverAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -50,6 +50,7 @@ namespace Ipfs
             }
             else
             {
+                sceneUrns = new List<string>();
                 ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
                 EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
             }
@@ -73,7 +74,7 @@ namespace Ipfs
         public override int GetHashCode() =>
             ContentBaseUrl.GetHashCode();
 
-        public async UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, IReadOnlyDictionary<string, byte[]> contentFiles, CancellationToken ct)
+        public async UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             string entityJson = JsonUtility.ToJson(entity);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
@@ -96,8 +97,9 @@ namespace Ipfs
 
             files.Clear();
 
-            foreach ((string key, byte[] value) in contentFiles)
-                files[key] = value;
+            if (contentFiles != null)
+                foreach ((string key, byte[] value) in contentFiles)
+                    files[key] = value;
 
             files[entityId] = entityFile;
 
