@@ -203,37 +203,37 @@ Shader "DCL/DCL_Toon"
 
 	//////////////////////////////////////////////////////////////////////////////
 	////////////////// Beginning of HDRP Matte. //////////////////////////////////
-	//////////////////////////////////////////////////////////////////////////////
-//        [Toggle(_)] _BaseColorVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _BaseColorOverridden("Channel mask", Float) = 0
-//        _BaseColorMaskColor("chennel mask color", Color) = (1, 1, 1, 1)
-//
-//        [Toggle(_)] _FirstShadeVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _FirstShadeOverridden("Channel mask", Float) = 0
-//        _FirstShadeMaskColor("chennel mask color", Color) = (0, 1, 1, 1)
-//
-//        [Toggle(_)] _SecondShadeVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _SecondShadeOverridden("Channel mask", Float) = 0
-//        _SecondShadeMaskColor("chennel mask color", Color) = (0, 0, 1, 1)
-//
-//        [Toggle(_)] _HighlightVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _HighlightOverridden("Channel mask", Float) = 0
-//        _HighlightMaskColor("Channel mask color", Color) = (1, 1, 0, 1)
-//
-//        [Toggle(_)] _AngelRingVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _AngelRingOverridden("Channel mask", Float) = 0
-//        _AngelRingMaskColor("Channel mask color", Color) = (0, 1, 0, 1)
-//
-//        [Toggle(_)] _RimLightVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _RimLightOverridden("Channel mask", Float) = 0
-//        _RimLightMaskColor("Channel mask color", Color) = (1, 0, 1, 1)
-//
-//        [Toggle(_)] _OutlineVisible("Channel mask", Float) = 1
-//        [Toggle(_)] _OutlineOverridden("Channel mask", Float) = 0
-//        _OutlineMaskColor("Channel mask color", Color) = (0, 0, 0, 1)
-//
-//        [Toggle(_)] _ComposerMaskMode("", Float) = 0
-//        [Enum(None, 0, BaseColor, 1, FirstShade, 2, SecondShade,3, Highlight, 4, AngelRing, 5, RimLight, 6)] _ClippingMatteMode("Clipping Matte Mode", int) = 0
+	////////////////////////////////////////////////////////////////////////////
+        [Toggle(_)] _BaseColorVisible("Channel mask", Float) = 1
+        [Toggle(_)] _BaseColorOverridden("Channel mask", Float) = 0
+        _BaseColorMaskColor("chennel mask color", Color) = (1, 1, 1, 1)
+
+        [Toggle(_)] _FirstShadeVisible("Channel mask", Float) = 1
+        [Toggle(_)] _FirstShadeOverridden("Channel mask", Float) = 0
+        _FirstShadeMaskColor("chennel mask color", Color) = (0, 1, 1, 1)
+
+        [Toggle(_)] _SecondShadeVisible("Channel mask", Float) = 1
+        [Toggle(_)] _SecondShadeOverridden("Channel mask", Float) = 0
+        _SecondShadeMaskColor("chennel mask color", Color) = (0, 0, 1, 1)
+
+        [Toggle(_)] _HighlightVisible("Channel mask", Float) = 1
+        [Toggle(_)] _HighlightOverridden("Channel mask", Float) = 0
+        _HighlightMaskColor("Channel mask color", Color) = (1, 1, 0, 1)
+
+        [Toggle(_)] _AngelRingVisible("Channel mask", Float) = 1
+        [Toggle(_)] _AngelRingOverridden("Channel mask", Float) = 0
+        _AngelRingMaskColor("Channel mask color", Color) = (0, 1, 0, 1)
+
+        [Toggle(_)] _RimLightVisible("Channel mask", Float) = 1
+        [Toggle(_)] _RimLightOverridden("Channel mask", Float) = 0
+        _RimLightMaskColor("Channel mask color", Color) = (1, 0, 1, 1)
+
+        [Toggle(_)] _OutlineVisible("Channel mask", Float) = 1
+        [Toggle(_)] _OutlineOverridden("Channel mask", Float) = 0
+        _OutlineMaskColor("Channel mask color", Color) = (0, 0, 0, 1)
+
+        [Toggle(_)] _ComposerMaskMode("", Float) = 0
+        [Enum(None, 0, BaseColor, 1, FirstShade, 2, SecondShade,3, Highlight, 4, AngelRing, 5, RimLight, 6)] _ClippingMatteMode("Clipping Matte Mode", int) = 0
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -248,224 +248,224 @@ Shader "DCL/DCL_Toon"
 	//////////////////////////////////////////////////////////////////////////////
 	////////////////// Beginning of HDRP material default values. ////////////////
 	//////////////////////////////////////////////////////////////////////////////
-//	_BaseColorMap("BaseColorMap", 2D) = "white" {}
-//        [HideInInspector] _BaseColorMap_MipInfo("_BaseColorMap_MipInfo", Vector) = (0, 0, 0, 0)
-//
-//        _Metallic("_Metallic", Range(0.0, 1.0)) = 0
-//        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
-//        _MaskMap("MaskMap", 2D) = "white" {}
-//        _SmoothnessRemapMin("SmoothnessRemapMin", Float) = 0.0
-//        _SmoothnessRemapMax("SmoothnessRemapMax", Float) = 1.0
-//        _AlphaRemapMin("AlphaRemapMin", Float) = 0.0   // HDRP 14
-//        _AlphaRemapMax("AlphaRemapMax", Float) = 1.0   // HDRP 14
-//        _AORemapMin("AORemapMin", Float) = 0.0
-//        _AORemapMax("AORemapMax", Float) = 1.0
-//
-//        ////////////////  _NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
-//        _NormalMapOS("NormalMapOS", 2D) = "white" {} // Object space normal map - no good default value
-//        _NormalScale("_NormalScale", Range(0.0, 8.0)) = 1
-//
-//        _BentNormalMap("_BentNormalMap", 2D) = "bump" {}
-//        _BentNormalMapOS("_BentNormalMapOS", 2D) = "white" {}
-//
-//        _HeightMap("HeightMap", 2D) = "black" {}
-//        // Caution: Default value of _HeightAmplitude must be (_HeightMax - _HeightMin) * 0.01
-//        // Those two properties are computed from the ones exposed in the UI and depends on the displaement mode so they are separate because we don't want to lose information upon displacement mode change.
-//        [HideInInspector] _HeightAmplitude("Height Amplitude", Float) = 0.02 // In world units. This will be computed in the UI.
-//        [HideInInspector] _HeightCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
-//
-//        [Enum(MinMax, 0, Amplitude, 1)] _HeightMapParametrization("Heightmap Parametrization", Int) = 0
-//        // These parameters are for vertex displacement/Tessellation
-//        _HeightOffset("Height Offset", Float) = 0
-//        // MinMax mode
-//        _HeightMin("Heightmap Min", Float) = -1
-//        _HeightMax("Heightmap Max", Float) = 1
-//        // Amplitude mode
-//        _HeightTessAmplitude("Amplitude", Float) = 2.0 // in Centimeters
-//        _HeightTessCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
-//
-//        // These parameters are for pixel displacement
-//        _HeightPoMAmplitude("Height Amplitude", Float) = 2.0 // In centimeters
-//
-//        _DetailMap("DetailMap", 2D) = "linearGrey" {}
-//        _DetailAlbedoScale("_DetailAlbedoScale", Range(0.0, 2.0)) = 1
-//        _DetailNormalScale("_DetailNormalScale", Range(0.0, 2.0)) = 1
-//        _DetailSmoothnessScale("_DetailSmoothnessScale", Range(0.0, 2.0)) = 1
-//
-//        _TangentMap("TangentMap", 2D) = "bump" {}
-//        _TangentMapOS("TangentMapOS", 2D) = "white" {}
-//        _Anisotropy("Anisotropy", Range(-1.0, 1.0)) = 0
-//        _AnisotropyMap("AnisotropyMap", 2D) = "white" {}
-//
-//        [HideInInspector] _DiffusionProfile("Obsolete, kept for migration purpose", Int) = 0
-//        [HideInInspector] _DiffusionProfileAsset("Diffusion Profile Asset", Vector) = (0, 0, 0, 0)
-//        [HideInInspector] _DiffusionProfileHash("Diffusion Profile Hash", Float) = 0
-//        _SubsurfaceMask("Subsurface Radius", Range(0.0, 1.0)) = 1.0
-//        _SubsurfaceMaskMap("Subsurface Radius Map", 2D) = "white" {}
-//        _TransmissionMask("Transmission Mask", Range(0.0, 1.0)) = 1.0
-//        _Thickness("Thickness", Range(0.0, 1.0)) = 1.0
-//        _ThicknessMap("Thickness Map", 2D) = "white" {}
-//        _ThicknessRemap("Thickness Remap", Vector) = (0, 1, 0, 0)
-//
-//        _IridescenceThickness("Iridescence Thickness", Range(0.0, 1.0)) = 1.0
-//        _IridescenceThicknessMap("Iridescence Thickness Map", 2D) = "white" {}
-//        _IridescenceThicknessRemap("Iridescence Thickness Remap", Vector) = (0, 1, 0, 0)
-//        _IridescenceMask("Iridescence Mask", Range(0.0, 1.0)) = 1.0
-//        _IridescenceMaskMap("Iridescence Mask Map", 2D) = "white" {}
-//
-//        _CoatMask("Coat Mask", Range(0.0, 1.0)) = 0.0
-//        _CoatMaskMap("CoatMaskMap", 2D) = "white" {}
-//
-//        [ToggleUI] _EnergyConservingSpecularColor("_EnergyConservingSpecularColor", Float) = 1.0
-//        _SpecularColor("SpecularColor", Color) = (1, 1, 1, 1)
-//        _SpecularColorMap("SpecularColorMap", 2D) = "white" {}
-//
-//        // Following options are for the GUI inspector and different from the input parameters above
-//        // These option below will cause different compilation flag.
-//        [Enum(Off, 0, From Ambient Occlusion, 1, From Bent Normals, 2)]  _SpecularOcclusionMode("Specular Occlusion Mode", Int) = 1
-//
-//        [HDR] _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
-//        // Used only to serialize the LDR and HDR emissive color in the material UI,
-//        // in the shader only the _EmissiveColor should be used
-//        [HideInInspector] _EmissiveColorLDR("EmissiveColor LDR", Color) = (0, 0, 0)
-//        _EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
-//        [ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
-//        [HideInInspector] _EmissiveIntensityUnit("Emissive Mode", Int) = 0
-//        [ToggleUI] _UseEmissiveIntensity("Use Emissive Intensity", Int) = 0
-//        _EmissiveIntensity("Emissive Intensity", Float) = 1
-//        _EmissiveExposureWeight("Emissive Pre Exposure", Range(0.0, 1.0)) = 1.0
-//
-//        _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
-//        [ToggleUI] _DistortionEnable("Enable Distortion", Float) = 0.0
-//        [ToggleUI] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
-//        [Enum(Add, 0, Multiply, 1, Replace, 2)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
-//        [HideInInspector] _DistortionSrcBlend("Distortion Blend Src", Int) = 0
-//        [HideInInspector] _DistortionDstBlend("Distortion Blend Dst", Int) = 0
-//        [HideInInspector] _DistortionBlurSrcBlend("Distortion Blur Blend Src", Int) = 0
-//        [HideInInspector] _DistortionBlurDstBlend("Distortion Blur Blend Dst", Int) = 0
-//        [HideInInspector] _DistortionBlurBlendMode("Distortion Blur Blend Mode", Int) = 0
-//        _DistortionScale("Distortion Scale", Float) = 1
-//        _DistortionVectorScale("Distortion Vector Scale", Float) = 2
-//        _DistortionVectorBias("Distortion Vector Bias", Float) = -1
-//        _DistortionBlurScale("Distortion Blur Scale", Float) = 1
-//        _DistortionBlurRemapMin("DistortionBlurRemapMin", Float) = 0.0
-//        _DistortionBlurRemapMax("DistortionBlurRemapMax", Float) = 1.0
-//
-//        [ToggleUI]  _UseShadowThreshold("_UseShadowThreshold", Float) = 0.0
-//        [ToggleUI]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
-//        _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
-//        _AlphaCutoffShadow("_AlphaCutoffShadow", Range(0.0, 1.0)) = 0.5
-//        _AlphaCutoffPrepass("_AlphaCutoffPrepass", Range(0.0, 1.0)) = 0.5
-//        _AlphaCutoffPostpass("_AlphaCutoffPostpass", Range(0.0, 1.0)) = 0.5
-//        [ToggleUI] _TransparentDepthPrepassEnable("_TransparentDepthPrepassEnable", Float) = 0.0
-//        [ToggleUI] _TransparentBackfaceEnable("_TransparentBackfaceEnable", Float) = 0.0
-//        [ToggleUI] _TransparentDepthPostpassEnable("_TransparentDepthPostpassEnable", Float) = 0.0
-//        _TransparentSortPriority("_TransparentSortPriority", Float) = 0
-//
-//        // Transparency
-//        [Enum(None, 0, Box, 1, Sphere, 2, Thin, 3)]_RefractionModel("Refraction Model", Int) = 0
-//        [Enum(Proxy, 1, HiZ, 2)]_SSRefractionProjectionModel("Refraction Projection Model", Int) = 0
-//        _Ior("Index Of Refraction", Range(1.0, 2.5)) = 1.0
-//        _ThicknessMultiplier("Thickness Multiplier", Float) = 1.0
-//        _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)
-//        _TransmittanceColorMap("TransmittanceColorMap", 2D) = "white" {}
-//        _ATDistance("Transmittance Absorption Distance", Float) = 1.0
-//        [ToggleUI] _TransparentWritingMotionVec("_TransparentWritingMotionVec", Float) = 0.0
-//
-//        // Stencil state
-//
-//        // Forward
-//        [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting
-//        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 3 // StencilMask.Lighting
-//        // GBuffer
-//        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 2 // StencilLightingUsage.RegularLighting
-//        [HideInInspector] _StencilWriteMaskGBuffer("_StencilWriteMaskGBuffer", Int) = 3 // StencilMask.Lighting
-//        // Depth prepass
-//        [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
-//        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
-//        // Motion vector pass
-//        [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
-//        [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
-//        // Distortion vector pass
-//        [HideInInspector] _StencilRefDistortionVec("_StencilRefDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
-//        [HideInInspector] _StencilWriteMaskDistortionVec("_StencilWriteMaskDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
-//
-//        // Blending state
-//        [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
-//        [HideInInspector] _BlendMode("__blendmode", Float) = 0.0
-//        [HideInInspector] _SrcBlend("__src", Float) = 1.0
-//        [HideInInspector] _DstBlend("__dst", Float) = 0.0
-//        [HideInInspector] _AlphaSrcBlend("__alphaSrc", Float) = 1.0
-//        [HideInInspector] _AlphaDstBlend("__alphaDst", Float) = 0.0
-//        [HideInInspector][ToggleUI] _ZWrite("__zw", Float) = 1.0
-//        [HideInInspector][ToggleUI] _TransparentZWrite("_TransparentZWrite", Float) = 0.0
-//        [HideInInspector] _CullMode("__cullmode", Float) = 2.0
-//        [HideInInspector] _CullModeForward("__cullmodeForward", Float) = 2.0 // This mode is dedicated to Forward to correctly handle backface then front face rendering thin transparent
-//        [HideInInspector] _TransparentCullMode("_TransparentCullMode", Int) = 2 // Back culling by default
-//        [HideInInspector] _ZTestDepthEqualForOpaque("_ZTestDepthEqualForOpaque", Int) = 4 // Less equal
-//        [HideInInspector] _ZTestModeDistortion("_ZTestModeDistortion", Int) = 8
-//        [HideInInspector] _ZTestGBuffer("_ZTestGBuffer", Int) = 4
-//        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTestTransparent("Transparent ZTest", Int) = 4 // Less equal
-//
-//        [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
-//        [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
-//
-//        [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
-//        [Enum(Flip, 0, Mirror, 1, None, 2)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1
-//        [HideInInspector] _DoubleSidedConstants("_DoubleSidedConstants", Vector) = (1, 1, -1, 0)
-//
-//        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3, Planar, 4, Triplanar, 5)] _UVBase("UV Set for base", Float) = 0
-//        [Enum(WorldSpace, 0, ObjectSpace, 1)] _ObjectSpaceUVMapping("Mapping space", Float) = 0.0
-//        _TexWorldScale("Scale to apply on world coordinate", Float) = 1.0
-//        [HideInInspector] _InvTilingScale("Inverse tiling scale = 2 / (abs(_BaseColorMap_ST.x) + abs(_BaseColorMap_ST.y))", Float) = 1
-//        [HideInInspector] _UVMappingMask("_UVMappingMask", Color) = (1, 0, 0, 0)
-//        [Enum(TangentSpace, 0, ObjectSpace, 1)] _NormalMapSpace("NormalMap space", Float) = 0
-//
-//        // Following enum should be material feature flags (i.e bitfield), however due to Gbuffer encoding constrain many combination exclude each other
-//        // so we use this enum as "material ID" which can be interpreted as preset of bitfield of material feature
-//        // The only material feature flag that can be added in all cases is clear coat
-//        [Enum(Subsurface Scattering, 0, Standard, 1, Anisotropy, 2, Iridescence, 3, Specular Color, 4, Translucent, 5)] _MaterialID("MaterialId", Int) = 1 // MaterialId.Standard
-//        [ToggleUI] _TransmissionEnable("_TransmissionEnable", Float) = 1.0
-//
-//        [Enum(None, 0, Vertex displacement, 1, Pixel displacement, 2)] _DisplacementMode("DisplacementMode", Int) = 0
-//        [ToggleUI] _DisplacementLockObjectScale("displacement lock object scale", Float) = 1.0
-//        [ToggleUI] _DisplacementLockTilingScale("displacement lock tiling scale", Float) = 1.0
-//        [ToggleUI] _DepthOffsetEnable("Depth Offset View space", Float) = 0.0
-//
-//        [ToggleUI] _EnableGeometricSpecularAA("EnableGeometricSpecularAA", Float) = 0.0
-//        _SpecularAAScreenSpaceVariance("SpecularAAScreenSpaceVariance", Range(0.0, 1.0)) = 0.1
-//        _SpecularAAThreshold("SpecularAAThreshold", Range(0.0, 1.0)) = 0.2
-//
-//        _PPDMinSamples("Min sample for POM", Range(1.0, 64.0)) = 5
-//        _PPDMaxSamples("Max sample for POM", Range(1.0, 64.0)) = 15
-//        _PPDLodThreshold("Start lod to fade out the POM effect", Range(0.0, 16.0)) = 5
-//        _PPDPrimitiveLength("Primitive length for POM", Float) = 1
-//        _PPDPrimitiveWidth("Primitive width for POM", Float) = 1
-//        [HideInInspector] _InvPrimScale("Inverse primitive scale for non-planar POM", Vector) = (1, 1, 0, 0)
-//
-//        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVDetail("UV Set for detail", Float) = 0
-//        [HideInInspector] _UVDetailsMappingMask("_UVDetailsMappingMask", Color) = (1, 0, 0, 0)
-//        [ToggleUI] _LinkDetailsWithBase("LinkDetailsWithBase", Float) = 1.0
-//
-//        [Enum(Use Emissive Color, 0, Use Emissive Mask, 1)] _EmissiveColorMode("Emissive color mode", Float) = 1
-//        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3, Planar, 4, Triplanar, 5)] _UVEmissive("UV Set for emissive", Float) = 0
-//        _TexWorldScaleEmissive("Scale to apply on world coordinate", Float) = 1.0
-//        [HideInInspector] _UVMappingMaskEmissive("_UVMappingMaskEmissive", Color) = (1, 0, 0, 0)
-//
-//        // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
-//        // value that exist to identify if the GI emission need to be enabled.
-//        // In our case we don't use such a mechanism but need to keep the code quiet. We declare the value and always enable it.
-//        // TODO: Fix the code in legacy unity so we can customize the beahvior for GI
-//        _EmissionColor("Color", Color) = (1, 1, 1)
-//
-//        // HACK: GI Baking system relies on some properties existing in the shader ("_MainTex", "_Cutoff" and "_Color") for opacity handling, so we need to store our version of those parameters in the hard-coded name the GI baking system recognizes.
-//        //////////// _MainTex("BaseMap", 2D) = "white" {}
-//        _Color("Color", Color) = (1,1,1,1)
-//        _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
-//
-//        [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
-//        [ToggleUI] _ReceivesSSR("Receives SSR", Float) = 1.0
-//        [ToggleUI] _AddPrecomputedVelocity("AddPrecomputedVelocity", Float) = 0.0
+	_BaseColorMap("BaseColorMap", 2D) = "white" {}
+        [HideInInspector] _BaseColorMap_MipInfo("_BaseColorMap_MipInfo", Vector) = (0, 0, 0, 0)
+
+        _Metallic("_Metallic", Range(0.0, 1.0)) = 0
+        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+        _MaskMap("MaskMap", 2D) = "white" {}
+        _SmoothnessRemapMin("SmoothnessRemapMin", Float) = 0.0
+        _SmoothnessRemapMax("SmoothnessRemapMax", Float) = 1.0
+        _AlphaRemapMin("AlphaRemapMin", Float) = 0.0   // HDRP 14
+        _AlphaRemapMax("AlphaRemapMax", Float) = 1.0   // HDRP 14
+        _AORemapMin("AORemapMin", Float) = 0.0
+        _AORemapMax("AORemapMax", Float) = 1.0
+
+        ////////////////  _NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
+        _NormalMapOS("NormalMapOS", 2D) = "white" {} // Object space normal map - no good default value
+        _NormalScale("_NormalScale", Range(0.0, 8.0)) = 1
+
+        _BentNormalMap("_BentNormalMap", 2D) = "bump" {}
+        _BentNormalMapOS("_BentNormalMapOS", 2D) = "white" {}
+
+        _HeightMap("HeightMap", 2D) = "black" {}
+        // Caution: Default value of _HeightAmplitude must be (_HeightMax - _HeightMin) * 0.01
+        // Those two properties are computed from the ones exposed in the UI and depends on the displaement mode so they are separate because we don't want to lose information upon displacement mode change.
+        [HideInInspector] _HeightAmplitude("Height Amplitude", Float) = 0.02 // In world units. This will be computed in the UI.
+        [HideInInspector] _HeightCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
+
+        [Enum(MinMax, 0, Amplitude, 1)] _HeightMapParametrization("Heightmap Parametrization", Int) = 0
+        // These parameters are for vertex displacement/Tessellation
+        _HeightOffset("Height Offset", Float) = 0
+        // MinMax mode
+        _HeightMin("Heightmap Min", Float) = -1
+        _HeightMax("Heightmap Max", Float) = 1
+        // Amplitude mode
+        _HeightTessAmplitude("Amplitude", Float) = 2.0 // in Centimeters
+        _HeightTessCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
+
+        // These parameters are for pixel displacement
+        _HeightPoMAmplitude("Height Amplitude", Float) = 2.0 // In centimeters
+
+        _DetailMap("DetailMap", 2D) = "linearGrey" {}
+        _DetailAlbedoScale("_DetailAlbedoScale", Range(0.0, 2.0)) = 1
+        _DetailNormalScale("_DetailNormalScale", Range(0.0, 2.0)) = 1
+        _DetailSmoothnessScale("_DetailSmoothnessScale", Range(0.0, 2.0)) = 1
+
+        _TangentMap("TangentMap", 2D) = "bump" {}
+        _TangentMapOS("TangentMapOS", 2D) = "white" {}
+        _Anisotropy("Anisotropy", Range(-1.0, 1.0)) = 0
+        _AnisotropyMap("AnisotropyMap", 2D) = "white" {}
+
+        [HideInInspector] _DiffusionProfile("Obsolete, kept for migration purpose", Int) = 0
+        [HideInInspector] _DiffusionProfileAsset("Diffusion Profile Asset", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _DiffusionProfileHash("Diffusion Profile Hash", Float) = 0
+        _SubsurfaceMask("Subsurface Radius", Range(0.0, 1.0)) = 1.0
+        _SubsurfaceMaskMap("Subsurface Radius Map", 2D) = "white" {}
+        _TransmissionMask("Transmission Mask", Range(0.0, 1.0)) = 1.0
+        _Thickness("Thickness", Range(0.0, 1.0)) = 1.0
+        _ThicknessMap("Thickness Map", 2D) = "white" {}
+        _ThicknessRemap("Thickness Remap", Vector) = (0, 1, 0, 0)
+
+        _IridescenceThickness("Iridescence Thickness", Range(0.0, 1.0)) = 1.0
+        _IridescenceThicknessMap("Iridescence Thickness Map", 2D) = "white" {}
+        _IridescenceThicknessRemap("Iridescence Thickness Remap", Vector) = (0, 1, 0, 0)
+        _IridescenceMask("Iridescence Mask", Range(0.0, 1.0)) = 1.0
+        _IridescenceMaskMap("Iridescence Mask Map", 2D) = "white" {}
+
+        _CoatMask("Coat Mask", Range(0.0, 1.0)) = 0.0
+        _CoatMaskMap("CoatMaskMap", 2D) = "white" {}
+
+        [ToggleUI] _EnergyConservingSpecularColor("_EnergyConservingSpecularColor", Float) = 1.0
+        _SpecularColor("SpecularColor", Color) = (1, 1, 1, 1)
+        _SpecularColorMap("SpecularColorMap", 2D) = "white" {}
+
+        // Following options are for the GUI inspector and different from the input parameters above
+        // These option below will cause different compilation flag.
+        [Enum(Off, 0, From Ambient Occlusion, 1, From Bent Normals, 2)]  _SpecularOcclusionMode("Specular Occlusion Mode", Int) = 1
+
+        [HDR] _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
+        // Used only to serialize the LDR and HDR emissive color in the material UI,
+        // in the shader only the _EmissiveColor should be used
+        [HideInInspector] _EmissiveColorLDR("EmissiveColor LDR", Color) = (0, 0, 0)
+        _EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
+        [ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
+        [HideInInspector] _EmissiveIntensityUnit("Emissive Mode", Int) = 0
+        [ToggleUI] _UseEmissiveIntensity("Use Emissive Intensity", Int) = 0
+        _EmissiveIntensity("Emissive Intensity", Float) = 1
+        _EmissiveExposureWeight("Emissive Pre Exposure", Range(0.0, 1.0)) = 1.0
+
+        _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
+        [ToggleUI] _DistortionEnable("Enable Distortion", Float) = 0.0
+        [ToggleUI] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
+        [Enum(Add, 0, Multiply, 1, Replace, 2)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
+        [HideInInspector] _DistortionSrcBlend("Distortion Blend Src", Int) = 0
+        [HideInInspector] _DistortionDstBlend("Distortion Blend Dst", Int) = 0
+        [HideInInspector] _DistortionBlurSrcBlend("Distortion Blur Blend Src", Int) = 0
+        [HideInInspector] _DistortionBlurDstBlend("Distortion Blur Blend Dst", Int) = 0
+        [HideInInspector] _DistortionBlurBlendMode("Distortion Blur Blend Mode", Int) = 0
+        _DistortionScale("Distortion Scale", Float) = 1
+        _DistortionVectorScale("Distortion Vector Scale", Float) = 2
+        _DistortionVectorBias("Distortion Vector Bias", Float) = -1
+        _DistortionBlurScale("Distortion Blur Scale", Float) = 1
+        _DistortionBlurRemapMin("DistortionBlurRemapMin", Float) = 0.0
+        _DistortionBlurRemapMax("DistortionBlurRemapMax", Float) = 1.0
+
+        [ToggleUI]  _UseShadowThreshold("_UseShadowThreshold", Float) = 0.0
+        [ToggleUI]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
+        _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+        _AlphaCutoffShadow("_AlphaCutoffShadow", Range(0.0, 1.0)) = 0.5
+        _AlphaCutoffPrepass("_AlphaCutoffPrepass", Range(0.0, 1.0)) = 0.5
+        _AlphaCutoffPostpass("_AlphaCutoffPostpass", Range(0.0, 1.0)) = 0.5
+        [ToggleUI] _TransparentDepthPrepassEnable("_TransparentDepthPrepassEnable", Float) = 0.0
+        [ToggleUI] _TransparentBackfaceEnable("_TransparentBackfaceEnable", Float) = 0.0
+        [ToggleUI] _TransparentDepthPostpassEnable("_TransparentDepthPostpassEnable", Float) = 0.0
+        _TransparentSortPriority("_TransparentSortPriority", Float) = 0
+
+        // Transparency
+        [Enum(None, 0, Box, 1, Sphere, 2, Thin, 3)]_RefractionModel("Refraction Model", Int) = 0
+        [Enum(Proxy, 1, HiZ, 2)]_SSRefractionProjectionModel("Refraction Projection Model", Int) = 0
+        _Ior("Index Of Refraction", Range(1.0, 2.5)) = 1.0
+        _ThicknessMultiplier("Thickness Multiplier", Float) = 1.0
+        _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)
+        _TransmittanceColorMap("TransmittanceColorMap", 2D) = "white" {}
+        _ATDistance("Transmittance Absorption Distance", Float) = 1.0
+        [ToggleUI] _TransparentWritingMotionVec("_TransparentWritingMotionVec", Float) = 0.0
+
+        // Stencil state
+
+        // Forward
+        [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting
+        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 3 // StencilMask.Lighting
+        // GBuffer
+        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 2 // StencilLightingUsage.RegularLighting
+        [HideInInspector] _StencilWriteMaskGBuffer("_StencilWriteMaskGBuffer", Int) = 3 // StencilMask.Lighting
+        // Depth prepass
+        [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
+        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
+        // Motion vector pass
+        [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
+        [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
+        // Distortion vector pass
+        [HideInInspector] _StencilRefDistortionVec("_StencilRefDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
+        [HideInInspector] _StencilWriteMaskDistortionVec("_StencilWriteMaskDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
+
+        // Blending state
+        [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
+        [HideInInspector] _BlendMode("__blendmode", Float) = 0.0
+        [HideInInspector] _SrcBlend("__src", Float) = 1.0
+        [HideInInspector] _DstBlend("__dst", Float) = 0.0
+        [HideInInspector] _AlphaSrcBlend("__alphaSrc", Float) = 1.0
+        [HideInInspector] _AlphaDstBlend("__alphaDst", Float) = 0.0
+        [HideInInspector][ToggleUI] _ZWrite("__zw", Float) = 1.0
+        [HideInInspector][ToggleUI] _TransparentZWrite("_TransparentZWrite", Float) = 0.0
+        //[HideInInspector] _CullMode("__cullmode", Float) = 2.0
+        [HideInInspector] _CullModeForward("__cullmodeForward", Float) = 2.0 // This mode is dedicated to Forward to correctly handle backface then front face rendering thin transparent
+        [HideInInspector] _TransparentCullMode("_TransparentCullMode", Int) = 2 // Back culling by default
+        [HideInInspector] _ZTestDepthEqualForOpaque("_ZTestDepthEqualForOpaque", Int) = 4 // Less equal
+        [HideInInspector] _ZTestModeDistortion("_ZTestModeDistortion", Int) = 8
+        [HideInInspector] _ZTestGBuffer("_ZTestGBuffer", Int) = 4
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTestTransparent("Transparent ZTest", Int) = 4 // Less equal
+
+        [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
+        [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
+
+        [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
+        [Enum(Flip, 0, Mirror, 1, None, 2)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1
+        [HideInInspector] _DoubleSidedConstants("_DoubleSidedConstants", Vector) = (1, 1, -1, 0)
+
+        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3, Planar, 4, Triplanar, 5)] _UVBase("UV Set for base", Float) = 0
+        [Enum(WorldSpace, 0, ObjectSpace, 1)] _ObjectSpaceUVMapping("Mapping space", Float) = 0.0
+        _TexWorldScale("Scale to apply on world coordinate", Float) = 1.0
+        [HideInInspector] _InvTilingScale("Inverse tiling scale = 2 / (abs(_BaseColorMap_ST.x) + abs(_BaseColorMap_ST.y))", Float) = 1
+        [HideInInspector] _UVMappingMask("_UVMappingMask", Color) = (1, 0, 0, 0)
+        [Enum(TangentSpace, 0, ObjectSpace, 1)] _NormalMapSpace("NormalMap space", Float) = 0
+
+        // Following enum should be material feature flags (i.e bitfield), however due to Gbuffer encoding constrain many combination exclude each other
+        // so we use this enum as "material ID" which can be interpreted as preset of bitfield of material feature
+        // The only material feature flag that can be added in all cases is clear coat
+        [Enum(Subsurface Scattering, 0, Standard, 1, Anisotropy, 2, Iridescence, 3, Specular Color, 4, Translucent, 5)] _MaterialID("MaterialId", Int) = 1 // MaterialId.Standard
+        [ToggleUI] _TransmissionEnable("_TransmissionEnable", Float) = 1.0
+
+        [Enum(None, 0, Vertex displacement, 1, Pixel displacement, 2)] _DisplacementMode("DisplacementMode", Int) = 0
+        [ToggleUI] _DisplacementLockObjectScale("displacement lock object scale", Float) = 1.0
+        [ToggleUI] _DisplacementLockTilingScale("displacement lock tiling scale", Float) = 1.0
+        [ToggleUI] _DepthOffsetEnable("Depth Offset View space", Float) = 0.0
+
+        [ToggleUI] _EnableGeometricSpecularAA("EnableGeometricSpecularAA", Float) = 0.0
+        _SpecularAAScreenSpaceVariance("SpecularAAScreenSpaceVariance", Range(0.0, 1.0)) = 0.1
+        _SpecularAAThreshold("SpecularAAThreshold", Range(0.0, 1.0)) = 0.2
+
+        _PPDMinSamples("Min sample for POM", Range(1.0, 64.0)) = 5
+        _PPDMaxSamples("Max sample for POM", Range(1.0, 64.0)) = 15
+        _PPDLodThreshold("Start lod to fade out the POM effect", Range(0.0, 16.0)) = 5
+        _PPDPrimitiveLength("Primitive length for POM", Float) = 1
+        _PPDPrimitiveWidth("Primitive width for POM", Float) = 1
+        [HideInInspector] _InvPrimScale("Inverse primitive scale for non-planar POM", Vector) = (1, 1, 0, 0)
+
+        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVDetail("UV Set for detail", Float) = 0
+        [HideInInspector] _UVDetailsMappingMask("_UVDetailsMappingMask", Color) = (1, 0, 0, 0)
+        [ToggleUI] _LinkDetailsWithBase("LinkDetailsWithBase", Float) = 1.0
+
+        [Enum(Use Emissive Color, 0, Use Emissive Mask, 1)] _EmissiveColorMode("Emissive color mode", Float) = 1
+        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3, Planar, 4, Triplanar, 5)] _UVEmissive("UV Set for emissive", Float) = 0
+        _TexWorldScaleEmissive("Scale to apply on world coordinate", Float) = 1.0
+        [HideInInspector] _UVMappingMaskEmissive("_UVMappingMaskEmissive", Color) = (1, 0, 0, 0)
+
+        // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
+        // value that exist to identify if the GI emission need to be enabled.
+        // In our case we don't use such a mechanism but need to keep the code quiet. We declare the value and always enable it.
+        // TODO: Fix the code in legacy unity so we can customize the beahvior for GI
+        _EmissionColor("Color", Color) = (1, 1, 1)
+
+        // HACK: GI Baking system relies on some properties existing in the shader ("_MainTex", "_Cutoff" and "_Color") for opacity handling, so we need to store our version of those parameters in the hard-coded name the GI baking system recognizes.
+        //////////// _MainTex("BaseMap", 2D) = "white" {}
+        _Color("Color", Color) = (1,1,1,1)
+        _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+
+        [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
+        [ToggleUI] _ReceivesSSR("Receives SSR", Float) = 1.0
+        [ToggleUI] _AddPrecomputedVelocity("AddPrecomputedVelocity", Float) = 0.0
 	//////////////////////////////////////////////////////////////////////////////
 	//////////////////// End of HDRP material default values. ////////////////////
 	//////////////////////////////////////////////////////////////////////////////
@@ -1131,42 +1131,46 @@ Shader "DCL/DCL_Toon"
             "RenderType"="Opaque"
             "RenderPipeline" = "UniversalPipeline"
         }
-        Pass {
-            Name "Outline"
-            Tags {
-                "LightMode" = "SRPDefaultUnlit"
-            }
-            Cull [_SRPDefaultUnlitColMode]
-            ColorMask [_SPRDefaultUnlitColorMask]
-            Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref[_StencilNo]
-                Comp[_StencilComp]
-                Pass[_StencilOpPass]
-                Fail[_StencilOpFail]
-
-            }
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            #pragma vertex vert
-            #pragma fragment frag
-
-
-            //V.2.0.4
-            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO _IS_OUTLINE_CLIPPING_YES
-            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
-            // Outline is implemented in UniversalToonOutline.hlsl.
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-#ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
-            #include "DCL_ToonInput.hlsl"
-            #include "DCL_ToonHead.hlsl"
-            #include "DCL_ToonOutline.hlsl"
-#endif
-            ENDHLSL
-        }
+//        Pass {
+//            Name "Outline"
+//            Tags {
+//                "LightMode" = "SRPDefaultUnlit"
+//            }
+//            Cull [_SRPDefaultUnlitColMode]
+//            ColorMask [_SPRDefaultUnlitColorMask]
+//            Blend SrcAlpha OneMinusSrcAlpha
+//            Stencil
+//            {
+//                Ref[_StencilNo]
+//                Comp[_StencilComp]
+//                Pass[_StencilOpPass]
+//                Fail[_StencilOpFail]
+//
+//            }
+//
+//            HLSLPROGRAM
+//            //#pragma exclude_renderers gles gles3 glcore
+//            #pragma target 4.5
+//            #pragma vertex vert
+//            #pragma fragment frag
+//
+//
+//            //V.2.0.4
+//            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO _IS_OUTLINE_CLIPPING_YES
+//            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
+//            //#pragma multi_compile_instancing
+//            //#pragma instancing_options renderinglayer
+//            #pragma multi_compile _ DOTS_INSTANCING_ON
+//            // Outline is implemented in UniversalToonOutline.hlsl.
+//            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+//            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+//#ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
+//            #include "DCL_ToonInput.hlsl"
+//            #include "DCL_ToonHead.hlsl"
+//            #include "DCL_ToonOutline.hlsl"
+//#endif
+//            ENDHLSL
+//        }
 
 //ToonCoreStart
         Pass {
@@ -1186,9 +1190,9 @@ Shader "DCL/DCL_Toon"
             }
 
             HLSLPROGRAM
-            #pragma target 2.0
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
+            #pragma target 4.5
+            //#pragma prefer_hlslcc gles
+            //#pragma exclude_renderers d3d11_9x
 
             #pragma vertex vert
             #pragma fragment frag
@@ -1225,6 +1229,9 @@ Shader "DCL/DCL_Toon"
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile_fog
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #define _IS_PASS_FWDBASE
             // DoubleShadeWithFeather and ShadingGradeMap use different fragment shader.  
@@ -1263,14 +1270,18 @@ Shader "DCL/DCL_Toon"
             Cull[_CullMode]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.5
 	    
             // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
+            //#pragma prefer_hlslcc gles
+            //#pragma exclude_renderers d3d11_9x
 
 
             #pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+
+            #pragma multi_compile_instancing
+            //#pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
@@ -1290,11 +1301,11 @@ Shader "DCL/DCL_Toon"
             Cull[_CullMode]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.5
 	    
             // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
+            //#pragma prefer_hlslcc gles
+            //#pragma exclude_renderers d3d11_9x
 
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
@@ -1302,7 +1313,9 @@ Shader "DCL/DCL_Toon"
             // -------------------------------------
             // Material Keywords
             #pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
 
             #include "DCL_ToonInput.hlsl"
@@ -1319,13 +1332,13 @@ Shader "DCL/DCL_Toon"
             Cull[_CullMode]
 
             HLSLPROGRAM
-            #pragma target 2.0	    
+            #pragma target 4.5	    
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Version.hlsl"
 
 
             // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
+            //#pragma prefer_hlslcc gles
+            //#pragma exclude_renderers d3d11_9x
 
             #pragma vertex DepthNormalsVertex
             #pragma fragment DepthNormalsFragment
@@ -1334,7 +1347,9 @@ Shader "DCL/DCL_Toon"
             // Material Keywords
             #pragma shader_feature_local _PARALLAXMAP
             #pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
 
             #include "DCL_ToonInput.hlsl"
