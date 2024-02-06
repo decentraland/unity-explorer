@@ -68,7 +68,7 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            IWeb3IdentityCache storedIdentityProvider)
+            IWeb3IdentityCache web3IdentityCache)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -125,13 +125,13 @@ namespace Global.Dynamic
                     backpackCommandBus,
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    storedIdentityProvider,
+                    web3IdentityCache,
                     wearableCatalog,
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     characterPreviewInputEventBus),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
@@ -144,6 +144,7 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             container.RealmController = new RealmController(
+                web3IdentityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,

@@ -5,6 +5,7 @@ using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -32,6 +33,7 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly IpfsTypes.ServerAbout serverAbout = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
@@ -52,9 +54,15 @@ namespace Global.Dynamic
             }
         }
 
-        public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
+        public RealmController(
+            IWeb3IdentityCache web3IdentityCache,
+            IWebRequestController webRequestController,
+            TeleportController teleportController,
+            RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
+            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
             IReadOnlyList<int2> staticLoadPositions, RealmData realmData, IScenesCache scenesCache)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
@@ -96,7 +104,7 @@ namespace Global.Dynamic
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-            realmData.Reconfigure(new IpfsRealm(realm, result));
+            realmData.Reconfigure(new IpfsRealm(web3IdentityCache, webRequestController, realm, result));
 
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
