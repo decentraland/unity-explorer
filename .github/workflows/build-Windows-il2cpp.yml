@@ -135,12 +135,24 @@ jobs:
           
       - name: Clone Packages To Use Locally
         run: |
-            git clone git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader
-            git clone git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2
-            echo "Editing package manifest"
-            sudo sed -i "s|git clone git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../StylizedGrassShader|" Packages/manifest.json
-            sudo sed -i "s|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../StylizedWater2|" Packages/manifest.json
-            cat Packages/manifest.json
+              # Clone the repository
+              git clone git@github.com:decentraland/unity-explorer-packages.git
+              
+              # Display message
+              Write-Host "Editing package manifest"
+              
+              # Specify the path to the manifest.json file
+              $jsonFilePath = "Packages\manifest.json"
+              
+              # Replace the first string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git clone git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../StylizedGrassShader' | Set-Content -Path $jsonFilePath
+              
+              # Replace the second string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../StylizedWater2' | Set-Content -Path $jsonFilePath
+              
+              # Display the content of manifest.json
+              Get-Content -Path $jsonFilePath
+
 
       - uses: decentraland/unity-builder@0.7
         id: build
