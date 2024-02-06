@@ -116,6 +116,22 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          $sshPath = "$env:USERPROFILE\.ssh"
+          if (-not (Test-Path -Path $sshPath)) {
+            New-Item -Path $sshPath -ItemType Directory
+          }
+          
+          $knownHostsPath = Join-Path $sshPath 'known_hosts'
+          
+          # Download GitHub public keys and append them to the known_hosts file
+          (Invoke-WebRequest -Uri 'https://api.github.com/meta' | ConvertFrom-Json).ssh_keys | ForEach-Object {
+            Add-Content -Path $knownHostsPath -Value ("github.com " + $_)
+          }
+        
+          # Set proper permissions on the known_hosts file
+          attrib.exe +R +H $knownHostsPath
 
       - uses: decentraland/unity-builder@0.7
         id: build
