@@ -67,7 +67,7 @@ namespace DCL.PluginSystem.World
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);

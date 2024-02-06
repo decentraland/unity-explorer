@@ -1,4 +1,5 @@
-﻿using DCL.ECSComponents;
+﻿using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
@@ -6,7 +7,9 @@ using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -17,6 +20,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
+        private ISceneStateProvider sceneStateProvider;
+        private IECSToCRDTWriter ecsToCRDTWriter;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
 
@@ -29,7 +34,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(DCLInputText), new ComponentPool<DCLInputText>() },
                 }, null);
 
-            system = new UIInputInstantiationSystem(world, poolsRegistry);
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
+            system = new UIInputInstantiationSystem(world, poolsRegistry, sceneStateProvider, ecsToCRDTWriter);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }
