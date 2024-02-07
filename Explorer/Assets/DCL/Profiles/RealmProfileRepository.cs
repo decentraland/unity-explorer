@@ -3,13 +3,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS;
-using Ipfs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using IpfsProfileEntity = DCL.Ipfs.IpfsRealmEntity<DCL.Profiles.GetProfileJsonRootDto>;
+using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
 {
@@ -52,7 +51,7 @@ namespace DCL.Profiles
             var entity = new IpfsProfileEntity
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new List<IpfsProfileEntity.Files>
+                content = new List<ContentDefinition>
                 {
                     new () { file = "body.png", hash = faceHash },
                     new () { file = "face256.png", hash = bodyHash },

@@ -200,8 +200,6 @@ namespace Global.Dynamic
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
-            await dynamicWorldContainer!.ProfileRepository.SetAsync(ownProfile, ct);
-
             loadReport!.ProgressCounter.Value = 0.2f;
 
             // Add the profile into the player entity so it will create the avatar in world
