@@ -1,23 +1,30 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI;
+using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Backpack
 {
     public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
+        private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
+        private const float ANIMATION_TIME = 0.1f;
+
         public event Action<string> OnSelectItem;
 
         [field: SerializeField]
         public string ItemId { get; set; }
 
         [field: SerializeField]
-        public GameObject HoverBackground { get; private set; }
+        public RectTransform ContainerTransform { get; private set; }
 
         [field: SerializeField]
-        public GameObject SelectedBackground { get; private set; }
+        public RectTransform HoverBackgroundTransform { get; private set; }
 
         [field: SerializeField]
         public Button EquipButton { get; private set; }
@@ -46,21 +53,49 @@ namespace DCL.Backpack
         [field: SerializeField]
         public GameObject FullBackpackItem { get; private set; }
 
+        [field: SerializeField]
+        public bool IsEquipped { get; set; }
+
+        private CancellationTokenSource cts;
+
         public void SetEquipButtonsState()
         {
-            EquipButton.gameObject.SetActive(!EquippedIcon.activeSelf);
-            UnEquipButton.gameObject.SetActive(EquippedIcon.activeSelf);
+            EquipButton.gameObject.SetActive(!IsEquipped);
+            UnEquipButton.gameObject.SetActive(IsEquipped);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            HoverBackground.SetActive(true);
+            AnimateHover();
             SetEquipButtonsState();
+
+            if (IsEquipped)
+                EquippedIcon.gameObject.SetActive(false);
+        }
+
+        private void AnimateHover()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            HoverBackgroundTransform.localScale = Vector3.zero;
+            HoverBackgroundTransform.gameObject.SetActive(true);
+            ContainerTransform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            HoverBackgroundTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+        }
+
+        private void AnimateExit()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            ContainerTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
+            HoverBackgroundTransform.DOScale(Vector3.zero, ANIMATION_TIME).SetEase(Ease.Flash)
+                                    .OnComplete(()=>HoverBackgroundTransform.gameObject.SetActive(false)).ToUniTask(cancellationToken: cts.Token);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            HoverBackground.SetActive(false);
+            AnimateExit();
+            EquippedIcon.gameObject.SetActive(IsEquipped);
         }
 
         public void OnPointerClick(PointerEventData eventData)

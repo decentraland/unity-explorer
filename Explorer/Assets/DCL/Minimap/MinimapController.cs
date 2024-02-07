@@ -26,12 +26,10 @@ namespace DCL.Minimap
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker;
-        public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
-            { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private CancellationTokenSource cts;
 
@@ -39,11 +37,15 @@ namespace DCL.Minimap
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
+        public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
+            { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public MinimapController(
             ViewFactoryMethod viewFactory,
             IMapRenderer mapRenderer,
-            MVCManager mvcManager,
+            IMVCManager mvcManager,
             IPlacesAPIService placesAPIService
         ) : base(viewFactory)
         {
@@ -77,9 +79,9 @@ namespace DCL.Minimap
 
         [All(typeof(PlayerComponent))]
         [Query]
-        private void QueryPlayerPosition(in TransformComponent transformComponent)
+        private void QueryPlayerPosition(in CharacterTransform transformComponent)
         {
-            var position = transformComponent.Transform.position;
+            Vector3 position = transformComponent.Position;
 
             if (mapCameraController == null)
             {
@@ -141,8 +143,6 @@ namespace DCL.Minimap
                 finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString(); }
             }
         }
-
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public override void Dispose()
         {

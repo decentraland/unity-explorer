@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using NSubstitute;
@@ -56,7 +57,7 @@ namespace CrdtEcsBridge.Engine.Tests
 
             outgoingMessages = new List<ProcessedCRDTMessage>
             {
-                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 122, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[100])), 120),
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 122, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[100])), 120),
             };
 
             crdtStateMessages = new List<ProcessedCRDTMessage>
@@ -93,11 +94,14 @@ namespace CrdtEcsBridge.Engine.Tests
             crdtProtocol.CreateMessagesFromTheCurrentState(Arg.Any<ProcessedCRDTMessage[]>())
                         .Returns(c =>
                          {
-                             crdtStateMessages.CopyTo(c.ArgAt<ProcessedCRDTMessage[]>(0));
-                             return crdtStateMessages.Aggregate(0, (acc, message) => acc + message.CRDTMessageDataLength);
+                             ProcessedCRDTMessage[] processedMessages = c.ArgAt<ProcessedCRDTMessage[]>(0);
+
+                             crdtStateMessages.CopyTo(processedMessages);
+                             outgoingMessages.CopyTo(processedMessages, crdtStateMessages.Count);
+                             return crdtStateMessages.Concat(outgoingMessages).Aggregate(0, (acc, message) => acc + message.CRDTMessageDataLength);
                          });
 
-            crdtProtocol.GetMessagesCount().Returns(crdtStateMessages.Count);
+            crdtProtocol.GetMessagesCount().Returns(crdtStateMessages.Count + outgoingMessages.Count);
 
             crdtWorldSynchronizer.GetSyncCommandBuffer().Returns(_ => worldSyncCommandBuffer = Substitute.For<IWorldSyncCommandBuffer>());
 
@@ -109,7 +113,7 @@ namespace CrdtEcsBridge.Engine.Tests
                                         .Returns(_ =>
                                          {
                                              mutex.WaitOne();
-                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages);
+                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages.ToList());
                                          });
         }
 
@@ -154,35 +158,35 @@ namespace CrdtEcsBridge.Engine.Tests
         [Test]
         public void MakeCallsInProperOrderCrdtGetState()
         {
-            ArraySegment<byte> state = engineAPIImplementation.CrdtGetState();
+            PoolableByteArray state = engineAPIImplementation.CrdtGetState();
 
             Received.InOrder(() =>
             {
-                crdtProtocol.GetMessagesCount();
-                sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtStateMessages.Count);
-                crdtProtocol.CreateMessagesFromTheCurrentState(Arg.Any<ProcessedCRDTMessage[]>());
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
+                crdtProtocol.GetMessagesCount();
+                sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtStateMessages.Count + outgoingMessages.Count);
+                crdtProtocol.CreateMessagesFromTheCurrentState(Arg.Any<ProcessedCRDTMessage[]>());
                 sharedPoolsProvider.GetSerializedStateBytesPool(400 + 120);
-                sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(Arg.Is<ProcessedCRDTMessage[]>(p => p.Length == crdtStateMessages.Count));
+                sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(Arg.Is<ProcessedCRDTMessage[]>(p => p.Length == crdtStateMessages.Count + outgoingMessages.Count));
             });
 
-            Assert.AreEqual(400 + 120, state.Count);
+            Assert.AreEqual(400 + 120, state.Length);
         }
 
         [Test]
-        public void ReleasePreviousBufferOnSend()
+        public void ReleasePreviousBufferCrdtSendToRenderer()
         {
-            engineAPIImplementation.CrdtSendToRenderer(INPUT);
-            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            PoolableByteArray data = engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            data.Dispose();
 
             sharedPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
         }
 
         [Test]
-        public void ReleasePreviousBufferOnGet()
+        public void ReleasePreviousBufferCrdtGetState()
         {
-            engineAPIImplementation.CrdtSendToRenderer(INPUT);
-            engineAPIImplementation.CrdtGetState();
+            PoolableByteArray data = engineAPIImplementation.CrdtGetState();
+            data.Dispose();
 
             sharedPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
         }

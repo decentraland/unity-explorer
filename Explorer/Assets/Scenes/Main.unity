@@ -260,6 +260,11 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
+      <PageButtonView>k__BackingField:
+        m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
   realmUrl: https://peer.decentraland.org
   splashRoot: {fileID: 7722564697705550552}
   splashAnimation: {fileID: 4327321310632415857}

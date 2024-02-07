@@ -1,6 +1,7 @@
 ﻿using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization;
 using System;
@@ -14,12 +15,6 @@ namespace DCL.PluginSystem.Global
     public class StaticSettings : IDCLPluginSettings
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
-        [field: SerializeField]
-        public CharacterObjectRef CharacterObject { get; private set; }
-
-        [field: SerializeField]
-        public float StartYPosition { get; private set; } = 1.0f;
-
         [field: SerializeField]
         public ReportHandlingSettingsRef ReportHandlingSettings { get; private set; }
 
@@ -47,12 +42,6 @@ namespace DCL.PluginSystem.Global
         };
 
         [Serializable]
-        public class CharacterObjectRef : ComponentReference<CharacterObject>
-        {
-            public CharacterObjectRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
         {
             public PartitionSettingsRef(string guid) : base(guid) { }
@@ -68,6 +57,12 @@ namespace DCL.PluginSystem.Global
         public class RealmPartitionSettingsRef : AssetReferenceT<RealmPartitionSettingsAsset>
         {
             public RealmPartitionSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class LODSettingsRef : AssetReferenceT<LODSettingsAsset>
+        {
+            public LODSettingsRef(string guid) : base(guid) { }
         }
     }
 }

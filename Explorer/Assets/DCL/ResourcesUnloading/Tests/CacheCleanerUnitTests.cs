@@ -1,4 +1,5 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -22,11 +23,13 @@ namespace DCL.ResourcesUnloading.Tests
         private IWearableCatalog wearableCatalog;
         private IWearableAssetsCache wearableAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
-        private IStreamableCache<AudioClip,GetAudioClipIntention> audioClipsCache;
+        private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
         private IProfileCache profileCache;
+        private ILODAssetsPool lodAssetsPool;
+
 
         [SetUp]
         public void SetUp()
@@ -43,6 +46,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
             profileCache = Substitute.For<IProfileCache>();
+            lodAssetsPool = Substitute.For<ILODAssetsPool>();
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
 
@@ -54,6 +58,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(wearableAssetsCache);
             cacheCleaner.Register(materialPool);
             cacheCleaner.Register(profileCache);
+            cacheCleaner.Register(lodAssetsPool);
         }
 
         [TestCase(true, 1)]

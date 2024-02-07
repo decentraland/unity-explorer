@@ -45,7 +45,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
 
         [All(typeof(PlayerComponent))]
         [Query]
-        private void SetPlayerTransform(in TransformComponent transformComponent)
+        private void SetPlayerTransform(in CharacterTransform transformComponent)
         {
             SetPosition(transformComponent.Transform.position);
             SetRotation(transformComponent.Transform.rotation);
@@ -70,7 +70,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
 
         private void SetPosition(Vector3 position)
         {
-            var gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
+            Vector2 gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
             playerMarker.SetPosition(coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition)));
         }
 
@@ -94,7 +94,6 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             playerMarker?.Dispose();
         }
     }
-
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class TrackPlayerPositionSystem : ControllerECSBridgeSystem

@@ -28,7 +28,7 @@ using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
 
@@ -123,12 +123,16 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
+            int totalAmount = 0;
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
                 BaseWearablesPromise = ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
+                    new GetWearableByParamIntention(new[]
+                    {
+                        ("collectionType", "base-wearable"), ("pageSize", "50")
+                    }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
             };
 
@@ -148,7 +152,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             [Data] in ICharacterControllerSettings characterControllerSettings,
             ref RandomAvatarRequest randomAvatarRequest)
         {
-            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> baseWearables))
+            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out var baseWearables))
             {
                 if (baseWearables.Succeeded)
                 {
@@ -162,7 +166,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             }
         }
 
-        private void GenerateRandomizers(StreamableLoadingResult<IWearable[]> baseWearables)
+        private void GenerateRandomizers(StreamableLoadingResult<WearablesResponse> baseWearables)
         {
             if (randomizerInitialized)
                 return;
@@ -170,7 +174,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var male = new AvatarRandomizer(BodyShape.MALE);
             var female = new AvatarRandomizer(BodyShape.FEMALE);
 
-            foreach (IWearable wearable in baseWearables.Asset)
+            foreach (var wearable in baseWearables.Asset.Wearables)
             {
                 male.AddWearable(wearable);
                 female.AddWearable(wearable);
@@ -228,7 +232,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new HeadIKComponent(),
                     new JumpInputComponent(),
                     new MovementInputComponent(),
-                    characterControllerSettings
+                    characterControllerSettings,
+                    PartitionComponent.TOP_PRIORITY
                 );
             }
         }

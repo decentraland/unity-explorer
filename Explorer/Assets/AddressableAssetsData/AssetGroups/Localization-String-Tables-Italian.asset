@@ -15,7 +15,7 @@ MonoBehaviour:
   m_GroupName: Localization-String-Tables-Italian
   m_Data:
     m_SerializedData: []
-  m_GUID: f741e94ac2a3dfa4aa677d6f5b41e02f
+  m_GUID: 3af364c4de917407fa09096d3c1d2ba5
   m_SerializeEntries:
   - m_GUID: bfe955d36292148ca8c9ecba37a22aac
     m_Address: SceneLoadingDefaultTips_it
@@ -27,5 +27,5 @@ MonoBehaviour:
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 2f184ea9aee0b20498ca789070a43b5b, type: 2}
-    - {fileID: 11400000, guid: 8d2279f565e5d184998dd1d0cae65314, type: 2}
+    - {fileID: 11400000, guid: 5ff32edfdbd3941bc9526e189e4c2ce6, type: 2}
+    - {fileID: 11400000, guid: bd737426796f847588c0e0d86442e587, type: 2}

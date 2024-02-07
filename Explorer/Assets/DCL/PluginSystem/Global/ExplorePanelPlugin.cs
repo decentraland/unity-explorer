@@ -4,17 +4,18 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.Navmap;
+using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
-using DCL.Profiles;
 using DCL.Settings;
+using DCL.UI;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Global.Dynamic;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -34,6 +35,8 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -48,7 +51,9 @@ namespace DCL.PluginSystem.Global
             BackpackEventBus backpackEventBus,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IWearableCatalog wearableCatalog)
+            IWearableCatalog wearableCatalog,
+            IComponentPoolsRegistry poolsRegistry,
+            CharacterPreviewInputEventBus characterPreviewInputEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -61,6 +66,8 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.wearableCatalog = wearableCatalog;
+            this.poolsRegistry = poolsRegistry;
+            this.characterPreviewInputEventBus = characterPreviewInputEventBus;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -78,7 +85,9 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog);
+            var pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>();
+            var characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
+            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog, pageButtonView, poolsRegistry, characterPreviewInputEventBus, characterPreviewFactory);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
@@ -100,7 +109,6 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             backpackController.InjectToWorld(ref builder, arguments.PlayerEntity);
-
         }
 
         public class ExplorePanelSettings : IDCLPluginSettings
