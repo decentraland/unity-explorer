@@ -143,6 +143,11 @@
         public const string PROFILE = nameof(PROFILE);
 
         /// <summary>
+        ///     Tweens Related
+        /// </summary>
+        public const string TWEEN = nameof(TWEEN);
+
+        /// <summary>
         ///     Wearable related
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);

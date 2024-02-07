@@ -6,6 +6,7 @@ using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
+using ECS.Unity.Tween.Systems;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -32,7 +33,9 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
+            var tweenHandlerSystem = TweenHandlerSystem.InjectToWorld(ref builder, globalWorld);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
+            finalizeWorldSystems.Add(tweenHandlerSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
