@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;

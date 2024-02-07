@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -12,7 +13,6 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.EmptyScene;
@@ -113,7 +113,7 @@ namespace ECS.SceneLifeCycle.Tests
             var world = World.Create();
 
             var args = new EmptySceneFacade.Args(map, world,
-                new EmptySceneMapping { environment = new IpfsTypes.ContentDefinition { file = "file1" }, grass = new IpfsTypes.ContentDefinition { file = "file2" } },
+                new EmptySceneMapping { environment = new ContentDefinition { file = "file1" }, grass = new ContentDefinition { file = "file2" } },
                 pool, Vector3.one, partition, new MutexSync());
 
             var facade = EmptySceneFacade.Create(args);

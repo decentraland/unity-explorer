@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.Web3.Identities;
@@ -31,7 +32,7 @@ namespace Global.Dynamic
         private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
-        private readonly IpfsTypes.ServerAbout serverAbout = new ();
+        private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly int sceneLoadRadius;
@@ -98,7 +99,7 @@ namespace Global.Dynamic
             try { await UnloadCurrentRealmAsync(); }
             catch (ObjectDisposedException) { }
 
-            IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
+            ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(new IpfsRealm(web3IdentityCache, webRequestController, realm, result));

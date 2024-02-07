@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Ipfs;
@@ -13,13 +14,13 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
-        protected Entity CreateSceneEntity(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath) =>
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
             World.Create(new SceneDefinitionComponent(definition, ipfsPath));
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
         /// </summary>
-        protected void TryCreateSceneEntity(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath, NativeHashSet<int2> processedParcels)
+        protected void TryCreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, NativeHashSet<int2> processedParcels)
         {
             var shouldCreate = true;
 

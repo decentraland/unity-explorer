@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -11,7 +10,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     public class IpfsRealm : IIpfsRealm, IEquatable<IpfsRealm>
     {
@@ -30,7 +29,7 @@ namespace Ipfs
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            URLDomain realmName, IpfsTypes.ServerAbout? serverAbout = null)
+            URLDomain realmName, ServerAbout? serverAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;

@@ -1,7 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Profiles;
-using Ipfs;
 using System;
 using System.Collections.Generic;
 using System.Threading;

@@ -1,11 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     /// <summary>
     ///     Provides a simple implementation to resolve URLs from StreamingAssets

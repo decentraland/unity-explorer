@@ -6,6 +6,7 @@ using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
+using DCL.Ipfs;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
@@ -198,6 +199,8 @@ namespace Global.Dynamic
         private async UniTask LoadCharacterAndWorldAsync(Entity playerEntity, CancellationToken ct)
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
+
+            await dynamicWorldContainer!.ProfileRepository.SetAsync(ownProfile, ct);
 
             loadReport!.ProgressCounter.Value = 0.2f;
 

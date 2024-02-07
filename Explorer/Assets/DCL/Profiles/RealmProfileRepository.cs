@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using IpfsProfileEntity = DCL.Profiles.IpfsRealmEntity<DCL.Profiles.GetProfileJsonRootDto>;
+using IpfsProfileEntity = DCL.Ipfs.IpfsRealmEntity<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
 {

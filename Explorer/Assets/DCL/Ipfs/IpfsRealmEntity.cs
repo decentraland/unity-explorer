@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Profiles
+namespace DCL.Ipfs
 {
     [Serializable]
     public struct IpfsRealmEntity<T>

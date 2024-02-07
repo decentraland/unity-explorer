@@ -1,4 +1,5 @@
-﻿using DCL.Optimization.Pools;
+﻿using DCL.Ipfs;
+using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Ipfs;
@@ -12,7 +13,7 @@ namespace ECS.SceneLifeCycle.Components
     /// </summary>
     public struct VolatileScenePointers
     {
-        public readonly List<IpfsTypes.SceneEntityDefinition> RetrievedReusableList;
+        public readonly List<SceneEntityDefinition> RetrievedReusableList;
         public readonly List<int2> InputReusableList;
 
         /// <summary>
@@ -20,7 +21,7 @@ namespace ECS.SceneLifeCycle.Components
         /// </summary>
         public AssetPromise<SceneDefinitions, GetSceneDefinitionList>? ActivePromise;
 
-        public VolatileScenePointers(List<IpfsTypes.SceneEntityDefinition> retrievedReusableList, List<int2> inputReusableList)
+        public VolatileScenePointers(List<SceneEntityDefinition> retrievedReusableList, List<int2> inputReusableList)
         {
             RetrievedReusableList = retrievedReusableList;
             InputReusableList = inputReusableList;
@@ -28,7 +29,7 @@ namespace ECS.SceneLifeCycle.Components
         }
 
         public static VolatileScenePointers Create() =>
-            new (new List<IpfsTypes.SceneEntityDefinition>(PoolConstants.SCENES_COUNT),
+            new (new List<SceneEntityDefinition>(PoolConstants.SCENES_COUNT),
                 new List<int2>(PoolConstants.SCENES_COUNT));
     }
 }

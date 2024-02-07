@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -29,8 +30,8 @@ namespace ECS.SceneLifeCycle.Systems
         public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
             SceneDefinitionComponent definitionComponent = intention.DefinitionComponent;
-            IpfsTypes.IpfsPath ipfsPath = definitionComponent.IpfsPath;
-            IpfsTypes.SceneEntityDefinition definition = definitionComponent.Definition;
+            IpfsPath ipfsPath = definitionComponent.IpfsPath;
+            SceneEntityDefinition definition = definitionComponent.Definition;
 
             // Warning! Obscure Logic!
             // Each scene can override the content base url, so we need to check if the scene definition has a base url
@@ -109,7 +110,7 @@ namespace ECS.SceneLifeCycle.Systems
                 return default(UniTaskVoid);
             }
 
-            IpfsTypes.SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
+            SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
 
             await (await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory))
                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
