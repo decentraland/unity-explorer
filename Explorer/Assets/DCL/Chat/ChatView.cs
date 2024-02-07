@@ -1,16 +1,21 @@
+using Cysharp.Threading.Tasks;
 using MVC;
 using DG.Tweening;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace DCL.Chat
 {
     public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler
     {
         private const float BACKGROUND_FADE_TIME = 0.2f;
+        private const float CHAT_ENTRIES_FADE_TIME = 3f;
+        private const int CHAT_ENTRIES_WAIT_BEFORE_FADE_MS = 10000;
 
         [field: SerializeField]
         public Transform MessagesContainer { get; private set; }
@@ -24,6 +29,11 @@ namespace DCL.Chat
         [field: SerializeField]
         public CanvasGroup PanelBackgroundCanvasGroup { get; private set; }
 
+        [field: SerializeField]
+        public CanvasGroup ChatEntriesCanvasGroup { get; private set; }
+
+        private CancellationTokenSource cts;
+
         private void Start()
         {
             PanelBackgroundCanvasGroup.alpha = 0;
@@ -31,12 +41,31 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            cts.SafeCancelAndDispose();
+            ChatEntriesCanvasGroup.alpha = 1;
             PanelBackgroundCanvasGroup.DOFade(1, BACKGROUND_FADE_TIME);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             PanelBackgroundCanvasGroup.DOFade(0, BACKGROUND_FADE_TIME);
+            StartChatEntriesFadeoutCount();
+        }
+
+        public void StartChatEntriesFadeoutCount()
+        {
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+
+            AwaitAndFadeChatEntries(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid AwaitAndFadeChatEntries(CancellationToken ct)
+        {
+            cts.Token.ThrowIfCancellationRequested();
+            ChatEntriesCanvasGroup.alpha = 1;
+            await UniTask.Delay(CHAT_ENTRIES_WAIT_BEFORE_FADE_MS, cancellationToken: ct);
+            ChatEntriesCanvasGroup.DOFade(0, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
         }
     }
 }

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using MVC;
-using System;
 using System.Linq;
 using System.Threading;
 using Object = UnityEngine.Object;
@@ -12,6 +11,7 @@ namespace DCL.Chat
     {
         private readonly ChatEntryView chatEntryView;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public ChatController(
@@ -23,7 +23,7 @@ namespace DCL.Chat
             this.chatEntryView = chatEntryView;
             this.chatEntryConfiguration = chatEntryConfiguration;
 
-            debugBuilder.AddWidget("Chat").AddControl(new DebugButtonDef("Create chat message", CreateChatEntriesAsync), null);
+            debugBuilder.AddWidget("Chat").AddControl(new DebugButtonDef("Create chat message", CreateChatEntry), null);
         }
 
         protected override void OnViewInstantiated()
@@ -50,7 +50,7 @@ namespace DCL.Chat
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
         }
 
-        private void CreateChatEntriesAsync()
+        private void CreateChatEntry()
         {
             ChatEntryView entryView = Object.Instantiate(chatEntryView, viewInstance.MessagesContainer);
             entryView.Initialise(chatEntryConfiguration);

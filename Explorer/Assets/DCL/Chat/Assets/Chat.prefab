@@ -1924,6 +1924,7 @@ MonoBehaviour:
   <InputField>k__BackingField: {fileID: 5622104160664987093}
   <CharacterCounter>k__BackingField: {fileID: 5274648269416443391}
   <PanelBackgroundCanvasGroup>k__BackingField: {fileID: 4742269820946521976}
+  <ChatEntriesCanvasGroup>k__BackingField: {fileID: 3261035143554008524}
 --- !u!1001 &5658065957138897067
 PrefabInstance:
   m_ObjectHideFlags: 0
