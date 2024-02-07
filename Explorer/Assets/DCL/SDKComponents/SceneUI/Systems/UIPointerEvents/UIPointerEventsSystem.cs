@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 if (pEvent.EventType != uiTransformComponent.PointerEventTriggered)
                     continue;
 
-                AppendMessage(sdkEntity, pEvent.EventInfo.Button, pEvent.EventType);
+                AppendMessage(ref sdkEntity, pEvent.EventInfo.Button, pEvent.EventType);
                 break;
             }
 
@@ -82,7 +82,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
             RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
 
-        private void AppendMessage(CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
+        private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
