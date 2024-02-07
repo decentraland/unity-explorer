@@ -25,8 +25,7 @@ Material:
   stringTagMap:
     IgnoreProjection: False
     RenderType: Opaque
-  disabledShaderPasses:
-  - SRPDEFAULTUNLIT
+  disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -279,7 +278,7 @@ Material:
     - _BlendModePreserveSpecular: 1
     - _BlurLevelMatcap: 0
     - _BlurLevelSGM: 0
-    - _BumpScale: 0.5
+    - _BumpScale: 1
     - _BumpScaleMatcap: 1
     - _CameraRolling_Stabilizer: 0
     - _ClearCoatMask: 0
@@ -379,7 +378,7 @@ Material:
     - _Is_LightColor_RimLight: 1
     - _Is_NormalMapForMatCap: 0
     - _Is_NormalMapToBase: 1
-    - _Is_NormalMapToHighColor: 0
+    - _Is_NormalMapToHighColor: 1
     - _Is_NormalMapToRimLight: 1
     - _Is_Ortho: 0
     - _Is_OutlineTex: 0
@@ -494,7 +493,7 @@ Material:
     - _Tweak_LightDirection_MaskLevel: 0
     - _Tweak_MatCapUV: 0
     - _Tweak_MatcapMaskLevel: 0
-    - _Tweak_RimLightMaskLevel: 0
+    - _Tweak_RimLightMaskLevel: -0.9
     - _Tweak_ShadingGradeMapLevel: 0
     - _Tweak_SystemShadowsLevel: 0
     - _Tweak_transparency: 0

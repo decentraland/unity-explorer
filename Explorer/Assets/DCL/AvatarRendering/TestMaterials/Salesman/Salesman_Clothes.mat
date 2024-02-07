@@ -26,8 +26,7 @@ Material:
   stringTagMap:
     IgnoreProjection: False
     RenderType: Opaque
-  disabledShaderPasses:
-  - SRPDEFAULTUNLIT
+  disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -137,7 +136,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MatCap_Sampler:
-        m_Texture: {fileID: 2800000, guid: d0b12a97446a44f00bb19f597bf6d706, type: 3}
+        m_Texture: {fileID: 2800000, guid: b94af1868a8fa52439013f558e7d748f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -280,7 +279,7 @@ Material:
     - _BlendModePreserveSpecular: 1
     - _BlurLevelMatcap: 0
     - _BlurLevelSGM: 0
-    - _BumpScale: 0.5
+    - _BumpScale: 1
     - _BumpScaleMatcap: 1
     - _CameraRolling_Stabilizer: 0
     - _ClearCoatMask: 0
@@ -350,7 +349,7 @@ Material:
     - _HeightPoMAmplitude: 2
     - _HeightTessAmplitude: 2
     - _HeightTessCenter: 0.5
-    - _HighColor_Power: 0.5
+    - _HighColor_Power: 0.7
     - _HighlightOverridden: 0
     - _HighlightVisible: 1
     - _InvTilingScale: 1
@@ -380,7 +379,7 @@ Material:
     - _Is_LightColor_RimLight: 1
     - _Is_NormalMapForMatCap: 0
     - _Is_NormalMapToBase: 1
-    - _Is_NormalMapToHighColor: 0
+    - _Is_NormalMapToHighColor: 1
     - _Is_NormalMapToRimLight: 1
     - _Is_Ortho: 0
     - _Is_OutlineTex: 0
@@ -401,7 +400,7 @@ Material:
     - _OUTLINE: 0
     - _ObjectSpaceUVMapping: 0
     - _OcclusionStrength: 1
-    - _Offset_X_Axis_BLD: -0.05
+    - _Offset_X_Axis_BLD: -0.583
     - _Offset_Y_Axis_BLD: 0.09
     - _Offset_Z: 0
     - _OutlineOverridden: 0
@@ -495,7 +494,7 @@ Material:
     - _Tweak_LightDirection_MaskLevel: 0
     - _Tweak_MatCapUV: 0
     - _Tweak_MatcapMaskLevel: 0
-    - _Tweak_RimLightMaskLevel: 0
+    - _Tweak_RimLightMaskLevel: -0.9
     - _Tweak_ShadingGradeMapLevel: 0
     - _Tweak_SystemShadowsLevel: 0
     - _Tweak_transparency: 0
