@@ -1,7 +1,6 @@
 ﻿using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
@@ -9,7 +8,6 @@ using DCL.SDKComponents.SceneUI.Utils;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -30,7 +28,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(DCLInputText), new ComponentPool<DCLInputText>() },
+                    { typeof(UIInputComponent), new ComponentPool<UIInputComponent>() },
                 }, null);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
@@ -51,12 +49,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.Input.TextField.name);
-            Assert.IsTrue(uiInputComponent.Input.TextField.ClassListContains("dcl-input"));
-            Assert.AreEqual(PickingMode.Position, uiInputComponent.Input.TextField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.Input.TextField));
-            Assert.IsNotNull(uiInputComponent.Input.TextField);
-            Assert.IsNotNull(uiInputComponent.Input.Placeholder);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.TextField.name);
+            Assert.IsTrue(uiInputComponent.TextField.ClassListContains("dcl-input"));
+            Assert.AreEqual(PickingMode.Position, uiInputComponent.TextField.pickingMode);
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.TextField));
+            Assert.IsNotNull(uiInputComponent.TextField);
+            Assert.IsNotNull(uiInputComponent.Placeholder);
         }
 
         [Test]
@@ -80,9 +78,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-                Assert.AreEqual(input.Value, uiInputComponent.Input.TextField.value);
-                Assert.IsTrue(input.GetFontSize() == uiInputComponent.Input.TextField.style.fontSize);
-                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.Input.TextField.style.unityTextAlign);
+                Assert.AreEqual(input.Value, uiInputComponent.TextField.value);
+                Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
+                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextField.style.unityTextAlign);
             }
         }
     }

@@ -5,7 +5,6 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using ECS.Abstract;
@@ -24,7 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         private UIInputReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(DCLInputText), out componentPool);
+            poolsRegistry.TryGetPool(typeof(UIInputComponent), out componentPool);
         }
 
         protected override void Update(float t)
@@ -47,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private void RemoveTextField(UIInputComponent uiInputComponent)
         {
             if (componentPool != null)
-                componentPool.Release(uiInputComponent.Input);
+                componentPool.Release(uiInputComponent);
         }
     }
 }

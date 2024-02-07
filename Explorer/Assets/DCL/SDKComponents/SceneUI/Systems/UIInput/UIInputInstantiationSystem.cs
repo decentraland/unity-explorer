@@ -6,12 +6,10 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 {
@@ -21,12 +19,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     {
         private const string COMPONENT_NAME = "UIInput";
 
-        private readonly IComponentPool<DCLInputText> inputTextsPool;
+        private readonly IComponentPool<UIInputComponent> inputTextsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
-            inputTextsPool = poolsRegistry.GetReferenceTypePool<DCLInputText>();
+            inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
@@ -34,6 +32,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         {
             InstantiateUIInputQuery(World);
             UpdateUIInputQuery(World);
+            TriggerInputResultsQuery(World);
         }
 
         [Query]
@@ -41,55 +40,42 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [None(typeof(UIInputComponent))]
         private void InstantiateUIInput(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var inputText = inputTextsPool.Get();
-            inputText.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
-            inputText.UnregisterAllCallbacks();
-            uiTransformComponent.Transform.Add(inputText.TextField);
-            var uiInputComponent = new UIInputComponent();
-            uiInputComponent.Input = inputText;
-            World.Add(entity, uiInputComponent);
+            var newUIInputComponent = inputTextsPool.Get();
+            newUIInputComponent.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
+            uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
+            World.Add(entity, newUIInputComponent);
         }
 
         [Query]
-        private void UpdateUIInput(UIInputComponent uiInputComponent, ref PBUiInput sdkModel, CRDTEntity sdkEntity)
+        private void UpdateUIInput(UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
         {
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupDCLInputText(ref uiInputComponent.Input, ref sdkModel);
-
-            uiInputComponent.Input.RegisterOnChangeCallback(evt =>
-            {
-                evt.StopPropagation();
-
-                ecsToCRDTWriter.PutMessage(
-                    new PBUiInputResult
-                    {
-                        IsSubmit = false,
-                        Value = uiInputComponent.Input.TextField.value,
-                        IsDirty = false,
-                    }, sdkEntity);
-            });
-
-            uiInputComponent.Input.RegisterOnKeyDownCallback(evt =>
-            {
-                evt.StopPropagation();
-
-                if (evt.keyCode != KeyCode.Return && evt.keyCode != KeyCode.KeypadEnter)
-                    return;
-
-                ecsToCRDTWriter.PutMessage(
-                    new PBUiInputResult
-                    {
-                        IsSubmit = true,
-                        Value = uiInputComponent.Input.TextField.value,
-                        IsDirty = false,
-                    }, sdkEntity);
-
-                uiInputComponent.Input.TextField.SetValueWithoutNotify(string.Empty);
-            });
-
+            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, ref sdkModel);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        private void TriggerInputResults(ref UIInputComponent uiInputComponent, ref CRDTEntity sdkEntity)
+        {
+            if (!uiInputComponent.IsOnValueChangedTriggered && !uiInputComponent.IsOnSubmitTriggered)
+                return;
+
+            ecsToCRDTWriter.PutMessage(
+                new PBUiInputResult
+                {
+                    IsSubmit = uiInputComponent.IsOnSubmitTriggered,
+                    Value = uiInputComponent.TextField.value,
+                    IsDirty = false,
+                }, sdkEntity);
+
+            if (uiInputComponent.IsOnSubmitTriggered)
+                uiInputComponent.TextField.SetValueWithoutNotify(string.Empty);
+
+            uiInputComponent.IsOnValueChangedTriggered = false;
+            uiInputComponent.IsOnSubmitTriggered = false;
+
         }
     }
 }

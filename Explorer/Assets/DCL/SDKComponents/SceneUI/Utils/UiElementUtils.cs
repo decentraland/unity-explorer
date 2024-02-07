@@ -156,7 +156,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
-        public static void SetupDCLInputText(ref DCLInputText inputToSetup, ref PBUiInput model)
+        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, ref PBUiInput model)
         {
             bool isReadonly = !model.IsInteractive();
             inputToSetup.Placeholder.SetPlaceholder(model.Placeholder);
@@ -207,10 +207,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void ReleaseDCLImage(DCLImage image) =>
             image.Dispose();
 
-        public static void ReleaseDCLInput(DCLInputText inputText)
+        public static void ReleaseUIInputComponent(UIInputComponent input)
         {
-            inputText.Dispose();
-            ReleaseUIElement(inputText.TextField);
+            input.Dispose();
+            ReleaseUIElement(input.TextField);
         }
 
         public static void ReleaseDCLDropdown(DCLDropdown dropdown)

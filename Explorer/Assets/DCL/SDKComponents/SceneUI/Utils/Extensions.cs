@@ -84,5 +84,19 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (pointerEvents != null)
                 uiTransformComponent.RegisteredPointerEvents.AddRange(pointerEvents);
         }
+
+        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, EventCallback<ChangeEvent<string>> newOnChangeCallback, EventCallback<KeyDownEvent> newOnSubmitCallback)
+        {
+            uiInputComponent.TextField.RegisterCallback(newOnChangeCallback);
+            uiInputComponent.currentOnValueChanged = newOnChangeCallback;
+            uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback);
+            uiInputComponent.currentOnSubmit = newOnSubmitCallback;
+        }
+
+        public static void UnregisterInputCallbacks(this UIInputComponent uiInputComponent)
+        {
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit);
+        }
     }
 }

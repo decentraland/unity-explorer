@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
-            componentPoolsRegistry.AddComponentPool<DCLInputText>(onRelease: UiElementUtils.ReleaseDCLInput, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent, maxSize: 50);
             componentPoolsRegistry.AddComponentPool<DCLDropdown>(onRelease: UiElementUtils.ReleaseDCLDropdown, maxSize: 50);
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<UITransformComponent, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLInputText, UIInputComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<UIInputComponent, UIInputComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLDropdown, UIDropdownComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 
