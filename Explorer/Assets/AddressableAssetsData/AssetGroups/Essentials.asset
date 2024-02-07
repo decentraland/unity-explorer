@@ -182,6 +182,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9776466c722cb644c914ee056b28d232
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Animations/Idle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2a3516c1d72224428057bd7c4f8115d
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Animations/Billy/Idle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:
