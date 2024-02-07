@@ -35,6 +35,9 @@ EditorUserSettings:
     UnityEditor.ShaderGraph.InspectorWindow:
       value: 18135939215a0a5004000b0e15254b524c1119263f2d6a722016393ce1eb3d36e5d339f9a5602b2e2c07a37e0901373ae01e0008f707250d171df81a53a5485d41895ac825e0100ec20313c0d91cddccd3d0c7efcca9bd80908fecb0f9cfddf1eff4e7a1b1eae482f0fcaee1e1928b86d888ed969b938797a7cf
       flags: 0
+    glTF.saveFilePath:
+      value: 200b683316501b48311a042d1d2263341304133e2338
+      flags: 0
     vcSharedLogLevel:
       value: 0d5e400f0650
       flags: 0

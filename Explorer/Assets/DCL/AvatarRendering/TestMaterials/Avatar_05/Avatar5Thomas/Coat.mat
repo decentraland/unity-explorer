@@ -53,6 +53,7 @@ Material:
     - _Is_NormalMapToHighColor: 1
     - _Is_NormalMapToRimLight: 1
     - _Is_SpecularToHighColor: 1
+    - _RimLight_Power: 0.3
     - _ShadeColor_Step: 0.2
     - _StencilNo: 1
     - _Tweak_HighColorMaskLevel: -1
