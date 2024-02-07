@@ -13,6 +13,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using DCL.LOD;
 using Unity.PerformanceTesting;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
@@ -31,6 +32,8 @@ namespace DCL.ResourcesUnloading.Tests
         private TexturesCache texturesCache;
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
+        private LODAssetsPool lodAssets;
+
 
         private AssetBundleCache assetBundleCache;
 
@@ -47,6 +50,8 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache = new GltfContainerAssetsCache();
             wearableAssetsCache = new WearableAssetsCache(100);
             wearableCatalog = new WearableCatalog();
+            lodAssets = new LODAssetsPool();
+
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
             cacheCleaner.Register(texturesCache);
@@ -55,6 +60,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
             cacheCleaner.Register(wearableCatalog);
+            cacheCleaner.Register(lodAssets);
         }
 
         [TearDown]
@@ -68,6 +74,7 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache.Dispose();
             wearableAssetsCache.Dispose();
             wearableCatalog.Unload(releasablePerformanceBudget);
+            lodAssets.Unload(releasablePerformanceBudget, 3);
         }
 
         [Performance]

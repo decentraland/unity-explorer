@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(UiElementUtils.BuildElementName("UIDropdown", entity), uiDropdownComponent.Dropdown.DropdownField.name);
             Assert.IsTrue(uiDropdownComponent.Dropdown.DropdownField.ClassListContains("dcl-dropdown"));
             Assert.AreEqual(PickingMode.Position, uiDropdownComponent.Dropdown.DropdownField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.VisualElement.Contains(uiDropdownComponent.Dropdown.DropdownField));
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiDropdownComponent.Dropdown.DropdownField));
             Assert.IsNotNull(uiDropdownComponent.Dropdown.DropdownField);
             Assert.IsNotNull(uiDropdownComponent.Dropdown.TextElement);
             Assert.IsTrue(uiDropdownComponent.Dropdown.TextElement.ClassListContains("unity-base-popup-field__text"));

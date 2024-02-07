@@ -30,6 +30,7 @@ MonoBehaviour:
   - rid: 1841402216112979969
   - rid: 4340256219339423747
   - rid: 4340256301410942981
+  - rid: 7249412338407702528
   references:
     version: 2
     RefIds:
@@ -232,6 +233,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 7249412338407702528
+      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
+      data:
+        <LodSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 8147919132522971138
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:

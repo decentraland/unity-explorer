@@ -3,6 +3,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Ipfs;
 using System.Collections.Generic;
+using ECS.Prioritization.Components;
 using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.Components
@@ -14,6 +15,7 @@ namespace ECS.SceneLifeCycle.Components
     {
         public readonly List<IpfsTypes.SceneEntityDefinition> RetrievedReusableList;
         public readonly List<int2> InputReusableList;
+        public readonly PartitionComponent ActivePartitionComponent;
 
         /// <summary>
         ///     Only one bulk request at a time
@@ -25,6 +27,12 @@ namespace ECS.SceneLifeCycle.Components
             RetrievedReusableList = retrievedReusableList;
             InputReusableList = inputReusableList;
             ActivePromise = null;
+            ActivePartitionComponent = new PartitionComponent
+            {
+                Bucket = 0,
+                //Lets lower the prio against asset bundles on the same bucket
+                IsBehind = true
+            };
         }
 
         public static VolatileScenePointers Create() =>

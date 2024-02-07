@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupVisualElement(ref uiTransformComponent.Transform.VisualElement, ref sdkModel);
+            UiElementUtils.SetupVisualElement(ref uiTransformComponent.Transform, ref sdkModel);
             sdkModel.IsDirty = false;
         }
 
@@ -55,19 +55,19 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void CheckUITransformOutOfScene(ref UITransformComponent uiTransformComponent)
         {
             // Ignore all the child transforms
-            if (uiTransformComponent.Transform.Parent != EntityReference.Null)
+            if (uiTransformComponent.Parent != EntityReference.Null)
                 return;
 
             // Depending on the scene state, we add or remove the root transform from the canvas
             switch (sceneStateProvider.IsCurrent)
             {
-                case false when !uiTransformComponent.Transform.IsHidden:
-                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform.VisualElement);
-                    uiTransformComponent.Transform.IsHidden = true;
+                case false when !uiTransformComponent.IsHidden:
+                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
+                    uiTransformComponent.IsHidden = true;
                     break;
-                case true when uiTransformComponent.Transform.IsHidden:
-                    canvas.rootVisualElement.Add(uiTransformComponent.Transform.VisualElement);
-                    uiTransformComponent.Transform.IsHidden = false;
+                case true when uiTransformComponent.IsHidden:
+                    canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+                    uiTransformComponent.IsHidden = false;
                     break;
             }
         }

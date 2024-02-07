@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             var dropdown = dropdownsPool.Get();
             dropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
-            uiTransformComponent.Transform.VisualElement.Add(dropdown.DropdownField);
+            uiTransformComponent.Transform.Add(dropdown.DropdownField);
             var uiDropdownComponent = new UIDropdownComponent();
             uiDropdownComponent.Dropdown = dropdown;
             World.Add(entity, uiDropdownComponent);

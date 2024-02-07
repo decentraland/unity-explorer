@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
-                Assert.AreEqual(UiElementUtils.GetDisplay(input.Display), uiTransformComponent.Transform.VisualElement.style.display);
+                Assert.AreEqual(UiElementUtils.GetDisplay(input.Display), uiTransformComponent.Transform.style.display);
             }
         }
 
@@ -48,13 +48,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
             PBUiTransform input = CreateUITransform();
             sceneStateProvider.IsCurrent = isCurrentScene;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
-            uiTransformComponent.Transform.IsHidden = isCurrentScene;
+            uiTransformComponent.IsHidden = isCurrentScene;
 
             // Act
             system.Update(0);
 
             // Assert
-            Assert.AreEqual(isCurrentScene, canvas.rootVisualElement.Contains(uiTransformComponent.Transform.VisualElement));
+            Assert.AreEqual(isCurrentScene, canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
         }
     }
 }

@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.Input.TextField.name);
             Assert.IsTrue(uiInputComponent.Input.TextField.ClassListContains("dcl-input"));
             Assert.AreEqual(PickingMode.Position, uiInputComponent.Input.TextField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.VisualElement.Contains(uiInputComponent.Input.TextField));
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.Input.TextField));
             Assert.IsNotNull(uiInputComponent.Input.TextField);
             Assert.IsNotNull(uiInputComponent.Input.Placeholder);
         }

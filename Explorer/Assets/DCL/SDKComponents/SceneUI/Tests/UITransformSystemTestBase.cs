@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
+using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using ECS.Abstract;
 using ECS.TestSuite;
@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(DCLTransform), new ComponentPool<DCLTransform>() },
+                    { typeof(UITransformComponent), new ComponentPool<UITransformComponent>() },
                 }, null);
 
             entity = world.Create();

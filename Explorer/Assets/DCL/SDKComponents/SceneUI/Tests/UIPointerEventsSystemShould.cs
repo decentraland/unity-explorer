@@ -7,6 +7,8 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
+using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.SceneUI.Tests
@@ -28,12 +30,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
-        }
 
-        [Test]
-        public void UpdatePointerEvents()
-        {
-            // Arrange
             var input = new PBPointerEvents { IsDirty = true };
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
@@ -46,13 +43,38 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 EventInfo = new PBPointerEvents.Types.Info(),
             });
 
-            // Act
             world.Add(entity, input);
+        }
+
+        [Test]
+        public void RegisterPointerEvents()
+        {
+            // Act
             system.Update(0);
 
             // Assert
-            Assert.IsTrue(uiTransformComponent.Transform.HasAnyPointerDownCallback);
-            Assert.IsTrue(uiTransformComponent.Transform.HasAnyPointerUpCallback);
+            Assert.IsTrue(uiTransformComponent.RegisteredPointerEvents.Count == 2);
+            Assert.AreEqual(PickingMode.Position, uiTransformComponent.Transform.pickingMode);
+        }
+
+        [Test]
+        [TestCase(PointerEventType.PetDown)]
+        [TestCase(PointerEventType.PetUp)]
+        public void TriggerPointerEvents(PointerEventType eventType)
+        {
+            // Arrange
+            uiTransformComponent.PointerEventTriggered = eventType;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).AppendMessage(
+                Arg.Any<Action<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>>(),
+                Arg.Any<CRDTEntity>(),
+                Arg.Any<int>(),
+                Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
+            Assert.IsNull(uiTransformComponent.PointerEventTriggered);
         }
     }
 }

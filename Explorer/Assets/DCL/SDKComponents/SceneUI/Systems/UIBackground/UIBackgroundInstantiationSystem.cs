@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var image = imagesPool.Get();
-            image.Initialize(uiTransformComponent.Transform.VisualElement);
+            image.Initialize(uiTransformComponent.Transform);
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;
             uiBackgroundComponent.Status = LifeCycle.LoadingNotStarted;

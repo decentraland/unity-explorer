@@ -8,8 +8,10 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
@@ -32,31 +34,53 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
-            UpdatePointerEventsQuery(World);
+            RegisterPointerEventsQuery(World);
+            TriggerPointerEventsQuery(World);
+
+            HandleEntityDestructionQuery(World);
+            HandleUIPointerEventsRemovalQuery(World);
         }
 
         [Query]
-        private void UpdatePointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, CRDTEntity sdkEntity)
+        private void RegisterPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
 
-            foreach (var pEvent in sdkModel.PointerEvents)
-            {
-                switch (pEvent.EventType)
-                {
-                    case PointerEventType.PetDown:
-                        uiTransformComponent.Transform.RegisterPointerDownCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetDown));
-                        break;
-                    case PointerEventType.PetUp:
-                        uiTransformComponent.Transform.RegisterPointerUpCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetUp));
-                        break;
-                }
-            }
+            uiTransformComponent.RegisterPointerEvents(sdkModel.PointerEvents);
+            uiTransformComponent.Transform.pickingMode = PickingMode.Position;
 
-            uiTransformComponent.Transform.VisualElement.pickingMode = PickingMode.Position;
             sdkModel.IsDirty = false;
         }
+
+        [Query]
+        private void TriggerPointerEvents(ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
+        {
+            if (uiTransformComponent.PointerEventTriggered == null)
+                return;
+
+            // Check if the component has any pointer events associated
+            foreach (var pEvent in uiTransformComponent.RegisteredPointerEvents)
+            {
+                if (pEvent.EventType != uiTransformComponent.PointerEventTriggered)
+                    continue;
+
+                AppendMessage(sdkEntity, pEvent.EventInfo.Button, pEvent.EventType);
+                break;
+            }
+
+            uiTransformComponent.PointerEventTriggered = null;
+        }
+
+        [Query]
+        [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
+        private void HandleUIPointerEventsRemoval(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
 
         private void AppendMessage(CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
@@ -69,6 +93,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                     result.Timestamp = data.sceneStateProvider.TickNumber;
                     result.TickNumber = data.sceneStateProvider.TickNumber;
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
+        }
+
+        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        {
+            uiTransformComponent.RegisterPointerEvents(null);
+            uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
         }
     }
 }
