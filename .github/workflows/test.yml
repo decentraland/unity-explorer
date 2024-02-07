@@ -63,8 +63,8 @@ jobs:
         run: |
             git clone git@github.com:decentraland/unity-explorer-packages.git            
             jsonFilePath="Explorer/Packages/manifest.json"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../StylizedGrassShader|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../StylizedWater2|' "$jsonFilePath"
+            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
+            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
             ls -l
             # Display the content of manifest.json
             cat "$jsonFilePath"
