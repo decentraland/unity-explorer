@@ -3,28 +3,24 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-#define fixed  half
-#define fixed3 half3
-#define fixed4 half4
+#include "DCL_Toon_SurfaceInput.hlsl"
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 UNITY_DEFINE_INSTANCED_PROP(float, _utsTechnique)
 UNITY_DEFINE_INSTANCED_PROP(float4, _MainTex_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Use_BaseAs1st)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Use_1stAs2nd)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_Base)
+UNITY_DEFINE_INSTANCED_PROP(half, _Use_BaseAs1st)
+UNITY_DEFINE_INSTANCED_PROP(half, _Use_1stAs2nd)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_Base)
 UNITY_DEFINE_INSTANCED_PROP(float4, _1st_ShadeMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _1st_ShadeColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_1st_Shade)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_1st_Shade)
 UNITY_DEFINE_INSTANCED_PROP(float4, _2nd_ShadeMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _2nd_ShadeColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_2nd_Shade)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_2nd_Shade)
 UNITY_DEFINE_INSTANCED_PROP(float4, _NormalMap_ST)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_NormalMapToBase)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Set_SystemShadowsToBase)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_NormalMapToBase)
+UNITY_DEFINE_INSTANCED_PROP(half, _Set_SystemShadowsToBase)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_SystemShadowsLevel)
 UNITY_DEFINE_INSTANCED_PROP(float, _BaseColor_Step)
 UNITY_DEFINE_INSTANCED_PROP(float, _BaseShade_Feather)
@@ -34,104 +30,104 @@ UNITY_DEFINE_INSTANCED_PROP(float, _1st2nd_Shades_Feather)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Set_2nd_ShadePosition_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _ShadingGradeMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_ShadingGradeMapLevel)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _BlurLevelSGM)
+UNITY_DEFINE_INSTANCED_PROP(half, _BlurLevelSGM)
 UNITY_DEFINE_INSTANCED_PROP(float, _1st_ShadeColor_Step)
 UNITY_DEFINE_INSTANCED_PROP(float, _1st_ShadeColor_Feather)
 UNITY_DEFINE_INSTANCED_PROP(float, _2nd_ShadeColor_Step)
 UNITY_DEFINE_INSTANCED_PROP(float, _2nd_ShadeColor_Feather)
 UNITY_DEFINE_INSTANCED_PROP(float4, _HighColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _HighColor_Tex_ST)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_HighColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_NormalMapToHighColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_HighColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_NormalMapToHighColor)
 UNITY_DEFINE_INSTANCED_PROP(float, _HighColor_Power)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_SpecularToHighColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_BlendAddToHiColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_UseTweakHighColorOnShadow)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_SpecularToHighColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_BlendAddToHiColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_UseTweakHighColorOnShadow)
 UNITY_DEFINE_INSTANCED_PROP(float, _TweakHighColorOnShadow)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Set_HighColorMask_ST)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_HighColorMaskLevel)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _RimLight)
+UNITY_DEFINE_INSTANCED_PROP(half, _RimLight)
 UNITY_DEFINE_INSTANCED_PROP(float4, _RimLightColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_RimLight)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_NormalMapToRimLight)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_RimLight)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_NormalMapToRimLight)
 UNITY_DEFINE_INSTANCED_PROP(float, _RimLight_Power)
 UNITY_DEFINE_INSTANCED_PROP(float, _RimLight_InsideMask)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _RimLight_FeatherOff)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _LightDirection_MaskOn)
+UNITY_DEFINE_INSTANCED_PROP(half, _RimLight_FeatherOff)
+UNITY_DEFINE_INSTANCED_PROP(half, _LightDirection_MaskOn)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_LightDirection_MaskLevel)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Add_Antipodean_RimLight)
+UNITY_DEFINE_INSTANCED_PROP(half, _Add_Antipodean_RimLight)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Ap_RimLightColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_Ap_RimLight)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_Ap_RimLight)
 UNITY_DEFINE_INSTANCED_PROP(float, _Ap_RimLight_Power)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Ap_RimLight_FeatherOff)
+UNITY_DEFINE_INSTANCED_PROP(half, _Ap_RimLight_FeatherOff)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Set_RimLightMask_ST)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_RimLightMaskLevel)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _MatCap)
+UNITY_DEFINE_INSTANCED_PROP(half, _MatCap)
 UNITY_DEFINE_INSTANCED_PROP(float4, _MatCap_Sampler_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _MatCapColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_MatCap)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_BlendAddToMatCap)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_MatCap)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_BlendAddToMatCap)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_MatCapUV)
 UNITY_DEFINE_INSTANCED_PROP(float, _Rotate_MatCapUV)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_NormalMapForMatCap)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_NormalMapForMatCap)
 UNITY_DEFINE_INSTANCED_PROP(float4, _NormalMapForMatCap_ST)
 UNITY_DEFINE_INSTANCED_PROP(float, _Rotate_NormalMapForMatCapUV)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_UseTweakMatCapOnShadow)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_UseTweakMatCapOnShadow)
 UNITY_DEFINE_INSTANCED_PROP(float, _TweakMatCapOnShadow)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Set_MatcapMask_ST)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_MatcapMaskLevel)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_Ortho)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_Ortho)
 UNITY_DEFINE_INSTANCED_PROP(float, _CameraRolling_Stabilizer)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _BlurLevelMatcap)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Inverse_MatcapMask)
+UNITY_DEFINE_INSTANCED_PROP(half, _BlurLevelMatcap)
+UNITY_DEFINE_INSTANCED_PROP(half, _Inverse_MatcapMask)
 UNITY_DEFINE_INSTANCED_PROP(float, _BumpScaleMatcap)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Emissive_Tex_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Emissive_Color)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_ViewCoord_Scroll)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_ViewCoord_Scroll)
 UNITY_DEFINE_INSTANCED_PROP(float, _Rotate_EmissiveUV)
 UNITY_DEFINE_INSTANCED_PROP(float, _Base_Speed)
 UNITY_DEFINE_INSTANCED_PROP(float, _Scroll_EmissiveU)
 UNITY_DEFINE_INSTANCED_PROP(float, _Scroll_EmissiveV)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_PingPong_Base)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_PingPong_Base)
 UNITY_DEFINE_INSTANCED_PROP(float4, _ColorShift)
 UNITY_DEFINE_INSTANCED_PROP(float4, _ViewShift)
 UNITY_DEFINE_INSTANCED_PROP(float, _ColorShift_Speed)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_ColorShift)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_ViewShift)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_ColorShift)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_ViewShift)
 UNITY_DEFINE_INSTANCED_PROP(float3, emissive)
 UNITY_DEFINE_INSTANCED_PROP(float, _Unlit_Intensity)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_Filter_HiCutPointLightColor)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_Filter_LightColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_Filter_HiCutPointLightColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_Filter_LightColor)
 UNITY_DEFINE_INSTANCED_PROP(float, _StepOffset)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_BLD)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_BLD)
 UNITY_DEFINE_INSTANCED_PROP(float, _Offset_X_Axis_BLD)
 UNITY_DEFINE_INSTANCED_PROP(float, _Offset_Y_Axis_BLD)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Inverse_Z_Axis_BLD)
+UNITY_DEFINE_INSTANCED_PROP(half, _Inverse_Z_Axis_BLD)
 UNITY_DEFINE_INSTANCED_PROP(float4, _ClippingMask_ST)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _IsBaseMapAlphaAsClippingMask)
+UNITY_DEFINE_INSTANCED_PROP(half, _IsBaseMapAlphaAsClippingMask)
 UNITY_DEFINE_INSTANCED_PROP(float, _Clipping_Level)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Inverse_Clipping)
+UNITY_DEFINE_INSTANCED_PROP(half, _Inverse_Clipping)
 UNITY_DEFINE_INSTANCED_PROP(float, _Tweak_transparency)
 UNITY_DEFINE_INSTANCED_PROP(float, _GI_Intensity)
-UNITY_DEFINE_INSTANCED_PROP(fixed , _AngelRing)
+UNITY_DEFINE_INSTANCED_PROP(half , _AngelRing)
 UNITY_DEFINE_INSTANCED_PROP(float4, _AngelRing_Sampler_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _AngelRing_Color)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_AR)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_AR)
 UNITY_DEFINE_INSTANCED_PROP(float, _AR_OffsetU)
 UNITY_DEFINE_INSTANCED_PROP(float, _AR_OffsetV)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _ARSampler_AlphaOn)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_LightColor_Outline)
+UNITY_DEFINE_INSTANCED_PROP(half, _ARSampler_AlphaOn)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_LightColor_Outline)
 UNITY_DEFINE_INSTANCED_PROP(float, _Outline_Width)
 UNITY_DEFINE_INSTANCED_PROP(float, _Farthest_Distance)
 UNITY_DEFINE_INSTANCED_PROP(float, _Nearest_Distance)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Outline_Sampler_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _Outline_Color)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_BlendBaseColor)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_BlendBaseColor)
 UNITY_DEFINE_INSTANCED_PROP(float, _Offset_Z)
 UNITY_DEFINE_INSTANCED_PROP(float4, _OutlineTex_ST)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_OutlineTex)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_OutlineTex)
 UNITY_DEFINE_INSTANCED_PROP(float4, _BakedNormal_ST)
-UNITY_DEFINE_INSTANCED_PROP(fixed, _Is_BakedNormal)
+UNITY_DEFINE_INSTANCED_PROP(half, _Is_BakedNormal)
 UNITY_DEFINE_INSTANCED_PROP(float, _ZOverDrawMode)
 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
@@ -143,6 +139,8 @@ UNITY_DEFINE_INSTANCED_PROP(half, _Metallic)
 UNITY_DEFINE_INSTANCED_PROP(half, _BumpScale)
 UNITY_DEFINE_INSTANCED_PROP(half, _OcclusionStrength)
 UNITY_DEFINE_INSTANCED_PROP(half, _Surface)
+UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_TexelSize)
+UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_MipInfo)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define _utsTechnique                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _utsTechnique)
@@ -222,7 +220,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _BumpScaleMatcap                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpScaleMatcap)
 #define _Emissive_Tex_ST                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Tex_ST)
 #define _Emissive_Color                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_Color)
-#define fixed _Is_ViewCoord_Scroll          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial,fixed )
+#define _Is_ViewCoord_Scroll                UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial,  _Is_ViewCoord_Scroll )
 #define _Rotate_EmissiveUV                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Rotate_EmissiveUV)
 #define _Base_Speed                         UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Base_Speed)
 #define _Scroll_EmissiveU                   UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Scroll_EmissiveU)
@@ -278,126 +276,220 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _BumpScale                          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpScale)
 #define _OcclusionStrength                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OcclusionStrength)
 #define _Surface                            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Surface)
-
+#define _BaseMap_TexelSize                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_TexelSize)
+#define _BaseMap_MipInfo                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_MipInfo)
 
 //sampler2D _MainTex;
 //sampler2D _1st_ShadeMap;
 //sampler2D _2nd_ShadeMap;
 //sampler2D _NormalMap;
 
-// #define _tex_arrays
-//
-// #ifdef _tex_arrays
-//     #define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex
-//     #define DCL_SAMPLE_TEX2DARRAY(tex,coord) tex.Sample (sampler##tex,coord)
-//
-//     DCL_DECLARE_TEX2DARRAY(_BaseMapArr);
-//
-//     #define SAMPLE_BASEMAP(uv, texArrayID)                  DCL_SAMPLE_TEX2DARRAY(_BaseMapArr, float3(uv, texArrayID))
-// #else
-//     TEXTURE2D(_AlphaTexture);       SAMPLER(sampler_AlphaTexture);
-//
-//     #define SAMPLE_BASEMAP(uv, texArrayID)                  SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap))
-// #endif
+//#define _tex_arrays
 
-TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
-TEXTURE2D(_1st_ShadeMap);
-TEXTURE2D(_2nd_ShadeMap);
-TEXTURE2D(_NormalMap);
+#ifdef _tex_arrays
+    #define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex
+    #define DCL_SAMPLE_TEX2DARRAY(tex,coord) tex.Sample (sampler##tex,coord)
+    #define DCL_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod) tex.SampleLevel (sampler##tex,coord,lod)
 
-sampler2D _Set_1st_ShadePosition; 
-sampler2D _Set_2nd_ShadePosition;
-sampler2D _ShadingGradeMap;
-sampler2D _HighColor_Tex;
-sampler2D _Set_HighColorMask;
-sampler2D _Set_RimLightMask;
-sampler2D _MatCap_Sampler;
-sampler2D _NormalMapForMatCap;
-sampler2D _Set_MatcapMask;
-sampler2D _Emissive_Tex;
-//sampler2D _ClippingMask;
-TEXTURE2D(_ClippingMask);
-sampler2D _AngelRing_Sampler;
-sampler2D _Outline_Sampler;
-sampler2D _OutlineTex;
-sampler2D _BakedNormal;
+    DCL_DECLARE_TEX2DARRAY(_MainTexArr);
+    DCL_DECLARE_TEX2DARRAY(_1st_ShadeMapArr);
+    DCL_DECLARE_TEX2DARRAY(_2nd_ShadeMapArr);
+    DCL_DECLARE_TEX2DARRAY(_NormalMapArr);
+    DCL_DECLARE_TEX2DARRAY(_Set_1st_ShadePositionArr); 
+    DCL_DECLARE_TEX2DARRAY(_Set_2nd_ShadePositionArr);
+    DCL_DECLARE_TEX2DARRAY(_ShadingGradeMapArr);
+    DCL_DECLARE_TEX2DARRAY(_HighColor_TexArr);
+    DCL_DECLARE_TEX2DARRAY(_Set_HighColorMaskArr);
+    DCL_DECLARE_TEX2DARRAY(_Set_RimLightMaskArr);
+    DCL_DECLARE_TEX2DARRAY(_MatCap_SamplerArr);
+    DCL_DECLARE_TEX2DARRAY(_NormalMapForMatCapArr);
+    DCL_DECLARE_TEX2DARRAY(_Set_MatcapMaskArr);
+    DCL_DECLARE_TEX2DARRAY(_Emissive_TexArr);
+    DCL_DECLARE_TEX2DARRAY(_ClippingMaskArr);
+    DCL_DECLARE_TEX2DARRAY(_AngelRing_SamplerArr);
+    DCL_DECLARE_TEX2DARRAY(_Outline_SamplerArr);
+    DCL_DECLARE_TEX2DARRAY(_OutlineTexArr);
+    DCL_DECLARE_TEX2DARRAY(_BakedNormalArr);
+    DCL_DECLARE_TEX2DARRAY(_OcclusionMapArr);
+    DCL_DECLARE_TEX2DARRAY(_MetallicGlossMapArr);
 
+    #define SAMPLE_MAINTEX (uv, texArrayID)                 DCL_SAMPLE_TEX2DARRAY(_MainTexArr, float3(uv, texArrayID))
+    #define SAMPLE_1ST_SHADEMAP (uv, texArrayID)            DCL_SAMPLE_TEX2DARRAY(_1st_ShadeMapArr, float3(uv, texArrayID))
+    #define SAMPLE_2ND_SHADEMAP (uv, texArrayID)            DCL_SAMPLE_TEX2DARRAY(_2nd_ShadeMapArr, float3(uv, texArrayID))
+    #define SAMPLE_NORMALMAP (uv, texArrayID)               DCL_SAMPLE_TEX2DARRAY(_NormalMapArr, float3(uv, texArrayID))
+    #define SAMPLE_SET_1ST_SHADEPOSITION (uv, texArrayID)   DCL_SAMPLE_TEX2DARRAY(_Set_1st_ShadePositionArr, float3(uv, texArrayID)) 
+    #define SAMPLE_SET_2ND_SHADEPOSITION (uv, texArrayID)   DCL_SAMPLE_TEX2DARRAY(_Set_2nd_ShadePositionArr, float3(uv, texArrayID))
+    #define SAMPLE_SHADINGGRADEMAP (uv, texArrayID, lod)    DCL_SAMPLE_TEX2DARRAY_LOD(_ShadingGradeMapArr, float3(uv, texArrayID), lod)
+    #define SAMPLE_HIGHCOLOR (uv, texArrayID)               DCL_SAMPLE_TEX2DARRAY(_HighColor_TexArr, float3(uv, texArrayID))
+    #define SAMPLE_HIGHCOLORMASK (uv, texArrayID)           DCL_SAMPLE_TEX2DARRAY(_Set_HighColorMaskArr, float3(uv, texArrayID))
+    #define SAMPLE_SET_RIMLIGHTMASK (uv, texArrayID)        DCL_SAMPLE_TEX2DARRAY(_Set_RimLightMaskArr, float3(uv, texArrayID))
+    #define SAMPLE_MATCAP (uv, texArrayID, lod)             DCL_SAMPLE_TEX2DARRAY_LOD(_MatCap_SamplerArr, float3(uv, texArrayID), lod)
+    #define SAMPLE_NORMALMAPFORMATCAP (uv, texArrayID)      DCL_SAMPLE_TEX2DARRAY(_NormalMapForMatCapArr, float3(uv, texArrayID))
+    #define SAMPLE_SET_MATCAPMASK (uv, texArrayID)          DCL_SAMPLE_TEX2DARRAY(_Set_MatcapMaskArr, float3(uv, texArrayID))
+    #define SAMPLE_EMISSIVE (uv, texArrayID)                DCL_SAMPLE_TEX2DARRAY(_Emissive_TexArr, float3(uv, texArrayID))
+    #define SAMPLE_CLIPPINGMASK (uv, texArrayID)            DCL_SAMPLE_TEX2DARRAY(_ClippingMaskArr, float3(uv, texArrayID))
+    #define SAMPLE_ANGELRING (uv, texArrayID)               DCL_SAMPLE_TEX2DARRAY(_AngelRing_SamplerArr, float3(uv, texArrayID))
+    #define SAMPLE_OUTLINE (uv, texArrayID, lod)            DCL_SAMPLE_TEX2DARRAY_LOD(_Outline_SamplerArr, float3(uv, texArrayID), lod)
+    #define SAMPLE_OUTLINETEX (uv, texArrayID)              DCL_SAMPLE_TEX2DARRAY(_OutlineTexArr, float3(uv, texArrayID))
+    #define SAMPLE_BAKEDNORMAL (uv, texArrayID, lod)        DCL_SAMPLE_TEX2DARRAY_LOD(_BakedNormalArr, float3(uv, texArrayID), lod)
+    #define SAMPLE_OCCLUSIONMAP (uv, texArrayID)            DCL_SAMPLE_TEX2DARRAY(_OcclusionMapArr, float3(uv, texArrayID))
+    #define SAMPLE_METALLICGLOSS(uv, texArrayID)            DCL_SAMPLE_TEX2DARRAY(_MetallicGlossMapArr, float3(uv, texArrayID))
 
-
-TEXTURE2D(_OcclusionMap);       SAMPLER(sampler_OcclusionMap);
-TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
-TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
-
-
-#ifdef _SPECULAR_SETUP
-#define SAMPLE_METALLICSPECULAR(uv) SAMPLE_TEXTURE2D(_SpecGlossMap, sampler_SpecGlossMap, uv)
 #else
-#define SAMPLE_METALLICSPECULAR(uv) SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, uv)
+    TEXTURE2D(_BaseMap);                SAMPLER(sampler_BaseMap);
+    TEXTURE2D(_BumpMap);                SAMPLER(sampler_BumpMap);
+    TEXTURE2D(_EmissionMap);            SAMPLER(sampler_EmissionMap);
+
+    TEXTURE2D(_MainTex);                SAMPLER(sampler_MainTex);
+    TEXTURE2D(_1st_ShadeMap);
+    TEXTURE2D(_2nd_ShadeMap);
+    TEXTURE2D(_NormalMap);
+    TEXTURE2D(_ClippingMask);
+    TEXTURE2D(_OcclusionMap);           SAMPLER(sampler_OcclusionMap);
+    TEXTURE2D(_MetallicGlossMap);       SAMPLER(sampler_MetallicGlossMap);
+
+    sampler2D _Set_1st_ShadePosition; 
+    sampler2D _Set_2nd_ShadePosition;
+    sampler2D _ShadingGradeMap;
+    sampler2D _HighColor_Tex;
+    sampler2D _Set_HighColorMask;
+    sampler2D _Set_RimLightMask;
+    sampler2D _MatCap_Sampler;
+    sampler2D _NormalMapForMatCap;
+    sampler2D _Set_MatcapMask;
+    sampler2D _Emissive_Tex;    
+    sampler2D _AngelRing_Sampler;
+    sampler2D _Outline_Sampler;
+    sampler2D _OutlineTex;
+    sampler2D _BakedNormal;
+
+    #define SAMPLE_BASEMAP (uv, texArrayID)                 SAMPLE_TEXTURE2D(_BaseMap,                  sampler_BaseMap, uv)
+    #define SAMPLE_BUMPMAP (uv, texArrayID)                 SAMPLE_TEXTURE2D(_BumpMap,                  sampler_BumpMap, uv)
+    #define SAMPLE_EMISSIONMAP (uv, texArrayID)             SAMPLE_TEXTURE2D(_EmissionMap,              sampler_EmissionMap, uv)
+
+    #define SAMPLE_MAINTEX (uv, texArrayID)                 SAMPLE_TEXTURE2D(_MainTex,                  sampler_MainTex, uv)
+    #define SAMPLE_1ST_SHADEMAP (uv, texArrayID)            SAMPLE_TEXTURE2D(_1st_ShadeMap,             sampler_MainTex, uv)
+    #define SAMPLE_2ND_SHADEMAP (uv, texArrayID)            SAMPLE_TEXTURE2D(_2nd_ShadeMap,             sampler_MainTex, uv)
+    #define SAMPLE_NORMALMAP (uv, texArrayID)               SAMPLE_TEXTURE2D(_NormalMap,                sampler_MainTex, uv)
+    #define SAMPLE_CLIPPINGMASK (uv, texArrayID)            SAMPLE_TEXTURE2D(_ClippingMask,             sampler_MainTex, uv)
+    #define SAMPLE_OCCLUSIONMAP (uv, texArrayID)            SAMPLE_TEXTURE2D(_OcclusionMap,             sampler_OcclusionMap, uv)
+    #define SAMPLE_METALLICGLOSS(uv, texArrayID)            SAMPLE_TEXTURE2D(_MetallicGlossMap,         sampler_MetallicGlossMap, uv)
+
+    #define SAMPLE_SET_1ST_SHADEPOSITION (uv, texArrayID)   tex2D(_Set_1st_ShadePosition,       uv) 
+    #define SAMPLE_SET_2ND_SHADEPOSITION (uv, texArrayID)   tex2D(_Set_2nd_ShadePosition,       uv)
+    #define SAMPLE_SHADINGGRADEMAP (uv, texArrayID, lod)    tex2Dlod(_ShadingGradeMap,          float4(uv, 0.0f, lod))
+    #define SAMPLE_HIGHCOLOR (uv, texArrayID)               tex2D(_HighColor_Tex,               uv)
+    #define SAMPLE_HIGHCOLORMASK (uv, texArrayID)           tex2D(_Set_HighColorMask,           uv)
+    #define SAMPLE_SET_RIMLIGHTMASK (uv, texArrayID)        tex2D(_Set_RimLightMask,            uv)
+    #define SAMPLE_MATCAP (uv, texArrayID, lod)             tex2Dlod(_MatCap_Sampler,           float4(uv, 0.0f, lod))
+    #define SAMPLE_NORMALMAPFORMATCAP (uv, texArrayID)      tex2D(_NormalMapForMatCap,          uv)
+    #define SAMPLE_SET_MATCAPMASK (uv, texArrayID)          tex2D(_Set_MatcapMask,              uv)
+    #define SAMPLE_EMISSIVE (uv, texArrayID)                tex2D(_Emissive_Tex,                uv)
+    #define SAMPLE_ANGELRING (uv, texArrayID)               tex2D(_AngelRing_Sampler,           uv)
+    #define SAMPLE_OUTLINE (uv, texArrayID, lod)            tex2Dlod(_Outline_Sampler,          float4(uv, 0.0f, lod))
+    #define SAMPLE_OUTLINETEX (uv, texArrayID)              tex2D(_OutlineTex,                  uv)
+    #define SAMPLE_BAKEDNORMAL (uv, texArrayID, lod)        tex2Dlod(_BakedNormal,              float4(uv, 0.0f, lod))
+
 #endif
+
+// TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+// TEXTURE2D(_1st_ShadeMap);
+// TEXTURE2D(_2nd_ShadeMap);
+// TEXTURE2D(_NormalMap);
+//
+// sampler2D _Set_1st_ShadePosition; 
+// sampler2D _Set_2nd_ShadePosition;
+// sampler2D _ShadingGradeMap;
+// sampler2D _HighColor_Tex;
+// sampler2D _Set_HighColorMask;
+// sampler2D _Set_RimLightMask;
+// sampler2D _MatCap_Sampler;
+// sampler2D _NormalMapForMatCap;
+// sampler2D _Set_MatcapMask;
+// sampler2D _Emissive_Tex;
+// //sampler2D _ClippingMask;
+// TEXTURE2D(_ClippingMask);
+// sampler2D _AngelRing_Sampler;
+// sampler2D _Outline_Sampler;
+// sampler2D _OutlineTex;
+// sampler2D _BakedNormal;
+//
+// TEXTURE2D(_OcclusionMap);       SAMPLER(sampler_OcclusionMap);
+// TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
+// TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
+//
+// #ifdef _SPECULAR_SETUP
+//     #define SAMPLE_METALLICSPECULAR(uv) SAMPLE_TEXTURE2D(_SpecGlossMap, sampler_SpecGlossMap, uv)
+// #else
+//     #define SAMPLE_METALLICSPECULAR(uv, texArrayID) SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, uv)
+// #endif
 
 half4 SampleMetallicSpecGloss(float2 uv, half albedoAlpha)
 {
     half4 specGloss;
 
-#ifdef _METALLICSPECGLOSSMAP
-    specGloss = SAMPLE_METALLICSPECULAR(uv);
-    #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-        specGloss.a = albedoAlpha * _Smoothness;
-    #else
-        specGloss.a *= _Smoothness;
-    #endif
-#else // _METALLICSPECGLOSSMAP
-    #if _SPECULAR_SETUP
-        specGloss.rgb = _SpecColor.rgb;
-    #else
-        specGloss.rgb = _Metallic.rrr;
-    #endif
+    #ifdef _METALLICSPECGLOSSMAP
+        int nMetallicGlossMapArrID = _MetallicGlossMapArr_ID;
+        specGloss = SAMPLE_METALLICGLOSS(uv, nMetallicGlossMapArrID);
+        #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            specGloss.a = albedoAlpha * _Smoothness;
+        #else
+            specGloss.a *= _Smoothness;
+        #endif
+    #else // _METALLICSPECGLOSSMAP
+        #if _SPECULAR_SETUP
+            specGloss.rgb = _SpecColor.rgb;
+        #else
+            specGloss.rgb = _Metallic.rrr;
+        #endif
 
-    #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-        specGloss.a = albedoAlpha * _Smoothness;
-    #else
-        specGloss.a = _Smoothness;
+        #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            specGloss.a = albedoAlpha * _Smoothness;
+        #else
+            specGloss.a = _Smoothness;
+        #endif
     #endif
-#endif
 
     return specGloss;
 }
 
 half SampleOcclusion(float2 uv)
 {
-#ifdef _OCCLUSIONMAP
-    // TODO: Controls things like these by exposing SHADER_QUALITY levels (low, medium, high)
-#if defined(SHADER_API_GLES)
-    return SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, uv).g;
-#else
-    half occ = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, uv).g;
-    return LerpWhiteTo(occ, _OcclusionStrength);
-#endif
-#else
-    return 1.0;
-#endif
+    #ifdef _OCCLUSIONMAP
+        // TODO: Controls things like these by exposing SHADER_QUALITY levels (low, medium, high)
+        #if defined(SHADER_API_GLES)
+            int nOcclusionMapArrID = _OcclusionMapArr_ID;
+            return SAMPLE_OCCLUSIONMAP(uv, nOcclusionMapArrID).g;
+        #else
+            int nOcclusionMapArrID = _OcclusionMapArr_ID;
+            half occ = SAMPLE_OCCLUSIONMAP(uv, nOcclusionMapArrID).g;
+            return LerpWhiteTo(occ, _OcclusionStrength);
+        #endif
+    #else
+        return 1.0;
+    #endif
 }
 
 inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
 {
-    half4 albedoAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
+    half4 albedoAlpha = SampleAlbedoAlpha(uv);
     outSurfaceData.alpha = Alpha(albedoAlpha.a, _BaseColor, _Cutoff);
-
+    
     half4 specGloss = SampleMetallicSpecGloss(uv, albedoAlpha.a);
     outSurfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
 
-#if _SPECULAR_SETUP
-    outSurfaceData.metallic = 1.0h;
-    outSurfaceData.specular = specGloss.rgb;
-#else
-    outSurfaceData.metallic = specGloss.r;
-    outSurfaceData.specular = half3(0.0h, 0.0h, 0.0h);
-#endif
+    #if _SPECULAR_SETUP
+        outSurfaceData.metallic = 1.0h;
+        outSurfaceData.specular = specGloss.rgb;
+    #else
+        outSurfaceData.metallic = specGloss.r;
+        outSurfaceData.specular = half3(0.0h, 0.0h, 0.0h);
+    #endif
 
     outSurfaceData.smoothness = specGloss.a;
-    outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap), _BumpScale);
+    outSurfaceData.normalTS = SampleNormal(uv, _BumpScale);
     outSurfaceData.occlusion = SampleOcclusion(uv);
-    outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
+    outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb);
 }
 
 #endif // UNIVERSAL_INPUT_SURFACE_PBR_INCLUDED
