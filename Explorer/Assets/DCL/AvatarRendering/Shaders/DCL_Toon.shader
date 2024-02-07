@@ -2,6 +2,32 @@ Shader "DCL/DCL_Toon"
 {
     Properties
     {
+        [HideInInspector] [PerRendererData] _MainTexArr_ID ("MainTex Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _NormalMapArr_ID ("Normal Map Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Set_1st_ShadePositionArr_ID ("Set 1st Shade Position Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Set_2nd_ShadePositionArr_ID ("Set 2nd Shade Position Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _ShadingGradeMapArr_ID ("Shading Grade Map Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _HighColor_TexArr_ID ("High Color Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Set_HighColorMaskArr_ID ("Set High Color Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Set_RimLightMaskArr_ID ("Set Rim Light Mask Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _MatCap_SamplerArr_ID ("MatCap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _NormalMapForMatCapArr_ID ("Normal Map for MatCap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Set_MatcapMaskArr_ID ("Set MatCap Mask Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Emissive_TexArr_ID ("Emissive Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _ClippingMaskArr_ID ("Clipping Mask Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _AngelRing_SamplerArr_ID ("Angel Ring Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _Outline_SamplerArr_ID ("Outline Sampler Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _OutlineTexArr_ID ("Outline Texture Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _BakedNormalArr_ID ("Baked Normal Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _OcclusionMapArr_ID ("Occlusion Map Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _MetallicGlossMapArr_ID ("MetallicGlossMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("Emission Map Array ID", Integer) = -1
+        
+        
         [HideInInspector] _simpleUI ("SimpleUI", Int ) = 0
         [HideInInspector][Enum(OFF, 0, ON, 1)] _isUnityToonshader("Material is touched by Unity Toon Shader", Int) = 1
         [HideInInspector] _utsVersionX("VersionX", Float) = 0

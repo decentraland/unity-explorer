@@ -65,11 +65,10 @@ float2 RotateUV(float2 _uv, float _radian, float2 _piv, float _time)
     return (mul(_uv - _piv, float2x2( RotateUV_cos, -RotateUV_sin, RotateUV_sin, RotateUV_cos)) + _piv);
 }
 
-fixed3 DecodeLightProbe( fixed3 N )
+half3 DecodeLightProbe( half3 N )
 {
     return ShadeSH9(float4(N,1));
 }
-
 
 inline void InitializeStandardLitSurfaceDataUTS(float2 uv, out SurfaceData outSurfaceData)
 {
@@ -91,9 +90,9 @@ inline void InitializeStandardLitSurfaceDataUTS(float2 uv, out SurfaceData outSu
     #endif
 
     outSurfaceData.smoothness = specGloss.a;
-    outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap), _BumpScale);
+    outSurfaceData.normalTS = SampleNormal(uv, _BumpScale);
     outSurfaceData.occlusion = SampleOcclusion(uv);
-    outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
+    outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb);
 }
 
 half3 GlobalIlluminationUTS_Deprecated_Deprecated(BRDFData brdfData, half3 bakedGI, half occlusion, half3 normalWS, half3 viewDirectionWS)
