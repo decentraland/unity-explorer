@@ -24,7 +24,7 @@ namespace DCL.Chat
 
         protected override void OnViewInstantiated()
         {
-            CreateChatEntries().Forget();
+            CreateChatEntriesAsync().Forget();
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
@@ -47,7 +47,7 @@ namespace DCL.Chat
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
         }
 
-        private async UniTaskVoid CreateChatEntries()
+        private async UniTaskVoid CreateChatEntriesAsync()
         {
             do
             {
