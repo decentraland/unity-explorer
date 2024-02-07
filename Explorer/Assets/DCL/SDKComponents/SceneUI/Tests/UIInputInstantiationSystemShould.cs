@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.ECSToCRDTWriter;
+﻿using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
@@ -35,6 +36,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
+            world.Add(entity, new CRDTEntity(500));
         }
 
         [Test]
@@ -82,6 +84,30 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
                 Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextField.style.unityTextAlign);
             }
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TriggerInputResults(bool isSubmit)
+        {
+            // Arrange
+            var input = new PBUiInput();
+            world.Add(entity, input);
+            input.Value = $"Test text";
+            input.IsDirty = true;
+            system.Update(0);
+
+            // Act
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.IsOnValueChangedTriggered = !isSubmit;
+            uiInputComponent.IsOnSubmitTriggered = isSubmit;
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<PBUiInputResult>(), Arg.Any<CRDTEntity>());
+            Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
+            Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
         }
     }
 }

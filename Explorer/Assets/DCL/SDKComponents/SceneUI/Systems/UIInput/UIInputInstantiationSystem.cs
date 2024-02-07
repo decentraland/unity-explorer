@@ -62,20 +62,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!uiInputComponent.IsOnValueChangedTriggered && !uiInputComponent.IsOnSubmitTriggered)
                 return;
 
-            ecsToCRDTWriter.PutMessage(
-                new PBUiInputResult
-                {
-                    IsSubmit = uiInputComponent.IsOnSubmitTriggered,
-                    Value = uiInputComponent.TextField.value,
-                    IsDirty = false,
-                }, sdkEntity);
+            AppendMessage(ref sdkEntity, uiInputComponent.IsOnSubmitTriggered, uiInputComponent.TextField.value);
 
             if (uiInputComponent.IsOnSubmitTriggered)
                 uiInputComponent.TextField.SetValueWithoutNotify(string.Empty);
 
             uiInputComponent.IsOnValueChangedTriggered = false;
             uiInputComponent.IsOnSubmitTriggered = false;
+        }
 
+        private void AppendMessage(ref CRDTEntity sdkEntity, bool isSubmit, string value)
+        {
+            ecsToCRDTWriter.PutMessage(
+                new PBUiInputResult
+                {
+                    IsSubmit = isSubmit,
+                    Value = value,
+                    IsDirty = false,
+                }, sdkEntity);
         }
     }
 }
