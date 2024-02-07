@@ -149,6 +149,8 @@
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
+        public const string LOD = nameof(LOD);
+
         /// <summary>
         ///     Everything related to Scenes audio source components
         /// </summary>

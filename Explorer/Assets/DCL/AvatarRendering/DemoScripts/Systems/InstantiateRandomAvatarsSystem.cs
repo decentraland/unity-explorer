@@ -123,13 +123,16 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
-            var totalAmount = 0;
+            int totalAmount = 0;
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
                 BaseWearablesPromise = ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>(), totalAmount),
+                    new GetWearableByParamIntention(new[]
+                    {
+                        ("collectionType", "base-wearable"), ("pageSize", "50")
+                    }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
             };
 
@@ -149,7 +152,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             [Data] in ICharacterControllerSettings characterControllerSettings,
             ref RandomAvatarRequest randomAvatarRequest)
         {
-            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<WearablesResponse> baseWearables))
+            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out var baseWearables))
             {
                 if (baseWearables.Succeeded)
                 {
@@ -171,7 +174,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var male = new AvatarRandomizer(BodyShape.MALE);
             var female = new AvatarRandomizer(BodyShape.FEMALE);
 
-            foreach (IWearable wearable in baseWearables.Asset.Wearables)
+            foreach (var wearable in baseWearables.Asset.Wearables)
             {
                 male.AddWearable(wearable);
                 female.AddWearable(wearable);
