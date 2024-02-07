@@ -135,13 +135,26 @@ jobs:
           
       - name: Clone Packages To Use Locally
         run: |
+              # Clone the repository
               git clone git@github.com:decentraland/unity-explorer-packages.git
+              
+              # Display message
+              Write-Host "Editing package manifest"
+              
+              # Specify the path to the manifest.json file
               $jsonFilePath = "Explorer\Packages\manifest.json"
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../StylizedGrassShader' | Set-Content -Path $jsonFilePath
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../StylizedWater2' | Set-Content -Path $jsonFilePath
+              
+              # Replace the first string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' | Set-Content -Path $jsonFilePath
+              
+              # Replace the second string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
               
               # Display the content of manifest.json
               Get-Content -Path $jsonFilePath
+
+              # Display list of files
+              ls
 
 
       - uses: decentraland/unity-builder@0.7
