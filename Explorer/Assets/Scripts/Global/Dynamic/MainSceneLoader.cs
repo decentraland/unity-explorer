@@ -6,7 +6,6 @@ using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
-using DCL.Ipfs;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
