@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using MVC;
 using System;
 using System.Linq;
@@ -16,15 +17,17 @@ namespace DCL.Chat
         public ChatController(
             ViewFactoryMethod viewFactory,
             ChatEntryView chatEntryView,
-            ChatEntryConfigurationSO chatEntryConfiguration) : base(viewFactory)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            IDebugContainerBuilder debugBuilder) : base(viewFactory)
         {
             this.chatEntryView = chatEntryView;
             this.chatEntryConfiguration = chatEntryConfiguration;
+
+            debugBuilder.AddWidget("Chat").AddControl(new DebugButtonDef("Create chat message", CreateChatEntriesAsync), null);
         }
 
         protected override void OnViewInstantiated()
         {
-            CreateChatEntriesAsync().Forget();
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
@@ -47,20 +50,13 @@ namespace DCL.Chat
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
         }
 
-        private async UniTaskVoid CreateChatEntriesAsync()
+        private void CreateChatEntriesAsync()
         {
-            do
-            {
-                ChatEntryView entryView = Object.Instantiate(chatEntryView, viewInstance.MessagesContainer);
-                entryView.Initialise(chatEntryConfiguration);
-                entryView.SetUsername(
-                    "User" + UnityEngine.Random.Range(0, 3),
-                    UnityEngine.Random.Range(0, 2) == 0 ? "" : "#asd38");
-                entryView.entryText.text = GenerateRandomString(UnityEngine.Random.Range(5, 200));
-                entryView.SetSentByUser(UnityEngine.Random.Range(0, 10) <= 2);
-                await UniTask.Delay(UnityEngine.Random.Range(2000, 6000));
-            }
-            while (true);
+            ChatEntryView entryView = Object.Instantiate(chatEntryView, viewInstance.MessagesContainer);
+            entryView.Initialise(chatEntryConfiguration);
+            entryView.SetUsername("User" + UnityEngine.Random.Range(0, 3), UnityEngine.Random.Range(0, 2) == 0 ? "" : "#asd38");
+            entryView.entryText.text = GenerateRandomString(UnityEngine.Random.Range(5, 200));
+            entryView.SetSentByUser(UnityEngine.Random.Range(0, 10) <= 2);
         }
 
         private string GenerateRandomString(int length)

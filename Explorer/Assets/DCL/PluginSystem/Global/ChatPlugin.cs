@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.DebugUtilities;
 using MVC;
 using System;
 using System.Collections;
@@ -16,12 +17,14 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly IDebugContainerBuilder debugBuilder;
         private ChatController chatController;
 
-        public ChatPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager)
+        public ChatPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, IDebugContainerBuilder debugBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose()
@@ -41,7 +44,8 @@ namespace DCL.PluginSystem.Global
                 ChatController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
                 chatEntryView,
-                chatEntryConfiguration);
+                chatEntryConfiguration,
+                debugBuilder);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
