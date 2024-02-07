@@ -200,7 +200,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ReleaseUITransformComponent(UITransformComponent transform)
         {
-            transform.UnregisterAllCallbacks();
+            transform.UnregisterPointerCallbacks();
             ReleaseUIElement(transform.Transform);
         }
 

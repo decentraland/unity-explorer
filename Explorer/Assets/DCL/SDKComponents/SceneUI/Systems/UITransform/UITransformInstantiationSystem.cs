@@ -6,10 +6,8 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
@@ -40,13 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
             UITransformComponent newTransform = transformsPool.Get();
-            newTransform.Transform ??= new VisualElement();
-            newTransform.Transform.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
-            newTransform.Parent = EntityReference.Null;
-            newTransform.Children = HashSetPool<EntityReference>.Get();
-            newTransform.IsHidden = false;
-            newTransform.RightOf = sdkModel.RightOf;
-            newTransform.UnregisterAllCallbacks();
+            newTransform.Initialize(COMPONENT_NAME, entity, ref sdkModel);
             canvas.rootVisualElement.Add(newTransform.Transform);
             World.Add(entity, newTransform);
         }

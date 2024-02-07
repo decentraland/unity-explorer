@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Utils;
+using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -22,13 +24,29 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal EventCallback<PointerDownEvent> currentOnPointerDownCallback;
         internal EventCallback<PointerUpEvent> currentOnPointerUpCallback;
 
-        public bool HasAnyPointerDownCallback => currentOnPointerDownCallback != null;
-        public bool HasAnyPointerUpCallback => currentOnPointerUpCallback != null;
+        public PointerEventType? PointerEventTriggered;
+        public RepeatedField<PBPointerEvents.Types.Entry> RegisteredPointerEvents { get; internal set; }
+
+        public void Initialize(string componentName, Entity entity, ref PBUiTransform sdkModel)
+        {
+            Transform ??= new VisualElement();
+            Transform.name = UiElementUtils.BuildElementName(componentName, entity);
+            Parent = EntityReference.Null;
+            Children = HashSetPool<EntityReference>.Get();
+            IsHidden = false;
+            RightOf = sdkModel.RightOf;
+
+            PointerEventTriggered = null;
+            this.RegisterPointerCallbacks(
+                _ => PointerEventTriggered = PointerEventType.PetDown,
+                _ => PointerEventTriggered = PointerEventType.PetUp);
+            this.RegisterPointerEvents(null);
+        }
 
         public void Dispose()
         {
             HashSetPool<EntityReference>.Release(Children);
-            this.UnregisterAllCallbacks();
+            this.UnregisterPointerCallbacks();
         }
     }
 }

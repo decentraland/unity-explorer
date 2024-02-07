@@ -33,30 +33,39 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
-            UpdatePointerEventsQuery(World);
+            RegisterPointerEventsQuery(World);
+            TriggerPointerEventsQuery(World);
         }
 
         [Query]
-        private void UpdatePointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, CRDTEntity sdkEntity)
+        private void RegisterPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
 
-            foreach (var pEvent in sdkModel.PointerEvents)
+            uiTransformComponent.RegisterPointerEvents(sdkModel.PointerEvents);
+            uiTransformComponent.Transform.pickingMode = PickingMode.Position;
+
+            sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        private void TriggerPointerEvents(ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
+        {
+            if (uiTransformComponent.PointerEventTriggered == null)
+                return;
+
+            // Check if the component has any pointer events associated
+            foreach (var pEvent in uiTransformComponent.RegisteredPointerEvents)
             {
-                switch (pEvent.EventType)
-                {
-                    case PointerEventType.PetDown:
-                        uiTransformComponent.RegisterPointerDownCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetDown));
-                        break;
-                    case PointerEventType.PetUp:
-                        uiTransformComponent.RegisterPointerUpCallback(_ => AppendMessage(sdkEntity, pEvent.EventInfo.Button, PointerEventType.PetUp));
-                        break;
-                }
+                if (pEvent.EventType != uiTransformComponent.PointerEventTriggered)
+                    continue;
+
+                AppendMessage(sdkEntity, pEvent.EventInfo.Button, pEvent.EventType);
+                break;
             }
 
-            uiTransformComponent.Transform.pickingMode = PickingMode.Position;
-            sdkModel.IsDirty = false;
+            uiTransformComponent.PointerEventTriggered = null;
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
