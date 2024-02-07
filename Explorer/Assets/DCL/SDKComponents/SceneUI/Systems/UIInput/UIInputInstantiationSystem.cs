@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         }
 
         [Query]
-        private void UpdateUIInput(UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
+        private void UpdateUIInput(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
         {
             if (!sdkModel.IsDirty)
                 return;
