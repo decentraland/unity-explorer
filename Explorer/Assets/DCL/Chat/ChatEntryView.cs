@@ -39,6 +39,8 @@ namespace DCL.Chat
             playerName.text = username;
             walletIdText.text = walletId;
             verifiedIcon.gameObject.SetActive(string.IsNullOrEmpty(walletId));
+            Color playerNameColor = entryConfiguration.GetNameColor(username);
+            playerName.color = playerNameColor;
         }
 
         public void SetSentByUser(bool sentByUser)

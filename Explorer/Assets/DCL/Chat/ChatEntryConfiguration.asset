@@ -18,3 +18,5 @@ MonoBehaviour:
   ownUsersBackground: {fileID: 21300000, guid: 87fb4cff448ca4195956c2dcfb3ec0df, type: 3}
   ownUserVerifiedIcon: {fileID: 21300000, guid: 278fd53da0711428da5ec83fb8504dd5, type: 3}
   ownUsersEntryColor: {r: 1, g: 1, b: 1, a: 1}
+  nameColorSaturation: 0.5
+  nameColorValue: 0.9
