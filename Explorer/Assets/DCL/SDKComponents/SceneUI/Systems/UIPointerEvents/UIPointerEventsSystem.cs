@@ -11,6 +11,7 @@ using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
@@ -35,6 +36,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         {
             RegisterPointerEventsQuery(World);
             TriggerPointerEventsQuery(World);
+
+            HandleEntityDestructionQuery(World);
+            HandleUIPointerEventsRemovalQuery(World);
         }
 
         [Query]
@@ -68,6 +72,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
             uiTransformComponent.PointerEventTriggered = null;
         }
 
+        [Query]
+        [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
+        private void HandleUIPointerEventsRemoval(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+
         private void AppendMessage(CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
@@ -79,6 +93,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                     result.Timestamp = data.sceneStateProvider.TickNumber;
                     result.TickNumber = data.sceneStateProvider.TickNumber;
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
+        }
+
+        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        {
+            uiTransformComponent.RegisterPointerEvents(null);
+            uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
         }
     }
 }
