@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.LOD;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;

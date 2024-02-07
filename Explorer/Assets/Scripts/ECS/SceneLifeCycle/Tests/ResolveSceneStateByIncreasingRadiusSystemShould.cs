@@ -13,6 +13,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 
@@ -36,7 +37,7 @@ namespace ECS.SceneLifeCycle.Tests
         public async Task LimitScenesLoading()
         {
             realmPartitionSettings.ScenesRequestBatchSize.Returns(2);
-            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(int.MaxValue);
+            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
 
             world.Create(realmComponent, new VolatileScenePointers());
 
@@ -52,7 +53,10 @@ namespace ECS.SceneLifeCycle.Tests
                                 { DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) } },
                         },
                     },
-                    new IpfsPath()), new PartitionComponent { Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i });
+                    new IpfsPath()), new PartitionComponent
+                {
+                    Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i
+                }, new VisualSceneState());
             }
 
             system.Update(0f);
@@ -94,7 +98,10 @@ namespace ECS.SceneLifeCycle.Tests
                             },
                         },
                     },
-                    new IpfsPath()), new PartitionComponent { Bucket = i, RawSqrDistance = (ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i) - 1f });
+                    new IpfsPath()), new PartitionComponent
+                {
+                    Bucket = i, RawSqrDistance = ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i - 1f
+                }, Substitute.For<ISceneFacade>());
             }
 
             system.Update(0f);
