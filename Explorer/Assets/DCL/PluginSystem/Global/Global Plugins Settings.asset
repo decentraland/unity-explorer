@@ -28,6 +28,10 @@ MonoBehaviour:
   - rid: 8593314843508867075
   - rid: 4107643854440628226
   - rid: 3022170012058910723
+  - rid: 1841402216112979969
+  - rid: 4340256219339423747
+  - rid: 4340256301410942981
+  - rid: 7249412338407702528
   references:
     version: 2
     RefIds:
@@ -113,6 +117,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 1841402216112979969
+      type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
+      data:
+        <CharacterObject>k__BackingField:
+          m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <StartYPosition>k__BackingField: 1
+        <sceneBucketPropagationLimit>k__BackingField: 3
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -156,6 +170,22 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
+    - rid: 4340256219339423747
+      type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        CharacterPreviewContainerReference:
+          m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 4340256301410942981
+      type: {class: ChatPlugin/ChatSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ChatPanelPrefab:
+          m_AssetGUID: f3b1d401bc50845629a6b982f9793f16
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -191,12 +221,6 @@ MonoBehaviour:
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <CharacterObject>k__BackingField:
-          m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <StartYPosition>k__BackingField: 1
         <ReportHandlingSettings>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
           m_SubObjectName: 
@@ -233,6 +257,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 7249412338407702528
+      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
+      data:
+        <LodSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 8147919132522971138
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:

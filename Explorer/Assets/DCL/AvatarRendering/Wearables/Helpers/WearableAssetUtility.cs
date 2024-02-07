@@ -50,6 +50,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 cachedWearable = new CachedWearable(originalAsset, Object.Instantiate(originalAsset.GameObject, parent));
 
             cachedWearable.Instance.transform.ResetLocalTRS();
+            cachedWearable.Instance.gameObject.layer = parent.gameObject.layer;
+
+            using PoolExtensions.Scope<List<Transform>> children = cachedWearable.Instance.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            for (var index = 0; index < children.Value.Count; index++)
+            {
+                Transform child = children.Value[index];
+                child.gameObject.layer = parent.gameObject.layer;
+            }
+
             cachedWearable.Instance.gameObject.SetActive(true);
             return cachedWearable;
         }

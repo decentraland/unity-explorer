@@ -58,6 +58,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private void Release(ref PrimitiveMeshRendererComponent rendererComponent)
         {
             ReleaseMaterial.TryReleaseDefault(ref rendererComponent);
+
             if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
                 componentPool.Release(rendererComponent.PrimitiveMesh);
         }

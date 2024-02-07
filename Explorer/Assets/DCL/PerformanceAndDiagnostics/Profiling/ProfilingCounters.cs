@@ -49,6 +49,14 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> GetWearablesIntentionAmount =
             new (MEMORY, "GetWearables Intentions", ProfilerMarkerDataUnit.Count);
 
+        //LODS
+
+        public static ProfilerCounterValue<int> LODAssetAmount =
+            new(MEMORY, "LOD Assets", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> LODInstantiatedInCache =
+            new(MEMORY, "LOD Assets In Cache", ProfilerMarkerDataUnit.Count);
+        
         // Textures cache
         public static ProfilerCounterValue<int> TexturesAmount =
             new (MEMORY, "Textures", ProfilerMarkerDataUnit.Count);
@@ -88,6 +96,9 @@ namespace DCL.Profiling
             CachedWearablesAmount.Value = 0;
             CachedWearablesInCacheAmount.Value = 0;
 
+            LODInstantiatedInCache.Value = 0;
+            LODAssetAmount.Value = 0;
+            
             TexturesAmount.Value = 0;
             TexturesInCache.Value = 0;
 

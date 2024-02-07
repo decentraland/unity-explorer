@@ -3,6 +3,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
@@ -21,25 +22,23 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class EngineAPIImplementation : IEngineApi
     {
-        private readonly ISharedPoolsProvider sharedPoolsProvider;
-        private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly CustomSampler applyBufferSampler;
+        private readonly ICRDTDeserializer crdtDeserializer;
+        private readonly CustomSampler crdtProcessMessagesSampler;
 
         private readonly ICRDTProtocol crdtProtocol;
-        private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
-        private readonly MutexSync mutexSync;
 
         private readonly CustomSampler deserializeBatchSampler;
-        private readonly CustomSampler worldSyncBufferSampler;
+        private readonly ISceneExceptionsHandler exceptionsHandler;
+        private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly MutexSync mutexSync;
+        private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
-        private readonly CustomSampler crdtProcessMessagesSampler;
-        private readonly CustomSampler applyBufferSampler;
-
-        private byte[] lastSerializationBuffer;
+        private readonly ISharedPoolsProvider sharedPoolsProvider;
+        private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
+        private readonly CustomSampler worldSyncBufferSampler;
         private bool isDisposing;
 
         public EngineAPIImplementation(
@@ -74,18 +73,15 @@ namespace CrdtEcsBridge.Engine
 
         public void Dispose()
         {
-            ReleaseSerializationBuffer();
             systemGroupsUpdateGate.Dispose();
         }
 
-        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
+        public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
             // TODO it's dirty, think how to do it better
-            if (isDisposing) return Array.Empty<byte>();
+            if (isDisposing) return PoolableByteArray.EMPTY;
 
             // Called on the thread where the Scene Runtime is running (background thread)
-
-            ReleaseSerializationBuffer();
 
             // Deserialize messages from the byte array
             List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
@@ -127,39 +123,113 @@ namespace CrdtEcsBridge.Engine
 
             ApplySyncCommandBuffer(worldSyncBuffer);
 
-            if (returnData)
-            {
-                int payloadLength = SerializeOutgoingCRDTMessages();
-                return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
-            }
-
-            return ArraySegment<byte>.Empty;
+            return returnData ? SerializeOutgoingCRDTMessages() : PoolableByteArray.EMPTY;
         }
 
-        private int SerializeOutgoingCRDTMessages()
+        public PoolableByteArray CrdtGetState()
+        {
+            if (isDisposing) return PoolableByteArray.EMPTY;
+
+            Profiler.BeginThreadProfiling("SceneRuntime", "CrtdGetState");
+
+            // Invoked on the background thread
+            // this method is called rarely but the memory impact is significant
+
+            try
+            {
+                // Apply outgoing messages straight-away so they are reflected in the current CRDT state
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                    SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
+
+                // Create CRDT Messages from the current state
+                // we know exactly how big the array should be
+                int messagesCount = crdtProtocol.GetMessagesCount();
+                ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(messagesCount);
+
+                int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
+
+                // We know exactly how many bytes we need to serialize
+                byte[] serializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
+
+                // Serialize the current state
+                Span<byte> currentStateSpan = serializationBuffer.AsSpan()[..currentStatePayloadLength];
+
+                for (var i = 0; i < messagesCount; i++)
+                    crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
+
+                // Messages are serialized, we no longer need them in the managed form
+                sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
+
+                // Return the buffer to the caller
+                return new PoolableByteArray(serializationBuffer, currentStatePayloadLength, sharedPoolsProvider);
+            }
+            catch (Exception e)
+            {
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
+                return PoolableByteArray.EMPTY;
+            }
+            finally { Profiler.EndThreadProfiling(); }
+        }
+
+        public void SetIsDisposing()
+        {
+            isDisposing = true;
+        }
+
+        private PoolableByteArray SerializeOutgoingCRDTMessages()
         {
             try
             {
                 outgoingMessagesSampler.Begin();
 
                 int payloadLength;
+                byte[] serializationBuffer;
 
                 using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
                 {
-                    lastSerializationBuffer =
+                    serializationBuffer =
                         sharedPoolsProvider.GetSerializedStateBytesPool(
                             payloadLength = outgoingMessagesSyncBlock.PayloadLength);
 
-                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
+                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBuffer.AsSpan());
+
+                    SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
                 }
 
                 outgoingMessagesSampler.End();
-                return payloadLength;
+                return new PoolableByteArray(serializationBuffer, payloadLength, sharedPoolsProvider);
             }
             catch (Exception e)
             {
                 exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
-                return 0;
+                return PoolableByteArray.EMPTY;
+            }
+        }
+
+        /// <summary>
+        ///     If local messages are not written in the local CRDT, the final state
+        ///     including timestamp is incorrect. Subsequent creation of propagated messages will result in a wrong timestamp
+        /// </summary>
+        private void SyncOutgoingCRDTMessages(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
+        {
+            for (var i = 0; i < outgoingMessages.Count; i++)
+            {
+                ProcessedCRDTMessage m = outgoingMessages[i];
+
+                // We are interested in LWW messages only,
+                switch (m.message.Type)
+                {
+                    case CRDTMessageType.DELETE_ENTITY:
+                    case CRDTMessageType.PUT_COMPONENT:
+                        // instead of processing via CRDTProtocol.ProcessMessage
+                        // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
+                        crdtProtocol.UpdateLWWState(m.message);
+                        break;
+                    default:
+                        // as this data is not kept in CRDTProtocol it must be released immediately
+                        m.message.Data.Dispose();
+                        break;
+                }
             }
         }
 
@@ -190,78 +260,6 @@ namespace CrdtEcsBridge.Engine
 
             foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
-        }
-
-        public ArraySegment<byte> CrdtGetState()
-        {
-            if (isDisposing) return Array.Empty<byte>();
-
-            Profiler.BeginThreadProfiling("SceneRuntime", "CrtdGetState");
-
-            // Invoked on the background thread
-            // this method is called rarely but the memory impact is significant
-
-            ReleaseSerializationBuffer();
-
-            try
-            {
-                // Create CRDT Messages from the current state
-                // we know exactly how big the array should be
-                int messagesCount = crdtProtocol.GetMessagesCount();
-                ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(messagesCount);
-
-                int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
-
-                // Sync block ensures that no messages are added while they are being processed
-                // By the end of the block messages are flushed and adding is unblocked
-                using OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
-
-                int outgoingCRDTMessagesPayloadLength = outgoingMessagesSyncBlock.PayloadLength;
-
-                int totalPayloadLength = currentStatePayloadLength + outgoingCRDTMessagesPayloadLength;
-
-                // We know exactly how many bytes we need to serialize
-                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
-
-                // Serialize the current state
-                Span<byte> currentStateSpan = lastSerializationBuffer.AsSpan()[..currentStatePayloadLength];
-
-                for (var i = 0; i < messagesCount; i++)
-                    crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
-
-                // Messages are serialized, we no longer need them in the managed form
-                sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
-
-                // Serialize outgoing messages
-                SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength, outgoingCRDTMessagesPayloadLength));
-
-                // Return the buffer to the caller
-                return new ArraySegment<byte>(lastSerializationBuffer, 0, totalPayloadLength);
-            }
-            catch (Exception e)
-            {
-                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
-                return Array.Empty<byte>();
-            }
-            finally { Profiler.EndThreadProfiling(); }
-        }
-
-        public void SetIsDisposing()
-        {
-            isDisposing = true;
-        }
-
-        /// <summary>
-        ///     When the state or outgoing messages processed by the Scene Runtime we can safely return them to the pool.
-        ///     It is guaranteed by the sequential order of `CrdtSendToRenderer`/`CrdtGetState` calls
-        /// </summary>
-        private void ReleaseSerializationBuffer()
-        {
-            if (lastSerializationBuffer != null)
-            {
-                sharedPoolsProvider.ReleaseSerializedStateBytesPool(lastSerializationBuffer);
-                lastSerializationBuffer = null;
-            }
         }
     }
 }

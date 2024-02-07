@@ -21,21 +21,19 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private readonly IProfilingProvider profilingProvider;
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
-        private readonly ISystemMemory systemMemory;
 
         // Debug
         private readonly bool isReleaseBuild = !Debug.isDebugBuild;
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
-        private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
+        internal ulong ActualSystemMemory;
 
         public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
-
-            this.systemMemory = systemMemory;
             this.profilingProvider = profilingProvider;
             this.memoryThreshold = memoryThreshold;
+            ActualSystemMemory = systemMemory.TotalSizeInMB;
         }
 
         public MemoryUsageStatus GetMemoryUsageStatus()
@@ -61,7 +59,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             GetMemoryUsageStatus() != Full;
 
         private ulong GetTotalSystemMemory() =>
-            isReleaseBuild ? actualSystemMemory : GetSimulatedSystemMemory();
+            isReleaseBuild ? ActualSystemMemory : GetSimulatedSystemMemory();
 
         private ulong GetSimulatedSystemMemory()
         {
@@ -69,7 +67,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                    {
                        Full => NO_MEMORY,
                        Warning => CalculateSystemMemoryForWarningThreshold(),
-                       _ => actualSystemMemory,
+                       _ => ActualSystemMemory
                    };
 
             // ReSharper disable once PossibleLossOfFraction

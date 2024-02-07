@@ -6,10 +6,10 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 ResolvedState = DefaultWearablesComponent.State.Success,
             });
 
-            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new IpfsRealm(URLDomain.EMPTY)), URLSubdirectory.EMPTY);
+            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
         }
 
         private WearableCatalog wearableCatalog;
@@ -69,6 +69,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 assetBundleData[BodyShape.MALE] = mockedDefaultAB;
 
             wearable.WearableAssetResults.Returns(assetBundleData);
+            wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
             return wearable;
         }
 
@@ -109,7 +110,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
-                { testUrn }, new IWearable[1], BodyShape.MALE);
+                { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
@@ -131,7 +132,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
-                { unisexTestUrn }, new IWearable[1], BodyShape.MALE);
+                { unisexTestUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
@@ -154,7 +155,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
-                { testUrn }, new IWearable[1], BodyShape.MALE);
+                { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
 
@@ -175,7 +176,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
-                { testUrn }, new IWearable[1], BodyShape.MALE);
+                { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
@@ -198,7 +199,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             var getWearablesByPointersIntention
                 = new GetWearablesByPointersIntention(new List<string>
-                    { testUrn }, new IWearable[1], BodyShape.MALE);
+                    { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
@@ -224,7 +225,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
-                { testUrn }, new IWearable[1], BodyShape.MALE);
+                { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
