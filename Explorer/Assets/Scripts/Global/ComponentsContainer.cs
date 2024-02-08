@@ -69,12 +69,7 @@ namespace Global
                                                              onGet: SDKComponentBuilderExtensions.SetAsDirty,
                                                              onRelease: pbe => pbe.Reset())
                                                         .Build())
-               .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT)
-                                                        .WithProtobufSerializer()
-                                                        .WithPool(
-                                                             onGet: SDKComponentBuilderExtensions.SetAsDirty,
-                                                             onRelease: pbe => pbe.Reset())
-                                                        .Build())
+               .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBCameraMode>.Create(ComponentID.CAMERA_MODE).AsProtobufResult())
                .Add(SDKComponentBuilder<PBPointerLock>.Create(ComponentID.POINTER_LOCK).AsProtobufResult())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())

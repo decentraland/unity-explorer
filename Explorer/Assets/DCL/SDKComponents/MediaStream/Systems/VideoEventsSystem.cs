@@ -50,20 +50,25 @@ namespace DCL.SDKComponents.MediaStream
             if (mediaPlayer.State == newState) return;
             mediaPlayer.State = newState;
 
-            ecsToCRDTWriter.AppendMessage<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)>
-                (PrepareMessage(), sdkEntity, (int)sceneStateProvider.TickNumber, (mediaPlayer, sceneStateProvider.TickNumber));
+            AppendMessage(in sdkEntity, in mediaPlayer);
         }
 
-        private static Action<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)> PrepareMessage() =>
-            static (pbVideoEvent, data) =>
-            {
-                pbVideoEvent.State = data.mediaPlayer.State;
-                pbVideoEvent.CurrentOffset = data.mediaPlayer.CurrentTime;
-                pbVideoEvent.VideoLength = data.mediaPlayer.Duration;
+        private void AppendMessage(in CRDTEntity sdkEntity, in MediaPlayerComponent mediaPlayer)
+        {
+            ecsToCRDTWriter.AppendMessage<PBVideoEvent, (MediaPlayerComponent mediaPlayer, uint timestamp)>
+            (
+                prepareMessage: static (pbVideoEvent, data) =>
+                {
+                    pbVideoEvent.State = data.mediaPlayer.State;
+                    pbVideoEvent.CurrentOffset = data.mediaPlayer.CurrentTime;
+                    pbVideoEvent.VideoLength = data.mediaPlayer.Duration;
 
-                pbVideoEvent.Timestamp = data.timestamp;
-                pbVideoEvent.TickNumber = data.timestamp;
-            };
+                    pbVideoEvent.Timestamp = data.timestamp;
+                    pbVideoEvent.TickNumber = data.timestamp;
+                },
+                sdkEntity, (int)sceneStateProvider.TickNumber, (mediaPlayer, sceneStateProvider.TickNumber)
+            );
+        }
 
         private static VideoState GetCurrentVideoState(IMediaControl mediaPlayerControl)
         {
