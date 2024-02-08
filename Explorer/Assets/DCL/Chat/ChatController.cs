@@ -55,6 +55,7 @@ namespace DCL.Chat
         private void CreateChatEntry()
         {
             ChatEntryView entryView = Object.Instantiate(chatEntryView, viewInstance.MessagesContainer);
+            entryView.AnimateChatEntry();
             entryView.Initialise(chatEntryConfiguration);
             entryView.SetUsername("User" + UnityEngine.Random.Range(0, 3), UnityEngine.Random.Range(0, 2) == 0 ? "" : "#asd38");
             entryView.entryText.text = GenerateRandomString(UnityEngine.Random.Range(5, 200));

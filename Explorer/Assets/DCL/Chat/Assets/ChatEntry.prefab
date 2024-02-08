@@ -259,6 +259,7 @@ GameObject:
   - component: {fileID: 9018837941637533574}
   - component: {fileID: 513910466895926226}
   - component: {fileID: 8943803053245930008}
+  - component: {fileID: 5513943395200512250}
   m_Layer: 5
   m_Name: ChatEntry
   m_TagString: Untagged
@@ -334,6 +335,19 @@ MonoBehaviour:
   <verifiedIcon>k__BackingField: {fileID: 5705731037816071643}
   <layoutGroup>k__BackingField: {fileID: 513910466895926226}
   <entryBackground>k__BackingField: {fileID: 7479161234860519628}
+  <chatEntryCanvasGroup>k__BackingField: {fileID: 5513943395200512250}
+--- !u!225 &5513943395200512250
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627172424029066339}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2270652527657414444
 GameObject:
   m_ObjectHideFlags: 0

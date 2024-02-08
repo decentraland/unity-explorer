@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,9 @@ namespace DCL.Chat
         [field: SerializeField]
         internal Image entryBackground { get; private set; }
 
+        [field: SerializeField]
+        internal CanvasGroup chatEntryCanvasGroup { get; private set; }
+
         private ChatEntryConfigurationSO entryConfiguration;
 
         public void Initialise(ChatEntryConfigurationSO chatEntryConfiguration)
@@ -50,6 +54,12 @@ namespace DCL.Chat
             entryBackground.sprite = sentByUser ? entryConfiguration.ownUsersBackground : entryConfiguration.otherUsersBackground;
             entryBackground.color = sentByUser ? entryConfiguration.ownUsersEntryColor : entryConfiguration.otherUsersEntryColor;
             verifiedIcon.sprite = sentByUser ? entryConfiguration.ownUserVerifiedIcon : entryConfiguration.otherUsersVerifiedIcon;
+        }
+
+        public void AnimateChatEntry()
+        {
+            chatEntryCanvasGroup.alpha = 0;
+            chatEntryCanvasGroup.DOFade(1, 0.5f);
         }
     }
 }
