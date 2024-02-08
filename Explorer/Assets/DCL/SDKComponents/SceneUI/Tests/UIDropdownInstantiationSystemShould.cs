@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.ECSToCRDTWriter;
+﻿using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
@@ -21,6 +22,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private IECSToCRDTWriter ecsToCRDTWriter;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
+        private PBUiDropdown input;
 
         [SetUp]
         public void SetUp()
@@ -35,18 +37,19 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
+            world.Add(entity, new CRDTEntity(500));
+
+            input = new PBUiDropdown();
+            input.Options.Add("TestOption1");
+            input.Options.Add("TestOption2");
+            input.Options.Add("TestOption3");
+            world.Add(entity, input);
+            system.Update(0);
         }
 
         [Test]
         public void InstantiateUIDropdown()
         {
-            // Arrange
-            var input = new PBUiDropdown();
-
-            // Act
-            world.Add(entity, input);
-            system.Update(0);
-
             // Assert
             ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
             Assert.AreEqual(UiElementUtils.BuildElementName("UIDropdown", entity), uiDropdownComponent.DropdownField.name);
@@ -62,9 +65,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public void UpdateUIDropdown()
         {
             // Arrange
-            var input = new PBUiDropdown();
-            world.Add(entity, input);
-            system.Update(0);
             const int NUMBER_OF_UPDATES = 3;
 
             for (var i = 0; i < NUMBER_OF_UPDATES; i++)
@@ -82,6 +82,32 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Assert.IsTrue(input.GetFontSize() == uiDropdownComponent.DropdownField.style.fontSize);
                 Assert.IsTrue(input.GetTextAlign() == uiDropdownComponent.TextElement.style.unityTextAlign);
             }
+        }
+
+        [Test]
+        public void TriggerDropdownResults()
+        {
+            // Arrange
+            input.IsDirty = true;
+            system.Update(0);
+            const int TEST_INDEX = 1;
+            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
+            uiDropdownComponent.DropdownField.index = TEST_INDEX;
+            uiDropdownComponent.IsOnValueChangedTriggered = true;
+            system.Update(0);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).PutMessage(
+                new PBUiDropdownResult
+                {
+                    Value = TEST_INDEX,
+                    IsDirty = false,
+                },
+                Arg.Any<CRDTEntity>());
+            Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);
         }
     }
 }

@@ -92,20 +92,31 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public void TriggerInputResults(bool isSubmit)
         {
             // Arrange
-            var input = new PBUiInput();
+            const string TEST_VALUE = "Test text";
+            var input = new PBUiInput
+            {
+                Value = TEST_VALUE,
+                IsDirty = true,
+            };
             world.Add(entity, input);
-            input.Value = $"Test text";
-            input.IsDirty = true;
             system.Update(0);
 
-            // Act
             ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
             uiInputComponent.IsOnValueChangedTriggered = !isSubmit;
             uiInputComponent.IsOnSubmitTriggered = isSubmit;
+
+            // Act
             system.Update(0);
 
             // Assert
-            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<PBUiInputResult>(), Arg.Any<CRDTEntity>());
+            ecsToCRDTWriter.Received(1).PutMessage(
+                new PBUiInputResult
+                {
+                    IsSubmit = isSubmit,
+                    Value = TEST_VALUE,
+                    IsDirty = false,
+                },
+                Arg.Any<CRDTEntity>());
             Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
             Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
         }
