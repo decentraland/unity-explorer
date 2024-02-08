@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using DCL.Ipfs;
+using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System;
 using System.Threading;
@@ -14,9 +15,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly IpfsTypes.IpfsPath IpfsPath;
+        public readonly IpfsPath IpfsPath;
 
-        public GetSceneDefinition(CommonLoadingArguments commonArguments, IpfsTypes.IpfsPath ipfsPath)
+        public GetSceneDefinition(CommonLoadingArguments commonArguments, IpfsPath ipfsPath)
         {
             CommonArguments = commonArguments;
             IpfsPath = ipfsPath;

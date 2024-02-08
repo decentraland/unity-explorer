@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -11,7 +10,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     public class IpfsRealm : IIpfsRealm, IEquatable<IpfsRealm>
     {
@@ -30,7 +29,7 @@ namespace Ipfs
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            URLDomain realmName, IpfsTypes.ServerAbout? serverAbout = null)
+            URLDomain realmName, ServerAbout? serverAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -74,12 +73,12 @@ namespace Ipfs
         public override int GetHashCode() =>
             ContentBaseUrl.GetHashCode();
 
-        public async UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             string entityJson = JsonUtility.ToJson(entity);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
             string entityId = entityFile.IpfsHashV1();
-            AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
+            using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
             var form = new WWWForm();
 
