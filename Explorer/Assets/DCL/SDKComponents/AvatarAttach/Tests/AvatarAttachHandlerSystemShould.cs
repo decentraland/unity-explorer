@@ -6,7 +6,6 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Systems;
-using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -42,10 +41,9 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             );
 
             // Setup system
-            var worldProxy = new WorldProxy();
-            worldProxy.SetWorld(globalWorld);
-            worldProxy.SetMainPlayerEntity(playerEntity);
-            system = new AvatarAttachHandlerSystem(world, worldProxy);
+            var mainPlayerAvatarBase = new MainPlayerAvatarBase();
+            mainPlayerAvatarBase.SetAvatarBase(playerAvatarBase);
+            system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             entityTransformComponent = AddTransformToEntity(entity);

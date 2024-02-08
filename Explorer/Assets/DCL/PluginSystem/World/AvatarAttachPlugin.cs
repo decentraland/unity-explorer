@@ -1,9 +1,9 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarAttach.Systems;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -13,11 +13,11 @@ namespace DCL.PluginSystem.World
 {
     public class AvatarAttachPlugin : IDCLWorldPlugin
     {
-        private readonly WorldProxy globalWorld;
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
 
-        public AvatarAttachPlugin(WorldProxy globalWorld)
+        public AvatarAttachPlugin(MainPlayerAvatarBase mainPlayerAvatarBase)
         {
-            this.globalWorld = globalWorld;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
-            var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, globalWorld);
+            var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBase);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
         }
 

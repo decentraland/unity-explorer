@@ -6,7 +6,6 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Components;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -23,16 +22,17 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     {
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
         private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarAttachComponent>().WithNone<DeleteEntityIntention, PBAvatarAttach>();
-        private static AvatarBase mainPlayerAvatarBase;
-        private readonly WorldProxy globalWorld;
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
 
-        public AvatarAttachHandlerSystem(World world, WorldProxy globalWorld) : base(world)
+        public AvatarAttachHandlerSystem(World world, MainPlayerAvatarBase mainPlayerAvatarBase) : base(world)
         {
-            this.globalWorld = globalWorld;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
         }
 
         protected override void Update(float t)
         {
+            if (!mainPlayerAvatarBase.Configured) return;
+
             SetupAvatarAttachQuery(World);
             UpdateAvatarAttachTransformQuery(World);
 
@@ -44,11 +44,6 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         [None(typeof(AvatarAttachComponent))]
         private void SetupAvatarAttach(in Entity entity, ref TransformComponent transformComponent, ref PBAvatarAttach pbAvatarAttach)
         {
-            if (mainPlayerAvatarBase == null)
-                mainPlayerAvatarBase = globalWorld.GetWorld()?.Get<AvatarBase>(globalWorld.GetMainPlayerEntity());
-
-            if (mainPlayerAvatarBase == null) return;
-
             var component = new AvatarAttachComponent
             {
                 anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId),
@@ -63,8 +58,6 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         [Query]
         private void UpdateAvatarAttachTransform(ref PBAvatarAttach pbAvatarAttach, ref AvatarAttachComponent avatarAttachComponent, ref TransformComponent transformComponent)
         {
-            if (mainPlayerAvatarBase == null) return;
-
             if (pbAvatarAttach.IsDirty)
                 avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
 
@@ -89,12 +82,12 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             switch (anchorPointType)
             {
                 case AvatarAnchorPointType.AaptLeftHand:
-                    return mainPlayerAvatarBase.LeftHandAnchorPoint;
+                    return mainPlayerAvatarBase.AvatarBase.LeftHandAnchorPoint;
                 case AvatarAnchorPointType.AaptRightHand:
-                    return mainPlayerAvatarBase.RightHandAnchorPoint;
+                    return mainPlayerAvatarBase.AvatarBase.RightHandAnchorPoint;
                 case AvatarAnchorPointType.AaptNameTag:
                 default: // AvatarAnchorPointType.AaptPosition
-                    return mainPlayerAvatarBase.transform;
+                    return mainPlayerAvatarBase.AvatarBase.transform;
             }
         }
 

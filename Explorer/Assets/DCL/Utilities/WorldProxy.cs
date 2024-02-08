@@ -5,22 +5,13 @@ namespace DCL.Utilities
     public class WorldProxy
     {
         private World? world;
-        private Entity mainPlayerEntity;
 
         public World? GetWorld() =>
             world;
 
-        public Entity GetMainPlayerEntity() =>
-            mainPlayerEntity;
-
         public void SetWorld(World newWorld)
         {
             world = newWorld;
-        }
-
-        public void SetMainPlayerEntity(Entity playerEntity)
-        {
-            mainPlayerEntity = playerEntity;
         }
 
         public void Add<T>(Entity entity, in T component)
