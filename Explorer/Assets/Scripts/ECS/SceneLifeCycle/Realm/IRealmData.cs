@@ -1,4 +1,5 @@
-﻿using Ipfs;
+﻿using DCL.Ipfs;
+using Ipfs;
 
 namespace ECS
 {

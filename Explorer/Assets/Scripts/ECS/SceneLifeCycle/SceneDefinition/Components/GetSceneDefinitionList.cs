@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using DCL.Ipfs;
+using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System;
 using System.Collections.Generic;
@@ -21,9 +22,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         /// <summary>
         ///     Reusable collection the results are placed in
         /// </summary>
-        public readonly List<IpfsTypes.SceneEntityDefinition> TargetCollection;
+        public readonly List<SceneEntityDefinition> TargetCollection;
 
-        public GetSceneDefinitionList(List<IpfsTypes.SceneEntityDefinition> targetCollection,
+        public GetSceneDefinitionList(List<SceneEntityDefinition> targetCollection,
             IReadOnlyList<int2> pointers,
             CommonLoadingArguments commonArguments)
         {

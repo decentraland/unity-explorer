@@ -3482,6 +3482,8 @@ MonoBehaviour:
   <HeadLookAtTargetHorizontal>k__BackingField: {fileID: 649947946792223910}
   <HeadLookAtTargetVertical>k__BackingField: {fileID: 5233882474765970618}
   <HeadPositionConstraint>k__BackingField: {fileID: 3708642057345503796}
+  <LeftHandAnchorPoint>k__BackingField: {fileID: 8257500666133283372}
+  <RightHandAnchorPoint>k__BackingField: {fileID: 481221082041237366}
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0

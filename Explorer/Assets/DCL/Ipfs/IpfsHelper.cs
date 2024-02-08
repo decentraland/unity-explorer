@@ -2,7 +2,7 @@ using CommunicationData.URLHelpers;
 using System;
 using UnityEngine;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     public static class IpfsHelper
     {
@@ -21,7 +21,7 @@ namespace Ipfs
 
         // Example:
         // urn:decentraland:entity:bafkreia2eo3hbl74iddvaxbx7wuzdjjhbvdyyrywsviamdejppza6vrl4y?=&baseUrl=https://sdk-team-cdn.decentraland.org/ipfs/
-        public static IpfsTypes.IpfsPath ParseUrn(string urn)
+        public static IpfsPath ParseUrn(string urn)
         {
             const string BASE_URL_TOKEN = "baseUrl=";
 
@@ -61,7 +61,7 @@ namespace Ipfs
                 baseUrl = string.Empty;
             }
 
-            return new IpfsTypes.IpfsPath(entityId, URLDomain.FromString(baseUrl));
+            return new IpfsPath(entityId, URLDomain.FromString(baseUrl));
         }
     }
 }

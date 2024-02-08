@@ -32,29 +32,31 @@ namespace DCL.PluginSystem.Global
         private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<PBAvatarShape>().WithNone<PlayerComponent>();
 
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
-        private readonly CacheCleaner cacheCleaner;
-        private readonly IPerformanceBudget memoryBudget;
-
-        private IComponentPool<Transform> transformPoolRegistry;
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
         private IExtendedObjectPool<Material> celShadingMaterialPool;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
+        private IComponentPool<Transform> transformPoolRegistry;
+
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
             IPerformanceBudget frameTimeCapBudget, IPerformanceBudget memoryBudget,
-            IRealmData realmData, IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
+            IRealmData realmData, MainPlayerAvatarBase mainPlayerAvatarBase, IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.memoryBudget = memoryBudget;
@@ -76,6 +78,33 @@ namespace DCL.PluginSystem.Global
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
+            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
+
+            var skinningStrategy = new ComputeShaderSkinning();
+
+            AvatarLoaderSystem.InjectToWorld(ref builder);
+
+            cacheCleaner.Register(avatarPoolRegistry);
+            cacheCleaner.Register(celShadingMaterialPool);
+            cacheCleaner.Register(computeShaderPool);
+
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
+                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBase);
+
+            MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
+
+            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
+
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
+
+            //Debug scripts
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -117,33 +146,6 @@ namespace DCL.PluginSystem.Global
                 ComputeShader prewarmedShader = computeShaderPool.Get();
                 computeShaderPool.Release(prewarmedShader);
             }
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
-            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
-
-            var skinningStrategy = new ComputeShaderSkinning();
-
-            AvatarLoaderSystem.InjectToWorld(ref builder);
-
-            cacheCleaner.Register(avatarPoolRegistry);
-            cacheCleaner.Register(celShadingMaterialPool);
-            cacheCleaner.Register(computeShaderPool);
-
-            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
-                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer);
-
-            MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
-
-            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
-            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
-
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
-
-            //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
         }
 
         [Serializable]
