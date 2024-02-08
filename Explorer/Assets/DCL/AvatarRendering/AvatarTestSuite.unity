@@ -4874,6 +4874,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: a68677c2f85c44499a11cd796b80ed76, type: 2}
+    - target: {fileID: 4263661560934156824, guid: f82fef03ea1e7174696052f2b729efbc, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 2f565e5b4f0e58645b013260a123da19, type: 2}
     - target: {fileID: 6635245195314443262, guid: f82fef03ea1e7174696052f2b729efbc, type: 3}
       propertyPath: m_Name
       value: avatar_09
@@ -18849,7 +18853,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8771091788907233078}
-  m_LocalRotation: {x: -0, y: -0.14576107, z: -0, w: 0.9893198}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -46, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -18859,7 +18863,7 @@ Transform:
   - {fileID: 2157912321990191603}
   m_Father: {fileID: 788873971}
   m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: -16.763, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5316342637177100620
 GameObject:
   m_ObjectHideFlags: 0
