@@ -60,8 +60,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
                    };
         }
 
-        public static void RegisterPointerCallbacks(this UITransformComponent uiTransformComponent, EventCallback<PointerDownEvent> newOnPointerDownCallback, EventCallback<PointerUpEvent> newOnPointerUpCallback)
+        public static void RegisterPointerCallbacks(this UITransformComponent uiTransformComponent)
         {
+            EventCallback<PointerDownEvent> newOnPointerDownCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetDown;
+            EventCallback<PointerUpEvent> newOnPointerUpCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetUp;
+
+            uiTransformComponent.UnregisterPointerCallbacks();
             uiTransformComponent.Transform.RegisterCallback(newOnPointerDownCallback);
             uiTransformComponent.currentOnPointerDownCallback = newOnPointerDownCallback;
             uiTransformComponent.Transform.RegisterCallback(newOnPointerUpCallback);

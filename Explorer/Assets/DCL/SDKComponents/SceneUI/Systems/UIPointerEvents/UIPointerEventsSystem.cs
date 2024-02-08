@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -43,7 +44,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         private void TriggerPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
         {
             if (!sdkModel.IsDirty)
+            {
                 uiTransformComponent.Transform.pickingMode = PickingMode.Position;
+                uiTransformComponent.RegisterPointerCallbacks();
+            }
 
             sdkModel.IsDirty = false;
 
@@ -86,7 +90,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
 
-        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
+            uiTransformComponent.UnregisterPointerCallbacks();
+        }
     }
 }

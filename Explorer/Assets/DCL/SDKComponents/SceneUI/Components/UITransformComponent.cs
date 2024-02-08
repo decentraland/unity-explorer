@@ -27,11 +27,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             Children = HashSetPool<EntityReference>.Get();
             IsHidden = false;
             RightOf = sdkModel.RightOf;
-
             PointerEventTriggered = null;
-            this.RegisterPointerCallbacks(
-                _ => PointerEventTriggered = PointerEventType.PetDown,
-                _ => PointerEventTriggered = PointerEventType.PetUp);
         }
 
         public void Dispose()
