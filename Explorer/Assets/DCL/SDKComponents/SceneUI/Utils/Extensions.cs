@@ -60,8 +60,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
                    };
         }
 
-        public static void RegisterPointerCallbacks(this UITransformComponent uiTransformComponent, EventCallback<PointerDownEvent> newOnPointerDownCallback, EventCallback<PointerUpEvent> newOnPointerUpCallback)
+        public static void RegisterPointerCallbacks(this UITransformComponent uiTransformComponent)
         {
+            EventCallback<PointerDownEvent> newOnPointerDownCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetDown;
+            EventCallback<PointerUpEvent> newOnPointerUpCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetUp;
+
+            uiTransformComponent.UnregisterPointerCallbacks();
             uiTransformComponent.Transform.RegisterCallback(newOnPointerDownCallback);
             uiTransformComponent.currentOnPointerDownCallback = newOnPointerDownCallback;
             uiTransformComponent.Transform.RegisterCallback(newOnPointerUpCallback);
@@ -72,17 +76,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
         {
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerDownCallback);
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
-        }
-
-        public static void RegisterPointerEvents(this UITransformComponent uiTransformComponent, RepeatedField<PBPointerEvents.Types.Entry> pointerEvents)
-        {
-            if (uiTransformComponent.RegisteredPointerEvents == null)
-                uiTransformComponent.RegisteredPointerEvents = new RepeatedField<PBPointerEvents.Types.Entry>();
-            else
-                uiTransformComponent.RegisteredPointerEvents.Clear();
-
-            if (pointerEvents != null)
-                uiTransformComponent.RegisteredPointerEvents.AddRange(pointerEvents);
         }
 
         public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, EventCallback<ChangeEvent<string>> newOnChangeCallback, EventCallback<KeyDownEvent> newOnSubmitCallback)

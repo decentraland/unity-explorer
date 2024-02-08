@@ -51,6 +51,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
 
+        // Anchor points to attach entities to, through the SDK
+        [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
+
         public void SetAnimatorFloat(int hash, float value)
         {
             avatarAnimator.SetFloat(hash, value);

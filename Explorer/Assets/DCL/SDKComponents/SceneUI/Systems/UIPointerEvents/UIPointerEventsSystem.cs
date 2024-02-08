@@ -34,7 +34,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
-            RegisterPointerEventsQuery(World);
             TriggerPointerEventsQuery(World);
 
             HandleEntityDestructionQuery(World);
@@ -42,25 +41,21 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         }
 
         [Query]
-        private void RegisterPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent)
+        private void TriggerPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
         {
             if (!sdkModel.IsDirty)
-                return;
-
-            uiTransformComponent.RegisterPointerEvents(sdkModel.PointerEvents);
-            uiTransformComponent.Transform.pickingMode = PickingMode.Position;
+            {
+                uiTransformComponent.Transform.pickingMode = PickingMode.Position;
+                uiTransformComponent.RegisterPointerCallbacks();
+            }
 
             sdkModel.IsDirty = false;
-        }
 
-        [Query]
-        private void TriggerPointerEvents(ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
-        {
             if (uiTransformComponent.PointerEventTriggered == null)
                 return;
 
             // Check if the component has any pointer events associated
-            foreach (var pEvent in uiTransformComponent.RegisteredPointerEvents)
+            foreach (var pEvent in sdkModel.PointerEvents)
             {
                 if (pEvent.EventType != uiTransformComponent.PointerEventTriggered)
                     continue;
@@ -97,8 +92,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
         {
-            uiTransformComponent.RegisterPointerEvents(null);
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
+            uiTransformComponent.UnregisterPointerCallbacks();
         }
     }
 }
