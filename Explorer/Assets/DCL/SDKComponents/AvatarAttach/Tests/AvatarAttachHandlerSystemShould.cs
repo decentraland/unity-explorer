@@ -12,6 +12,7 @@ using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -24,6 +25,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         private TransformComponent entityTransformComponent;
         private World globalWorld;
         private AvatarBase playerAvatarBase;
+        private ISceneStateProvider sceneStateProvider;
 
         [SetUp]
         public async void Setup()
@@ -41,9 +43,11 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             );
 
             // Setup system
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
             var mainPlayerAvatarBase = new MainPlayerAvatarBase();
             mainPlayerAvatarBase.SetAvatarBase(playerAvatarBase);
-            system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase);
+            system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase, sceneStateProvider);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             entityTransformComponent = AddTransformToEntity(entity);
@@ -276,6 +280,43 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             system.Update(0);
             Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+        }
+
+        [Test]
+        public async Task UpdateTransformOnlyWhenPlayerIsInCurrentScene()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+
+            system.Update(0);
+            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+
+            // Simulate leaving the scene
+            sceneStateProvider.IsCurrent.Returns(false);
+            playerAvatarBase.transform.position += Vector3.one * 5;
+            playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
+            system.Update(0);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+
+            playerAvatarBase.transform.position += Vector3.one * 5;
+            system.Update(0);
+            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
+
+            // Simulate re-entering the scene
+            sceneStateProvider.IsCurrent.Returns(true);
+            playerAvatarBase.transform.position += Vector3.one * 5;
+            system.Update(0);
+            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
     }
 }
