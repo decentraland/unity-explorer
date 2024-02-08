@@ -107,5 +107,23 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit);
         }
+
+        public static void RegisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
+        {
+            EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
+            {
+                evt.StopPropagation();
+                uiDropdownComponent.IsOnValueChangedTriggered = true;
+            };
+
+            uiDropdownComponent.UnregisterDropdownCallbacks();
+            uiDropdownComponent.DropdownField.RegisterCallback(newOnChangeCallback);
+            uiDropdownComponent.currentOnValueChanged = newOnChangeCallback;
+        }
+
+        public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiInputComponent)
+        {
+            uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+        }
     }
 }

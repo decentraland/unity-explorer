@@ -112,6 +112,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBUiDropdownResult : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBVideoPlayer : IDirtyMarker
     {
         public bool IsDirty { get; set; }

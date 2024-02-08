@@ -170,7 +170,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.Placeholder.Refresh();
         }
 
-        public static void SetupDCLDropdown(ref DCLDropdown dropdownToSetup, ref PBUiDropdown model)
+        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
         {
             dropdownToSetup.DropdownField.style.fontSize = model.GetFontSize();
             dropdownToSetup.DropdownField.style.color = model.GetColor();
@@ -213,7 +213,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             ReleaseUIElement(input.TextField);
         }
 
-        public static void ReleaseDCLDropdown(DCLDropdown dropdown)
+        public static void ReleaseUIDropdownComponent(UIDropdownComponent dropdown)
         {
             dropdown.Dispose();
             ReleaseUIElement(dropdown.DropdownField);

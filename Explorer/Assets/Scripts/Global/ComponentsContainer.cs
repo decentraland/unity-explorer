@@ -44,6 +44,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBUiInput>.Create(ComponentID.UI_INPUT).AsProtobufComponent(true))
                .Add(SDKComponentBuilder<PBUiInputResult>.Create(ComponentID.UI_INPUT_RESULT).AsProtobufComponent(true))
                .Add(SDKComponentBuilder<PBUiDropdown>.Create(ComponentID.UI_DROPDOWN).AsProtobufComponent(true))
+               .Add(SDKComponentBuilder<PBUiDropdownResult>.Create(ComponentID.UI_DROPDOWN_RESULT).AsProtobufComponent(true))
 
                 // Special logic for pooling/releasing PBRaycastResult
                .Add(SDKComponentBuilder<PBRaycastResult>.Create(ComponentID.RAYCAST_RESULT)
