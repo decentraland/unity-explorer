@@ -75,7 +75,6 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<UIInputComponent, UIInputComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLDropdown, UIDropdownComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 

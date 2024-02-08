@@ -78,8 +78,24 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
         }
 
-        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, EventCallback<ChangeEvent<string>> newOnChangeCallback, EventCallback<KeyDownEvent> newOnSubmitCallback)
+        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent)
         {
+            EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
+            {
+                evt.StopPropagation();
+                uiInputComponent.IsOnValueChangedTriggered = true;
+            };
+
+            EventCallback<KeyDownEvent> newOnSubmitCallback = evt =>
+            {
+                if (evt.keyCode != KeyCode.Return && evt.keyCode != KeyCode.KeypadEnter)
+                    return;
+
+                evt.StopPropagation();
+                uiInputComponent.IsOnSubmitTriggered = true;
+            };
+
+            uiInputComponent.UnregisterInputCallbacks();
             uiInputComponent.TextField.RegisterCallback(newOnChangeCallback);
             uiInputComponent.currentOnValueChanged = newOnChangeCallback;
             uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback);

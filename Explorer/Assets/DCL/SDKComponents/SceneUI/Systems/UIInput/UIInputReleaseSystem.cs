@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -47,6 +48,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         {
             if (componentPool != null)
                 componentPool.Release(uiInputComponent);
+
+            uiInputComponent.UnregisterInputCallbacks();
         }
     }
 }

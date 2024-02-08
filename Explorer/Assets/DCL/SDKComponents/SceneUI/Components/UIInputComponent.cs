@@ -1,21 +1,15 @@
-﻿using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
+﻿using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Utils;
-using System;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
-    public class UIInputComponent: IPoolableComponentProvider<UIInputComponent>
+    public class UIInputComponent
     {
         public readonly TextField TextField = new ();
         public readonly TextFieldPlaceholder Placeholder = new ();
         public bool IsOnValueChangedTriggered;
         public bool IsOnSubmitTriggered;
-
-        UIInputComponent IPoolableComponentProvider<UIInputComponent>.PoolableComponent => this;
-        Type IPoolableComponentProvider<UIInputComponent>.PoolableComponentType => typeof(UIInputComponent);
 
         internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
         internal EventCallback<KeyDownEvent> currentOnSubmit;
@@ -29,20 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             IsOnValueChangedTriggered = false;
             IsOnSubmitTriggered = false;
-            this.RegisterInputCallbacks(
-                evt =>
-                {
-                    evt.StopPropagation();
-                    IsOnValueChangedTriggered = true;
-                },
-                evt =>
-                {
-                    if (evt.keyCode != KeyCode.Return && evt.keyCode != KeyCode.KeypadEnter)
-                        return;
-
-                    evt.StopPropagation();
-                    IsOnSubmitTriggered = true;
-                });
+            this.RegisterInputCallbacks();
         }
 
         public void Dispose()
