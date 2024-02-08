@@ -30,7 +30,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));
+        }
 
+        [Test]
+        [TestCase(PointerEventType.PetDown)]
+        [TestCase(PointerEventType.PetUp)]
+        public void TriggerPointerEvents(PointerEventType eventType)
+        {
+            // Arrange
             var input = new PBPointerEvents { IsDirty = true };
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
@@ -44,31 +51,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
             });
 
             world.Add(entity, input);
-        }
 
-        [Test]
-        public void RegisterPointerEvents()
-        {
             // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsTrue(uiTransformComponent.RegisteredPointerEvents.Count == 2);
-            Assert.AreEqual(PickingMode.Position, uiTransformComponent.Transform.pickingMode);
-        }
-
-        [Test]
-        [TestCase(PointerEventType.PetDown)]
-        [TestCase(PointerEventType.PetUp)]
-        public void TriggerPointerEvents(PointerEventType eventType)
-        {
-            // Arrange
             uiTransformComponent.PointerEventTriggered = eventType;
-
-            // Act
             system.Update(0);
 
             // Assert
+            Assert.AreEqual(PickingMode.Position, uiTransformComponent.Transform.pickingMode);
             ecsToCRDTWriter.Received(1).AppendMessage(
                 Arg.Any<Action<PBPointerEventsResult, (RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>>(),
                 Arg.Any<CRDTEntity>(),

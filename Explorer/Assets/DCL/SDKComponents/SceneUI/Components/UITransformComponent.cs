@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Utils;
-using Google.Protobuf.Collections;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
@@ -15,12 +14,10 @@ namespace DCL.SDKComponents.SceneUI.Components
         public HashSet<EntityReference> Children;
         public bool IsHidden;
         public int RightOf;
+        public PointerEventType? PointerEventTriggered;
 
         internal EventCallback<PointerDownEvent> currentOnPointerDownCallback;
         internal EventCallback<PointerUpEvent> currentOnPointerUpCallback;
-
-        public PointerEventType? PointerEventTriggered;
-        public RepeatedField<PBPointerEvents.Types.Entry> RegisteredPointerEvents { get; internal set; }
 
         public void Initialize(string componentName, Entity entity, ref PBUiTransform sdkModel)
         {
@@ -35,7 +32,6 @@ namespace DCL.SDKComponents.SceneUI.Components
             this.RegisterPointerCallbacks(
                 _ => PointerEventTriggered = PointerEventType.PetDown,
                 _ => PointerEventTriggered = PointerEventType.PetUp);
-            this.RegisterPointerEvents(null);
         }
 
         public void Dispose()
