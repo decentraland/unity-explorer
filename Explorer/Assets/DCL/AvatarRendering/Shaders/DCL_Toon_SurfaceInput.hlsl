@@ -1,11 +1,10 @@
-#ifndef UNIVERSAL_INPUT_SURFACE_INCLUDED
-#define UNIVERSAL_INPUT_SURFACE_INCLUDED
+#ifndef TOON_INPUT_SURFACE_INCLUDED
+#define TOON_INPUT_SURFACE_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceData.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-#include "DCL_ToonInput.hlsl"
 
 ///////////////////////////////////////////////////////////////////////////////
 //                      Material Property Helpers                            //
@@ -26,7 +25,7 @@ half Alpha(half albedoAlpha, half4 color, half cutoff)
 half4 SampleAlbedoAlpha(float2 uv)
 {
     int nBaseMapArrID = _BaseMapArr_ID;
-    return half4(SAMPLE_BASEMAP(uv, nBaseMapArrID));
+    return half4(SAMPLE_BASEMAP(uv,nBaseMapArrID));
 }
 
 half3 SampleNormal(float2 uv, half scale = half(1.0))
@@ -50,7 +49,7 @@ half3 SampleEmission(float2 uv, half3 emissionColor)
         return 0;
     #else
         int nEmissionMapArrID = _EmissionMapArr_ID;
-        return SAMPLE_EMISSIONMAP(uv, nEmissionMapArrID).rgb * emissionColor;
+        return SAMPLE_EMISSIONMAP(uv,nEmissionMapArrID).rgb * emissionColor;
     #endif
 }
 

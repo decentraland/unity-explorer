@@ -65,15 +65,9 @@ Shader "DCL/DCL_Toon"
         _Clipping_Level("Clipping_Level", Range(0, 1)) = 0
         _Tweak_transparency("Tweak_transparency", Range(-1, 1)) = 0
         // ClippingMask paramaters to Here.
-
-
+        
         //[Enum(OFF,0,FRONT,1,BACK,2)] _CullMode("Cull Mode", int) = 2  //OFF/FRONT/BACK
-
-
-
-
-
-
+        
         _MainTex ("BaseMap", 2D) = "white" {}
         _BaseMap ("BaseMap", 2D) = "white" {}
         _BaseColor ("BaseColor", Color) = (1,1,1,1)
@@ -1313,7 +1307,7 @@ Shader "DCL/DCL_Toon"
             #pragma fragment ShadowPassFragment
 
             #include "DCL_ToonInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            #include "DCL_ToonShadowCasterPass.hlsl"
             ENDHLSL
         }
 
@@ -1345,7 +1339,7 @@ Shader "DCL/DCL_Toon"
 
 
             #include "DCL_ToonInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            #include "DCL_ToonDepthOnlyPass.hlsl"
             ENDHLSL
         }
         // This pass is used when drawing to a _CameraNormalsTexture texture
@@ -1379,7 +1373,7 @@ Shader "DCL/DCL_Toon"
 
 
             #include "DCL_ToonInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+            #include "DCL_ToonDepthNormalsPass.hlsl"
 
             ENDHLSL
         }

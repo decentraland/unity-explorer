@@ -1,9 +1,9 @@
-#ifndef UNIVERSAL_TOON_INPUT_INCLUDED
-#define UNIVERSAL_TOON_INPUT_INCLUDED
+#ifndef DCL_TOON_INPUT_INCLUDED
+#define DCL_TOON_INPUT_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-#include "DCL_Toon_SurfaceInput.hlsl"
+
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 UNITY_DEFINE_INSTANCED_PROP(float, _utsTechnique)
@@ -141,6 +141,30 @@ UNITY_DEFINE_INSTANCED_PROP(half, _OcclusionStrength)
 UNITY_DEFINE_INSTANCED_PROP(half, _Surface)
 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_TexelSize)
 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_MipInfo)
+UNITY_DEFINE_INSTANCED_PROP(int, _MainTexArr_ID) 
+UNITY_DEFINE_INSTANCED_PROP(int, _1st_ShadeMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _2nd_ShadeMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _NormalMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Set_1st_ShadePositionArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Set_2nd_ShadePositionArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _ShadingGradeMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _HighColor_TexArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Set_HighColorMaskArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Set_RimLightMaskArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _MatCap_SamplerArr_ID) 
+UNITY_DEFINE_INSTANCED_PROP(int, _NormalMapForMatCapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Set_MatcapMaskArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Emissive_TexArr_ID) 
+UNITY_DEFINE_INSTANCED_PROP(int, _ClippingMaskArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _AngelRing_SamplerArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _Outline_SamplerArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _OutlineTexArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _BakedNormalArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _OcclusionMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _MetallicGlossMapArr_ID) 
+UNITY_DEFINE_INSTANCED_PROP(int, _BaseMapArr_ID) 
+UNITY_DEFINE_INSTANCED_PROP(int, _BumpMapArr_ID) 
+UNITY_DEFINE_INSTANCED_PROP(int, _EmissionMapArr_ID)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define _utsTechnique                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _utsTechnique)
@@ -278,11 +302,31 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _Surface                            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Surface)
 #define _BaseMap_TexelSize                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_TexelSize)
 #define _BaseMap_MipInfo                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_MipInfo)
+#define _MainTexArr_ID                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTexArr_ID)
+#define _1st_ShadeMapArr_ID                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _1st_ShadeMapArr_ID)
+#define _2nd_ShadeMapArr_ID                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _2nd_ShadeMapArr_ID)
+#define _NormalMapArr_ID                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMapArr_ID)
+#define _Set_1st_ShadePositionArr_ID        UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_1st_ShadePositionArr_ID)
+#define _Set_2nd_ShadePositionArr_ID        UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_2nd_ShadePositionArr_ID)
+#define _ShadingGradeMapArr_ID              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ShadingGradeMapArr_ID)
+#define _HighColor_TexArr_ID                UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighColor_TexArr_ID)
+#define _Set_HighColorMaskArr_ID            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_HighColorMaskArr_ID)
+#define _Set_RimLightMaskArr_ID             UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_RimLightMaskArr_ID)
+#define _MatCap_SamplerArr_ID               UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MatCap_SamplerArr_ID)
+#define _NormalMapForMatCapArr_ID           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMapForMatCapArr_ID)
+#define _Set_MatcapMaskArr_ID               UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Set_MatcapMaskArr_ID)
+#define _Emissive_TexArr_ID                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emissive_TexArr_ID)
+#define _ClippingMaskArr_ID                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ClippingMaskArr_ID)
+#define _AngelRing_SamplerArr_ID            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _AngelRing_SamplerArr_ID)
+#define _Outline_SamplerArr_ID              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Outline_SamplerArr_ID)
+#define _OutlineTexArr_ID                   UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OutlineTexArr_ID)
+#define _BakedNormalArr_ID                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BakedNormalArr_ID)
+#define _OcclusionMapArr_ID                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OcclusionMapArr_ID)
+#define _MetallicGlossMapArr_ID             UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicGlossMapArr_ID)
+#define _BaseMapArr_ID                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMapArr_ID)
+#define _BumpMapArr_ID                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpMapArr_ID)
+#define _EmissionMapArr_ID                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID)
 
-//sampler2D _MainTex;
-//sampler2D _1st_ShadeMap;
-//sampler2D _2nd_ShadeMap;
-//sampler2D _NormalMap;
 
 //#define _tex_arrays
 
@@ -363,66 +407,36 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
     sampler2D _OutlineTex;
     sampler2D _BakedNormal;
 
-    #define SAMPLE_BASEMAP (uv, texArrayID)                 SAMPLE_TEXTURE2D(_BaseMap,                  sampler_BaseMap, uv)
-    #define SAMPLE_BUMPMAP (uv, texArrayID)                 SAMPLE_TEXTURE2D(_BumpMap,                  sampler_BumpMap, uv)
-    #define SAMPLE_EMISSIONMAP (uv, texArrayID)             SAMPLE_TEXTURE2D(_EmissionMap,              sampler_EmissionMap, uv)
+    #define SAMPLE_BASEMAP(uv,texArrayID)                   SAMPLE_TEXTURE2D(_BaseMap,                  sampler_BaseMap, uv)
+    #define SAMPLE_BUMPMAP(uv,texArrayID)                   SAMPLE_TEXTURE2D(_BumpMap,                  sampler_BumpMap, uv)
+    #define SAMPLE_EMISSIONMAP(uv,texArrayID)               SAMPLE_TEXTURE2D(_EmissionMap,              sampler_EmissionMap, uv)
 
-    #define SAMPLE_MAINTEX (uv, texArrayID)                 SAMPLE_TEXTURE2D(_MainTex,                  sampler_MainTex, uv)
-    #define SAMPLE_1ST_SHADEMAP (uv, texArrayID)            SAMPLE_TEXTURE2D(_1st_ShadeMap,             sampler_MainTex, uv)
-    #define SAMPLE_2ND_SHADEMAP (uv, texArrayID)            SAMPLE_TEXTURE2D(_2nd_ShadeMap,             sampler_MainTex, uv)
-    #define SAMPLE_NORMALMAP (uv, texArrayID)               SAMPLE_TEXTURE2D(_NormalMap,                sampler_MainTex, uv)
-    #define SAMPLE_CLIPPINGMASK (uv, texArrayID)            SAMPLE_TEXTURE2D(_ClippingMask,             sampler_MainTex, uv)
-    #define SAMPLE_OCCLUSIONMAP (uv, texArrayID)            SAMPLE_TEXTURE2D(_OcclusionMap,             sampler_OcclusionMap, uv)
-    #define SAMPLE_METALLICGLOSS(uv, texArrayID)            SAMPLE_TEXTURE2D(_MetallicGlossMap,         sampler_MetallicGlossMap, uv)
+    #define SAMPLE_MAINTEX(uv,texArrayID)                   SAMPLE_TEXTURE2D(_MainTex,                  sampler_MainTex, uv)
+    #define SAMPLE_1ST_SHADEMAP(uv,texArrayID)              SAMPLE_TEXTURE2D(_1st_ShadeMap,             sampler_MainTex, uv)
+    #define SAMPLE_2ND_SHADEMAP(uv,texArrayID)              SAMPLE_TEXTURE2D(_2nd_ShadeMap,             sampler_MainTex, uv)
+    #define SAMPLE_NORMALMAP(uv,texArrayID)                 SAMPLE_TEXTURE2D(_NormalMap,                sampler_MainTex, uv)
+    #define SAMPLE_CLIPPINGMASK(uv,texArrayID)              SAMPLE_TEXTURE2D(_ClippingMask,             sampler_MainTex, uv)
+    #define SAMPLE_OCCLUSIONMAP(uv,texArrayID)              SAMPLE_TEXTURE2D(_OcclusionMap,             sampler_OcclusionMap, uv)
+    #define SAMPLE_METALLICGLOSS(uv,texArrayID)             SAMPLE_TEXTURE2D(_MetallicGlossMap,         sampler_MetallicGlossMap, uv)
 
-    #define SAMPLE_SET_1ST_SHADEPOSITION (uv, texArrayID)   tex2D(_Set_1st_ShadePosition,       uv) 
-    #define SAMPLE_SET_2ND_SHADEPOSITION (uv, texArrayID)   tex2D(_Set_2nd_ShadePosition,       uv)
-    #define SAMPLE_SHADINGGRADEMAP (uv, texArrayID, lod)    tex2Dlod(_ShadingGradeMap,          float4(uv, 0.0f, lod))
-    #define SAMPLE_HIGHCOLOR (uv, texArrayID)               tex2D(_HighColor_Tex,               uv)
-    #define SAMPLE_HIGHCOLORMASK (uv, texArrayID)           tex2D(_Set_HighColorMask,           uv)
-    #define SAMPLE_SET_RIMLIGHTMASK (uv, texArrayID)        tex2D(_Set_RimLightMask,            uv)
-    #define SAMPLE_MATCAP (uv, texArrayID, lod)             tex2Dlod(_MatCap_Sampler,           float4(uv, 0.0f, lod))
-    #define SAMPLE_NORMALMAPFORMATCAP (uv, texArrayID)      tex2D(_NormalMapForMatCap,          uv)
-    #define SAMPLE_SET_MATCAPMASK (uv, texArrayID)          tex2D(_Set_MatcapMask,              uv)
-    #define SAMPLE_EMISSIVE (uv, texArrayID)                tex2D(_Emissive_Tex,                uv)
-    #define SAMPLE_ANGELRING (uv, texArrayID)               tex2D(_AngelRing_Sampler,           uv)
-    #define SAMPLE_OUTLINE (uv, texArrayID, lod)            tex2Dlod(_Outline_Sampler,          float4(uv, 0.0f, lod))
-    #define SAMPLE_OUTLINETEX (uv, texArrayID)              tex2D(_OutlineTex,                  uv)
-    #define SAMPLE_BAKEDNORMAL (uv, texArrayID, lod)        tex2Dlod(_BakedNormal,              float4(uv, 0.0f, lod))
+    #define SAMPLE_SET_1ST_SHADEPOSITION(uv,texArrayID)     tex2D(_Set_1st_ShadePosition,       uv) 
+    #define SAMPLE_SET_2ND_SHADEPOSITION(uv,texArrayID)     tex2D(_Set_2nd_ShadePosition,       uv)
+    #define SAMPLE_SHADINGGRADEMAP(uv,texArrayID,lod)       tex2Dlod(_ShadingGradeMap,          float4(uv, 0.0f, lod))
+    #define SAMPLE_HIGHCOLOR(uv,texArrayID)                 tex2D(_HighColor_Tex,               uv)
+    #define SAMPLE_HIGHCOLORMASK(uv,texArrayID)             tex2D(_Set_HighColorMask,           uv)
+    #define SAMPLE_SET_RIMLIGHTMASK(uv, texArrayID)         tex2D(_Set_RimLightMask,            uv)
+    #define SAMPLE_MATCAP(uv,texArrayID,lod)                tex2Dlod(_MatCap_Sampler,           float4(uv, 0.0f, lod))
+    #define SAMPLE_NORMALMAPFORMATCAP(uv,texArrayID)        tex2D(_NormalMapForMatCap,          uv)
+    #define SAMPLE_SET_MATCAPMASK(uv,texArrayID)            tex2D(_Set_MatcapMask,              uv)
+    #define SAMPLE_EMISSIVE(uv,texArrayID)                  tex2D(_Emissive_Tex,                uv)
+    #define SAMPLE_ANGELRING(uv,texArrayID)                 tex2D(_AngelRing_Sampler,           uv)
+    #define SAMPLE_OUTLINE(uv,texArrayID,lod)               tex2Dlod(_Outline_Sampler,          float4(uv, 0.0f, lod))
+    #define SAMPLE_OUTLINETEX(uv,texArrayID)                tex2D(_OutlineTex,                  uv)
+    #define SAMPLE_BAKEDNORMAL(uv,texArrayID,lod)           tex2Dlod(_BakedNormal,              float4(uv, 0.0f, lod))
 
 #endif
 
-// TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
-// TEXTURE2D(_1st_ShadeMap);
-// TEXTURE2D(_2nd_ShadeMap);
-// TEXTURE2D(_NormalMap);
-//
-// sampler2D _Set_1st_ShadePosition; 
-// sampler2D _Set_2nd_ShadePosition;
-// sampler2D _ShadingGradeMap;
-// sampler2D _HighColor_Tex;
-// sampler2D _Set_HighColorMask;
-// sampler2D _Set_RimLightMask;
-// sampler2D _MatCap_Sampler;
-// sampler2D _NormalMapForMatCap;
-// sampler2D _Set_MatcapMask;
-// sampler2D _Emissive_Tex;
-// //sampler2D _ClippingMask;
-// TEXTURE2D(_ClippingMask);
-// sampler2D _AngelRing_Sampler;
-// sampler2D _Outline_Sampler;
-// sampler2D _OutlineTex;
-// sampler2D _BakedNormal;
-//
-// TEXTURE2D(_OcclusionMap);       SAMPLER(sampler_OcclusionMap);
-// TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
-// TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
-//
-// #ifdef _SPECULAR_SETUP
-//     #define SAMPLE_METALLICSPECULAR(uv) SAMPLE_TEXTURE2D(_SpecGlossMap, sampler_SpecGlossMap, uv)
-// #else
-//     #define SAMPLE_METALLICSPECULAR(uv, texArrayID) SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, uv)
-// #endif
+#include "DCL_Toon_SurfaceInput.hlsl"
 
 half4 SampleMetallicSpecGloss(float2 uv, half albedoAlpha)
 {

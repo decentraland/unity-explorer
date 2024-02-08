@@ -73,7 +73,8 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
 
     half3 mainLightColor = GetLightColor(mainLight);
     int nMainTexArrID = _MainTexArr_ID;
-    float4 _MainTex_var = SAMPLE_MAINTEX(TRANSFORM_TEX(Set_UV0, _MainTex), nMainTexArrID);
+    float2 uv_maintex = TRANSFORM_TEX(Set_UV0, _MainTex);
+    float4 _MainTex_var = SAMPLE_MAINTEX(uv_maintex,nMainTexArrID);
 
     //v.2.0.4
     #if defined(_IS_CLIPPING_MODE) 
@@ -125,19 +126,19 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         float3 Set_BaseColor = lerp( (_BaseColor.rgb*_MainTex_var.rgb), ((_BaseColor.rgb*_MainTex_var.rgb)*Set_LightColor), _Is_LightColor_Base );
         //v.2.0.5
         int n1st_ShadeMapArrID = _1st_ShadeMapArr_ID;
-        float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap), n1st_ShadeMapArrID),_MainTex_var,_Use_BaseAs1st);
+        float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap),n1st_ShadeMapArrID),_MainTex_var,_Use_BaseAs1st);
         float3 Set_1st_ShadeColor = lerp( (_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb), ((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_1st_Shade );
         //v.2.0.5
         int n2nd_ShadeMapArrID = _2nd_ShadeMapArr_ID;
-        float4 _2nd_ShadeMap_var = lerp(SAMPLE_2ND_SHADEMAP(TRANSFORM_TEX(Set_UV0, _2nd_ShadeMap), n2nd_ShadeMapArrID),_1st_ShadeMap_var,_Use_1stAs2nd);
+        float4 _2nd_ShadeMap_var = lerp(SAMPLE_2ND_SHADEMAP(TRANSFORM_TEX(Set_UV0, _2nd_ShadeMap),n2nd_ShadeMapArrID),_1st_ShadeMap_var,_Use_1stAs2nd);
         float3 Set_2nd_ShadeColor = lerp( (_2nd_ShadeColor.rgb*_2nd_ShadeMap_var.rgb), ((_2nd_ShadeColor.rgb*_2nd_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_2nd_Shade );
         float _HalfLambert_var = 0.5*dot(lerp( i.normalDir, normalDirection, _Is_NormalMapToBase ),lightDirection)+0.5;
     
         int nSet_1st_ShadePositionArrID = _Set_1st_ShadePositionArr_ID;
-        float4 _Set_2nd_ShadePosition_var = SAMPLE_SET_1ST_SHADEPOSITION(TRANSFORM_TEX(Set_UV0, _Set_2nd_ShadePosition), nSet_1st_ShadePositionArrID);
+        float4 _Set_2nd_ShadePosition_var = SAMPLE_SET_1ST_SHADEPOSITION(TRANSFORM_TEX(Set_UV0,_Set_2nd_ShadePosition),nSet_1st_ShadePositionArrID);
 
         int nSet_2nd_ShadePositionArrID = _Set_2nd_ShadePositionArr_ID;
-        float4 _Set_1st_ShadePosition_var = SAMPLE_SET_2ND_SHADEPOSITION(TRANSFORM_TEX(Set_UV0, _Set_1st_ShadePosition), nSet_2nd_ShadePositionArrID);
+        float4 _Set_1st_ShadePosition_var = SAMPLE_SET_2ND_SHADEPOSITION(TRANSFORM_TEX(Set_UV0,_Set_1st_ShadePosition),nSet_2nd_ShadePositionArrID);
         //v.2.0.6
         //Minmimum value is same as the Minimum Feather's value with the Minimum Step's value as threshold.
         float _SystemShadowsLevel_var = (shadowAttenuation*0.5)+0.5+_Tweak_SystemShadowsLevel > 0.001 ? (shadowAttenuation*0.5)+0.5+_Tweak_SystemShadowsLevel : 0.0001;
@@ -446,7 +447,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     //v.2.0.4
     #ifdef _IS_CLIPPING_OFF
         //DoubleShadeWithFeather
-        fixed4 finalRGBA = fixed4(finalColor,1);
+        half4 finalRGBA = half4(finalColor,1);
     #elif _IS_CLIPPING_MODE
         //DoubleShadeWithFeather_Clipping
         fixed4 finalRGBA = fixed4(finalColor,1);
