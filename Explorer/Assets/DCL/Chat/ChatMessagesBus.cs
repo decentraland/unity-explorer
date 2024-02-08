@@ -1,6 +1,6 @@
 using DCL.DebugUtilities;
 using System;
-using System.Linq;
+using Utility;
 using Random = UnityEngine.Random;
 
 namespace DCL.Chat
@@ -18,16 +18,10 @@ namespace DCL.Chat
         {
             OnMessageAdded?.Invoke(
                 new ChatMessage(
-                    GenerateRandomString(Random.Range(1,250)),
+                    StringUtils.GenerateRandomString(Random.Range(1,250)),
                     "User" + Random.Range(0, 3),
                     Random.Range(0, 2) == 0 ? "" : "#asd38",
                     Random.Range(0, 10) <= 2));
-        }
-
-        private string GenerateRandomString(int length)
-        {
-            const string chars = " ABCDEFGHIJ KLMNOPQRSTU VWXYZ0123456789 ";
-            return new string(Enumerable.Repeat(chars, length).Select(s => s[Random.Range(0, s.Length)]).ToArray());
         }
 
         //Add message will be called from the message handling system of the livekit integration
