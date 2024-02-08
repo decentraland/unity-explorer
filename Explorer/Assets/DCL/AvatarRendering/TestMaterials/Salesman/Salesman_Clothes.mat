@@ -355,7 +355,7 @@ Material:
     - _InvTilingScale: 1
     - _Inverse_Clipping: 0
     - _Inverse_MatcapMask: 0
-    - _Inverse_Z_Axis_BLD: 1
+    - _Inverse_Z_Axis_BLD: 0
     - _Ior: 1
     - _IridescenceMask: 1
     - _IridescenceThickness: 1
@@ -400,8 +400,8 @@ Material:
     - _OUTLINE: 0
     - _ObjectSpaceUVMapping: 0
     - _OcclusionStrength: 1
-    - _Offset_X_Axis_BLD: -0.583
-    - _Offset_Y_Axis_BLD: 0.09
+    - _Offset_X_Axis_BLD: 0.019
+    - _Offset_Y_Axis_BLD: -0.121
     - _Offset_Z: 0
     - _OutlineOverridden: 0
     - _OutlineVisible: 1
