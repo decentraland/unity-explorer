@@ -41,18 +41,23 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            cts.SafeCancelAndDispose();
-            ChatEntriesCanvasGroup.alpha = 1;
             PanelBackgroundCanvasGroup.DOFade(1, BACKGROUND_FADE_TIME);
+            StopChatEntriesFadeout();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             PanelBackgroundCanvasGroup.DOFade(0, BACKGROUND_FADE_TIME);
-            StartChatEntriesFadeoutCount();
+            StartChatEntriesFadeout();
         }
 
-        public void StartChatEntriesFadeoutCount()
+        public void StopChatEntriesFadeout()
+        {
+            cts.SafeCancelAndDispose();
+            ChatEntriesCanvasGroup.alpha = 1;
+        }
+
+        public void StartChatEntriesFadeout()
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
@@ -65,7 +70,7 @@ namespace DCL.Chat
             cts.Token.ThrowIfCancellationRequested();
             ChatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(CHAT_ENTRIES_WAIT_BEFORE_FADE_MS, cancellationToken: ct);
-            ChatEntriesCanvasGroup.DOFade(0, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
+            await ChatEntriesCanvasGroup.DOFade(0, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
         }
     }
 }

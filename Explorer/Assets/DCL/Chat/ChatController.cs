@@ -43,11 +43,13 @@ namespace DCL.Chat
         private void OnInputSelected(string inputText)
         {
             viewInstance.CharacterCounter.gameObject.SetActive(true);
+            viewInstance.StopChatEntriesFadeout();
         }
 
         private void OnInputChanged(string inputText)
         {
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
+            viewInstance.StopChatEntriesFadeout();
         }
 
         private void CreateChatEntry()
