@@ -1,11 +1,8 @@
-using System.Collections.Generic;
 using Arch.Core;
-using DCL.AssetsProvision;
-using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
-using Decentraland.Kernel.Comms.Rfc4;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -13,7 +10,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -42,7 +38,7 @@ namespace DCL.LOD.Tests
                 2, 4
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
-            
+
             var frameCapBudget = Substitute.For<IPerformanceBudget>();
             frameCapBudget.TrySpendBudget().Returns(true);
 
@@ -53,11 +49,12 @@ namespace DCL.LOD.Tests
             var sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
 
             partitionComponent = new PartitionComponent();
-            var sceneEntityDefinition = new IpfsTypes.SceneEntityDefinition
+
+            var sceneEntityDefinition = new SceneEntityDefinition
             {
-                id = fakeHash, metadata = new IpfsTypes.SceneMetadata
+                id = fakeHash, metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                    scene = new SceneMetadataScene
                     {
                         DecodedParcels = new Vector2Int[]
                         {
@@ -66,7 +63,8 @@ namespace DCL.LOD.Tests
                     }
                 }
             };
-            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsTypes.IpfsPath());
+
+            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();

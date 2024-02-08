@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
+using DCL.Ipfs;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -7,7 +8,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -45,15 +45,15 @@ namespace ECS.SceneLifeCycle.Tests
             for (var i = 0; i < 4; i++)
             {
                 world.Create(new SceneDefinitionComponent(
-                    new IpfsTypes.SceneEntityDefinition
+                    new SceneEntityDefinition
                     {
-                        metadata = new IpfsTypes.SceneMetadata
+                        metadata = new SceneMetadata
                         {
-                            scene = new IpfsTypes.SceneMetadataScene
+                            scene = new SceneMetadataScene
                                 { DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) } },
                         },
                     },
-                    new IpfsTypes.IpfsPath()), new PartitionComponent
+                    new IpfsPath()), new PartitionComponent
                 {
                     Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i
                 }, new VisualSceneState());
@@ -88,17 +88,17 @@ namespace ECS.SceneLifeCycle.Tests
             for (byte i = 2; i <= 4; i++)
             {
                 world.Create(new SceneDefinitionComponent(
-                    new IpfsTypes.SceneEntityDefinition
+                    new SceneEntityDefinition
                     {
-                        metadata = new IpfsTypes.SceneMetadata
+                        metadata = new SceneMetadata
                         {
-                            scene = new IpfsTypes.SceneMetadataScene
+                            scene = new SceneMetadataScene
                             {
                                 DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) },
                             },
                         },
                     },
-                    new IpfsTypes.IpfsPath()), new PartitionComponent
+                    new IpfsPath()), new PartitionComponent
                 {
                     Bucket = i, RawSqrDistance = ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i - 1f
                 }, Substitute.For<ISceneFacade>());

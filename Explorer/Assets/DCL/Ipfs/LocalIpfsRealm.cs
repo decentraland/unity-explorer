@@ -1,11 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     /// <summary>
     ///     Provides a simple implementation to resolve URLs from StreamingAssets
@@ -25,7 +24,7 @@ namespace Ipfs
             LambdasBaseUrl = URLDomain.FromString("https://peer.decentraland.org/explorer/");
         }
 
-        public UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
+        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
             throw new NotSupportedException();
 
         public string GetFileHash(byte[] file) =>
