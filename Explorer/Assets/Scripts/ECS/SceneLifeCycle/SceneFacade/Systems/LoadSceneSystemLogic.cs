@@ -50,11 +50,10 @@ namespace ECS.SceneLifeCycle.Systems
 
             // Create scene data
             Vector2Int baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
-            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(intention.DefinitionComponent.ParcelsCorners, baseParcel);
-            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel, sceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
             // Calculate partition immediately
-
             await UniTask.SwitchToMainThread();
 
             return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);

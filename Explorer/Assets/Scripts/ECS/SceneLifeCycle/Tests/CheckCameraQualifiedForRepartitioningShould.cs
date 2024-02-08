@@ -20,7 +20,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
-            var realmData = new RealmData(new IpfsRealm(URLDomain.EMPTY));
+            var realmData = new RealmData(new TestIpfsRealm());
             system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings, realmData);
 
             world.Create(new RealmComponent(realmData));

@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using System;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -12,7 +13,9 @@ using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -26,19 +29,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     {
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IPartitionSettings partitionSettings;
+
+        private float[]? sqrDistances;
 
         private bool splitIsPending;
 
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
-            IRealmPartitionSettings realmPartitionSettings) : base(world)
+            IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings) : base(world)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.partitionSettings = partitionSettings;
         }
 
         protected override void Update(float t)
         {
+            if (realmPartitionSettings.ScenesDefinitionsRequestBatchSize != sqrDistances?.Length)
+                sqrDistances = new float[realmPartitionSettings.ScenesDefinitionsRequestBatchSize];
+
             // VolatileScenePointers should be created from RealmController
 
             // job started means that there was a new split initiated (dirty state)
@@ -69,8 +79,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Take up to <ScenesDefinitionsRequestBatchSize> closest pointers that were not processed yet
             List<int2> input = volatileScenePointers.InputReusableList;
 
-            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.LastSplit;
+            ref var flatArray = ref parcelMathJobifiedHelper.LastSplit;
             int i;
+
+            splitIsPending = false;
 
             for (i = 0; i < flatArray.Length; i++)
             {
@@ -80,15 +92,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     continue;
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
+                {
+                    sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                     input.Add(parcelInfo.Parcel);
-            }
-
-            // Detect if we have other unprocessed parcels in the current split
-            splitIsPending = false;
-
-            for (; i < flatArray.Length; i++)
-            {
-                if (!flatArray[i].AlreadyProcessed)
+                    parcelInfo.AlreadyProcessed = true;
+                    flatArray[i] = parcelInfo;
+                }
+                else
                 {
                     splitIsPending = true;
                     break;
@@ -97,9 +107,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (input.Count == 0) return;
 
+            Array.Clear(sqrDistances!, input.Count, sqrDistances!.Length - input.Count);
+
+            // Use median instead of average as the latter can affect the resulting bucket unpredictably (tends to give higher values)
+            Array.Sort(sqrDistances!);
+            float median = sqrDistances![input.Count / 2];
+
+            // Find the bucket
+            byte bucketIndex = 0;
+            for (; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
+            {
+                if (median < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                    break;
+            }
+
+            volatileScenePointers.ActivePartitionComponent.Bucket = bucketIndex;
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
+                        new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)),
+                    volatileScenePointers.ActivePartitionComponent);
         }
 
         [Query]

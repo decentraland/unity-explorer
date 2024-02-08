@@ -36,6 +36,8 @@ using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD.Systems;
+using DCL.ResourcesUnloading;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -126,18 +128,19 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
-            CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
             // Archaic systems
+            //CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
             //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
-            LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
+                partitionSettings);
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
