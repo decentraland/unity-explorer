@@ -65,6 +65,12 @@ namespace DCL.Chat
             AwaitAndFadeChatEntries(cts.Token).Forget();
         }
 
+        public void ResetChatEntriesFadeout()
+        {
+            StopChatEntriesFadeout();
+            StartChatEntriesFadeout();
+        }
+
         private async UniTaskVoid AwaitAndFadeChatEntries(CancellationToken ct)
         {
             cts.Token.ThrowIfCancellationRequested();

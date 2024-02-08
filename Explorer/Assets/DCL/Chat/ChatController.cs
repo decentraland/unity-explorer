@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.DebugUtilities;
 using MVC;
-using System.Linq;
 using System.Threading;
 using Object = UnityEngine.Object;
 
@@ -11,6 +9,7 @@ namespace DCL.Chat
     {
         private readonly ChatEntryView chatEntryView;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IChatMessagesBus chatMessagesBus;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -18,12 +17,13 @@ namespace DCL.Chat
             ViewFactoryMethod viewFactory,
             ChatEntryView chatEntryView,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            IDebugContainerBuilder debugBuilder) : base(viewFactory)
+            IChatMessagesBus chatMessagesBus) : base(viewFactory)
         {
             this.chatEntryView = chatEntryView;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.chatMessagesBus = chatMessagesBus;
 
-            debugBuilder.AddWidget("Chat").AddControl(new DebugButtonDef("Create chat message", CreateChatEntry), null);
+            chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
 
         protected override void OnViewInstantiated()
@@ -38,6 +38,7 @@ namespace DCL.Chat
         private void OnInputDeselected(string inputText)
         {
             viewInstance.CharacterCounter.gameObject.SetActive(false);
+            viewInstance.StartChatEntriesFadeout();
         }
 
         private void OnInputSelected(string inputText)
@@ -52,20 +53,16 @@ namespace DCL.Chat
             viewInstance.StopChatEntriesFadeout();
         }
 
-        private void CreateChatEntry()
+        private void CreateChatEntry(ChatMessage chatMessage)
         {
+            viewInstance.ResetChatEntriesFadeout();
+            //TODO: pool based on the virtual list pooling integration
             ChatEntryView entryView = Object.Instantiate(chatEntryView, viewInstance.MessagesContainer);
             entryView.AnimateChatEntry();
             entryView.Initialise(chatEntryConfiguration);
-            entryView.SetUsername("User" + UnityEngine.Random.Range(0, 3), UnityEngine.Random.Range(0, 2) == 0 ? "" : "#asd38");
-            entryView.entryText.text = GenerateRandomString(UnityEngine.Random.Range(5, 200));
-            entryView.SetSentByUser(UnityEngine.Random.Range(0, 10) <= 2);
-        }
-
-        private string GenerateRandomString(int length)
-        {
-            const string chars = " ABCDEFGHIJ KLMNOPQRSTU VWXYZ0123456789 ";
-            return new string(Enumerable.Repeat(chars, length).Select(s => s[UnityEngine.Random.Range(0, s.Length)]).ToArray());
+            entryView.SetUsername(chatMessage.Sender, chatMessage.WalletAddress);
+            entryView.entryText.text = chatMessage.Message;
+            entryView.SetSentByUser(chatMessage.SentByOwnUser);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

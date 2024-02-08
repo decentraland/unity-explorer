@@ -17,14 +17,17 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly IDebugContainerBuilder debugBuilder;
+        private readonly IChatMessagesBus chatMessagesBus;
         private ChatController chatController;
 
-        public ChatPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, IDebugContainerBuilder debugBuilder)
+        public ChatPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IMVCManager mvcManager,
+            IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.debugBuilder = debugBuilder;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         public void Dispose()
@@ -45,7 +48,7 @@ namespace DCL.PluginSystem.Global
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
                 chatEntryView,
                 chatEntryConfiguration,
-                debugBuilder);
+                chatMessagesBus);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
