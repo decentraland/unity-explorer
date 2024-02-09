@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using Ipfs;
 using JetBrains.Annotations;
 using System;
@@ -12,7 +13,7 @@ namespace SceneRunner.Scene
     public class SceneData : ISceneData
     {
         private readonly ISceneContent sceneContent;
-        private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
+        private readonly SceneEntityDefinition sceneDefinition;
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
@@ -22,7 +23,7 @@ namespace SceneRunner.Scene
 
         public SceneData(
             ISceneContent sceneContent,
-            IpfsTypes.SceneEntityDefinition sceneDefinition,
+            SceneEntityDefinition sceneDefinition,
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,

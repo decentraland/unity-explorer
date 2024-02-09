@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -8,7 +9,6 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using Ipfs;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -62,26 +62,26 @@ namespace ECS.SceneLifeCycle.Tests
             var ipfsRealm = new TestIpfsRealm();
 
             // create promises
-            UniTask<AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>>[] promises = URNs.Take(2)
-                                                                                                        .Select(async urn =>
-                                                                                                         {
-                                                                                                             IpfsTypes.IpfsPath path = IpfsHelper.ParseUrn(urn);
+            UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>>[] promises = URNs.Take(2)
+                                                                                              .Select(async urn =>
+                                                                                               {
+                                                                                                   IpfsPath path = IpfsHelper.ParseUrn(urn);
 
-                                                                                                             var promise = AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
-                                                                                                                .Create(world, new GetSceneDefinition(new CommonLoadingArguments(), path), PartitionComponent.TOP_PRIORITY);
+                                                                                                   var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
+                                                                                                      .Create(world, new GetSceneDefinition(new CommonLoadingArguments(), path), PartitionComponent.TOP_PRIORITY);
 
-                                                                                                             // resolve it
-                                                                                                             UnityWebRequestAsyncOperation request = UnityWebRequest.Get(ipfsRealm.ContentBaseUrl + path.EntityId).SendWebRequest();
-                                                                                                             await request;
+                                                                                                   // resolve it
+                                                                                                   UnityWebRequestAsyncOperation request = UnityWebRequest.Get(ipfsRealm.ContentBaseUrl + path.EntityId).SendWebRequest();
+                                                                                                   await request;
 
-                                                                                                             world.Add(promise.Entity, new StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>(
-                                                                                                                 JsonConvert.DeserializeObject<IpfsTypes.SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
+                                                                                                   world.Add(promise.Entity, new StreamableLoadingResult<SceneEntityDefinition>(
+                                                                                                       JsonConvert.DeserializeObject<SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
 
-                                                                                                             return promise;
-                                                                                                         })
-                                                                                                        .ToArray();
+                                                                                                   return promise;
+                                                                                               })
+                                                                                              .ToArray();
 
-            AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[] results = await promises;
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] results = await promises;
 
             // Create realm + fixed pointers
 
