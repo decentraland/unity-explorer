@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         [Query]
         private void TriggerPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
         {
-            if (!sdkModel.IsDirty)
+            if (sdkModel.IsDirty)
             {
                 uiTransformComponent.Transform.pickingMode = PickingMode.Position;
                 uiTransformComponent.RegisterPointerCallbacks();
