@@ -1,8 +1,10 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
+using DCL.SDKComponents.SceneUI.Components;
 using Google.Protobuf.Collections;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -56,6 +58,24 @@ namespace DCL.SDKComponents.SceneUI.Utils
                        BackgroundTextureMode.NineSlices => DCLImageScaleMode.NineSlices,
                        _ => DCLImageScaleMode.Stretch
                    };
+        }
+
+        public static void RegisterPointerCallbacks(this UITransformComponent uiTransformComponent)
+        {
+            EventCallback<PointerDownEvent> newOnPointerDownCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetDown;
+            EventCallback<PointerUpEvent> newOnPointerUpCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetUp;
+
+            uiTransformComponent.UnregisterPointerCallbacks();
+            uiTransformComponent.Transform.RegisterCallback(newOnPointerDownCallback);
+            uiTransformComponent.currentOnPointerDownCallback = newOnPointerDownCallback;
+            uiTransformComponent.Transform.RegisterCallback(newOnPointerUpCallback);
+            uiTransformComponent.currentOnPointerUpCallback = newOnPointerUpCallback;
+        }
+
+        public static void UnregisterPointerCallbacks(this UITransformComponent uiTransformComponent)
+        {
+            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerDownCallback);
+            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
         }
     }
 }
