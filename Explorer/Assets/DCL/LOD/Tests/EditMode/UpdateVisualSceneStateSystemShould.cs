@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Arch.Core;
-using DCL.AssetsProvision;
+using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
-using DCL.LOD.Systems;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -14,8 +9,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
-using Ipfs;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -44,11 +37,11 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         partitionComponent = new PartitionComponent();
         partitionComponent.IsDirty = true;
 
-        var sceneEntityDefinition = new IpfsTypes.SceneEntityDefinition
+        var sceneEntityDefinition = new SceneEntityDefinition
         {
-            id = "FAKE_HASH", metadata = new IpfsTypes.SceneMetadata
+            id = "FAKE_HASH", metadata = new SceneMetadata
             {
-                scene = new IpfsTypes.SceneMetadataScene
+                scene = new SceneMetadataScene
                 {
                     DecodedParcels = new Vector2Int[]
                     {
@@ -58,7 +51,8 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
                 runtimeVersion = "7"
             }
         };
-        sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsTypes.IpfsPath());
+
+        sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
         visualSceneState = new VisualSceneState();
 
         system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings);
@@ -108,11 +102,12 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
         partitionComponent.Bucket = 0;
-        var sdk6SceneDefinitionComponent = new IpfsTypes.SceneEntityDefinition
+
+        var sdk6SceneDefinitionComponent = new SceneEntityDefinition
         {
-            id = "FAKE_HASH", metadata = new IpfsTypes.SceneMetadata
+            id = "FAKE_HASH", metadata = new SceneMetadata
             {
-                scene = new IpfsTypes.SceneMetadataScene
+                scene = new SceneMetadataScene
                 {
                     DecodedParcels = new Vector2Int[]
                     {
@@ -129,7 +124,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
         Assert.IsFalse(world.Has<ISceneFacade>(entityReference));
     }
-    
-    
+
+
 
 }

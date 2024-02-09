@@ -3,6 +3,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -143,14 +144,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (result.Succeeded)
             {
-                List<IpfsTypes.SceneEntityDefinition> definitions = result.Asset.Value;
+                List<SceneEntityDefinition> definitions = result.Asset.Value;
 
                 for (var i = 0; i < definitions.Count; i++)
                 {
-                    IpfsTypes.SceneEntityDefinition scene = definitions[i];
+                    SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Count == 0) continue;
 
-                    TryCreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, URLDomain.EMPTY), processesScenePointers.Value);
+                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processesScenePointers.Value);
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved

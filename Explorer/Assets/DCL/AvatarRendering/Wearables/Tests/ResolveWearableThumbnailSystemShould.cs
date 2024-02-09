@@ -9,7 +9,6 @@ using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
