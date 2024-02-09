@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using Ipfs;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,18 +13,18 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     /// </summary>
     public struct SceneDefinitionComponent
     {
-        public static readonly IpfsTypes.SceneMetadataScene EMPTY_METADATA = new ();
+        public static readonly SceneMetadataScene EMPTY_METADATA = new ();
 
-        public readonly IpfsTypes.SceneEntityDefinition Definition;
+        public readonly SceneEntityDefinition Definition;
 
         public readonly IReadOnlyList<Vector2Int> Parcels;
         public readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners;
-        public readonly IpfsTypes.IpfsPath IpfsPath;
+        public readonly IpfsPath IpfsPath;
         public readonly bool IsEmpty;
         public readonly bool IsSDK7;
         public readonly ParcelMathHelper.SceneGeometry SceneGeometry; 
 
-        public SceneDefinitionComponent(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath)
+        public SceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath)
         {
             Definition = definition;
             ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
@@ -44,12 +45,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             ParcelsCorners = new[] { ParcelMathHelper.CalculateCorners(parcel) };
             Parcels = new[] { parcel };
             IsEmpty = true;
-            IpfsPath = new IpfsTypes.IpfsPath(id, URLDomain.EMPTY);
+            IpfsPath = new IpfsPath(id, URLDomain.EMPTY);
 
-            Definition = new IpfsTypes.SceneEntityDefinition
+            Definition = new SceneEntityDefinition
             {
                 id = id,
-                metadata = new IpfsTypes.SceneMetadata
+                metadata = new SceneMetadata
                 {
                     main = "bin/game.js",
                     scene = EMPTY_METADATA,

@@ -1,4 +1,5 @@
-﻿using ECS.SceneLifeCycle.SceneDefinition;
+﻿using DCL.Ipfs;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Ipfs;
 
@@ -9,14 +10,14 @@ namespace ECS.SceneLifeCycle.Components
     /// </summary>
     public struct FixedScenePointers
     {
-        public readonly AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[] Promises;
+        public readonly AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] Promises;
 
         // Quick path to avoid an iteration
         public bool AllPromisesResolved;
 
         public int EmptyParcelsLastProcessedIndex;
 
-        public FixedScenePointers(AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[] promises)
+        public FixedScenePointers(AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises)
         {
             Promises = promises;
             AllPromisesResolved = false;

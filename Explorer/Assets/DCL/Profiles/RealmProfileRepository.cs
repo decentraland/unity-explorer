@@ -1,13 +1,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS;
-using Ipfs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
 {
@@ -47,17 +48,17 @@ namespace DCL.Profiles
             profileDto.avatars[0].avatar.snapshots.body = bodyHash;
             profileDto.avatars[0].avatar.snapshots.face256 = faceHash;
 
-            var entity = new IpfsRealmEntity<GetProfileJsonRootDto>
+            var entity = new IpfsProfileEntity
             {
-                version = "v3",
-                content = new List<IpfsRealmEntity<GetProfileJsonRootDto>.Files>
+                version = IpfsProfileEntity.DEFAULT_VERSION,
+                content = new List<ContentDefinition>
                 {
                     new () { file = "body.png", hash = faceHash },
                     new () { file = "face256.png", hash = bodyHash },
                 },
                 pointers = new List<string> { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                type = "profile",
+                type = IpfsRealmEntityType.Profile.ToEntityString(),
                 metadata = profileDto,
             };
 
