@@ -100,12 +100,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             // Assert
-            ecsToCRDTWriter.Received(1).PutMessage(
-                new PBUiDropdownResult
+            ecsToCRDTWriter.Received(1).PutMessage<PBUiDropdownResult, int>(
+                static (component, data) =>
                 {
-                    Value = TEST_INDEX,
-                },
-                Arg.Any<CRDTEntity>());
+                    component.Value = data;
+                }, Arg.Any<CRDTEntity>(), TEST_INDEX);
             Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);
         }
     }
