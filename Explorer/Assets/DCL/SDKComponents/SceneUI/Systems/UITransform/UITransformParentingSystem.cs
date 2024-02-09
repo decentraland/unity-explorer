@@ -77,6 +77,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             }
 
             UITransformComponent parentComponent = World.Get<UITransformComponent>(parentEntity);
+
+            if (parentComponent == childComponent)
+                return;
+
             parentComponent.Transform.Add(childComponent.Transform);
             childComponent.Parent = World.Reference(parentEntity);
             parentComponent.Children.Add(childEntityReference);

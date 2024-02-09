@@ -6,10 +6,8 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
@@ -22,12 +20,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private const string COMPONENT_NAME = "UITransform";
 
         private readonly UIDocument canvas;
-        private readonly IComponentPool<VisualElement> transformsPool;
+        private readonly IComponentPool<UITransformComponent> transformsPool;
 
         public UITransformInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            transformsPool = poolsRegistry.GetReferenceTypePool<VisualElement>();
+            transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
         }
 
         protected override void Update(float t)
@@ -39,16 +37,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
-            VisualElement newTransform = transformsPool.Get();
-            newTransform.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
-            canvas.rootVisualElement.Add(newTransform);
-            var transformComponent = new UITransformComponent();
-            transformComponent.Transform = newTransform;
-            transformComponent.Parent = EntityReference.Null;
-            transformComponent.Children = HashSetPool<EntityReference>.Get();
-            transformComponent.IsHidden = false;
-            transformComponent.RightOf = sdkModel.RightOf;
-            World.Add(entity, transformComponent);
+            UITransformComponent newTransform = transformsPool.Get();
+            newTransform.Initialize(COMPONENT_NAME, entity, ref sdkModel);
+            canvas.rootVisualElement.Add(newTransform.Transform);
+            World.Add(entity, newTransform);
         }
     }
 }
