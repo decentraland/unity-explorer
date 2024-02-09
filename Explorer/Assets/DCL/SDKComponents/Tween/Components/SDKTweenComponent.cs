@@ -24,7 +24,7 @@ namespace ECS.Unity.Tween.Components
         public Entity globalWorldEntity;
 
         public SDKTweenComponent(Entity globalWorldEntity, bool removed, bool playing, float currentTime, Transform transform,
-            Tweener tweener, PBTween.ModeOneofCase tweenMode, PBTween lastModel, bool dirty)
+            Sequence tweener, PBTween.ModeOneofCase tweenMode, PBTween lastModel, bool dirty)
         {
             this.globalWorldEntity = globalWorldEntity;
             this.removed = removed;
@@ -42,7 +42,7 @@ namespace ECS.Unity.Tween.Components
         public bool playing;
         public float currentTime;
         public Transform transform;
-        public Tweener tweener;
+        public Sequence tweener;
         public PBTween.ModeOneofCase tweenMode;
         public PBTween lastModel;
     }
