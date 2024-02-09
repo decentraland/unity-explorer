@@ -107,7 +107,7 @@ namespace Global.Dynamic
             var builder = new ArchSystemsWorldBuilder<World>(world);
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
-            Entity playerEntity = characterContainer.CreatePlayerEntity(world);
+            Entity playerEntity = characterContainer.CreatePlayerEntity(world, staticContainer.MainPlayerReferences.MainPlayerTransform);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
@@ -132,8 +132,10 @@ namespace Global.Dynamic
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings);
+
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 

@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -67,11 +68,16 @@ namespace DCL.Character.Plugin
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        public Entity CreatePlayerEntity(World world) =>
-            world.Create(
+        public Entity CreatePlayerEntity(World world, MainPlayerTransform mainPlayerTransform)
+        {
+            var playerTransform = new CharacterTransform(characterObject.Value.Transform);
+            mainPlayerTransform.SetTransform(playerTransform);
+
+            return world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
-                new CharacterTransform(characterObject.Value.Transform));
+                playerTransform);
+        }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {

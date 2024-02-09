@@ -41,7 +41,9 @@ namespace Global
     {
         private ProvidedInstance<CharacterObject> characterObject;
         public WorldProxy GlobalWorld = new ();
-        public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
+
+        // public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
+        public MainPlayerReferences MainPlayerReferences = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -178,7 +180,7 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
-                new AvatarAttachPlugin(container.MainPlayerAvatarBase),
+                new AvatarAttachPlugin(container.MainPlayerReferences.MainPlayerAvatarBase),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
@@ -188,6 +190,7 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+                new CameraModeAreaPlugin(container.MainPlayerReferences.MainPlayerTransform),
                 new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
 
 #if UNITY_EDITOR

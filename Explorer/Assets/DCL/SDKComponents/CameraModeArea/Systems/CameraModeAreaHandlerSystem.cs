@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Metadata;
 using Arch.SystemGroups.Throttling;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.CameraModeArea.Components;
@@ -19,16 +20,30 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        public CameraModeAreaHandlerSystem(World world) : base(world) { }
+        private readonly MainPlayerTransform mainPlayerTransform;
+
+        public CameraModeAreaHandlerSystem(World world, MainPlayerTransform mainPlayerTransform) : base(world)
+        {
+            this.mainPlayerTransform = mainPlayerTransform;
+        }
 
         protected override void Update(float t)
         {
+            if (!mainPlayerTransform.Configured) return;
+
             SetupCameraModeAreaQuery(World);
         }
 
         [Query]
         [None(typeof(CameraModeAreaComponent))]
         private void SetupCameraModeArea(in Entity entity, ref TransformComponent transformComponent, ref PBCameraModeArea pbCameraModeArea) { }
+
+        // [Query]
+        // private void UpdateCameraModeArea(in Entity entity, ref TransformComponent transformComponent, ref PBCameraModeArea pbCameraModeArea, ref CameraModeAreaComponent cameraModeAreaComponent) { }
+
+        private void OnEnteredArea() { }
+
+        private void OnExitedArea() { }
 
         public void FinalizeComponents(in Query query)
         {
