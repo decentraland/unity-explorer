@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!uiInputComponent.IsOnValueChangedTriggered && !uiInputComponent.IsOnSubmitTriggered)
                 return;
 
-            AppendMessage(ref sdkEntity, uiInputComponent.IsOnSubmitTriggered, uiInputComponent.TextField.value);
+            PutMessage(ref sdkEntity, uiInputComponent.IsOnSubmitTriggered, uiInputComponent.TextField.value);
 
             if (uiInputComponent.IsOnSubmitTriggered)
                 uiInputComponent.TextField.SetValueWithoutNotify(string.Empty);
@@ -71,15 +71,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             uiInputComponent.IsOnSubmitTriggered = false;
         }
 
-        private void AppendMessage(ref CRDTEntity sdkEntity, bool isSubmit, string value)
+        private void PutMessage(ref CRDTEntity sdkEntity, bool isSubmit, string value)
         {
-            ecsToCRDTWriter.PutMessage(
-                new PBUiInputResult
-                {
-                    IsSubmit = isSubmit,
-                    Value = value,
-                    IsDirty = false,
-                }, sdkEntity);
+            ecsToCRDTWriter.PutMessage<PBUiInputResult, (bool isSubmit, string value)>(static (component, data) =>
+            {
+                component.IsSubmit = data.isSubmit;
+                component.Value = data.value;
+            }, sdkEntity, (isSubmit, value));
         }
     }
 }

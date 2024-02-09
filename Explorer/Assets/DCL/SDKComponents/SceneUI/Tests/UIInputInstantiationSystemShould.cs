@@ -114,7 +114,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 {
                     IsSubmit = isSubmit,
                     Value = TEST_VALUE,
-                    IsDirty = false,
                 },
                 Arg.Any<CRDTEntity>());
             Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);

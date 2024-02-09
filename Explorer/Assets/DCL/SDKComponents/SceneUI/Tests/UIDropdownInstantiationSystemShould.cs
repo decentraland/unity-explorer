@@ -104,7 +104,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 new PBUiDropdownResult
                 {
                     Value = TEST_INDEX,
-                    IsDirty = false,
                 },
                 Arg.Any<CRDTEntity>());
             Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);

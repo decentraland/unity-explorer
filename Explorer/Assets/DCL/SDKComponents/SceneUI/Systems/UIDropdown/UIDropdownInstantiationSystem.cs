@@ -62,18 +62,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             if (!uiDropdownComponent.IsOnValueChangedTriggered)
                 return;
 
-            AppendMessage(ref sdkEntity, uiDropdownComponent.DropdownField.index);
+            PutMessage(ref sdkEntity, uiDropdownComponent.DropdownField.index);
             uiDropdownComponent.IsOnValueChangedTriggered = false;
         }
 
-        private void AppendMessage(ref CRDTEntity sdkEntity, int index)
+        private void PutMessage(ref CRDTEntity sdkEntity, int index)
         {
-            ecsToCRDTWriter.PutMessage(
-                new PBUiDropdownResult
-                {
-                    Value = index,
-                    IsDirty = false,
-                }, sdkEntity);
+            ecsToCRDTWriter.PutMessage<PBUiDropdownResult, int>(static (component, data) =>
+            {
+                component.Value = data;
+            }, sdkEntity, index);
         }
     }
 }
