@@ -109,12 +109,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             // Assert
-            ecsToCRDTWriter.Received(1).PutMessage<PBUiInputResult, (bool isSubmit, string value)>(
-                static (component, data) =>
-                {
-                    component.IsSubmit = data.isSubmit;
-                    component.Value = data.value;
-                }, Arg.Any<CRDTEntity>(), (isSubmit, TEST_VALUE));
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiInputResult, (bool, string)>>(), Arg.Any<CRDTEntity>(), (isSubmit, TEST_VALUE));
             Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
             Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
         }
