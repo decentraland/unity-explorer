@@ -121,8 +121,22 @@ half3 GlobalIlluminationUTS(BRDFData brdfData, half3 bakedGI, half occlusion, ha
     return EnvironmentBRDF(brdfData, indirectDiffuse, indirectSpecular, fresnelTerm);     
 }
 
+#ifdef DCL_COMPUTE_SKINNING
+// Skinning structure
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+    float4 tangent;
+};
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+#endif
+
 struct VertexInput
 {
+    #if DCL_COMPUTE_SKINNING
+        uint index : SV_VertexID;
+    #endif
     float4 vertex : POSITION;
     float3 normal : NORMAL;
     float4 tangent : TANGENT;
@@ -437,7 +451,13 @@ VertexOutput vert (VertexInput v)
     #elif _IS_ANGELRING_ON
         o.uv1 = v.texcoord1;
     #endif
-    o.normalDir = UnityObjectToWorldNormal(v.normal);
+    
+    #ifdef DCL_COMPUTE_SKINNING
+        o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
+    #else
+        o.normalDir = UnityObjectToWorldNormal(v.normal);
+    #endif
+    
     o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
     o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
     o.posWorld = mul(unity_ObjectToWorld, v.vertex);
@@ -448,7 +468,11 @@ VertexOutput vert (VertexInput v)
     float3 crossFwd = cross(UNITY_MATRIX_V[0].xyz, UNITY_MATRIX_V[1].xyz);
     o.mirrorFlag = dot(crossFwd, UNITY_MATRIX_V[2].xyz) < 0 ? 1 : -1;
 
-    float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
+    #ifdef DCL_COMPUTE_SKINNING
+        float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+    #else
+        float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
+    #endif
     float4 positionCS = TransformWorldToHClip(positionWS);
     half3 vertexLight = VertexLighting(o.posWorld.xyz, o.normalDir);
     half fogFactor = ComputeFogFactor(positionCS.z);

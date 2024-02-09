@@ -7,8 +7,22 @@
 #endif
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl"
 
+#ifdef DCL_COMPUTE_SKINNING
+// Skinning structure
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+    float4 tangent;
+};
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+#endif
+
 struct Attributes
 {
+    #if DCL_COMPUTE_SKINNING
+        uint index : SV_VertexID;
+    #endif
     float4 positionOS     : POSITION;
     float4 tangentOS      : TANGENT;
     float2 texcoord     : TEXCOORD0;
@@ -33,9 +47,14 @@ Varyings DepthNormalsVertex(Attributes input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
+    #ifdef DCL_COMPUTE_SKINNING
+        output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+        VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
+    #else
+        output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+        VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
+    #endif
+    
     output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
 
     return output;
