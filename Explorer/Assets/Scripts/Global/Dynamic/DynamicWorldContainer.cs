@@ -60,6 +60,12 @@ namespace Global.Dynamic
             MvcManager.Dispose();
         }
 
+        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
+        {
+            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
+            return UniTask.CompletedTask;
+        }
+
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
@@ -113,7 +119,7 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, debugBuilder, staticContainer.CacheCleaner),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, staticContainer.MainPlayerAvatarBase, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
@@ -170,12 +176,6 @@ namespace Global.Dynamic
             BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder);
 
             return (container, true);
-        }
-
-        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
-        {
-            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
-            return UniTask.CompletedTask;
         }
 
         private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,

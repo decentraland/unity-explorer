@@ -152,7 +152,12 @@
         public const string LOD = nameof(LOD);
 
         /// <summary>
-        ///     Everything related to Scenes audio source components
+        ///     AvatarAttach SDK component
+        /// </summary>
+        public const string AVATAR_ATTACH = nameof(AVATAR_ATTACH);
+
+        /// <summary>
+        ///     VideoPlayer SDK component
         /// </summary>
         public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
 

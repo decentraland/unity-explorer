@@ -1,6 +1,7 @@
+using Ipfs;
 using System.IO;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     public static class HashingExtensions
     {

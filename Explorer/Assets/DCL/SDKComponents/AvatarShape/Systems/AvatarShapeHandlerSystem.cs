@@ -70,6 +70,7 @@ namespace ECS.Unity.AvatarShape.Systems
         private void HandleEntityDestruction(in Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
             World.Remove<SDKAvatarShapeComponent>(entity);
+            World.Remove<PBAvatarShape>(entity);
             globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
