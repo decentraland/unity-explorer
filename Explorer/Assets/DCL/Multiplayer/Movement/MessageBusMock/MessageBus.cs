@@ -7,6 +7,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
     {
         public Action<MessageMock> MessageSent;
 
+        [Tooltip("Wait for seconds until next sent")]
         public float PackageSentRate;
 
         public void Send(float timestamp, Vector3 position)

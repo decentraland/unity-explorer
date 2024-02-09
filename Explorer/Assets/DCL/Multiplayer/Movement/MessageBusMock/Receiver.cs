@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,47 +7,50 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class Receiver : MonoBehaviour
     {
-        [SerializeField] private int listCapacity;
-
+        private readonly Queue<MessageMock> receivedMessages = new ();
         [SerializeField] private MessageBus messageBus;
-        [SerializeField] private float positionPrecision;
+        [SerializeField] private float minDelta;
 
-        [Space]
-        [SerializeField] private List<MessageMock> receivedMessages;
+        [Header("DEBUG")]
         [SerializeField] private float lerpTime;
 
-        [SerializeField] private MessageMock lastMessage;
-
+        private bool isLerping;
         private Coroutine coroutine;
+        private Vector3 targetPosition;
 
-        private void Start()
+        private void Awake() =>
+            messageBus.MessageSent += newMessage => receivedMessages.Enqueue(newMessage);
+
+        private void Update()
         {
-            receivedMessages = new List<MessageMock>(listCapacity);
-            messageBus.MessageSent += OnReceive;
+            if (receivedMessages.Count > 1 && !isLerping)
+            {
+                MessageMock nextTarget = receivedMessages.Dequeue();
+
+                if (Vector3.Distance(transform.position, nextTarget.position) > minDelta)
+                {
+                    lerpTime = receivedMessages.Peek().timestamp - nextTarget.timestamp;
+                    StartCoroutine(MoveToLinearly(nextTarget.position, lerpTime));
+                }
+            }
         }
 
-        private void OnReceive(MessageMock newMessage)
+        private IEnumerator MoveToLinearly(Vector3 targetPosition, float timeDif)
         {
-            float lastTimestamp = lastMessage?.timestamp ?? 0;
-            lastMessage = newMessage;
+            isLerping = true;
 
-            lerpTime = newMessage.timestamp - lastTimestamp;
-
-            if (coroutine != null) StopCoroutine(coroutine);
-            coroutine = StartCoroutine(LerpToNewPosition(newMessage.position, lerpTime));
-        }
-
-        private IEnumerator LerpToNewPosition(Vector3 targetPosition, float timeDif)
-        {
             Vector3 initialPosition = transform.position;
 
             var t = 0f;
+
             while (t < timeDif)
             {
                 t += UnityEngine.Time.deltaTime;
                 transform.position = Vector3.Lerp(initialPosition, targetPosition, t / timeDif);
                 yield return null;
             }
+
+            isLerping = false;
         }
     }
 }
