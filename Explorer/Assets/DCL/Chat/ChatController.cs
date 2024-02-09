@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using MVC;
+using System;
 using System.Threading;
 using Object = UnityEngine.Object;
 
@@ -33,6 +34,12 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
+            viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
+        }
+
+        private void CloseChat()
+        {
+            //TODO: will add logic for the panel closing once it's defined
         }
 
         private void OnInputDeselected(string inputText)

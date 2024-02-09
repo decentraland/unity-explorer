@@ -1,12 +1,11 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using DG.Tweening;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Chat
@@ -31,6 +30,9 @@ namespace DCL.Chat
 
         [field: SerializeField]
         public CanvasGroup ChatEntriesCanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public Button CloseChatButton { get; private set; }
 
         private CancellationTokenSource cts;
 
@@ -62,7 +64,7 @@ namespace DCL.Chat
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
 
-            AwaitAndFadeChatEntries(cts.Token).Forget();
+            AwaitAndFadeChatEntriesAsync(cts.Token).Forget();
         }
 
         public void ResetChatEntriesFadeout()
@@ -71,7 +73,7 @@ namespace DCL.Chat
             StartChatEntriesFadeout();
         }
 
-        private async UniTaskVoid AwaitAndFadeChatEntries(CancellationToken ct)
+        private async UniTaskVoid AwaitAndFadeChatEntriesAsync(CancellationToken ct)
         {
             cts.Token.ThrowIfCancellationRequested();
             ChatEntriesCanvasGroup.alpha = 1;
