@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace DCL.CharacterPreview
         public Color SkinColor;
         public Color HairColor;
 
-        public List<string> Wearables;
-        public HashSet<string> ForceRender;
+        public List<URN> Wearables;
+        public HashSet<string> ForceRenderCategories;
     }
 }

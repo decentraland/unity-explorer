@@ -49,7 +49,7 @@ namespace DCL.CharacterPreview
             avatarShape.WearablePromise.ForgetLoading(globalWorld);
             avatarShape.WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, avatarModel.Wearables, avatarModel.ForceRender),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, avatarModel.Wearables, avatarModel.ForceRenderCategories),
                 PartitionComponent.TOP_PRIORITY
             );
 

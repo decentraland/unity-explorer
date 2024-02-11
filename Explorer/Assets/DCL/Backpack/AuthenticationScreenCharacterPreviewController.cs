@@ -1,4 +1,5 @@
-﻿using DCL.Profiles;
+﻿using CommunicationData.URLHelpers;
+using DCL.Profiles;
 using System.Collections.Generic;
 
 namespace DCL.CharacterPreview
@@ -11,7 +12,7 @@ namespace DCL.CharacterPreview
 
         public override void Initialize(Avatar avatar)
         {
-            previewAvatarModel.Wearables = new List<string>();
+            previewAvatarModel.Wearables = new List<URN>();
             foreach (var wearable in avatar.SharedWearables)
             {
                 previewAvatarModel.Wearables.Add(wearable);

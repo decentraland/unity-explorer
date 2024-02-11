@@ -1,5 +1,6 @@
 ﻿
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.Profiles;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,7 @@ namespace DCL.CharacterPreview
             previewAvatarModel.BodyShape = avatar.BodyShape;
             previewAvatarModel.HairColor = avatar.HairColor;
             previewAvatarModel.SkinColor = avatar.SkinColor;
-            previewAvatarModel.ForceRender = new HashSet<string>(avatar.ForceRender);
+            previewAvatarModel.ForceRenderCategories = new HashSet<string>(avatar.ForceRender);
 
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;

@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System.Collections.Generic;
 
@@ -31,16 +32,16 @@ namespace DCL.CharacterPreview
 
         private void OnForceRenderChange(IReadOnlyCollection<string> forceRender)
         {
-            previewAvatarModel.ForceRender.Clear();
+            previewAvatarModel.ForceRenderCategories.Clear();
 
-            foreach (string wearable in forceRender) { previewAvatarModel.ForceRender.Add(wearable); }
+            foreach (string wearable in forceRender) { previewAvatarModel.ForceRenderCategories.Add(wearable); }
 
             OnModelUpdated();
         }
 
         private void OnEquipped(IWearable i)
         {
-            previewAvatarModel.Wearables ??= new List<string>();
+            previewAvatarModel.Wearables ??= new List<URN>();
 
             if (i.IsBodyShape())
                 previewAvatarModel.BodyShape = i.GetUrn();
