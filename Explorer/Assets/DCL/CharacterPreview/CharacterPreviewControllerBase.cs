@@ -1,29 +1,25 @@
-﻿
-using Arch.Core;
-using CommunicationData.URLHelpers;
-using DCL.Profiles;
+﻿using Arch.Core;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Experimental.Rendering;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
 {
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
-        private protected readonly CharacterPreviewInputEventBus inputEventBus;
-        private protected CharacterPreviewAvatarModel previewAvatarModel;
+        protected readonly CharacterPreviewInputEventBus inputEventBus;
+        protected CharacterPreviewAvatarModel previewAvatarModel;
 
         private readonly CharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly CharacterPreviewCursorController cursorController;
 
-        private protected World world;
+        private World world;
         private CharacterPreviewController previewController;
 
-        private protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory)
+        protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory)
         {
             this.view = view;
             this.previewFactory = previewFactory;
@@ -92,7 +88,7 @@ namespace DCL.CharacterPreview
             previewController.Hide();
         }
 
-        private protected void OnModelUpdated()
+        protected void OnModelUpdated()
         {
             previewController.UpdateAvatar(previewAvatarModel);
         }

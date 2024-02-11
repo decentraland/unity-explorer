@@ -1,9 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using System.Collections.Generic;
 
-namespace DCL.CharacterPreview
+namespace DCL.Backpack.CharacterPreview
 {
     public class BackpackCharacterPreviewController : CharacterPreviewControllerBase
     {

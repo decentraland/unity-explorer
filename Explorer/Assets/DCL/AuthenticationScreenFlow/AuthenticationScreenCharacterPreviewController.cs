@@ -1,8 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.CharacterPreview;
 using DCL.Profiles;
 using System.Collections.Generic;
 
-namespace DCL.CharacterPreview
+namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenCharacterPreviewController : CharacterPreviewControllerBase
     {

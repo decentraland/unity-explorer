@@ -1,8 +1,9 @@
-﻿using System;
+﻿using DCL.CharacterPreview;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.CharacterPreview
+namespace DCL.Backpack.CharacterPreview
 {
     public readonly struct BackpackCharacterPreviewCursorController : IDisposable
     {
