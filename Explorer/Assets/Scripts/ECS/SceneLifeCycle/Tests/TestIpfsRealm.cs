@@ -1,7 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
-using Ipfs;
+using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
+using DCL.Profiles;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -23,5 +26,11 @@ namespace ECS.SceneLifeCycle.Tests
             EntitiesActiveEndpoint = URLDomain.FromString($"{ContentBaseUrl.Value}ActiveEntitiesByPointer.json");
             LambdasBaseUrl = URLDomain.EMPTY;
         }
+
+        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
+            throw new NotSupportedException();
+
+        public string GetFileHash(byte[] file) =>
+            file.IpfsHashV1();
     }
 }

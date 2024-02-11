@@ -3,8 +3,10 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -15,6 +17,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD.Components;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -30,7 +33,8 @@ namespace Global.Dynamic
         private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
-        private readonly IpfsTypes.ServerAbout serverAbout = new ();
+        private readonly ServerAbout serverAbout = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
@@ -51,9 +55,15 @@ namespace Global.Dynamic
             }
         }
 
-        public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
+        public RealmController(
+            IWeb3IdentityCache web3IdentityCache,
+            IWebRequestController webRequestController,
+            TeleportController teleportController,
+            RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
+            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
             IReadOnlyList<int2> staticLoadPositions, RealmData realmData, IScenesCache scenesCache)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
@@ -90,15 +100,17 @@ namespace Global.Dynamic
             try { await UnloadCurrentRealmAsync(); }
             catch (ObjectDisposedException) { }
 
-            IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
+            await UniTask.SwitchToMainThread();
+
+            ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-            realmData.Reconfigure(new IpfsRealm(realm, result));
+            realmData.Reconfigure(new IpfsRealm(web3IdentityCache, webRequestController, realm, result));
 
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            Entity realmEntity = world.Create(realmComp,
+            var realmEntity = world.Create(realmComp,
                 new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
@@ -133,11 +145,13 @@ namespace Global.Dynamic
 
             World world = globalWorld.EcsWorld;
 
-            FindLoadedScenes(world);
+            FindLoadedScenes();
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
                 globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+
+            world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
@@ -158,7 +172,8 @@ namespace Global.Dynamic
             if (globalWorld != null)
             {
                 World world = globalWorld.EcsWorld;
-                FindLoadedScenes(world);
+                FindLoadedScenes();
+                world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.Dispose();
@@ -167,16 +182,13 @@ namespace Global.Dynamic
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
         }
 
-        private void FindLoadedScenes(World world)
+        private void FindLoadedScenes()
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
 
             // Dispose all scenes
             scenesCache.Clear();
-
-            // find all loaded scenes
-            world.Query(in SCENES, (ref ISceneFacade scene) => allScenes.Add(scene));
         }
     }
 }

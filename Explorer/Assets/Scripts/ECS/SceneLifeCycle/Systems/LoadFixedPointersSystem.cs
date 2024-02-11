@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -37,15 +38,15 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
 
             // tolerate allocations as it's once per realm only
-            var promises = new AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[realmComponent.Ipfs.SceneUrns.Count];
+            var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[realmComponent.Ipfs.SceneUrns.Count];
 
             for (var i = 0; i < realmComponent.Ipfs.SceneUrns.Count; i++)
             {
                 string urn = realmComponent.Ipfs.SceneUrns[i];
-                IpfsTypes.IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
+                IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
 
                 // can't prioritize scenes definition - they are always top priority
-                var promise = AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
+                var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
                    .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
                 promises[i] = promise;
@@ -63,10 +64,10 @@ namespace ECS.SceneLifeCycle.Systems
 
             for (var i = 0; i < fixedScenePointers.Promises.Length; i++)
             {
-                ref AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> promise = ref fixedScenePointers.Promises[i];
+                ref AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise = ref fixedScenePointers.Promises[i];
                 if (promise.IsConsumed) continue;
 
-                if (promise.TryConsume(World, out StreamableLoadingResult<IpfsTypes.SceneEntityDefinition> result))
+                if (promise.TryConsume(World, out StreamableLoadingResult<SceneEntityDefinition> result))
                 {
                     if (result.Succeeded)
                     {

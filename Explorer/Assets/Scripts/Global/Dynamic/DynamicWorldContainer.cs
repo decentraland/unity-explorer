@@ -25,6 +25,8 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
+using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -57,6 +59,12 @@ namespace Global.Dynamic
             MvcManager.Dispose();
         }
 
+        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
+        {
+            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
+            return UniTask.CompletedTask;
+        }
+
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
@@ -66,7 +74,7 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            IWeb3IdentityCache storedIdentityProvider)
+            IWeb3IdentityCache web3IdentityCache)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -109,11 +117,10 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, debugBuilder, staticContainer.CacheCleaner),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, staticContainer.MainPlayerAvatarBase, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService), new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -124,29 +131,27 @@ namespace Global.Dynamic
                     backpackCommandBus,
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    storedIdentityProvider,
+                    web3IdentityCache,
                     wearableCatalog,
-                    characterPreviewFactory),
+                    characterPreviewFactory
+                ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(
-                    staticContainer.AssetsProvisioner,
-                    web3Authenticator,
-                    debugBuilder,
-                    container.MvcManager,
-                    container.ProfileRepository,
-                    new UnityAppWebBrowser(),
-                    realmData,
-                    storedIdentityProvider,
-                    characterPreviewFactory),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache,characterPreviewFactory, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    characterPreviewInputEventBus),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
+                new LODPlugin(staticContainer.CacheCleaner, realmData,
+                    staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget,
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             container.RealmController = new RealmController(
+                web3IdentityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
@@ -169,12 +174,6 @@ namespace Global.Dynamic
             BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder);
 
             return (container, true);
-        }
-
-        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
-        {
-            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
-            return UniTask.CompletedTask;
         }
 
         private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,

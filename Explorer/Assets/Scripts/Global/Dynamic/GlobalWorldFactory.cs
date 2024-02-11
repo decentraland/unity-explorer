@@ -1,14 +1,11 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
-using CRDT;
-using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.Character;
-using DCL.Character.Components;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -29,8 +26,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
-using ECS.Unity.Transforms.Components;
-using Ipfs;
 using SceneRunner;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
@@ -117,7 +112,7 @@ namespace Global.Dynamic
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(webRequestController, assetBundlesURL),
@@ -126,18 +121,19 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
-            CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
             // Archaic systems
+            //CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
             //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
-            LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
+                partitionSettings);
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
