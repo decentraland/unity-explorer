@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -15,6 +16,9 @@ using Realm;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCL.LOD.Components;
+using System;
+using DCL.LOD;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -36,8 +40,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private static readonly Comparer COMPARER_INSTANCE = new ();
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-                                                                       .WithAll<SceneDefinitionComponent, PartitionComponent>()
-                                                                       .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>();
+            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
+            .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo>();
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
@@ -163,9 +167,18 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     continue;
 
                 // We can't save component to data as sorting is throttled and components could change
-                Components<SceneDefinitionComponent, PartitionComponent> components = World.Get<SceneDefinitionComponent, PartitionComponent>(data.Entity);
+                var components
+                    = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
 
-                CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
+                if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+                {
+                    World.Add(data.Entity, SceneLODInfo.Create());
+                }
+                else
+                {
+                    CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
+                }
+
                 promisesCreated++;
             }
         }
@@ -173,6 +186,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
+        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void StartUnloading([Data] float unloadingSqrDistance, in Entity entity, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.RawSqrDistance < unloadingSqrDistance) return;

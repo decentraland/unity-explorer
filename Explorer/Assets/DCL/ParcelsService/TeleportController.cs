@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Ipfs;
 using ECS.SceneLifeCycle.Reporting;
 using Ipfs;
 using System;
@@ -50,7 +51,7 @@ namespace DCL.ParcelsService
                 return;
             }
 
-            IpfsTypes.SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+            SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             Vector3 targetPosition;
 
@@ -61,18 +62,18 @@ namespace DCL.ParcelsService
 
                 targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
-                List<IpfsTypes.SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
+                List<SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
 
                 if (spawnPoints is { Count: > 0 })
                 {
                     // TODO transfer obscure logic of how to pick the desired spawn point from the array
                     // For now just pick default/first
 
-                    IpfsTypes.SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
+                    SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
 
                     for (var i = 0; i < spawnPoints.Count; i++)
                     {
-                        IpfsTypes.SceneMetadata.SpawnPoint sp = spawnPoints[i];
+                        SceneMetadata.SpawnPoint sp = spawnPoints[i];
                         if (!sp.@default) continue;
 
                         spawnPoint = sp;
@@ -124,7 +125,7 @@ namespace DCL.ParcelsService
             }
 
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            IpfsTypes.SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+            SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             if (sceneDef != null)
 
@@ -155,11 +156,11 @@ namespace DCL.ParcelsService
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
-        private static Vector3 GetOffsetFromSpawnPoint(IpfsTypes.SceneMetadata.SpawnPoint spawnPoint)
+        private static Vector3 GetOffsetFromSpawnPoint(SceneMetadata.SpawnPoint spawnPoint)
         {
             if (spawnPoint.SP != null)
             {
-                IpfsTypes.SceneMetadata.SpawnPoint.SinglePosition val = spawnPoint.SP.Value;
+                SceneMetadata.SpawnPoint.SinglePosition val = spawnPoint.SP.Value;
                 return new Vector3(val.x, val.y, val.z);
             }
 
@@ -175,7 +176,7 @@ namespace DCL.ParcelsService
                     return sum / coordArray.Length;
                 }
 
-                IpfsTypes.SceneMetadata.SpawnPoint.MultiPosition val = spawnPoint.MP.Value;
+                SceneMetadata.SpawnPoint.MultiPosition val = spawnPoint.MP.Value;
                 return new Vector3(GetMidPoint(val.x), GetMidPoint(val.y), GetMidPoint(val.z));
             }
 

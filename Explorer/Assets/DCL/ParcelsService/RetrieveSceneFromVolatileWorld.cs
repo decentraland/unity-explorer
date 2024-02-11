@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
@@ -19,7 +20,7 @@ namespace DCL.ParcelsService
     public class RetrieveSceneFromVolatileWorld : IRetrieveScene
     {
         private static readonly ListObjectPool<int2> POINTERS_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 1);
-        private static readonly ListObjectPool<IpfsTypes.SceneEntityDefinition> TARGET_COLLECTION_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 1);
+        private static readonly ListObjectPool<SceneEntityDefinition> TARGET_COLLECTION_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 1);
 
         private readonly IRealmData realmData;
 
@@ -30,7 +31,7 @@ namespace DCL.ParcelsService
             this.realmData = realmData;
         }
 
-        public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask<SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
             if (!realmData.Configured)
                 return null;
@@ -39,7 +40,7 @@ namespace DCL.ParcelsService
 
             // Just make a request, cache to be implemented on the side of LoadSceneDefinition Systems
             using PoolExtensions.Scope<List<int2>> pointersList = POINTERS_POOL.AutoScope();
-            using PoolExtensions.Scope<List<IpfsTypes.SceneEntityDefinition>> targetCollection = TARGET_COLLECTION_POOL.AutoScope();
+            using PoolExtensions.Scope<List<SceneEntityDefinition>> targetCollection = TARGET_COLLECTION_POOL.AutoScope();
             pointersList.Value.Add(parcel.ToInt2());
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,

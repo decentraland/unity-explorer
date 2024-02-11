@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
@@ -60,7 +61,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
-            List<IpfsTypes.SceneEntityDefinition> targetList = await
+            List<SceneEntityDefinition> targetList = await
                 (await webRequestController.PostAsync(intention.CommonArguments, GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
                .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 

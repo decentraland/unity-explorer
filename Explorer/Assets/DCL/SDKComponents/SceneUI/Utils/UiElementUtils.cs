@@ -198,6 +198,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void ReleaseUIElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
 
+        public static void ReleaseUITransformComponent(UITransformComponent transform)
+        {
+            transform.UnregisterPointerCallbacks();
+            ReleaseUIElement(transform.Transform);
+        }
+
         public static void ReleaseDCLImage(DCLImage image) =>
             image.Dispose();
 

@@ -81,7 +81,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBTween>.Create(ComponentID.TWEEN).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenState>.Create(ComponentID.TWEEN_STATE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenSequence>.Create(ComponentID.TWEEN_SEQUENCE).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

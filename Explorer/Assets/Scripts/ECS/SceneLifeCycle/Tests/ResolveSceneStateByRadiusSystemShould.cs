@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
+using DCL.Ipfs;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
-using Ipfs;
 using NUnit.Framework;
 using Realm;
 using SceneRunner.Scene;
@@ -38,14 +38,14 @@ namespace ECS.SceneLifeCycle.Tests
             // wider range
             var sceneParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) };
 
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            Entity scene = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
             {
-                metadata = new IpfsTypes.SceneMetadata
+                metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                    scene = new SceneMetadataScene
                         { DecodedParcels = sceneParcels },
                 },
-            }, new IpfsTypes.IpfsPath()), PartitionComponent.TOP_PRIORITY);
+            }, new IpfsPath()), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0f);
 
@@ -62,14 +62,14 @@ namespace ECS.SceneLifeCycle.Tests
             // no match
             var sceneParcels = new Vector2Int[] { new (0, 0), new (0, 1) };
 
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            Entity scene = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
                 {
-                    metadata = new IpfsTypes.SceneMetadata
+                    metadata = new SceneMetadata
                     {
-                        scene = new IpfsTypes.SceneMetadataScene
+                        scene = new SceneMetadataScene
                             { DecodedParcels = sceneParcels },
                     },
-                }, new IpfsTypes.IpfsPath()),
+                }, new IpfsPath()),
                 PartitionComponent.TOP_PRIORITY);
 
             system.Update(0f);
@@ -86,14 +86,14 @@ namespace ECS.SceneLifeCycle.Tests
             // no match
             var sceneParcels = new Vector2Int[] { new (0, 0), new (0, 1) };
 
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            Entity scene = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
             {
-                metadata = new IpfsTypes.SceneMetadata
+                metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                    scene = new SceneMetadataScene
                         { DecodedParcels = sceneParcels },
                 },
-            }, new IpfsTypes.IpfsPath()), PartitionComponent.TOP_PRIORITY);
+            }, new IpfsPath()), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -109,14 +109,14 @@ namespace ECS.SceneLifeCycle.Tests
             // match
             var sceneParcels = new Vector2Int[] { new (5, 5), new (0, 1) };
 
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            Entity scene = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
             {
-                metadata = new IpfsTypes.SceneMetadata
+                metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                    scene = new SceneMetadataScene
                         { DecodedParcels = sceneParcels },
                 },
-            }, new IpfsTypes.IpfsPath()), PartitionComponent.TOP_PRIORITY);
+            }, new IpfsPath()), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 

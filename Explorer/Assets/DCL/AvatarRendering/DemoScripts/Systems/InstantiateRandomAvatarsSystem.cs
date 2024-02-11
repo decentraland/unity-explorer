@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
@@ -123,13 +124,16 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
-            var totalAmount = 0;
+            int totalAmount = 0;
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
                 BaseWearablesPromise = ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>(), totalAmount),
+                    new GetWearableByParamIntention(new[]
+                    {
+                        ("collectionType", "base-wearable"), ("pageSize", "50")
+                    }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
             };
 
@@ -149,7 +153,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             [Data] in ICharacterControllerSettings characterControllerSettings,
             ref RandomAvatarRequest randomAvatarRequest)
         {
-            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<WearablesResponse> baseWearables))
+            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out var baseWearables))
             {
                 if (baseWearables.Succeeded)
                 {
@@ -171,7 +175,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var male = new AvatarRandomizer(BodyShape.MALE);
             var female = new AvatarRandomizer(BodyShape.FEMALE);
 
-            foreach (IWearable wearable in baseWearables.Asset.Wearables)
+            foreach (var wearable in baseWearables.Asset.Wearables)
             {
                 male.AddWearable(wearable);
                 female.AddWearable(wearable);
@@ -200,7 +204,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 var transformComp =
-                    new TransformComponent(transformPool.Get(), $"RANDOM_AVATAR_{i}", StartPosition(spawnArea, startXPosition, startZPosition));
+                    new CharacterTransform(transformPool.Get());
+
+                transformComp.Transform.position = StartPosition(spawnArea, startXPosition, startZPosition);
+                transformComp.Transform.name = $"RANDOM_AVATAR_{i}";
 
                 CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;

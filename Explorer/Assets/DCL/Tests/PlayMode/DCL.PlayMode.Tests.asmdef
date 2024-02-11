@@ -43,7 +43,9 @@
         "GUID:c0dd0d10738d4ad4a9de57c559d0ca1b",
         "GUID:db9f6ca714dd4f9b9755c0faa3a8f24c",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:7f6c11dd1400cef4f838168f18ce244a"
+        "GUID:7f6c11dd1400cef4f838168f18ce244a",
+        "GUID:54660b0fae444b4cbfdafa9d68108f04",
+        "GUID:a29f69b42fb1815409464ac7b05381d0"
     ],
     "includePlatforms": [],
     "excludePlatforms": [
