@@ -92,6 +92,9 @@ namespace DCL.ExplorePanel
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
                                         new ControllerNoData(), profileWidgetCts.Token)
                                    .Forget();
+
+            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                systemMenuController.HideViewAsync(CancellationToken.None).Forget();
         }
 
         protected override void OnViewClose()
