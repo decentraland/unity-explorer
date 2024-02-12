@@ -71,6 +71,8 @@ namespace DCL.ExplorePanel
             webBrowser.OpenUrl(PRIVACY_POLICY_URL);
 
         private void ExitApp() =>
+
+            // TODO: abstraction (?)
             Application.Quit();
 
         private void Logout()
