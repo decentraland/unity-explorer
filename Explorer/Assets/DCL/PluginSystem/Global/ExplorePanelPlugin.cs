@@ -4,14 +4,17 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.Navmap;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.Settings;
 using DCL.UI;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Global.Dynamic;
@@ -37,6 +40,8 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableCatalog wearableCatalog;
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
+        private readonly IProfileRepository profileRepository;
+        private readonly IWeb3Authenticator web3Authenticator;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -53,7 +58,9 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IWearableCatalog wearableCatalog,
             IComponentPoolsRegistry poolsRegistry,
-            CharacterPreviewInputEventBus characterPreviewInputEventBus)
+            CharacterPreviewInputEventBus characterPreviewInputEventBus,
+            IProfileRepository profileRepository,
+            IWeb3Authenticator web3Authenticator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -68,6 +75,8 @@ namespace DCL.PluginSystem.Global
             this.wearableCatalog = wearableCatalog;
             this.poolsRegistry = poolsRegistry;
             this.characterPreviewInputEventBus = characterPreviewInputEventBus;
+            this.profileRepository = profileRepository;
+            this.web3Authenticator = web3Authenticator;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -90,7 +99,9 @@ namespace DCL.PluginSystem.Global
             backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog, pageButtonView, poolsRegistry, characterPreviewInputEventBus, characterPreviewFactory);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
-            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
+            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController,
+                new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
+                new SystemMenuController(() => explorePanelView.SystemMenu, new UnityAppWebBrowser(), web3Authenticator)));
 
             mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
                 PersistentExplorePanelOpenerController.CreateLazily(
