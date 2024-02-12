@@ -39,11 +39,11 @@ namespace ECS.Unity.Tween.Systems
         [Query]
         private void Execute(ref CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
         {
-            if (!tweenComponent.TweenState.IsDirty) return;
+            if (!tweenComponent.IsTweenStateDirty) return;
 
-            tweenComponent.TweenState.IsDirty = false;
+            tweenComponent.IsTweenStateDirty = false;
             ecsToCRDTWriter.PutMessage<PBTweenState, TweenStateStatus>(
-                static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenComponent.TweenState.State);
+                static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenComponent.TweenStateStatus);
         }
 
         [Query]

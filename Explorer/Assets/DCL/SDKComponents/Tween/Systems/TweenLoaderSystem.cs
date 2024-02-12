@@ -51,23 +51,20 @@ namespace ECS.Unity.Tween.Systems
             var tweenComponent = new SDKTweenComponent
                 {
                     IsDirty = true,
-                    currentTweenModel = pbTween,
+                    CurrentTweenModel = pbTween,
                     globalWorldEntity = entity,
-                    TweenState =  new PBTweenState(),
                 };
 
-            //pbTweenModel.IsDirty = false;
             World.Add(entity, tweenComponent);
         }
 
         [Query]
         private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
-            if (pbTween.IsDirty || !AreSameModels(pbTween, sdkTweenComponent.currentTweenModel))
+            if (pbTween.IsDirty || !AreSameModels(pbTween, sdkTweenComponent.CurrentTweenModel))
             {
-                sdkTweenComponent.currentTweenModel = pbTween;
+                sdkTweenComponent.CurrentTweenModel = pbTween;
                 sdkTweenComponent.IsDirty = true;
-                //pbTween.IsDirty = false;
             }
         }
 

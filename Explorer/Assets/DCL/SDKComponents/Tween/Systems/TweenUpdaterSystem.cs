@@ -39,46 +39,38 @@ namespace ECS.Unity.Tween.Systems
 
         public void FinalizeComponents(in Query query) { }
 
+        private TweenStateStatus GetTweenState(float currentTime, bool isPlaying)
+        {
+            if (!isPlaying) { return TweenStateStatus.TsPaused; }
+
+            return currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+        }
+
         [Query]
         [All(typeof(SDKTweenComponent))]
         private void SetupTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
         {
             if (!sdkTweenComponent.IsDirty)
             {
-                //We update transform positions
+                //We also need to update transform positions
                 float currentTime = sdkTweenComponent.tweener.ElapsedPercentage();
-                if (currentTime.Equals(1f) && sdkTweenComponent.currentTime.Equals(1f))
-                    return;
+                TweenStateStatus newState = GetTweenState(currentTime, sdkTweenComponent.isPlaying);
 
-                if (sdkTweenComponent.isPlaying)
+                if (newState != sdkTweenComponent.TweenStateStatus)
                 {
-
-                     var state = currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
-
-                     if (sdkTweenComponent.TweenState.State != state)
-                     {
-                         sdkTweenComponent.TweenState.State = state;
-                         sdkTweenComponent.TweenState.IsDirty = true;
-                     }
-
-                     if (!sdkTweenComponent.TweenState.CurrentTime.Equals(currentTime))
-                     {
-                         sdkTweenComponent.TweenState.CurrentTime = currentTime;
-                         sdkTweenComponent.TweenState.IsDirty = true;
-                     }
+                    sdkTweenComponent.TweenStateStatus = newState;
+                    sdkTweenComponent.IsTweenStateDirty = true;
                 }
-                else
+
+                if (sdkTweenComponent.isPlaying && !sdkTweenComponent.CurrentTime.Equals(currentTime))
                 {
-                    if (sdkTweenComponent.TweenState.State != TweenStateStatus.TsPaused)
-                    {
-                        sdkTweenComponent.TweenState.State = TweenStateStatus.TsPaused;
-                        sdkTweenComponent.TweenState.IsDirty = true;
-                    }
+                    sdkTweenComponent.CurrentTime = currentTime;
+                    sdkTweenComponent.IsTweenStateDirty = true;
                 }
             }
             else
             {
-                PBTween tweenModel = sdkTweenComponent.currentTweenModel;
+                PBTween tweenModel = sdkTweenComponent.CurrentTweenModel;
                 bool isPlaying = !tweenModel.HasPlaying || tweenModel.Playing;
                 sdkTweenComponent.isPlaying = isPlaying;
 
@@ -91,8 +83,6 @@ namespace ECS.Unity.Tween.Systems
                 // is null, e.g: during preview mode hot-reload.
                 List<DG.Tweening.Tween> transformTweens = DOTween.TweensByTarget(entityTransform, true);
                 transformTweens?[0].Rewind(false);
-
-                sdkTweenComponent.currentTime = tweenModel.CurrentTime;
 
                 if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
                     ease = Linear;
@@ -126,18 +116,18 @@ namespace ECS.Unity.Tween.Systems
                 currentTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
 
                 sdkTweenComponent.tweener = currentTweener;
-                sdkTweenComponent.currentTime = tweenModel.CurrentTime;
+                sdkTweenComponent.CurrentTime = tweenModel.CurrentTime;
                 sdkTweenComponent.IsDirty = false;
 
                 if (isPlaying)
                 {
                     sdkTweenComponent.tweener.Play();
-                    sdkTweenComponent.TweenState.State = sdkTweenComponent.currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+                    sdkTweenComponent.TweenStateStatus = sdkTweenComponent.CurrentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
                 }
                 else
                 {
                     sdkTweenComponent.tweener.Pause();
-                    sdkTweenComponent.TweenState.State = TweenStateStatus.TsPaused;
+                    sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
                 }
             }
         }

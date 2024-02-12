@@ -12,10 +12,11 @@ namespace ECS.Unity.Tween.Components
         public bool IsDirty { get; set; }
         public bool removed;
         public bool isPlaying;
-        public float currentTime;
+        public float CurrentTime;
         public Tweener tweener;
         public PBTween.ModeOneofCase tweenMode;
-        public PBTween currentTweenModel;
-        public PBTweenState TweenState;
+        public PBTween CurrentTweenModel;
+        public TweenStateStatus TweenStateStatus;
+        public bool IsTweenStateDirty;
     }
 }
