@@ -31,7 +31,6 @@ MonoBehaviour:
   - rid: 4340256219339423747
   - rid: 4340256301410942981
   - rid: 7249412338407702528
-  - rid: 847852389420236802
   references:
     version: 2
     RefIds:
@@ -39,14 +38,6 @@ MonoBehaviour:
       type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
         <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
-    - rid: 847852389420236802
-      type: {class: MainPlayerTriggerAreaPlugin/MainPlayerTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        MainPlayerTriggerAreaPrefab:
-          m_AssetGUID: c8e610a7440c44bfc88cfdb9d738cfc6
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

@@ -192,6 +192,7 @@ namespace Global
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
                 new CameraModeAreaPlugin(container.MainPlayerReferences.MainPlayerTransform),
                 new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
+                new MainPlayerTriggerAreaPlugin(componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

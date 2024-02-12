@@ -145,7 +145,6 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
-                new MainPlayerTriggerAreaPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
