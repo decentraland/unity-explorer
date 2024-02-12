@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             // Create systems
             startLoadingSystem = StartAudioClipLoadingSystemShould.CreateSystem(world);
             loadAudioClipSystem = LoadAudioClipSystemShould.CreateSystem(world);
-            updateAudioSourceSystem = CreateAudioSourceSystemShould.CreateSystem(world);
+            updateAudioSourceSystem = UpdateAudioSourceSystemShould.CreateSystem(world);
 
             startLoadingSystem.Initialize();
             loadAudioClipSystem.Initialize();
