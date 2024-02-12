@@ -1,9 +1,12 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Credentials.Hub;
+using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
 using ECS.Abstract;
+using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using UnityEngine;
 
@@ -26,13 +29,17 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            var multiPool = new ThreadSafeMultiPool();
+            var multiPool = new LogMultiPool(
+                new ThreadSafeMultiPool(),
+                Debug.Log
+            );
 
             var roomHub = new LogMutableRoomHub(
                 new MutableRoomHub(multiPool),
                 Debug.Log
             );
 
+            IFFIClient.Default.EnsureInitialize();
             system = new ConnectionRoomsSystem(world, roomHub, multiPool, credentialsHub);
         }
 

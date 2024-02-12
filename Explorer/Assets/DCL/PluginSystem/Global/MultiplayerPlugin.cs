@@ -1,7 +1,9 @@
 using Arch.SystemGroups;
 using DCL.Multiplayer.Connections.Credentials.Hub;
+using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 
 namespace DCL.PluginSystem.Global
@@ -31,6 +33,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            IFFIClient.Default.EnsureInitialize();
             ConnectionRoomsSystem.InjectToWorld(ref builder, roomHub, multiPool, credentialsHub);
         }
     }

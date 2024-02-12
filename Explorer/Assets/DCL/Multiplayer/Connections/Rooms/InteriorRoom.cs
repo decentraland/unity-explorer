@@ -21,6 +21,8 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous = assigned;
             if (previous != null)
             {
+                room?.Disconnect();
+
                 previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
                 previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
                 previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;

@@ -10,6 +10,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -23,6 +24,8 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly IMultiPool multiPool;
         private readonly ICredentialsHub credentialsHub;
         private Vector2Int currentParcelPosition = new (int.MaxValue, int.MaxValue);
+        private bool assigningIslandRoom;
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
 
         public ConnectionRoomsSystem(
             World world,
@@ -47,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Systems
             UpdatePose(transformComponent.Position, out bool newPositioned);
             if (newPositioned) UpdateSceneRoomAsync(currentParcelPosition).Forget();
             //TODO check if I need to update the room
-            if (true) UpdateIslandRoomAsync().Forget();
+            if (assigningIslandRoom == false) UpdateIslandRoomAsync().Forget();
         }
 
         private void UpdatePose(in Vector3 characterPosition, out bool updated)
@@ -59,16 +62,24 @@ namespace DCL.Multiplayer.Connections.Systems
 
         private async UniTaskVoid UpdateSceneRoomAsync(Vector2Int parcelPosition)
         {
-            var credentials = await credentialsHub.SceneRoomCredentials(parcelPosition, CancellationToken.None);
-            var room = await NewConnectedRoom(credentials, CancellationToken.None);
+            var token = NewCancellationTokenSource();
+            var credentials = await credentialsHub.SceneRoomCredentials(parcelPosition, token.Token);
+            var room = await NewConnectedRoom(credentials, token.Token);
             roomHub.AssignSceneRoom(room);
         }
 
         private async UniTaskVoid UpdateIslandRoomAsync()
         {
-            var credentials = await credentialsHub.IslandRoomCredentials(CancellationToken.None);
-            var room = await NewConnectedRoom(credentials, CancellationToken.None);
-            roomHub.AssignIslandRoom(room);
+            try
+            {
+                assigningIslandRoom = true;
+                var token = NewCancellationTokenSource();
+                var credentials = await credentialsHub.IslandRoomCredentials(token.Token);
+                var room = await NewConnectedRoom(credentials, token.Token);
+                roomHub.AssignIslandRoom(room);
+            }
+            catch (Exception e) { throw new Exception("Failed to assign island room", e); }
+            finally { assigningIslandRoom = false; }
         }
 
         private async UniTask<IRoom> NewConnectedRoom(ICredentials credentials, CancellationToken cancellationToken)
@@ -79,10 +90,13 @@ namespace DCL.Multiplayer.Connections.Systems
             if (connected == false)
             {
                 multiPool.Release(room);
-                throw new System.Exception($"Failed to connect to room {credentials.Url} with token {credentials.AuthToken}");
+                throw new Exception($"Failed to connect to room {credentials.Url} with token {credentials.AuthToken}");
             }
 
             return room;
         }
+
+        private static CancellationTokenSource NewCancellationTokenSource() =>
+            new (TIMEOUT);
     }
 }
