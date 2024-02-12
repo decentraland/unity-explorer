@@ -14,6 +14,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Settings;
 using DCL.UI;
+using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -42,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -60,7 +62,8 @@ namespace DCL.PluginSystem.Global
             IComponentPoolsRegistry poolsRegistry,
             CharacterPreviewInputEventBus characterPreviewInputEventBus,
             IProfileRepository profileRepository,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3Authenticator web3Authenticator,
+            IUserInAppInitializationFlow userInAppInitializationFlow)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -77,6 +80,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewInputEventBus = characterPreviewInputEventBus;
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -101,7 +105,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController,
                 new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                new SystemMenuController(() => explorePanelView.SystemMenu, new UnityAppWebBrowser(), web3Authenticator)));
+                new SystemMenuController(() => explorePanelView.SystemMenu, new UnityAppWebBrowser(), web3Authenticator, userInAppInitializationFlow)));
 
             mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
                 PersistentExplorePanelOpenerController.CreateLazily(

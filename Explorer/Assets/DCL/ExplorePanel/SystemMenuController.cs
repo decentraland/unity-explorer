@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using MVC;
 using System.Threading;
@@ -15,6 +16,7 @@ namespace DCL.ExplorePanel
 
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
 
         private CancellationTokenSource? logoutCts;
 
@@ -22,11 +24,13 @@ namespace DCL.ExplorePanel
 
         public SystemMenuController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3Authenticator web3Authenticator,
+            IUserInAppInitializationFlow userInAppInitializationFlow)
             : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
         }
 
         public override void Dispose()
@@ -70,8 +74,7 @@ namespace DCL.ExplorePanel
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
                 await web3Authenticator.LogoutAsync(ct);
-
-                // TODO: start authentication flow
+                await userInAppInitializationFlow.ExecuteAsync(true, true, ct);
             }
 
             logoutCts = logoutCts.SafeRestart();
