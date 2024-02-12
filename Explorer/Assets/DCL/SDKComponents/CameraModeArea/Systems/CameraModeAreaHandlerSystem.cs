@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly MainPlayerTransform mainPlayerTransform;
+        private readonly MainPlayerTransform mainPlayerTransform; // TODO: We may be able to get rid of this if we use Unity collision events...
 
         public CameraModeAreaHandlerSystem(World world, MainPlayerTransform mainPlayerTransform) : base(world)
         {
@@ -31,12 +31,18 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         {
             if (!mainPlayerTransform.Configured) return;
 
+            // TODO: Check if we have control of the camera mode as well
+
             SetupCameraModeAreaQuery(World);
         }
 
         [Query]
         [None(typeof(CameraModeAreaComponent))]
-        private void SetupCameraModeArea(in Entity entity, ref TransformComponent transformComponent, ref PBCameraModeArea pbCameraModeArea) { }
+        private void SetupCameraModeArea(in Entity entity, ref TransformComponent transformComponent, ref PBCameraModeArea pbCameraModeArea)
+        {
+            // TODO: Instantiate MainPlayerTriggerArea from pool
+            // TODO: subscribe to MainPlayerTriggerArea events
+        }
 
         // [Query]
         // private void UpdateCameraModeArea(in Entity entity, ref TransformComponent transformComponent, ref PBCameraModeArea pbCameraModeArea, ref CameraModeAreaComponent cameraModeAreaComponent) { }
