@@ -13,19 +13,47 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private bool isLerping;
         private Coroutine coroutine;
 
+        private bool isFirst;
+
         private void Awake() =>
-            messageBus.MessageSent += newMessage => receivedMessages.Enqueue(newMessage);
+            messageBus.MessageSent += newMessage =>
+            {
+                if (isFirst)
+                {
+                    transform.position = newMessage.position;
+                    isFirst = false;
+                }
+
+                receivedMessages.Enqueue(newMessage);
+            };
 
         private void Update()
         {
             if (receivedMessages.Count > 1 && !isLerping)
             {
-                MessageMock nextTarget = receivedMessages.Dequeue();
+                MessageMock startPoint = receivedMessages.Dequeue();
+                MessageMock endPoint = receivedMessages.Peek();
 
-                if (Vector3.Distance(transform.position, nextTarget.position) > minDelta)
-                    StartCoroutine(
-                        MoveToLinearly(nextTarget.position, receivedMessages.Peek().timestamp - nextTarget.timestamp));
+                if (Vector3.Distance(startPoint.position, endPoint.position) > minDelta)
+                    StartCoroutine(MoveToLinearly2(startPoint.position, endPoint.position, endPoint.timestamp - startPoint.timestamp));
+                    // StartCoroutine(MoveToLinearly(next.position, receivedMessages.Peek().timestamp - next.timestamp));
             }
+        }
+
+        private IEnumerator MoveToLinearly2(Vector3 initialPosition, Vector3 targetPosition, float timeDif)
+        {
+            isLerping = true;
+
+            var t = 0f;
+
+            while (t < timeDif)
+            {
+                t += UnityEngine.Time.deltaTime;
+                transform.position = Vector3.Lerp(initialPosition, targetPosition, t / timeDif);
+                yield return null;
+            }
+
+            isLerping = false;
         }
 
         private IEnumerator MoveToLinearly(Vector3 targetPosition, float timeDif)
