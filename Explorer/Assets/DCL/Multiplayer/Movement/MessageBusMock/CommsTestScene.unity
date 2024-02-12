@@ -937,7 +937,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   messageBus: {fileID: 1672578178}
   minDelta: 0.01
-  interpolationType: 0
+  interpolationType: 1
 --- !u!96 &2142167751
 TrailRenderer:
   serializedVersion: 3
