@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
@@ -102,6 +103,7 @@ namespace Global.Dynamic
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
             var characterPreviewInputEventBus = new CharacterPreviewInputEventBus();
+            var chatMessagesBus = new ChatMessagesBus(debugBuilder);
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -120,7 +122,8 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, staticContainer.MainPlayerAvatarBase, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService), new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
