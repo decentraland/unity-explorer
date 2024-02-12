@@ -13,7 +13,6 @@ using ECS.Unity.Transforms.Components;
 using ECS.Unity.Tween.Components;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -26,7 +25,7 @@ namespace ECS.Unity.Tween.Systems
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly WorldProxy globalWorld;
-        private Sequence currentTweener;
+        private Tweener currentTweener;
 
         public TweenUpdaterSystem(World world, WorldProxy globalWorld) : base(world)
         {
@@ -38,96 +37,95 @@ namespace ECS.Unity.Tween.Systems
             SetupTweenSequenceQuery(World);
         }
 
-        public void FinalizeComponents(in Query query)
-        {
-        }
+        public void FinalizeComponents(in Query query) { }
 
         [Query]
-        [All(typeof(PBTween))]
-        private void SetupTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref PBTweenState pbTweenState, ref PBTween pbTween)
+        [All(typeof(SDKTweenComponent))]
+        private void SetupTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref PBTweenState pbTweenState)
         {
-            if (!sdkTweenComponent.dirty)
+            if (!sdkTweenComponent.IsDirty)
             {
                 //We update transform positions
                 //We also check and update PBTweenState
                 //We also need to check playing property on pbTween
+
+                float currentTime = sdkTweenComponent.tweener.ElapsedPercentage();
+                if (currentTime.Equals(1f) && sdkTweenComponent.currentTime.Equals(1f))
+                    return;
+
+                if (sdkTweenComponent.isPlaying)
+                {
+                    pbTweenState.State = currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+                    pbTweenState.CurrentTime = currentTime;
+                }
+                else
+                {
+                    pbTweenState.State = TweenStateStatus.TsPaused;
+                }
             }
             else
             {
-                foreach (var tweenModel in tweenModelList)
+                PBTween tweenModel = sdkTweenComponent.currentTweenModel;
+                bool isPlaying = !tweenModel.HasPlaying || tweenModel.Playing;
+                sdkTweenComponent.isPlaying = isPlaying;
+
+                Transform entityTransform = transformComponent.Transform;
+                float durationInSeconds = tweenModel.Duration / 1000;
+
+                currentTweener = sdkTweenComponent.tweener;
+
+                // There may be a tween running for the entity transform, even though internalComponentModel.tweener
+                // is null, e.g: during preview mode hot-reload.
+                List<DG.Tweening.Tween> transformTweens = DOTween.TweensByTarget(entityTransform, true);
+                transformTweens?[0].Rewind(false);
+
+                sdkTweenComponent.currentTime = tweenModel.CurrentTime;
+
+                if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
+                    ease = Linear;
+
+                switch (tweenModel.ModeCase)
                 {
-                    Transform entityTransform = transformComponent.Transform;
-                    float durationInSeconds = tweenModel.Duration / 1000;
-                    currentTweener = sdkTweenComponent.tweener;
+                    case PBTween.ModeOneofCase.Rotate:
+                        currentTweener = SetupRotationTween(transformComponent,
+                            PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
+                            PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
+                            durationInSeconds, ease);
 
-                    if (currentTweener == null) //Not sure if this is really needed at this point.
-                    {
-                        // There may be a tween running for the entity transform, even though internalComponentModel.tweener
-                        // is null, e.g: during preview mode hot-reload.
-                        List<DG.Tweening.Tween> transformTweens = DOTween.TweensByTarget(entityTransform, true);
-                        transformTweens?[0].Rewind(false);
-                        currentTweener = DOTween.Sequence(entityTransform);
-                    }
-                    else { currentTweener.Rewind(false); }
+                        break;
+                    case PBTween.ModeOneofCase.Scale:
+                        currentTweener = SetupScaleTween(ref transformComponent,
+                            PBVectorToUnityVector(tweenModel.Scale.Start),
+                            PBVectorToUnityVector(tweenModel.Scale.End),
+                            durationInSeconds, ease);
 
-                    sdkTweenComponent.transform = entityTransform;
-                    sdkTweenComponent.currentTime = tweenModel.CurrentTime;
+                        break;
+                    case PBTween.ModeOneofCase.Move:
+                    default:
+                        currentTweener = SetupPositionTween(transformComponent,
+                            PBVectorToUnityVector(tweenModel.Move.Start),
+                            PBVectorToUnityVector(tweenModel.Move.End),
+                            durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection);
 
-                    if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
-                        ease = Linear;
-
-                    switch (tweenModel.ModeCase)
-                    {
-                        case PBTween.ModeOneofCase.Rotate:
-                            currentTweener.Append(SetupRotationTween(transformComponent,
-                                PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
-                                PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
-                                durationInSeconds, ease));
-
-                            break;
-                        case PBTween.ModeOneofCase.Scale:
-                            currentTweener.Append(SetupScaleTween(ref transformComponent,
-                                PBVectorToUnityVector(tweenModel.Scale.Start),
-                                PBVectorToUnityVector(tweenModel.Scale.End),
-                                durationInSeconds, ease));
-
-                            break;
-                        case PBTween.ModeOneofCase.Move:
-                        default:
-                            currentTweener.Append(SetupPositionTween(transformComponent,
-                                PBVectorToUnityVector(tweenModel.Move.Start),
-                                PBVectorToUnityVector(tweenModel.Move.End),
-                                durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection));
-
-                            break;
-                    }
+                        break;
                 }
 
-                currentTweener.Goto(sdkTweenComponent.currentTweenModel.CurrentTime * sdkTweenComponent.currentTweenModel.Duration / 1000, sdkTweenComponent.playing);
-
-                ListPool<PBTween>.Release(tweenModelList);
-
-                if (sdkTweenComponent.currentTweenSequence is { HasLoop: true })
-                {
-                    switch (sdkTweenComponent.currentTweenSequence.Loop)
-                    {
-                        case TweenLoop.TlYoyo:
-                            currentTweener.SetLoops(-1, LoopType.Yoyo);
-                            break;
-                        case TweenLoop.TlRestart:
-                            currentTweener.SetLoops(-1, LoopType.Restart);
-                            break;
-                    }
-                }
+                currentTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
 
                 sdkTweenComponent.tweener = currentTweener;
+                sdkTweenComponent.currentTime = tweenModel.CurrentTime;
+                sdkTweenComponent.IsDirty = false;
 
-                sdkTweenComponent.dirty = false;
-
-                if (sdkTweenComponent.playing)
+                if (isPlaying)
+                {
                     sdkTweenComponent.tweener.Play();
+                    pbTweenState.State = sdkTweenComponent.currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+                }
                 else
+                {
                     sdkTweenComponent.tweener.Pause();
+                    pbTweenState.State = TweenStateStatus.TsPaused;
+                }
             }
         }
 
@@ -158,8 +156,6 @@ namespace ECS.Unity.Tween.Systems
 
             entityTransform.localPosition = startPosition;
             return entityTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
-
-            //sbcInternalComponent.SetPosition(scene, entity, entityTransform.position);
         }
 
         private Tweener SetupRotationTween( /*IParcelScene scene,*/ TransformComponent transformComponent, Quaternion startRotation,
@@ -182,7 +178,6 @@ namespace ECS.Unity.Tween.Systems
 
             //sbcInternalComponent.OnTransformScaleRotationChanged(scene, transform);
         }
-
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
         {

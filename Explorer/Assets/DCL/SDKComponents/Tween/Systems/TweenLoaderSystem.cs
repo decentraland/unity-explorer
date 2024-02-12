@@ -44,57 +44,56 @@ namespace ECS.Unity.Tween.Systems
 
         [Query]
         [None(typeof(SDKTweenComponent))]
-        private void LoadTween(in Entity entity, ref PBTween pbTweenModel, ref TransformComponent transformComponent)
+        private void LoadTween(in Entity entity, ref PBTween pbTweenModel)
         {
             if (pbTweenModel.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            bool isPlaying = !pbTweenModel.HasPlaying || pbTweenModel.Playing;
-            var tweenComponent = new SDKTweenComponent(entity, false, isPlaying, pbTweenModel.CurrentTime, null, pbTweenModel.ModeCase, pbTweenModel, true);
-            var tweenState = new PBTweenState();
+            var tweenComponent = new SDKTweenComponent
+                {
+                    IsDirty = true,
+                    currentTweenModel = pbTweenModel,
+                    globalWorldEntity = entity
+                };
+
+            pbTweenModel.IsDirty = false;
+            var tweenState = new PBTweenState(); //Use a pool of PBTweenStates for this
 
             World.Add(entity, tweenComponent, tweenState);
         }
 
         [Query]
-        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
+        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
-
-            if (!AreSameModels(pbTween, sdkTweenComponent.currentTweenModel))
+            if (pbTween.IsDirty || !AreSameModels(pbTween, sdkTweenComponent.currentTweenModel))
             {
                 sdkTweenComponent.currentTweenModel = pbTween;
-                sdkTweenComponent.dirty = true;
+                sdkTweenComponent.IsDirty = true;
+                pbTween.IsDirty = false;
             }
-
-            if (!pbTween.IsDirty)
-               return;
-
-            //check if pbTween data changed, if so, mark SDK as dirty and update its values
         }
-
-
 
         [Query]
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(in Entity entity, ref SDKTweenComponent tweenComponent)
         {
             // If the component is removed at scene-world, the global-world representation should disappear entirely
-            globalWorld.Add(tweenComponent.globalWorldEntity, new DeleteEntityIntention());
+           // globalWorld.Add(tweenComponent.globalWorldEntity, new DeleteEntityIntention());
 
-            World.Remove<SDKTweenComponent>(entity);
+            //World.Remove<SDKTweenComponent>(entity);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(in Entity entity, ref SDKTweenComponent sdkTweenComponent)
         {
-            World.Remove<SDKTweenComponent>(entity);
-            globalWorld.Add(sdkTweenComponent.globalWorldEntity, new DeleteEntityIntention());
+           // World.Remove<SDKTweenComponent>(entity);
+            //globalWorld.Add(sdkTweenComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
         [Query]
         public void FinalizeComponents(ref SDKTweenComponent sdkTweenComponent)
         {
-            globalWorld.Add(sdkTweenComponent.globalWorldEntity, new DeleteEntityIntention());
+            //globalWorld.Add(sdkTweenComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
         public void FinalizeComponents(in Query query)

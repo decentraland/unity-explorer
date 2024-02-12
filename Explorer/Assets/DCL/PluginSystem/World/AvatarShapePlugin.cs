@@ -12,6 +12,8 @@ using System.Threading;
 
 namespace DCL.PluginSystem.World
 {
+
+
     public class AvatarShapePlugin : IDCLWorldPlugin
     {
         private readonly WorldProxy globalWorld;
@@ -35,6 +37,7 @@ namespace DCL.PluginSystem.World
             var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
             var tweenHandlerSystem = TweenLoaderSystem.InjectToWorld(ref builder, globalWorld);
             var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, globalWorld);
+            var writeTweenStateSystem = WriteTweenStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
             finalizeWorldSystems.Add(tweenHandlerSystem);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
