@@ -14,15 +14,15 @@ namespace DCL.CharacterPreview
 {
     public class BackpackCharacterPreviewController : IDisposable
     {
-        private readonly BackpackCharacterPreviewView view;
-        private readonly ICharacterPreviewFactory previewFactory;
         private readonly BackpackEventBus backpackEventBus;
-        private readonly CharacterPreviewInputEventBus inputEventBus;
         private readonly BackpackCharacterPreviewCursorController cursorController;
+        private readonly CharacterPreviewInputEventBus inputEventBus;
+        private readonly ICharacterPreviewFactory previewFactory;
+        private readonly BackpackCharacterPreviewView view;
+        private CharacterPreviewController? previewController;
+        private CharacterPreviewModel previewModel;
 
         private World world;
-        private CharacterPreviewController previewController;
-        private CharacterPreviewModel previewModel;
 
         public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, CharacterPreviewInputEventBus inputEventBus)
         {
@@ -44,6 +44,18 @@ namespace DCL.CharacterPreview
             cursorController = new BackpackCharacterPreviewCursorController(view.CharacterPreviewCursorView, inputEventBus);
         }
 
+        public void Dispose()
+        {
+            backpackEventBus.EquipEvent -= OnEquipped;
+            backpackEventBus.UnEquipEvent -= OnUnequipped;
+            view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
+            view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
+            view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
+            view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
+            previewController?.Dispose();
+            cursorController.Dispose();
+        }
+
         public void Initialize(Avatar avatar)
         {
             previewModel.BodyShape = avatar.BodyShape;
@@ -52,6 +64,7 @@ namespace DCL.CharacterPreview
             previewModel.ForceRender = new HashSet<string>(avatar.ForceRender);
 
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
+
             var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
@@ -63,18 +76,6 @@ namespace DCL.CharacterPreview
             previewController = previewFactory.Create(world, newTexture, inputEventBus);
 
             OnModelUpdated();
-        }
-
-        public void Dispose()
-        {
-            backpackEventBus.EquipEvent -= OnEquipped;
-            backpackEventBus.UnEquipEvent -= OnUnequipped;
-            view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
-            view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
-            view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
-            view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
-            previewController.Dispose();
-            cursorController.Dispose();
         }
 
         public void SetWorld(World world)
@@ -118,13 +119,13 @@ namespace DCL.CharacterPreview
 
         public void OnShow()
         {
-            previewController.Show();
+            previewController!.Value.Show();
             OnModelUpdated();
         }
 
         public void OnHide()
         {
-            previewController.Hide();
+            previewController!.Value.Hide();
         }
 
         private void OnEquipped(IWearable i)
@@ -146,7 +147,7 @@ namespace DCL.CharacterPreview
 
         private void OnModelUpdated()
         {
-            previewController.UpdateAvatar(previewModel);
+            previewController!.Value.UpdateAvatar(previewModel);
         }
     }
 }
