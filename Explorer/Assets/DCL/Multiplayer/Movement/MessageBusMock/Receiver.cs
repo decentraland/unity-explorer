@@ -35,39 +35,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 MessageMock endPoint = receivedMessages.Peek();
 
                 if (Vector3.Distance(startPoint.position, endPoint.position) > minDelta)
-                    StartCoroutine(MoveToLinearly2(startPoint.position, endPoint.position, endPoint.timestamp - startPoint.timestamp));
-                    // StartCoroutine(MoveToLinearly(next.position, receivedMessages.Peek().timestamp - next.timestamp));
+                    StartCoroutine(MoveToHermite(startPoint, endPoint));
             }
         }
 
-        private IEnumerator MoveToLinearly2(Vector3 initialPosition, Vector3 targetPosition, float timeDif)
+        private IEnumerator MoveToLinearly(MessageMock start, MessageMock end)
         {
             isLerping = true;
 
             var t = 0f;
+            float timeDif = end.timestamp - start.timestamp;
 
             while (t < timeDif)
             {
                 t += UnityEngine.Time.deltaTime;
-                transform.position = Vector3.Lerp(initialPosition, targetPosition, t / timeDif);
-                yield return null;
-            }
-
-            isLerping = false;
-        }
-
-        private IEnumerator MoveToLinearly(Vector3 targetPosition, float timeDif)
-        {
-            isLerping = true;
-
-            Vector3 initialPosition = transform.position;
-
-            var t = 0f;
-
-            while (t < timeDif)
-            {
-                t += UnityEngine.Time.deltaTime;
-                transform.position = Vector3.Lerp(initialPosition, targetPosition, t / timeDif);
+                transform.position = Vector3.Lerp(start.position, end.position, t / timeDif);
                 yield return null;
             }
 
@@ -76,30 +58,33 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private IEnumerator MoveToHermite(MessageMock start, MessageMock end)
         {
-            var timeDif = end.timestamp - start.timestamp;
-
             isLerping = true;
+
             var t = 0.0f;
+            float timeDif = end.timestamp - start.timestamp;
 
             while (t < timeDif)
             {
                 t += UnityEngine.Time.deltaTime;
-
-                float s = t / timeDif; // Normalized time [0, 1]
-                float h1 = (2 * s * s * s) - (3 * s * s) + 1;
-                float h2 = (-2 * s * s * s) + (3 * s * s);
-                float h3 = (s * s * s) - (2 * s * s) + s;
-                float h4 = (s * s * s) - (s * s);
-
-                Vector3 position = (h1 * start.position) + (h2 * end.position) + (h3 * start.velocity * timeDif) + (h4 * end.velocity * timeDif);
-
-                transform.position = position;
-
+                transform.position = CubicHermiteSpline(start, end, t / timeDif, timeDif);
                 yield return null;
             }
 
             isLerping = false;
         }
 
+        private static Vector3 CubicHermiteSpline(MessageMock start, MessageMock end, float t, float timeDif)
+        {
+            float t2 = t * t;
+            float t3 = t2 * t;
+
+            float h2 = (-2 * t3) + (3 * t2); // end position h_01
+            float h1 = -h2 + 1; // start position h_00
+
+            float h3 = t3 - (2 * t2) + t; // start velocity h_10
+            float h4 = t3 - t2; // end velocity h_11
+
+            return (h1 * start.position) + (h2 * end.position) + (start.velocity * (h3 * timeDif)) + (end.velocity * (h4 * timeDif));
+        }
     }
 }

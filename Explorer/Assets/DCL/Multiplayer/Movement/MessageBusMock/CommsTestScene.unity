@@ -820,9 +820,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf6a4b096f4d8f42a37f6f2b5d054de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Jitter: 0
+  Jitter: 0.1
   PackageSentRate: 0.1
-  InitialLag: 0
+  InitialLag: 0.5
 --- !u!4 &1672578179
 Transform:
   m_ObjectHideFlags: 0
@@ -937,7 +937,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   messageBus: {fileID: 1672578178}
   minDelta: 0.01
-  lerpTime: 0
 --- !u!96 &2142167751
 TrailRenderer:
   serializedVersion: 3
