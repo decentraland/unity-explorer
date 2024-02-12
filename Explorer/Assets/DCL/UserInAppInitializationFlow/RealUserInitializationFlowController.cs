@@ -8,11 +8,16 @@ using DCL.ParcelsService;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.Web3.Identities;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
+using LoadAvatarPromise = ECS.StreamableLoading.Common.AssetPromise<
+    DCL.Profiles.Profile,
+    DCL.Profiles.GetProfileIntention>;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -24,8 +29,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IProfileRepository profileRepository;
         private readonly Vector2Int startParcel;
 
-        private World? world;
-        private Entity? playerEntity;
+        private World? ecsWorld;
+        private Entity? ownPlayerEntity;
 
         private AsyncLoadProcessReport? loadReport;
 
@@ -44,8 +49,8 @@ namespace DCL.UserInAppInitializationFlow
 
         public void InjectToWorld(World world, in Entity playerEntity)
         {
-            this.world = world;
-            this.playerEntity = playerEntity;
+            ecsWorld = world;
+            ownPlayerEntity = playerEntity;
         }
 
         public async UniTask ExecuteAsync(
@@ -70,8 +75,15 @@ namespace DCL.UserInAppInitializationFlow
 
             loadReport!.ProgressCounter.Value = 0.2f;
 
+            const int VERSION = 0;
+
             // Add the profile into the player entity so it will create the avatar in world
-            world!.Add(playerEntity!.Value, ownProfile);
+            var promise = LoadAvatarPromise.Create(ecsWorld!,
+                new GetProfileIntention(ownProfile.UserId, VERSION,
+                    new CommonLoadingArguments($"profiles/{ownProfile.UserId}?version={VERSION}")),
+                PartitionComponent.TOP_PRIORITY);
+
+            ecsWorld!.Add(ownPlayerEntity!.Value, promise);
 
             await TeleportToSpawnPointAsync(ct);
 
