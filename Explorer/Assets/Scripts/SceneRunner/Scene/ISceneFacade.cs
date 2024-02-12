@@ -1,10 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using System;
 using System.Threading;
 
 namespace SceneRunner.Scene
 {
-    public interface ISceneFacade : IUniTaskAsyncDisposable
+    public interface ISceneFacade : IUniTaskAsyncDisposable, IDisposable
     {
+        SceneShortInfo Info { get; }
+
         /// <summary>
         ///     Start an update loop with a given FPS
         /// </summary>
