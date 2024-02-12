@@ -11,6 +11,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.Unity.Transforms.Components;
 using System;
+using UnityEngine;
 
 namespace DCL.CharacterPreview
 {
@@ -75,7 +76,13 @@ namespace DCL.CharacterPreview
         public void Dispose()
         {
             globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
-            characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
+
+            try { characterPreviewContainerPool.Release(characterPreviewAvatarContainer); }
+            catch (Exception e)
+            {
+                throw;
+            }
+
             cameraController.Dispose();
         }
     }

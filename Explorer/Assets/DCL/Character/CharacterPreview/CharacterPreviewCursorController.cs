@@ -65,11 +65,15 @@ namespace DCL.CharacterPreview
                 {
                     case PointerEventData.InputButton.Right:
                         cursorOverridePresent = cursorReplacementSprites.TryGetValue(CharacterPreviewInputAction.VerticalPan, out Sprite panSprite);
-                        if (cursorOverridePresent) { cursorContainer.CursorOverrideImage.sprite = panSprite;}
+
+                        if (cursorOverridePresent) { cursorContainer.CursorOverrideImage.sprite = panSprite; }
+
                         break;
                     case PointerEventData.InputButton.Left:
                         cursorOverridePresent = cursorReplacementSprites.TryGetValue(CharacterPreviewInputAction.Rotate, out Sprite rotateSprite);
-                        if (cursorOverridePresent) { cursorContainer.CursorOverrideImage.sprite = rotateSprite;}
+
+                        if (cursorOverridePresent) { cursorContainer.CursorOverrideImage.sprite = rotateSprite; }
+
                         break;
                 }
 
@@ -88,7 +92,12 @@ namespace DCL.CharacterPreview
             inputEventBus.OnPointerUpEvent -= OnPointerUp;
             inputEventBus.OnPointerDownEvent -= OnPointerDown;
             inputEventBus.OnDraggingEvent -= OnDrag;
-            DictionaryPool<CharacterPreviewInputAction, Sprite>.Release(cursorReplacementSprites);
+
+            try { DictionaryPool<CharacterPreviewInputAction, Sprite>.Release(cursorReplacementSprites); }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
     }
 }
