@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,12 +10,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [SerializeField] private MessageBus messageBus;
         [SerializeField] private float minDelta;
 
-        [Header("DEBUG")]
-        [SerializeField] private float lerpTime;
-
         private bool isLerping;
         private Coroutine coroutine;
-        private Vector3 targetPosition;
 
         private void Awake() =>
             messageBus.MessageSent += newMessage => receivedMessages.Enqueue(newMessage);
@@ -28,10 +23,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 MessageMock nextTarget = receivedMessages.Dequeue();
 
                 if (Vector3.Distance(transform.position, nextTarget.position) > minDelta)
-                {
-                    lerpTime = receivedMessages.Peek().timestamp - nextTarget.timestamp;
-                    StartCoroutine(MoveToLinearly(nextTarget.position, lerpTime));
-                }
+                    StartCoroutine(
+                        MoveToLinearly(nextTarget.position, receivedMessages.Peek().timestamp - nextTarget.timestamp));
             }
         }
 
@@ -52,5 +45,33 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             isLerping = false;
         }
+
+        private IEnumerator MoveToHermite(MessageMock start, MessageMock end)
+        {
+            var timeDif = end.timestamp - start.timestamp;
+
+            isLerping = true;
+            var t = 0.0f;
+
+            while (t < timeDif)
+            {
+                t += UnityEngine.Time.deltaTime;
+
+                float s = t / timeDif; // Normalized time [0, 1]
+                float h1 = (2 * s * s * s) - (3 * s * s) + 1;
+                float h2 = (-2 * s * s * s) + (3 * s * s);
+                float h3 = (s * s * s) - (2 * s * s) + s;
+                float h4 = (s * s * s) - (s * s);
+
+                Vector3 position = (h1 * start.position) + (h2 * end.position) + (h3 * start.velocity * timeDif) + (h4 * end.velocity * timeDif);
+
+                transform.position = position;
+
+                yield return null;
+            }
+
+            isLerping = false;
+        }
+
     }
 }
