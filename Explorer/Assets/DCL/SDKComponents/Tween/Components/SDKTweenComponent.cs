@@ -16,5 +16,6 @@ namespace ECS.Unity.Tween.Components
         public Tweener tweener;
         public PBTween.ModeOneofCase tweenMode;
         public PBTween currentTweenModel;
+        public PBTweenState TweenState;
     }
 }

@@ -6,8 +6,11 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
+using ECS.Unity.Tween.Components;
+using System;
 
 namespace ECS.Unity.Tween.Systems
 {
@@ -17,7 +20,7 @@ namespace ECS.Unity.Tween.Systems
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(TweenUpdaterSystem))]
     [LogCategory(ReportCategory.TWEEN)]
-    public partial class WriteTweenStateSystem : BaseUnityLoopSystem
+    public partial class WriteTweenStateSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -34,10 +37,13 @@ namespace ECS.Unity.Tween.Systems
         }
 
         [Query]
-        private void Execute(ref CRDTEntity sdkEntity, ref PBTweenState tweenState)
+        private void Execute(ref CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
         {
-                ecsToCRDTWriter.PutMessage<PBTweenState, TweenStateStatus>(
-                    static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenState.State);
+            if (!tweenComponent.TweenState.IsDirty) return;
+
+            tweenComponent.TweenState.IsDirty = false;
+            ecsToCRDTWriter.PutMessage<PBTweenState, TweenStateStatus>(
+                static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenComponent.TweenState.State);
         }
 
         [Query]
@@ -45,6 +51,10 @@ namespace ECS.Unity.Tween.Systems
         {
             if (removedComponents.Remove<PBTweenState>())
                 ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
         }
     }
 }

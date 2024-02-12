@@ -41,26 +41,39 @@ namespace ECS.Unity.Tween.Systems
 
         [Query]
         [All(typeof(SDKTweenComponent))]
-        private void SetupTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref PBTweenState pbTweenState)
+        private void SetupTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
         {
             if (!sdkTweenComponent.IsDirty)
             {
                 //We update transform positions
-                //We also check and update PBTweenState
-                //We also need to check playing property on pbTween
-
                 float currentTime = sdkTweenComponent.tweener.ElapsedPercentage();
                 if (currentTime.Equals(1f) && sdkTweenComponent.currentTime.Equals(1f))
                     return;
 
                 if (sdkTweenComponent.isPlaying)
                 {
-                    pbTweenState.State = currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
-                    pbTweenState.CurrentTime = currentTime;
+
+                     var state = currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+
+                     if (sdkTweenComponent.TweenState.State != state)
+                     {
+                         sdkTweenComponent.TweenState.State = state;
+                         sdkTweenComponent.TweenState.IsDirty = true;
+                     }
+
+                     if (!sdkTweenComponent.TweenState.CurrentTime.Equals(currentTime))
+                     {
+                         sdkTweenComponent.TweenState.CurrentTime = currentTime;
+                         sdkTweenComponent.TweenState.IsDirty = true;
+                     }
                 }
                 else
                 {
-                    pbTweenState.State = TweenStateStatus.TsPaused;
+                    if (sdkTweenComponent.TweenState.State != TweenStateStatus.TsPaused)
+                    {
+                        sdkTweenComponent.TweenState.State = TweenStateStatus.TsPaused;
+                        sdkTweenComponent.TweenState.IsDirty = true;
+                    }
                 }
             }
             else
@@ -119,12 +132,12 @@ namespace ECS.Unity.Tween.Systems
                 if (isPlaying)
                 {
                     sdkTweenComponent.tweener.Play();
-                    pbTweenState.State = sdkTweenComponent.currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+                    sdkTweenComponent.TweenState.State = sdkTweenComponent.currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
                 }
                 else
                 {
                     sdkTweenComponent.tweener.Pause();
-                    pbTweenState.State = TweenStateStatus.TsPaused;
+                    sdkTweenComponent.TweenState.State = TweenStateStatus.TsPaused;
                 }
             }
         }

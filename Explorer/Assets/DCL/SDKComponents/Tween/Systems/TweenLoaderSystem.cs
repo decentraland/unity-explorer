@@ -52,13 +52,12 @@ namespace ECS.Unity.Tween.Systems
                 {
                     IsDirty = true,
                     currentTweenModel = pbTweenModel,
-                    globalWorldEntity = entity
+                    globalWorldEntity = entity,
+                    TweenState =  new PBTweenState(),
                 };
 
             pbTweenModel.IsDirty = false;
-            var tweenState = new PBTweenState(); //Use a pool of PBTweenStates for this
-
-            World.Add(entity, tweenComponent, tweenState);
+            World.Add(entity, tweenComponent);
         }
 
         [Query]
