@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DCL.SDKComponents.CameraModeArea
+namespace DCL.MainPlayerTriggerArea
 {
     public class MainPlayerTriggerArea : MonoBehaviour
     {

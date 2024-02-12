@@ -167,6 +167,11 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
+        ///     CameraModeArea SDK component
+        /// </summary>
+        public const string PLAYER_TRIGGER_AREA = nameof(PLAYER_TRIGGER_AREA);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);

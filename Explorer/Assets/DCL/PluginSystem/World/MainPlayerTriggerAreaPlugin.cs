@@ -5,7 +5,6 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.CameraModeArea;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,7 +19,7 @@ namespace DCL.PluginSystem.World
         private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        private IComponentPool<MainPlayerTriggerArea> mainPlayerTriggerAreaPoolRegistry;
+        private IComponentPool<MainPlayerTriggerArea.MainPlayerTriggerArea> mainPlayerTriggerAreaPoolRegistry;
 
         public MainPlayerTriggerAreaPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
@@ -49,12 +48,12 @@ namespace DCL.PluginSystem.World
 
         private async UniTask CreateMainPlayerTriggerAreaPoolAsync(MainPlayerTriggerAreaSettings settings, CancellationToken ct)
         {
-            MainPlayerTriggerArea mainPlayerTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MainPlayerTriggerAreaPrefab, ct: ct)).Value.GetComponent<MainPlayerTriggerArea>();
+            MainPlayerTriggerArea.MainPlayerTriggerArea mainPlayerTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MainPlayerTriggerAreaPrefab, ct: ct)).Value.GetComponent<MainPlayerTriggerArea.MainPlayerTriggerArea>();
 
             // var parentContainer = new GameObject("MainPlayerTriggerAreaPool");
             // componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(mainPlayerTriggerArea, parentContainer.transform));
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(mainPlayerTriggerAreaPrefab, Vector3.zero, Quaternion.identity));
-            mainPlayerTriggerAreaPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<MainPlayerTriggerArea>();
+            mainPlayerTriggerAreaPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<MainPlayerTriggerArea.MainPlayerTriggerArea>();
 
             cacheCleaner.Register(mainPlayerTriggerAreaPoolRegistry);
         }
