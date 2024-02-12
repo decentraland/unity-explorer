@@ -97,18 +97,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            try
+            if (uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
             {
-                if (uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+                if (promiseResult.Succeeded)
                 {
                     // Backgrounds with texture
                     UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
                     uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
                 }
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(ReportCategory.SCENE_UI, $"Error consuming texture promise: {e.Message}");
+                else
+                    ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
             }
         }
 
