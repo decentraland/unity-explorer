@@ -9,10 +9,7 @@ namespace DCL.Utilities
 
         public static void SafeDispose<T>(this T? disposable, ReportData reportData, Func<T, string>? exceptionMessageFactory = null) where T: IDisposable
         {
-            static string GetDefaultException(T disposable) =>
-                $"{disposable.GetType()}{DEFAULT_EXCEPTION}";
-
-            exceptionMessageFactory ??= GetDefaultException;
+            exceptionMessageFactory ??= static d => $"{d.GetType()}{DEFAULT_EXCEPTION}";
 
             try { disposable?.Dispose(); }
             catch (Exception e) { ReportHub.LogException(new Exception(exceptionMessageFactory(disposable!), e), reportData); }
