@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
+using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
@@ -44,6 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
+        private IComponentPool<NametagView> nametagPoolRegistry;
         private IExtendedObjectPool<Material> celShadingMaterialPool;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
@@ -74,6 +76,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             await CreateAvatarBasePoolAsync(settings, ct);
+            await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
 
@@ -90,6 +93,7 @@ namespace DCL.PluginSystem.Global
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
             cacheCleaner.Register(avatarPoolRegistry);
+            cacheCleaner.Register(nametagPoolRegistry);
             cacheCleaner.Register(celShadingMaterialPool);
             cacheCleaner.Register(computeShaderPool);
 
@@ -105,6 +109,7 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagPoolRegistry);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -113,6 +118,14 @@ namespace DCL.PluginSystem.Global
 
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
+        }
+
+        private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct)).Value.GetComponent<NametagView>();
+
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity));
+            nametagPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<NametagView>();
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -155,6 +168,10 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject avatarBase;
+
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject nametagView;
 
             [field: SerializeField]
             public AssetReferenceMaterial celShadingMaterial;
