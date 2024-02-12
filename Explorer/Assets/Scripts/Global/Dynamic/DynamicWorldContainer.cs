@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
-using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -110,6 +109,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
+                new MultiplayerPlugin(),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
