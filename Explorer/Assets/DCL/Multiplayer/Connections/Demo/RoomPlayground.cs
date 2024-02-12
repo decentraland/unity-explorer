@@ -2,12 +2,14 @@ using Arch.Core;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Credentials.Hub;
 using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
@@ -34,8 +36,15 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
+            var messagePipeHub = new MessagePipesHub();
+
             var roomHub = new LogMutableRoomHub(
-                new MutableRoomHub(multiPool),
+                new MessagePipedMutableRoomHub(
+                    new MutableRoomHub(multiPool),
+                    messagePipeHub,
+                    multiPool,
+                    new ArrayMemoryPool()
+                ),
                 Debug.Log
             );
 
