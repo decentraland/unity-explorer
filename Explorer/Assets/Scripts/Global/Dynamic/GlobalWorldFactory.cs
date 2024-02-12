@@ -93,7 +93,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld world, Entity playerEntity) Create(ISceneFactory sceneFactory,
+        public GlobalWorld Create(ISceneFactory sceneFactory,
             IEmptyScenesWorldFactory emptyScenesWorldFactory)
         {
             var world = World.Create();
@@ -173,7 +173,7 @@ namespace Global.Dynamic
 
             staticContainer.GlobalWorld.SetWorld(world);
 
-            return (globalWorld, playerEntity);
+            return globalWorld;
         }
     }
 }

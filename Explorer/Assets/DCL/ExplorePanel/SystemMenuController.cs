@@ -41,7 +41,11 @@ namespace DCL.ExplorePanel
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            viewInstance.CloseButton.OnClickAsync(ct);
+            UniTask.WhenAny(viewInstance.LogoutButton.OnClickAsync(ct),
+                viewInstance.ExitAppButton.OnClickAsync(ct),
+                viewInstance.PrivacyPolicyButton.OnClickAsync(ct),
+                viewInstance.TermsOfServiceButton.OnClickAsync(ct),
+                viewInstance.CloseButton.OnClickAsync(ct));
 
         protected override void OnViewInstantiated()
         {

@@ -149,9 +149,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                Entity playerEntity;
-
-                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
+                globalWorld = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);

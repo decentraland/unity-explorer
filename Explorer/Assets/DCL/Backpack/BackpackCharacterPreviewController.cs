@@ -125,6 +125,7 @@ namespace DCL.CharacterPreview
 
         public void OnHide()
         {
+            if (!previewController.HasValue) return;
             previewController!.Value.Hide();
         }
 

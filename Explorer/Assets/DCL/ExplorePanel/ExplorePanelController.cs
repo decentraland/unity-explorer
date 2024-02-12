@@ -112,9 +112,15 @@ namespace DCL.ExplorePanel
 
             if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) return;
 
-            systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
-                                     new ControllerNoData(), systemMenuCts.Token)
-                                .Forget();
+            async UniTaskVoid ShowSystemMenuAsync(CancellationToken ct)
+            {
+                await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
+                    new ControllerNoData(), ct);
+
+                await systemMenuController.HideViewAsync(ct);
+            }
+
+            ShowSystemMenuAsync(systemMenuCts.Token).Forget();
         }
     }
 
