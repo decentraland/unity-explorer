@@ -17,4 +17,10 @@ namespace DCL.Multiplayer.Connections.Credentials
             public string AuthToken { get; }
         }
     }
+
+    public static class CredentialsExtensions
+    {
+        public static string ReadableString(this ICredentials credentials) =>
+            $"Url: {credentials.Url}, AuthToken: {credentials.AuthToken}";
+    }
 }

@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly IMutableRoomHub roomHub;
         private readonly IMultiPool multiPool;
         private readonly ICredentialsHub credentialsHub;
-        private Vector2Int currentParcelPosition;
+        private Vector2Int currentParcelPosition = new (int.MaxValue, int.MaxValue);
 
         public ConnectionRoomsSystem(
             World world,
