@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             var credentials = await credentialsHub.IslandRoomCredentials(CancellationToken.None);
             var room = await NewConnectedRoom(credentials, CancellationToken.None);
-            roomHub.AssignSceneRoom(room);
+            roomHub.AssignIslandRoom(room);
         }
 
         private async UniTask<IRoom> NewConnectedRoom(ICredentials credentials, CancellationToken cancellationToken)
