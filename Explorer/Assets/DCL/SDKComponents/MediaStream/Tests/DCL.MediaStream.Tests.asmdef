@@ -1,0 +1,30 @@
+{
+    "name": "DCL.MediaStream.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:54660b0fae444b4cbfdafa9d68108f04",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a",
+        "GUID:f258ad16766447e7b0f4dc2b1c1b8a00",
+        "GUID:3ca842002c51d0a43b73e45298809a13",
+        "GUID:a3c61f15599a43ae9de508c9c4dd5530",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:3c7b57a14671040bd8c549056adc04f5",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AV_PRO_PRESENT"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
