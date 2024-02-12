@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -96,11 +97,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            if (uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+            try
             {
-                // Backgrounds with texture
-                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
-                uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
+                if (uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+                {
+                    // Backgrounds with texture
+                    UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
+                    uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
+                }
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.SCENE_UI, $"Error consuming texture promise: {e.Message}");
             }
         }
 
