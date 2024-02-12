@@ -18,6 +18,7 @@ namespace DCL.CharacterPreview
 
         private World world;
         private CharacterPreviewController previewController;
+        private bool initialized;
 
         protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory)
         {
@@ -51,6 +52,7 @@ namespace DCL.CharacterPreview
             view.RawImage.texture = newTexture;
 
             previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
+            initialized = true;
 
             OnModelUpdated();
         }
@@ -78,14 +80,17 @@ namespace DCL.CharacterPreview
 
         public void OnShow()
         {
-            previewController.Show();
-            inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
-            OnModelUpdated();
+            if (initialized)
+            {
+                previewController.Show();
+                inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
+                OnModelUpdated();
+            }
         }
 
         public void OnHide()
         {
-            previewController.Hide();
+            if (initialized) previewController.Hide();
         }
 
         protected void OnModelUpdated()
