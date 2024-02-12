@@ -33,13 +33,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
-            var tweenHandlerSystem = TweenLoaderSystem.InjectToWorld(ref builder, globalWorld);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, globalWorld);
-            var writeTweenStateSystem = WriteTweenStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
-            finalizeWorldSystems.Add(tweenHandlerSystem);
-            finalizeWorldSystems.Add(tweenUpdaterSystem);
-
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

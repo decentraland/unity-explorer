@@ -44,19 +44,19 @@ namespace ECS.Unity.Tween.Systems
 
         [Query]
         [None(typeof(SDKTweenComponent))]
-        private void LoadTween(in Entity entity, ref PBTween pbTweenModel)
+        private void LoadTween(in Entity entity, ref PBTween pbTween)
         {
-            if (pbTweenModel.ModeCase == PBTween.ModeOneofCase.None) return;
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             var tweenComponent = new SDKTweenComponent
                 {
                     IsDirty = true,
-                    currentTweenModel = pbTweenModel,
+                    currentTweenModel = pbTween,
                     globalWorldEntity = entity,
                     TweenState =  new PBTweenState(),
                 };
 
-            pbTweenModel.IsDirty = false;
+            //pbTweenModel.IsDirty = false;
             World.Add(entity, tweenComponent);
         }
 
@@ -67,7 +67,7 @@ namespace ECS.Unity.Tween.Systems
             {
                 sdkTweenComponent.currentTweenModel = pbTween;
                 sdkTweenComponent.IsDirty = true;
-                pbTween.IsDirty = false;
+                //pbTween.IsDirty = false;
             }
         }
 

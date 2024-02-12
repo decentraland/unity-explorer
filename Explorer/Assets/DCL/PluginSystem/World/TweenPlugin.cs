@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             var tweenHandlerSystem = TweenLoaderSystem.InjectToWorld(ref builder, globalWorld);
             var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, globalWorld);
             var writeTweenStateSystem = WriteTweenStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
