@@ -20,11 +20,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     [ThrottlingEnabled]
     public partial class UIDropdownReleaseSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool componentPool;
+        private readonly IComponentPool<UIDropdownComponent> componentPool;
 
         private UIDropdownReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(UIDropdownComponent), out componentPool);
+            componentPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
         }
 
         protected override void Update(float t)
