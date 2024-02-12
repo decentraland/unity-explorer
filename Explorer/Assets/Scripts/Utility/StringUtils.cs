@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 
 namespace Utility
@@ -5,15 +6,18 @@ namespace Utility
     public class StringUtils
     {
         private const string CHARS = "ABCDEFGHIJ KLMNOPQRSTU VWXYZ 0123456789 abcdefghij klmnopqrstu vwxyz";
-        private static string randomStringResult = "";
+        private const int MAX_RANDOM_STRING_LENGTH = 250;
+        
+        private static readonly StringBuilder RANDOM_STRING_BUILDER_RESULT = new (MAX_RANDOM_STRING_LENGTH);
 
         public static string GenerateRandomString(int length)
         {
-            randomStringResult = "";
-            for (var i = 0; i < length; i++)
-                randomStringResult += CHARS[Random.Range(0, CHARS.Length)];
+            RANDOM_STRING_BUILDER_RESULT.Clear();
 
-            return randomStringResult;
+            for (var i = 0; i < length; i++)
+                RANDOM_STRING_BUILDER_RESULT.Append(CHARS[Random.Range(0, CHARS.Length)]);
+
+            return RANDOM_STRING_BUILDER_RESULT.ToString();
         }
     }
 }
