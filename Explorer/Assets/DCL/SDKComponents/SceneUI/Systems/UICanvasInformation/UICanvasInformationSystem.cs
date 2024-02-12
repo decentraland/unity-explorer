@@ -21,7 +21,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private BorderRect interactableArea;
-        private float lastDevicePixelRatio = -1;
         private int lastViewportResolutionWidth = -1;
         private int lastScreenRealResolutionWidth = -1;
 
