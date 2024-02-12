@@ -7,7 +7,6 @@ namespace ECS.Unity.Tween.Components
 {
     public struct SDKTweenComponent
     {
-
         public SDKTweenComponent(Entity globalWorldEntity)
         {
             this.globalWorldEntity = globalWorldEntity;
@@ -19,12 +18,13 @@ namespace ECS.Unity.Tween.Components
             tweenMode = PBTween.ModeOneofCase.None;
             lastModel = null;
             dirty = false;
+            lastSequence = null;
         }
 
         public Entity globalWorldEntity;
 
         public SDKTweenComponent(Entity globalWorldEntity, bool removed, bool playing, float currentTime, Transform transform,
-            Sequence tweener, PBTween.ModeOneofCase tweenMode, PBTween lastModel, bool dirty)
+            Sequence tweener, PBTween.ModeOneofCase tweenMode, PBTween lastModel, bool dirty, PBTweenSequence lastSequence)
         {
             this.globalWorldEntity = globalWorldEntity;
             this.removed = removed;
@@ -35,6 +35,7 @@ namespace ECS.Unity.Tween.Components
             this.tweenMode = tweenMode;
             this.lastModel = lastModel;
             this.dirty = dirty;
+            this.lastSequence = lastSequence;
         }
 
         public bool dirty { get; set; }
@@ -45,5 +46,6 @@ namespace ECS.Unity.Tween.Components
         public Sequence tweener;
         public PBTween.ModeOneofCase tweenMode;
         public PBTween lastModel;
+        public PBTweenSequence lastSequence;
     }
 }

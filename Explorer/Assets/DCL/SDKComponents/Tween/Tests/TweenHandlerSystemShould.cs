@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace ECS.Unity.Tween.Tests
 {
     [TestFixture]
-    public class TweenHandlerSystemShould : UnitySystemTestBase<TweenHandlerSystem>
+    public class TweenHandlerSystemShould : UnitySystemTestBase<TweenLoaderSystem>
     {
         [SetUp]
         public void SetUp()
@@ -19,7 +19,7 @@ namespace ECS.Unity.Tween.Tests
             globalWorld = World.Create();
             var worldProxy = new WorldProxy();
             worldProxy.SetWorld(globalWorld);
-            system = new TweenHandlerSystem(world, worldProxy);
+            system = new TweenLoaderSystem(world, worldProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
