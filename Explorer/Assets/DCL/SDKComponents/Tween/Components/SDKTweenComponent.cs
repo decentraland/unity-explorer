@@ -13,39 +13,35 @@ namespace ECS.Unity.Tween.Components
             removed = false;
             playing = false;
             currentTime = 0;
-            transform = null;
             tweener = null;
             tweenMode = PBTween.ModeOneofCase.None;
-            lastModel = null;
+            currentTweenModel = null;
             dirty = false;
-            lastSequence = null;
+            currentTweenSequence = null;
         }
 
         public Entity globalWorldEntity;
 
-        public SDKTweenComponent(Entity globalWorldEntity, bool removed, bool playing, float currentTime, Transform transform,
-            Sequence tweener, PBTween.ModeOneofCase tweenMode, PBTween lastModel, bool dirty, PBTweenSequence lastSequence)
+        public SDKTweenComponent(Entity globalWorldEntity, bool removed, bool playing, float currentTime,
+            Tweener tweener, PBTween.ModeOneofCase tweenMode, PBTween currentTweenModel, bool dirty)
         {
             this.globalWorldEntity = globalWorldEntity;
             this.removed = removed;
             this.playing = playing;
             this.currentTime = currentTime;
-            this.transform = transform;
             this.tweener = tweener;
             this.tweenMode = tweenMode;
-            this.lastModel = lastModel;
+            this.currentTweenModel = currentTweenModel;
             this.dirty = dirty;
-            this.lastSequence = lastSequence;
         }
 
         public bool dirty { get; set; }
         public bool removed;
         public bool playing;
         public float currentTime;
-        public Transform transform;
-        public Sequence tweener;
+        public Tweener tweener;
         public PBTween.ModeOneofCase tweenMode;
-        public PBTween lastModel;
-        public PBTweenSequence lastSequence;
+        public PBTween currentTweenModel;
+        public PBTweenSequence currentTweenSequence;
     }
 }

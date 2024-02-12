@@ -11,7 +11,6 @@ using ECS.LifeCycle;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Tween.Components;
-using Google.Api;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -45,25 +44,17 @@ namespace ECS.Unity.Tween.Systems
 
         [Query]
         [All(typeof(PBTween))]
-        private void SetupTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref PBTweenState pbTweenState)
+        private void SetupTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref PBTweenState pbTweenState, ref PBTween pbTween)
         {
             if (!sdkTweenComponent.dirty)
             {
                 //We update transform positions
                 //We also check and update PBTweenState
+                //We also need to check playing property on pbTween
             }
             else
             {
-                //We create sequence and start tween //we need to add also TweenState - Maybe on Loader directly so we dont make so many changes to world?
-
-                var tweenModelList = ListPool<PBTween>.Get();
-
-                tweenModelList.Add(sdkTweenComponent.lastModel);
-                if (sdkTweenComponent.lastSequence?.Sequence != null) tweenModelList.AddRange(sdkTweenComponent.lastSequence.Sequence);
-
                 foreach (var tweenModel in tweenModelList)
-
-                    //if (!AreSameModels(tweenModel, sdkTweenComponent.lastModel)) //Not Necessary here, probably on Loader to mark SDKComponent as dirty
                 {
                     Transform entityTransform = transformComponent.Transform;
                     float durationInSeconds = tweenModel.Duration / 1000;
@@ -110,15 +101,15 @@ namespace ECS.Unity.Tween.Systems
 
                             break;
                     }
-
-                    currentTweener.Goto(tweenModel.CurrentTime * durationInSeconds, sdkTweenComponent.playing);
                 }
+
+                currentTweener.Goto(sdkTweenComponent.currentTweenModel.CurrentTime * sdkTweenComponent.currentTweenModel.Duration / 1000, sdkTweenComponent.playing);
 
                 ListPool<PBTween>.Release(tweenModelList);
 
-                if (sdkTweenComponent.lastSequence is { HasLoop: true })
+                if (sdkTweenComponent.currentTweenSequence is { HasLoop: true })
                 {
-                    switch (sdkTweenComponent.lastSequence.Loop)
+                    switch (sdkTweenComponent.currentTweenSequence.Loop)
                     {
                         case TweenLoop.TlYoyo:
                             currentTweener.SetLoops(-1, LoopType.Yoyo);
@@ -138,28 +129,6 @@ namespace ECS.Unity.Tween.Systems
                 else
                     sdkTweenComponent.tweener.Pause();
             }
-        }
-
-
-        private static bool AreSameModels(PBTween modelA, PBTween modelB)
-        {
-            if (modelB == null || modelA == null)
-                return false;
-
-            if (modelB.ModeCase != modelA.ModeCase
-                || modelB.EasingFunction != modelA.EasingFunction
-                || !modelB.CurrentTime.Equals(modelA.CurrentTime)
-                || !modelB.Duration.Equals(modelA.Duration))
-                return false;
-
-            return modelA.ModeCase switch
-                   {
-                       PBTween.ModeOneofCase.Scale => modelB.Scale.Start.Equals(modelA.Scale.Start) && modelB.Scale.End.Equals(modelA.Scale.End),
-                       PBTween.ModeOneofCase.Rotate => modelB.Rotate.Start.Equals(modelA.Rotate.Start) && modelB.Rotate.End.Equals(modelA.Rotate.End),
-                       PBTween.ModeOneofCase.Move => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
-                       PBTween.ModeOneofCase.None => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
-                       _ => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
-                   };
         }
 
         public static Vector3 PBVectorToUnityVector(Decentraland.Common.Vector3 original) =>

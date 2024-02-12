@@ -35,7 +35,6 @@ namespace ECS.Unity.Tween.Systems
         protected override void Update(float t)
         {
             LoadTweenQuery(World);
-            LoadTweenSequenceQuery(World);
 
             UpdateTweenQuery(World);
 
@@ -44,27 +43,13 @@ namespace ECS.Unity.Tween.Systems
         }
 
         [Query]
-        [None(typeof(SDKTweenComponent), typeof(PBTweenSequence))]
+        [None(typeof(SDKTweenComponent))]
         private void LoadTween(in Entity entity, ref PBTween pbTweenModel, ref TransformComponent transformComponent)
         {
             if (pbTweenModel.ModeCase == PBTween.ModeOneofCase.None) return;
 
             bool isPlaying = !pbTweenModel.HasPlaying || pbTweenModel.Playing;
-            var tweenComponent = new SDKTweenComponent(entity, false, isPlaying, pbTweenModel.CurrentTime, transformComponent.Transform, null, pbTweenModel.ModeCase, pbTweenModel, true, null);
-            var tweenState = new PBTweenState();
-
-            World.Add(entity, tweenComponent, tweenState);
-        }
-
-
-        [Query]
-        [None(typeof(SDKTweenComponent))]
-        private void LoadTweenSequence(in Entity entity, ref PBTween pbTweenModel, ref PBTweenSequence pbTweenSequence, ref TransformComponent transformComponent)
-        {
-            if (pbTweenModel.ModeCase == PBTween.ModeOneofCase.None) return;
-
-            bool isPlaying = !pbTweenModel.HasPlaying || pbTweenModel.Playing;
-            var tweenComponent = new SDKTweenComponent(entity, false, isPlaying, pbTweenModel.CurrentTime, transformComponent.Transform, null, pbTweenModel.ModeCase, pbTweenModel, true, pbTweenSequence);
+            var tweenComponent = new SDKTweenComponent(entity, false, isPlaying, pbTweenModel.CurrentTime, null, pbTweenModel.ModeCase, pbTweenModel, true);
             var tweenState = new PBTweenState();
 
             World.Add(entity, tweenComponent, tweenState);
@@ -73,6 +58,13 @@ namespace ECS.Unity.Tween.Systems
         [Query]
         private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
         {
+
+            if (!AreSameModels(pbTween, sdkTweenComponent.currentTweenModel))
+            {
+                sdkTweenComponent.currentTweenModel = pbTween;
+                sdkTweenComponent.dirty = true;
+            }
+
             if (!pbTween.IsDirty)
                return;
 
@@ -108,6 +100,27 @@ namespace ECS.Unity.Tween.Systems
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+        }
+
+        private static bool AreSameModels(PBTween modelA, PBTween modelB)
+        {
+            if (modelB == null || modelA == null)
+                return false;
+
+            if (modelB.ModeCase != modelA.ModeCase
+                || modelB.EasingFunction != modelA.EasingFunction
+                || !modelB.CurrentTime.Equals(modelA.CurrentTime)
+                || !modelB.Duration.Equals(modelA.Duration))
+                return false;
+
+            return modelA.ModeCase switch
+                   {
+                       PBTween.ModeOneofCase.Scale => modelB.Scale.Start.Equals(modelA.Scale.Start) && modelB.Scale.End.Equals(modelA.Scale.End),
+                       PBTween.ModeOneofCase.Rotate => modelB.Rotate.Start.Equals(modelA.Rotate.Start) && modelB.Rotate.End.Equals(modelA.Rotate.End),
+                       PBTween.ModeOneofCase.Move => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
+                       PBTween.ModeOneofCase.None => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
+                       _ => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
+                   };
         }
 
     }
