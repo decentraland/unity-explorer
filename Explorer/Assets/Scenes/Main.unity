@@ -262,6 +262,11 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
+    <ChatEntryConfiguration>k__BackingField:
+      m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
   realmUrl: https://peer.decentraland.org
   splashRoot: {fileID: 7722564697705550552}
   splashAnimation: {fileID: 4327321310632415857}

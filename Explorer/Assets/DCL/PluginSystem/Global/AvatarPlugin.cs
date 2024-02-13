@@ -10,6 +10,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
 using DCL.Nametags;
@@ -35,6 +36,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
@@ -53,9 +55,16 @@ namespace DCL.PluginSystem.Global
 
         private IObjectPool<NametagView> nametagViewPool;
 
-        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
-            IPerformanceBudget frameTimeCapBudget, IPerformanceBudget memoryBudget,
-            IRealmData realmData, MainPlayerAvatarBase mainPlayerAvatarBase, IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
+        public AvatarPlugin(
+            IComponentPoolsRegistry poolsRegistry,
+            IAssetsProvisioner assetsProvisioner,
+            IPerformanceBudget frameTimeCapBudget,
+            IPerformanceBudget memoryBudget,
+            IRealmData realmData,
+            MainPlayerAvatarBase mainPlayerAvatarBase,
+            IDebugContainerBuilder debugContainerBuilder,
+            CacheCleaner cacheCleaner,
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -63,6 +72,7 @@ namespace DCL.PluginSystem.Global
             this.mainPlayerAvatarBase = mainPlayerAvatarBase;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
+            this.chatEntryConfiguration = chatEntryConfiguration;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
@@ -110,7 +120,7 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
