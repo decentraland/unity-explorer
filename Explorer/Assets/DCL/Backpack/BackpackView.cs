@@ -21,7 +21,7 @@ namespace DCL.Backpack
         public DeselectableUiElement TipsPanelDeselectable { get; private set; }
 
         [field: SerializeField]
-        internal BackpackCharacterPreviewView backpackCharacterPreviewView { get; private set; }
+        internal CharacterPreviewView characterPreviewView { get; private set; }
     }
 
     [Serializable]
