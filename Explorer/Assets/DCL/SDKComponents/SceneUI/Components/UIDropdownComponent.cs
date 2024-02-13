@@ -1,19 +1,30 @@
-﻿using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
-using System;
+﻿using DCL.SDKComponents.SceneUI.Utils;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
-    public struct UIDropdownComponent: IPoolableComponentProvider<DCLDropdown>
+    public class UIDropdownComponent
     {
-        public DCLDropdown Dropdown;
+        public readonly DropdownField DropdownField = new ();
+        public TextElement TextElement;
+        public bool IsOnValueChangedTriggered;
 
-        DCLDropdown IPoolableComponentProvider<DCLDropdown>.PoolableComponent => Dropdown;
-        Type IPoolableComponentProvider<DCLDropdown>.PoolableComponentType => typeof(DCLDropdown);
+        internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
+
+        public void Initialize(string dropdownName, string dropdownStyleClass, string textElementStyleClass)
+        {
+            DropdownField.name = dropdownName;
+            DropdownField.AddToClassList(dropdownStyleClass);
+            DropdownField.pickingMode = PickingMode.Position;
+            TextElement = DropdownField.Q<TextElement>(className: textElementStyleClass);
+
+            IsOnValueChangedTriggered = false;
+            this.RegisterDropdownCallbacks();
+        }
 
         public void Dispose()
         {
-            Dropdown.Dispose();
+            this.UnregisterDropdownCallbacks();
         }
     }
 }

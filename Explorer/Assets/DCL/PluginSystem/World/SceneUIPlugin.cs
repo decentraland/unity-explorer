@@ -7,6 +7,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIBackground;
+using DCL.SDKComponents.SceneUI.Systems.UICanvasInformation;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
 using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
@@ -39,8 +40,8 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
-            componentPoolsRegistry.AddComponentPool<DCLInputText>(onRelease: UiElementUtils.ReleaseDCLInput, maxSize: 50);
-            componentPoolsRegistry.AddComponentPool<DCLDropdown>(onRelease: UiElementUtils.ReleaseDCLDropdown, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent, maxSize: 50);
+            componentPoolsRegistry.AddComponentPool<UIDropdownComponent>(onRelease: UiElementUtils.ReleaseUIDropdownComponent, maxSize: 50);
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
             memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
@@ -67,16 +68,15 @@ namespace DCL.PluginSystem.World
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLInputText, UIInputComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLDropdown, UIDropdownComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

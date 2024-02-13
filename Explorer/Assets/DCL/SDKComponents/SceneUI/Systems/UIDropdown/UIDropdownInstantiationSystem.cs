@@ -1,10 +1,11 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -18,17 +19,20 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     {
         private const string COMPONENT_NAME = "UIDropdown";
 
-        private readonly IComponentPool<DCLDropdown> dropdownsPool;
+        private readonly IComponentPool<UIDropdownComponent> dropdownsPool;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
-            dropdownsPool = poolsRegistry.GetReferenceTypePool<DCLDropdown>();
+            dropdownsPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
         {
             InstantiateUIDropdownQuery(World);
             UpdateUIDropdownQuery(World);
+            TriggerDropdownResultsQuery(World);
         }
 
         [Query]
@@ -36,12 +40,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         [None(typeof(UIDropdownComponent))]
         private void InstantiateUIDropdown(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var dropdown = dropdownsPool.Get();
-            dropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
-            uiTransformComponent.Transform.Add(dropdown.DropdownField);
-            var uiDropdownComponent = new UIDropdownComponent();
-            uiDropdownComponent.Dropdown = dropdown;
-            World.Add(entity, uiDropdownComponent);
+            var newDropdown = dropdownsPool.Get();
+            newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
+            uiTransformComponent.Transform.Add(newDropdown.DropdownField);
+            World.Add(entity, newDropdown);
         }
 
         [Query]
@@ -50,8 +52,26 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupDCLDropdown(ref uiDropdownComponent.Dropdown, ref sdkModel);
+            UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, ref sdkModel);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        private void TriggerDropdownResults(ref UIDropdownComponent uiDropdownComponent, ref CRDTEntity sdkEntity)
+        {
+            if (!uiDropdownComponent.IsOnValueChangedTriggered)
+                return;
+
+            PutMessage(ref sdkEntity, uiDropdownComponent.DropdownField.index);
+            uiDropdownComponent.IsOnValueChangedTriggered = false;
+        }
+
+        private void PutMessage(ref CRDTEntity sdkEntity, int index)
+        {
+            ecsToCRDTWriter.PutMessage<PBUiDropdownResult, int>(static (component, data) =>
+            {
+                component.Value = data;
+            }, sdkEntity, index);
         }
     }
 }
