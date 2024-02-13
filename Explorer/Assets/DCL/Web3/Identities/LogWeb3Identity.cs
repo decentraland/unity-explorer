@@ -41,14 +41,7 @@ namespace DCL.Web3.Identities
             }
         }
 
-        public IWeb3Account EphemeralAccount
-        {
-            get
-            {
-                log($"Web3Identity EphemeralAccount requested: {origin.EphemeralAccount.Address}");
-                return origin.EphemeralAccount;
-            }
-        }
+        public IWeb3Account EphemeralAccount => new LogWeb3Account(origin.EphemeralAccount, log);
 
         public bool IsExpired
         {

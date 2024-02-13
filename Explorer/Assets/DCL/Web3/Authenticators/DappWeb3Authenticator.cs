@@ -258,5 +258,53 @@ namespace DCL.Web3.Authenticators
             }
             catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
         }
+
+        public class Default : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+        {
+            private readonly IWeb3VerifiedAuthenticator originAuth;
+            private readonly IVerifiedEthereumApi originApi;
+
+            public Default(IWeb3IdentityCache identityCache)
+            {
+                var origin = new DappWeb3Authenticator(
+                    new UnityAppWebBrowser(),
+                    "https://auth-api.decentraland.zone",
+                    "https://decentraland.zone/auth/requests",
+                    identityCache,
+                    new HashSet<string>(
+                        new[]
+                        {
+                            "eth_getBalance",
+                            "eth_call",
+                            "eth_blockNumber",
+                            "eth_signTypedData_v4",
+                        }
+                    )
+                );
+
+                originApi = origin;
+                originAuth = origin;
+            }
+
+            public void Dispose()
+            {
+                originAuth.Dispose();// Disposes both
+            }
+
+            public UniTask<T> SendAsync<T>(EthApiRequest request, CancellationToken ct) =>
+                originApi.SendAsync<T>(request, ct);
+
+            public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
+                originApi.AddVerificationListener(callback);
+
+            public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct) =>
+                originAuth.LoginAsync(ct);
+
+            public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+                originAuth.LogoutAsync(cancellationToken);
+
+            public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
+                originAuth.AddVerificationListener(callback);
+        }
     }
 }
