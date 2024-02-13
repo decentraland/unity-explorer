@@ -143,8 +143,6 @@ namespace Global.Dynamic
                     web3IdentityCache,
                     wearableCatalog,
                     characterPreviewFactory,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                    characterPreviewInputEventBus,
                     container.ProfileRepository,
                     web3Authenticator,
                     container.UserInAppInitializationFlow),
