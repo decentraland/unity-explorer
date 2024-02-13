@@ -34,20 +34,19 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Update()
         {
-            T_t += UnityEngine.Time.deltaTime; // Increment time since the last package
+            T_t += UnityEngine.Time.deltaTime;
+            float T_hat = Mathf.Clamp(T_t / messageBus.PackageSentRate, 0f, 1f);
 
-            Vector3 P_t = P_0 + (currentVelocity * T_t);
+            Vector3 V_b = currentVelocity + (v_0_n - currentVelocity) * T_hat;
+
+            Vector3 P_t = P_0 + (V_b * T_t);
             Vector3 P_t_n = P_0_n + (v_0_n * T_t);
 
             // Apply the interpolated position
-            float T_hat = Mathf.Clamp(T_t / messageBus.PackageSentRate, 0f, 1f); // Ensure T_hat is within [0, 1]
             transform.position = P_t + ((P_t_n - P_t) * T_hat);
 
-            // This might be done when T_hat reaches 1, indicating the transition to the new state is complete
             if (T_hat >= 1f)
-            {
-                currentVelocity = v_0_n; // Consider updating v_1 to the new velocity for subsequent movements
-            }
+                currentVelocity = v_0_n;
         }
 
         private void OnMessageReceived(MessageMock newMessage)
