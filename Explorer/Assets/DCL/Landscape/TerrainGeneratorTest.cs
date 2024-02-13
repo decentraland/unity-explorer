@@ -17,7 +17,7 @@ namespace DCL.Landscape
         public TerrainGenerationData genData;
         public TextAsset emptyParcelsData;
         public TextAsset ownedParcelsData;
-        private NativeHashSet<int2> ownedParcels;
+        private NativeParallelHashSet<int2> ownedParcels;
         private NativeArray<int2> emptyParcels;
 
         [ContextMenu("Generate")]
@@ -26,7 +26,6 @@ namespace DCL.Landscape
             ParseParcels();
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
             await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
-            gen.FreeMemory();
         }
 
         private void ParseParcels()
@@ -34,7 +33,7 @@ namespace DCL.Landscape
             string[] ownedParcelsRaw = ownedParcelsData.text.Split('\n');
             string[] emptyParcelsRaw = emptyParcelsData.text.Split('\n');
 
-            ownedParcels = new NativeHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
+            ownedParcels = new NativeParallelHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
             emptyParcels = new NativeArray<int2>(emptyParcelsRaw.Length, Allocator.Persistent);
 
             foreach (string ownedParcel in ownedParcelsRaw)

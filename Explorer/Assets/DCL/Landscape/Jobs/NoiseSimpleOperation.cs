@@ -11,7 +11,7 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly float value;
         [ReadOnly] private readonly NoiseJobOperation operation;
 
-        public NoiseSimpleOperation(ref NativeArray<float> targetArray, float value, NoiseJobOperation operation)
+        public NoiseSimpleOperation(NativeArray<float> targetArray, float value, NoiseJobOperation operation)
         {
             this.targetArray = targetArray;
             this.value = value;

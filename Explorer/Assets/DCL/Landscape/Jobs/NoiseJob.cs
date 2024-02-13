@@ -28,7 +28,8 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly float2 offset;
         [ReadOnly] private readonly NoiseJobOperation operation;
 
-        public NoiseJob(ref NativeArray<float> result,
+        public NoiseJob(
+            NativeArray<float> result,
             in NativeArray<float2> octaveOffsets,
             int width,
             int height,

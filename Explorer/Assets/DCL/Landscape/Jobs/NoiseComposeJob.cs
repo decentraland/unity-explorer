@@ -11,7 +11,7 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly NativeArray<float> noiseToCompose;
         [ReadOnly] private readonly NoiseJobOperation operation;
 
-        public NoiseComposeJob(ref NativeArray<float> targetArray, in NativeArray<float> noiseToCompose, NoiseJobOperation operation)
+        public NoiseComposeJob(ref NativeArray<float> targetArray, NativeArray<float> noiseToCompose, NoiseJobOperation operation)
         {
             this.targetArray = targetArray;
             this.noiseToCompose = noiseToCompose;
