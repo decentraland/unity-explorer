@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.CharacterPreview
+namespace DCL.Backpack.CharacterPreview
 {
     public class BackpackCharacterPreviewCursorView : ViewBase, IView
     {
