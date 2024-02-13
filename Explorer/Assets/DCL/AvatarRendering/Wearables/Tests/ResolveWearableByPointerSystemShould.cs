@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private StreamableLoadingResult<SceneAssetBundleManifest> mockedABManifest;
         private StreamableLoadingResult<WearableAsset> mockedAB;
 
-        private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)
+        private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {
             IWearable wearable = Substitute.For<IWearable>();
             wearable.GetUrn().Returns(urn);

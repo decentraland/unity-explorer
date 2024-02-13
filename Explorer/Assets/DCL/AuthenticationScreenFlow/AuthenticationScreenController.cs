@@ -1,5 +1,7 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Authenticators;
@@ -20,11 +22,14 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IProfileRepository profileRepository;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
 
+        private AuthenticationScreenCharacterPreviewController characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
+        private World world;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -32,13 +37,15 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3VerifiedAuthenticator web3Authenticator,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            IWeb3IdentityCache storedIdentityProvider)
+            IWeb3IdentityCache storedIdentityProvider,
+            ICharacterPreviewFactory characterPreviewFactory)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
+            this.characterPreviewFactory = characterPreviewFactory;
         }
 
         public override void Dispose()
@@ -47,6 +54,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
+            characterPreviewController.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -75,6 +83,9 @@ namespace DCL.AuthenticationScreenFlow
 
                 SwitchState(ViewState.LoginInProgress);
             });
+
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory);
+            characterPreviewController.SetWorld(world);
         }
 
         protected override void OnBeforeViewShow()
@@ -147,6 +158,7 @@ namespace DCL.AuthenticationScreenFlow
             // TODO: get latest profile version from storage if any (?)
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
             profileNameLabel!.Value = profile?.Name;
+            if (profile != null) characterPreviewController.Initialize(profile.Avatar);
         }
 
         private void ChangeAccount()
@@ -166,6 +178,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             lifeCycleTask!.TrySetResult();
             lifeCycleTask = null;
+            characterPreviewController.Dispose();
         }
 
         private void SwitchState(ViewState state)
@@ -237,6 +250,11 @@ namespace DCL.AuthenticationScreenFlow
             LoginInProgress,
             Loading,
             Finalize,
+        }
+
+        public void SetWorld(World world)
+        {
+            this.world = world;
         }
     }
 }

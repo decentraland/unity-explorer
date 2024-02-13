@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             system = new ResolveWearableThumbnailSystem(world);
         }
 
-        private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)
+        private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {
             IWearable wearable = Substitute.For<IWearable>();
             wearable.GetUrn().Returns(urn);

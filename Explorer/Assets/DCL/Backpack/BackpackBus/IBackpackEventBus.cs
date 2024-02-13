@@ -15,11 +15,15 @@ namespace DCL.Backpack.BackpackBus
         public event Action<string> SearchEvent;
 
         public void SendSelect(IWearable equipWearable);
+
         public void SendEquip(IWearable equipWearable);
+
         public void SendUnEquip(IWearable unEquipWearable);
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender);
-        public void SendFilterCategory(string category, AvatarSlotCategoryEnum categoryEnum);
+
+        public void SendFilterCategory(string category, AvatarWearableCategoryEnum categoryEnum);
+
         public void SendSearch(string searchText);
     }
 }

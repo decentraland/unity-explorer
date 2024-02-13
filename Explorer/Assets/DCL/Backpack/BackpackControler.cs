@@ -6,8 +6,8 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.CharacterPreview;
 using DCL.CharacterPreview;
-using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3.Identities;
@@ -45,8 +45,6 @@ namespace DCL.Backpack
             IWeb3IdentityCache web3IdentityCache,
             IWearableCatalog wearableCatalog,
             PageButtonView pageButtonView,
-            IComponentPoolsRegistry poolsRegistry,
-            CharacterPreviewInputEventBus inputEventBus,
             ICharacterPreviewFactory characterPreviewFactory)
         {
             this.view = view;
@@ -92,7 +90,7 @@ namespace DCL.Backpack
                     });
             }
 
-            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, characterPreviewFactory, backpackEventBus, inputEventBus);
+            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus);
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }
