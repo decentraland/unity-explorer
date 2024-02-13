@@ -30,5 +30,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public float timestamp;
         public Vector3 position;
         public Vector3 velocity;
+        public Vector3 acceleration;
     }
 }
