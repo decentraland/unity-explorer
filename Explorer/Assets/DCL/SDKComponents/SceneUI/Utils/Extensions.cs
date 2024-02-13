@@ -77,5 +77,53 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerDownCallback);
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
         }
+
+        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent)
+        {
+            EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
+            {
+                evt.StopPropagation();
+                uiInputComponent.IsOnValueChangedTriggered = true;
+            };
+
+            EventCallback<KeyDownEvent> newOnSubmitCallback = evt =>
+            {
+                if (evt.keyCode != KeyCode.Return && evt.keyCode != KeyCode.KeypadEnter)
+                    return;
+
+                evt.StopPropagation();
+                uiInputComponent.IsOnSubmitTriggered = true;
+            };
+
+            uiInputComponent.UnregisterInputCallbacks();
+            uiInputComponent.TextField.RegisterCallback(newOnChangeCallback);
+            uiInputComponent.currentOnValueChanged = newOnChangeCallback;
+            uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback);
+            uiInputComponent.currentOnSubmit = newOnSubmitCallback;
+        }
+
+        public static void UnregisterInputCallbacks(this UIInputComponent uiInputComponent)
+        {
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit);
+        }
+
+        public static void RegisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
+        {
+            EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
+            {
+                evt.StopPropagation();
+                uiDropdownComponent.IsOnValueChangedTriggered = true;
+            };
+
+            uiDropdownComponent.UnregisterDropdownCallbacks();
+            uiDropdownComponent.DropdownField.RegisterCallback(newOnChangeCallback);
+            uiDropdownComponent.currentOnValueChanged = newOnChangeCallback;
+        }
+
+        public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiInputComponent)
+        {
+            uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+        }
     }
 }
