@@ -77,13 +77,13 @@ namespace SocketIOClient.Transport.WebSockets
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
+        public async Task SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
         {
             WebSocketMessageType msgType = WebSocketMessageType.Text;
 
             if (type == TransportMessageType.Binary) { msgType = WebSocketMessageType.Binary; }
 
-            await _ws.SendAsync(new ArraySegment<byte>(bytes), msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
+            await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
