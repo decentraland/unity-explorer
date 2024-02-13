@@ -158,7 +158,12 @@ namespace DCL.AuthenticationScreenFlow
             // TODO: get latest profile version from storage if any (?)
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
             profileNameLabel!.Value = profile?.Name;
-            if (profile != null) characterPreviewController.Initialize(profile.Avatar);
+
+            if (profile != null)
+            {
+                characterPreviewController.Initialize(profile.Avatar);
+                characterPreviewController.OnShow();
+            }
         }
 
         private void ChangeAccount()
@@ -178,7 +183,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             lifeCycleTask!.TrySetResult();
             lifeCycleTask = null;
-            characterPreviewController.Dispose();
+            characterPreviewController.OnHide();
         }
 
         private void SwitchState(ViewState state)
