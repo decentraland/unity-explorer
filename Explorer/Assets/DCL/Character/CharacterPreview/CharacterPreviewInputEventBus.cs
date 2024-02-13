@@ -9,7 +9,7 @@ namespace DCL.CharacterPreview
         public event Action<PointerEventData> OnScrollEvent;
         public event Action<PointerEventData> OnPointerUpEvent;
         public event Action<PointerEventData> OnPointerDownEvent;
-        public event Action<AvatarSlotCategoryEnum> OnChangePreviewFocusEvent;
+        public event Action<AvatarWearableCategoryEnum> OnChangePreviewFocusEvent;
 
         public void OnDrag(PointerEventData eventData) =>
             OnDraggingEvent?.Invoke(eventData);
@@ -17,29 +17,13 @@ namespace DCL.CharacterPreview
         public void OnScroll(PointerEventData eventData) =>
             OnScrollEvent?.Invoke(eventData);
 
-        public void OnChangeCategoryFocus(AvatarSlotCategoryEnum category) =>
+        public void OnChangePreviewFocus(AvatarWearableCategoryEnum category) =>
             OnChangePreviewFocusEvent?.Invoke(category);
 
-        public void OnPointerUp(PointerEventData pointerEventData)
-        {
+        public void OnPointerUp(PointerEventData pointerEventData) =>
             OnPointerUpEvent?.Invoke(pointerEventData);
-        }
 
-        public void OnPointerDown(PointerEventData pointerEventData)
-        {
+        public void OnPointerDown(PointerEventData pointerEventData) =>
             OnPointerDownEvent?.Invoke(pointerEventData);
-        }
     }
-
-    public enum AvatarSlotCategoryEnum
-    {
-        Top,
-        Bottom,
-        Shoes,
-        Head,
-        Body
-    }
-
 }
-
-

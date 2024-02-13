@@ -1,8 +1,9 @@
+using DCL.CharacterPreview;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.CharacterPreview
+namespace DCL.Backpack.CharacterPreview
 {
     public class BackpackCharacterPreviewView : ViewBase, IView
     {

@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject,
                 emptyDefaultWearable);
 
-            Assert.AreEqual(tiaraDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
+            Assert.AreEqual(tiaraDefaultWearable.GetUrn().ToString(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
             Assert.IsTrue(shouldBeEmpty);
 
             //In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
