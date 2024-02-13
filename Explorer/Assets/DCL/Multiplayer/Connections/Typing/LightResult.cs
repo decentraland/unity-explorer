@@ -5,12 +5,18 @@ namespace DCL.Multiplayer.Connections.Typing
         public static readonly LightResult<T> FAILURE = new ();
 
         public readonly T Result;
-        public bool Success;
+        public readonly bool Success;
 
-        public LightResult(T result, bool success)
+        public LightResult(T result)
         {
             this.Result = result;
-            this.Success = success;
+            this.Success = true;
         }
+    }
+
+    public static class LightResultExtensions
+    {
+        public static LightResult<T> AsSuccess<T>(this T result) =>
+            new (result);
     }
 }

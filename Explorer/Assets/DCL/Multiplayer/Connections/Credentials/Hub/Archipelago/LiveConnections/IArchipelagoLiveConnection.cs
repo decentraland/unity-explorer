@@ -91,10 +91,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
                 using var response = result.result;
                 var serverPacket = ServerPacket.Parser.ParseFrom(response.Span());
 
-                return new LightResult<SmartWrap<WelcomeMessage>>(
-                    new SmartWrap<WelcomeMessage>(serverPacket.Welcome!, multiPool),
-                    true
-                );
+                return new SmartWrap<WelcomeMessage>(serverPacket.Welcome!, multiPool).AsSuccess();
             }
 
             return LightResult<SmartWrap<WelcomeMessage>>.FAILURE;
