@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<TextAsset> emptyParcelsData;
         private ProvidedAsset<TextAsset> ownedParcelsData;
         private NativeArray<int2> emptyParcels;
-        private NativeHashSet<int2> ownedParcels;
+        private NativeParallelHashSet<int2> ownedParcels;
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer)
         {
@@ -65,10 +65,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            await terrainGenerator.GenerateTerrainAsync(processReport: loadReport);
-
-            // immediately dispose to free all memory used for generating the terrain
-            terrainGenerator.FreeMemory();
+            await terrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
         }
 
         private void ParseParcels()
@@ -76,7 +73,7 @@ namespace DCL.PluginSystem.Global
             string[] ownedParcelsRaw = ownedParcelsData.Value.text.Split('\n');
             string[] emptyParcelsRaw = emptyParcelsData.Value.text.Split('\n');
 
-            ownedParcels = new NativeHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
+            ownedParcels = new NativeParallelHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
             emptyParcels = new NativeArray<int2>(emptyParcelsRaw.Length, Allocator.Persistent);
 
             foreach (string ownedParcel in ownedParcelsRaw)

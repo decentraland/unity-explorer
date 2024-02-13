@@ -3,52 +3,41 @@ using DCL.Landscape.Jobs;
 using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace DCL.Landscape.NoiseGeneration
 {
-    public class CompositeNoiseGenerator : INoiseGenerator
+    public class CompositeNoiseGenerator : BaseNoiseGenerator
     {
-        private NativeArray<float> noiseResults;
         private readonly CompositeNoiseData compositeNoiseData;
-        private readonly uint baseSeed;
-        private readonly uint variantSeed;
         private readonly NoiseGeneratorCache generatorCache;
-
-        private int sizeOfLastCache = -1;
+        private readonly uint baseSeed;
         private NoiseGenerator mainJob;
 
-        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, uint variantSeed, NoiseGeneratorCache generatorCache)
+        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, uint variantSeed, NoiseGeneratorCache generatorCache) :
+            base(compositeNoiseData, variantSeed, baseSeed)
         {
             this.compositeNoiseData = compositeNoiseData;
             this.baseSeed = baseSeed;
-            this.variantSeed = variantSeed;
             this.generatorCache = generatorCache;
         }
 
-        public JobHandle Schedule(int size, int offsetX, int offsetZ, int batchCount = 32)
-        {
-            if (compositeNoiseData == null) return default(JobHandle);
-            CheckCache(size);
-            compositeNoiseData.settings.ValidateValues();
-
-            return Execute(ref noiseResults, NoiseJobOperation.SET, size, offsetX, offsetZ, batchCount);
-        }
-
-        public JobHandle Compose(ref NativeArray<float> result, NoiseJobOperation operation, int size, int offsetX, int offsetZ,
-            int batchCount = 32)
+        protected override JobHandle OnSchedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount)
         {
             if (compositeNoiseData == null) return default(JobHandle);
             compositeNoiseData.settings.ValidateValues();
-            return Execute(ref result, operation, size, offsetX, offsetZ, batchCount);
-        }
 
-        private JobHandle Execute(ref NativeArray<float> targetArray, NoiseJobOperation operation, int size, int offsetX, int offsetZ,
-            int batchCount = 32)
-        {
-            var tempNoiseGenerator = new NoiseGenerator(compositeNoiseData, baseSeed, variantSeed);
-            JobHandle jobHandle = tempNoiseGenerator.Schedule(size, offsetX, offsetZ, batchCount);
-            jobHandle.Complete();
+            NativeArray<float> targetNativeArray = noiseResultDictionary[noiseDataPointer];
+
+            var noiseJob = new NoiseJob(targetNativeArray,
+                in offsets,
+                noiseDataPointer.size,
+                noiseDataPointer.size,
+                in noiseData.settings, maxHeight,
+                new float2(noiseDataPointer.offsetX, noiseDataPointer.offsetZ),
+                NoiseJobOperation.SET);
+
+            JobHandle jobHandle = noiseJob.Schedule(noiseDataPointer.size * noiseDataPointer.size, batchCount, parentJobHandle);
 
             foreach (var op in compositeNoiseData.operations)
             {
@@ -64,53 +53,38 @@ namespace DCL.Landscape.NoiseGeneration
                 if (generator.IsRecursive(compositeNoiseData))
                     continue;
 
-                jobHandle = generator.Compose(ref tempNoiseGenerator.GetResult(), op.operation, size, offsetX, offsetZ, batchCount);
-                jobHandle.Complete();
+                // Schedule original Noise
+                JobHandle operationHandle = generator.Schedule(noiseDataPointer, jobHandle, batchCount);
+                jobHandle = JobHandle.CombineDependencies(jobHandle, operationHandle);
+
+                // Combine
+                NativeArray<float> noiseToCompose = generator.GetResult(noiseDataPointer);
+                var composeOperation = new NoiseComposeJob(ref targetNativeArray, noiseToCompose, op.operation);
+                JobHandle composeOperationHandle = composeOperation.Schedule(noiseToCompose.Length, 32, jobHandle);
+                jobHandle = JobHandle.CombineDependencies(jobHandle, composeOperationHandle);
             }
 
             foreach (var op in compositeNoiseData.simpleOperations)
             {
                 if (op.disable) continue;
-                var noiseSimpleOp = new NoiseSimpleOperation(ref tempNoiseGenerator.GetResult(), op.value, op.operation);
-                var h = noiseSimpleOp.Schedule(tempNoiseGenerator.GetResult().Length, 32);
-                h.Complete();
+                var simpleOperationJob = new NoiseSimpleOperation(GetResult(noiseDataPointer), op.value, op.operation);
+                JobHandle simpleOperationHandle = simpleOperationJob.Schedule(GetResult(noiseDataPointer).Length, 32, jobHandle);
+                jobHandle = JobHandle.CombineDependencies(jobHandle, simpleOperationHandle);
             }
 
-            var cutoffJob = new NoiseCutOffJob(ref tempNoiseGenerator.GetResult(), compositeNoiseData.finalCutOff);
-            var handle = cutoffJob.Schedule(tempNoiseGenerator.GetResult().Length, 32);
-            handle.Complete();
+            var cutoffJob = new NoiseCutOffJob(GetResult(noiseDataPointer), compositeNoiseData.finalCutOff);
+            JobHandle cutoffJobHandle = cutoffJob.Schedule(GetResult(noiseDataPointer).Length, 32, jobHandle);
+            jobHandle = JobHandle.CombineDependencies(jobHandle, cutoffJobHandle);
 
-            var composeJob = new NoiseComposeJob(ref targetArray, in tempNoiseGenerator.GetResult(), operation);
-            var cHandle = composeJob.Schedule(tempNoiseGenerator.GetResult().Length, 32);
-            cHandle.Complete();
-
-            tempNoiseGenerator.Dispose();
             return jobHandle;
         }
 
-        private void CheckCache(int size)
-        {
-            if (sizeOfLastCache == size) return;
-
-            if (sizeOfLastCache > 0)
-                noiseResults.Dispose();
-
-            sizeOfLastCache = size;
-            noiseResults = new NativeArray<float>(size * size, Allocator.Persistent);
-        }
-
-        public float GetValue(int index) =>
-            noiseResults[index];
-
-        public ref NativeArray<float> GetResult() =>
-            ref noiseResults;
-
-        public bool IsRecursive(NoiseDataBase otherNoiseData) =>
+        public override bool IsRecursive(NoiseDataBase otherNoiseData) =>
             this.compositeNoiseData.operations.Any(operation => operation.noise == otherNoiseData);
 
-        public void Dispose()
+        public override void Dispose()
         {
-            noiseResults.Dispose();
+
         }
     }
 }
