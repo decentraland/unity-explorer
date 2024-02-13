@@ -10,15 +10,16 @@ using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Web3;
 using ECS.Prioritization.Components;
-using Ipfs;
 using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -186,6 +187,9 @@ namespace SceneRunner
                 ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
+
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(new UnityAppWebBrowser());
+            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);

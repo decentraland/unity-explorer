@@ -8,6 +8,8 @@ namespace SceneRuntime
     {
         void RegisterEngineApi(IEngineApi api);
 
+        void RegisterRestrictedActionsApi(IRestrictedActionsAPI api);
+
         UniTask StartScene();
 
         UniTask UpdateScene(float dt);
