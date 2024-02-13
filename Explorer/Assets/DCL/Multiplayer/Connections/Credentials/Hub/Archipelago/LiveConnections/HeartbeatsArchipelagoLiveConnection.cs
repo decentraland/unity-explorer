@@ -28,24 +28,29 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
         public async UniTaskVoid LaunchHeartbeats(CancellationToken token)
         {
             var message = new Heartbeat();
+
             while (token.IsCancellationRequested == false)
             {
                 await UniTask.Delay(interval, cancellationToken: token);
+
                 //message.Position= new Position() //TODO position
-                await origin.Send(message, memoryPool, token);
+                await origin.SendAndReceiveAsync(message, memoryPool, token);
             }
         }
 
         public bool Connected() =>
             origin.Connected();
 
-        public UniTask Connect(string adapterUrl, CancellationToken token) =>
-            origin.Connect(adapterUrl, token);
+        public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>
+            origin.ConnectAsync(adapterUrl, token);
 
-        public UniTask Disconnect(CancellationToken token) =>
-            origin.Disconnect(token);
+        public UniTask DisconnectAsync(CancellationToken token) =>
+            origin.DisconnectAsync(token);
 
-        public UniTask<MemoryWrap> Send(MemoryWrap data, CancellationToken token) =>
-            origin.Send(data, token);
+        public UniTask<MemoryWrap> ReceiveAsync(CancellationToken token) =>
+            origin.ReceiveAsync(token);
+
+        public UniTask SendAsync(MemoryWrap data, CancellationToken token) =>
+            origin.SendAsync(data, token);
     }
 }

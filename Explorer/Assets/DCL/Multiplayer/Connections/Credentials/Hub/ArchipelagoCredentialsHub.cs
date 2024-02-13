@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
                 heartbeatsInterval
             );
 
-            await connection.Connect(adapterUrl, token);
+            await connection.ConnectAsync(adapterUrl, token);
             var result = await AuthorizedPeerId(connection, token);
 
             if (result.Success == false)

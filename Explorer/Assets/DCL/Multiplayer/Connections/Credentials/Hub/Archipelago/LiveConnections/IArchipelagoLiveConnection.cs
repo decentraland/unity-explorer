@@ -15,23 +15,34 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
     {
         bool Connected();
 
-        UniTask Connect(string adapterUrl, CancellationToken token);
+        UniTask ConnectAsync(string adapterUrl, CancellationToken token);
 
-        UniTask Disconnect(CancellationToken token);
+        UniTask DisconnectAsync(CancellationToken token);
 
         /// <param name="data">takes the ownership for the data</param>
         /// <param name="token">cancellation token</param>
         /// <returns>returns a memory chunk ang gives the ownership for it</returns>
-        UniTask<MemoryWrap> Send(MemoryWrap data, CancellationToken token);
+        UniTask SendAsync(MemoryWrap data, CancellationToken token);
+
+        UniTask<MemoryWrap> ReceiveAsync(CancellationToken token);
     }
 
     public static class ArchipelagoLiveConnectionExtensions
     {
-        public static async UniTask<MemoryWrap> Send<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
+        /// <summary>
+        /// Takes ownership for the data and returns the ownership for the result
+        /// </summary>
+        public static async UniTask<MemoryWrap> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
+        {
+            await archipelagoLiveConnection.SendAsync(data, token);
+            return await archipelagoLiveConnection.ReceiveAsync(token);
+        }
+
+        public static async UniTask<MemoryWrap> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
             using var memory = memoryPool.Memory(message);
             Write();
-            var result = await connection.Send(memory, token);
+            var result = await connection.SendAndReceiveAsync(memory, token);
             return result;
 
             void Write()
@@ -51,7 +62,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
         {
             using var challenge = multiPool.TempResource<ChallengeRequestMessage>();
             challenge.value.Address = ethereumAddress;
-            using var response = await connection.Send(challenge.value, memoryPool, token);
+            using var response = await connection.SendAndReceiveAsync(challenge.value, memoryPool, token);
             var serverPacket = ServerPacket.Parser.ParseFrom(response.Span());
             return new SmartWrap<ChallengeResponseMessage>(serverPacket.ChallengeResponse!, multiPool);
         }
@@ -67,9 +78,12 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
             using var signedMessage = multiPool.TempResource<SignedChallengeMessage>();
             signedMessage.value.AuthChainJson = challenge;
 
+
+            var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
+
             var result = await UniTask.WhenAny(
-                connection.Send(signedMessage.value, memoryPool, token),
-                connection.WaitDisconnect(token)
+                connection.SendAndReceiveAsync(signedMessage.value, memoryPool, linkedToken.Token),
+                connection.WaitDisconnect(linkedToken.Token)
             );
 
             if (result.hasResultLeft)

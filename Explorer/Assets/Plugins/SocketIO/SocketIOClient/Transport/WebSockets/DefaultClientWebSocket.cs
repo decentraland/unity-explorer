@@ -1,4 +1,8 @@
-﻿using System;
+﻿#nullable enable
+
+using LiveKit.Internal.FFIClients.Pools.Memory;
+using System;
+using System.Buffers;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
@@ -64,6 +68,7 @@ namespace SocketIOClient.Transport.WebSockets
 #endif
 
         private readonly ClientWebSocket _ws;
+        private readonly IMemoryPool memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
         public WebSocketState State => (WebSocketState)_ws.State;
 
@@ -88,16 +93,17 @@ namespace SocketIOClient.Transport.WebSockets
 
         public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
-            var buffer = new byte[bufferSize];
-            System.Net.WebSockets.WebSocketReceiveResult result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
+            var memory = memoryPool.Memory(bufferSize);
+            byte[] buffer = memory.DangerousBuffer();
 
-            return new WebSocketReceiveResult
-            {
-                Count = result.Count,
-                MessageType = (TransportMessageType)result.MessageType,
-                EndOfMessage = result.EndOfMessage,
-                Buffer = buffer,
-            };
+            System.Net.WebSockets.WebSocketReceiveResult? result = await _ws.ReceiveAsync(buffer, cancellationToken)!
+                                                                            .ConfigureAwait(false);
+            return new WebSocketReceiveResult(
+                memory,
+                result.Count,
+                result.EndOfMessage,
+                (TransportMessageType)result.MessageType
+            );
         }
 
         public void AddHeader(string key, string val)
