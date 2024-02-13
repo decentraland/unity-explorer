@@ -16,7 +16,16 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [SerializeField] private MessageBus messageBus;
 
         private Vector3 currentVelocity = Vector3.zero;
-        private Vector3? target;
+
+        // Class members
+        private Vector3 P_0; // Position at the time of receiving the new package
+        private Vector3 P_0_n; // Position from the new package
+        private Vector3 v_0_n; // Velocity from the new package
+
+        private float T_t; // Time since the new package was received
+        private float T_hat; // Normalized time factor for interpolation
+
+        private bool firstMessage = true;
 
         private void Awake()
         {
@@ -25,28 +34,39 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Update()
         {
-            if (target != null)
-            {
-                transform.position = Vector3.MoveTowards(transform.position, target.Value, currentVelocity.magnitude * UnityEngine.Time.deltaTime);
+            T_t += UnityEngine.Time.deltaTime; // Increment time since the last package
 
-                if (Vector3.Distance(transform.position, target.Value) < 0.001f)
-                    target = null;
+            Vector3 P_t = P_0 + (currentVelocity * T_t);
+            Vector3 P_t_n = P_0_n + (v_0_n * T_t);
+
+            // Apply the interpolated position
+            float T_hat = Mathf.Clamp(T_t / messageBus.PackageSentRate, 0f, 1f); // Ensure T_hat is within [0, 1]
+            transform.position = P_t + ((P_t_n - P_t) * T_hat);
+
+            // This might be done when T_hat reaches 1, indicating the transition to the new state is complete
+            if (T_hat >= 1f)
+            {
+                currentVelocity = v_0_n; // Consider updating v_1 to the new velocity for subsequent movements
             }
-            else
-                transform.position += currentVelocity * UnityEngine.Time.deltaTime;
         }
 
         private void OnMessageReceived(MessageMock newMessage)
         {
-            if (replicaHistory.Count == 0)
+            P_0 = transform.position; // Current position at the time of the new package
+            currentVelocity = v_0_n;
+
+            P_0_n = newMessage.position;
+            v_0_n = newMessage.velocity;
+
+            T_t = 0f; // Reset time since the new package
+
+            if (firstMessage)
             {
                 transform.position = newMessage.position;
                 currentVelocity = newMessage.velocity;
-            }
-            else
-            {
-                target = newMessage.position;
-                currentVelocity = newMessage.velocity;
+
+                T_t = 1f;
+                firstMessage = false;
             }
         }
     }

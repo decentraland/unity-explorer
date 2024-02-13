@@ -821,7 +821,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Jitter: 0.1
-  PackageSentRate: 0.2
+  PackageSentRate: 0.1
   InitialLag: 0.5
 --- !u!4 &1672578179
 Transform:
