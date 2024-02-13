@@ -22,6 +22,7 @@ namespace DCL.Nametags
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly Dictionary<string, NametagView> nametagViews = new Dictionary<string, NametagView>();
         private SingleInstanceEntity playerCamera;
+        private NametagView nametagView;
 
         public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool) : base(world)
         {
@@ -44,16 +45,16 @@ namespace DCL.Nametags
         {
             if (partitionComponent.IsBehind)
             {
-                if(nametagViews.TryGetValue(avatarShape.ID, out var releasableNametagView))
+                if(nametagViews.TryGetValue(avatarShape.ID, out nametagView))
                 {
-                    nametagViewPool.Release(releasableNametagView);
+                    nametagViewPool.Release(nametagView);
                     nametagViews.Remove(avatarShape.ID);
                 }
 
                 return;
             }
 
-            if(nametagViews.TryGetValue(avatarShape.ID, out var nametagView))
+            if(nametagViews.TryGetValue(avatarShape.ID, out nametagView))
             {
                 nametagView.transform.position = camera.Camera.WorldToScreenPoint(characterTransform.Transform.position + Vector3.up * 2);
             }
