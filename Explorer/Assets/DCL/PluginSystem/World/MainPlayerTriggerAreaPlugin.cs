@@ -1,11 +1,13 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MainPlayerTriggerArea;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -42,6 +44,10 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             // cacheCleaner.Register(mainPlayerTriggerAreaPoolRegistry);
+
+            ResetDirtyFlagSystem<MainPlayerTriggerAreaComponent>.InjectToWorld(ref builder);
+            var mainPlayerTriggerAreaHandlerSystem = MainPlayerTriggerAreaHandlerSystem.InjectToWorld(ref builder, mainPlayerTriggerAreaPoolRegistry);
+            finalizeWorldSystems.Add(mainPlayerTriggerAreaHandlerSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

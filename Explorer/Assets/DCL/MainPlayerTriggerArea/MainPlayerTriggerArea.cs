@@ -5,6 +5,8 @@ namespace DCL.MainPlayerTriggerArea
 {
     public class MainPlayerTriggerArea : MonoBehaviour
     {
+        public BoxCollider boxCollider;
+
         public void OnTriggerEnter(Collider other)
         {
             OnEnteredTrigger?.Invoke();
