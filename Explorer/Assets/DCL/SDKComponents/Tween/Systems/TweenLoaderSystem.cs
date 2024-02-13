@@ -24,18 +24,15 @@ namespace ECS.Unity.Tween.Systems
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-       private readonly WorldProxy globalWorld;
         private Sequence currentTweener;
 
-        public TweenLoaderSystem(World world, WorldProxy globalWorld) : base(world)
+        public TweenLoaderSystem(World world) : base(world)
         {
-            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)
         {
             LoadTweenQuery(World);
-
             UpdateTweenQuery(World);
 
             HandleComponentRemovalQuery(World);
@@ -61,6 +58,8 @@ namespace ECS.Unity.Tween.Systems
         [Query]
         private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
         {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
             if (pbTween.IsDirty || !AreSameModels(pbTween, sdkTweenComponent.CurrentTweenModel))
             {
                 sdkTweenComponent.CurrentTweenModel = pbTween;
@@ -72,10 +71,7 @@ namespace ECS.Unity.Tween.Systems
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(in Entity entity, ref SDKTweenComponent tweenComponent)
         {
-            // If the component is removed at scene-world, the global-world representation should disappear entirely
-           // globalWorld.Add(tweenComponent.globalWorldEntity, new DeleteEntityIntention());
-
-            //World.Remove<SDKTweenComponent>(entity);
+            tweenComponent.Removed = true;
         }
 
         [Query]

@@ -10,13 +10,13 @@ namespace ECS.Unity.Tween.Components
         public Entity globalWorldEntity;
 
         public bool IsDirty { get; set; }
-        public bool removed;
-        public bool isPlaying;
-        public float CurrentTime;
-        public Tweener tweener;
-        public PBTween.ModeOneofCase tweenMode;
-        public PBTween CurrentTweenModel;
-        public TweenStateStatus TweenStateStatus;
-        public bool IsTweenStateDirty;
+        public bool Removed { get; set; }
+        public bool isPlaying { get; set; }
+        public float CurrentTime { get; set; }
+        public Tweener Tweener { get; set; }
+        public PBTween.ModeOneofCase tweenMode { get; set; }
+        public PBTween CurrentTweenModel { get; set; }
+        public TweenStateStatus TweenStateStatus { get; set; }
+        public bool IsTweenStateDirty { get; set; }
     }
 }

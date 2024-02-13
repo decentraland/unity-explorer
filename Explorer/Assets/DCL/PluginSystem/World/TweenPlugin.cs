@@ -14,6 +14,7 @@ namespace DCL.PluginSystem.World
     public class TweenPlugin : IDCLWorldPlugin
     {
         private readonly WorldProxy globalWorld;
+        private WriteTweenDataSystem system;
 
         public TweenPlugin(WorldProxy globalWorld)
         {
@@ -31,12 +32,11 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
-            var tweenHandlerSystem = TweenLoaderSystem.InjectToWorld(ref builder, globalWorld);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, globalWorld);
-            var writeTweenStateSystem = WriteTweenStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
+            var tweenHandlerSystem = TweenLoaderSystem.InjectToWorld(ref builder);
+            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder);
+            WriteTweenDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             finalizeWorldSystems.Add(tweenHandlerSystem);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
-            finalizeWorldSystems.Add(writeTweenStateSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

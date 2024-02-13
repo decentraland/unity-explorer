@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components.Transform;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Utilities;
@@ -24,12 +25,12 @@ namespace ECS.Unity.Tween.Systems
     [ThrottlingEnabled]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly WorldProxy globalWorld;
-        private Tweener currentTweener;
+        private const int MILLISECONDS_CONVERSION_INT = 1000;
 
-        public TweenUpdaterSystem(World world, WorldProxy globalWorld) : base(world)
+        private Tweener tempTweener;
+
+        public TweenUpdaterSystem(World world) : base(world)
         {
-            this.globalWorld = globalWorld;
         }
 
         protected override void Update(float t)
@@ -37,9 +38,19 @@ namespace ECS.Unity.Tween.Systems
             SetupTweenSequenceQuery(World);
         }
 
-        public void FinalizeComponents(in Query query) { }
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeComponentsQuery(World);
+        }
 
-        private TweenStateStatus GetTweenState(float currentTime, bool isPlaying)
+        [Query]
+        [All(typeof(SDKTweenComponent))]
+        private void FinalizeComponents(in Entity entity, ref SDKTweenComponent sdkTweenComponent)
+        {
+            World.Remove<SDKTweenComponent>(entity);
+        }
+
+        private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
         {
             if (!isPlaying) { return TweenStateStatus.TsPaused; }
 
@@ -48,14 +59,21 @@ namespace ECS.Unity.Tween.Systems
 
         [Query]
         [All(typeof(SDKTweenComponent))]
-        private void SetupTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
+        private void SetupTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent)
         {
+            if (sdkTweenComponent.Removed)
+            {
+                sdkTweenComponent.Tweener.Kill();
+                World.Remove<SDKTweenComponent>(entity);
+                return;
+            }
+
             if (!sdkTweenComponent.IsDirty)
             {
-                //We also need to update transform positions
-                float currentTime = sdkTweenComponent.tweener.ElapsedPercentage();
-                TweenStateStatus newState = GetTweenState(currentTime, sdkTweenComponent.isPlaying);
+                float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
+                TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.isPlaying);
 
+                //We only update the state if we changed status OR if the tween is playing and the current time has changed
                 if (newState != sdkTweenComponent.TweenStateStatus)
                 {
                     sdkTweenComponent.TweenStateStatus = newState;
@@ -75,10 +93,11 @@ namespace ECS.Unity.Tween.Systems
                 sdkTweenComponent.isPlaying = isPlaying;
 
                 Transform entityTransform = transformComponent.Transform;
-                float durationInSeconds = tweenModel.Duration / 1000;
+                float durationInSeconds = tweenModel.Duration / MILLISECONDS_CONVERSION_INT;
 
-                currentTweener = sdkTweenComponent.tweener;
+                tempTweener = sdkTweenComponent.Tweener;
 
+                //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
                 // There may be a tween running for the entity transform, even though internalComponentModel.tweener
                 // is null, e.g: during preview mode hot-reload.
                 List<DG.Tweening.Tween> transformTweens = DOTween.TweensByTarget(entityTransform, true);
@@ -90,14 +109,14 @@ namespace ECS.Unity.Tween.Systems
                 switch (tweenModel.ModeCase)
                 {
                     case PBTween.ModeOneofCase.Rotate:
-                        currentTweener = SetupRotationTween(transformComponent,
+                        tempTweener = SetupRotationTween(transformComponent.Transform,
                             PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
                             PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
                             durationInSeconds, ease);
 
                         break;
                     case PBTween.ModeOneofCase.Scale:
-                        currentTweener = SetupScaleTween(ref transformComponent,
+                        tempTweener = SetupScaleTween(transformComponent.Transform,
                             PBVectorToUnityVector(tweenModel.Scale.Start),
                             PBVectorToUnityVector(tweenModel.Scale.End),
                             durationInSeconds, ease);
@@ -105,7 +124,7 @@ namespace ECS.Unity.Tween.Systems
                         break;
                     case PBTween.ModeOneofCase.Move:
                     default:
-                        currentTweener = SetupPositionTween(transformComponent,
+                        tempTweener = SetupPositionTween(transformComponent.Transform,
                             PBVectorToUnityVector(tweenModel.Move.Start),
                             PBVectorToUnityVector(tweenModel.Move.End),
                             durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection);
@@ -113,26 +132,26 @@ namespace ECS.Unity.Tween.Systems
                         break;
                 }
 
-                currentTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
+                tempTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
 
-                sdkTweenComponent.tweener = currentTweener;
+                sdkTweenComponent.Tweener = tempTweener;
                 sdkTweenComponent.CurrentTime = tweenModel.CurrentTime;
                 sdkTweenComponent.IsDirty = false;
 
                 if (isPlaying)
                 {
-                    sdkTweenComponent.tweener.Play();
+                    sdkTweenComponent.Tweener.Play();
                     sdkTweenComponent.TweenStateStatus = sdkTweenComponent.CurrentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
                 }
                 else
                 {
-                    sdkTweenComponent.tweener.Pause();
+                    sdkTweenComponent.Tweener.Pause();
                     sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
                 }
             }
         }
 
-        public static Vector3 PBVectorToUnityVector(Decentraland.Common.Vector3 original) =>
+        private static Vector3 PBVectorToUnityVector(Decentraland.Common.Vector3 original) =>
             new ()
             {
                 x = original.X,
@@ -140,7 +159,7 @@ namespace ECS.Unity.Tween.Systems
                 z = original.Z,
             };
 
-        public static Quaternion PBQuaternionToUnityQuaternion(Decentraland.Common.Quaternion original) =>
+        private static Quaternion PBQuaternionToUnityQuaternion(Decentraland.Common.Quaternion original) =>
             new ()
             {
                 x = original.X,
@@ -149,37 +168,27 @@ namespace ECS.Unity.Tween.Systems
                 w = original.W,
             };
 
-        private Tweener SetupPositionTween( /*IParcelScene scene,*/ TransformComponent transformComponent, Vector3 startPosition,
+        private Tweener SetupPositionTween(Transform entityTransform, Vector3 startPosition,
             Vector3 endPosition, float durationInSeconds, Ease ease, bool faceDirection)
         {
-            Transform entityTransform = transformComponent.Transform;
-
-            if (faceDirection)
-                entityTransform.forward = (endPosition - startPosition).normalized;
+            if (faceDirection) entityTransform.forward = (endPosition - startPosition).normalized;
 
             entityTransform.localPosition = startPosition;
             return entityTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
         }
 
-        private Tweener SetupRotationTween( /*IParcelScene scene,*/ TransformComponent transformComponent, Quaternion startRotation,
+        private Tweener SetupRotationTween(Transform entityTransform, Quaternion startRotation,
             Quaternion endRotation, float durationInSeconds, Ease ease)
         {
-            Transform entityTransform = transformComponent.Transform;
             entityTransform.localRotation = startRotation;
             return entityTransform.DOLocalRotateQuaternion(endRotation, durationInSeconds).SetEase(ease).SetAutoKill(false);
-
-            //sbcInternalComponent.OnTransformScaleRotationChanged(scene, entity);
         }
 
-        private Tweener SetupScaleTween( /*IParcelScene scene,*/ ref TransformComponent transformComponent, Vector3 startScale,
+        private Tweener SetupScaleTween(Transform entityTransform, Vector3 startScale,
             Vector3 endScale, float durationInSeconds, Ease ease)
         {
-            Transform entityTransform = transformComponent.Transform;
             entityTransform.localScale = startScale;
-            transformComponent.Cached.LocalScale = startScale;
             return entityTransform.DOScale(endScale, durationInSeconds).SetEase(ease).SetAutoKill(false);
-
-            //sbcInternalComponent.OnTransformScaleRotationChanged(scene, transform);
         }
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
