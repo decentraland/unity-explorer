@@ -374,8 +374,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1266408382}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1bca652ab4d044eaac654b2f1a2bfa6, type: 3}
+  m_Script: {fileID: 11500000, guid: ca4ff73c84b53454fa6df8f4c45821e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  url: wss://decentraland-explorer-ssrsdlud.livekit.cloud
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDc3NDAzNjcsImlzcyI6IkFQSUVUdEQ2YmNqM3lFaiIsIm5iZiI6MTcwNzczOTQ2Nywic3ViIjoiciIsInZpZGVvIjp7ImNhblB1Ymxpc2giOnRydWUsImNhblB1Ymxpc2hEYXRhIjp0cnVlLCJjYW5TdWJzY3JpYmUiOnRydWUsInJvb20iOiJyIiwicm9vbUpvaW4iOnRydWV9fQ.0itc9gmYWyJfcGlAhMShCxtP1G0b8aygd6ryU6-53U8
+  aboutUrl: https://realm-provider.decentraland.zone/main/about

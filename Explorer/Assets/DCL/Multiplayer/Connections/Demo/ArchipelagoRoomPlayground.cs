@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Credentials.Hub;
+using DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.AdapterAddress;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
@@ -16,8 +17,7 @@ namespace DCL.Multiplayer.Connections.Demo
 {
     public class ArchipelagoRoomPlayground : MonoBehaviour
     {
-        [SerializeField] private string url = string.Empty;
-        [SerializeField] private string authToken = string.Empty;
+        [SerializeField] private string aboutUrl = string.Empty;
 
         private BaseUnityLoopSystem system = null!;
 
@@ -26,13 +26,22 @@ namespace DCL.Multiplayer.Connections.Demo
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
-            var credentialsHub = new LogCredentialsHub(
-                new ICredentialsHub.Fake(url, authToken),
-                Debug.Log
-            );
+            var memoryPool = new ArrayMemoryPool();
 
             var multiPool = new LogMultiPool(
                 new ThreadSafeMultiPool(),
+                Debug.Log
+            );
+
+            var adapterAddresses = new LogAdapterAddresses(
+                new RefinedAdapterAddresses(
+                    new WebRequestsAdapterAddresses()
+                ),
+                Debug.Log
+            );
+
+            var credentialsHub = new LogCredentialsHub(
+                new ArchipelagoCredentialsHub(adapterAddresses, memoryPool, multiPool, aboutUrl),
                 Debug.Log
             );
 
@@ -43,7 +52,7 @@ namespace DCL.Multiplayer.Connections.Demo
                     new MutableRoomHub(multiPool),
                     messagePipeHub,
                     multiPool,
-                    new ArrayMemoryPool()
+                    memoryPool
                 ),
                 Debug.Log
             );

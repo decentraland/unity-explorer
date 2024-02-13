@@ -52,8 +52,16 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
         {
             using var result = await webSocket.ReceiveAsync(BUFFER_SIZE, token)!;
-            EnsureBinary(result.MessageType);
-            return CopiedMemory(result.Buffer, result.Count);
+
+            return result.MessageType switch
+                   {
+                       TransportMessageType.Text => throw new NotSupportedException(
+                           $"Expected Binary, Text messages are not supported: {result.AsText()}"
+                       ),
+                       TransportMessageType.Binary => CopiedMemory(result.Buffer, result.Count),
+                       TransportMessageType.Close => throw new Exception("Connection closed"),
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
         }
 
         private MemoryWrap CopiedMemory(ReadOnlyMemory<byte> buffer, int count)
@@ -62,12 +70,6 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
             var slice = buffer.Slice(0, count).Span;
             slice.CopyTo(memory.Span());
             return memory;
-        }
-
-        private static void EnsureBinary(TransportMessageType type)
-        {
-            if (type != TransportMessageType.Binary)
-                throw new NotSupportedException("Only binary messages are supported");
         }
     }
 }

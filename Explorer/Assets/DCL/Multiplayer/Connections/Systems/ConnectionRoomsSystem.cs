@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private void AssignRooms(in CharacterTransform transformComponent)
         {
             UpdatePose(transformComponent.Position, out bool newPositioned);
-            if (newPositioned) UpdateSceneRoomAsync(currentParcelPosition).Forget();
+            //TODO uncomment if (newPositioned) UpdateSceneRoomAsync(currentParcelPosition).Forget();
             //TODO check if I need to update the room
             if (assigningIslandRoom == false) UpdateIslandRoomAsync().Forget();
         }
