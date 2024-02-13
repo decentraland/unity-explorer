@@ -18,6 +18,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [SerializeField] private float minDelta;
         [SerializeField] private InterpolationType interpolationType;
 
+        [SerializeField] private bool useAcceleration;
+
+
         private readonly Queue<MessageMock> incomingMessages = new ();
         private readonly List<MessageMock> processedMessages = new ();
 
@@ -66,36 +69,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
                 lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
 
-                // suppose velocity didn't change
-                newMessage.velocity = lastMessage.velocity;
+                newMessage.velocity = useAcceleration
+                    ? lastMessage.velocity + (lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp))
+                    : lastMessage.velocity;
             }
-            // else if (processedMessages.Count == 2)
-            // {
-            //     MessageMock lastMessage = processedMessages[^1];
-            //     MessageMock preLastMessage = processedMessages[^2];
-            //
-            //     lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
-            //     preLastMessage.acceleration = CalculateDiff(preLastMessage.velocity, preLastMessage.timestamp, lastMessage.velocity, lastMessage.timestamp);
-            //
-            //     // suppose acceleration didn't change
-            //     lastMessage.acceleration = preLastMessage.acceleration;
-            //     newMessage.velocity = lastMessage.velocity + (lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp));
-            // }
-            // else
-            // {
-            //     MessageMock lastMessage = processedMessages[^1];
-            //     MessageMock preLastMessage = processedMessages[^2];
-            //     MessageMock prePreLastMessage = processedMessages[^3];
-            //
-            //     lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
-            //     preLastMessage.acceleration = CalculateDiff(preLastMessage.velocity, preLastMessage.timestamp, lastMessage.velocity, lastMessage.timestamp);
-            //     prePreLastMessage.jerk = CalculateDiff(prePreLastMessage.acceleration, prePreLastMessage.timestamp, preLastMessage.acceleration, preLastMessage.timestamp);
-            //
-            //     // suppose jerk didn't change
-            //     preLastMessage.jerk = prePreLastMessage.jerk;
-            //     lastMessage.acceleration = preLastMessage.acceleration + (preLastMessage.jerk * (lastMessage.timestamp - preLastMessage.timestamp));
-            //     newMessage.velocity = lastMessage.velocity + (lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp));
-            // }
 
             processedMessages.Add(newMessage);
 

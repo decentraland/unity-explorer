@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
-using Debug = System.Diagnostics.Debug;
+﻿using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class ReceiverExtrapolation : MonoBehaviour
     {
-        public const int MAX_POSITIONS = 10;
-
-        private readonly Queue<MessageMock> receivedMessages = new ();
-        private readonly List<MessageMock> receivedHistory = new ();
-        private readonly List<MessageMock> replicaHistory = new ();
-
         [SerializeField] private MessageBus messageBus;
 
         private Vector3 currentVelocity = Vector3.zero;
@@ -67,17 +58,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 T_t = 1f;
                 firstMessage = false;
             }
-        }
-    }
-
-    public static class ListExtensions
-    {
-        public static void AddToHistory(this List<MessageMock> history, MessageMock newPosition)
-        {
-            while (history.Count >= ReceiverExtrapolation.MAX_POSITIONS)
-                history.RemoveAt(0);
-
-            history.Add(newPosition);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -6,6 +7,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class Sender : MonoBehaviour
     {
+        private const int HISTORY_SIZE = 3; // Adjust size for smoothing
+
+        private readonly List<(Vector3, float)> velocityHistory = new ();
         public int packageLost;
         public bool saveData;
 
@@ -42,6 +46,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             }
         }
 
+        private void FixedUpdate()
+        {
+            velocityHistory.Add((characterController.velocity, UnityEngine.Time.unscaledTime));
+
+            if (velocityHistory.Count >= HISTORY_SIZE)
+                velocityHistory.RemoveAt(0); // Keep the queue size constant
+        }
+
         private void OnDestroy()
         {
             if (saveData)
@@ -57,11 +69,36 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 if (packageLost > 0)
                     packageLost--;
                 else
-                    messageBus.Send(UnityEngine.Time.unscaledTime, characterController.transform.position, characterController.velocity);
+                {
+                    Vector3 acceleration = CalculateAverageAcceleration();
 
+                    Debug.Log(acceleration.magnitude);
+                    messageBus.Send(UnityEngine.Time.unscaledTime, characterController.transform.position, characterController.velocity, acceleration);
+                }
 
                 yield return new WaitForSeconds(messageBus.PackageSentRate + (Random.Range(0, messageBus.Jitter) * messageBus.PackageSentRate));
             }
+        }
+
+        private Vector3 CalculateAverageAcceleration()
+        {
+            Vector3 acceleration = Vector3.zero;
+
+            if (velocityHistory.Count > 1) // Ensure there are at least two velocities to compare
+            {
+                // Starting at 1 because we are looking at pairs, and there's no pair for the first element alone
+                for (var i = 1; i < velocityHistory.Count; i++)
+                {
+                    (Vector3 v1, float t1) = velocityHistory[^(i + 1)]; // Earlier velocity
+                    (Vector3 v2, float t2) = velocityHistory[^i]; // Later velocity
+
+                    acceleration += (v2 - v1) / (t2 - t1);
+                }
+
+                acceleration /= (velocityHistory.Count - 1); // Correct division for averaging
+            }
+
+            return acceleration;
         }
     }
 }

@@ -13,13 +13,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         public float InitialLag;
 
-        public void Send(float timestamp, Vector3 position, Vector3 velocity)
+        public void Send(float timestamp, Vector3 position, Vector3 velocity, Vector3 acceleration)
         {
             MessageSent?.Invoke(new MessageMock
             {
                 timestamp = timestamp,
                 position = position,
                 velocity = velocity,
+                acceleration = acceleration,
             });
         }
     }
