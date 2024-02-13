@@ -2,24 +2,24 @@
 using Newtonsoft.Json.Linq;
 using System;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     /// <summary>
     ///     Provides support for polymorphic definition of "position"
     /// </summary>
-    public class SpawnPointConverter : JsonConverter<IpfsTypes.SceneMetadata.SpawnPoint>
+    public class SpawnPointConverter : JsonConverter<SceneMetadata.SpawnPoint>
     {
         public override bool CanWrite => false;
 
-        public override void WriteJson(JsonWriter writer, IpfsTypes.SceneMetadata.SpawnPoint value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, SceneMetadata.SpawnPoint value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
         }
 
-        public override IpfsTypes.SceneMetadata.SpawnPoint ReadJson(JsonReader reader, Type objectType, IpfsTypes.SceneMetadata.SpawnPoint existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override SceneMetadata.SpawnPoint ReadJson(JsonReader reader, Type objectType, SceneMetadata.SpawnPoint existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             var jsonObject = JObject.Load(reader);
-            var spawnPoint = new IpfsTypes.SceneMetadata.SpawnPoint();
+            var spawnPoint = new SceneMetadata.SpawnPoint();
 
             spawnPoint.name = jsonObject["name"].Value<string>();
             JToken position = jsonObject["position"];
@@ -28,12 +28,12 @@ namespace Ipfs
             if (position["x"].Type == JTokenType.Array)
             {
                 // Deserialize as MultiPosition
-                spawnPoint.MP = position.ToObject<IpfsTypes.SceneMetadata.SpawnPoint.MultiPosition>();
+                spawnPoint.MP = position.ToObject<SceneMetadata.SpawnPoint.MultiPosition>();
             }
             else
             {
                 // Deserialize as SinglePosition
-                spawnPoint.SP = position.ToObject<IpfsTypes.SceneMetadata.SpawnPoint.SinglePosition>();
+                spawnPoint.SP = position.ToObject<SceneMetadata.SpawnPoint.SinglePosition>();
             }
 
             return spawnPoint;

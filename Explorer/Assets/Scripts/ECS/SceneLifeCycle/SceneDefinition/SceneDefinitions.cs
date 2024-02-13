@@ -1,13 +1,14 @@
-﻿using Ipfs;
+﻿using DCL.Ipfs;
+using Ipfs;
 using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
     public readonly struct SceneDefinitions
     {
-        public readonly List<IpfsTypes.SceneEntityDefinition> Value;
+        public readonly List<SceneEntityDefinition> Value;
 
-        public SceneDefinitions(List<IpfsTypes.SceneEntityDefinition> value)
+        public SceneDefinitions(List<SceneEntityDefinition> value)
         {
             Value = value;
         }

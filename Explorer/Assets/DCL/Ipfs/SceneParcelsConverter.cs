@@ -4,21 +4,21 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     /// <summary>
     ///     Converts string representation of parcels into Vector2Int to eliminate the necessity of an additional abstraction layer
     /// </summary>
-    public class SceneParcelsConverter : JsonConverter<IpfsTypes.SceneMetadataScene>
+    public class SceneParcelsConverter : JsonConverter<SceneMetadataScene>
     {
         public override bool CanWrite => false;
 
-        public override void WriteJson(JsonWriter writer, IpfsTypes.SceneMetadataScene value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, SceneMetadataScene value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
         }
 
-        public override IpfsTypes.SceneMetadataScene ReadJson(JsonReader reader, Type objectType, IpfsTypes.SceneMetadataScene existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override SceneMetadataScene ReadJson(JsonReader reader, Type objectType, SceneMetadataScene existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             var jsonObject = JObject.Load(reader);
 
@@ -36,7 +36,7 @@ namespace Ipfs
             else
                 decodedParcels = Array.Empty<Vector2Int>();
 
-            return new IpfsTypes.SceneMetadataScene
+            return new SceneMetadataScene
             {
                 DecodedBase = baseParcel != null ? IpfsHelper.DecodePointer(baseParcel) : Vector2Int.zero,
                 DecodedParcels = decodedParcels,

@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.Web3.Identities;
@@ -17,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD.Components;
+using DCL.Utilities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -32,7 +34,7 @@ namespace Global.Dynamic
         private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
-        private readonly IpfsTypes.ServerAbout serverAbout = new ();
+        private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly int sceneLoadRadius;
@@ -101,7 +103,7 @@ namespace Global.Dynamic
 
             await UniTask.SwitchToMainThread();
 
-            IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
+            ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(new IpfsRealm(web3IdentityCache, webRequestController, realm, result));
@@ -109,7 +111,7 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            var realmEntity = world.Create(realmComp,
+            Entity realmEntity = world.Create(realmComp,
                 new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
@@ -151,7 +153,7 @@ namespace Global.Dynamic
                 globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
             world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
-            
+
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
 
@@ -166,7 +168,7 @@ namespace Global.Dynamic
             GC.Collect();
         }
 
-        public async UniTask DisposeGlobalWorldAsync()
+        public void DisposeGlobalWorld()
         {
             if (globalWorld != null)
             {
@@ -178,7 +180,11 @@ namespace Global.Dynamic
                 globalWorld.Dispose();
             }
 
-            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+            foreach (ISceneFacade scene in allScenes)
+
+                // Scene Info is contained in the ReportData, don't include it into the exception
+                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                    static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
         }
 
         private void FindLoadedScenes()
