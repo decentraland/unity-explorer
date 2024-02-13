@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -18,28 +19,34 @@ namespace DCL.Nametags
     [LogCategory(ReportCategory.AVATAR)]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<NametagView> nametagPoolRegistry;
+        private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly Dictionary<string, NametagView> nametagViews = new Dictionary<string, NametagView>();
+        private SingleInstanceEntity playerCamera;
 
-        public NametagPlacementSystem(World world, IComponentPool<NametagView> nametagPoolRegistry) : base(world)
+        public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool) : base(world)
         {
-            this.nametagPoolRegistry = nametagPoolRegistry;
+            this.nametagViewPool = nametagViewPool;
+        }
+
+        public override void Initialize()
+        {
+            playerCamera = World.CacheCamera();
         }
 
         protected override void Update(float t)
         {
-            UpdateNametagPlacementQuery(World);
+            UpdateNametagPlacementQuery(World, playerCamera.GetCameraComponent(World));
         }
 
         [Query]
         [All(typeof(CharacterTransform))]
-        private void UpdateNametagPlacement(ref AvatarShapeComponent avatarShape, ref CharacterTransform characterTransform, ref PartitionComponent partitionComponent)
+        private void UpdateNametagPlacement([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref CharacterTransform characterTransform, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind)
             {
                 if(nametagViews.TryGetValue(avatarShape.ID, out var releasableNametagView))
                 {
-                    nametagPoolRegistry.Release(releasableNametagView);
+                    nametagViewPool.Release(releasableNametagView);
                     nametagViews.Remove(avatarShape.ID);
                 }
 
@@ -48,11 +55,11 @@ namespace DCL.Nametags
 
             if(nametagViews.TryGetValue(avatarShape.ID, out var nametagView))
             {
-                nametagView.transform.position = characterTransform.Transform.position; //Camera.WorldToScreenPoint(characterTransform.Transform.position + Vector3.up * 2);
+                nametagView.transform.position = camera.Camera.WorldToScreenPoint(characterTransform.Transform.position + Vector3.up * 2);
             }
             else
             {
-                nametagViews.Add(avatarShape.ID, nametagPoolRegistry.Get());
+                nametagViews.Add(avatarShape.ID, nametagViewPool.Get());
             }
 
         }
