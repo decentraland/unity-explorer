@@ -9,6 +9,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
     {
         Linear,
         Hermite,
+        Bezier,
     }
 
     public class Receiver : MonoBehaviour
@@ -27,12 +28,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Awake()
         {
             messageBus.MessageSent += newMessage => receivedMessages.Enqueue(newMessage);
-
-            interpolation = interpolationType switch
-                            {
-                                InterpolationType.Linear => LinearInterpolation,
-                                InterpolationType.Hermite => HermiteInterpolation,
-                            };
         }
 
         // private void OnMessageReceived2(MessageMock newMessage)
@@ -69,6 +64,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Update()
         {
             if (isLerping) return;
+
+            interpolation = interpolationType switch
+                            {
+                                InterpolationType.Linear => LinearInterpolation,
+                                InterpolationType.Hermite => HermiteInterpolation,
+                                InterpolationType.Bezier => BezierInterpolation,
+                            };
 
             (MessageMock startPoint, MessageMock endPoint) = GetInterpolationPoints();
 
@@ -111,7 +113,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private static Vector3 LinearInterpolation(MessageMock start, MessageMock end, float t, float _) =>
             Vector3.Lerp(start.position, end.position, t);
 
-        /// Cubic Hermite Spline version of Hermite interpolation
+        /// Cubic Hermite spline interpolation
         private static Vector3 HermiteInterpolation(MessageMock start, MessageMock end, float t, float timeDif)
         {
             float t2 = t * t;
@@ -124,6 +126,23 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             float h4 = t3 - t2; // Hermite basis function h_11 (for end velocity)
 
             return (h1 * start.position) + (h2 * end.position) + (start.velocity * (h3 * timeDif)) + (end.velocity * (h4 * timeDif));
+        }
+
+        /// Cubic Bézier spline interpolation
+        private static Vector3 BezierInterpolation(MessageMock start, MessageMock end, float t, float timeDif)
+        {
+            float t2 = t * t;
+            float t3 = t2 * t;
+
+            float oneMinusT = 1 - t;
+            float oneMinusT2 = oneMinusT * oneMinusT;
+            float oneMinusT3 = oneMinusT2 * oneMinusT;
+
+            // Compute the control points based on start and end positions and velocities
+            Vector3 c0 = start.position + (start.velocity * (timeDif / 3));
+            Vector3 c1 = end.position - (end.velocity * (timeDif / 3));
+
+            return (oneMinusT3 * start.position) + (3 * oneMinusT2 * t * c0) + (3 * oneMinusT * t2 * c1) + (t3 * end.position);
         }
     }
 }

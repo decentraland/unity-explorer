@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -11,6 +10,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public bool saveData;
 
         [SerializeField] private MessageBus messageBus;
+        [SerializeField] private GameObject lostText;
 
         private SnapshotRecorder recorder;
         private CharacterController characterController;
@@ -35,7 +35,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             // Simulate package lost
             if (UnityEngine.Input.GetKeyUp(KeyCode.Space))
+            {
                 packageLost++;
+                lostText.SetActive(false);
+                lostText.SetActive(true);
+            }
         }
 
         private void OnDestroy()
