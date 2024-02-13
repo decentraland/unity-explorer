@@ -57,33 +57,20 @@ namespace DCL.CharacterPreview
             avatarShape.IsDirty = true;
         }
 
-        public void Hide()
+        public void Dispose()
         {
             if (globalWorld != null)
             {
                 ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
                 if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
+
+                globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
+
+                try { characterPreviewContainerPool.Release(characterPreviewAvatarContainer); }
+                catch (Exception e) { throw; }
+
+                cameraController.Dispose();
             }
-
-            if (characterPreviewAvatarContainer != null) characterPreviewAvatarContainer.gameObject.SetActive(false);
-        }
-
-        public void Show()
-        {
-            if (characterPreviewAvatarContainer != null) { characterPreviewAvatarContainer.gameObject.SetActive(true); }
-        }
-
-        public void Dispose()
-        {
-            globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
-
-            try { characterPreviewContainerPool.Release(characterPreviewAvatarContainer); }
-            catch (Exception e)
-            {
-                throw;
-            }
-
-            cameraController.Dispose();
         }
     }
 }

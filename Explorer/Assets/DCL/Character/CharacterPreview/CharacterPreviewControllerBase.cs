@@ -39,7 +39,13 @@ namespace DCL.CharacterPreview
             previewAvatarModel.HairColor = avatar.HairColor;
             previewAvatarModel.SkinColor = avatar.SkinColor;
             previewAvatarModel.ForceRenderCategories = new HashSet<string>(avatar.ForceRender);
+            previewAvatarModel.Initialized = true;
 
+            Initialize();
+        }
+
+        private void Initialize()
+        {
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
             var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, TextureUtilities.GetColorSpaceFormat())
@@ -82,15 +88,22 @@ namespace DCL.CharacterPreview
         {
             if (initialized)
             {
-                previewController.Show();
                 inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
                 OnModelUpdated();
+            }
+            else if (previewAvatarModel.Initialized)
+            {
+                Initialize();
             }
         }
 
         public void OnHide()
         {
-            if (initialized) previewController.Hide();
+            if (initialized)
+            {
+                previewController.Dispose();
+                initialized = false;
+            }
         }
 
         protected void OnModelUpdated()

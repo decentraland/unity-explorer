@@ -162,7 +162,6 @@ namespace DCL.AuthenticationScreenFlow
             if (profile != null)
             {
                 characterPreviewController.Initialize(profile.Avatar);
-                characterPreviewController.OnShow();
             }
         }
 

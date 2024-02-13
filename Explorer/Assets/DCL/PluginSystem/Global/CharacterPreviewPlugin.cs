@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
         {
             CharacterPreviewAvatarContainer characterPreviewAvatarContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
             var parentContainer = new GameObject("CharacterPreviewContainerPool");
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
+            componentPoolsRegistry.AddGameObjectPool<CharacterPreviewAvatarContainer>(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
             characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
         }
 
