@@ -18,9 +18,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [SerializeField] private float minDelta;
         [SerializeField] private InterpolationType interpolationType;
 
-        // private readonly Queue<MessageMock> receivedMessages = new ();
-
-        private readonly List<MessageMock> messageHistory = new ();
+        private readonly Queue<MessageMock> incomingMessages = new ();
+        private readonly List<MessageMock> processedMessages = new ();
 
         private bool isLerping;
 
@@ -28,12 +27,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Awake()
         {
-            messageBus.MessageSent += HandleNewMessage;
+            messageBus.MessageSent += newMessage => incomingMessages.Enqueue(newMessage);
         }
 
         private void Update()
         {
-            if (isLerping || messageHistory.Count < 2) return;
+            if (isLerping || incomingMessages.Count == 0) return;
+
+            // Process incoming message
+            MessageMock newMessage = incomingMessages.Dequeue();
+            HandleNewMessage(newMessage);
+
+            if (processedMessages.Count < 2) return; // Ensure we have at least two messages to interpolate between
+
+            MessageMock startPoint = processedMessages[^2];
+            MessageMock endPoint = processedMessages[^1];
 
             interpolation = interpolationType switch
                             {
@@ -42,43 +50,58 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                                 InterpolationType.Bezier => BezierInterpolation,
                             };
 
-            MessageMock startPoint = messageHistory[^2];
-            MessageMock endPoint = messageHistory[^1];
-
             if (Vector3.Distance(startPoint.position, endPoint.position) > minDelta)
                 StartCoroutine(MoveTo(startPoint, endPoint, interpolation));
         }
 
         private void HandleNewMessage(MessageMock newMessage)
         {
-            if (messageHistory.Count == 0)
+            if (processedMessages.Count == 0)
             {
                 transform.position = newMessage.position;
             }
-            else if (messageHistory.Count == 1)
+            else if (processedMessages.Count == 1)
             {
-                var lastMessage = messageHistory[^1];
+                MessageMock lastMessage = processedMessages[^1];
 
                 lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
 
                 // suppose velocity didn't change
                 newMessage.velocity = lastMessage.velocity;
             }
-            else
-            {
-                var lastMessage = messageHistory[^1];
-                var preLastMessage = messageHistory[^2];
+            // else if (processedMessages.Count == 2)
+            // {
+            //     MessageMock lastMessage = processedMessages[^1];
+            //     MessageMock preLastMessage = processedMessages[^2];
+            //
+            //     lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
+            //     preLastMessage.acceleration = CalculateDiff(preLastMessage.velocity, preLastMessage.timestamp, lastMessage.velocity, lastMessage.timestamp);
+            //
+            //     // suppose acceleration didn't change
+            //     lastMessage.acceleration = preLastMessage.acceleration;
+            //     newMessage.velocity = lastMessage.velocity + (lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp));
+            // }
+            // else
+            // {
+            //     MessageMock lastMessage = processedMessages[^1];
+            //     MessageMock preLastMessage = processedMessages[^2];
+            //     MessageMock prePreLastMessage = processedMessages[^3];
+            //
+            //     lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
+            //     preLastMessage.acceleration = CalculateDiff(preLastMessage.velocity, preLastMessage.timestamp, lastMessage.velocity, lastMessage.timestamp);
+            //     prePreLastMessage.jerk = CalculateDiff(prePreLastMessage.acceleration, prePreLastMessage.timestamp, preLastMessage.acceleration, preLastMessage.timestamp);
+            //
+            //     // suppose jerk didn't change
+            //     preLastMessage.jerk = prePreLastMessage.jerk;
+            //     lastMessage.acceleration = preLastMessage.acceleration + (preLastMessage.jerk * (lastMessage.timestamp - preLastMessage.timestamp));
+            //     newMessage.velocity = lastMessage.velocity + (lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp));
+            // }
 
-                lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
+            processedMessages.Add(newMessage);
 
-                preLastMessage.acceleration = CalculateDiff(preLastMessage.velocity, preLastMessage.timestamp, lastMessage.velocity, lastMessage.timestamp);
-
-                // suppose acceleration didn't change
-                lastMessage.acceleration = preLastMessage.acceleration;
-                newMessage.velocity = lastMessage.velocity + lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp);
-            }
-
-            messageHistory.Add(newMessage);
+            // Remove oldest to keep list size in check
+            if (processedMessages.Count > 100)
+                processedMessages.RemoveAt(0);
         }
 
         private static Vector3 CalculateDiff(Vector3 start, float startT, Vector3 end, float endT) =>
