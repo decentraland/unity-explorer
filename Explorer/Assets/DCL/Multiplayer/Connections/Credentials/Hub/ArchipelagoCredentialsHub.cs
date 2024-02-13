@@ -2,12 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.AdapterAddress;
 using DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Typing;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
+using System.Buffers;
 using System.Threading;
 using UnityEngine;
 
@@ -21,8 +19,11 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
         private readonly string aboutUrl;
         private readonly TimeSpan heartbeatsInterval;
 
-        public ArchipelagoCredentialsHub(IAdapterAddresses adapterAddresses, IMemoryPool memoryPool, IMultiPool multiPool) : this(
-            adapterAddresses, memoryPool, multiPool, "https://realm-provider.decentraland.zone/main/about"
+        public ArchipelagoCredentialsHub() : this(
+            new WebRequestsAdapterAddresses(),
+            new ArrayMemoryPool(ArrayPool<byte>.Shared!),
+            new ThreadSafeMultiPool(),
+            "https://realm-provider.decentraland.zone/main/about"
         ) { }
 
         public ArchipelagoCredentialsHub(IAdapterAddresses adapterAddresses, IMemoryPool memoryPool, IMultiPool multiPool, string aboutUrl)
@@ -40,15 +41,22 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
 
         public async UniTask<ICredentials> IslandRoomCredentials(CancellationToken token)
         {
-            string adapterUrl = await adapterAddresses.AdapterUrl(aboutUrl);
-            var connection = await NewArchipelagoLiveConnection(adapterUrl, token);
+            try
+            {
+                string adapterUrl = await adapterAddresses.AdapterUrlAsync(aboutUrl, token);
+                var connection = await NewArchipelagoLiveConnection(adapterUrl, token);
 
-            //about info
-            //adapter url
-            //open a connection against the adapter url via wss
+                //about info
+                //adapter url
+                //open a connection against the adapter url via wss
 
-            //TODO sending heartbeats to the wss connection
-            throw new NotImplementedException();
+                //TODO sending heartbeats to the wss connection
+                throw new NotImplementedException();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Cannot get island room credentials", e);
+            }
         }
 
         private async UniTask<IArchipelagoLiveConnection> NewArchipelagoLiveConnection(string adapterUrl, CancellationToken token)

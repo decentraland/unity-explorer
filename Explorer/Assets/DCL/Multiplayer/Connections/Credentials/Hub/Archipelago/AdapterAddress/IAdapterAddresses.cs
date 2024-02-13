@@ -1,9 +1,10 @@
 using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.AdapterAddress
 {
     public interface IAdapterAddresses
     {
-        UniTask<string> AdapterUrl(string aboutUrl);
+        UniTask<string> AdapterUrlAsync(string aboutUrl, CancellationToken token);
     }
 }
