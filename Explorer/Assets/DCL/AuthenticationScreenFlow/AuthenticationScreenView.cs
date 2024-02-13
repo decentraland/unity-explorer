@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.CharacterPreview;
 using MVC;
 using System;
 using System.Threading;
@@ -7,12 +8,14 @@ using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
-using UnityEngine.Video;
 
 namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenView : ViewBase, IView
     {
+        [SerializeField] private LocalizeStringEvent countdownLabel;
+
+        private StringVariable? countdownLabelParameter;
         [field: SerializeField]
         public GameObject LoginContainer { get; private set; } = null!;
 
@@ -55,9 +58,8 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;
 
-        [SerializeField] private LocalizeStringEvent countdownLabel;
-
-        private StringVariable? countdownLabelParameter;
+        [field: SerializeField]
+        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
