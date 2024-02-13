@@ -57,9 +57,13 @@ namespace DCL.Multiplayer.Connections.Demo
                 )
             );
 
-            IWeb3Authenticator authenticator = new DappWeb3Authenticator.Default(identityCache);
-            var identity = await authenticator.LoginAsync(CancellationToken.None);
-            identityCache.Identity = new LogWeb3Identity(identity);
+            if (identityCache.Identity is null)
+            {
+                var identity = await new DappWeb3Authenticator.Default(identityCache)
+                   .LoginAsync(CancellationToken.None);
+
+                identityCache.Identity = new LogWeb3Identity(identity);
+            }
 
             var credentialsHub = new LogCredentialsHub(
                 new ArchipelagoCredentialsHub(
