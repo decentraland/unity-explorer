@@ -86,6 +86,8 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
                 connection.WaitDisconnect(linkedToken.Token)
             );
 
+            linkedToken.Cancel();
+
             if (result.hasResultLeft)
             {
                 using var response = result.result;
