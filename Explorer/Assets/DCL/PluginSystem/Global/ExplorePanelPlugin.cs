@@ -35,8 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWearableCatalog wearableCatalog;
-        private readonly IComponentPoolsRegistry poolsRegistry;
-        private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -52,8 +51,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IWearableCatalog wearableCatalog,
-            IComponentPoolsRegistry poolsRegistry,
-            CharacterPreviewInputEventBus characterPreviewInputEventBus)
+            ICharacterPreviewFactory characterPreviewFactory)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -66,8 +64,13 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.wearableCatalog = wearableCatalog;
-            this.poolsRegistry = poolsRegistry;
-            this.characterPreviewInputEventBus = characterPreviewInputEventBus;
+            this.characterPreviewFactory = characterPreviewFactory;
+        }
+
+        public void Dispose()
+        {
+            navmapController.Dispose();
+            backpackController.Dispose();
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -84,10 +87,10 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
+
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
             var pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>();
-            var characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
-            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog, pageButtonView, poolsRegistry, characterPreviewInputEventBus, characterPreviewFactory);
+            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog, pageButtonView, characterPreviewFactory);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
@@ -98,12 +101,6 @@ namespace DCL.PluginSystem.Global
             );
 
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
-        }
-
-        public void Dispose()
-        {
-            navmapController.Dispose();
-            backpackController.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

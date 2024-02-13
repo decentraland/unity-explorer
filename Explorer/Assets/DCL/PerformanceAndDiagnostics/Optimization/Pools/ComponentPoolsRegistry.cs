@@ -52,7 +52,7 @@ namespace DCL.Optimization.Pools
             lock (pools) { return pools[type]; }
         }
 
-        public void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component
+        public void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024, Action<T> onGet = null) where T: Component
         {
             lock (pools)
             {
@@ -62,7 +62,7 @@ namespace DCL.Optimization.Pools
                     return;
                 }
 
-                pools.Add(typeof(T), new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
+                pools.Add(typeof(T), new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize, onGet));
             }
         }
 
