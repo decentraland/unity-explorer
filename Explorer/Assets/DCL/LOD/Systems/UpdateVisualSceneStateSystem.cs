@@ -16,11 +16,13 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(ResolveVisualSceneStateSystem))]
+    [UpdateAfter(typeof(PartitionSceneEntitiesSystem))]
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
@@ -103,8 +105,7 @@ namespace ECS.SceneLifeCycle.Systems
                     ref T customComponent = ref Unsafe.Add(ref customComponentFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitioncomponentFirstElement, entityIndex);
 
-                    // embed checking is dirty here as it's a starting point
-                    if (partitioncomponentFirstElement.IsDirty)
+                    if (partitionComponent.IsDirty)
                     {
                         VisualSceneStateUtils.ResolveVisualSceneState(ref visualSceneStateComponent, partitionComponent, sceneDefinitionComponent, lodSettingsAsset);
 
