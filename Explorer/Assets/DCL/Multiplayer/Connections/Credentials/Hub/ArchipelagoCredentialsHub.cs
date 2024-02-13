@@ -21,19 +21,16 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
         private readonly string aboutUrl;
         private readonly TimeSpan heartbeatsInterval;
 
-        public ArchipelagoCredentialsHub() : this(
-            new WebRequestController(
-                new WebRequestsAnalyticsContainer(),
-                new PlayerPrefsIdentityProvider(
-                    new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
-                )
-            ),
-            "https://realm-provider.decentraland.zone/main/about") { }
+        public ArchipelagoCredentialsHub(IAdapterAddresses adapterAddresses, IMemoryPool memoryPool, IMultiPool multiPool) : this(
+            adapterAddresses, memoryPool, multiPool, "https://realm-provider.decentraland.zone/main/about"
+        ) { }
 
-        //TODO inject dependencies
-        public ArchipelagoCredentialsHub(IWebRequestController webRequestController, string aboutUrl)
+        public ArchipelagoCredentialsHub(IAdapterAddresses adapterAddresses, IMemoryPool memoryPool, IMultiPool multiPool, string aboutUrl)
         {
             this.aboutUrl = aboutUrl;
+            this.adapterAddresses = adapterAddresses;
+            this.memoryPool = memoryPool;
+            this.multiPool = multiPool;
         }
 
         public UniTask<ICredentials> SceneRoomCredentials(Vector2Int parcelPosition, CancellationToken token)
@@ -64,12 +61,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
 
             await connection.ConnectAsync(adapterUrl, token);
             var result = await AuthorizedPeerId(connection, token);
-
-            if (result.Success == false)
-                throw new Exception(
-                    "Cannot autorize with current ethereum address and signature, peer id is invalid"
-                );
-
+            result.EnsureSuccess("Cannot authorize with current ethereum address and signature, peer id is invalid");
             connection.LaunchHeartbeats(token).Forget();
             return connection;
         }
@@ -84,7 +76,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
             if (result.Success)
             {
                 using var welcome = result.Result;
-                return new LightResult<string>(welcome.value.PeerId!, true);
+                return welcome.value.PeerId.AsSuccess();
             }
 
             return LightResult<string>.FAILURE;

@@ -18,5 +18,11 @@ namespace DCL.Multiplayer.Connections.Typing
     {
         public static LightResult<T> AsSuccess<T>(this T result) =>
             new (result);
+
+        public static void EnsureSuccess<T>(this LightResult<T> result, string errorMessage)
+        {
+            if (result.Success == false)
+                throw new System.Exception($"Result is failure: {errorMessage}");
+        }
     }
 }
