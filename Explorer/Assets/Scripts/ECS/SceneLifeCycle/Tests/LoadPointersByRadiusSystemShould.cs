@@ -1,10 +1,10 @@
 ﻿using Arch.Core;
+using DCL.Ipfs;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
-using Ipfs;
 using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -32,7 +32,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var parcelsInRange = new ParcelsInRange(new HashSet<int2>(array), 2);
 
-            var volatilePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(), new List<int2>());
+            var volatilePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
 
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
 
@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
-            var volatilePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(),
+            var volatilePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(),
                 new List<int2>());
 
             foreach (int2 vector2Int in array)

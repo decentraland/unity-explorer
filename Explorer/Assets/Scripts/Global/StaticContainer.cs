@@ -1,6 +1,8 @@
-﻿using CrdtEcsBridge.Components;
+﻿using Arch.Core;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.Diagnostics;
@@ -8,6 +10,7 @@ using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -37,9 +40,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public WorldProxy GlobalWorld = new ();
-
         private ProvidedInstance<CharacterObject> characterObject;
+        public WorldProxy GlobalWorld = new ();
+        public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -164,7 +167,7 @@ namespace Global
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
-            var videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+            ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -176,6 +179,7 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
+                new AvatarAttachPlugin(container.MainPlayerAvatarBase),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
@@ -184,8 +188,7 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
-                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
-                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
+                new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

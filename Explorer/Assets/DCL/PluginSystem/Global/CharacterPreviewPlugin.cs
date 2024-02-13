@@ -7,7 +7,6 @@ using DCL.ResourcesUnloading;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
@@ -18,19 +17,19 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly CacheCleaner cacheCleaner;
 
-        private IComponentPool<CharacterPreviewContainer> characterPreviewPoolRegistry;
+        private IComponentPool<CharacterPreviewAvatarContainer> characterPreviewPoolRegistry;
 
-        public CharacterPreviewPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public CharacterPreviewPlugin(
+            IComponentPoolsRegistry poolsRegistry,
+            IAssetsProvisioner assetsProvisioner,
+            CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
         }
 
-
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
@@ -44,10 +43,10 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateCharacterPreviewPoolAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
-            CharacterPreviewContainer characterPreviewContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
-            GameObject parentContainer = new GameObject("CharacterPreviewContainerPool");
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewContainer,parentContainer.transform));
-            characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewContainer>();
+            CharacterPreviewAvatarContainer characterPreviewAvatarContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
+            var parentContainer = new GameObject("CharacterPreviewContainerPool");
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
+            characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
         }
 
         public class CharacterPreviewSettings : IDCLPluginSettings
@@ -59,7 +58,7 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
-        public class CharacterPreviewContainerReference : ComponentReference<CharacterPreviewContainer>
+        public class CharacterPreviewContainerReference : ComponentReference<CharacterPreviewAvatarContainer>
         {
             public CharacterPreviewContainerReference(string guid) : base(guid) { }
         }

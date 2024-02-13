@@ -9,7 +9,6 @@ using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -37,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             system = new ResolveWearableThumbnailSystem(world);
         }
 
-        private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)
+        private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {
             IWearable wearable = Substitute.For<IWearable>();
             wearable.GetUrn().Returns(urn);

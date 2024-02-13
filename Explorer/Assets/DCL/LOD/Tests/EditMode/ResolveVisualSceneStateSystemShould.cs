@@ -1,10 +1,9 @@
-﻿using DCL.AssetsProvision;
+﻿using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -47,11 +46,11 @@ namespace DCL.LOD.Tests
             var partitionComponent = new PartitionComponent();
             partitionComponent.Bucket = bucket;
 
-            var sceneEntityDefinition = new IpfsTypes.SceneEntityDefinition
+            var sceneEntityDefinition = new SceneEntityDefinition
             {
-                id = "FAKE_HASH", metadata = new IpfsTypes.SceneMetadata
+                id = "FAKE_HASH", metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                    scene = new SceneMetadataScene
                     {
                         DecodedParcels = new Vector2Int[]
                         {
@@ -61,7 +60,8 @@ namespace DCL.LOD.Tests
                     runtimeVersion = "7"
                 }
             };
-            var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsTypes.IpfsPath());
+
+            var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
             var entity = world.Create( partitionComponent, sceneDefinitionComponent);
 
             system.Update(0);

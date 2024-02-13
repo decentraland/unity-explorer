@@ -6,7 +6,9 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.DebugUtilities;
+using DCL.LOD;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
@@ -26,8 +28,6 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
-using ECS.SceneLifeCycle;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -58,6 +58,12 @@ namespace Global.Dynamic
         public void Dispose()
         {
             MvcManager.Dispose();
+        }
+
+        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
+        {
+            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
+            return UniTask.CompletedTask;
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -96,7 +102,8 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
-            var characterPreviewInputEventBus = new CharacterPreviewInputEventBus();
+            var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
+            var chatMessagesBus = new ChatMessagesBus(debugBuilder);
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -112,10 +119,11 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, debugBuilder, staticContainer.CacheCleaner),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, staticContainer.MainPlayerAvatarBase, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService), new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -128,11 +136,11 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     web3IdentityCache,
                     wearableCatalog,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                    characterPreviewInputEventBus),
+                    characterPreviewFactory
+                ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache, characterPreviewFactory),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
@@ -169,12 +177,6 @@ namespace Global.Dynamic
             BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder);
 
             return (container, true);
-        }
-
-        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
-        {
-            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
-            return UniTask.CompletedTask;
         }
 
         private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,

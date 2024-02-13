@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void RemoveVisualElement(ref UITransformComponent uiTransformComponent)
         {
             if (componentPool != null)
-                componentPool.Release(uiTransformComponent.Transform);
+                componentPool.Release(uiTransformComponent);
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
-using Ipfs;
 using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
@@ -49,14 +49,14 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
-            Entity e = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            Entity e = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
             {
-                metadata = new IpfsTypes.SceneMetadata
+                metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                    scene = new SceneMetadataScene
                         { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
                 },
-            }, new IpfsTypes.IpfsPath()));
+            }, new IpfsPath()));
 
             system.Update(0);
 
@@ -78,14 +78,14 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
-            var sceneDefinitionComponent = new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            var sceneDefinitionComponent = new SceneDefinitionComponent(new SceneEntityDefinition
             {
-                metadata = new IpfsTypes.SceneMetadata
+                    metadata = new SceneMetadata
                 {
-                    scene = new IpfsTypes.SceneMetadataScene
+                        scene = new SceneMetadataScene
                         { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
                 },
-            }, new IpfsTypes.IpfsPath()) { InternalJobIndex = 0 };
+            }, new IpfsPath()) { InternalJobIndex = 0 };
 
             Entity e = world.Create(new PartitionComponent { Bucket = 10, IsBehind = false }, sceneDefinitionComponent);
             mockSystem.AddPartitionData(0, ref sceneDefinitionComponent, new ScenesPartitioningUtils.PartitionData { Bucket = 10, IsBehind = false, IsDirty = isDirty });
