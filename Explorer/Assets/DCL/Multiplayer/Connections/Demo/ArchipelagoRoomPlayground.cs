@@ -7,6 +7,8 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Web3.Accounts;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -40,8 +42,24 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
+            var identity = new IWeb3IdentityCache.Fake(
+                new LogWeb3Identity(
+                    new IWeb3Identity.Random(
+                        new LogWeb3Account(
+                            NethereumAccount.CreateRandom()
+                        )
+                    )
+                )
+            );
+
             var credentialsHub = new LogCredentialsHub(
-                new ArchipelagoCredentialsHub(adapterAddresses, memoryPool, multiPool, aboutUrl),
+                new ArchipelagoCredentialsHub(
+                    adapterAddresses,
+                    memoryPool,
+                    multiPool,
+                    identity,
+                    aboutUrl
+                ),
                 Debug.Log
             );
 
