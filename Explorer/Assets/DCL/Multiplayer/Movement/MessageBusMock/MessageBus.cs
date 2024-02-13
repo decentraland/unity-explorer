@@ -5,11 +5,12 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class MessageBus : MonoBehaviour
     {
-        public float Jitter = 0.1f;
         public Action<MessageMock> MessageSent;
 
         [Tooltip("Wait for seconds until next sent")]
         public float PackageSentRate;
+        public float Jitter = 0.1f;
+
         public float InitialLag;
 
         public void Send(float timestamp, Vector3 position, Vector3 velocity)
