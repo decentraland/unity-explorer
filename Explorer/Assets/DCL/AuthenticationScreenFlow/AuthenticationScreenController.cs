@@ -173,6 +173,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
             }
 
+            characterPreviewController.OnHide();
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
