@@ -1,11 +1,13 @@
-﻿using DCL.ECSComponents;
+﻿using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -17,8 +19,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UIDropdownInstantiationSystemShould : UnitySystemTestBase<UIDropdownInstantiationSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
+        private IECSToCRDTWriter ecsToCRDTWriter;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
+        private PBUiDropdown input;
 
         [SetUp]
         public void SetUp()
@@ -26,42 +30,41 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(DCLDropdown), new ComponentPool<DCLDropdown>() },
+                    { typeof(UIDropdownComponent), new ComponentPool<UIDropdownComponent>() },
                 }, null);
 
-            system = new UIDropdownInstantiationSystem(world, poolsRegistry);
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
+            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
+            world.Add(entity, new CRDTEntity(500));
+
+            input = new PBUiDropdown();
+            input.Options.Add("TestOption1");
+            input.Options.Add("TestOption2");
+            input.Options.Add("TestOption3");
+            world.Add(entity, input);
+            system.Update(0);
         }
 
         [Test]
         public void InstantiateUIDropdown()
         {
-            // Arrange
-            var input = new PBUiDropdown();
-
-            // Act
-            world.Add(entity, input);
-            system.Update(0);
-
             // Assert
             ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-            Assert.AreEqual(UiElementUtils.BuildElementName("UIDropdown", entity), uiDropdownComponent.Dropdown.DropdownField.name);
-            Assert.IsTrue(uiDropdownComponent.Dropdown.DropdownField.ClassListContains("dcl-dropdown"));
-            Assert.AreEqual(PickingMode.Position, uiDropdownComponent.Dropdown.DropdownField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiDropdownComponent.Dropdown.DropdownField));
-            Assert.IsNotNull(uiDropdownComponent.Dropdown.DropdownField);
-            Assert.IsNotNull(uiDropdownComponent.Dropdown.TextElement);
-            Assert.IsTrue(uiDropdownComponent.Dropdown.TextElement.ClassListContains("unity-base-popup-field__text"));
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIDropdown", entity), uiDropdownComponent.DropdownField.name);
+            Assert.IsTrue(uiDropdownComponent.DropdownField.ClassListContains("dcl-dropdown"));
+            Assert.AreEqual(PickingMode.Position, uiDropdownComponent.DropdownField.pickingMode);
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiDropdownComponent.DropdownField));
+            Assert.IsNotNull(uiDropdownComponent.DropdownField);
+            Assert.IsNotNull(uiDropdownComponent.TextElement);
+            Assert.IsTrue(uiDropdownComponent.TextElement.ClassListContains("unity-base-popup-field__text"));
         }
 
         [Test]
         public void UpdateUIDropdown()
         {
             // Arrange
-            var input = new PBUiDropdown();
-            world.Add(entity, input);
-            system.Update(0);
             const int NUMBER_OF_UPDATES = 3;
 
             for (var i = 0; i < NUMBER_OF_UPDATES; i++)
@@ -75,10 +78,30 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
-                Assert.AreEqual(input.Options.Count, uiDropdownComponent.Dropdown.DropdownField.choices.Count);
-                Assert.IsTrue(input.GetFontSize() == uiDropdownComponent.Dropdown.DropdownField.style.fontSize);
-                Assert.IsTrue(input.GetTextAlign() == uiDropdownComponent.Dropdown.TextElement.style.unityTextAlign);
+                Assert.AreEqual(input.Options.Count, uiDropdownComponent.DropdownField.choices.Count);
+                Assert.IsTrue(input.GetFontSize() == uiDropdownComponent.DropdownField.style.fontSize);
+                Assert.IsTrue(input.GetTextAlign() == uiDropdownComponent.TextElement.style.unityTextAlign);
             }
+        }
+
+        [Test]
+        public void TriggerDropdownResults()
+        {
+            // Arrange
+            input.IsDirty = true;
+            system.Update(0);
+            const int TEST_INDEX = 1;
+            ref UIDropdownComponent uiDropdownComponent = ref world.Get<UIDropdownComponent>(entity);
+            uiDropdownComponent.DropdownField.index = TEST_INDEX;
+            uiDropdownComponent.IsOnValueChangedTriggered = true;
+            system.Update(0);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiDropdownResult, int>>(), Arg.Any<CRDTEntity>(), TEST_INDEX);
+            Assert.IsFalse(uiDropdownComponent.IsOnValueChangedTriggered);
         }
     }
 }
