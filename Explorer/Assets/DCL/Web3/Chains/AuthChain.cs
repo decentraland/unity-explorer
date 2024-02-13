@@ -41,5 +41,8 @@ namespace DCL.Web3.Chains
 
         IEnumerator IEnumerable.GetEnumerator() =>
             chain.GetEnumerator();
+
+        public override string ToString() =>
+            $"AuthChain: {{{string.Join(", ", chain.Values)}}}";
     }
 }
