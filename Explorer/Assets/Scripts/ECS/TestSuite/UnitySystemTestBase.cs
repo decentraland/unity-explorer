@@ -1,11 +1,9 @@
 ﻿using Arch.Core;
-using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ECS.TestSuite
@@ -31,8 +29,7 @@ namespace ECS.TestSuite
         protected UITransformComponent AddUITransformToEntity(in Entity entity, bool isDirty = false)
         {
             var uiTransformComponent = new UITransformComponent();
-            uiTransformComponent.Transform = new VisualElement();
-            uiTransformComponent.Transform.name = $"{entity.Id}";
+            uiTransformComponent.Transform = new VisualElement { name = $"{entity.Id}",};
 
             world.Add(entity, uiTransformComponent, new PBUiTransform { IsDirty = isDirty });
             return uiTransformComponent;

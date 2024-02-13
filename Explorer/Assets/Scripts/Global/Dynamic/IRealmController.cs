@@ -25,6 +25,6 @@ namespace Global.Dynamic
         /// <summary>
         ///     Dispose everything on application quit
         /// </summary>
-        UniTask DisposeGlobalWorldAsync();
+        void DisposeGlobalWorld();
     }
 }

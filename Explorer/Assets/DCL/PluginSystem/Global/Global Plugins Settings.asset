@@ -186,6 +186,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        ChatEntryPrefab:
+          m_AssetGUID: 9e9bf5fb9ee9c452f858e423651a52ca
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ChatEntryConfiguration>k__BackingField:
+          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

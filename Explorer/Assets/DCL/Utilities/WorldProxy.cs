@@ -37,5 +37,10 @@ namespace DCL.Utilities
         {
             world?.Remove<T>(entity);
         }
+
+        public void Query<T0, T1>(in QueryDescription description, ForEach<T0, T1> forEach)
+        {
+            world?.Query(description, forEach);
+        }
     }
 }

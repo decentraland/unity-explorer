@@ -123,13 +123,18 @@ namespace DCL.LOD.Systems
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.CurrentLOD)) return;
+            if (newLODKey.Equals(sceneLODInfo.CurrentLOD))
+            {
+                sceneLODInfo.IsDirty = false;
+                return;
+            }
 
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
                 sceneLODInfo.CurrentLOD?.Release();
                 sceneLODInfo.CurrentLOD = cachedAsset;
+                sceneLODInfo.IsDirty = false;
                 CheckSceneReadiness(sceneDefinitionComponent);
             }
             else

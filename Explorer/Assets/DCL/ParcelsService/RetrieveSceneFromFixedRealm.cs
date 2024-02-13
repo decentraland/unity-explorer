@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -17,12 +18,12 @@ namespace DCL.ParcelsService
         /// </summary>
         public World World { get; set; }
 
-        public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask<SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
             // Wait for all pointers resolution, they should be resolved at start-up
 
             var resolved = false;
-            AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[] result = null;
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null;
 
             while (!resolved)
             {
@@ -35,7 +36,7 @@ namespace DCL.ParcelsService
             // TODO O(N)
             for (var i = 0; i < result.Length; i++)
             {
-                IpfsTypes.SceneEntityDefinition sceneDef = result[i].Result.Value.Asset;
+                SceneEntityDefinition sceneDef = result[i].Result.Value.Asset;
 
                 for (var j = 0; j < sceneDef.metadata.scene.DecodedParcels.Count; j++)
                 {
@@ -49,7 +50,7 @@ namespace DCL.ParcelsService
         }
 
         [Query]
-        private void ReadFixedRealm([Data] ref bool resolved, [Data] ref AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[] result,
+        private void ReadFixedRealm([Data] ref bool resolved, [Data] ref AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result,
             in FixedScenePointers fixedScenePointers)
         {
             resolved = fixedScenePointers.AllPromisesResolved;

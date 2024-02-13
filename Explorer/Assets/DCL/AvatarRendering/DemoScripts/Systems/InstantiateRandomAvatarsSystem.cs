@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
@@ -203,7 +204,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 var transformComp =
-                    new TransformComponent(transformPool.Get(), $"RANDOM_AVATAR_{i}", StartPosition(spawnArea, startXPosition, startZPosition));
+                    new CharacterTransform(transformPool.Get());
+
+                transformComp.Transform.position = StartPosition(spawnArea, startXPosition, startZPosition);
+                transformComp.Transform.name = $"RANDOM_AVATAR_{i}";
 
                 CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;

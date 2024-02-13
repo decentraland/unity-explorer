@@ -1,10 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Ipfs
+namespace DCL.Ipfs
 {
     public interface IIpfsRealm
     {
@@ -14,7 +13,7 @@ namespace Ipfs
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
 
-        UniTask PublishAsync<T>(IpfsRealmEntity<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null);
+        UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null);
 
         string GetFileHash(byte[] file);
     }

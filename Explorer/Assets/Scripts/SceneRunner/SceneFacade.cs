@@ -6,6 +6,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
@@ -37,6 +38,8 @@ namespace SceneRunner
 
         public ISceneData SceneData { get; }
 
+        public SceneShortInfo Info => SceneData.SceneShortInfo;
+
         public SceneFacade(
             ISceneRuntime runtimeInstance,
             ECSWorldFacade ecsWorldFacade,
@@ -63,6 +66,18 @@ namespace SceneRunner
             SceneData = sceneData;
         }
 
+        public void Dispose()
+        {
+            AssertMainThread(nameof(Dispose), true);
+
+            sceneStateProvider.State = SceneState.Disposing;
+            runtimeInstance.SetIsDisposing();
+
+            DisposeInternal();
+
+            sceneStateProvider.State = SceneState.Disposed;
+        }
+
         public void SetTargetFPS(int fps)
         {
             intervalMS = (int)(1000f / fps);
@@ -76,7 +91,7 @@ namespace SceneRunner
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
-            AssertIsNotMainThread(nameof(StartUpdateLoopAsync));
+            AssertMainThread(nameof(StartUpdateLoopAsync));
 
             if (sceneStateProvider.State != SceneState.NotStarted)
                 throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
@@ -100,7 +115,7 @@ namespace SceneRunner
                 return;
             }
 
-            AssertIsNotMainThread(nameof(SceneRuntimeImpl.StartScene));
+            AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
@@ -129,7 +144,7 @@ namespace SceneRunner
 
                     sceneStateProvider.TickNumber++;
 
-                    AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+                    AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
@@ -142,7 +157,7 @@ namespace SceneRunner
                     // We can't use Thread.Sleep as EngineAPI is called on the same thread
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     await Task.Delay(sleepMS, ct);
-                    AssertIsNotMainThread(nameof(Task.Delay));
+                    AssertMainThread(nameof(Task.Delay));
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
             }
@@ -180,10 +195,10 @@ namespace SceneRunner
         /// </summary>
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]
-        private static void AssertIsNotMainThread(string funcName)
+        private static void AssertMainThread(string funcName, bool isMainThread = false)
         {
-            if (PlayerLoopHelper.IsMainThread)
-                throw new ThreadStateException($"Execution after calling {funcName} must be off the main thread");
+            if (PlayerLoopHelper.IsMainThread != isMainThread)
+                throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
         }
 
         public void SetIsCurrent(bool isCurrent)
@@ -202,6 +217,13 @@ namespace SceneRunner
 
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
+            DisposeInternal();
+
+            sceneStateProvider.State = SceneState.Disposed;
+        }
+
+        private void DisposeInternal()
+        {
             runtimeInstance.Dispose();
             ecsWorldFacade.Dispose();
             crdtProtocol.Dispose();
@@ -211,8 +233,6 @@ namespace SceneRunner
             crdtMemoryAllocator.Dispose();
             sceneExceptionsHandler.Dispose();
             entityCollidersSceneCache.Dispose();
-
-            sceneStateProvider.State = SceneState.Disposed;
         }
     }
 }

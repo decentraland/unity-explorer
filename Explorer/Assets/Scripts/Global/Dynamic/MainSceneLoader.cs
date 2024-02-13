@@ -6,11 +6,14 @@ using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
+using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using System;
@@ -63,26 +66,27 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
-            async UniTaskVoid DisposeAsync()
+            web3Authenticator.SafeDispose(ReportCategory.AUTHENTICATION);
+
+            if (dynamicWorldContainer != null)
             {
-                if (dynamicWorldContainer != null)
-                {
-                    foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
-                        plugin.Dispose();
+                foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                    plugin.SafeDispose(ReportCategory.ENGINE);
 
-                    if (globalWorld != null)
-                        await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().SuppressCancellationThrow();
-                }
+                if (globalWorld != null)
+                    dynamicWorldContainer.RealmController.DisposeGlobalWorld();
 
-                dynamicWorldContainer?.Dispose();
-
-                await UniTask.SwitchToMainThread();
-
-                staticContainer?.Dispose();
-                web3Authenticator?.Dispose();
+                dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
 
-            DisposeAsync().Forget();
+            if (staticContainer != null)
+            {
+                // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
+                foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+
+                staticContainer.SafeDispose(ReportCategory.ENGINE);
+            }
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)

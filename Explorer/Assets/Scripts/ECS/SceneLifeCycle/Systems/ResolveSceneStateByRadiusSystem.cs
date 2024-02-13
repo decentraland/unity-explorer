@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Ipfs;
 using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;

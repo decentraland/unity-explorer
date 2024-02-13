@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -33,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 // start loading
                 staticScenePointers.Promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(new List<IpfsTypes.SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value,
+                    new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value,
                         new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
             }
             else
@@ -47,8 +48,8 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     for (var i = 0; i < result.Asset.Value.Count; i++)
                     {
-                        IpfsTypes.SceneEntityDefinition definition = result.Asset.Value[i];
-                        var path = new IpfsTypes.IpfsPath(definition.id, URLDomain.EMPTY);
+                        SceneEntityDefinition definition = result.Asset.Value[i];
+                        var path = new IpfsPath(definition.id, URLDomain.EMPTY);
                         CreateSceneEntity(definition, path);
                     }
                 }
