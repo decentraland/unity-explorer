@@ -33,14 +33,14 @@ namespace DCL.Web3.Identities
 
             public string Serialize(IWeb3Identity identity)
             {
-                var dclIdentity = (DecentralandIdentity)identity;
-                var account = (NethereumAccount)identity.EphemeralAccount;
+                var account = identity.EphemeralAccount as IEthKeyOwner
+                              ?? throw new Exception("The identity account is not an IEthKeyOwner");
 
                 jsonRoot.Clear();
                 jsonRoot.address = identity.Address;
                 jsonRoot.expiration = $"{identity.Expiration:O}";
-                jsonRoot.ephemeralAuthChain.AddRange(dclIdentity.AuthChain);
-                jsonRoot.key = account.key.GetPrivateKey();
+                jsonRoot.ephemeralAuthChain.AddRange(identity.AuthChain);
+                jsonRoot.key = account.Key.GetPrivateKey()!;
 
                 return JsonConvert.SerializeObject(jsonRoot);
             }

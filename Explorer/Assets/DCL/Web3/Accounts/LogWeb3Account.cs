@@ -1,9 +1,10 @@
+using Nethereum.Signer;
 using System;
 using UnityEngine;
 
 namespace DCL.Web3.Accounts
 {
-    public class LogWeb3Account : IWeb3Account
+    public class LogWeb3Account : IWeb3Account, IEthKeyOwner
     {
         private readonly IWeb3Account origin;
         private readonly Action<string> log;
@@ -40,5 +41,9 @@ namespace DCL.Web3.Accounts
             log($"Web3Account Verify result: {result} for {message} with {signature}");
             return result;
         }
+
+        public EthECKey Key => origin is IEthKeyOwner ethKeyOwner
+            ? ethKeyOwner.Key
+            : throw new InvalidOperationException("The origin is not an IEthKeyOwner");
     }
 }
