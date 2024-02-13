@@ -1,5 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
@@ -202,12 +202,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent)
         {
             Material avatarMaterial = celShadingMaterial.Get();
-            var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
-            TextureArraySlot? usedIndex = null;
-
-            if (albedoTexture != null)
-                usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
+            TextureArraySlot?[] slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
 
             foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
@@ -222,7 +218,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
 
-            return new AvatarCustomSkinningComponent.MaterialSetup(usedIndex, avatarMaterial);
+            return new AvatarCustomSkinningComponent.MaterialSetup(slots, avatarMaterial);
         }
 
         public override void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent)

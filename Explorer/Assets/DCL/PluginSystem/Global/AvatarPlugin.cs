@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.GPUSkinning;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
@@ -35,13 +35,13 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IPerformanceBudget frameTimeCapBudget;
         private readonly IRealmData realmData;
-        private readonly TextureArrayContainer textureArrayContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
         private readonly CacheCleaner cacheCleaner;
         private readonly IPerformanceBudget memoryBudget;
 
+        private TextureArrayContainer textureArrayContainer;
         private IComponentPool<Transform> transformPoolRegistry;
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
@@ -59,7 +59,6 @@ namespace DCL.PluginSystem.Global
             this.cacheCleaner = cacheCleaner;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
-            textureArrayContainer = new TextureArrayContainer();
 
             cacheCleaner.Register(wearableAssetsCache);
         }
@@ -90,8 +89,14 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
 
+            textureArrayContainer = TextureArrayContainerFactory.GetCached(providedMaterial.Value.shader);
+
             celShadingMaterialPool = new ExtendedObjectPool<Material>(
-                () => new Material(providedMaterial.Value),
+                () =>
+                {
+                    var mat = new Material(providedMaterial.Value);
+                    return mat;
+                },
                 actionOnRelease: mat =>
                 {
                     // reset material so it does not contain any old properties

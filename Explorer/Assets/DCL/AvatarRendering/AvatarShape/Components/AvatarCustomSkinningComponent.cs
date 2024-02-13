@@ -1,5 +1,5 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine;
@@ -33,15 +33,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public struct MaterialSetup
         {
-            internal readonly TextureArraySlot? usedTextureArraySlot;
+            internal readonly TextureArraySlot?[] usedTextureArraySlots;
             /// <summary>
             ///     Cel Shading Material is created based on the original material
             /// </summary>
             internal readonly Material celShadingMaterial;
 
-            public MaterialSetup(TextureArraySlot? usedTextureArraySlot, Material celShadingMaterial)
+            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material celShadingMaterial)
             {
-                this.usedTextureArraySlot = usedTextureArraySlot;
+                this.usedTextureArraySlots = usedTextureArraySlots;
                 this.celShadingMaterial = celShadingMaterial;
             }
         }
@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal readonly int vertCount;
 
-        internal readonly Buffers buffers;
+        internal Buffers buffers;
         internal readonly List<MaterialSetup> materials;
         internal readonly UnityEngine.ComputeShader computeShaderInstance;
 
@@ -72,8 +72,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             for (var i = 0; i < materials.Count; i++)
             {
-                materials[i].usedTextureArraySlot?.FreeSlot();
-                objectPool.Release(materials[i].celShadingMaterial);
+                MaterialSetup material = materials[i];
+
+                for (var j = 0; j < material.usedTextureArraySlots.Length; j++)
+                    material.usedTextureArraySlots[j]?.FreeSlot();
+
+                objectPool.Release(material.celShadingMaterial);
+                TextureArrayContainerFactory.SLOTS_POOL.Release(material.usedTextureArraySlots);
             }
 
             computeShaderSkinningPool.Release(computeShaderInstance);

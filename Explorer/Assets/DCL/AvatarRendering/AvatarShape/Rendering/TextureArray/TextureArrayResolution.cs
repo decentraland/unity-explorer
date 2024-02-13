@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
+namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public class TextureArrayResolution
     {
@@ -12,13 +12,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
         private readonly int resolution;
         private int nextFreeIndex;
 
-        public TextureArrayResolution(int resolution, int minArraySize)
+        public TextureArrayResolution(int resolution, int minArraySize, int initialCapacity)
         {
             this.minArraySize = minArraySize;
             this.resolution = resolution;
 
-            //Initial capacity for (100 * minArraySize) texutres
-            arrays = new List<Texture2DArray>(100);
+            //Initial capacity for (100 * minArraySize) textures
+            arrays = new List<Texture2DArray>(initialCapacity);
             arrays.Add(CreateTexture2DArray());
             nextFreeIndex = 0;
             freeSlots = new Stack<TextureArraySlot>();

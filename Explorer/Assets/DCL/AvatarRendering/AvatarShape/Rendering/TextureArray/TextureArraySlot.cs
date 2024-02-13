@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
+namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public struct TextureArraySlot
     {
