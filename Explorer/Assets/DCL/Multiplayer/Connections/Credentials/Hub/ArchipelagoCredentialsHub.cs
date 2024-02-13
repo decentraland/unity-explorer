@@ -58,14 +58,16 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub
         private async UniTask<IArchipelagoLiveConnection> NewArchipelagoLiveConnection(string adapterUrl, CancellationToken token)
         {
             var connection = new HeartbeatsArchipelagoLiveConnection(
-                new WebSocketArchipelagoLiveConnection(),
+                new LogArchipelagoLiveConnection( //TODO remove log
+                    new WebSocketArchipelagoLiveConnection()
+                ),
                 memoryPool,
                 heartbeatsInterval
             );
 
             await connection.ConnectAsync(adapterUrl, token);
             var result = await AuthorizedPeerId(connection, token);
-            result.EnsureSuccess("Cannot authorize with current ethereum address and signature, peer id is invalid");
+            result.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
             connection.LaunchHeartbeats(token).Forget();
             return connection;
         }

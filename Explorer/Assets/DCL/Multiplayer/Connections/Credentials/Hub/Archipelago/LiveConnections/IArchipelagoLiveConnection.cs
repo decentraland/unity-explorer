@@ -62,7 +62,10 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
         {
             using var challenge = multiPool.TempResource<ChallengeRequestMessage>();
             challenge.value.Address = ethereumAddress;
-            using var response = await connection.SendAndReceiveAsync(challenge.value, memoryPool, token);
+            using var clientPacket = multiPool.TempResource<ClientPacket>();
+            clientPacket.value.ClearMessage();
+            clientPacket.value.ChallengeRequest = challenge.value;
+            using var response = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
             var serverPacket = ServerPacket.Parser.ParseFrom(response.Span());
             return new SmartWrap<ChallengeResponseMessage>(serverPacket.ChallengeResponse!, multiPool);
         }
@@ -78,11 +81,14 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
             using var signedMessage = multiPool.TempResource<SignedChallengeMessage>();
             signedMessage.value.AuthChainJson = challenge;
 
+            using var clientPacket = multiPool.TempResource<ClientPacket>();
+            clientPacket.value.ClearMessage();
+            clientPacket.value.SignedChallenge = signedMessage.value;
 
             var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
 
             var result = await UniTask.WhenAny(
-                connection.SendAndReceiveAsync(signedMessage.value, memoryPool, linkedToken.Token),
+                connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
                 connection.WaitDisconnect(linkedToken.Token)
             );
 
