@@ -48,9 +48,9 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackFilterCategoryCommand
     {
         public readonly string Category;
-        public readonly AvatarSlotCategoryEnum CategoryEnum;
+        public readonly AvatarWearableCategoryEnum CategoryEnum;
 
-        public BackpackFilterCategoryCommand(string category, AvatarSlotCategoryEnum categoryEnum = AvatarSlotCategoryEnum.Body)
+        public BackpackFilterCategoryCommand(string category, AvatarWearableCategoryEnum categoryEnum = AvatarWearableCategoryEnum.Body)
         {
             Category = category;
             CategoryEnum = categoryEnum;
