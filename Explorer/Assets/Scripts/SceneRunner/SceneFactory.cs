@@ -24,6 +24,7 @@ using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules;
 using SceneRuntime.Factory;
 using System;
 using System.Collections.Generic;
@@ -190,6 +191,8 @@ namespace SceneRunner
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
+            sceneRuntime.RegisterEthereumApi(ethereumApi);
+            sceneRuntime.RegisterSceneApi(sceneData);
 
             return new SceneFacade(
                 sceneRuntime,

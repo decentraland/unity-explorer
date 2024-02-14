@@ -5,6 +5,7 @@ using DCL.Web3;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules;
@@ -33,6 +34,7 @@ namespace SceneRuntime
         private EngineApiWrapper engineApi;
         private EthereumApiWrapper ethereumApi;
         private RuntimeWrapper runtimeWrapper;
+        private SceneApiWrapper sceneApiWrapper;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -90,6 +92,11 @@ namespace SceneRuntime
             ethereumApi?.Dispose();
             engine.Dispose();
             runtimeWrapper?.Dispose();
+        }
+
+        public void RegisterSceneApi(ISceneData sceneData)
+        {
+            engine.AddHostObject("UnitySceneApi", sceneApiWrapper = new SceneApiWrapper(sceneData));
         }
 
         public void RegisterEngineApi(IEngineApi api)
