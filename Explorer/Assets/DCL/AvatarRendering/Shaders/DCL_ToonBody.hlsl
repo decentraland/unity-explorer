@@ -121,7 +121,7 @@ half3 GlobalIlluminationUTS(BRDFData brdfData, half3 bakedGI, half occlusion, ha
     return EnvironmentBRDF(brdfData, indirectDiffuse, indirectSpecular, fresnelTerm);     
 }
 
-#ifdef DCL_COMPUTE_SKINNING
+#ifdef _DCL_COMPUTE_SKINNING
 // Skinning structure
 struct VertexInfo
 {
@@ -134,7 +134,7 @@ StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct VertexInput
 {
-    #if DCL_COMPUTE_SKINNING
+    #if _DCL_COMPUTE_SKINNING
         uint index : SV_VertexID;
     #endif
     float4 vertex : POSITION;
@@ -452,7 +452,7 @@ VertexOutput vert (VertexInput v)
         o.uv1 = v.texcoord1;
     #endif
     
-    #ifdef DCL_COMPUTE_SKINNING
+    #ifdef _DCL_COMPUTE_SKINNING
         o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
     #else
         o.normalDir = UnityObjectToWorldNormal(v.normal);
@@ -468,7 +468,7 @@ VertexOutput vert (VertexInput v)
     float3 crossFwd = cross(UNITY_MATRIX_V[0].xyz, UNITY_MATRIX_V[1].xyz);
     o.mirrorFlag = dot(crossFwd, UNITY_MATRIX_V[2].xyz) < 0 ? 1 : -1;
 
-    #ifdef DCL_COMPUTE_SKINNING
+    #ifdef _DCL_COMPUTE_SKINNING
         float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
     #else
         float3 positionWS = TransformObjectToWorld(v.vertex.xyz);

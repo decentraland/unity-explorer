@@ -13,7 +13,7 @@
 float3 _LightDirection;
 float3 _LightPosition;
 
-#ifdef DCL_COMPUTE_SKINNING
+#ifdef _DCL_COMPUTE_SKINNING
 // Skinning structure
 struct VertexInfo
 {
@@ -26,7 +26,7 @@ StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct Attributes
 {
-    #if DCL_COMPUTE_SKINNING
+    #if _DCL_COMPUTE_SKINNING
         uint index : SV_VertexID;
     #endif
     float4 positionOS   : POSITION;
@@ -43,7 +43,7 @@ struct Varyings
 
 float4 GetShadowPositionHClip(Attributes input)
 {
-    #if DCL_COMPUTE_SKINNING
+    #if _DCL_COMPUTE_SKINNING
         float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
         float3 normalWS = TransformObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
     #else

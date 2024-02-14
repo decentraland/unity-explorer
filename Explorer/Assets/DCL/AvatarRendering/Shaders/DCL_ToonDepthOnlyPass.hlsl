@@ -6,7 +6,7 @@
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
 
-#ifdef DCL_COMPUTE_SKINNING
+#ifdef _DCL_COMPUTE_SKINNING
 // Skinning structure
 struct VertexInfo
 {
@@ -19,7 +19,7 @@ StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct Attributes
 {
-    #if DCL_COMPUTE_SKINNING
+    #if _DCL_COMPUTE_SKINNING
         uint index : SV_VertexID;
     #endif
     float4 position     : POSITION;
@@ -43,7 +43,7 @@ Varyings DepthOnlyVertex(Attributes input)
 
     output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
     
-    #ifdef DCL_COMPUTE_SKINNING    
+    #ifdef _DCL_COMPUTE_SKINNING    
         output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
     #else
         output.positionCS = TransformObjectToHClip(input.position.xyz);

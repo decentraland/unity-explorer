@@ -4,7 +4,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public static class TextureArrayConstants
     {
-        public const string TOON_KEYWORD = "_tex_arrays";
+        public const string TOON_KEYWORD = "_DCL_TEXTURE_ARRAYS";
 
         /// <summary>
         ///     This format is applicable to both Regular and Normal textures

@@ -1257,6 +1257,8 @@ Shader "DCL/DCL_Toon"
             // DoubleShadeWithFeather and ShadingGradeMap use different fragment shader.  
             #pragma shader_feature_local _ _SHADINGGRADEMAP
 
+            #pragma shader_feature_local _DCL_COMPUTE_SKINNING
+            #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
 
             // used in ShadingGradeMap
             #pragma shader_feature _IS_TRANSCLIPPING_OFF _IS_TRANSCLIPPING_ON
@@ -1303,6 +1305,9 @@ Shader "DCL/DCL_Toon"
             //#pragma instancing_options renderinglayer
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
+            #pragma shader_feature_local _DCL_COMPUTE_SKINNING
+            #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
+
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
 
@@ -1337,6 +1342,9 @@ Shader "DCL/DCL_Toon"
             #pragma instancing_options renderinglayer
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
+            #pragma shader_feature_local _DCL_COMPUTE_SKINNING
+            #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
+
 
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonDepthOnlyPass.hlsl"
@@ -1370,6 +1378,9 @@ Shader "DCL/DCL_Toon"
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
             #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #pragma shader_feature_local _DCL_COMPUTE_SKINNING
+            #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
 
 
             #include "DCL_ToonInput.hlsl"
