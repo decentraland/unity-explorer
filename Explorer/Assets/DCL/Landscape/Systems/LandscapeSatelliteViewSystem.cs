@@ -13,7 +13,7 @@ namespace DCL.Landscape.Systems
 {
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public class LandscapeSatelliteViewSystem : BaseUnityLoopSystem
+    public partial class LandscapeSatelliteViewSystem : BaseUnityLoopSystem
     {
         private const int PARCEL_SIZE = 16;
         private const int CHUNK_SIZE = 40;

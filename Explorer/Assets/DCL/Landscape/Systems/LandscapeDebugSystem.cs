@@ -9,7 +9,7 @@ using ECS.Prioritization;
 using System;
 using UnityEngine;
 
-namespace DCL.Landscape
+namespace DCL.Landscape.Systems
 {
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]

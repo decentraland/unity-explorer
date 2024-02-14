@@ -12,6 +12,7 @@ using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
 {
