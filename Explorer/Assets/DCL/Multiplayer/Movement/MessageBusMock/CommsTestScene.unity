@@ -1033,7 +1033,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PackageSentRate: 0.1
-  Jitter: 0.1
+  Jitter: 0
   InitialLag: 0.33
 --- !u!4 &1672578179
 Transform:
@@ -1211,7 +1211,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2142167746}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 15d02361bc2146ed9782da2a2c01cf68, type: 3}
   m_Name: 
@@ -1221,6 +1221,8 @@ MonoBehaviour:
   interpolationType: 1
   useAcceleration: 0
   useVelocity: 1
+  Incoming: 0
+  Processed: 0
 --- !u!96 &2142167751
 TrailRenderer:
   serializedVersion: 3
@@ -1332,7 +1334,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2142167746}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1501afde23b41508edde10e5e849902, type: 3}
   m_Name: 
