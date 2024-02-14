@@ -21,23 +21,25 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+
 namespace DCL.PluginSystem.Global
 {
     public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IMVCManager mvcManager;
-        private readonly MapRendererContainer mapRendererContainer;
-        private readonly IPlacesAPIService placesAPIService;
-        private readonly ITeleportController teleportController;
-        private readonly IWebRequestController webRequestController;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileRepository profileRepository;
-        private readonly IWeb3Authenticator web3Authenticator;
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly IWebBrowser webBrowser;
 
         private readonly BackpackSubPlugin backpackSubPlugin;
+        private readonly MapRendererContainer mapRendererContainer;
+        private readonly IMVCManager mvcManager;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly IProfileRepository profileRepository;
+        private readonly ITeleportController teleportController;
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWebBrowser webBrowser;
+        private readonly IWebRequestController webRequestController;
 
         private NavmapController? navmapController;
 
@@ -122,7 +124,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceGameObject MinimapPrefab;
 
             [field: SerializeField]
-            public BackpackSettings BackpackSettings { get; }
+            public BackpackSettings BackpackSettings { get; private set; }
         }
     }
 }
