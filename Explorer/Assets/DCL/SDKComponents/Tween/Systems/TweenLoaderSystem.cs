@@ -2,20 +2,14 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using Collections.Pooled;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using DCL.Utilities;
 using DG.Tweening;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
-using ECS.Unity.Transforms.Components;
 using ECS.Unity.Tween.Components;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Pool;
 
 namespace ECS.Unity.Tween.Systems
 {
@@ -27,13 +21,12 @@ namespace ECS.Unity.Tween.Systems
         private Sequence currentTweener;
 
         public TweenLoaderSystem(World world) : base(world)
-        {
-        }
+        { }
 
         protected override void Update(float t)
         {
-            LoadTweenQuery(World);
             UpdateTweenQuery(World);
+            LoadTweenQuery(World);
 
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
@@ -48,9 +41,8 @@ namespace ECS.Unity.Tween.Systems
             var tweenComponent = new SDKTweenComponent
                 {
                     IsDirty = true,
-                    CurrentTweenModel = pbTween,
-                    globalWorldEntity = entity,
                 };
+            tweenComponent.CurrentTweenModel.Update(pbTween);
 
             World.Add(entity, tweenComponent);
         }
@@ -62,7 +54,7 @@ namespace ECS.Unity.Tween.Systems
 
             if (pbTween.IsDirty || !AreSameModels(pbTween, sdkTweenComponent.CurrentTweenModel))
             {
-                sdkTweenComponent.CurrentTweenModel = pbTween;
+                sdkTweenComponent.CurrentTweenModel.Update(pbTween);
                 sdkTweenComponent.IsDirty = true;
             }
         }
@@ -93,9 +85,9 @@ namespace ECS.Unity.Tween.Systems
             FinalizeComponentsQuery(World);
         }
 
-        private static bool AreSameModels(PBTween modelA, PBTween modelB)
+        private static bool AreSameModels(PBTween modelA, SDKTweenModel modelB)
         {
-            if (modelB == null || modelA == null)
+            if (modelA == null)
                 return false;
 
             if (modelB.ModeCase != modelA.ModeCase

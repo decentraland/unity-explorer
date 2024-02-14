@@ -13,14 +13,6 @@ namespace DCL.PluginSystem.World
 {
     public class TweenPlugin : IDCLWorldPlugin
     {
-        private readonly WorldProxy globalWorld;
-        private WriteTweenDataSystem system;
-
-        public TweenPlugin(WorldProxy globalWorld)
-        {
-            this.globalWorld = globalWorld;
-        }
-
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -33,8 +25,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             var tweenHandlerSystem = TweenLoaderSystem.InjectToWorld(ref builder);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder);
-            WriteTweenDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
+            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             finalizeWorldSystems.Add(tweenHandlerSystem);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }
