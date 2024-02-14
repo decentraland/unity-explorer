@@ -17,7 +17,7 @@ namespace DCL.CharacterPreview
 
         private readonly World world;
         protected CharacterPreviewAvatarModel previewAvatarModel;
-        private CharacterPreviewController previewController;
+        private CharacterPreviewController? previewController;
         private bool initialized;
 
         protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
@@ -67,7 +67,7 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
-            previewController.Dispose();
+            previewController?.Dispose();
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
@@ -109,14 +109,15 @@ namespace DCL.CharacterPreview
         {
             if (initialized)
             {
-                previewController.Dispose();
+                previewController?.Dispose();
+                previewController = null;
                 initialized = false;
             }
         }
 
         protected void OnModelUpdated()
         {
-            previewController.UpdateAvatar(previewAvatarModel);
+            previewController?.UpdateAvatar(previewAvatarModel);
         }
     }
 }
