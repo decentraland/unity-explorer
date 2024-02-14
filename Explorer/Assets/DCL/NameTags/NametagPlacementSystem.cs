@@ -8,8 +8,9 @@ using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -21,9 +22,7 @@ namespace DCL.Nametags
     {
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
-        private readonly Dictionary<string, NametagView> nametagViews = new Dictionary<string, NametagView>();
         private SingleInstanceEntity playerCamera;
-        private NametagView nametagView;
 
         public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool, ChatEntryConfigurationSO chatEntryConfiguration) : base(world)
         {
@@ -38,37 +37,55 @@ namespace DCL.Nametags
 
         protected override void Update(float t)
         {
-            UpdateNametagPlacementQuery(World, playerCamera.GetCameraComponent(World));
+            RemoveTagQuery(World);
+
+            CameraComponent camera = playerCamera.GetCameraComponent(World);
+
+            UpdateTagQuery(World, camera);
+            AddTagQuery(World, camera);
         }
 
         [Query]
-        [All(typeof(CharacterTransform))]
-        private void UpdateNametagPlacement([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref CharacterTransform characterTransform, ref PartitionComponent partitionComponent)
+        [None(typeof(NametagView))]
+        private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        {
+            if (partitionComponent.IsBehind) return;
+
+            NametagView nametagView = nametagViewPool.Get();
+            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
+            nametagView.Username.text = avatarShape.Name;
+            nametagView.WalletId.text = avatarShape.ID;
+            nametagView.gameObject.name = avatarShape.ID;
+
+            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
+
+            World.Add(e, nametagView);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void RemoveTag(NametagView nametagView)
+        {
+            nametagViewPool.Release(nametagView);
+        }
+
+        [Query]
+        private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind)
             {
-                if(nametagViews.TryGetValue(avatarShape.ID, out nametagView))
-                {
-                    nametagViewPool.Release(nametagView);
-                    nametagViews.Remove(avatarShape.ID);
-                }
-
+                nametagViewPool.Release(nametagView);
+                World.Remove<NametagView>(e);
                 return;
             }
 
-            if(nametagViews.TryGetValue(avatarShape.ID, out nametagView))
-            {
-                nametagView.transform.position = camera.Camera.WorldToScreenPoint(characterTransform.Transform.position + (Vector3.up * 2.2f));
-            }
-            else
-            {
-                nametagView = nametagViewPool.Get();
-                nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-                nametagView.Username.text = avatarShape.Name;
-                nametagView.WalletId.text = avatarShape.ID;
-                nametagViews.Add(avatarShape.ID, nametagView);
-            }
+            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateTagPosition(NametagView view, Camera camera, Vector3 characterPosition)
+        {
+            view.transform.position = camera.WorldToScreenPoint(characterPosition + (Vector3.up * 2.2f));
         }
     }
 }
