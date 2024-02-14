@@ -7,19 +7,21 @@ using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
+using DCL.SDKComponents.Tween.Components;
+using DCL.SDKComponents.Tween.Helpers;
 using DG.Tweening;
 using ECS.Abstract;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using ECS.Unity.Tween.Components;
-using ECS.Unity.Tween.Helpers;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
-namespace ECS.Unity.Tween.Systems
+namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(TweenLoaderSystem))]
@@ -32,15 +34,19 @@ namespace ECS.Unity.Tween.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private List<DG.Tweening.Tween> transformTweens = new List<DG.Tweening.Tween>();
         private Tweener tempTweener;
+        private readonly IComponentPool<SDKTweenComponent> tweenComponentPool;
 
-        private TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+
+        private TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTweenComponent> tweenComponentPool) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.tweenComponentPool = tweenComponentPool;
         }
 
         protected override void Update(float t)
         {
-            SetupTweenSequenceQuery(World);
+            UpdateTweenSequenceQuery(World);
+            HandleEntityDestructionQuery(World);
         }
 
         public void FinalizeComponents(in Query query)
@@ -49,34 +55,40 @@ namespace ECS.Unity.Tween.Systems
         }
 
         [Query]
-        [All(typeof(SDKTweenComponent))]
-        private void FinalizeComponents(in Entity entity)
+        [All(typeof(TweenComponent))]
+        private void FinalizeComponents(in Entity entity, ref CRDTEntity sdkEntity)
         {
-            World.Remove<SDKTweenComponent>(entity);
-        }
-
-        private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
-        {
-            if (!isPlaying) { return TweenStateStatus.TsPaused; }
-
-            return currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+            ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
+            World.Remove<TweenComponent>(entity);
         }
 
         [Query]
-        [All(typeof(SDKTweenComponent))]
-        private void SetupTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity)
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(ref TweenComponent tweenComponent, ref CRDTEntity sdkEntity)
         {
+            ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
+            tweenComponentPool.Release(tweenComponent.SDKTweenComponent);
+        }
+
+        [Query]
+        [All(typeof(TweenComponent))]
+        private void UpdateTweenSequence(in Entity entity, ref TweenComponent tweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity)
+        {
+            var sdkTweenComponent = tweenComponent.SDKTweenComponent;
+
             if (sdkTweenComponent.Removed)
             {
                 sdkTweenComponent.Tweener.Kill();
-                World.Remove<SDKTweenComponent>(entity);
+                ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
+                tweenComponentPool.Release(sdkTweenComponent);
+                World.Remove<TweenComponent>(entity);
                 return;
             }
 
             if (!sdkTweenComponent.IsDirty)
             {
                 float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
-                bool tweenStateDirty = false;
+                var tweenStateDirty = false;
                 TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.IsPlaying);
 
                 //We only update the state if we changed status OR if the tween is playing and the current time has changed
@@ -94,14 +106,13 @@ namespace ECS.Unity.Tween.Systems
 
                 if (!tweenStateDirty) return;
 
-                TweenWriteHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, ref sdkTweenComponent);
+                TweenWriteHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
                 TweenWriteHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
-
             }
             else
             {
                 SDKTweenModel tweenModel = sdkTweenComponent.CurrentTweenModel;
-                bool isPlaying = tweenModel.Playing;
+                bool isPlaying = tweenModel.IsPlaying;
                 sdkTweenComponent.IsPlaying = isPlaying;
 
                 Transform entityTransform = transformComponent.Transform;
@@ -112,7 +123,7 @@ namespace ECS.Unity.Tween.Systems
                 //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
                 // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
                 DOTween.TweensByTarget(entityTransform, true, transformTweens);
-                transformTweens?[0].Rewind(false);
+                if (transformTweens.Count > 0) transformTweens[0].Rewind(false);
 
                 if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
                     ease = Linear;
@@ -169,6 +180,14 @@ namespace ECS.Unity.Tween.Systems
 
             entityTransform.localPosition = startPosition;
             return entityTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
+        }
+
+
+        private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
+        {
+            if (!isPlaying) { return TweenStateStatus.TsPaused; }
+
+            return currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
         }
 
         private Tweener SetupRotationTween(Transform entityTransform, Quaternion startRotation,

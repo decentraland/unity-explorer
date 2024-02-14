@@ -4,24 +4,25 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
+using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
-using DG.Tweening;
-using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
-using ECS.Unity.Tween.Components;
 
-namespace ECS.Unity.Tween.Systems
+namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
-    public partial class TweenLoaderSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        private Sequence currentTweener;
+        private readonly IComponentPool<SDKTweenComponent> sdkTweenComponentPool;
 
-        public TweenLoaderSystem(World world) : base(world)
-        { }
+        private TweenLoaderSystem(World world, IComponentPool<SDKTweenComponent> sdkTweenComponentPool) : base(world)
+        {
+            this.sdkTweenComponentPool = sdkTweenComponentPool;
+        }
 
         protected override void Update(float t)
         {
@@ -29,60 +30,50 @@ namespace ECS.Unity.Tween.Systems
             LoadTweenQuery(World);
 
             HandleComponentRemovalQuery(World);
-            HandleEntityDestructionQuery(World);
         }
 
         [Query]
-        [None(typeof(SDKTweenComponent))]
+        [None(typeof(TweenComponent))]
         private void LoadTween(in Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            var tweenComponent = new SDKTweenComponent
-                {
-                    IsDirty = true,
-                };
-            tweenComponent.CurrentTweenModel.Update(pbTween);
+            var tweenComponent = new TweenComponent();
 
+            var sdkTweenComponent = sdkTweenComponentPool.Get();
+
+            sdkTweenComponent.IsDirty = true;
+            sdkTweenComponent.Removed = false;
+
+            if (sdkTweenComponent.CurrentTweenModel == null)
+            {
+                sdkTweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween);
+            }
+            else
+            {
+                sdkTweenComponent.CurrentTweenModel.Update(pbTween);
+            }
+            tweenComponent.SDKTweenComponent = sdkTweenComponent;
             World.Add(entity, tweenComponent);
         }
 
         [Query]
-        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent)
+        private void UpdateTween(ref PBTween pbTween, ref TweenComponent tweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            if (pbTween.IsDirty || !AreSameModels(pbTween, sdkTweenComponent.CurrentTweenModel))
+            if (pbTween.IsDirty || !AreSameModels(pbTween, tweenComponent.SDKTweenComponent.CurrentTweenModel))
             {
-                sdkTweenComponent.CurrentTweenModel.Update(pbTween);
-                sdkTweenComponent.IsDirty = true;
+                tweenComponent.SDKTweenComponent.CurrentTweenModel.Update(pbTween);
+                tweenComponent.SDKTweenComponent.IsDirty = true;
             }
         }
 
         [Query]
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity entity, ref SDKTweenComponent tweenComponent)
+        private void HandleComponentRemoval(ref TweenComponent tweenComponent)
         {
-            tweenComponent.Removed = true;
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref SDKTweenComponent sdkTweenComponent)
-        {
-           // World.Remove<SDKTweenComponent>(entity);
-            //globalWorld.Add(sdkTweenComponent.globalWorldEntity, new DeleteEntityIntention());
-        }
-
-        [Query]
-        public void FinalizeComponents(ref SDKTweenComponent sdkTweenComponent)
-        {
-            //globalWorld.Add(sdkTweenComponent.globalWorldEntity, new DeleteEntityIntention());
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World);
+            tweenComponent.SDKTweenComponent.Removed = true;
         }
 
         private static bool AreSameModels(PBTween modelA, SDKTweenModel modelB)
@@ -93,7 +84,8 @@ namespace ECS.Unity.Tween.Systems
             if (modelB.ModeCase != modelA.ModeCase
                 || modelB.EasingFunction != modelA.EasingFunction
                 || !modelB.CurrentTime.Equals(modelA.CurrentTime)
-                || !modelB.Duration.Equals(modelA.Duration))
+                || !modelB.Duration.Equals(modelA.Duration)
+                || !modelB.IsPlaying.Equals(!modelA.HasPlaying || modelA.Playing))
                 return false;
 
             return modelA.ModeCase switch

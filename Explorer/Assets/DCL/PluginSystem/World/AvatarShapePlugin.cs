@@ -6,7 +6,6 @@ using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
-using ECS.Unity.Tween.Systems;
 using System.Collections.Generic;
 using System.Threading;
 

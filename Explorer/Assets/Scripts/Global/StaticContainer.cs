@@ -189,7 +189,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(),
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
                 new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
-                new TweenPlugin(),
+                new TweenPlugin(componentsContainer.ComponentPoolsRegistry),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

@@ -1,9 +1,9 @@
 using DCL.ECSComponents;
 using DG.Tweening;
 
-namespace ECS.Unity.Tween.Components
+namespace DCL.SDKComponents.Tween.Components
 {
-    public struct SDKTweenComponent
+    public class SDKTweenComponent
     {
         public bool IsDirty { get; set; }
         public bool Removed { get; set; }
@@ -14,16 +14,21 @@ namespace ECS.Unity.Tween.Components
         public SDKTweenModel CurrentTweenModel { get; set; }
     }
 
-    public struct SDKTweenModel
+    public class SDKTweenModel
     {
         public EasingFunction EasingFunction;
         public PBTween.ModeOneofCase ModeCase;
         public float CurrentTime;
         public float Duration;
-        public bool Playing;
+        public bool IsPlaying;
         public Scale Scale;
         public Rotate Rotate;
         public Move Move;
+
+        public SDKTweenModel(PBTween pbTween)
+        {
+            Update(pbTween);
+        }
 
         public void Update(PBTween pbTween)
         {
@@ -31,7 +36,7 @@ namespace ECS.Unity.Tween.Components
             ModeCase = pbTween.ModeCase;
             CurrentTime = pbTween.CurrentTime;
             Duration = pbTween.Duration;
-            Playing = !pbTween.HasPlaying || pbTween.Playing;
+            IsPlaying = !pbTween.HasPlaying || pbTween.Playing;
             Scale = pbTween.Scale;
             Rotate = pbTween.Rotate;
             Move = pbTween.Move;
