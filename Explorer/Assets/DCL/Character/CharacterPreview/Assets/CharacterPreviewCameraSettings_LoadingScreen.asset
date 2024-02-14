@@ -17,32 +17,19 @@ MonoBehaviour:
     - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
       <cameraFieldOfView>k__BackingField: 24
       <wearableCategoryEnum>k__BackingField: 4
-    <dragEnabled>k__BackingField: 0
-    <dragMovementModifier>k__BackingField: 0
-    <minVerticalOffset>k__BackingField: 0
-    <maxVerticalOffset>k__BackingField: 0
-    <scrollEnabled>k__BackingField: 0
-    <scrollModifier>k__BackingField: 0
-    <fieldOfViewThresholdForPanning>k__BackingField: 0
-    <fieldOfViewThresholdForReCentering>k__BackingField: 0
-    <fieldOfViewLimits>k__BackingField: {x: 0, y: 0}
+    <dragEnabled>k__BackingField: 1
+    <dragMovementModifier>k__BackingField: 0.3
+    <minVerticalOffset>k__BackingField: -0.84
+    <maxVerticalOffset>k__BackingField: 0.5
+    <scrollEnabled>k__BackingField: 1
+    <scrollModifier>k__BackingField: 6
+    <fieldOfViewThresholdForPanning>k__BackingField: 32
+    <fieldOfViewThresholdForReCentering>k__BackingField: 10
+    <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}
     <rotationEnabled>k__BackingField: 1
     <rotationModifier>k__BackingField: 10
-  <cameraPositions>k__BackingField:
-  - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
-    <cameraFieldOfView>k__BackingField: 24
-    <wearableCategoryEnum>k__BackingField: 4
-  <dragEnabled>k__BackingField: 0
-  <dragMovementModifier>k__BackingField: 0.3
-  <minVerticalOffset>k__BackingField: -0.84
-  <maxVerticalOffset>k__BackingField: 0.5
-  <scrollEnabled>k__BackingField: 0
-  <scrollModifier>k__BackingField: 6
-  <fieldOfViewThresholdForPanning>k__BackingField: 18
-  <fieldOfViewThresholdForReCentering>k__BackingField: 10
-  <fieldOfViewLimits>k__BackingField: {x: 0, y: 0}
-  <rotationEnabled>k__BackingField: 0
-  <rotationModifier>k__BackingField: 10
   <cursorSettings>k__BackingField:
   - inputAction: 1
     cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}
+  - inputAction: 0
+    cursorSprite: {fileID: 21300000, guid: a0dd824ee2daadd46a4437a4e3145c9e, type: 3}
