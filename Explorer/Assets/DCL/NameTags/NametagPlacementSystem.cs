@@ -43,6 +43,7 @@ namespace DCL.Nametags
 
         [Query]
         [All(typeof(CharacterTransform))]
+        [None(typeof(PlayerComponent))]
         private void UpdateNametagPlacement([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref CharacterTransform characterTransform, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind)
