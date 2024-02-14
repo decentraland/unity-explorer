@@ -5,6 +5,7 @@ using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
+using DCL.Landscape.Utils;
 using StylizedGrass;
 using System;
 using System.Collections.Generic;
@@ -49,15 +50,16 @@ namespace DCL.Landscape
 
         private int processedTerrainDataCount;
         private float terrainDataCount;
-        private Stopwatch terrainTimer;
+        private readonly TimeProfiler timeProfiler;
 
-        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
             noiseGenCache = new NoiseGeneratorCache();
             reportData = new ReportData("TERRAIN_GENERATOR");
+            timeProfiler = new TimeProfiler(measureTime);
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -74,13 +76,14 @@ namespace DCL.Landscape
 
             try
             {
-                terrainTimer = new Stopwatch();
-                terrainTimer.Start();
+                timeProfiler.StartMeasure();
 
                 random = new Random((uint)terrainGenData.seed);
 
+                timeProfiler.StartMeasure();
                 await SetupEmptyParcelDataAsync(cancellationToken);
-                ReportHub.Log(LogType.Log, reportData, $"[{terrainTimer.ElapsedMilliseconds / 1000f:F2}s] Empty Parcel Setup");
+                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Empty Parcel Setup"));
+
 
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA;
 
@@ -88,9 +91,10 @@ namespace DCL.Landscape
                 if (rootGo != null) UnityObjectUtils.SafeDestroy(rootGo);
                 rootGo = new GameObject("Generated Terrain");
 
+                timeProfiler.StartMeasure();
                 SpawnMiscAsync();
                 GenerateCliffs();
-                ReportHub.Log(LogType.Log, reportData, $"[{terrainTimer.ElapsedMilliseconds / 1000f:F2}s] Misc & Cliffs");
+                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Misc & Cliffs"));
 
                 if (centerTerrain)
                     rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
@@ -114,19 +118,20 @@ namespace DCL.Landscape
 
                 if (withHoles)
                 {
+                    timeProfiler.StartMeasure();
                     DigHoles(terrainDataDictionary, cancellationToken);
-                    ReportHub.Log(LogType.Log, reportData, $"[{terrainTimer.ElapsedMilliseconds / 1000f:F2}s] Holes");
+                    timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Holes"));
                 }
 
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
 
+                timeProfiler.StartMeasure();
                 GenerateChunks(terrainDataDictionary, cancellationToken);
-                ReportHub.Log(LogType.Log, reportData, $"[{terrainTimer.ElapsedMilliseconds / 1000f:F2}s] Chunks");
+                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
 
-                terrainTimer.Stop();
-                ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {terrainTimer.ElapsedMilliseconds / 1000f:F2} seconds");
+                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {t / 1000f:F2} seconds"));
             }
             catch (OperationCanceledException)
             {
@@ -339,10 +344,12 @@ namespace DCL.Landscape
             }
 
             processedTerrainDataCount++;
+
+            timeProfiler.StartMeasure();
             await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
             if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
-            ReportHub.Log(LogType.Log, reportData, $"[{terrainTimer.ElapsedMilliseconds / 1000f:F2}s] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})");
+            timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})"));
 
             return new KeyValuePair<int2, TerrainData>(new int2(offsetX, offsetZ), terrainData);
         }
@@ -380,8 +387,7 @@ namespace DCL.Landscape
         {
             var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
 
-            var sw3 = new Stopwatch();
-            sw3.Start();
+            timeProfiler.StartMeasure();
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -410,9 +416,9 @@ namespace DCL.Landscape
             }
 
             await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-            ReportHub.Log(reportData, $"    - [SetDetailsAsync] Wait for Parallel Jobs {sw3.ElapsedMilliseconds}ms");
-            sw3.Reset();
-            sw3.Start();
+
+            timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [SetDetailsAsync] Wait for Parallel Jobs {t}ms"));
+            timeProfiler.StartMeasure();
 
             for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
             {
@@ -434,9 +440,7 @@ namespace DCL.Landscape
                 terrainData.SetDetailLayer(0, 0, i, detailLayer);
             }
 
-            ReportHub.Log(reportData, $"    - [SetDetailsAsync] SetDetailLayer in Parallel {sw3.ElapsedMilliseconds}ms");
-            sw3.Reset();
-            sw3.Start();
+            timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [SetDetailsAsync] SetDetailLayer in Parallel {t}ms"));
         }
 
         private async UniTask SetHeightsAsync(int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed, CancellationToken cancellationToken)
@@ -491,8 +495,6 @@ namespace DCL.Landscape
         private async UniTask SetTexturesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
             CancellationToken cancellationToken)
         {
-            var sw3 = new Stopwatch();
-            sw3.Start();
             cancellationToken.ThrowIfCancellationRequested();
 
             List<INoiseGenerator> noiseGenerators = new List<INoiseGenerator>();
@@ -511,16 +513,16 @@ namespace DCL.Landscape
                 noiseGenerators.Add(noiseGenerator);
             }
 
+            timeProfiler.StartMeasure();
             await UniTask.WhenAll(noiseTasks).AttachExternalCancellation(cancellationToken);
-            ReportHub.Log(reportData, $"    - [AlphaMaps] Parallel Jobs {sw3.ElapsedMilliseconds}ms");
-            sw3.Reset();
-            sw3.Start();
+            timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] Parallel Jobs {t}ms"));
 
+            timeProfiler.StartMeasure();
             // TODO: remove usage of SetAlphamaps and instead use terrainData.GetAlphamapTexture() and fill the texture with a Compute Shader
             float[,,] result3D = GenerateAlphaMaps(noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray(), chunkSize, chunkSize);
             terrainData.SetAlphamaps(0, 0, result3D);
 
-            ReportHub.Log(reportData, $"    - [AlphaMaps] SetAlphamaps {sw3.ElapsedMilliseconds}ms");
+            timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] SetAlphamaps {t}ms"));
 
         }
 
