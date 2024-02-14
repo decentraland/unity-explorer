@@ -24,7 +24,7 @@ namespace DCL.Landscape
         public async UniTask GenerateAsync()
         {
             ParseParcels();
-            var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
+            var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true);
             await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
         }
 
