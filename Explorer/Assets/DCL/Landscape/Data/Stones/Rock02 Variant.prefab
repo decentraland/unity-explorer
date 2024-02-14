@@ -112,6 +112,10 @@ PrefabInstance:
       value: Rock02 Variant
       objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.021002172
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
       propertyPath: m_LODs.Array.data[0].renderers.Array.data[0].renderer
       value: 
       objectReference: {fileID: 7426796733171423171}

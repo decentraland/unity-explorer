@@ -689,6 +689,7 @@ namespace DCL.Landscape
         private void FreeMemory()
         {
             emptyParcelNeighborData.Dispose();
+            emptyParcelHeights.Dispose();
             noiseGenCache.Dispose();
         }
 
