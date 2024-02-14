@@ -15,22 +15,25 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
     public class Receiver : MonoBehaviour
     {
         private readonly Queue<MessageMock> incomingMessages = new ();
-        private readonly List<MessageWrap> processedMessages = new ();
-        [SerializeField] private MessageBus messageBus;
-        [SerializeField] private float minDelta;
-        [SerializeField] private InterpolationType interpolationType;
+        private readonly List<MessageMock> processedMessages = new (); // Messages that have finished interpolation
 
-        [SerializeField] private bool useAcceleration;
-        [SerializeField] private bool useVelocity;
+        public MessageBus messageBus;
+        public float minDelta;
+        public InterpolationType interpolationType;
 
-        private bool isLerping;
-
-        private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
+        [Space]
+        [Header("DYNAMIC")]
+        public bool isLerping;
+        public MessageMock endPoint;
 
         [Space]
         [Header("DEBUG")]
         public int Incoming;
         public int Processed;
+
+
+        private bool isFirst = true;
+        private int extrapolationCount;
 
         private void Awake()
         {
@@ -44,84 +47,56 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (isLerping) return;
 
+
             if (incomingMessages.Count > 0)
             {
-                // Process incoming message
                 MessageMock newMessage = incomingMessages.Dequeue();
-                HandleNewMessage(newMessage);
+
+                if (isFirst)
+                {
+                    isFirst = false;
+                    transform.position = newMessage.position;
+                    processedMessages.Add(newMessage);
+                    return;
+                }
+
+                endPoint = newMessage;
+                extrapolationCount = 0;
             }
-            else if (processedMessages.Count >= 2)
+            else if (incomingMessages.Count == 0 && processedMessages.Count > 2 && extrapolationCount == 0)
             {
-                ExtrapolateNextPosition();
+                endPoint = ExtrapolateNextPosition();
             }
+            else return;
 
-            if (processedMessages.Count < 2) return; // Ensure we have at least two messages to interpolate between
-
-            MessageMock startPoint = processedMessages[^2];
-            MessageMock endPoint = processedMessages[^1];
-
-            interpolation = interpolationType switch
-                            {
-                                InterpolationType.Linear => LinearInterpolation,
-                                InterpolationType.Hermite => HermiteInterpolation,
-                                InterpolationType.Bezier => BezierInterpolation,
-                            };
+            MessageMock startPoint = processedMessages[^1];
 
             if (Vector3.Distance(startPoint.position, endPoint.position) > minDelta)
-                StartCoroutine(MoveTo(startPoint, endPoint, interpolation));
+            {
+                StartCoroutine(MoveTo(startPoint, endPoint, GetInterpolation()));
+            }
+            else
+            {
+                processedMessages.Add(endPoint);
+            }
         }
 
-        private void ExtrapolateNextPosition()
+        private MessageMock ExtrapolateNextPosition()
         {
-            // Get the last two real messages to calculate the extrapolation
-            var lastMessage = processedMessages[^1];
-            var preLastMessage = processedMessages[^2];
-            var timeDiff = lastMessage.timestamp - preLastMessage.timestamp;
+            extrapolationCount++;
 
-            // Assuming linear motion (constant velocity) for extrapolation
-            var extrapolatedPosition = lastMessage.position + (lastMessage.velocity * timeDiff);
-            var extrapolatedTimestamp = lastMessage.timestamp + timeDiff;
+            MessageMock lastMessage = processedMessages[^1];
+            MessageMock preLastMessage = processedMessages[^2];
 
-            // Create an artificial message with extrapolated values
-            MessageMock extrapolatedMessage = new MessageMock
+            float timeDiff = lastMessage.timestamp - preLastMessage.timestamp;
+
+            return new MessageMock
             {
-                position = extrapolatedPosition,
-                timestamp = extrapolatedTimestamp,
+                timestamp = lastMessage.timestamp + timeDiff, // Delta time to handle network jitter
+                position = lastMessage.position + (lastMessage.velocity * timeDiff), // Assuming linear motion (constant velocity) for extrapolation
                 velocity = lastMessage.velocity, // Assuming constant velocity
             };
-
-            processedMessages.Add(new MessageWrap(extrapolatedMessage));
-
-            if (processedMessages.Count > 100)
-                processedMessages.RemoveAt(0);
         }
-
-        private void HandleNewMessage(MessageMock newMessage)
-        {
-            if (processedMessages.Count == 0)
-            {
-                transform.position = newMessage.position;
-            }
-            else if (!useVelocity)
-            {
-                MessageMock lastMessage = processedMessages[^1];
-
-                lastMessage.velocity = CalculateDiff(lastMessage.position, lastMessage.timestamp, newMessage.position, newMessage.timestamp);
-
-                newMessage.velocity = useAcceleration
-                    ? lastMessage.velocity + (lastMessage.acceleration * (newMessage.timestamp - lastMessage.timestamp))
-                    : lastMessage.velocity;
-            }
-
-            processedMessages.Add(new MessageWrap(newMessage));
-
-            // Remove oldest to keep list size in check
-            if (processedMessages.Count > 100)
-                processedMessages.RemoveAt(0);
-        }
-
-        private static Vector3 CalculateDiff(Vector3 start, float startT, Vector3 end, float endT) =>
-            (end - start) / (endT - startT);
 
         private IEnumerator MoveTo(MessageMock start, MessageMock end, Func<MessageMock, MessageMock, float, float, Vector3> interpolation)
         {
@@ -137,8 +112,18 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 yield return null;
             }
 
+            processedMessages.Add(end);
+
             isLerping = false;
         }
+
+        private Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolation() =>
+            interpolationType switch
+            {
+                InterpolationType.Linear => LinearInterpolation,
+                InterpolationType.Hermite => HermiteInterpolation,
+                InterpolationType.Bezier => BezierInterpolation,
+            };
 
         private static Vector3 LinearInterpolation(MessageMock start, MessageMock end, float t, float _) =>
             Vector3.Lerp(start.position, end.position, t);
@@ -175,20 +160,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             float oneMinusT3 = oneMinusT2 * oneMinusT;
 
             return (oneMinusT3 * start.position) + (3 * oneMinusT2 * t * c0) + (3 * oneMinusT * t2 * c1) + (t3 * end.position);
-        }
-    }
-
-    public class MessageWrap : MessageMock
-    {
-        public bool isPassed;
-
-        public MessageWrap(MessageMock message, bool isPassed = false)
-        {
-            timestamp = message.timestamp;
-            position = message.position;
-            velocity = message.velocity;
-            acceleration = message.acceleration;
-            this.isPassed = isPassed;
         }
     }
 }

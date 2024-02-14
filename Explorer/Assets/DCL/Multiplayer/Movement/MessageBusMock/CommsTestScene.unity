@@ -1218,9 +1218,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   messageBus: {fileID: 1672578178}
   minDelta: 0.01
-  interpolationType: 1
-  useAcceleration: 0
-  useVelocity: 1
+  interpolationType: 0
+  extrapolationStepTime: 0.1
+  maxExtrapolationSteps: 1
+  isLerping: 0
+  endPoint:
+    timestamp: 0
+    position: {x: 0, y: 0, z: 0}
+    velocity: {x: 0, y: 0, z: 0}
+    acceleration: {x: 0, y: 0, z: 0}
   Incoming: 0
   Processed: 0
 --- !u!96 &2142167751
