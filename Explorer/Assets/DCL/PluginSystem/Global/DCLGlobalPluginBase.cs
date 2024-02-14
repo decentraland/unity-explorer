@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(TSettings settings, CancellationToken ct)
         {
             this.settings = settings;
-            initializationContinuation = await InitializeAsyncInternal(settings, ct);
+            initializationContinuation = await InitializeInternalAsync(settings, ct);
         }
 
         /// <summary>
@@ -41,6 +41,6 @@ namespace DCL.PluginSystem.Global
         /// <param name="settings"></param>
         /// <param name="ct"></param>
         /// <returns>Action to continue initialization when the world is set</returns>
-        protected abstract UniTask<ContinueInitialization?> InitializeAsyncInternal(TSettings settings, CancellationToken ct);
+        protected abstract UniTask<ContinueInitialization?> InitializeInternalAsync(TSettings settings, CancellationToken ct);
     }
 }

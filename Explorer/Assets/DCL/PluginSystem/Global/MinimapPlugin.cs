@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeAsyncInternal(MinimapSettings settings, CancellationToken ct)
+        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
         {
             MinimapView? prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>();
 

@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin.Dispose();
         }
 
-        protected override async UniTask<ContinueInitialization?> InitializeAsyncInternal(ExplorePanelSettings settings, CancellationToken ct)
+        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
