@@ -16,6 +16,14 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
+        private enum ViewState
+        {
+            Login,
+            LoginInProgress,
+            Loading,
+            Finalize,
+        }
+
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
@@ -84,8 +92,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.LoginInProgress);
             });
 
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory);
-            characterPreviewController.SetWorld(world);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world);
         }
 
         protected override void OnBeforeViewShow()
@@ -159,10 +166,7 @@ namespace DCL.AuthenticationScreenFlow
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
             profileNameLabel!.Value = profile?.Name;
 
-            if (profile != null)
-            {
-                characterPreviewController.Initialize(profile.Avatar);
-            }
+            if (profile != null) { characterPreviewController.Initialize(profile.Avatar); }
         }
 
         private void ChangeAccount()
@@ -247,14 +251,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             verificationCountdownCancellationToken?.SafeCancelAndDispose();
             verificationCountdownCancellationToken = null;
-        }
-
-        private enum ViewState
-        {
-            Login,
-            LoginInProgress,
-            Loading,
-            Finalize,
         }
 
         public void SetWorld(World world)

@@ -103,10 +103,9 @@ namespace Global.Dynamic
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
             var wearableCatalog = new WearableCatalog();
-            var backpackCommandBus = new BackpackCommandBus();
-            var backpackEventBus = new BackpackEventBus();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var chatMessagesBus = new ChatMessagesBus(debugBuilder);
+            var webBrowser = new UnityAppWebBrowser();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -136,19 +135,17 @@ namespace Global.Dynamic
                     mapRendererContainer,
                     placesAPIService,
                     parcelServiceContainer.TeleportController,
-                    dynamicSettings.BackpackSettings,
-                    backpackCommandBus,
-                    backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     web3IdentityCache,
                     wearableCatalog,
                     characterPreviewFactory,
                     container.ProfileRepository,
                     web3Authenticator,
-                    container.UserInAppInitializationFlow),
+                    container.UserInAppInitializationFlow,
+                    webBrowser),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache, characterPreviewFactory),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, web3IdentityCache, characterPreviewFactory),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
@@ -156,7 +153,6 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
-                new UserInAppInitializationFlowPlugin(container.UserInAppInitializationFlow),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

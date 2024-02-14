@@ -31,21 +31,19 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            cacheCleaner.Register(characterPreviewPoolRegistry);
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
             await CreateCharacterPreviewPoolAsync(settings, ct);
+            cacheCleaner.Register(characterPreviewPoolRegistry);
         }
 
         private async UniTask CreateCharacterPreviewPoolAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
             CharacterPreviewAvatarContainer characterPreviewAvatarContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewContainerReference, ct: ct)).Value;
             var parentContainer = new GameObject("CharacterPreviewContainerPool");
-            componentPoolsRegistry.AddGameObjectPool<CharacterPreviewAvatarContainer>(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewAvatarContainer), null, 1024, container => container.transform.SetParent(parentContainer.transform));
             characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
         }
 

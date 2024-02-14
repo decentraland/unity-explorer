@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.UserInAppInitializationFlow;
@@ -17,12 +18,16 @@ namespace DCL.ExplorePanel
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly Entity playerEntity;
+        private readonly World world;
 
         private CancellationTokenSource? logoutCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public SystemMenuController(ViewFactoryMethod viewFactory,
+            World world,
+            Entity playerEntity,
             IWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow)
@@ -31,6 +36,8 @@ namespace DCL.ExplorePanel
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.playerEntity = playerEntity;
+            this.world = world;
         }
 
         public override void Dispose()
@@ -80,7 +87,7 @@ namespace DCL.ExplorePanel
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
                 await web3Authenticator.LogoutAsync(ct);
-                await userInAppInitializationFlow.ExecuteAsync(true, true, ct);
+                await userInAppInitializationFlow.ExecuteAsync(true, true, world, playerEntity, ct);
             }
 
             logoutCts = logoutCts.SafeRestart();

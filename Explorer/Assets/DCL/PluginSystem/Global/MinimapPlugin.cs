@@ -5,20 +5,19 @@ using DCL.Minimap;
 using DCL.PlacesAPIService;
 using Global.Dynamic;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MinimapPlugin : IDCLGlobalPlugin<MinimapPlugin.MinimapSettings>
+    public class MinimapPlugin : DCLGlobalPluginBase<MinimapPlugin.MinimapSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
-
-        private MinimapController minimapController;
 
         public MinimapPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService)
         {
@@ -28,23 +27,18 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
         }
 
-        public void Dispose() { }
-
-        public async UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
+        protected override async UniTask<ContinueInitialization?> InitializeAsyncInternal(MinimapSettings settings, CancellationToken ct)
         {
-            minimapController = new MinimapController(
-                MinimapController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mapRendererContainer.MapRenderer, mvcManager, placesAPIService);
+            MinimapView? prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>();
 
-            mvcManager.RegisterController(minimapController);
-            mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> world, in GlobalPluginArguments _) =>
+            {
+                mvcManager.RegisterController(new MinimapController(MinimapController.CreateLazily(prefab, null),
+                    mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world)));
+            };
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            var system = TrackPlayerPositionSystem.InjectToWorld(ref builder);
-            minimapController.SystemBinding.InjectSystem(system);
-        }
+        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class MinimapSettings : IDCLPluginSettings
         {

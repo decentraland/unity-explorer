@@ -3,12 +3,15 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
+using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -149,7 +152,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
+                Entity playerEntity;
+
+                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
@@ -162,7 +167,10 @@ namespace Global.Dynamic
 
                 splashRoot.SetActive(false);
 
-                await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading, ct);
+                await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
+                    globalWorld.EcsWorld, playerEntity, ct);
+
+                OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)
             {
@@ -174,6 +182,12 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
+        {
+            mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
         }
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)

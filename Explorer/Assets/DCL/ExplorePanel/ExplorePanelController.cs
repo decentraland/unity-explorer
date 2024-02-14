@@ -14,7 +14,7 @@ namespace DCL.ExplorePanel
     {
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
-        private readonly BackpackControler backpackController;
+        private readonly BackpackController backpackController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly SystemMenuController systemMenuController;
 
@@ -32,7 +32,7 @@ namespace DCL.ExplorePanel
             ViewFactoryMethod viewFactory,
             NavmapController navmapController,
             SettingsController settingsController,
-            BackpackControler backpackController,
+            BackpackController backpackController,
             ProfileWidgetController profileWidgetController,
             SystemMenuController systemMenuController)
             : base(viewFactory)
@@ -54,24 +54,24 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewInstantiated()
         {
-            exploreSections = new ()
+            exploreSections = new Dictionary<ExploreSections, ISection>
             {
                 { ExploreSections.Navmap, navmapController },
                 { ExploreSections.Settings, settingsController },
-                { ExploreSections.Backpack, backpackController }
+                { ExploreSections.Backpack, backpackController },
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            foreach (var keyValuePair in exploreSections)
+            foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
 
-            foreach (var tabSelector in viewInstance.TabSelectorMappedViews)
+            foreach (ExplorePanelTabSelectorMapping tabSelector in viewInstance.TabSelectorMappedViews)
             {
                 tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
                 tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
-                    (isOn) =>
+                    isOn =>
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();

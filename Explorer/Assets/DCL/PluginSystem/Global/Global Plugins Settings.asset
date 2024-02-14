@@ -116,6 +116,32 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BackpackSettings>k__BackingField:
+          <CategoryIconsMapping>k__BackingField:
+            m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityInfoPanelBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityColorMappings>k__BackingField:
+            m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <PageButtonView>k__BackingField:
+            m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

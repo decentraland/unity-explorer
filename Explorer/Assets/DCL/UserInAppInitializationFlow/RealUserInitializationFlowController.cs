@@ -29,9 +29,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IProfileRepository profileRepository;
         private readonly Vector2Int startParcel;
 
-        private World? ecsWorld;
-        private Entity? ownPlayerEntity;
-
         private AsyncLoadProcessReport? loadReport;
 
         public RealUserInitializationFlowController(ITeleportController teleportController,
@@ -47,15 +44,10 @@ namespace DCL.UserInAppInitializationFlow
             this.startParcel = startParcel;
         }
 
-        public void InjectToWorld(World world, in Entity playerEntity)
-        {
-            ecsWorld = world;
-            ownPlayerEntity = playerEntity;
-        }
-
-        public async UniTask ExecuteAsync(
-            bool showAuthentication,
+        public async UniTask ExecuteAsync(bool showAuthentication,
             bool showLoading,
+            World world,
+            Entity playerEntity,
             CancellationToken ct)
         {
             loadReport = AsyncLoadProcessReport.Create();
@@ -63,32 +55,47 @@ namespace DCL.UserInAppInitializationFlow
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
 
+            UniTask showLoadingScreenAsyncTask = LoadCharacterAndWorldAsync(world, playerEntity, ct);
+
             if (showLoading)
-                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(ct));
+                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), showLoadingScreenAsyncTask);
             else
-                await LoadCharacterAndWorldAsync(ct);
+                await showLoadingScreenAsyncTask;
         }
 
-        private async UniTask LoadCharacterAndWorldAsync(CancellationToken ct)
+        private async UniTask LoadCharacterAndWorldAsync(World world, Entity ownPlayerEntity, CancellationToken ct)
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
             loadReport!.ProgressCounter.Value = 0.2f;
 
-            const int VERSION = 0;
-
-            // Add the profile into the player entity so it will create the avatar in world
-            var promise = LoadAvatarPromise.Create(ecsWorld!,
-                new GetProfileIntention(ownProfile.UserId, VERSION,
-                    new CommonLoadingArguments($"profiles/{ownProfile.UserId}?version={VERSION}")),
-                PartitionComponent.TOP_PRIORITY);
-
-            ecsWorld!.Add(ownPlayerEntity!.Value, promise);
+            CreateAvatarPromise(world, ownPlayerEntity, ownProfile);
 
             await TeleportToSpawnPointAsync(ct);
 
             loadReport.ProgressCounter.Value = 1f;
             loadReport.CompletionSource.TrySetResult();
+        }
+
+        private void CreateAvatarPromise(World world, Entity playerEntity, Profile profile)
+        {
+            const int VERSION = 0;
+
+            // Add the profile into the player entity so it will create the avatar in world
+            var promise = LoadAvatarPromise.Create(world,
+                new GetProfileIntention(profile.UserId, VERSION,
+                    new CommonLoadingArguments($"profiles/{profile.UserId}?version={VERSION}")),
+                PartitionComponent.TOP_PRIORITY);
+
+            ref LoadAvatarPromise previousPromise = ref world.TryGetRef<LoadAvatarPromise>(playerEntity, out bool found);
+
+            if (found)
+            {
+                previousPromise.ForgetLoading(world);
+                world.Set(playerEntity, promise);
+            }
+            else
+                world.Add(playerEntity, promise);
         }
 
         private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
@@ -121,14 +128,12 @@ namespace DCL.UserInAppInitializationFlow
         {
             var timeout = TimeSpan.FromMinutes(2);
 
-            await mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
-                            .AttachExternalCancellation(ct);
+            await mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)), ct);
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
-            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand())
-                            .AttachExternalCancellation(ct);
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
         }
     }
 }
