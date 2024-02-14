@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
     {
         private const int HISTORY_SIZE = 3; // Adjust size for smoothing
 
-        private readonly List<(Vector3, float)> velocityHistory = new ();
+        private readonly List<Vector3> velocityHistory = new ();
         public int packageLost;
         public bool saveData;
 
@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void FixedUpdate()
         {
-            velocityHistory.Add((characterController.velocity, UnityEngine.Time.unscaledTime));
+            velocityHistory.Add(characterController.velocity);
 
             if (velocityHistory.Count >= HISTORY_SIZE)
                 velocityHistory.RemoveAt(0); // Keep the queue size constant
@@ -71,8 +71,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 else
                 {
                     Vector3 acceleration = CalculateAverageAcceleration();
+                        // velocityHistory.Count != 0 ? (velocityHistory[^1] - characterController.velocity) / UnityEngine.Time.fixedDeltaTime : Vector3.zero;
 
-                    Debug.Log(acceleration.magnitude);
                     messageBus.Send(UnityEngine.Time.unscaledTime, characterController.transform.position, characterController.velocity, acceleration);
                 }
 
@@ -89,13 +89,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 // Starting at 1 because we are looking at pairs, and there's no pair for the first element alone
                 for (var i = 1; i < velocityHistory.Count; i++)
                 {
-                    (Vector3 v1, float t1) = velocityHistory[^(i + 1)]; // Earlier velocity
-                    (Vector3 v2, float t2) = velocityHistory[^i]; // Later velocity
+                    Vector3 v1 = velocityHistory[^(i + 1)]; // Earlier velocity
+                    Vector3 v2 = velocityHistory[^i]; // Later velocity
 
-                    acceleration += (v2 - v1) / (t2 - t1);
+                    acceleration += (v2 - v1) / UnityEngine.Time.fixedDeltaTime;
                 }
 
-                acceleration /= (velocityHistory.Count - 1); // Correct division for averaging
+                acceleration /= velocityHistory.Count - 1; // Correct division for averaging
             }
 
             return acceleration;

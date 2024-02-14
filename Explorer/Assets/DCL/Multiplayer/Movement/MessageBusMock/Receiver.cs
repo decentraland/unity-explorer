@@ -14,19 +14,19 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
     public class Receiver : MonoBehaviour
     {
+        private readonly Queue<MessageMock> incomingMessages = new ();
+        private readonly List<MessageMock> processedMessages = new ();
         [SerializeField] private MessageBus messageBus;
         [SerializeField] private float minDelta;
         [SerializeField] private InterpolationType interpolationType;
 
         [SerializeField] private bool useAcceleration;
-
-
-        private readonly Queue<MessageMock> incomingMessages = new ();
-        private readonly List<MessageMock> processedMessages = new ();
+        [SerializeField] private bool useVelocity;
 
         private bool isLerping;
 
         private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
+        private Vector3 currentVelocity = Vector3.zero;
 
         private void Awake()
         {
@@ -62,8 +62,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             if (processedMessages.Count == 0)
             {
                 transform.position = newMessage.position;
+                currentVelocity = newMessage.velocity;
             }
-            else if (processedMessages.Count == 1)
+            else if (!useVelocity)
             {
                 MessageMock lastMessage = processedMessages[^1];
 

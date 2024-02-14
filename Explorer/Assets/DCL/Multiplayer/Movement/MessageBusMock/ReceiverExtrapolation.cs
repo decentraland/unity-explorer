@@ -5,13 +5,16 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
     public class ReceiverExtrapolation : MonoBehaviour
     {
         [SerializeField] private MessageBus messageBus;
+        [SerializeField] private bool useAcceleration;
 
         private Vector3 currentVelocity = Vector3.zero;
 
         // Class members
         private Vector3 P_0; // Position at the time of receiving the new package
+
         private Vector3 P_0_n; // Position from the new package
         private Vector3 v_0_n; // Velocity from the new package
+        private Vector3 A_0_n; // Acceleration from the new package
 
         private float T_t; // Time since the new package was received
         private float T_hat; // Normalized time factor for interpolation
@@ -28,10 +31,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             T_t += UnityEngine.Time.deltaTime;
             float T_hat = Mathf.Clamp(T_t / messageBus.PackageSentRate, 0f, 1f);
 
-            Vector3 V_b = currentVelocity + (v_0_n - currentVelocity) * T_hat;
+            Vector3 V_b = currentVelocity + ((v_0_n - currentVelocity) * T_hat);
 
-            Vector3 P_t = P_0 + (V_b * T_t);
-            Vector3 P_t_n = P_0_n + (v_0_n * T_t);
+            Vector3 P_t = P_0 + (V_b * T_t) + (A_0_n * (0.5f * T_t * T_t));
+            Vector3 P_t_n = P_0_n + (v_0_n * T_t) + (A_0_n * (0.5f * T_t * T_t));
 
             // Apply the interpolated position
             transform.position = P_t + ((P_t_n - P_t) * T_hat);
@@ -47,6 +50,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             P_0_n = newMessage.position;
             v_0_n = newMessage.velocity;
+
+            A_0_n = useAcceleration ? newMessage.acceleration : Vector3.zero;
 
             T_t = 0f; // Reset time since the new package
 
