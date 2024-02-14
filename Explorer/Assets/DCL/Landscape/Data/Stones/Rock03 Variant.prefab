@@ -111,6 +111,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Rock03 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.021002172
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

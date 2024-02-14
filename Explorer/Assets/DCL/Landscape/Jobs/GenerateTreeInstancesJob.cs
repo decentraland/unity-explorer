@@ -13,8 +13,6 @@ namespace DCL.Landscape.Jobs
     ///     - Is there a neighbour owned parcel that overlaps with my asset radius?
     ///     - Is there another asset of the same type within my radius?
     /// </summary>
-
-    // TODO: Convert NativeHashMap into NativeArray's so we can use IJobParallelFor
     [BurstCompile]
     public struct GenerateTreeInstancesJob : IJobParallelFor
     {

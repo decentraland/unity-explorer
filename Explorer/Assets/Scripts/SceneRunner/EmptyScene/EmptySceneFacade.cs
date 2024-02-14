@@ -4,7 +4,6 @@ using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Landscape.Components;
 using ECS.ComponentsPooling;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;

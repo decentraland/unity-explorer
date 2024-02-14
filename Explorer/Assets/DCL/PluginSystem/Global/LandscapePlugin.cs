@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.Landscape;
-using DCL.Landscape.Components;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.MapRenderer.ComponentsFactory;
@@ -51,9 +50,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
-            LandscapeParcelInitializerSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
-            builder.World.Create(new SatelliteView(), new LandscapeParcelInitialization());
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value);
+            LandscapeSatelliteViewSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
         }
 
         public void Dispose()

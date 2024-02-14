@@ -60,6 +60,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bush01 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: a6a0a3b2a136b9641b0620d8f2fb0124, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.07635137
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: a6a0a3b2a136b9641b0620d8f2fb0124, type: 3}
+      propertyPath: m_LODs.Array.data[3].screenRelativeHeight
+      value: 0.021002172
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6367646867474405593, guid: a6a0a3b2a136b9641b0620d8f2fb0124, type: 3}
     m_RemovedGameObjects:

@@ -60,6 +60,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Oak01 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 80eeb1f39e52d334b8dc1ef07981efe1, type: 3}
+      propertyPath: m_LODs.Array.data[3].screenRelativeHeight
+      value: 0.021002172
+      objectReference: {fileID: 0}
     - target: {fileID: 7013799120591977417, guid: 80eeb1f39e52d334b8dc1ef07981efe1, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.19
