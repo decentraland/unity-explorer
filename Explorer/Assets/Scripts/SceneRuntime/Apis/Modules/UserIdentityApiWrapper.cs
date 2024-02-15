@@ -95,7 +95,7 @@ namespace SceneRuntime.Apis.Modules
             }
 
             return GetOwnUserDataAsync(lifeCycleCts.Token)
-                  .ToTask()
+                  .AsTask()
                   .ToPromise();
         }
 
