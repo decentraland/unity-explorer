@@ -6,13 +6,10 @@ namespace DCL.ExternalUrlPrompt
     {
         public struct Params
         {
-            //public string Url { get; }
-            //public string Host { get; }
             public Uri Uri { get; }
 
             public Params(string url)
             {
-                //Url = url;
                 Uri = Uri.TryCreate(url, UriKind.Absolute, out Uri uri) ? uri : null;
             }
         }
