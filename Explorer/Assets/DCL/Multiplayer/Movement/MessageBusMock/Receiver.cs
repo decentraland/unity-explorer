@@ -16,21 +16,27 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
     public class Receiver : MonoBehaviour
     {
-        private const float EXT_DAMPING = 0.9f;
-
         private readonly Queue<MessageMock> incomingMessages = new ();
         private readonly List<MessageMock> passedMessages = new ();
 
         public MessageBus messageBus;
-        public float minDelta;
-        public InterpolationType interpolationType;
 
         [Space]
-        [Header("DYNAMIC")]
+        [Header("INTERPOLATION")]
         public bool isInterpolating;
-        public bool isExtrapolating;
-
+        public InterpolationType interpolationType;
+        public float minPositionDelta;
         public MessageMock endPoint;
+
+        [Space]
+        [Header("EXTRAPOLATION")]
+        public bool isExtrapolating;
+        public float minSpeed = 0.1f;
+        public float linearExtrapolationTime = 0.33f;
+        public int dampedExtrapolationSteps = 2;
+
+        public float extDuration;
+        public Vector3 extVelocity;
 
         [Space]
         [Header("DEBUG")]
@@ -38,9 +44,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public int Processed;
 
         private bool isFirst = true;
-
-        private float extDuration;
-        private Vector3 extVelocity;
 
         private void Awake()
         {
@@ -68,7 +71,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
                 endPoint = newMessage;
 
-                if (isExtrapolating)
+                if (isExtrapolating  && passedMessages.Count > 1)
                 {
                     StopAllCoroutines();
 
@@ -78,11 +81,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                         position = transform.position,
                         velocity = extVelocity,
                     });
+
+                    Debug.Log(endPoint.timestamp - passedMessages[^1].timestamp);
                 }
 
                 isExtrapolating = false;
             }
-            else if (!passedMessages.IsNullOrEmpty() && !isExtrapolating && passedMessages[^1].velocity.sqrMagnitude > 1f)
+            else if (!passedMessages.IsNullOrEmpty() && !isExtrapolating && passedMessages[^1].velocity.sqrMagnitude > minSpeed)
             {
                 StartCoroutine(Extrapolate());
                 return;
@@ -101,16 +106,18 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             Vector3 initialVelocity = extVelocity;
 
+            float maxDuration = linearExtrapolationTime * dampedExtrapolationSteps;
+
             while (isExtrapolating)
             {
                 extDuration += UnityEngine.Time.deltaTime;
 
-                if (extDuration is > 0.33f and < 0.66f)
-                    extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / 0.66f);
-                else if (extDuration >= 0.66f)
+                if (extDuration > linearExtrapolationTime && extDuration < maxDuration)
+                    extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / maxDuration);
+                else if (extDuration >= maxDuration)
                     extVelocity = Vector3.zero;
 
-                if (extVelocity.sqrMagnitude > 0.01f)
+                if (extVelocity.sqrMagnitude > minSpeed)
                     transform.position += extVelocity * UnityEngine.Time.deltaTime;
 
                 yield return null;
@@ -147,7 +154,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             isInterpolating = true;
 
-            if (Vector3.Distance(start.position, endPoint.position) > minDelta)
+            if (Vector3.Distance(start.position, endPoint.position) > minPositionDelta)
             {
                 var t = 0f;
                 float timeDif = end.timestamp - start.timestamp;

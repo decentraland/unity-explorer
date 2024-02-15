@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Update()
         {
             // Simulate package lost
-            if (UnityEngine.Input.GetKeyUp(KeyCode.LeftShift))
+            if (UnityEngine.Input.GetKeyUp(KeyCode.RightShift))
             {
                 packageLost++;
                 lostText.SetActive(false);
