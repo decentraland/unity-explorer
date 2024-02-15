@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -9,7 +10,8 @@ namespace SceneRunner.Scene
     public interface ISceneData
     {
         SceneShortInfo SceneShortInfo { get; }
-
+        SceneEntityDefinition SceneEntityDefinition { get; }
+        URLDomain SceneContentBaseUrl { get; }
         IReadOnlyList<Vector2Int> Parcels { get; }
 
         /// <summary>
@@ -58,6 +60,8 @@ namespace SceneRunner.Scene
         class Fake : ISceneData
         {
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
+            public SceneEntityDefinition SceneEntityDefinition => new ();
+            public URLDomain SceneContentBaseUrl => new ();
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes());
             public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;

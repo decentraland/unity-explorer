@@ -24,18 +24,13 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public GetSceneResponse GetSceneInfo()
-        {
-            URLAddress urlAddress;
-            sceneData.TryGetMainScriptUrl(out urlAddress);
-
-            return new GetSceneResponse()
+        public object GetSceneInfo() =>
+            new
             {
-                BaseUrl = urlAddress,
-                Metadata = "",
-                Contents = {  },
-                Cid = ""
+                BaseUrl = sceneData.SceneContentBaseUrl,
+                Metadata = sceneData.SceneEntityDefinition.metadata, // parse metadata
+                Contents = sceneData.SceneEntityDefinition.content, // pass contents array
+                Cid = sceneData.SceneEntityDefinition.id
             };
-        }
     }
 }

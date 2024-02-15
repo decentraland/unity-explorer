@@ -92,6 +92,7 @@ namespace SceneRuntime
             ethereumApi?.Dispose();
             engine.Dispose();
             runtimeWrapper?.Dispose();
+            sceneApiWrapper?.Dispose();
         }
 
         public void RegisterSceneApi(ISceneData sceneData)

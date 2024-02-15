@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,11 @@ namespace SceneRunner.EmptyScene
         ///     Per scene data is not resolved as empty scenes use the shared world for all instances
         /// </summary>
         public SceneShortInfo SceneShortInfo { get; }
+
+        public SceneEntityDefinition SceneEntityDefinition => new ();
+
+        public URLDomain SceneContentBaseUrl => new ();
+
         public IReadOnlyList<Vector2Int> Parcels { get; }
 
         public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;

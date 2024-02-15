@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using Ipfs;
 using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
@@ -14,9 +13,12 @@ namespace SceneRunner.Scene
     {
         private readonly ISceneContent sceneContent;
         private readonly SceneEntityDefinition sceneDefinition;
-
+        private readonly URLDomain contentBaseUrl;
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
+        public SceneEntityDefinition SceneEntityDefinition => sceneDefinition;
+
+        public URLDomain SceneContentBaseUrl => contentBaseUrl;
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
@@ -26,12 +28,14 @@ namespace SceneRunner.Scene
             SceneEntityDefinition sceneDefinition,
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
+            URLDomain contentBaseUrl,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
             StaticSceneMessages staticSceneMessages)
         {
             this.sceneContent = sceneContent;
             this.sceneDefinition = sceneDefinition;
+            this.contentBaseUrl = contentBaseUrl;
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             Parcels = parcels;
