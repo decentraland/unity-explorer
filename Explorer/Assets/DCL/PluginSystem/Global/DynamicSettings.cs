@@ -1,3 +1,5 @@
+using DCL.Backpack;
+using DCL.Chat;
 using DCL.MapRenderer;
 using System;
 using UnityEngine;
@@ -13,5 +15,12 @@ namespace DCL.PluginSystem.Global
 
         [field: SerializeField]
         public MapRendererSettings MapRendererSettings { get; private set; }
+
+        [field: SerializeField]
+        public BackpackSettings BackpackSettings { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
+
     }
 }
