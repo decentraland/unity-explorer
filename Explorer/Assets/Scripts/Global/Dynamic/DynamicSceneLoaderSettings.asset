@@ -12,11 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51b5f8f4ed664a47a7204b6a65d2d742, type: 3}
   m_Name: DynamicSceneLoaderSettings
   m_EditorClassIdentifier: 
-  <StartPosition>k__BackingField: {x: 65, y: -125}
-  <SceneLoadRadius>k__BackingField: 1
-  <StaticLoadPositions>k__BackingField:
-  - x: 65
-    y: -125
+  <StartPosition>k__BackingField: {x: 0, y: 0}
+  <SceneLoadRadius>k__BackingField: 4
+  <StaticLoadPositions>k__BackingField: []
   <Realms>k__BackingField:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
   - https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main
