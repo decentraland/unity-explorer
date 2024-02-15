@@ -7,17 +7,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [SerializeField] private MessageBus messageBus;
         [SerializeField] private bool useAcceleration;
 
-        private Vector3 currentVelocity = Vector3.zero;
+        private MessageMock local;
+        private MessageMock remote;
 
-        // Class members
-        private Vector3 P_0; // Position at the time of receiving the new package
-
-        private Vector3 P_0_n; // Position from the new package
-        private Vector3 v_0_n; // Velocity from the new package
-        private Vector3 A_0_n; // Acceleration from the new package
-
-        private float T_t; // Time since the new package was received
-        private float T_hat; // Normalized time factor for interpolation
+        private float t; // Time since the new package was received
 
         private bool firstMessage = true;
 
@@ -28,40 +21,55 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Update()
         {
-            T_t += UnityEngine.Time.deltaTime;
+            if (remote == null) return;
 
-            float T_hat = Mathf.Clamp(T_t / messageBus.PackageSentRate, 0f, 1f);
+            t += UnityEngine.Time.deltaTime;
+            transform.position = VelocityBlendingInterpolation(local, remote, t, messageBus.PackageSentRate);
+        }
 
-            Vector3 V_b = currentVelocity + ((v_0_n - currentVelocity) * T_hat);
+        private static Vector3 VelocityBlendingInterpolation(MessageMock local, MessageMock remote, float t, float totalDuration)
+        {
+            float lerpValue = Mathf.Max(0, t / totalDuration);
 
-            Vector3 P_t = P_0 + (V_b * T_t) + (A_0_n * (0.5f * T_t * T_t));
-            Vector3 P_t_n = P_0_n + (v_0_n * T_t) + (A_0_n * (0.5f * T_t * T_t));
+            Vector3 projectedRemote = remote.position + (remote.velocity * t) + (remote.acceleration * (0.5f * t * t));
 
-            // Apply the interpolated position
-            transform.position = P_t + ((P_t_n - P_t) * T_hat);
+            if (lerpValue < 1f)
+            {
+                Vector3 lerpedVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue); // Interpolated velocity
+                Vector3 projectedLocal = local.position + (lerpedVelocity * t) + (remote.acceleration * (0.5f * t * t));
 
-            if (T_hat >= 1f)
-                currentVelocity = v_0_n;
+                return projectedLocal + ((projectedRemote - projectedLocal) * lerpValue); // interpolate positions
+            }
+
+            return projectedRemote;
         }
 
         private void OnMessageReceived(MessageMock newMessage)
         {
-            P_0 = transform.position; // Current position at the time of the new package
-            currentVelocity = v_0_n;
-
-            P_0_n = newMessage.position;
-            v_0_n = newMessage.velocity;
-
-            A_0_n = useAcceleration ? newMessage.acceleration : Vector3.zero;
-
-            T_t = 0f; // Reset time since the new package
-
-            if (firstMessage)
+            remote = new MessageMock
             {
-                transform.position = newMessage.position;
-                currentVelocity = newMessage.velocity;
+                position = newMessage.position,
+                velocity = newMessage.velocity,
+                acceleration = useAcceleration ? newMessage.acceleration : Vector3.zero,
+            };
 
-                T_t = 1f;
+            if (!firstMessage)
+            {
+                // Current local state at the time of the new package
+                local = new MessageMock
+                {
+                    position = transform.position,
+                    velocity = remote.velocity,
+                    acceleration = remote.acceleration,
+                };
+
+                t = 0f; // Reset time since the new package
+            }
+            else
+            {
+                transform.position = remote.position;
+                local = remote;
+                t = messageBus.PackageSentRate;
                 firstMessage = false;
             }
         }

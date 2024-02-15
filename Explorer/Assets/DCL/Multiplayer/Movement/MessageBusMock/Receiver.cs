@@ -134,11 +134,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 Vector3 lerpedVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue);
 
                 // Calculate the position at time t
-                Vector3 P_t = local.position + (lerpedVelocity * t);
-                Vector3 P_t_n = remoteOldPosition + (remote.velocity * t);
+                Vector3 projectedLocal = local.position + (lerpedVelocity * t);
+                Vector3 projectedRemote = remoteOldPosition + (remote.velocity * t);
 
                 // Apply the interpolated position
-                transform.position = P_t + ((P_t_n - P_t) * lerpValue);
+                transform.position = projectedLocal + ((projectedRemote - projectedLocal) * lerpValue);
 
                 yield return null;
             }
@@ -186,11 +186,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             StartCoroutine(Move(start, end, interpolation: interpolationType switch
                                                            {
-                                                               InterpolationType.Linear => LinearInterpolation,
-                                                               InterpolationType.Hermite => HermiteInterpolation,
-                                                               InterpolationType.Bezier => BezierInterpolation,
-                                                               InterpolationType.VelocityBlending => VelocityBlendingInterpolation,
-                                                               _ => LinearInterpolation,
+                                                               InterpolationType.Linear => Interpolation.Linear,
+                                                               InterpolationType.Hermite => Interpolation.Hermite,
+                                                               InterpolationType.Bezier => Interpolation.Bezier,
+                                                               InterpolationType.VelocityBlending => Interpolation.VelocityBlending,
+                                                               _ => Interpolation.Linear,
                                                            }));
         }
 
@@ -217,60 +217,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             isInterpolating = false;
         }
 
-        private static Vector3 LinearInterpolation(MessageMock start, MessageMock end, float t, float totalDuration) =>
-            Vector3.Lerp(start.position, end.position, t / totalDuration);
 
-        private static Vector3 VelocityBlendingInterpolation(MessageMock start, MessageMock end, float t, float totalDuration)
-        {
-            Vector3 fakeOldPosition = end.position - (end.velocity * totalDuration);
-
-            float lerpValue = t / totalDuration;
-
-            Vector3 lerpedVelocity = start.velocity + ((end.velocity - start.velocity) * lerpValue); // Interpolated velocity
-
-            // Calculate the position at time t
-            Vector3 P_t = start.position + (lerpedVelocity * t);
-            Vector3 P_t_n = fakeOldPosition + (end.velocity * t);
-
-            return P_t + ((P_t_n - P_t) * lerpValue); // interpolate positions
-        }
-
-        /// Cubic Hermite spline interpolation
-        private static Vector3 HermiteInterpolation(MessageMock start, MessageMock end, float t, float totalDuration)
-        {
-            float lerpValue = t / totalDuration;
-
-            float t2 = lerpValue * lerpValue;
-            float t3 = t2 * lerpValue;
-
-            float h2 = (-2 * t3) + (3 * t2); // Hermite basis function h_01 (for end position)
-            float h1 = -h2 + 1; // Hermite basis function h_00 (for start position)
-
-            float h3 = t3 - (2 * t2) + lerpValue; // Hermite basis function h_10 (for start velocity)
-            float h4 = t3 - t2; // Hermite basis function h_11 (for end velocity)
-
-            // note: (start.velocity * timeDif) and (end.velocity * timeDif) can be cached
-            return (h1 * start.position) + (h2 * end.position) + (start.velocity * (h3 * totalDuration)) + (end.velocity * (h4 * totalDuration));
-        }
-
-        /// Cubic Bézier spline interpolation
-        private static Vector3 BezierInterpolation(MessageMock start, MessageMock end, float t, float totalDuration)
-        {
-            float lerpValue = t / totalDuration;
-
-            // Compute the control points based on start and end positions and velocities
-            // note: c0 and c1 can be cached
-            Vector3 c0 = start.position + (start.velocity * (totalDuration / 3));
-            Vector3 c1 = end.position - (end.velocity * (totalDuration / 3));
-
-            float t2 = lerpValue * lerpValue;
-            float t3 = t2 * lerpValue;
-
-            float oneMinusT = 1 - lerpValue;
-            float oneMinusT2 = oneMinusT * oneMinusT;
-            float oneMinusT3 = oneMinusT2 * oneMinusT;
-
-            return (oneMinusT3 * start.position) + (3 * oneMinusT2 * lerpValue * c0) + (3 * oneMinusT * t2 * c1) + (t3 * end.position);
-        }
     }
 }

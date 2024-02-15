@@ -16,6 +16,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [SerializeField] private MessageBus messageBus;
         [SerializeField] private GameObject lostText;
 
+        [SerializeField] private bool avarageAcceleration;
+
         private SnapshotRecorder recorder;
         private CharacterController characterController;
 
@@ -68,10 +70,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             {
                 if (packageLost > 0)
                     packageLost--;
-                else if(!UnityEngine.Input.GetKey(KeyCode.Space))
+                else if (!UnityEngine.Input.GetKey(KeyCode.Space))
                 {
                     Vector3 acceleration = CalculateAverageAcceleration();
-                        // velocityHistory.Count != 0 ? (velocityHistory[^1] - characterController.velocity) / UnityEngine.Time.fixedDeltaTime : Vector3.zero;
 
                     messageBus.Send(UnityEngine.Time.unscaledTime, characterController.transform.position, characterController.velocity, acceleration);
                 }
@@ -82,6 +83,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private Vector3 CalculateAverageAcceleration()
         {
+            if (!avarageAcceleration)
+                return velocityHistory.Count != 0 ? (velocityHistory[^1] - characterController.velocity) / UnityEngine.Time.fixedDeltaTime : Vector3.zero;
+
             Vector3 acceleration = Vector3.zero;
 
             if (velocityHistory.Count > 1) // Ensure there are at least two velocities to compare

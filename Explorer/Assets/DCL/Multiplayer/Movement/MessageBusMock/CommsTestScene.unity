@@ -1032,8 +1032,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf6a4b096f4d8f42a37f6f2b5d054de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PackageSentRate: 0.33
-  Jitter: 0.1
+  PackageSentRate: 0.1
+  Jitter: 0
   InitialLag: 0.33
 --- !u!4 &1672578179
 Transform:
@@ -1211,7 +1211,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2142167746}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 15d02361bc2146ed9782da2a2c01cf68, type: 3}
   m_Name: 
@@ -1228,7 +1228,7 @@ MonoBehaviour:
   isExtrapolating: 0
   minSpeed: 0.1
   linearExtrapolationTime: 0.33
-  dampedExtrapolationSteps: 5
+  dampedExtrapolationSteps: 2
   extDuration: 0
   extVelocity: {x: 0, y: 0, z: 0}
   isBlending: 0
@@ -1347,7 +1347,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2142167746}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1501afde23b41508edde10e5e849902, type: 3}
   m_Name: 
