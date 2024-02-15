@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
 using LiveKit.Internal.FFIClients.Pools;
 using Unity.Mathematics;
 using UnityEngine;
@@ -112,7 +113,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(staticContainer.CharacterContainer.CharacterObject, web3IdentityCache, multiPool),
+                new MultiplayerPlugin(new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, web3IdentityCache, multiPool)),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
