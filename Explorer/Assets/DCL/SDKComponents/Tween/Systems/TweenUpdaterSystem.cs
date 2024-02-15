@@ -71,7 +71,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private readonly List<DG.Tweening.Tween> transformTweens = new ();
         private Tweener tempTweener;
 
-        private TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTweenComponent> tweenComponentPool) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTweenComponent> tweenComponentPool) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.tweenComponentPool = tweenComponentPool;
@@ -170,8 +170,8 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (!tweenStateDirty) return;
 
-            TweenWriteHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-            TweenWriteHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
+            TweenSDKComponentHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+            TweenSDKComponentHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
         }
 
         private void SetupTweener(TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, Transform entityTransform, SDKTweenModel tweenModel, float durationInSeconds, bool isPlaying)
