@@ -31,11 +31,45 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
 
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private List<DG.Tweening.Tween> transformTweens = new List<DG.Tweening.Tween>();
-        private Tweener tempTweener;
-        private readonly IComponentPool<SDKTweenComponent> tweenComponentPool;
+        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
+        {
+            [EfLinear] = Linear,
+            [EfEaseinsine] = InSine,
+            [EfEaseoutsine] = OutSine,
+            [EfEasesine] = InOutSine,
+            [EfEaseinquad] = InQuad,
+            [EfEaseoutquad] = OutQuad,
+            [EfEasequad] = InOutQuad,
+            [EfEaseinexpo] = InExpo,
+            [EfEaseoutexpo] = OutExpo,
+            [EfEaseexpo] = InOutExpo,
+            [EfEaseinelastic] = InElastic,
+            [EfEaseoutelastic] = OutElastic,
+            [EfEaseelastic] = InOutElastic,
+            [EfEaseinbounce] = InBounce,
+            [EfEaseoutbounce] = OutBounce,
+            [EfEasebounce] = InOutBounce,
+            [EfEaseincubic] = InCubic,
+            [EfEaseoutcubic] = OutCubic,
+            [EfEasecubic] = InOutCubic,
+            [EfEaseinquart] = InQuart,
+            [EfEaseoutquart] = OutQuart,
+            [EfEasequart] = InOutQuart,
+            [EfEaseinquint] = InQuint,
+            [EfEaseoutquint] = OutQuint,
+            [EfEasequint] = InOutQuint,
+            [EfEaseincirc] = InCirc,
+            [EfEaseoutcirc] = OutCirc,
+            [EfEasecirc] = InOutCirc,
+            [EfEaseinback] = InBack,
+            [EfEaseoutback] = OutBack,
+            [EfEaseback] = InOutBack,
+        };
 
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly IComponentPool<SDKTweenComponent> tweenComponentPool;
+        private readonly List<DG.Tweening.Tween> transformTweens = new ();
+        private Tweener tempTweener;
 
         private TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTweenComponent> tweenComponentPool) : base(world)
         {
@@ -50,9 +84,8 @@ namespace DCL.SDKComponents.Tween.Systems
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
 
-            World.Remove<TweenComponent>(in HandleComponentRemoval_QueryDescription);
-            World.Remove<TweenComponent>(in FinalizeComponents_QueryDescription);
             World.Remove<TweenComponent>(in HandleEntityDestruction_QueryDescription);
+            World.Remove<TweenComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         public void FinalizeComponents(in Query query)
@@ -81,12 +114,11 @@ namespace DCL.SDKComponents.Tween.Systems
             CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
 
-
         [Query]
         [All(typeof(TweenComponent))]
         private void UpdateTweenSequence(ref TweenComponent tweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity)
         {
-            var sdkTweenComponent = tweenComponent.SDKTweenComponent;
+            SDKTweenComponent sdkTweenComponent = tweenComponent.SDKTweenComponent;
 
             if (!sdkTweenComponent.IsDirty)
             {
@@ -192,7 +224,6 @@ namespace DCL.SDKComponents.Tween.Systems
             return entityTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
         }
 
-
         private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
         {
             if (!isPlaying) { return TweenStateStatus.TsPaused; }
@@ -213,40 +244,5 @@ namespace DCL.SDKComponents.Tween.Systems
             entityTransform.localScale = startScale;
             return entityTransform.DOScale(endScale, durationInSeconds).SetEase(ease).SetAutoKill(false);
         }
-
-        private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
-        {
-            [EfLinear] = Linear,
-            [EfEaseinsine] = InSine,
-            [EfEaseoutsine] = OutSine,
-            [EfEasesine] = InOutSine,
-            [EfEaseinquad] = InQuad,
-            [EfEaseoutquad] = OutQuad,
-            [EfEasequad] = InOutQuad,
-            [EfEaseinexpo] = InExpo,
-            [EfEaseoutexpo] = OutExpo,
-            [EfEaseexpo] = InOutExpo,
-            [EfEaseinelastic] = InElastic,
-            [EfEaseoutelastic] = OutElastic,
-            [EfEaseelastic] = InOutElastic,
-            [EfEaseinbounce] = InBounce,
-            [EfEaseoutbounce] = OutBounce,
-            [EfEasebounce] = InOutBounce,
-            [EfEaseincubic] = InCubic,
-            [EfEaseoutcubic] = OutCubic,
-            [EfEasecubic] = InOutCubic,
-            [EfEaseinquart] = InQuart,
-            [EfEaseoutquart] = OutQuart,
-            [EfEasequart] = InOutQuart,
-            [EfEaseinquint] = InQuint,
-            [EfEaseoutquint] = OutQuint,
-            [EfEasequint] = InOutQuint,
-            [EfEaseincirc] = InCirc,
-            [EfEaseoutcirc] = OutCirc,
-            [EfEasecirc] = InOutCirc,
-            [EfEaseinback] = InBack,
-            [EfEaseoutback] = OutBack,
-            [EfEaseback] = InOutBack,
-        };
     }
 }

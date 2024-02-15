@@ -7,7 +7,6 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 
 namespace DCL.SDKComponents.Tween.Systems
@@ -38,19 +37,13 @@ namespace DCL.SDKComponents.Tween.Systems
 
             var tweenComponent = new TweenComponent();
 
-            var sdkTweenComponent = sdkTweenComponentPool.Get();
+            SDKTweenComponent sdkTweenComponent = sdkTweenComponentPool.Get();
 
             sdkTweenComponent.IsDirty = true;
-            sdkTweenComponent.Removed = false;
 
-            if (sdkTweenComponent.CurrentTweenModel == null)
-            {
-                sdkTweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween);
-            }
-            else
-            {
-                sdkTweenComponent.CurrentTweenModel.Update(pbTween);
-            }
+            if (sdkTweenComponent.CurrentTweenModel == null) { sdkTweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween); }
+            else { sdkTweenComponent.CurrentTweenModel.Update(pbTween); }
+
             tweenComponent.SDKTweenComponent = sdkTweenComponent;
             World.Add(entity, tweenComponent);
         }
@@ -88,6 +81,5 @@ namespace DCL.SDKComponents.Tween.Systems
                        _ => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
                    };
         }
-
     }
 }

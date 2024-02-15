@@ -6,7 +6,6 @@ namespace DCL.SDKComponents.Tween.Components
     public class SDKTweenComponent
     {
         public bool IsDirty { get; set; }
-        public bool Removed { get; set; }
         public bool IsPlaying { get; set; }
         public float CurrentTime { get; set; }
         public Tweener Tweener { get; set; }
