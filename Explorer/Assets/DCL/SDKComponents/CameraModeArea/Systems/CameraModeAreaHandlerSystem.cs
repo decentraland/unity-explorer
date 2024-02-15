@@ -3,9 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.MainPlayerTriggerArea;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.Unity.Groups;
@@ -22,20 +24,28 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly MainPlayerTransform mainPlayerTransform; // TODO: We may be able to get rid of this if we use Unity collision events...
+        private readonly World globalWorld;
+        private CameraComponent cameraComponent;
+        private Entity cameraEntity;
 
-        public CameraModeAreaHandlerSystem(World world, MainPlayerTransform mainPlayerTransform) : base(world)
+        public CameraModeAreaHandlerSystem(World world, WorldProxy globalWorldProxy) : base(world)
         {
-            this.mainPlayerTransform = mainPlayerTransform;
+            globalWorld = globalWorldProxy.GetWorld();
+
+            // TODO: Propagate the CameraEntity from the global CharacterCameraPlugin somehow...
+            // cameraComponent = globalWorldProxy.GetWorld().Get<CameraComponent>(cameraEntity);
+            globalWorld!.Query(new QueryDescription().WithAll<CameraComponent>(), (Entity entity, ref CameraComponent cameraComponent) =>
+            {
+                cameraEntity = entity;
+                this.cameraComponent = cameraComponent;
+            });
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerTransform.Configured) return;
+            // TODO: Check if we have control of the camera mode as well?
 
-            // TODO: Check if we have control of the camera mode as well
-
-            UpdateCameraModeAreaQuery(World);
+            // UpdateCameraModeAreaQuery(World);
             SetupCameraModeAreaQuery(World);
         }
 
@@ -44,23 +54,19 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
-            CameraType targetCameraMode = pbCameraModeArea.Mode;
+            var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
+            CameraMode previousCameraMode = cameraComponent.Mode;
 
             World.Add(entity, new MainPlayerTriggerAreaComponent
             {
                 areaSize = pbCameraModeArea.Area,
-                OnEnteredTrigger = () =>
-                {
-                    // change camera mode towards pbCameraModeArea.Mode
-                    // lock camera mode
-                    Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {targetCameraMode}");
-                },
-                OnExitedTrigger = () => { Debug.Log("RESET CAMERA MODE"); },
+                OnEnteredTrigger = () => UpdateCameraMode(targetCameraMode, true),
+                OnExitedTrigger = () => UpdateCameraMode(previousCameraMode, false),
                 IsDirty = true,
             });
         }
 
-        [Query]
+        /*[Query]
         [All(typeof(TransformComponent))]
         private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref MainPlayerTriggerAreaComponent mainPlayerTriggerAreaComponent)
         {
@@ -68,14 +74,19 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             Debug.Log($"PRAVS - Update CAMERA MODE AREA SIZE from {mainPlayerTriggerAreaComponent.areaSize} to {pbCameraModeArea.Area}");
 
-            // TODO: Support changing actions as well?
+            // TODO: Support changing CameraType-Mode (actions) as well?
             mainPlayerTriggerAreaComponent.areaSize = pbCameraModeArea.Area;
             mainPlayerTriggerAreaComponent.IsDirty = true;
+        }*/
+
+        private void UpdateCameraMode(CameraMode targetCameraMode, bool lockMode)
+        {
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
+            camera.Mode = targetCameraMode;
+            camera.LockCameraInput = lockMode;
+
+            Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {targetCameraMode}");
         }
-
-        private void OnEnteredArea() { }
-
-        private void OnExitedArea() { }
 
         public void FinalizeComponents(in Query query)
         {

@@ -1,4 +1,5 @@
 using DCL.Character.Components;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
@@ -17,11 +18,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
     public class MainPlayerTransform
     {
-        public CharacterTransform Transform { get; private set; }
+        public Transform Transform { get; private set; }
 
         public bool Configured { get; private set; }
 
-        public void SetTransform(CharacterTransform newTransform)
+        public void SetTransform(Transform newTransform)
         {
             Transform = newTransform;
             Configured = true;

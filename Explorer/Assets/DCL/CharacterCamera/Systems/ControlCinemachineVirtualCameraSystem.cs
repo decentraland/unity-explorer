@@ -54,7 +54,7 @@ namespace DCL.CharacterCamera.Systems
 
         private void SwitchCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            if (camera.Mode == targetCameraMode)
+            if (camera.Mode == targetCameraMode && IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
                 return;
 
             cameraState.CurrentCamera.enabled = false;
@@ -102,7 +102,25 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
-            // Zoom out
+            if (cameraComponent.LockCameraInput)
+            {
+                switch (cameraComponent.Mode)
+                {
+                    case CameraMode.FirstPerson:
+                        if (!cinemachinePreset.FirstPersonCameraData.Camera.enabled)
+                            SwitchCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+
+                        break;
+                    case CameraMode.ThirdPerson:
+                        if (!cinemachinePreset.ThirdPersonCameraData.Camera.enabled)
+                            SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+
+                        break;
+                }
+
+                return;
+            }
+
             if (input.ZoomOut)
             {
                 switch (cameraComponent.Mode)
@@ -126,8 +144,6 @@ namespace DCL.CharacterCamera.Systems
                         break;
                 }
             }
-
-            // Zoom in
             else if (input.ZoomIn)
             {
                 switch (cameraComponent.Mode)
@@ -152,10 +168,10 @@ namespace DCL.CharacterCamera.Systems
                         return;
                 }
             }
-            else
-
-                // if zoom was not changed
+            else // if zoom was not changed
+            {
                 return;
+            }
 
             // Set a freshly assigned value
             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
@@ -216,6 +232,19 @@ namespace DCL.CharacterCamera.Systems
 
                 CinemachineFreeLook.Orbit orbitValue = LerpOrbit(zoomInOrbitThreshold[i], zoomOutOrbitThreshold[i], normValue);
                 cinemachinePreset.ThirdPersonCameraData.Camera.m_Orbits[i] = orbitValue;
+            }
+        }
+
+        private bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
+        {
+            switch (mode)
+            {
+                case CameraMode.FirstPerson:
+                    return cinemachinePreset.FirstPersonCameraData.Camera.enabled;
+                case CameraMode.ThirdPerson:
+                    return cinemachinePreset.ThirdPersonCameraData.Camera.enabled;
+                default:
+                    return cinemachinePreset.FreeCameraData.Camera.enabled;
             }
         }
     }

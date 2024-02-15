@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.MainPlayerTriggerArea;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -20,14 +21,16 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
 
         private IComponentPool<MainPlayerTriggerArea.MainPlayerTriggerArea> mainPlayerTriggerAreaPoolRegistry;
 
-        public MainPlayerTriggerAreaPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public MainPlayerTriggerAreaPlugin(MainPlayerAvatarBase mainPlayerAvatarBase, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
         }
 
         public void Dispose()
@@ -45,8 +48,8 @@ namespace DCL.PluginSystem.World
         {
             // cacheCleaner.Register(mainPlayerTriggerAreaPoolRegistry);
 
-            ResetDirtyFlagSystem<MainPlayerTriggerAreaComponent>.InjectToWorld(ref builder);
-            var mainPlayerTriggerAreaHandlerSystem = MainPlayerTriggerAreaHandlerSystem.InjectToWorld(ref builder, mainPlayerTriggerAreaPoolRegistry);
+            // ResetDirtyFlagSystem<MainPlayerTriggerAreaComponent>.InjectToWorld(ref builder);
+            var mainPlayerTriggerAreaHandlerSystem = MainPlayerTriggerAreaHandlerSystem.InjectToWorld(ref builder, mainPlayerTriggerAreaPoolRegistry, mainPlayerAvatarBase);
             finalizeWorldSystems.Add(mainPlayerTriggerAreaHandlerSystem);
         }
 

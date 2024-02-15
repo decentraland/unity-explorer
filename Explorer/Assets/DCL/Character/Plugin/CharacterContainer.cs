@@ -35,11 +35,6 @@ namespace DCL.Character.Plugin
 
         private ProvidedInstance<CharacterObject> characterObject;
 
-        /// <summary>
-        ///     Character Object exists in a single instance
-        /// </summary>
-        public ICharacterObject CharacterObject => characterObject.Value;
-
         public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -47,6 +42,11 @@ namespace DCL.Character.Plugin
 
             exposedTransform = new ExposedTransform();
         }
+
+        /// <summary>
+        ///     Character Object exists in a single instance
+        /// </summary>
+        public ICharacterObject CharacterObject => characterObject.Value;
 
         public void Dispose()
         {
@@ -70,13 +70,12 @@ namespace DCL.Character.Plugin
 
         public Entity CreatePlayerEntity(World world, MainPlayerTransform mainPlayerTransform)
         {
-            var playerTransform = new CharacterTransform(characterObject.Value.Transform);
-            mainPlayerTransform.SetTransform(playerTransform);
+            mainPlayerTransform.SetTransform(characterObject.Value.Transform);
 
             return world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
-                playerTransform);
+                new CharacterTransform(characterObject.Value.Transform));
         }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings

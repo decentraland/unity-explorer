@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components.Transform;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -19,40 +21,51 @@ namespace DCL.MainPlayerTriggerArea
     public partial class MainPlayerTriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<MainPlayerTriggerArea> poolRegistry;
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
 
-        public MainPlayerTriggerAreaHandlerSystem(World world, IComponentPool<MainPlayerTriggerArea> poolRegistry) : base(world)
+        public MainPlayerTriggerAreaHandlerSystem(World world, IComponentPool<MainPlayerTriggerArea> poolRegistry, MainPlayerAvatarBase mainPlayerAvatarBase) : base(world)
         {
             this.poolRegistry = poolRegistry;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
         }
 
         protected override void Update(float t)
         {
+            if (!mainPlayerAvatarBase.Configured) return;
+
+            // TODO: Handle 'current scene' with sceneProvider
+
             UpdateMainPlayerTriggerAreaQuery(World);
         }
 
         [Query]
         private void UpdateMainPlayerTriggerArea(ref TransformComponent transformComponent, ref MainPlayerTriggerAreaComponent mainPlayerTriggerAreaComponent)
         {
-            if (!mainPlayerTriggerAreaComponent.IsDirty) return;
-
-            if (mainPlayerTriggerAreaComponent.MonoBehaviour == null)
+            if (mainPlayerTriggerAreaComponent.IsDirty)
             {
-                MainPlayerTriggerArea triggerArea = poolRegistry.Get();
+                mainPlayerTriggerAreaComponent.IsDirty = false;
+
+                if (mainPlayerTriggerAreaComponent.MonoBehaviour == null)
+                {
+                    MainPlayerTriggerArea triggerArea = poolRegistry.Get();
+
+                    // TODO: Find a way of enparenting to scene GAMEOBJECT
+                    // triggerArea.transform.SetParent();
+
+                    triggerArea.OnEnteredTrigger += mainPlayerTriggerAreaComponent.OnEnteredTrigger;
+                    triggerArea.OnExitedTrigger += mainPlayerTriggerAreaComponent.OnExitedTrigger;
+                    triggerArea.boxCollider.enabled = true; // TODO: Disable when returning to pool...
+                    mainPlayerTriggerAreaComponent.MonoBehaviour = triggerArea;
+                }
 
                 // TODO: Support changing actions as well?
-                triggerArea.OnEnteredTrigger += mainPlayerTriggerAreaComponent.OnEnteredTrigger;
-                triggerArea.OnExitedTrigger += mainPlayerTriggerAreaComponent.OnExitedTrigger;
-
-                Transform transform = triggerArea.transform;
-                transform.SetParent(transformComponent.Transform);
-                transform.localPosition = Vector3.zero;
-                transform.localRotation = Quaternion.identity;
-
-                triggerArea.boxCollider.enabled = true; // TODO: Disable when returning to pool...
-                mainPlayerTriggerAreaComponent.MonoBehaviour = triggerArea;
+                mainPlayerTriggerAreaComponent.MonoBehaviour.boxCollider.size = mainPlayerTriggerAreaComponent.areaSize;
             }
 
-            mainPlayerTriggerAreaComponent.MonoBehaviour.boxCollider.size = mainPlayerTriggerAreaComponent.areaSize;
+            // TODO: Optimize here similar to AvatarAttachHandlerSystem.ApplyAnchorPointTransformValues()...
+            Transform triggerAreaTransform = mainPlayerTriggerAreaComponent.MonoBehaviour.transform;
+            triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
+            triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
         }
 
         public void FinalizeComponents(in Query query)

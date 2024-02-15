@@ -190,9 +190,12 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
-                new CameraModeAreaPlugin(container.MainPlayerReferences.MainPlayerTransform),
+
+                // new CameraModeAreaPlugin(container.MainPlayerReferences.MainPlayerTransform),
+                // new CameraModeAreaPlugin(exposedGlobalDataContainer.ExposedCameraData),
+                new CameraModeAreaPlugin(container.GlobalWorld),
                 new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
-                new MainPlayerTriggerAreaPlugin(componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
+                new MainPlayerTriggerAreaPlugin(container.MainPlayerReferences.MainPlayerAvatarBase, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

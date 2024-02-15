@@ -1,9 +1,11 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.CameraModeArea.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -13,11 +15,11 @@ namespace DCL.PluginSystem.World
 {
     public class CameraModeAreaPlugin : IDCLWorldPlugin
     {
-        private readonly MainPlayerTransform mainPlayerTransform;
+        private readonly WorldProxy globalWorldProxy;
 
-        public CameraModeAreaPlugin(MainPlayerTransform mainPlayerTransform)
+        public CameraModeAreaPlugin(WorldProxy globalWorldProxy)
         {
-            this.mainPlayerTransform = mainPlayerTransform;
+            this.globalWorldProxy = globalWorldProxy;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
@@ -31,7 +33,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
-            var cameraModeAreaHandlerSystem = CameraModeAreaHandlerSystem.InjectToWorld(ref builder, mainPlayerTransform);
+            var cameraModeAreaHandlerSystem = CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy);
             finalizeWorldSystems.Add(cameraModeAreaHandlerSystem);
         }
 

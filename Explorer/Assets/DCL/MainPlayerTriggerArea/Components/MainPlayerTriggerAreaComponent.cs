@@ -11,7 +11,7 @@ namespace DCL.MainPlayerTriggerArea
         public Vector3 areaSize;
         public MainPlayerTriggerArea MonoBehaviour;
 
-        public MainPlayerTriggerAreaComponent(Vector3 areaSize, Action OnEnteredTrigger, Action OnExitedTrigger)
+        public MainPlayerTriggerAreaComponent(Vector3 areaSize, Action OnEnteredTrigger, Action OnExitedTrigger) : this()
         {
             this.areaSize = areaSize;
             this.OnEnteredTrigger = OnEnteredTrigger;

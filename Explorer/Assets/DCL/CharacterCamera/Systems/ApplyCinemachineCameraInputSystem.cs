@@ -26,6 +26,8 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
+            // if (camera.LockCameraInput) return;
+
             switch (camera.Mode)
             {
                 case CameraMode.ThirdPerson:
