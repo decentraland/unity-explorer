@@ -1,19 +1,22 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Character;
 using DCL.Character.Components;
-using DCL.Multiplayer.Connections.Credentials.Hub;
-using DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.AdapterAddress;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.AdapterAddress;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Systems;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using SocketIOClient.Transport.WebSockets;
 using System.Threading;
 using UnityEngine;
 
@@ -64,17 +67,18 @@ namespace DCL.Multiplayer.Connections.Demo
 
                 identityCache.Identity = identity;
             }
+
             identityCache.Identity = new LogWeb3Identity(identityCache.Identity);
 
-            var credentialsHub = new LogCredentialsHub(
-                new ArchipelagoCredentialsHub(
-                    adapterAddresses,
-                    memoryPool,
-                    multiPool,
-                    identityCache,
-                    aboutUrl
+            var signFlow = new LiveConnectionArchipelagoSignFlow(
+                new LogArchipelagoLiveConnection(
+                    new WebSocketArchipelagoLiveConnection(
+                        new DefaultClientWebSocket(),
+                        memoryPool
+                    )
                 ),
-                Debug.Log
+                memoryPool,
+                multiPool
             );
 
             var messagePipeHub = new MessagePipesHub();
@@ -90,13 +94,21 @@ namespace DCL.Multiplayer.Connections.Demo
             );
 
             IFFIClient.Default.EnsureInitialize();
-            system = new ConnectionRoomsSystem(world, roomHub, multiPool, credentialsHub);
 
-            while (this)
-            {
-                system.Update(Time.deltaTime);
-                await UniTask.Yield();
-            }
+            // system = new ConnectionRoomsSystem(world, roomHub, multiPool, credentialsHub);
+
+            // while (this)
+            // {
+            //     system.Update(Time.deltaTime);
+            //     await UniTask.Yield();
+            // }
+
+            //await credentialsHub.IslandRoomCredentials(destroyCancellationToken);
+
+            ICharacterObject character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
+
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
+            archipelagoIslandRoom.Start();
         }
     }
 }

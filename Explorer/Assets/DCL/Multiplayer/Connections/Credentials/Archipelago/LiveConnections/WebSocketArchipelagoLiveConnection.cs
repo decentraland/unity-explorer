@@ -6,7 +6,7 @@ using System;
 using System.Buffers;
 using System.Threading;
 
-namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnections
+namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
 {
     public class WebSocketArchipelagoLiveConnection : IArchipelagoLiveConnection
     {

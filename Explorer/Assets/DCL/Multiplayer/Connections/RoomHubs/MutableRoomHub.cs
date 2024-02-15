@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
@@ -24,19 +25,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public void AssignIslandRoom(IRoom playRoom)
         {
             islandPlayRoom.Assign(playRoom, out var previous);
-            TryRelease(previous);
+            multiPool.TryRelease(previous);
         }
 
         public void AssignSceneRoom(IRoom playRoom)
         {
             scenePlayRoom.Assign(playRoom, out var previous);
-            TryRelease(previous);
-        }
-
-        private void TryRelease(IRoom? room)
-        {
-            if (room is Room r)
-                multiPool.Release(r);
+            multiPool.TryRelease(previous);
         }
     }
 }

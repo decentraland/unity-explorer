@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Credentials;
-using DCL.Multiplayer.Connections.Credentials.Hub;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using ECS.Abstract;
 using ECS.Groups;
@@ -20,28 +20,25 @@ namespace DCL.Multiplayer.Connections.Systems
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     public partial class ConnectionRoomsSystem : BaseUnityLoopSystem
     {
-        private readonly IMutableRoomHub roomHub;
         private readonly IMultiPool multiPool;
-        private readonly ICredentialsHub credentialsHub;
+        private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private Vector2Int currentParcelPosition = new (int.MaxValue, int.MaxValue);
-        private bool assigningIslandRoom;
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
 
         public ConnectionRoomsSystem(
             World world,
-            IMutableRoomHub roomHub,
-            IMultiPool multiPool,
-            ICredentialsHub credentialsHub
+            IArchipelagoIslandRoom archipelagoIslandRoom,
+            IMultiPool multiPool
         ) : base(world)
         {
-            this.roomHub = roomHub;
+            this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.multiPool = multiPool;
-            this.credentialsHub = credentialsHub;
         }
 
         protected override void Update(float t)
         {
             AssignRoomsQuery(World!);
+            archipelagoIslandRoom.StartIfNotRunning();
         }
 
         [Query]
@@ -50,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Systems
             UpdatePose(transformComponent.Position, out bool newPositioned);
             //TODO uncomment if (newPositioned) UpdateSceneRoomAsync(currentParcelPosition).Forget();
             //TODO check if I need to update the room
-            if (assigningIslandRoom == false) UpdateIslandRoomAsync().Forget();
+            //if (assigningIslandRoom == false) UpdateIslandRoomAsync().Forget();
         }
 
         private void UpdatePose(in Vector3 characterPosition, out bool updated)
@@ -62,37 +59,16 @@ namespace DCL.Multiplayer.Connections.Systems
 
         private async UniTaskVoid UpdateSceneRoomAsync(Vector2Int parcelPosition)
         {
-            var token = NewCancellationTokenSource();
-            var credentials = await credentialsHub.SceneRoomCredentials(parcelPosition, token.Token);
-            var room = await NewConnectedRoom(credentials, token.Token);
-            roomHub.AssignSceneRoom(room);
-        }
-
-        private async UniTaskVoid UpdateIslandRoomAsync()
-        {
-            try
-            {
-                assigningIslandRoom = true;
-                var token = NewCancellationTokenSource();
-                var credentials = await credentialsHub.IslandRoomCredentials(token.Token);
-                var room = await NewConnectedRoom(credentials, token.Token);
-                roomHub.AssignIslandRoom(room);
-            }
-            catch (Exception e) { throw new Exception("Failed to assign island room", e); }
-            finally { assigningIslandRoom = false; }
+            // var token = NewCancellationTokenSource();
+            // var credentials = await credentialsHub.SceneRoomCredentials(parcelPosition, token.Token);
+            // var room = await NewConnectedRoom(credentials, token.Token);
+            // roomHub.AssignSceneRoom(room);
         }
 
         private async UniTask<IRoom> NewConnectedRoom(ICredentials credentials, CancellationToken cancellationToken)
         {
             var room = multiPool.Get<Room>();
-            bool connected = await room.Connect(credentials.Url, credentials.AuthToken, cancellationToken);
-
-            if (connected == false)
-            {
-                multiPool.Release(room);
-                throw new Exception($"Failed to connect to room {credentials.Url} with token {credentials.AuthToken}");
-            }
-
+            await room.EnsuredConnect(credentials, multiPool, cancellationToken);
             return room;
         }
 

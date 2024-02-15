@@ -7,7 +7,7 @@ using DCL.WebRequests.Analytics;
 using System;
 using System.Threading;
 
-namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.AdapterAddress
+namespace DCL.Multiplayer.Connections.Credentials.Archipelago.AdapterAddress
 {
     public class WebRequestsAdapterAddresses : IAdapterAddresses
     {

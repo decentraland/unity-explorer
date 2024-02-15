@@ -1,8 +1,9 @@
 using Arch.SystemGroups;
-using DCL.Multiplayer.Connections.Credentials.Hub;
+using DCL.Character;
+using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.FfiClients;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 
@@ -10,31 +11,24 @@ namespace DCL.PluginSystem.Global
 {
     public class MultiplayerPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly IMutableRoomHub roomHub;
         private readonly IMultiPool multiPool;
-        private readonly ICredentialsHub credentialsHub;
+        private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
 
-        public MultiplayerPlugin() : this(new ThreadSafeMultiPool(), ICredentialsHub.Null.INSTANCE)
-        {
-        }
-
-        public MultiplayerPlugin(IMultiPool multiPool, ICredentialsHub credentialsHub) : this(
-            new MutableRoomHub(multiPool),
-            multiPool,
-            credentialsHub
+        public MultiplayerPlugin(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool) : this(
+            new ArchipelagoIslandRoom(characterObject, web3IdentityCache, multiPool),
+            multiPool
         ) { }
 
-        public MultiplayerPlugin(IMutableRoomHub roomHub, IMultiPool multiPool, ICredentialsHub credentialsHub)
+        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IMultiPool multiPool)
         {
-            this.roomHub = roomHub;
+            this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.multiPool = multiPool;
-            this.credentialsHub = credentialsHub;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             IFFIClient.Default.EnsureInitialize();
-            ConnectionRoomsSystem.InjectToWorld(ref builder, roomHub, multiPool, credentialsHub);
+            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, multiPool);
         }
     }
 }
