@@ -187,8 +187,7 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
-                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
-                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
+                new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

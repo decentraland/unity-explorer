@@ -6,6 +6,7 @@ using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
+using Decentraland.Kernel.Apis;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -81,6 +82,7 @@ namespace DCL.Systems
 
         [Query]
         [Any(typeof(PBAvatarShape), typeof(Profile))]
+        [None(typeof(PlayerComponent))]
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
             ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {

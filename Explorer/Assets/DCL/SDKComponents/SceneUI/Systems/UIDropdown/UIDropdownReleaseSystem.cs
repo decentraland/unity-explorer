@@ -5,9 +5,9 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -20,11 +20,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     [ThrottlingEnabled]
     public partial class UIDropdownReleaseSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool componentPool;
+        private readonly IComponentPool<UIDropdownComponent> componentPool;
 
         private UIDropdownReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(DCLDropdown), out componentPool);
+            componentPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
         }
 
         protected override void Update(float t)
@@ -47,7 +47,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private void RemoveDropdownField(UIDropdownComponent uiDropdownComponent)
         {
             if (componentPool != null)
-                componentPool.Release(uiDropdownComponent.Dropdown);
+                componentPool.Release(uiDropdownComponent);
+
+            uiDropdownComponent.UnregisterDropdownCallbacks();
         }
     }
 }

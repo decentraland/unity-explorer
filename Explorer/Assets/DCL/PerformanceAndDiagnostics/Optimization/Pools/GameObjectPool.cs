@@ -14,14 +14,16 @@ namespace DCL.Optimization.Pools
         private readonly Transform rootContainer;
 
         private readonly Action<T> onRelease;
+        private readonly Action<T> onGet;
 
         public int CountInactive => gameObjectPool.CountInactive;
 
-        public GameObjectPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048)
+        public GameObjectPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048, Action<T> onGet = null)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
             parentContainer.SetParent(rootContainer);
             this.onRelease += onRelease;
+            this.onGet += onGet;
             gameObjectPool = new ExtendedObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
@@ -50,9 +52,10 @@ namespace DCL.Optimization.Pools
             return go.TryAddComponent<T>();
         }
 
-        private static void HandleGet(T component)
+        private void HandleGet(T component)
         {
             component.gameObject.SetActive(true);
+            onGet?.Invoke(component);
         }
 
         private void HandleRelease(T component)
