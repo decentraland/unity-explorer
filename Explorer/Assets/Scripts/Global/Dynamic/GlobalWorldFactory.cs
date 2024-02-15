@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
@@ -93,7 +94,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld world, Entity playerEntity) Create(ISceneFactory sceneFactory,
+        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory,
             IEmptyScenesWorldFactory emptyScenesWorldFactory)
         {
             var world = World.Create();
@@ -176,6 +177,7 @@ namespace Global.Dynamic
             staticContainer.GlobalWorldProxy.SetWorld(world);
 
             return (globalWorld, playerEntity);
+            ;
         }
     }
 }

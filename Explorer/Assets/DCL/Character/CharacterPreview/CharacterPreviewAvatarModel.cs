@@ -13,5 +13,7 @@ namespace DCL.CharacterPreview
 
         public List<URN> Wearables;
         public HashSet<string> ForceRenderCategories;
+
+        public bool Initialized;
     }
 }

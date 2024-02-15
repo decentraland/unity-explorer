@@ -12,13 +12,19 @@ namespace DCL.ExplorePanel
     public class ExplorePanelView : ViewBase, IView
     {
         [field: SerializeField]
-        public RectTransform AnimationTransform { get; private set; }
+        public RectTransform AnimationTransform { get; private set; } = null!;
 
         [field: SerializeField]
-        public ExplorePanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; }
+        public ExplorePanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CloseButton { get; private set; }
+        public Button CloseButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public ProfileWidgetView ProfileWidget { get; private set; } = null!;
+
+        [field: SerializeField]
+        public SystemMenuView SystemMenu { get; private set; } = null!;
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
