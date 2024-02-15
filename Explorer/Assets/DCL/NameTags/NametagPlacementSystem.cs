@@ -53,8 +53,7 @@ namespace DCL.Nametags
 
             NametagView nametagView = nametagViewPool.Get();
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.Username.text = avatarShape.Name;
-            nametagView.WalletId.text = avatarShape.ID;
+            nametagView.Username.text = $"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>";;
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
