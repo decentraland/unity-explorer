@@ -39,9 +39,8 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        private ProvidedInstance<CharacterObject> characterObject;
         public WorldProxy GlobalWorld = new ();
-        public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
+
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -178,7 +177,7 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
-                new AvatarAttachPlugin(container.MainPlayerAvatarBase),
+                new AvatarAttachPlugin(container.CharacterContainer.MainPlayerAvatarBase),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),

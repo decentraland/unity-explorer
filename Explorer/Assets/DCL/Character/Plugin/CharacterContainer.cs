@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -38,6 +39,8 @@ namespace DCL.Character.Plugin
         ///     Character Object exists in a single instance
         /// </summary>
         public ICharacterObject CharacterObject => characterObject.Value;
+
+        public readonly MainPlayerAvatarBase MainPlayerAvatarBase = new ();
 
         public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
         {

@@ -43,14 +43,10 @@ namespace DCL.PluginSystem.Global
         private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
-        private readonly CacheCleaner cacheCleaner;
-        private readonly IPerformanceBudget memoryBudget;
 
         private TextureArrayContainer textureArrayContainer;
-        private IComponentPool<Transform> transformPoolRegistry;
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
         private IExtendedObjectPool<Material> celShadingMaterialPool;
