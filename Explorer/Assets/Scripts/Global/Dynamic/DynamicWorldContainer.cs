@@ -103,6 +103,7 @@ namespace Global.Dynamic
             var backpackEventBus = new BackpackEventBus();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var chatMessagesBus = new ChatMessagesBus(debugBuilder);
+            var chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -117,12 +118,20 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
-                new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, staticContainer.MainPlayerAvatarBase, debugBuilder, staticContainer.CacheCleaner),
+                new AvatarPlugin(
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    staticContainer.AssetsProvisioner,
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget,
+                    staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    realmData,
+                    staticContainer.MainPlayerAvatarBase,
+                    debugBuilder,
+                    staticContainer.CacheCleaner,
+                    chatEntryConfiguration),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus, chatEntryConfiguration),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
