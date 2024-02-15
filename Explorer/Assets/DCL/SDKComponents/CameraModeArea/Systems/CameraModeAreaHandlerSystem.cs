@@ -7,6 +7,7 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.MainPlayerTriggerArea;
+using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -25,8 +26,10 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly World globalWorld;
-        private CameraComponent cameraComponent;
         private Entity cameraEntity;
+
+        // private CameraComponent cameraComponent;
+        // private ref CameraComponent cameraComponent => ref globalWorld.Get<CameraComponent>(cameraEntity);
 
         public CameraModeAreaHandlerSystem(World world, WorldProxy globalWorldProxy) : base(world)
         {
@@ -34,11 +37,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             // TODO: Propagate the CameraEntity from the global CharacterCameraPlugin somehow...
             // cameraComponent = globalWorldProxy.GetWorld().Get<CameraComponent>(cameraEntity);
-            globalWorld!.Query(new QueryDescription().WithAll<CameraComponent>(), (Entity entity, ref CameraComponent cameraComponent) =>
-            {
-                cameraEntity = entity;
-                this.cameraComponent = cameraComponent;
-            });
+            globalWorld!.Query(new QueryDescription().WithAll<CameraComponent>(), entity => { cameraEntity = entity; });
         }
 
         protected override void Update(float t)
@@ -55,15 +54,15 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
             var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
-            CameraMode previousCameraMode = cameraComponent.Mode;
+            CameraModeAreaComponent cameraModeAreaComponent = new ();
 
             World.Add(entity, new MainPlayerTriggerAreaComponent
             {
                 areaSize = pbCameraModeArea.Area,
-                OnEnteredTrigger = () => UpdateCameraMode(targetCameraMode, true),
-                OnExitedTrigger = () => UpdateCameraMode(previousCameraMode, false),
+                OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode, ref cameraModeAreaComponent),
+                OnExitedTrigger = () => OnExitedCameraModeArea(ref cameraModeAreaComponent),
                 IsDirty = true,
-            });
+            }, cameraModeAreaComponent);
         }
 
         /*[Query]
@@ -79,13 +78,32 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             mainPlayerTriggerAreaComponent.IsDirty = true;
         }*/
 
-        private void UpdateCameraMode(CameraMode targetCameraMode, bool lockMode)
+        /*private void UpdateCameraMode(CameraMode targetCameraMode, bool lockMode)
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
+            // ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
+            ref CameraComponent camera = ref cameraComponent;
             camera.Mode = targetCameraMode;
             camera.LockCameraInput = lockMode;
 
             Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {targetCameraMode}");
+        }*/
+        private void OnEnteredCameraModeArea(CameraMode targetCameraMode, ref CameraModeAreaComponent cameraModeAreaComponent)
+        {
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
+            cameraModeAreaComponent.modeBeforeEntering = camera.Mode;
+            camera.Mode = targetCameraMode;
+            camera.LockCameraInput = true;
+
+            Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
+        }
+
+        private void OnExitedCameraModeArea(ref CameraModeAreaComponent cameraModeAreaComponent)
+        {
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
+            camera.Mode = cameraModeAreaComponent.modeBeforeEntering;
+            camera.LockCameraInput = false;
+
+            Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
         }
 
         public void FinalizeComponents(in Query query)
