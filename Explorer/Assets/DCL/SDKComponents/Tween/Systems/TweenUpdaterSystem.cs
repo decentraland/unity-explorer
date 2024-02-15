@@ -120,30 +120,7 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             SDKTweenComponent sdkTweenComponent = tweenComponent.SDKTweenComponent;
 
-            if (!sdkTweenComponent.IsDirty)
-            {
-                float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
-                var tweenStateDirty = false;
-                TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.IsPlaying);
-
-                //We only update the state if we changed status OR if the tween is playing and the current time has changed
-                if (newState != sdkTweenComponent.TweenStateStatus)
-                {
-                    sdkTweenComponent.TweenStateStatus = newState;
-                    tweenStateDirty = true;
-                }
-
-                if (sdkTweenComponent.IsPlaying && !sdkTweenComponent.CurrentTime.Equals(currentTime))
-                {
-                    sdkTweenComponent.CurrentTime = currentTime;
-                    tweenStateDirty = true;
-                }
-
-                if (!tweenStateDirty) return;
-
-                TweenWriteHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-                TweenWriteHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
-            }
+            if (!sdkTweenComponent.IsDirty) { UpdateTweenState(transformComponent, sdkEntity, sdkTweenComponent); }
             else
             {
                 SDKTweenModel tweenModel = sdkTweenComponent.CurrentTweenModel;
@@ -153,43 +130,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 Transform entityTransform = transformComponent.Transform;
                 float durationInSeconds = tweenModel.Duration / MILLISECONDS_CONVERSION_INT;
 
-                tempTweener = sdkTweenComponent.Tweener;
-
-                //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
-                // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-                DOTween.TweensByTarget(entityTransform, true, transformTweens);
-                if (transformTweens.Count > 0) transformTweens[0].Rewind(false);
-
-                if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
-                    ease = Linear;
-
-                switch (tweenModel.ModeCase)
-                {
-                    case PBTween.ModeOneofCase.Rotate:
-                        tempTweener = SetupRotationTween(transformComponent.Transform,
-                            PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
-                            PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
-                            durationInSeconds, ease);
-
-                        break;
-                    case PBTween.ModeOneofCase.Scale:
-                        tempTweener = SetupScaleTween(transformComponent.Transform,
-                            PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.Start),
-                            PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.End),
-                            durationInSeconds, ease);
-
-                        break;
-                    case PBTween.ModeOneofCase.Move:
-                    default:
-                        tempTweener = SetupPositionTween(transformComponent.Transform,
-                            PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start),
-                            PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End),
-                            durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection);
-
-                        break;
-                }
-
-                tempTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
+                SetupTweener(transformComponent, sdkTweenComponent, entityTransform, tweenModel, durationInSeconds, isPlaying);
 
                 sdkTweenComponent.Tweener = tempTweener;
                 sdkTweenComponent.CurrentTime = tweenModel.CurrentTime;
@@ -206,6 +147,72 @@ namespace DCL.SDKComponents.Tween.Systems
                     sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
                 }
             }
+        }
+
+        private void UpdateTweenState(TransformComponent transformComponent, CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
+        {
+            float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
+            var tweenStateDirty = false;
+            TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.IsPlaying);
+
+            //We only update the state if we changed status OR if the tween is playing and the current time has changed
+            if (newState != sdkTweenComponent.TweenStateStatus)
+            {
+                sdkTweenComponent.TweenStateStatus = newState;
+                tweenStateDirty = true;
+            }
+
+            if (sdkTweenComponent.IsPlaying && !sdkTweenComponent.CurrentTime.Equals(currentTime))
+            {
+                sdkTweenComponent.CurrentTime = currentTime;
+                tweenStateDirty = true;
+            }
+
+            if (!tweenStateDirty) return;
+
+            TweenWriteHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+            TweenWriteHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
+        }
+
+        private void SetupTweener(TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, Transform entityTransform, SDKTweenModel tweenModel, float durationInSeconds, bool isPlaying)
+        {
+            tempTweener = sdkTweenComponent.Tweener;
+
+            //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
+            // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
+            DOTween.TweensByTarget(entityTransform, true, transformTweens);
+            if (transformTweens.Count > 0) transformTweens[0].Rewind(false);
+
+            if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
+                ease = Linear;
+
+            switch (tweenModel.ModeCase)
+            {
+                case PBTween.ModeOneofCase.Rotate:
+                    tempTweener = SetupRotationTween(transformComponent.Transform,
+                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
+                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
+                        durationInSeconds, ease);
+
+                    break;
+                case PBTween.ModeOneofCase.Scale:
+                    tempTweener = SetupScaleTween(transformComponent.Transform,
+                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.Start),
+                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.End),
+                        durationInSeconds, ease);
+
+                    break;
+                case PBTween.ModeOneofCase.Move:
+                default:
+                    tempTweener = SetupPositionTween(transformComponent.Transform,
+                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start),
+                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End),
+                        durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection);
+
+                    break;
+            }
+
+            tempTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
