@@ -1,13 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.Typing;
-using Decentraland.Kernel.Comms.V3;
+using DCL.Multiplayer.Connections.Messaging;
 using Google.Protobuf;
-using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
-using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Threading;
-using WelcomeMessage = Decentraland.Kernel.Comms.V3.WelcomeMessage;
 
 namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnections
 {
@@ -29,6 +24,13 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
 
     public static class ArchipelagoLiveConnectionExtensions
     {
+        public static async UniTask SendAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
+        {
+            using var memory = memoryPool.Memory(message);
+            message.WriteTo(memory);
+            await connection.SendAsync(memory, token);
+        }
+
         /// <summary>
         /// Takes ownership for the data and returns the ownership for the result
         /// </summary>
@@ -41,68 +43,9 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
         public static async UniTask<MemoryWrap> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
             using var memory = memoryPool.Memory(message);
-            Write();
+            message.WriteTo(memory);
             var result = await connection.SendAndReceiveAsync(memory, token);
             return result;
-
-            void Write()
-            {
-                var span = memory.Span();
-                message.WriteTo(span);
-            }
-        }
-
-        public static async UniTask<SmartWrap<ChallengeResponseMessage>> SendChallengeRequest(
-            this IArchipelagoLiveConnection connection,
-            string ethereumAddress,
-            IMemoryPool memoryPool,
-            IMultiPool multiPool,
-            CancellationToken token
-        )
-        {
-            using var challenge = multiPool.TempResource<ChallengeRequestMessage>();
-            challenge.value.Address = ethereumAddress;
-            using var clientPacket = multiPool.TempResource<ClientPacket>();
-            clientPacket.value.ClearMessage();
-            clientPacket.value.ChallengeRequest = challenge.value;
-            using var response = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
-            var serverPacket = ServerPacket.Parser.ParseFrom(response.Span());
-            return new SmartWrap<ChallengeResponseMessage>(serverPacket.ChallengeResponse!, multiPool);
-        }
-
-        public static async UniTask<LightResult<SmartWrap<WelcomeMessage>>> SendSignedChallenge(
-            this IArchipelagoLiveConnection connection,
-            string challenge,
-            IMemoryPool memoryPool,
-            IMultiPool multiPool,
-            CancellationToken token
-        )
-        {
-            using var signedMessage = multiPool.TempResource<SignedChallengeMessage>();
-            signedMessage.value.AuthChainJson = challenge;
-
-            using var clientPacket = multiPool.TempResource<ClientPacket>();
-            clientPacket.value.ClearMessage();
-            clientPacket.value.SignedChallenge = signedMessage.value;
-
-            var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
-
-            var result = await UniTask.WhenAny(
-                connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
-                connection.WaitDisconnect(linkedToken.Token)
-            );
-
-            linkedToken.Cancel();
-
-            if (result.hasResultLeft)
-            {
-                using var response = result.result;
-                var serverPacket = ServerPacket.Parser.ParseFrom(response.Span());
-
-                return new SmartWrap<WelcomeMessage>(serverPacket.Welcome!, multiPool).AsSuccess();
-            }
-
-            return LightResult<SmartWrap<WelcomeMessage>>.FAILURE;
         }
 
         public static async UniTask WaitDisconnect(this IArchipelagoLiveConnection connection, CancellationToken token)
