@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
+using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -29,6 +30,7 @@ namespace Global.Static
         private ISceneFacade sceneFacade;
         private StaticContainer staticContainer;
         private IWeb3Authenticator? web3Authenticator;
+        private IWeb3IdentityCache identityCache;
 
         private void Awake()
         {
@@ -45,8 +47,6 @@ namespace Global.Static
         {
             try
             {
-                IWeb3IdentityCache identityCache;
-
                 if (useStoredCredentials
 
                     // avoid storing invalid credentials
@@ -81,7 +81,7 @@ namespace Global.Static
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, dappWeb3Authenticator, ct);
+                    identityCache, dappWeb3Authenticator, identityCache, new MemoryProfileRepository(new DefaultProfileCache()), ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
@@ -99,6 +99,8 @@ namespace Global.Static
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
+            IWeb3IdentityCache identityCache,
+            IProfileRepository profileRepository,
             CancellationToken ct)
         {
             // First load the common global plugin
@@ -109,7 +111,7 @@ namespace Global.Static
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, identityCache, profileRepository);
 
             return (staticContainer, sceneSharedContainer);
         }

@@ -1,15 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace DCL.Profiles
 {
     public class Profile
     {
+        private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
+
         internal HashSet<string>? blocked;
         internal List<string>? interests;
         internal List<string>? links;
+
         public string UserId { get; internal set; }
         public string Name { get; internal set; }
+        public string DisplayName => $"{VALID_NAME_CHARACTERS.Match(Name).Value}#{UserId[^4..]}";
         public string UnclaimedName { get; internal set; }
         public bool HasClaimedName { get; internal set; }
         public bool HasConnectedWeb3 { get; internal set; }

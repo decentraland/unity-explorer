@@ -113,8 +113,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!);
-
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     staticContainer!,
                     scenePluginSettingsContainer,
@@ -133,6 +131,9 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, identityCache,
+                    dynamicWorldContainer!.ProfileRepository);
 
                 // Initialize global plugins
                 var anyFailure = false;

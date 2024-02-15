@@ -1,4 +1,5 @@
 module.exports.getUserData = async function(message) {
-    console.log('JSMODULE: getUserData')
-    return {};
+    const result = await UnityUserIdentityApi.GetOwnUserData();
+    console.log(result);
+    return result;
 }

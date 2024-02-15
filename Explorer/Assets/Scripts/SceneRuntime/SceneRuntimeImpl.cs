@@ -1,7 +1,9 @@
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -30,14 +32,16 @@ namespace SceneRuntime
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
 
-        private EngineApiWrapper engineApi;
-        private EthereumApiWrapper ethereumApi;
-        private RuntimeWrapper runtimeWrapper;
+        private EngineApiWrapper? engineApi;
+        private EthereumApiWrapper? ethereumApi;
+        private RuntimeWrapper? runtimeWrapper;
+        private UserIdentityApiWrapper? userIdentity;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
             string sourceCode, string jsInitCode,
-            Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider,
+            Dictionary<string, string> jsModules,
+            IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
         {
             this.sceneExceptionsHandler = sceneExceptionsHandler;
@@ -88,6 +92,7 @@ namespace SceneRuntime
         {
             engineApi?.Dispose();
             ethereumApi?.Dispose();
+            userIdentity?.Dispose();
             engine.Dispose();
             runtimeWrapper?.Dispose();
         }
@@ -105,6 +110,11 @@ namespace SceneRuntime
         public void RegisterEthereumApi(IEthereumApi ethereumApi)
         {
             engine.AddHostObject("UnityEthereumApi", this.ethereumApi = new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler));
+        }
+
+        public void RegisterUserIdentityApi(IProfileRepository profileRepository, IWeb3IdentityCache identityCache)
+        {
+            engine.AddHostObject("UnityUserIdentityApi", userIdentity = new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()

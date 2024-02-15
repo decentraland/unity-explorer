@@ -5,7 +5,9 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -40,7 +42,8 @@ namespace SceneRunner.Tests
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>());
+                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(),
+                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>());
         }
 
         [TearDown]
