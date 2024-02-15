@@ -14,5 +14,8 @@ namespace DCL.Web3.Chains
 
         public override string ToString() =>
             $"AuthLink: {{type: {type}; payload: {payload}; signature: {signature}}}";
+
+        public string ToJson() =>
+            JsonConvert.SerializeObject(this);
     }
 }
