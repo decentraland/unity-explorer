@@ -10,6 +10,7 @@ namespace DCL.Landscape
     [ExecuteInEditMode]
     public class TerrainGeneratorTest : MonoBehaviour
     {
+        public bool clearCache;
         public uint worldSeed = 1;
         public bool digHoles;
         public bool centerTerrain;
@@ -32,7 +33,7 @@ namespace DCL.Landscape
             ownedParcels = parcelData.GetOwnedParcels();
             emptyParcels = parcelData.GetEmptyParcels();
 
-            var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true);
+            var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
             await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
 
             emptyParcels.Dispose();
