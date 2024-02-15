@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             {
                 areaSize = pbCameraModeArea.Area,
                 OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode, ref cameraModeAreaComponent),
-                OnExitedTrigger = () => OnExitedCameraModeArea(ref cameraModeAreaComponent),
+                OnExitedTrigger = () => OnExitedCameraModeArea(cameraModeAreaComponent),
                 IsDirty = true,
             }, cameraModeAreaComponent);
         }
@@ -97,7 +97,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
         }
 
-        private void OnExitedCameraModeArea(ref CameraModeAreaComponent cameraModeAreaComponent)
+        private void OnExitedCameraModeArea(CameraModeAreaComponent cameraModeAreaComponent)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
             camera.Mode = cameraModeAreaComponent.modeBeforeEntering;

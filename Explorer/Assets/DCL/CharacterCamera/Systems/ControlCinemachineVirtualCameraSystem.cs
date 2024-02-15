@@ -95,6 +95,8 @@ namespace DCL.CharacterCamera.Systems
                     // Disable Player input
                     inputMapComponent.Active &= ~InputMapComponent.Kind.Player;
 
+                    SetDefaultFreeCameraPosition(in cinemachinePreset);
+
                     break;
             }
         }
@@ -102,79 +104,65 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
-            if (cameraComponent.LockCameraInput)
+            if (!cameraComponent.LockCameraInput)
             {
-                switch (cameraComponent.Mode)
+                if (input.ZoomOut)
                 {
-                    case CameraMode.FirstPerson:
-                        if (!cinemachinePreset.FirstPersonCameraData.Camera.enabled)
-                            SwitchCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
-
-                        break;
-                    case CameraMode.ThirdPerson:
-                        if (!cinemachinePreset.ThirdPersonCameraData.Camera.enabled)
+                    switch (cameraComponent.Mode)
+                    {
+                        // if we switch from FP to TP just zoom at 0 position
+                        case CameraMode.FirstPerson:
                             SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
 
-                        break;
-                }
+                            // Reset zoom value
+                            state.ThirdPersonZoomValue = 0f;
 
-                return;
-            }
-
-            if (input.ZoomOut)
-            {
-                switch (cameraComponent.Mode)
-                {
-                    // if we switch from FP to TP just zoom at 0 position
-                    case CameraMode.FirstPerson:
-                        SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
-
-                        // Reset zoom value
-                        state.ThirdPersonZoomValue = 0f;
-                        break;
-                    case CameraMode.ThirdPerson:
-                        // Zoom out according to sensitivity
-                        if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, 1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
-                        {
-                            SwitchCamera(CameraMode.Free, ref cinemachinePreset, ref cameraComponent, ref state);
-                            SetDefaultFreeCameraPosition(in cinemachinePreset);
+                            // Set a freshly assigned value
+                            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
-                        }
+                        case CameraMode.ThirdPerson:
+                            // Zoom out according to sensitivity
+                            if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, 1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
+                            {
+                                SwitchCamera(CameraMode.Free, ref cinemachinePreset, ref cameraComponent, ref state);
+                                SetDefaultFreeCameraPosition(in cinemachinePreset);
+                            }
 
-                        break;
-                }
-            }
-            else if (input.ZoomIn)
-            {
-                switch (cameraComponent.Mode)
-                {
-                    case CameraMode.ThirdPerson:
-                    {
-                        // If we exceed the zoom more than by twice the previous value, switch to FP
-                        if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
-                        {
-                            SwitchCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+                            // Set a freshly assigned value
+                            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
-                        }
-
-                        break;
                     }
-                    case CameraMode.Free:
-                        // Switch to third-person
-                        SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+                }
+                else if (input.ZoomIn)
+                {
+                    switch (cameraComponent.Mode)
+                    {
+                        case CameraMode.ThirdPerson:
+                        {
+                            // If we exceed the zoom more than by twice the previous value, switch to FP
+                            if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
+                            {
+                                SwitchCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+                                return;
+                            }
 
-                        // Reset zoom value to the maximum
-                        state.ThirdPersonZoomValue = 1f;
-                        return;
+                            // Set a freshly assigned value
+                            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
+                            return;
+                        }
+                        case CameraMode.Free:
+                            // Switch to third-person
+                            SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+
+                            // Reset zoom value to the maximum
+                            state.ThirdPersonZoomValue = 1f;
+                            return;
+                    }
                 }
             }
-            else // if zoom was not changed
-            {
-                return;
-            }
 
-            // Set a freshly assigned value
-            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
+            if (!IsCorrectCameraEnabled(cameraComponent.Mode, cinemachinePreset))
+                SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
         }
 
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)
