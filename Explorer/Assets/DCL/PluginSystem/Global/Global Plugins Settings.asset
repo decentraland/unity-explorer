@@ -31,7 +31,6 @@ MonoBehaviour:
   - rid: 4340256219339423747
   - rid: 4340256301410942981
   - rid: 7249412338407702528
-  - rid: 7162477455585050626
   references:
     version: 2
     RefIds:
@@ -181,6 +180,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        nametagView:
+          m_AssetGUID: fabfcdf867b484665b44c8a158bd8eb4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        nametagParent:
+          m_AssetGUID: bd2233d5950ee4b4c96fc19f60d8c582
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         celShadingMaterial:
           m_AssetGUID: 19373184c73f36042a55739551bb8298
           m_SubObjectName: 
@@ -244,14 +253,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-    - rid: 7162477455585050626
-      type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        ExternalUrlPromptPrefab:
-          m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 7249412338407702528
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:
