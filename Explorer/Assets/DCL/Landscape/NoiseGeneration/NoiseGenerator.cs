@@ -26,10 +26,5 @@ namespace DCL.Landscape.NoiseGeneration
 
         public override bool IsRecursive(NoiseDataBase otherNoiseData) =>
             noiseData == otherNoiseData;
-
-        public override void Dispose()
-        {
-            offsets.Dispose();
-        }
     }
 }

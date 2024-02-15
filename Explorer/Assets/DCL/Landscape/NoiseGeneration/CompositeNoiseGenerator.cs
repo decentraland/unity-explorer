@@ -81,10 +81,5 @@ namespace DCL.Landscape.NoiseGeneration
 
         public override bool IsRecursive(NoiseDataBase otherNoiseData) =>
             this.compositeNoiseData.operations.Any(operation => operation.noise == otherNoiseData);
-
-        public override void Dispose()
-        {
-
-        }
     }
 }

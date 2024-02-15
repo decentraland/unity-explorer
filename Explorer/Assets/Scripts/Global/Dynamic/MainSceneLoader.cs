@@ -9,7 +9,6 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
@@ -21,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
 using Avatar = DCL.Profiles.Avatar;
@@ -30,8 +30,8 @@ namespace Global.Dynamic
     public class MainSceneLoader : MonoBehaviour
     {
         private const float LOADING_PROGRESS_PROFILE = 0.1f;
-        private const float LOADING_PROGRESS_LANDSCAPE = 0.6f;
-        private const float LOADING_PROGRESS_TELEPORT = 0.8f;
+        private const float LOADING_PROGRESS_LANDSCAPE = 0.9f;
+        private const float LOADING_PROGRESS_TELEPORT = 0.95f;
         private const float LOADING_PROGRESS_COMPLETE = 1f;
 
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -47,7 +47,7 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
-        [SerializeField] private bool loadLandscape;
+        [FormerlySerializedAs("loadLandscape")] [SerializeField] private bool disableLandscape;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -216,7 +216,11 @@ namespace Global.Dynamic
             // Add the profile into the player entity so it will create the avatar in world
             globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
 
-            if (loadLandscape)
+#if !UNITY_EDITOR
+            disableLandscape = false;
+#endif
+
+            if (!disableLandscape)
                 await LoadLandscapeAsync(ct);
 
             await TeleportToSpawnPointAsync(ct);
