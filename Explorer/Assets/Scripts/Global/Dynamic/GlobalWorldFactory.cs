@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
@@ -93,7 +94,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld world, Entity playerEntity) Create(ISceneFactory sceneFactory,
+        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory,
             IEmptyScenesWorldFactory emptyScenesWorldFactory)
         {
             var world = World.Create();
@@ -132,8 +133,10 @@ namespace Global.Dynamic
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings);
+
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
@@ -174,6 +177,7 @@ namespace Global.Dynamic
             staticContainer.GlobalWorld.SetWorld(world);
 
             return (globalWorld, playerEntity);
+            ;
         }
     }
 }

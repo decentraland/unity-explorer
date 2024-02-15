@@ -20,10 +20,7 @@ namespace MVC
         /// </summary>
         void Blur();
 
-        /// <summary>
-        ///     Should be called from <see cref="IMVCManager" /> only
-        /// </summary>
-        internal UniTask HideViewAsync(CancellationToken ct);
+        UniTask HideViewAsync(CancellationToken ct);
 
         void Dispose();
     }

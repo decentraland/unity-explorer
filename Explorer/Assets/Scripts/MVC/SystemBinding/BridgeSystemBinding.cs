@@ -31,7 +31,8 @@ namespace MVC
         {
             this.controller = controller;
             this.queryMethod = queryMethod;
-            this.system = system;
+
+            InjectSystem(system);
         }
 
         public void InjectSystem([NotNull] TSystem systemInstance)

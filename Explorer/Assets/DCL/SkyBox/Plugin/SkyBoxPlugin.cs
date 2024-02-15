@@ -34,7 +34,6 @@ namespace DCL.SkyBox
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             // Update the model from the system
-
             TimeOfDaySystem.InjectToWorld(ref builder, debugContainerBuilder, featureModel, sceneData.DirectionalLight);
         }
 
