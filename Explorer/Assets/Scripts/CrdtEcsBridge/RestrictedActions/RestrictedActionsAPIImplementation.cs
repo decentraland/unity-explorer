@@ -1,16 +1,17 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Browser;
+using DCL.ExternalUrlPrompt;
+using MVC;
 using SceneRuntime.Apis.Modules;
 
 namespace CrdtEcsBridge.RestrictedActions
 {
     public class RestrictedActionsAPIImplementation : IRestrictedActionsAPI
     {
-        private readonly IWebBrowser webBrowser;
+        private readonly IMVCManager mvcManager;
 
-        public RestrictedActionsAPIImplementation(IWebBrowser webBrowser)
+        public RestrictedActionsAPIImplementation(IMVCManager mvcManager)
         {
-            this.webBrowser = webBrowser;
+            this.mvcManager = mvcManager;
         }
 
         public bool OpenExternalUrl(string url)
@@ -22,7 +23,7 @@ namespace CrdtEcsBridge.RestrictedActions
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
-            webBrowser.OpenUrl(url);
+            await mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
         }
 
         public void Dispose() { }

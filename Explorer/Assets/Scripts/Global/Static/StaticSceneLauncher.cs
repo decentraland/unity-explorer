@@ -109,7 +109,7 @@ namespace Global.Static
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, null);
 
             return (staticContainer, sceneSharedContainer);
         }
