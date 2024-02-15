@@ -13,6 +13,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
         private readonly IClientWebSocket webSocket;
         private readonly IMemoryPool memoryPool;
         private const int BUFFER_SIZE = 1024 * 1024; //1MB
+        private readonly Atomic<bool> isSomeoneReceiving = new (false);
 
         public WebSocketArchipelagoLiveConnection() : this(
             new DefaultClientWebSocket(),
@@ -51,6 +52,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
 
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
         {
+            using var ownership = new ReceivingOwnership(isSomeoneReceiving);
             using var result = await webSocket.ReceiveAsync(BUFFER_SIZE, token)!;
 
             return result.MessageType switch
@@ -70,6 +72,50 @@ namespace DCL.Multiplayer.Connections.Credentials.Hub.Archipelago.LiveConnection
             var slice = buffer.Slice(0, count).Span;
             slice.CopyTo(memory.Span());
             return memory;
+        }
+
+        private readonly struct ReceivingOwnership : IDisposable
+        {
+            private readonly Atomic<bool> isSomeoneReceiving;
+
+            public ReceivingOwnership(Atomic<bool> isSomeoneReceiving)
+            {
+                if (isSomeoneReceiving.Value())
+                    throw new InvalidOperationException(
+                        "Someone is already receiving data, cannot handle 2 data receivers at the same time"
+                    );
+
+                isSomeoneReceiving.Set(true);
+                this.isSomeoneReceiving = isSomeoneReceiving;
+            }
+
+            public void Dispose()
+            {
+                isSomeoneReceiving.Set(false);
+            }
+        }
+
+        private class Atomic<T> where T: struct
+        {
+            private T value;
+            private readonly object locker = new ();
+
+            public Atomic() : this(default(T)) { }
+
+            public Atomic(T value)
+            {
+                this.value = value;
+            }
+
+            public void Set(T newValue)
+            {
+                lock (locker) { value = newValue; }
+            }
+
+            public T Value()
+            {
+                lock (locker) { return value; }
+            }
         }
     }
 }
