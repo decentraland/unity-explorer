@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.CharacterCamera
 {
@@ -9,13 +10,21 @@ namespace DCL.CharacterCamera
     public struct CameraComponent
     {
         public CameraMode Mode;
-        public bool LockCameraInput;
+        public int CameraInputLocks;
         public readonly Camera Camera;
 
         public CameraComponent(Camera camera) : this()
         {
             Camera = camera;
-            LockCameraInput = false;
+            CameraInputLocks = 0;
         }
+
+        public bool CameraInputChangeEnabled => CameraInputLocks == 0;
+
+        public void AddCameraInputLock() =>
+            CameraInputLocks++;
+
+        public void RemoveCameraInputLock() =>
+            CameraInputLocks = CameraInputLocks - 1 < 0 ? 0 : CameraInputLocks - 1;
     }
 }

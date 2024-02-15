@@ -78,21 +78,12 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             mainPlayerTriggerAreaComponent.IsDirty = true;
         }*/
 
-        /*private void UpdateCameraMode(CameraMode targetCameraMode, bool lockMode)
-        {
-            // ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
-            ref CameraComponent camera = ref cameraComponent;
-            camera.Mode = targetCameraMode;
-            camera.LockCameraInput = lockMode;
-
-            Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {targetCameraMode}");
-        }*/
         private void OnEnteredCameraModeArea(CameraMode targetCameraMode, ref CameraModeAreaComponent cameraModeAreaComponent)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
             cameraModeAreaComponent.modeBeforeEntering = camera.Mode;
             camera.Mode = targetCameraMode;
-            camera.LockCameraInput = true;
+            camera.AddCameraInputLock();
 
             Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
         }
@@ -100,8 +91,12 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private void OnExitedCameraModeArea(CameraModeAreaComponent cameraModeAreaComponent)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
-            camera.Mode = cameraModeAreaComponent.modeBeforeEntering;
-            camera.LockCameraInput = false;
+
+            // If there are more locks then there is another newer camera mode area in place
+            if (camera.CameraInputLocks == 1)
+                camera.Mode = cameraModeAreaComponent.modeBeforeEntering;
+
+            camera.RemoveCameraInputLock();
 
             Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
         }
