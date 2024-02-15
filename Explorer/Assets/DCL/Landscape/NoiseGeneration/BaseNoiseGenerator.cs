@@ -47,6 +47,7 @@ namespace DCL.Landscape.NoiseGeneration
             return resultHandle;
         }
 
+
         protected abstract JobHandle OnSchedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount);
 
         public NativeArray<float> GetResult(NoiseDataPointer noiseDataPointer) =>
@@ -59,13 +60,14 @@ namespace DCL.Landscape.NoiseGeneration
             ClearCache();
         }
 
-        public void ClearCache()
+        private void ClearCache()
         {
             foreach (KVPair<NoiseDataPointer, NativeArray<float>> pair in noiseResultDictionary)
                 pair.Value.Dispose();
 
             noiseResultDictionary.Dispose();
             jobHandleDictionary.Dispose();
+            offsets.Dispose();
         }
     }
 }
