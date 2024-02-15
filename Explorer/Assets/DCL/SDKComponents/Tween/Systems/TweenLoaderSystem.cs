@@ -28,8 +28,6 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             UpdateTweenQuery(World);
             LoadTweenQuery(World);
-
-            HandleComponentRemovalQuery(World);
         }
 
         [Query]
@@ -67,13 +65,6 @@ namespace DCL.SDKComponents.Tween.Systems
                 tweenComponent.SDKTweenComponent.CurrentTweenModel.Update(pbTween);
                 tweenComponent.SDKTweenComponent.IsDirty = true;
             }
-        }
-
-        [Query]
-        [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref TweenComponent tweenComponent)
-        {
-            tweenComponent.SDKTweenComponent.Removed = true;
         }
 
         private static bool AreSameModels(PBTween modelA, SDKTweenModel modelB)
