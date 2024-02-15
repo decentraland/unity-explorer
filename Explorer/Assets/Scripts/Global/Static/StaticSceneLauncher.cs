@@ -4,6 +4,7 @@ using DCL.PluginSystem;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using MVC;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -109,7 +110,7 @@ namespace Global.Static
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, null);
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, new MVCManager(new WindowStackManager(), new CancellationTokenSource(), null));
 
             return (staticContainer, sceneSharedContainer);
         }
