@@ -1,5 +1,8 @@
-﻿namespace DCL.Landscape.Jobs
+﻿using System;
+
+namespace DCL.Landscape.Jobs
 {
+    [Serializable]
     public struct EmptyParcelNeighborData
     {
         public int DownHeight;
