@@ -11,15 +11,16 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             Vector3.Lerp(start.position, end.position, t / totalDuration);
 
         /// <summary>
-        ///     Interpolation based on Velocity Blending Projection.
-        ///     Ensures that the velocity and position of the end point are matched at the end of interpolation
+        ///     Interpolation based on Projective Velocity Blending.
+        ///     Ensures that the velocity and position of the end point are matched at the end of interpolation.
+        ///     See 'Curtiss Murphy and E Lengyel. Believable dead reckoning for networked games. Game engine gems, 2:307{328, 2011.'
         /// </summary>
         /// <param name="start"> point from which interpolation starts </param>
         /// <param name="end"> point where interpolation should end </param>
         /// <param name="t"> time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 VelocityBlending(MessageMock start, MessageMock end, float t, float totalDuration)
+        public static Vector3 ProjectiveVelocityBlending(MessageMock start, MessageMock end, float t, float totalDuration)
         {
             Vector3 fakeStartPosition = end.position - (end.velocity * totalDuration);
 

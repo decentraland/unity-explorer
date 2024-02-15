@@ -6,14 +6,6 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
-    public enum InterpolationType
-    {
-        Linear,
-        Hermite,
-        Bezier,
-        VelocityBlending,
-    }
-
     public class Receiver : MonoBehaviour
     {
         private readonly Queue<MessageMock> incomingMessages = new ();
@@ -189,7 +181,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                                                                InterpolationType.Linear => Interpolation.Linear,
                                                                InterpolationType.Hermite => Interpolation.Hermite,
                                                                InterpolationType.Bezier => Interpolation.Bezier,
-                                                               InterpolationType.VelocityBlending => Interpolation.VelocityBlending,
+                                                               InterpolationType.VelocityBlending => Interpolation.ProjectiveVelocityBlending,
                                                                _ => Interpolation.Linear,
                                                            }));
         }
@@ -216,7 +208,5 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             isInterpolating = false;
         }
-
-
     }
 }

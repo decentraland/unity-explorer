@@ -1,9 +1,13 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class ReceiverExtrapolation : MonoBehaviour
     {
+        public bool useVelocityBlending;
+
+        public InterpolationType extrapolationType;
         [SerializeField] private MessageBus messageBus;
         [SerializeField] private bool useAcceleration;
 
@@ -14,6 +18,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private bool firstMessage = true;
 
+        private MessageMock projectedRemote;
+
         private void Awake()
         {
             messageBus.MessageSent += OnMessageReceived;
@@ -21,13 +27,24 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Update()
         {
-            if (remote == null) return;
+            if (local == null) return;
 
             t += UnityEngine.Time.deltaTime;
-            transform.position = VelocityBlendingInterpolation(local, remote, t, messageBus.PackageSentRate);
+
+            if (t > messageBus.PackageSentRate)
+                transform.position += local.velocity * UnityEngine.Time.deltaTime;
+            else
+            {
+                transform.position = extrapolationType switch
+                                     {
+                                         InterpolationType.VelocityBlending => ProjectiveVelocityBlending(local, remote, t, messageBus.PackageSentRate),
+                                         InterpolationType.Hermite => Interpolation.Hermite(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.Bezier => Interpolation.Bezier(local, projectedRemote, t, messageBus.PackageSentRate),
+                                     };
+            }
         }
 
-        private static Vector3 VelocityBlendingInterpolation(MessageMock local, MessageMock remote, float t, float totalDuration)
+        private static Vector3 ProjectiveVelocityBlending(MessageMock local, MessageMock remote, float t, float totalDuration)
         {
             float lerpValue = Mathf.Max(0, t / totalDuration);
 
@@ -46,14 +63,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void OnMessageReceived(MessageMock newMessage)
         {
-            remote = new MessageMock
+            if (firstMessage)
             {
-                position = newMessage.position,
-                velocity = newMessage.velocity,
-                acceleration = useAcceleration ? newMessage.acceleration : Vector3.zero,
-            };
-
-            if (!firstMessage)
+                transform.position = newMessage.position;
+                local = newMessage;
+                t = messageBus.PackageSentRate;
+                firstMessage = false;
+            }
+            else
             {
                 // Current local state at the time of the new package
                 local = new MessageMock
@@ -65,13 +82,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
                 t = 0f; // Reset time since the new package
             }
-            else
+
+            remote = new MessageMock
             {
-                transform.position = remote.position;
-                local = remote;
-                t = messageBus.PackageSentRate;
-                firstMessage = false;
-            }
+                position = newMessage.position,
+                velocity = newMessage.velocity,
+                acceleration = useAcceleration ? newMessage.acceleration : Vector3.zero,
+            };
+
+            projectedRemote = new MessageMock
+            {
+                timestamp = remote.timestamp + messageBus.PackageSentRate,
+                position = remote.position + (remote.velocity * messageBus.PackageSentRate) + (remote.acceleration * (0.5f * messageBus.PackageSentRate * messageBus.PackageSentRate)),
+                velocity = remote.velocity + (remote.acceleration * messageBus.PackageSentRate),
+                acceleration = remote.acceleration,
+            };
         }
     }
 }
