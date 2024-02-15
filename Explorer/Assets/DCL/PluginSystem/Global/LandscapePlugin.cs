@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.Landscape;
+using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.MapRenderer.ComponentsFactory;
@@ -11,7 +12,6 @@ using ECS.Prioritization;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
@@ -24,8 +24,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private readonly MapRendererTextureContainer textureContainer;
         private ProvidedAsset<LandscapeData> landscapeData;
-        private ProvidedAsset<TextAsset> emptyParcelsData;
-        private ProvidedAsset<TextAsset> ownedParcelsData;
+        private ProvidedAsset<ParcelData> parcelData;
         private NativeArray<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
@@ -38,13 +37,13 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
-            emptyParcelsData = await assetsProvisioner.ProvideMainAssetAsync(settings.emptyParcels, ct);
-            ownedParcelsData = await assetsProvisioner.ProvideMainAssetAsync(settings.ownedParcels, ct);
-
-            ParseParcels();
+            parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+
+            emptyParcels = parcelData.Value.GetEmptyParcels();
+            ownedParcels = parcelData.Value.GetOwnedParcels();
 
             terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
         }
@@ -58,46 +57,14 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             terrainGenerator.Dispose();
-            emptyParcels.Dispose();
-            ownedParcels.Dispose();
         }
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             await terrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
-        }
 
-        private void ParseParcels()
-        {
-            string[] ownedParcelsRaw = ownedParcelsData.Value.text.Split('\n');
-            string[] emptyParcelsRaw = emptyParcelsData.Value.text.Split('\n');
-
-            ownedParcels = new NativeParallelHashSet<int2>(ownedParcelsRaw.Length, Allocator.Persistent);
-            emptyParcels = new NativeArray<int2>(emptyParcelsRaw.Length, Allocator.Persistent);
-
-            foreach (string ownedParcel in ownedParcelsRaw)
-            {
-                string[] coordinates = ownedParcel.Trim().Split(',');
-
-                if (TryParse(coordinates, out int x, out int y))
-                    ownedParcels.Add(new int2(x, y));
-            }
-
-            for (var i = 0; i < emptyParcelsRaw.Length; i++)
-            {
-                string emptyParcel = emptyParcelsRaw[i];
-                string[] coordinates = emptyParcel.Trim().Split(',');
-
-                if (TryParse(coordinates, out int x, out int y))
-                    emptyParcels[i] = new int2(x, y);
-            }
-
-            bool TryParse(string[] coords, out int x, out int y)
-            {
-                x = 0;
-                y = 0;
-                return coords.Length == 2 && int.TryParse(coords[0], out x) && int.TryParse(coords[1], out y);
-            }
+            emptyParcels.Dispose();
+            ownedParcels.Dispose();
         }
     }
 }
