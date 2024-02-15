@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Systems;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS.Abstract;
@@ -35,15 +36,10 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
+            IFFIClient.Default.EnsureInitialize();
+
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
-
-            var memoryPool = new ArrayMemoryPool();
-
-            var multiPool = new LogMultiPool(
-                new ThreadSafeMultiPool(),
-                Debug.Log
-            );
 
             var adapterAddresses = new LogAdapterAddresses(
                 new RefinedAdapterAddresses(
@@ -70,6 +66,13 @@ namespace DCL.Multiplayer.Connections.Demo
 
             identityCache.Identity = new LogWeb3Identity(identityCache.Identity);
 
+            var memoryPool = new ArrayMemoryPool();
+
+            var multiPool = new LogMultiPool(
+                new ThreadSafeMultiPool(),
+                Debug.Log
+            );
+
             var signFlow = new LiveConnectionArchipelagoSignFlow(
                 new LogArchipelagoLiveConnection(
                     new WebSocketArchipelagoLiveConnection(
@@ -83,6 +86,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             var messagePipeHub = new MessagePipesHub();
 
+            //TODO message pipe with new approach, in PR with scene room
             var roomHub = new LogMutableRoomHub(
                 new MessagePipedMutableRoomHub(
                     new MutableRoomHub(multiPool),
@@ -93,22 +97,15 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            IFFIClient.Default.EnsureInitialize();
-
-            // system = new ConnectionRoomsSystem(world, roomHub, multiPool, credentialsHub);
-
-            // while (this)
-            // {
-            //     system.Update(Time.deltaTime);
-            //     await UniTask.Yield();
-            // }
-
-            //await credentialsHub.IslandRoomCredentials(destroyCancellationToken);
-
-            ICharacterObject character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
-
+            var character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
-            archipelagoIslandRoom.Start();
+            system = new ConnectionRoomsSystem(world, archipelagoIslandRoom);
+
+            while (this)
+            {
+                system.Update(Time.deltaTime);
+                await UniTask.Yield();
+            }
         }
     }
 }
