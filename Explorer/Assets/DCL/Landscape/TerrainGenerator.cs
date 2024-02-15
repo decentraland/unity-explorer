@@ -126,7 +126,7 @@ namespace DCL.Landscape
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
 
                 timeProfiler.StartMeasure();
-                GenerateChunks(terrainDataDictionary, cancellationToken);
+                await GenerateChunks(terrainDataDictionary, cancellationToken);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
@@ -226,8 +226,7 @@ namespace DCL.Landscape
                     maxHeightIndex = emptyParcelHeight.Value;
         }
 
-        // TODO: THROTTLE ME
-        private void GenerateChunks(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
+        private async UniTask GenerateChunks(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
         {
             for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
             for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
@@ -236,6 +235,7 @@ namespace DCL.Landscape
 
                 TerrainData terrainData = terrainDatas[new int2(x, z)];
                 GenerateTerrainChunk(x, z, terrainData, terrainGenData.terrainMaterial);
+                await UniTask.Yield();
             }
         }
 
@@ -579,11 +579,8 @@ namespace DCL.Landscape
             timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] Parallel Jobs {t}ms"));
 
             timeProfiler.StartMeasure();
-
-            // TODO: remove usage of SetAlphamaps and instead use terrainData.GetAlphamapTexture() and fill the texture with a Compute Shader
             float[,,] result3D = GenerateAlphaMaps(noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray(), chunkSize, chunkSize);
             terrainData.SetAlphamaps(0, 0, result3D);
-
             timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] SetAlphamaps {t}ms"));
         }
 
