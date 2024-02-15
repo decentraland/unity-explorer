@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
@@ -47,7 +48,7 @@ namespace DCL.Backpack
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
 
         private readonly PageSelectorController pageSelectorController;
-        private readonly Dictionary<string, BackpackItemView> usedPoolItems;
+        private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
         private readonly List<(string, string)> requestParameters;
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
@@ -132,14 +133,14 @@ namespace DCL.Backpack
                 loadingResults[j].gameObject.transform.SetAsFirstSibling();
                 loadingResults[j].LoadingView.gameObject.SetActive(false);
                 loadingResults[j].FullBackpackItem.SetActive(false);
-                usedPoolItems.Remove(j.ToString());
+                usedPoolItems.Remove(j);
                 gridItemsPool.Release(loadingResults[j]);
             }
             Array.Reverse(gridWearables);
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = loadingResults[i];
-                usedPoolItems.Remove(i.ToString());
+                usedPoolItems.Remove(i );
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;

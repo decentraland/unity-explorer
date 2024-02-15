@@ -33,7 +33,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "4fc8a079fc08f52a26130b319f4f69897b0e2c93"
+      "hash": "af15ee7336fa1759dc24953a21e253944180dfc7"
     },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",

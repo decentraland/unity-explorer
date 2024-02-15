@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
 using ECS.SceneLifeCycle.Components;
@@ -41,7 +42,7 @@ namespace DCL.GlobalPartitioning
             COMPONENT_HANDLERS = new[]
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
-                CreateQuery<GetSceneDefinition, IpfsTypes.SceneEntityDefinition>(),
+                CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),

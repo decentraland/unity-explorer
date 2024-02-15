@@ -13,7 +13,10 @@ namespace DCL.PluginSystem.World
 
         void IDisposable.Dispose() { }
 
-        UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
-            UniTask.CompletedTask;
+        UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings,
+            CancellationToken ct)
+        {
+            return UniTask.CompletedTask;
+        }
     }
 }

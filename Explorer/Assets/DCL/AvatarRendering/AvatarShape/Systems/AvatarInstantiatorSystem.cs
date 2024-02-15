@@ -42,9 +42,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IWearableAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
 
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
+            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, MainPlayerAvatarBase mainPlayerAvatarBase) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -56,17 +58,19 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.memoryBudget = memoryBudget;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
         }
 
         protected override void Update(float t)
         {
+            InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
             DestroyAvatarQuery(World);
         }
 
         [Query]
-        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
@@ -99,6 +103,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        {
+            InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
+
+            if (World.TryGet(entity, out AvatarBase avatarBase))
+                mainPlayerAvatarBase.SetAvatarBase(avatarBase);
         }
 
         [Query]

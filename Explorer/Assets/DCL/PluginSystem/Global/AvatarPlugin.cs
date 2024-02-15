@@ -10,8 +10,10 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
+using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
@@ -21,6 +23,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
 
@@ -32,8 +35,13 @@ namespace DCL.PluginSystem.Global
         private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<PBAvatarShape>().WithNone<PlayerComponent>();
 
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly CacheCleaner cacheCleaner;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
+        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
@@ -48,15 +56,28 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<Material> celShadingMaterialPool;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
-        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
-            IPerformanceBudget frameTimeCapBudget, IPerformanceBudget memoryBudget,
-            IRealmData realmData, IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
+        private IComponentPool<Transform> transformPoolRegistry;
+
+        private IObjectPool<NametagView> nametagViewPool;
+
+        public AvatarPlugin(
+            IComponentPoolsRegistry poolsRegistry,
+            IAssetsProvisioner assetsProvisioner,
+            IPerformanceBudget frameTimeCapBudget,
+            IPerformanceBudget memoryBudget,
+            IRealmData realmData,
+            MainPlayerAvatarBase mainPlayerAvatarBase,
+            IDebugContainerBuilder debugContainerBuilder,
+            CacheCleaner cacheCleaner,
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
+            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
+            this.chatEntryConfiguration = chatEntryConfiguration;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
 
@@ -71,10 +92,39 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             await CreateAvatarBasePoolAsync(settings, ct);
+            await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
+            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
+
+            var skinningStrategy = new ComputeShaderSkinning();
+
+            AvatarLoaderSystem.InjectToWorld(ref builder);
+
+            cacheCleaner.Register(avatarPoolRegistry);
+            cacheCleaner.Register(celShadingMaterialPool);
+            cacheCleaner.Register(computeShaderPool);
+
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
+                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBase);
+
+            MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
+
+            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
+
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
+
+            //Debug scripts
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -83,6 +133,20 @@ namespace DCL.PluginSystem.Global
 
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
+        }
+
+        private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct)).Value.GetComponent<NametagView>();
+            GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagParent, ct: ct)).Value;
+
+            GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity);
+
+            nametagViewPool = new ObjectPool<NametagView>(
+                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
+                actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
+                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
+                actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -124,33 +188,6 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
-            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
-
-            var skinningStrategy = new ComputeShaderSkinning();
-
-            AvatarLoaderSystem.InjectToWorld(ref builder);
-
-            cacheCleaner.Register(avatarPoolRegistry);
-            cacheCleaner.Register(celShadingMaterialPool);
-            cacheCleaner.Register(computeShaderPool);
-
-            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
-                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer);
-
-            MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
-
-            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
-            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
-
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
-
-            //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-        }
-
         [Serializable]
         public class AvatarShapeSettings : IDCLPluginSettings
         {
@@ -158,6 +195,14 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject avatarBase;
+
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject nametagView;
+
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject nametagParent;
 
             [field: SerializeField]
             public AssetReferenceMaterial celShadingMaterial;

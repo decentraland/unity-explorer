@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
+using DCL.Ipfs;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -17,25 +17,28 @@ namespace ECS.SceneLifeCycle.Tests
     {
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
+        private IPartitionSettings partitionSettings;
+
 
         [SetUp]
         public void SetUp()
         {
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
-                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>());
+                realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
+                partitionSettings = Substitute.For<IPartitionSettings>());
+
+            realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
 
         [Test]
         public void StartLoading([Range(1, 10, 1)] int radius)
         {
-            realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
-
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
-            var scenePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(), new List<int2>());
+            var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
 
             Entity e = world.Create(realm, scenePointers, new ProcessesScenePointers { Value = processedParcels });
             system.Update(0);
@@ -52,8 +55,6 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void NotStartLoadingProcessedParcels([Range(1, 10, 1)] int radius)
         {
-            realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
-
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
@@ -64,7 +65,7 @@ namespace ECS.SceneLifeCycle.Tests
             foreach (ParcelMathJobifiedHelper.ParcelInfo parcel in array)
                 processedParcels.Add(parcel.Parcel);
 
-            var scenePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(), new List<int2>());
+            var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
 
             Entity e = world.Create(realm, scenePointers, new ProcessesScenePointers { Value = processedParcels });
 

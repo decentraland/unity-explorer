@@ -5,7 +5,6 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -20,7 +19,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
-            var realmData = new RealmData(new IpfsRealm(URLDomain.EMPTY));
+            var realmData = new RealmData(new TestIpfsRealm());
             system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings, realmData);
 
             world.Create(new RealmComponent(realmData));

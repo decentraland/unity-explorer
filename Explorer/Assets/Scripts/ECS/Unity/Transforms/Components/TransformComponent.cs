@@ -58,16 +58,21 @@ namespace ECS.Unity.Transforms.Components
             Transform.SetLocalPositionAndRotation(localPosition, localRotation);
             Transform.localScale = localScale;
 
-            Cached.LocalPosition = localPosition;
-            Cached.LocalRotation = localRotation;
-            Cached.LocalScale = localScale;
-            Cached.WorldPosition = Transform.position;
-            Cached.WorldRotation = Transform.rotation;
+            UpdateCache();
         }
 
         public void SetTransform(Transform transform)
         {
             SetTransform(transform.localPosition, transform.localRotation, transform.localScale);
+        }
+
+        public void UpdateCache()
+        {
+            Cached.LocalPosition = Transform.localPosition;
+            Cached.LocalRotation = Transform.localRotation;
+            Cached.LocalScale = Transform.localScale;
+            Cached.WorldPosition = Transform.position;
+            Cached.WorldRotation = Transform.rotation;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

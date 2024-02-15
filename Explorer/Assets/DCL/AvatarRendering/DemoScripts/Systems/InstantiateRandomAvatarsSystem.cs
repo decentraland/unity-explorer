@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
@@ -28,6 +29,7 @@ using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -129,7 +131,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
                 BaseWearablesPromise = ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>(), totalAmount),
+                    new GetWearableByParamIntention(new[]
+                    {
+                        ("collectionType", "base-wearable"), ("pageSize", "50"),
+                    }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
             };
 
@@ -200,7 +205,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 var transformComp =
-                    new TransformComponent(transformPool.Get(), $"RANDOM_AVATAR_{i}", StartPosition(spawnArea, startXPosition, startZPosition));
+                    new CharacterTransform(transformPool.Get());
+
+                transformComp.Transform.position = StartPosition(spawnArea, startXPosition, startZPosition);
+                transformComp.Transform.name = $"RANDOM_AVATAR_{i}";
 
                 CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;
@@ -211,6 +219,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 var avatarShape = new PBAvatarShape
                 {
+                    Id = StringUtils.GenerateRandomString(5),
+                    Name = StringUtils.GenerateRandomString(5),
                     BodyShape = currentRandomizer.BodyShape,
                     Wearables = { wearables },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
@@ -229,8 +239,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new HeadIKComponent(),
                     new JumpInputComponent(),
                     new MovementInputComponent(),
-                    characterControllerSettings,
-                    PartitionComponent.TOP_PRIORITY
+                    characterControllerSettings
                 );
             }
         }
