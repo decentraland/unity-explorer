@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -14,8 +13,6 @@ using ECS.LifeCycle;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using System;
-using UnityEngine;
-using CameraType = DCL.ECSComponents.CameraType;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
@@ -84,8 +81,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             cameraModeAreaComponent.modeBeforeEntering = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
-
-            Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
         }
 
         private void OnExitedCameraModeArea(CameraModeAreaComponent cameraModeAreaComponent)
@@ -97,8 +92,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
                 camera.Mode = cameraModeAreaComponent.modeBeforeEntering;
 
             camera.RemoveCameraInputLock();
-
-            Debug.Log($"PRAVS - CHANGE CAMERA MODE TO {camera.Mode}");
         }
 
         public void FinalizeComponents(in Query query)

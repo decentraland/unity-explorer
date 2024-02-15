@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CrdtEcsBridge.Components.Transform;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
