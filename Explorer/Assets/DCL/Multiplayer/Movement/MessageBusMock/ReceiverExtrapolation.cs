@@ -29,6 +29,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Update()
         {
             T_t += UnityEngine.Time.deltaTime;
+
             float T_hat = Mathf.Clamp(T_t / messageBus.PackageSentRate, 0f, 1f);
 
             Vector3 V_b = currentVelocity + ((v_0_n - currentVelocity) * T_hat);
