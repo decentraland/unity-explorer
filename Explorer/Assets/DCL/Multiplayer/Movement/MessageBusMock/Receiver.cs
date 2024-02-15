@@ -105,18 +105,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             {
                 extDuration += UnityEngine.Time.deltaTime;
 
-                // if (extDuration is > 0.33f and < 0.66f)
-                //     extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / 0.66f);
-                // else if (extDuration >= 0.66f)
-                //     extVelocity = Vector3.zero;
-
-                transform.position += extVelocity * UnityEngine.Time.deltaTime;
-
-                if (extVelocity.sqrMagnitude < 0.01f)
-                {
-                    isExtrapolating = false;
+                if (extDuration is > 0.33f and < 0.66f)
+                    extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / 0.66f);
+                else if (extDuration >= 0.66f)
                     extVelocity = Vector3.zero;
-                }
+
+                if (extVelocity.sqrMagnitude > 0.01f)
+                    transform.position += extVelocity * UnityEngine.Time.deltaTime;
 
                 yield return null;
             }
