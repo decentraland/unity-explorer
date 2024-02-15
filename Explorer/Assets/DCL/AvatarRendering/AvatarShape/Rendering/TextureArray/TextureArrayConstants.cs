@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const int NORMAL_TEXTURE_ARRAY_SIZE = 250;
         public const int OTHER_TEXTURE_ARRAY_SIZE = 150;
 
-        public static readonly int MAINTEX_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_MainTex");
+        public static readonly int MAINTEX_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_BaseMap");
         public static readonly int MAINTEX_ARR_SHADER_ID = Shader.PropertyToID("_MainTexArr_ID");
         public static readonly int MAINTEX_ARR_TEX_SHADER_ID = Shader.PropertyToID("_MainTexArr");
 

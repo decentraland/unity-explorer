@@ -1218,6 +1218,7 @@ Shader "DCL/DCL_Toon"
 
             #pragma vertex vert
             #pragma fragment frag
+            #pragma enable_d3d11_debug_symbols
 
 #ifndef DISABLE_RP_SHADERS
             // -------------------------------------
@@ -1312,6 +1313,7 @@ Shader "DCL/DCL_Toon"
 
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
+            #pragma enable_d3d11_debug_symbols
 
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonShadowCasterPass.hlsl"
@@ -1336,6 +1338,7 @@ Shader "DCL/DCL_Toon"
 
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
+            #pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Material Keywords
@@ -1372,6 +1375,7 @@ Shader "DCL/DCL_Toon"
 
             #pragma vertex DepthNormalsVertex
             #pragma fragment DepthNormalsFragment
+            #pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Material Keywords
