@@ -23,7 +23,7 @@ namespace DCL.Web3.Identities
                 var authChain = AuthChain.Create();
 
                 foreach (AuthLink link in jsonRoot.ephemeralAuthChain)
-                    authChain.Set(link.type, link);
+                    authChain.Set(link);
 
                 return new DecentralandIdentity(new Web3Address(jsonRoot.address),
                     new NethereumAccount(new EthECKey(jsonRoot.key)),

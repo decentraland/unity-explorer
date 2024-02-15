@@ -182,12 +182,7 @@ namespace DCL.Web3.Authenticators
         {
             var authChain = AuthChain.Create();
 
-            authChain.Set(AuthLinkType.SIGNER, new AuthLink
-            {
-                type = AuthLinkType.SIGNER,
-                payload = response.sender,
-                signature = "",
-            });
+            authChain.SetSigner(response.sender);
 
             string signature = response.result;
 
@@ -195,7 +190,7 @@ namespace DCL.Web3.Authenticators
                 ? AuthLinkType.ECDSA_EPHEMERAL
                 : AuthLinkType.ECDSA_EIP_1654_EPHEMERAL;
 
-            authChain.Set(ecdsaType, new AuthLink
+            authChain.Set(new AuthLink
             {
                 type = ecdsaType,
                 payload = ephemeralMessage,

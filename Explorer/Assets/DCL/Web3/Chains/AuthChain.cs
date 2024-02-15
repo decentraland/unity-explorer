@@ -29,13 +29,17 @@ namespace DCL.Web3.Chains
         public AuthLink Get(AuthLinkType type) =>
             chain[type];
 
-        //TODO I see some flow of design here: type and link.type can be assigned to different values, but I don't think it's expected behavior
-        public void Set(AuthLinkType type, AuthLink link)
-        {
-            if (link.type != type)
-                throw new AuthChainException(this, $"Invalid link type ${link.type}. Expected ${type}");
+        public void Set(AuthLink link) =>
+            chain[link.type] = link;
 
-            chain[type] = link;
+        public void SetSigner(string signerAddress)
+        {
+            Set(new AuthLink
+            {
+                type = AuthLinkType.SIGNER,
+                payload = signerAddress,
+                signature = "",
+            });
         }
 
         public IEnumerator<AuthLink> GetEnumerator() =>
