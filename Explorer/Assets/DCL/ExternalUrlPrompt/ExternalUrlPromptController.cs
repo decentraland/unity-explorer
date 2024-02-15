@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Input;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -12,14 +13,17 @@ namespace DCL.ExternalUrlPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly IWebBrowser webBrowser;
+        private readonly ICursor cursor;
         private readonly List<string> trustedDomains = new ();
         private Action<ExternalUrlPromptResultType> resultCallback;
 
         public ExternalUrlPromptController(
             ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser) : base(viewFactory)
+            IWebBrowser webBrowser,
+            ICursor cursor) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
+            this.cursor = cursor;
         }
 
         protected override void OnViewInstantiated()
@@ -41,7 +45,7 @@ namespace DCL.ExternalUrlPrompt
                 return;
             }
 
-            //Utils.UnlockCursor();
+            cursor.Unlock();
             RequestOpenUrl(inputData.Uri, result =>
             {
                 switch (result)
