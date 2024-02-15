@@ -26,7 +26,9 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("Emission Map Array ID", Integer) = -1
-        
+
+        [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
+        [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
         
         [HideInInspector] _simpleUI ("SimpleUI", Int ) = 0
         [HideInInspector][Enum(OFF, 0, ON, 1)] _isUnityToonshader("Material is touched by Unity Toon Shader", Int) = 1

@@ -165,6 +165,8 @@ UNITY_DEFINE_INSTANCED_PROP(int, _MetallicGlossMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _BaseMapArr_ID) 
 UNITY_DEFINE_INSTANCED_PROP(int, _BumpMapArr_ID) 
 UNITY_DEFINE_INSTANCED_PROP(int, _EmissionMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(int, _lastWearableVertCount)
+UNITY_DEFINE_INSTANCED_PROP(int, _lastAvatarVertCount)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define _utsTechnique                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _utsTechnique)
@@ -326,6 +328,8 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _BaseMapArr_ID                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMapArr_ID)
 #define _BumpMapArr_ID                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpMapArr_ID)
 #define _EmissionMapArr_ID                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID)
+#define _lastWearableVertCount              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastWearableVertCount) 
+#define _lastAvatarVertCount                UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount)
 
 #ifdef _DCL_TEXTURE_ARRAYS
     #define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex

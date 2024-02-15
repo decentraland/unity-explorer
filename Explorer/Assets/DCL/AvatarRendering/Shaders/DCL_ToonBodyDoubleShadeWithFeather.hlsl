@@ -8,7 +8,8 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float2 Set_UV0 = i.uv0;
     //v.2.0.6
 
-    float3 _NormalMap_var = UnpackNormalScale(SAMPLE_TEXTURE2D(_NormalMap, sampler_MainTex, TRANSFORM_TEX(Set_UV0, _NormalMap)), _BumpScale);
+    int nNormalMapArrID = _NormalMapArr_ID;
+    float3 _NormalMap_var = UnpackNormalScale(SAMPLE_NORMALMAP(TRANSFORM_TEX(Set_UV0, _NormalMap), nNormalMapArrID), _BumpScale);
 
     float3 normalLocal = _NormalMap_var.rgb;
     float3 normalDirection = normalize(mul( normalLocal, tangentTransform )); // Perturbed normals
@@ -199,7 +200,8 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         //v.2.0.7
         float2 _Rot_MatCapNmUV_var = RotateUV(Set_UV0, (_Rotate_NormalMapForMatCapUV*3.141592654), float2(0.5, 0.5), 1.0);
         //V.2.0.6
-        float3 _NormalMapForMatCap_var = UnpackNormalScale(tex2D(_NormalMapForMatCap, TRANSFORM_TEX(_Rot_MatCapNmUV_var, _NormalMapForMatCap)), _BumpScaleMatcap);
+        int nNormalMapForMatCapArrID = _NormalMapForMatCapArr_ID;
+        float3 _NormalMapForMatCap_var = UnpackNormalScale(SAMPLE_NORMALMAPFORMATCAP(TRANSFORM_TEX(_Rot_MatCapNmUV_var, _NormalMapForMatCap), nNormalMapForMatCapArrID), _BumpScaleMatcap);
         //v.2.0.5: MatCap with camera skew correction
         float3 viewNormal = (mul(UNITY_MATRIX_V, float4(lerp( i.normalDir, mul( _NormalMapForMatCap_var.rgb, tangentTransform ).rgb, _Is_NormalMapForMatCap ),0))).rgb;
         float3 NormalBlend_MatcapUV_Detail = viewNormal.rgb * float3(-1,-1,1);

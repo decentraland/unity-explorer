@@ -453,7 +453,7 @@ VertexOutput vert (VertexInput v)
     #endif
     
     #ifdef _DCL_COMPUTE_SKINNING
-        o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
+        o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz);
     #else
         o.normalDir = UnityObjectToWorldNormal(v.normal);
     #endif
@@ -469,7 +469,7 @@ VertexOutput vert (VertexInput v)
     o.mirrorFlag = dot(crossFwd, UNITY_MATRIX_V[2].xyz) < 0 ? 1 : -1;
 
     #ifdef _DCL_COMPUTE_SKINNING
-        float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+        float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
     #else
         float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
     #endif
