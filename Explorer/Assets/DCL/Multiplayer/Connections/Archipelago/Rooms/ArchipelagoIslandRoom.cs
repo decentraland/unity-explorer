@@ -118,18 +118,17 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
             var token = CancellationToken();
             await ConnectToArchipelagoAsync(token);
 
-            signFlow.StartListeningForConnectionString(OnNewConnectionString, token);
+            signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token);
 
             while (token.IsCancellationRequested == false)
             {
-                await signFlow.SendHeartbeat(characterObject.Position, token);
+                await signFlow.SendHeartbeatAsync(characterObject.Position, token);
                 await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
             }
         }
 
         private void OnNewConnectionString(string connectionString)
         {
-            Debug.Log($"OnNewConnectionString: {connectionString}");
             if (IsRunning() == false) throw new Exception("Is not running");
             ConnectToRoomAsync(connectionString, cancellationTokenSource!.Token).Forget();
         }
@@ -137,7 +136,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
         private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
         {
             var newRoom = multiPool.Get<Room>();
-            await newRoom.EnsuredConnect(connectionString, multiPool, token);
+            await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
             room.Assign(newRoom, out var previous);
             multiPool.TryRelease(previous);
         }
@@ -154,10 +153,10 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
             var identity = web3IdentityCache.EnsuredIdentity("Identity is not found");
             await signFlow.ConnectAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;
-            string messageForSign = await signFlow.MessageForSign(ethereumAddress, token);
+            string messageForSign = await signFlow.MessageForSignAsync(ethereumAddress, token);
             string signedMessage = identity.Sign(messageForSign).ToJson();
             ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, $"Signed message: {signedMessage}");
-            return await signFlow.WelcomePeerId(signedMessage, token);
+            return await signFlow.WelcomePeerIdAsync(signedMessage, token);
         }
     }
 }

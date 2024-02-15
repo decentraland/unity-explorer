@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
             return result;
         }
 
-        public static async UniTask WaitDisconnect(this IArchipelagoLiveConnection connection, CancellationToken token)
+        public static async UniTask WaitDisconnectAsync(this IArchipelagoLiveConnection connection, CancellationToken token)
         {
             while (token.IsCancellationRequested == false && connection.Connected())
                 await UniTask.Yield();

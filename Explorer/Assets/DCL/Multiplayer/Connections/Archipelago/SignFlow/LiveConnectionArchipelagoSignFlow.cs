@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
         public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>
             connection.ConnectAsync(adapterUrl, token);
 
-        public async UniTask<string> MessageForSign(string ethereumAddress, CancellationToken token)
+        public async UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token)
         {
             using var challenge = multiPool.TempResource<ChallengeRequestMessage>();
             challenge.value.Address = ethereumAddress;
@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
             return challengeResponse.value.ChallengeToSign!;
         }
 
-        public async UniTask<LightResult<string>> WelcomePeerId(string signedMessageAuthChainJson, CancellationToken token)
+        public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
         {
             using var signedMessage = multiPool.TempResource<SignedChallengeMessage>();
             signedMessage.value.AuthChainJson = signedMessageAuthChainJson;
@@ -56,7 +56,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
 
             var result = await UniTask.WhenAny(
                 connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
-                connection.WaitDisconnect(linkedToken.Token)
+                connection.WaitDisconnectAsync(linkedToken.Token)
             );
 
             linkedToken.Cancel();
@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
             return LightResult<string>.FAILURE;
         }
 
-        public UniTask SendHeartbeat(Vector3 playerPosition, CancellationToken token)
+        public UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
         {
             using var position = multiPool.TempResource<Position>();
             position.value.X = playerPosition.x;
@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
             return connection.SendAsync(clientPacket.value, memoryPool, token);
         }
 
-        public async UniTask StartListeningForConnectionString(Action<string> onNewConnectionString, CancellationToken token)
+        public async UniTask StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {

@@ -10,12 +10,12 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
     {
         UniTask ConnectAsync(string adapterUrl, CancellationToken token);
 
-        UniTask<string> MessageForSign(string ethereumAddress, CancellationToken token);
+        UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token);
 
-        UniTask<LightResult<string>> WelcomePeerId(string signedMessageAuthChainJson, CancellationToken token);
+        UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token);
 
-        UniTask SendHeartbeat(Vector3 playerPosition, CancellationToken token);
+        UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token);
 
-        UniTask StartListeningForConnectionString(Action<string> onNewConnectionString, CancellationToken token);
+        UniTask StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token);
     }
 }

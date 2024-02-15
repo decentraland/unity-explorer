@@ -30,12 +30,12 @@ namespace DCL.Multiplayer.Connections.Credentials
         public static string ReadableString(this ICredentials credentials) =>
             $"Url: {credentials.Url}, AuthToken: {credentials.AuthToken}";
 
-        public static Task<bool> Connect<T>(this IRoom room, T credentials, CancellationToken token) where T: ICredentials =>
+        public static Task<bool> ConnectAsync<T>(this IRoom room, T credentials, CancellationToken token) where T: ICredentials =>
             room.Connect(credentials.Url, credentials.AuthToken, token);
 
-        public static async Task EnsuredConnect<T>(this IRoom room, T credentials, IMultiPool multiPool, CancellationToken token) where T: ICredentials
+        public static async Task EnsuredConnectAsync<T>(this IRoom room, T credentials, IMultiPool multiPool, CancellationToken token) where T: ICredentials
         {
-            bool result = await room.Connect(credentials, token);
+            bool result = await room.ConnectAsync(credentials, token);
 
             if (result == false)
             {
@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Credentials
             }
         }
 
-        public static Task EnsuredConnect(this IRoom room, string connectionString, IMultiPool multiPool, CancellationToken token) =>
-            room.EnsuredConnect(new ConnectionStringCredentials(connectionString), multiPool, token);
+        public static Task EnsuredConnectAsync(this IRoom room, string connectionString, IMultiPool multiPool, CancellationToken token) =>
+            room.EnsuredConnectAsync(new ConnectionStringCredentials(connectionString), multiPool, token);
     }
 }
