@@ -43,11 +43,11 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "git@github.com:decentraland/client-sdk-unity.git",
+      "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a5f5db729ba3baf935b060ce8801303f1d9e77ea"
+      "hash": "bfdd4ad9cb155b37a576668fe2d80289198f433e"
     },
     "com.decentraland.unity-shared-dependencies": {
       "version": "https://github.com/decentraland/unity-shared-dependencies.git",
