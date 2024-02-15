@@ -460,17 +460,19 @@ VertexOutput vert (VertexInput v)
     
     o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
     o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
-    o.posWorld = mul(unity_ObjectToWorld, v.vertex);
-
-    o.pos = UnityObjectToClipPos( v.vertex );
+    
     //v.2.0.7 Detection of the inside the mirror (right or left-handed) o.mirrorFlag = -1 then "inside the mirror".
 
     float3 crossFwd = cross(UNITY_MATRIX_V[0].xyz, UNITY_MATRIX_V[1].xyz);
     o.mirrorFlag = dot(crossFwd, UNITY_MATRIX_V[2].xyz) < 0 ? 1 : -1;
 
     #ifdef _DCL_COMPUTE_SKINNING
+        o.posWorld = mul(unity_ObjectToWorld, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position);
+        o.pos = UnityObjectToClipPos( _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position );
         float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
     #else
+        o.posWorld = mul(unity_ObjectToWorld, v.vertex);
+        o.pos = UnityObjectToClipPos( v.vertex );
         float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
     #endif
     float4 positionCS = TransformWorldToHClip(positionWS);
