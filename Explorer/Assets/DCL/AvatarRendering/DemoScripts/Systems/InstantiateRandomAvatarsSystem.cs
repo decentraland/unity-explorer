@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
@@ -28,6 +29,7 @@ using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -123,7 +125,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
-            int totalAmount = 0;
+            var totalAmount = 0;
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
@@ -131,7 +133,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 BaseWearablesPromise = ParamPromise.Create(World,
                     new GetWearableByParamIntention(new[]
                     {
-                        ("collectionType", "base-wearable"), ("pageSize", "50")
+                        ("collectionType", "base-wearable"), ("pageSize", "50"),
                     }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
             };
@@ -152,7 +154,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             [Data] in ICharacterControllerSettings characterControllerSettings,
             ref RandomAvatarRequest randomAvatarRequest)
         {
-            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out var baseWearables))
+            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<WearablesResponse> baseWearables))
             {
                 if (baseWearables.Succeeded)
                 {
@@ -174,7 +176,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var male = new AvatarRandomizer(BodyShape.MALE);
             var female = new AvatarRandomizer(BodyShape.FEMALE);
 
-            foreach (var wearable in baseWearables.Asset.Wearables)
+            foreach (IWearable wearable in baseWearables.Asset.Wearables)
             {
                 male.AddWearable(wearable);
                 female.AddWearable(wearable);
@@ -203,7 +205,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 var transformComp =
-                    new TransformComponent(transformPool.Get(), $"RANDOM_AVATAR_{i}", StartPosition(spawnArea, startXPosition, startZPosition));
+                    new CharacterTransform(transformPool.Get());
+
+                transformComp.Transform.position = StartPosition(spawnArea, startXPosition, startZPosition);
+                transformComp.Transform.name = $"RANDOM_AVATAR_{i}";
 
                 CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;
@@ -214,6 +219,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 var avatarShape = new PBAvatarShape
                 {
+                    Id = StringUtils.GenerateRandomString(5),
+                    Name = StringUtils.GenerateRandomString(5),
                     BodyShape = currentRandomizer.BodyShape,
                     Wearables = { wearables },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
@@ -232,8 +239,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new HeadIKComponent(),
                     new JumpInputComponent(),
                     new MovementInputComponent(),
-                    characterControllerSettings,
-                    PartitionComponent.TOP_PRIORITY
+                    characterControllerSettings
                 );
             }
         }

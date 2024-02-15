@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD.Components;
+using DCL.Utilities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -110,7 +111,7 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            var realmEntity = world.Create(realmComp,
+            Entity realmEntity = world.Create(realmComp,
                 new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
@@ -167,7 +168,7 @@ namespace Global.Dynamic
             GC.Collect();
         }
 
-        public async UniTask DisposeGlobalWorldAsync()
+        public void DisposeGlobalWorld()
         {
             if (globalWorld != null)
             {
@@ -179,7 +180,11 @@ namespace Global.Dynamic
                 globalWorld.Dispose();
             }
 
-            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+            foreach (ISceneFacade scene in allScenes)
+
+                // Scene Info is contained in the ReportData, don't include it into the exception
+                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                    static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
         }
 
         private void FindLoadedScenes()
