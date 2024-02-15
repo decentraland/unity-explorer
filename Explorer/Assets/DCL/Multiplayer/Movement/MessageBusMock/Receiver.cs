@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Castle.Core.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -14,8 +16,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
     public class Receiver : MonoBehaviour
     {
+        private const float EXT_DAMPING = 0.9f;
+
         private readonly Queue<MessageMock> incomingMessages = new ();
-        private readonly List<MessageMock> processedMessages = new (); // Messages that have finished interpolation
+        private readonly List<MessageMock> passedMessages = new ();
 
         public MessageBus messageBus;
         public float minDelta;
@@ -23,7 +27,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         [Space]
         [Header("DYNAMIC")]
-        public bool isLerping;
+        public bool isInterpolating;
+        public bool isExtrapolating;
+
         public MessageMock endPoint;
 
         [Space]
@@ -31,9 +37,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public int Incoming;
         public int Processed;
 
-
         private bool isFirst = true;
-        private int extrapolationCount;
+
+        private float extDuration;
+        private Vector3 extVelocity;
 
         private void Awake()
         {
@@ -43,10 +50,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Update()
         {
             Incoming = incomingMessages.Count;
-            Processed = processedMessages.Count;
+            Processed = passedMessages.Count;
 
-            if (isLerping) return;
-
+            if (isInterpolating) return;
 
             if (incomingMessages.Count > 0)
             {
@@ -56,37 +62,70 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 {
                     isFirst = false;
                     transform.position = newMessage.position;
-                    processedMessages.Add(newMessage);
+                    passedMessages.Add(newMessage);
                     return;
                 }
 
                 endPoint = newMessage;
-                extrapolationCount = 0;
+
+                if (isExtrapolating)
+                {
+                    StopAllCoroutines();
+
+                    passedMessages.Add(new MessageMock
+                    {
+                        timestamp = passedMessages[^1].timestamp + extDuration,
+                        position = transform.position,
+                        velocity = extVelocity,
+                    });
+                }
+
+                isExtrapolating = false;
             }
-            else if (incomingMessages.Count == 0 && processedMessages.Count > 2 && extrapolationCount == 0)
+            else if (!passedMessages.IsNullOrEmpty() && !isExtrapolating && passedMessages[^1].velocity.sqrMagnitude > 1f)
             {
-                endPoint = ExtrapolateNextPosition();
+                StartCoroutine(Extrapolate());
+                return;
             }
             else return;
 
-            MessageMock startPoint = processedMessages[^1];
+            Interpolate(start: passedMessages[^1], endPoint);
+        }
 
-            if (Vector3.Distance(startPoint.position, endPoint.position) > minDelta)
+        private IEnumerator Extrapolate()
+        {
+            isExtrapolating = true;
+
+            extDuration = 0f;
+            extVelocity = passedMessages[^1].velocity;
+
+            Vector3 initialVelocity = extVelocity;
+
+            while (isExtrapolating)
             {
-                StartCoroutine(MoveTo(startPoint, endPoint, GetInterpolation()));
-            }
-            else
-            {
-                processedMessages.Add(endPoint);
+                extDuration += UnityEngine.Time.deltaTime;
+
+                // if (extDuration is > 0.33f and < 0.66f)
+                //     extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / 0.66f);
+                // else if (extDuration >= 0.66f)
+                //     extVelocity = Vector3.zero;
+
+                transform.position += extVelocity * UnityEngine.Time.deltaTime;
+
+                if (extVelocity.sqrMagnitude < 0.01f)
+                {
+                    isExtrapolating = false;
+                    extVelocity = Vector3.zero;
+                }
+
+                yield return null;
             }
         }
 
         private MessageMock ExtrapolateNextPosition()
         {
-            extrapolationCount++;
-
-            MessageMock lastMessage = processedMessages[^1];
-            MessageMock preLastMessage = processedMessages[^2];
+            MessageMock lastMessage = passedMessages[^1];
+            MessageMock preLastMessage = passedMessages[^2];
 
             float timeDiff = lastMessage.timestamp - preLastMessage.timestamp;
 
@@ -98,32 +137,37 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             };
         }
 
-        private IEnumerator MoveTo(MessageMock start, MessageMock end, Func<MessageMock, MessageMock, float, float, Vector3> interpolation)
+        private void Interpolate(MessageMock start, MessageMock end)
         {
-            isLerping = true;
-
-            var t = 0f;
-            float timeDif = end.timestamp - start.timestamp;
-
-            while (t < timeDif)
-            {
-                t += UnityEngine.Time.deltaTime;
-                transform.position = interpolation(start, end, t / timeDif, timeDif);
-                yield return null;
-            }
-
-            processedMessages.Add(end);
-
-            isLerping = false;
+            StartCoroutine(MoveTo(start, end, interpolation: interpolationType switch
+                                                             {
+                                                                 InterpolationType.Linear => LinearInterpolation,
+                                                                 InterpolationType.Hermite => HermiteInterpolation,
+                                                                 InterpolationType.Bezier => BezierInterpolation,
+                                                                 _ => LinearInterpolation,
+                                                             }));
         }
 
-        private Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolation() =>
-            interpolationType switch
+        private IEnumerator MoveTo(MessageMock start, MessageMock end, Func<MessageMock, MessageMock, float, float, Vector3> interpolation)
+        {
+            isInterpolating = true;
+
+            if (Vector3.Distance(start.position, endPoint.position) > minDelta)
             {
-                InterpolationType.Linear => LinearInterpolation,
-                InterpolationType.Hermite => HermiteInterpolation,
-                InterpolationType.Bezier => BezierInterpolation,
-            };
+                var t = 0f;
+                float timeDif = end.timestamp - start.timestamp;
+
+                while (t < timeDif)
+                {
+                    t += UnityEngine.Time.deltaTime;
+                    transform.position = interpolation(start, end, t / timeDif, timeDif);
+                    yield return null;
+                }
+            }
+
+            passedMessages.Add(end);
+            isInterpolating = false;
+        }
 
         private static Vector3 LinearInterpolation(MessageMock start, MessageMock end, float t, float _) =>
             Vector3.Lerp(start.position, end.position, t);

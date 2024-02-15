@@ -1032,8 +1032,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf6a4b096f4d8f42a37f6f2b5d054de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PackageSentRate: 0.1
-  Jitter: 0
+  PackageSentRate: 0.5
+  Jitter: 0.5
   InitialLag: 0.33
 --- !u!4 &1672578179
 Transform:
@@ -1219,9 +1219,7 @@ MonoBehaviour:
   messageBus: {fileID: 1672578178}
   minDelta: 0.01
   interpolationType: 0
-  extrapolationStepTime: 0.1
-  maxExtrapolationSteps: 1
-  isLerping: 0
+  isInterpolating: 0
   endPoint:
     timestamp: 0
     position: {x: 0, y: 0, z: 0}

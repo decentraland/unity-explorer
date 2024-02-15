@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Update()
         {
             // Simulate package lost
-            if (UnityEngine.Input.GetKeyUp(KeyCode.Space))
+            if (UnityEngine.Input.GetKeyUp(KeyCode.LeftShift))
             {
                 packageLost++;
                 lostText.SetActive(false);
@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             {
                 if (packageLost > 0)
                     packageLost--;
-                else
+                else if(!UnityEngine.Input.GetKey(KeyCode.Space))
                 {
                     Vector3 acceleration = CalculateAverageAcceleration();
                         // velocityHistory.Count != 0 ? (velocityHistory[^1] - characterController.velocity) / UnityEngine.Time.fixedDeltaTime : Vector3.zero;
