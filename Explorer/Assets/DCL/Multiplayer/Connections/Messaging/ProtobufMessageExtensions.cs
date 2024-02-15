@@ -1,3 +1,4 @@
+using Decentraland.Kernel.Comms.V3;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
@@ -22,5 +23,12 @@ namespace DCL.Multiplayer.Connections.Messaging
             var span = memory.Span();
             message.WriteTo(span);
         }
+
+        /// <summary>
+        /// Just to localize strange behaviour with Rider and Protobuf: not finding a suitable method but everything compiles fine
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ServerPacket AsMessageServerPacket(this MemoryWrap memoryWrap) =>
+            ServerPacket.Parser.ParseFrom(memoryWrap.Span());
     }
 }

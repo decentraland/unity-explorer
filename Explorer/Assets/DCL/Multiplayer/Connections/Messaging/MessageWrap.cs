@@ -39,9 +39,8 @@ namespace DCL.Multiplayer.Connections.Messaging
                 throw new Exception("Request already sent");
 
             using var memory = memoryPool.Memory(Payload);
-            var data = memory.Span();
-            Payload.WriteTo(data);
-            dataPipe.PublishData(data, TOPIC, recipients, dataPacketKind);
+            Payload.WriteTo(memory);
+            dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
             sent = true;
         }
 
