@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.ExternalUrlPrompt;
+using DCL.Input;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -32,7 +33,8 @@ namespace DCL.PluginSystem.Global
             externalUrlPromptController = new ExternalUrlPromptController(
                 ExternalUrlPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.ExternalUrlPromptPrefab, ct: ct)).Value.GetComponent<ExternalUrlPromptView>(), null),
-                webBrowser);
+                webBrowser,
+                new DCLCursor());
 
             mvcManager.RegisterController(externalUrlPromptController);
         }
