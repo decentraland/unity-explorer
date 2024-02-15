@@ -26,8 +26,6 @@ namespace Global.Dynamic
 {
     public class RealmController : IRealmController
     {
-        private static readonly QueryDescription SCENES = new QueryDescription().WithAll<ISceneFacade>();
-
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises

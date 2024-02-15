@@ -26,7 +26,7 @@ namespace DCL.CharacterPreview
         public CharacterPreviewController Create(World world, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings)
         {
             characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
-            var container = (CharacterPreviewAvatarContainer)characterPreviewComponentPool.Rent();
+            CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get();
             container.Initialize(targetTexture);
             return new CharacterPreviewController(world, container, inputEventBus, characterPreviewComponentPool, cameraSettings);
         }

@@ -53,9 +53,9 @@ namespace DCL.Backpack
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
         private readonly int totalAmount;
+        private readonly IObjectPool<BackpackItemView> gridItemsPool;
+        private readonly World world;
 
-        private IObjectPool<BackpackItemView> gridItemsPool;
-        private World world;
         private CancellationTokenSource cts;
         private bool currentCollectiblesOnly;
         private string currentCategory = "";
@@ -72,7 +72,7 @@ namespace DCL.Backpack
             NftTypeIconSO categoryIcons,
             IBackpackEquipStatusController backpackEquipStatusController,
             BackpackSortController backpackSortController,
-            PageButtonView pageButtonView)
+            PageButtonView pageButtonView, IObjectPool<BackpackItemView> gridItemsPool, World world)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -81,9 +81,11 @@ namespace DCL.Backpack
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.backpackEquipStatusController = backpackEquipStatusController;
-            this.pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
+            this.world = world;
+            this.gridItemsPool = gridItemsPool;
+            pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
-            usedPoolItems = new ();
+            usedPoolItems = new Dictionary<URN, BackpackItemView>();
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
@@ -95,19 +97,20 @@ namespace DCL.Backpack
             new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
-        {
-            world = builder.World;
-        }
-
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)
         {
             BackpackItemView backpackItem = (await assetsProvisioner.ProvideMainAssetAsync(view.BackpackItem, ct: ct)).Value;
 
-            gridItemsPool = new ObjectPool<BackpackItemView>(
+            return new ObjectPool<BackpackItemView>(
                 () => CreateBackpackItem(backpackItem),
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
+
+            BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
+            {
+                BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
+                return backpackItemView;
+            }
         }
 
         private void SetGridAsLoading()
@@ -115,7 +118,8 @@ namespace DCL.Backpack
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             ClearPoolElements();
-            for (int i = 0; i < CURRENT_PAGE_SIZE; i++)
+
+            for (var i = 0; i < CURRENT_PAGE_SIZE; i++)
             {
                 BackpackItemView backpackItemView = gridItemsPool.Get();
                 backpackItemView.LoadingView.StartLoadingAnimation(backpackItemView.FullBackpackItem);
@@ -136,11 +140,13 @@ namespace DCL.Backpack
                 usedPoolItems.Remove(j);
                 gridItemsPool.Release(loadingResults[j]);
             }
+
             Array.Reverse(gridWearables);
+
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = loadingResults[i];
-                usedPoolItems.Remove(i );
+                usedPoolItems.Remove(i);
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
@@ -156,12 +162,6 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
-        }
-
-        private BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
-        {
-            BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
-            return backpackItemView;
         }
 
         public void RequestTotalNumber()
@@ -182,13 +182,13 @@ namespace DCL.Backpack
             requestParameters.Add((PAGE_NUMBER, pageNumber));
             requestParameters.Add((PAGE_SIZE, pageSize));
 
-            if(!string.IsNullOrEmpty(currentCategory))
+            if (!string.IsNullOrEmpty(currentCategory))
                 requestParameters.Add((CATEGORY, currentCategory));
 
             requestParameters.Add((ORDER_BY, currentSort.OrderByOperation.ToString()));
             requestParameters.Add((ORDER_DIRECTION, currentSort.SortAscending ? ASCENDING : DESCENDING));
 
-            if(currentCollectiblesOnly)
+            if (currentCollectiblesOnly)
                 requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
 
             if (!string.IsNullOrEmpty(currentSeach))
@@ -280,7 +280,7 @@ namespace DCL.Backpack
 
         private void ClearPoolElements()
         {
-            foreach (var backpackItemView in usedPoolItems)
+            foreach (KeyValuePair<URN, BackpackItemView> backpackItemView in usedPoolItems)
             {
                 backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
@@ -291,7 +291,7 @@ namespace DCL.Backpack
                 gridItemsPool.Release(backpackItemView.Value);
             }
 
-            for(var i = 0; i < loadingResults.Length; i++)
+            for (var i = 0; i < loadingResults.Length; i++)
                 loadingResults[i] = null;
 
             usedPoolItems.Clear();
