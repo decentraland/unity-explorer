@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             webSocket.State is WebSocketState.Open;
 
         public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>
-            webSocket.ConnectAsync(new Uri(adapterUrl), token)!.AsUniTask();
+            webSocket.ConnectAsync(new Uri(adapterUrl), token)!.AsUniTask(false);
 
         public UniTask DisconnectAsync(CancellationToken token) =>
 
