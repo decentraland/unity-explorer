@@ -69,8 +69,7 @@ namespace Global.Dynamic
             return UniTask.CompletedTask;
         }
 
-        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
-            StaticContainer staticContainer,
+        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
@@ -79,7 +78,8 @@ namespace Global.Dynamic
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IWeb3IdentityCache web3IdentityCache,
-            Vector2Int startParcel)
+            Vector2Int startParcel,
+            bool disableLandscape)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -114,8 +114,10 @@ namespace Global.Dynamic
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
+            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer);
+
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
-                container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel);
+                container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel, disableLandscape, landscapePlugin);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -163,7 +165,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
-                new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer),
+                landscapePlugin,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

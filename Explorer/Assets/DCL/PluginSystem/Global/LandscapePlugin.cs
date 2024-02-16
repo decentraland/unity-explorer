@@ -5,6 +5,7 @@ using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;
+using DCL.Landscape.Interface;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.MapRenderer.ComponentsFactory;
@@ -16,7 +17,7 @@ using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
 {
-    public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>
+    public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
     {
         private TerrainGenerator terrainGenerator = null!;
         private readonly IAssetsProvisioner assetsProvisioner;

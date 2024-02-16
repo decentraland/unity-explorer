@@ -27,11 +27,6 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
-        private const float LOADING_PROGRESS_PROFILE = 0.1f;
-        private const float LOADING_PROGRESS_LANDSCAPE = 0.9f;
-        private const float LOADING_PROGRESS_TELEPORT = 0.95f;
-        private const float LOADING_PROGRESS_COMPLETE = 1f;
-
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
@@ -45,7 +40,7 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
-        [FormerlySerializedAs("loadLandscape")] [SerializeField] private bool disableLandscape;
+        [SerializeField] private bool disableLandscape;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -93,6 +88,7 @@ namespace Global.Dynamic
             showSplash = true;
             showAuthentication = true;
             showLoading = true;
+            disableLandscape = false;
 #endif
 
             try
@@ -136,7 +132,8 @@ namespace Global.Dynamic
                     dynamicSettings,
                     web3Authenticator,
                     identityCache,
-                    settings.StartPosition);
+                    settings.StartPosition,
+                    disableLandscape);
 
                 if (!isLoaded)
                 {
