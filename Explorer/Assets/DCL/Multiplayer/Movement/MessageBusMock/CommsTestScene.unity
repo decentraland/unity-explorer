@@ -666,7 +666,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!96 &579518765
 TrailRenderer:
   serializedVersion: 3
@@ -1501,7 +1501,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PackageSentRate: 0.33
-  Jitter: 0
+  Jitter: 2
   InitialLag: 1
 --- !u!4 &1672578179
 Transform:

@@ -114,7 +114,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             }
             else return;
 
-            Interpolate(start: passedMessages[^1], endPoint);
+            if (endPoint.timestamp > passedMessages[^1].timestamp)
+                Interpolate(start: passedMessages[^1], endPoint);
         }
 
         private IEnumerator Blend(MessageMock local, MessageMock remote)
