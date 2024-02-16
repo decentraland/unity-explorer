@@ -6,7 +6,6 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.MainPlayerTriggerArea;
-using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -22,6 +21,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private static CameraMode cameraModeBeforeLastAreaEnter; // There's only 1 camera at a time
         private readonly World globalWorld;
         private readonly Entity cameraEntity;
 
@@ -33,9 +33,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         protected override void Update(float t)
         {
-            // TODO: Check if we have control of the camera mode as well?
-
-            // UpdateCameraModeAreaQuery(World);
+            UpdateCameraModeAreaQuery(World);
             SetupCameraModeAreaQuery(World);
         }
 
@@ -45,47 +43,46 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
             var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
-            CameraModeAreaComponent cameraModeAreaComponent = new ();
 
             World.Add(entity, new MainPlayerTriggerAreaComponent
             {
                 areaSize = pbCameraModeArea.Area,
-                OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode, ref cameraModeAreaComponent),
-                OnExitedTrigger = () => OnExitedCameraModeArea(cameraModeAreaComponent),
+                OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode),
+                OnExitedTrigger = OnExitedCameraModeArea,
                 IsDirty = true,
-            }, cameraModeAreaComponent);
+            });
         }
 
-        /*[Query]
+        [Query]
         [All(typeof(TransformComponent))]
         private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref MainPlayerTriggerAreaComponent mainPlayerTriggerAreaComponent)
         {
             if (!pbCameraModeArea.IsDirty) return;
 
-            Debug.Log($"PRAVS - Update CAMERA MODE AREA SIZE from {mainPlayerTriggerAreaComponent.areaSize} to {pbCameraModeArea.Area}");
-
-            // TODO: Support changing CameraType-Mode (actions) as well?
+            var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
+            mainPlayerTriggerAreaComponent.OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode);
+            mainPlayerTriggerAreaComponent.OnExitedTrigger = OnExitedCameraModeArea;
             mainPlayerTriggerAreaComponent.areaSize = pbCameraModeArea.Area;
             mainPlayerTriggerAreaComponent.IsDirty = true;
-        }*/
+        }
 
-        private void OnEnteredCameraModeArea(CameraMode targetCameraMode, ref CameraModeAreaComponent cameraModeAreaComponent)
+        private void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
-            cameraModeAreaComponent.modeBeforeEntering = camera.Mode;
+            cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
         }
 
-        private void OnExitedCameraModeArea(CameraModeAreaComponent cameraModeAreaComponent)
+        private void OnExitedCameraModeArea()
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
 
-            // If there are more locks then there is another newer camera mode area in place
-            if (camera.CameraInputLocks == 1)
-                camera.Mode = cameraModeAreaComponent.modeBeforeEntering;
-
             camera.RemoveCameraInputLock();
+
+            // If there are more locks then there is another newer camera mode area in place
+            if (camera.CameraInputLocks == 0)
+                camera.Mode = cameraModeBeforeLastAreaEnter;
         }
 
         public void FinalizeComponents(in Query query)

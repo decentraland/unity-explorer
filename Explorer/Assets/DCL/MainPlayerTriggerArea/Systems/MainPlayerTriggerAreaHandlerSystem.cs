@@ -40,29 +40,28 @@ namespace DCL.MainPlayerTriggerArea
         [Query]
         private void UpdateMainPlayerTriggerArea(ref TransformComponent transformComponent, ref MainPlayerTriggerAreaComponent mainPlayerTriggerAreaComponent)
         {
+            MainPlayerTriggerArea triggerAreaMonoBehaviour = mainPlayerTriggerAreaComponent.MonoBehaviour;
+
             if (mainPlayerTriggerAreaComponent.IsDirty)
             {
                 mainPlayerTriggerAreaComponent.IsDirty = false;
 
-                if (mainPlayerTriggerAreaComponent.MonoBehaviour == null)
+                if (triggerAreaMonoBehaviour == null)
                 {
-                    MainPlayerTriggerArea triggerArea = poolRegistry.Get();
-
-                    // TODO: Find a way of enparenting to scene GAMEOBJECT
-                    // triggerArea.transform.SetParent();
-
-                    triggerArea.OnEnteredTrigger += mainPlayerTriggerAreaComponent.OnEnteredTrigger;
-                    triggerArea.OnExitedTrigger += mainPlayerTriggerAreaComponent.OnExitedTrigger;
-                    triggerArea.boxCollider.enabled = true; // TODO: Disable when returning to pool...
-                    mainPlayerTriggerAreaComponent.MonoBehaviour = triggerArea;
+                    triggerAreaMonoBehaviour = poolRegistry.Get();
+                    triggerAreaMonoBehaviour.boxCollider.enabled = true; // TODO: Disable when returning to pool...
+                    mainPlayerTriggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
                 }
 
-                // TODO: Support changing actions as well?
+                // Values that may have been updated from the scene
+                triggerAreaMonoBehaviour.ClearEvents();
+                triggerAreaMonoBehaviour.OnEnteredTrigger += mainPlayerTriggerAreaComponent.OnEnteredTrigger;
+                triggerAreaMonoBehaviour.OnExitedTrigger += mainPlayerTriggerAreaComponent.OnExitedTrigger;
                 mainPlayerTriggerAreaComponent.MonoBehaviour.boxCollider.size = mainPlayerTriggerAreaComponent.areaSize;
             }
 
             // TODO: Optimize here similar to AvatarAttachHandlerSystem.ApplyAnchorPointTransformValues()...
-            Transform triggerAreaTransform = mainPlayerTriggerAreaComponent.MonoBehaviour.transform;
+            Transform triggerAreaTransform = triggerAreaMonoBehaviour.transform;
             triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
             triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
         }

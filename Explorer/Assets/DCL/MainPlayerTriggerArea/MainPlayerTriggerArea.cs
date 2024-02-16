@@ -17,6 +17,12 @@ namespace DCL.MainPlayerTriggerArea
             OnExitedTrigger?.Invoke();
         }
 
+        public void ClearEvents()
+        {
+            OnEnteredTrigger = null;
+            OnExitedTrigger = null;
+        }
+
         public event Action OnEnteredTrigger;
         public event Action OnExitedTrigger;
     }
