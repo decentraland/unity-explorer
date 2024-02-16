@@ -60,10 +60,13 @@ namespace DCL.MainPlayerTriggerArea
                 mainPlayerTriggerAreaComponent.MonoBehaviour.boxCollider.size = mainPlayerTriggerAreaComponent.areaSize;
             }
 
-            // TODO: Optimize here similar to AvatarAttachHandlerSystem.ApplyAnchorPointTransformValues()...
             Transform triggerAreaTransform = triggerAreaMonoBehaviour.transform;
-            triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
-            triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
+
+            if (transformComponent.Cached.WorldPosition != triggerAreaTransform.position)
+                triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
+
+            if (transformComponent.Cached.WorldRotation != triggerAreaTransform.rotation)
+                triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
         }
 
         public void FinalizeComponents(in Query query)
