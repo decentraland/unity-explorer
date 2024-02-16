@@ -2,6 +2,7 @@
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
@@ -9,12 +10,15 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     {
         private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation;
         private IMVCManager mvcManager;
+        private ISceneStateProvider sceneStateProvider;
 
         [SetUp]
         public void SetUp()
         {
             mvcManager = Substitute.For<IMVCManager>();
-            restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(mvcManager);
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+            restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(mvcManager, sceneStateProvider);
         }
 
         [Test]

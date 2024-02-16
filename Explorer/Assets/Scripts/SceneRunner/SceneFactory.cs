@@ -191,7 +191,7 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
-            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager);
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
