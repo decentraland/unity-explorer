@@ -1,4 +1,4 @@
-using LiveKit.Internal.FFIClients.Pools;
+using DCL.Multiplayer.Connections.Rooms.Interior;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -12,9 +12,13 @@ using System.Threading.Tasks;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
-    public class InteriorRoom : IRoom
+    public class InteriorRoom : IRoom, IInterior<IRoom>
     {
         private IRoom? assigned;
+
+        private readonly InteriorActiveSpeakers activeSpeakers = new ();
+        private readonly InteriorParticipantsHub participants = new ();
+        private readonly InteriorDataPipe dataPipe = new ();
 
         public void Assign(IRoom room, out IRoom? previous)
         {
@@ -38,6 +42,10 @@ namespace DCL.Multiplayer.Connections.Rooms
             }
 
             assigned = room;
+
+            activeSpeakers.Assign(room.ActiveSpeakers);
+            participants.Assign(room.Participants);
+            dataPipe.Assign(room.DataPipe);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
@@ -127,13 +135,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event ConnectionDelegate? ConnectionUpdated;
 
         public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
-            assigned.Connect(url, authToken, cancelToken);
+            assigned.EnsureAssigned().Connect(url, authToken, cancelToken);
 
         public void Disconnect() =>
-            assigned.Disconnect();
+            assigned.EnsureAssigned().Disconnect();
 
-        public IActiveSpeakers ActiveSpeakers => assigned.ActiveSpeakers;
-        public IParticipantsHub Participants => assigned.Participants;
-        public IDataPipe DataPipe => assigned.DataPipe;
+        public IActiveSpeakers ActiveSpeakers => activeSpeakers;
+        public IParticipantsHub Participants => participants;
+        public IDataPipe DataPipe => dataPipe;
     }
 }
