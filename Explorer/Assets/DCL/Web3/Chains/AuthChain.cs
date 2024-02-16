@@ -17,6 +17,11 @@ namespace DCL.Web3.Chains
 
         private AuthChain() { }
 
+        ~AuthChain()
+        {
+            Dispose();
+        }
+
         public void Dispose()
         {
             chain.Clear();
