@@ -13,14 +13,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.AdapterAddress
     {
         private readonly IWebRequestController webRequestController;
 
-        public WebRequestsAdapterAddresses() : this(
-            new WebRequestController(
-                new WebRequestsAnalyticsContainer(),
-                new PlayerPrefsIdentityProvider(
-                    new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
-                )
-            )
-        ) { }
+        public WebRequestsAdapterAddresses() : this(IWebRequestController.DEFAULT) { }
 
         public WebRequestsAdapterAddresses(IWebRequestController webRequestController)
         {
