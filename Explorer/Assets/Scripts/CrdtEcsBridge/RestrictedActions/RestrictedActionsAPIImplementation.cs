@@ -4,6 +4,7 @@ using DCL.ExternalUrlPrompt;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
+using UnityEngine;
 
 namespace CrdtEcsBridge.RestrictedActions
 {
@@ -22,12 +23,23 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             if (!sceneStateProvider.IsCurrent)
             {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "Error: Player is not inside of scene");
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "OpenExternalUrl: Player is not inside of scene");
                 return false;
             }
 
             OpenUrlAsync(url).Forget();
             return true;
+        }
+
+        public void MovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget)
+        {
+            if (!sceneStateProvider.IsCurrent)
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Player is not inside of scene");
+                return;
+            }
+
+            // TODO: Implement player teleportation
         }
 
         private async UniTask OpenUrlAsync(string url)
