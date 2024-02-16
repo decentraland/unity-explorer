@@ -12,9 +12,9 @@ using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
-using SocketIOClient.Transport.WebSockets;
 using System;
 using System.Buffers;
+using System.Net.WebSockets;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
-                    new DefaultClientWebSocket(),
+                    new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Shared!)
                 ),
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),

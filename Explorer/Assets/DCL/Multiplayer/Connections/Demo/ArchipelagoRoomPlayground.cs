@@ -17,7 +17,7 @@ using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using SocketIOClient.Transport.WebSockets;
+using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 
@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var signFlow = new LiveConnectionArchipelagoSignFlow(
                 new LogArchipelagoLiveConnection(
                     new WebSocketArchipelagoLiveConnection(
-                        new DefaultClientWebSocket(),
+                        new ClientWebSocket(),
                         memoryPool
                     )
                 ),

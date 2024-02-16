@@ -1,26 +1,25 @@
 using Cysharp.Threading.Tasks;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using SocketIOClient.Transport;
-using SocketIOClient.Transport.WebSockets;
 using System;
 using System.Buffers;
+using System.Net.WebSockets;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
 {
     public class WebSocketArchipelagoLiveConnection : IArchipelagoLiveConnection
     {
-        private readonly IClientWebSocket webSocket;
+        private readonly ClientWebSocket webSocket;
         private readonly IMemoryPool memoryPool;
         private const int BUFFER_SIZE = 1024 * 1024; //1MB
         private readonly Atomic<bool> isSomeoneReceiving = new (false);
 
         public WebSocketArchipelagoLiveConnection() : this(
-            new DefaultClientWebSocket(),
+            new ClientWebSocket(),
             new ArrayMemoryPool(ArrayPool<byte>.Shared!)
         ) { }
 
-        public WebSocketArchipelagoLiveConnection(IClientWebSocket webSocket, IMemoryPool memoryPool)
+        public WebSocketArchipelagoLiveConnection(ClientWebSocket webSocket, IMemoryPool memoryPool)
         {
             this.webSocket = webSocket;
             this.memoryPool = memoryPool;
@@ -33,7 +32,9 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
             webSocket.ConnectAsync(new Uri(adapterUrl), token)!.AsUniTask();
 
         public UniTask DisconnectAsync(CancellationToken token) =>
-            webSocket.DisconnectAsync(token)!.AsUniTask();
+
+            //webSocket.DisconnectAsync(token)!.AsUniTask();
+            webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
 
         public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
         {
@@ -43,7 +44,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
 
                 await webSocket.SendAsync(
                     buffer,
-                    TransportMessageType.Binary,
+                    WebSocketMessageType.Binary,
                     true,
                     token
                 )!;
@@ -53,17 +54,28 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
         {
             using var ownership = new ReceivingOwnership(isSomeoneReceiving);
-            using var result = await webSocket.ReceiveAsync(BUFFER_SIZE, token)!;
+            using var buffer = memoryPool.Memory(BUFFER_SIZE);
+            var result = await webSocket.ReceiveAsync(buffer.DangerousBuffer(), token)!;
 
             return result.MessageType switch
                    {
-                       TransportMessageType.Text => throw new NotSupportedException(
-                           $"Expected Binary, Text messages are not supported: {result.AsText()}"
+                       WebSocketMessageType.Text => throw new NotSupportedException(
+                           $"Expected Binary, Text messages are not supported: {AsText(result, buffer.DangerousBuffer())}"
                        ),
-                       TransportMessageType.Binary => CopiedMemory(result.Buffer, result.Count),
-                       TransportMessageType.Close => throw new Exception("Connection closed"),
+                       WebSocketMessageType.Binary => CopiedMemory(buffer.DangerousBuffer(), result.Count),
+                       WebSocketMessageType.Close => throw new Exception("Connection closed"),
                        _ => throw new ArgumentOutOfRangeException()
                    };
+        }
+
+        public string AsText(WebSocketReceiveResult result, byte[] buffer)
+        {
+            if (result.MessageType is not WebSocketMessageType.Text)
+                throw new NotSupportedException(
+                    $"Expected Text, {result.MessageType} messages are not supported to converting to text"
+                );
+
+            return System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
         }
 
         private MemoryWrap CopiedMemory(ReadOnlyMemory<byte> buffer, int count)
