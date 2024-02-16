@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace DCL.Landscape
 {
-    [ExecuteInEditMode]
     public class TerrainGeneratorTest : MonoBehaviour
     {
         public bool clearCache;
