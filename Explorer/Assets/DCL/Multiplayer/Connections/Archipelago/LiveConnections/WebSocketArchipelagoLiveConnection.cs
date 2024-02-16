@@ -4,6 +4,8 @@ using System;
 using System.Buffers;
 using System.Net.WebSockets;
 using System.Threading;
+using Utility.Multithreading;
+using Utility.Ownership;
 
 namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
 {
@@ -53,16 +55,20 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
 
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
         {
-            using var ownership = new ReceivingOwnership(isSomeoneReceiving);
-            using var buffer = memoryPool.Memory(BUFFER_SIZE);
-            var result = await webSocket.ReceiveAsync(buffer.DangerousBuffer(), token)!;
+            using var ownership = new AtomicUniqueOwnership(
+                isSomeoneReceiving,
+                "Someone is already receiving data, cannot handle 2 data receivers at the same time"
+            );
+            using var memory = memoryPool.Memory(BUFFER_SIZE);
+            byte[] buffer = memory.DangerousBuffer();
+            var result = await webSocket.ReceiveAsync(buffer, token)!;
 
             return result.MessageType switch
                    {
                        WebSocketMessageType.Text => throw new NotSupportedException(
-                           $"Expected Binary, Text messages are not supported: {AsText(result, buffer.DangerousBuffer())}"
+                           $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"
                        ),
-                       WebSocketMessageType.Binary => CopiedMemory(buffer.DangerousBuffer(), result.Count),
+                       WebSocketMessageType.Binary => CopiedMemory(buffer, result.Count),
                        WebSocketMessageType.Close => throw new Exception("Connection closed"),
                        _ => throw new ArgumentOutOfRangeException()
                    };
@@ -84,50 +90,6 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
             var slice = buffer.Slice(0, count).Span;
             slice.CopyTo(memory.Span());
             return memory;
-        }
-
-        private readonly struct ReceivingOwnership : IDisposable
-        {
-            private readonly Atomic<bool> isSomeoneReceiving;
-
-            public ReceivingOwnership(Atomic<bool> isSomeoneReceiving)
-            {
-                if (isSomeoneReceiving.Value())
-                    throw new InvalidOperationException(
-                        "Someone is already receiving data, cannot handle 2 data receivers at the same time"
-                    );
-
-                isSomeoneReceiving.Set(true);
-                this.isSomeoneReceiving = isSomeoneReceiving;
-            }
-
-            public void Dispose()
-            {
-                isSomeoneReceiving.Set(false);
-            }
-        }
-
-        private class Atomic<T> where T: struct
-        {
-            private T value;
-            private readonly object locker = new ();
-
-            public Atomic() : this(default(T)) { }
-
-            public Atomic(T value)
-            {
-                this.value = value;
-            }
-
-            public void Set(T newValue)
-            {
-                lock (locker) { value = newValue; }
-            }
-
-            public T Value()
-            {
-                lock (locker) { return value; }
-            }
         }
     }
 }
