@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
@@ -14,63 +15,54 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private readonly List<MessageMock> passedMessages = new ();
 
         public MessageBus messageBus;
-        public GameObject mark;
+        public GameObject receivedMark;
+        public GameObject passedMark;
 
-        [Space]
         [Header("DEBUG")]
         public int Incoming;
-        public int Processed;
+        public int Passed;
 
-        [Space]
         [Header("INTERPOLATION")]
-        public bool isInterpolating;
         public InterpolationType interpolationType;
         public float minPositionDelta;
         [Space]
+        public bool isInterpolating;
         public MessageMock endPoint;
 
-        [Space]
         [Header("EXTRAPOLATION")]
         public bool useExtrapolation;
-        public bool isExtrapolating;
         public float minSpeed = 0.1f;
         public float linearExtrapolationTime = 0.33f;
         public int dampedExtrapolationSteps = 2;
         [Space]
+        public bool isExtrapolating;
         public float extDuration;
         public Vector3 extVelocity;
 
-        [Space]
         [Header("BLENDING")]
         public bool useBlend;
-        public bool isBlending;
         public float blendExtra;
+        [Space]
+        public bool isBlending;
 
         private bool isFirst = true;
 
         private void Start()
         {
             messageBus.MessageSent += newMessage =>
-                UniTask.Delay(TimeSpan.FromSeconds(messageBus.InitialLag + (messageBus.PackageSentRate * Random.Range(0, messageBus.Jitter))))
+                UniTask.Delay(TimeSpan.FromSeconds((messageBus.Latency * Random.Range(0, messageBus.LatencyJitter)) + (messageBus.PackageSentRate * Random.Range(0, messageBus.PackagesJitter))))
                        .ContinueWith(() =>
                         {
                             incomingMessages.Enqueue(newMessage);
-                            PutMark(newMessage);
+                            PutMark(newMessage, receivedMark, 0.11f);
                         })
                        .Forget();
-
-            void PutMark(MessageMock newMessage)
-            {
-                GameObject markPoint = Instantiate(mark);
-                markPoint.transform.position = newMessage.position + (Vector3.up * 0.11f);
-                markPoint.SetActive(true);
-            }
         }
 
         private void Update()
         {
             Incoming = incomingMessages.Count;
-            Processed = passedMessages.Count;
+            Passed = passedMessages.Count;
 
             if (isInterpolating || isBlending) return;
 
@@ -83,17 +75,17 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 {
                     isFirst = false;
                     transform.position = endPoint.position;
-                    passedMessages.Add(endPoint);
+                    AddToPassed(endPoint);
                     return;
                 }
 
                 // Stop extrapolation when message arrives
-                if (useExtrapolation && isExtrapolating)
+                if (isExtrapolating)
                 {
                     isExtrapolating = false;
                     StopAllCoroutines();
 
-                    passedMessages.Add(new MessageMock
+                    AddToPassed(new MessageMock
                     {
                         timestamp = passedMessages[^1].timestamp + extDuration,
                         position = transform.position,
@@ -106,16 +98,24 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                         return;
                     }
                 }
-            }
-            else if (useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty() && passedMessages[^1].velocity.sqrMagnitude > minSpeed)
-            {
-                StartCoroutine(Extrapolate());
-                return;
-            }
-            else return;
 
-            if (endPoint.timestamp > passedMessages[^1].timestamp)
-                Interpolate(start: passedMessages[^1], endPoint);
+                if (endPoint.timestamp > passedMessages[^1].timestamp)
+                    Interpolate(start: passedMessages[^1], endPoint);
+            }
+            else if (useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty() && passedMessages[^1].velocity.sqrMagnitude > minSpeed) { StartCoroutine(Extrapolate()); }
+        }
+
+        private static void PutMark(MessageMock newMessage, GameObject mark, float f)
+        {
+            GameObject markPoint = Instantiate(mark);
+            markPoint.transform.position = newMessage.position + (Vector3.up * f);
+            markPoint.SetActive(true);
+        }
+
+        private void AddToPassed(MessageMock message)
+        {
+            passedMessages.Add(message);
+            PutMark(message, passedMark, 0.2f);
         }
 
         private IEnumerator Blend(MessageMock local, MessageMock remote)
@@ -124,7 +124,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (Vector3.Distance(local.position, remote.position) < minPositionDelta)
             {
-                passedMessages.Add(remote);
+                AddToPassed(remote);
                 isBlending = false;
                 yield break;
             }
@@ -156,9 +156,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             }
 
             // transform.position = remote.position;
-            passedMessages.Add(remote);
+            AddToPassed(remote);
 
-            passedMessages.Add(new MessageMock
+            AddToPassed(new MessageMock
             {
                 timestamp = remote.timestamp + blendExtra,
                 position = transform.position,
@@ -216,7 +216,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             if (Vector3.Distance(start.position, endPoint.position) > minPositionDelta)
             {
                 var t = 0f;
-                float totalDuration = end.timestamp - start.timestamp;
+                float totalDuration = end.timestamp - start.timestamp - (2 * Time.smoothDeltaTime);
 
                 while (t < totalDuration)
                 {
@@ -227,7 +227,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             }
 
             transform.position = end.position;
-            passedMessages.Add(end);
+            AddToPassed(end);
 
             isInterpolating = false;
         }

@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 // Debug.Log(JsonUtility.ToJson(snapshot));
 
                 snapshots.list.Add(snapshot);
-                yield return new WaitForSeconds(messageBus.PackageSentRate + (Random.Range(0, messageBus.Jitter) * messageBus.PackageSentRate));
+                yield return new WaitForSeconds(messageBus.PackageSentRate + (Random.Range(0, messageBus.PackagesJitter) * messageBus.PackageSentRate));
             }
         }
 
