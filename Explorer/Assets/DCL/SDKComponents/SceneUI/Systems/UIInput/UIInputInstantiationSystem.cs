@@ -1,10 +1,11 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -18,17 +19,20 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     {
         private const string COMPONENT_NAME = "UIInput";
 
-        private readonly IComponentPool<DCLInputText> inputTextsPool;
+        private readonly IComponentPool<UIInputComponent> inputTextsPool;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
-            inputTextsPool = poolsRegistry.GetReferenceTypePool<DCLInputText>();
+            inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>();
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
         {
             InstantiateUIInputQuery(World);
             UpdateUIInputQuery(World);
+            TriggerInputResultsQuery(World);
         }
 
         [Query]
@@ -36,12 +40,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [None(typeof(UIInputComponent))]
         private void InstantiateUIInput(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var inputText = inputTextsPool.Get();
-            inputText.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
-            uiTransformComponent.Transform.Add(inputText.TextField);
-            var uiInputComponent = new UIInputComponent();
-            uiInputComponent.Input = inputText;
-            World.Add(entity, uiInputComponent);
+            var newUIInputComponent = inputTextsPool.Get();
+            newUIInputComponent.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
+            uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
+            World.Add(entity, newUIInputComponent);
         }
 
         [Query]
@@ -50,8 +52,32 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupDCLInputText(ref uiInputComponent.Input, ref sdkModel);
+            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, ref sdkModel);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        private void TriggerInputResults(ref UIInputComponent uiInputComponent, ref CRDTEntity sdkEntity)
+        {
+            if (!uiInputComponent.IsOnValueChangedTriggered && !uiInputComponent.IsOnSubmitTriggered)
+                return;
+
+            PutMessage(ref sdkEntity, uiInputComponent.IsOnSubmitTriggered, uiInputComponent.TextField.value);
+
+            if (uiInputComponent.IsOnSubmitTriggered)
+                uiInputComponent.TextField.SetValueWithoutNotify(string.Empty);
+
+            uiInputComponent.IsOnValueChangedTriggered = false;
+            uiInputComponent.IsOnSubmitTriggered = false;
+        }
+
+        private void PutMessage(ref CRDTEntity sdkEntity, bool isSubmit, string value)
+        {
+            ecsToCRDTWriter.PutMessage<PBUiInputResult, (bool isSubmit, string value)>(static (component, data) =>
+            {
+                component.IsSubmit = data.isSubmit;
+                component.Value = data.value;
+            }, sdkEntity, (isSubmit, value));
         }
     }
 }

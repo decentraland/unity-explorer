@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         public CameraModeAreaHandlerSystem(World world, WorldProxy globalWorldProxy) : base(world)
         {
-            globalWorld = globalWorldProxy.GetWorld();
+            globalWorld = globalWorldProxy.World;
 
             // TODO: Propagate the CameraEntity from the global CharacterCameraPlugin somehow...
             // cameraComponent = globalWorldProxy.GetWorld().Get<CameraComponent>(cameraEntity);

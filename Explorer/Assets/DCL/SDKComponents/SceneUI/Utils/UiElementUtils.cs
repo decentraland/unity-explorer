@@ -156,7 +156,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
-        public static void SetupDCLInputText(ref DCLInputText inputToSetup, ref PBUiInput model)
+        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, ref PBUiInput model)
         {
             bool isReadonly = !model.IsInteractive();
             inputToSetup.Placeholder.SetPlaceholder(model.Placeholder);
@@ -170,7 +170,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.Placeholder.Refresh();
         }
 
-        public static void SetupDCLDropdown(ref DCLDropdown dropdownToSetup, ref PBUiDropdown model)
+        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
         {
             dropdownToSetup.DropdownField.style.fontSize = model.GetFontSize();
             dropdownToSetup.DropdownField.style.color = model.GetColor();
@@ -198,16 +198,22 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void ReleaseUIElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
 
+        public static void ReleaseUITransformComponent(UITransformComponent transform)
+        {
+            transform.UnregisterPointerCallbacks();
+            ReleaseUIElement(transform.Transform);
+        }
+
         public static void ReleaseDCLImage(DCLImage image) =>
             image.Dispose();
 
-        public static void ReleaseDCLInput(DCLInputText inputText)
+        public static void ReleaseUIInputComponent(UIInputComponent input)
         {
-            inputText.Dispose();
-            ReleaseUIElement(inputText.TextField);
+            input.Dispose();
+            ReleaseUIElement(input.TextField);
         }
 
-        public static void ReleaseDCLDropdown(DCLDropdown dropdown)
+        public static void ReleaseUIDropdownComponent(UIDropdownComponent dropdown)
         {
             dropdown.Dispose();
             ReleaseUIElement(dropdown.DropdownField);

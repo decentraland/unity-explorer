@@ -40,7 +40,7 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         private ProvidedInstance<CharacterObject> characterObject;
-        public WorldProxy GlobalWorld = new ();
+        public WorldProxy GlobalWorldProxy = new ();
 
         // public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
         public MainPlayerReferences MainPlayerReferences = new ();
@@ -179,7 +179,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(container.GlobalWorld),
+                new AvatarShapePlugin(container.GlobalWorldProxy),
                 new AvatarAttachPlugin(container.MainPlayerReferences.MainPlayerAvatarBase),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
@@ -189,12 +189,11 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
-                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
+                new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
 
                 // new CameraModeAreaPlugin(container.MainPlayerReferences.MainPlayerTransform),
                 // new CameraModeAreaPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new CameraModeAreaPlugin(container.GlobalWorld),
-                new VideoPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool),
+                new CameraModeAreaPlugin(container.GlobalWorldProxy),
                 new MainPlayerTriggerAreaPlugin(container.MainPlayerReferences.MainPlayerAvatarBase, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR

@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
@@ -114,7 +115,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var args = new EmptySceneFacade.Args(map, world,
                 new EmptySceneMapping { environment = new ContentDefinition { file = "file1" }, grass = new ContentDefinition { file = "file2" } },
-                pool, Vector3.one, partition, new MutexSync());
+                pool, Vector3.one, new SceneShortInfo(Vector2Int.zero, "EMPTY"), partition, new MutexSync());
 
             var facade = EmptySceneFacade.Create(args);
 

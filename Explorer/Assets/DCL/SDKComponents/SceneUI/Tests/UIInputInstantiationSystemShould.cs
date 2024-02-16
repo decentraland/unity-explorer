@@ -1,11 +1,13 @@
-﻿using DCL.ECSComponents;
+﻿using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIInput;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -17,6 +19,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UIInputInstantiationSystemShould : UnitySystemTestBase<UIInputInstantiationSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
+        private IECSToCRDTWriter ecsToCRDTWriter;
         private Entity entity;
         private UITransformComponent uiTransformComponent;
 
@@ -26,12 +29,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(DCLInputText), new ComponentPool<DCLInputText>() },
+                    { typeof(UIInputComponent), new ComponentPool<UIInputComponent>() },
                 }, null);
 
-            system = new UIInputInstantiationSystem(world, poolsRegistry);
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
+            system = new UIInputInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
+            world.Add(entity, new CRDTEntity(500));
         }
 
         [Test]
@@ -46,12 +51,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.Input.TextField.name);
-            Assert.IsTrue(uiInputComponent.Input.TextField.ClassListContains("dcl-input"));
-            Assert.AreEqual(PickingMode.Position, uiInputComponent.Input.TextField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.Input.TextField));
-            Assert.IsNotNull(uiInputComponent.Input.TextField);
-            Assert.IsNotNull(uiInputComponent.Input.Placeholder);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UIInput", entity), uiInputComponent.TextField.name);
+            Assert.IsTrue(uiInputComponent.TextField.ClassListContains("dcl-input"));
+            Assert.AreEqual(PickingMode.Position, uiInputComponent.TextField.pickingMode);
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.TextField));
+            Assert.IsNotNull(uiInputComponent.TextField);
+            Assert.IsNotNull(uiInputComponent.Placeholder);
         }
 
         [Test]
@@ -75,10 +80,38 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-                Assert.AreEqual(input.Value, uiInputComponent.Input.TextField.value);
-                Assert.IsTrue(input.GetFontSize() == uiInputComponent.Input.TextField.style.fontSize);
-                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.Input.TextField.style.unityTextAlign);
+                Assert.AreEqual(input.Value, uiInputComponent.TextField.value);
+                Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
+                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextField.style.unityTextAlign);
             }
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TriggerInputResults(bool isSubmit)
+        {
+            // Arrange
+            const string TEST_VALUE = "Test text";
+            var input = new PBUiInput
+            {
+                Value = TEST_VALUE,
+                IsDirty = true,
+            };
+            world.Add(entity, input);
+            system.Update(0);
+
+            ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+            uiInputComponent.IsOnValueChangedTriggered = !isSubmit;
+            uiInputComponent.IsOnSubmitTriggered = isSubmit;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBUiInputResult, (bool, string)>>(), Arg.Any<CRDTEntity>(), (isSubmit, TEST_VALUE));
+            Assert.IsFalse(uiInputComponent.IsOnValueChangedTriggered);
+            Assert.IsFalse(uiInputComponent.IsOnSubmitTriggered);
         }
     }
 }
