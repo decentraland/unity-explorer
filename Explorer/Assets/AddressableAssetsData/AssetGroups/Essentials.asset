@@ -202,6 +202,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fabfcdf867b484665b44c8a158bd8eb4
+    m_Address: NameTag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd2233d5950ee4b4c96fc19f60d8c582
+    m_Address: NametagParent
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35bedc705b5a3bc48a2801dc62a3f2b1
     m_Address: Assets/DCL/Landscape/Data/EmptyParcels.txt
     m_ReadOnly: 0

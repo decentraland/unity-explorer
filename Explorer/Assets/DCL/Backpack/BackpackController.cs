@@ -21,7 +21,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Backpack
 {
-    public class BackpackControler : ISection, IDisposable
+    public class BackpackController : ISection, IDisposable
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -29,45 +29,40 @@ namespace DCL.Backpack
         private readonly AvatarController avatarController;
 
         private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
+
+        private readonly World world;
+        private readonly Entity playerEntity;
         private CancellationTokenSource animationCts;
+
         private CancellationTokenSource profileLoadingCts;
+        private bool initialLoadingIsDone;
 
-        private bool initialLoading;
-
-        public BackpackControler(
+        public BackpackController(
             BackpackView view,
-            NftTypeIconSO rarityBackgrounds,
+            AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
-            NftTypeIconSO categoryIcons,
-            NFTColorsSO rarityColors,
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
-            IWeb3IdentityCache web3IdentityCache,
-            IWearableCatalog wearableCatalog,
-            PageButtonView pageButtonView,
-            ICharacterPreviewFactory characterPreviewFactory)
+            ICharacterPreviewFactory characterPreviewFactory,
+            BackpackGridController gridController,
+            BackpackInfoPanelController infoPanelController,
+            World world, Entity playerEntity)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
-            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
-            var backpackSortController = new BackpackSortController(view.BackpackSortView);
-            var busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
+            this.world = world;
+            this.playerEntity = playerEntity;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             avatarController = new AvatarController(
-                view.GetComponentInChildren<AvatarView>(),
+                avatarView,
                 view.GetComponentsInChildren<AvatarSlotView>(),
-                rarityBackgrounds,
                 rarityInfoPanelBackgrounds,
-                categoryIcons,
-                rarityColors,
                 backpackCommandBus,
                 backpackEventBus,
-                web3IdentityCache,
-                backpackEquipStatusController,
-                backpackSortController,
-                pageButtonView);
+                gridController,
+                infoPanelController);
 
             Dictionary<BackpackSections, ISection> backpackSections = new ()
             {
@@ -90,7 +85,7 @@ namespace DCL.Backpack
                     });
             }
 
-            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus);
+            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus, world);
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }
@@ -112,25 +107,8 @@ namespace DCL.Backpack
             view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        private async UniTaskVoid AwaitForProfileAsync(CancellationTokenSource cts)
         {
-            await avatarController.InitialiseAssetsAsync(assetsProvisioner, ct);
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
-        {
-            World world = builder.World;
-            avatarController.InjectToWorld(ref builder, playerEntity);
-            backpackCharacterPreviewController.SetWorld(builder.World);
-            profileLoadingCts = new CancellationTokenSource();
-            AwaitForProfileAsync(world, playerEntity, profileLoadingCts).Forget();
-        }
-
-        private async UniTaskVoid AwaitForProfileAsync(World world, Entity playerEntity, CancellationTokenSource cts)
-        {
-            do { await UniTask.Delay(1000, cancellationToken: cts.Token); }
-            while (!initialLoading);
-
             world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
@@ -146,17 +124,27 @@ namespace DCL.Backpack
 
             foreach (URN avatarSharedWearable in avatar.SharedWearables)
                 backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+
+            initialLoadingIsDone = true;
         }
 
         public void Activate()
         {
+            if (!initialLoadingIsDone)
+            {
+                profileLoadingCts = new CancellationTokenSource();
+                AwaitForProfileAsync(profileLoadingCts).Forget();
+            }
+
             view.gameObject.SetActive(true);
-            initialLoading = true;
             backpackCharacterPreviewController.OnShow();
         }
 
         public void Deactivate()
         {
+            if (!initialLoadingIsDone)
+                profileLoadingCts.SafeCancelAndDispose();
+
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
         }
