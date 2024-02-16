@@ -26,6 +26,7 @@ namespace Global.Static
         [SerializeField] private string authenticationServerUrl;
         [SerializeField] private string authenticationSignatureUrl;
         [SerializeField] private string[] ethWhitelistMethods;
+        [SerializeField] private string ownProfileJson;
 
         private ISceneFacade sceneFacade;
         private StaticContainer staticContainer;
@@ -80,8 +81,17 @@ namespace Global.Static
 
                 SceneSharedContainer sceneSharedContainer;
 
+                var memoryProfileRepository = new MemoryProfileRepository(new DefaultProfileCache());
+
+                if (!string.IsNullOrEmpty(ownProfileJson))
+                {
+                    var ownProfile = new Profile();
+                    JsonUtility.FromJson<ProfileJsonDto>(ownProfileJson).CopyTo(ownProfile);
+                    await memoryProfileRepository.SetAsync(ownProfile, ct);
+                }
+
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, dappWeb3Authenticator, identityCache, new MemoryProfileRepository(new DefaultProfileCache()), ct);
+                    identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
