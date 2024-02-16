@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
             return connection.SendAsync(clientPacket.value, memoryPool, token);
         }
 
-        public async UniTask StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
+        public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {
