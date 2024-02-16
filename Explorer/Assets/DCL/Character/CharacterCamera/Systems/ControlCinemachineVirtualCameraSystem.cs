@@ -126,6 +126,7 @@ namespace DCL.CharacterCamera.Systems
                             {
                                 SwitchCamera(CameraMode.Free, ref cinemachinePreset, ref cameraComponent, ref state);
                                 SetDefaultFreeCameraPosition(in cinemachinePreset);
+                                return;
                             }
 
                             // Set a freshly assigned value
@@ -138,7 +139,6 @@ namespace DCL.CharacterCamera.Systems
                     switch (cameraComponent.Mode)
                     {
                         case CameraMode.ThirdPerson:
-                        {
                             // If we exceed the zoom more than by twice the previous value, switch to FP
                             if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
                             {
@@ -149,7 +149,6 @@ namespace DCL.CharacterCamera.Systems
                             // Set a freshly assigned value
                             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
-                        }
                         case CameraMode.Free:
                             // Switch to third-person
                             SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
