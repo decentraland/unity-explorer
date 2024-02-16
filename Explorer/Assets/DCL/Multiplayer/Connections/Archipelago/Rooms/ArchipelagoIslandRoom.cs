@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -15,7 +16,6 @@ using SocketIOClient.Transport.WebSockets;
 using System;
 using System.Buffers;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
 {
@@ -33,9 +33,9 @@ namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
 
         private CancellationTokenSource? cancellationTokenSource;
 
-        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool) : this(
+        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool) : this(
             new RefinedAdapterAddresses(
-                new WebRequestsAdapterAddresses()
+                new WebRequestsAdapterAddresses(webRequestController)
             ),
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
