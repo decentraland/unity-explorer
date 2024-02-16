@@ -212,18 +212,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 35bedc705b5a3bc48a2801dc62a3f2b1
-    m_Address: Assets/DCL/Landscape/Data/EmptyParcels.txt
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 32f2b877400526d4cbf648ba5c5064b4
     m_Address: Assets/DCL/Landscape/Data/LandscapeData.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a160048636f0c6a43b91e491836f503b
-    m_Address: Assets/DCL/Landscape/Data/OwnedParcels.txt
+  - m_GUID: 86bf0204cf3bb75429342452a2a460af
+    m_Address: Assets/DCL/Landscape/Data/ParcelData.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
