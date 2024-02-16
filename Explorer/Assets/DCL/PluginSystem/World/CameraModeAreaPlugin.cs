@@ -1,7 +1,5 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.CameraModeArea.Systems;
@@ -18,10 +16,10 @@ namespace DCL.PluginSystem.World
         private readonly EntityProxy cameraEntityProxy;
         private readonly WorldProxy globalWorldProxy;
 
-        public CameraModeAreaPlugin(WorldProxy globalWorldProxy, ExposedCameraData exposedCameraData)
+        public CameraModeAreaPlugin(WorldProxy globalWorldProxy, EntityProxy cameraEntityProxy)
         {
             this.globalWorldProxy = globalWorldProxy;
-            cameraEntityProxy = exposedCameraData.CameraEntityProxy;
+            this.cameraEntityProxy = cameraEntityProxy;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>

@@ -9,7 +9,6 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
-using DCL.Utilities;
 using ECS.Prioritization.Components;
 using System.Threading;
 using UnityEngine;
