@@ -1,15 +1,14 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class ReceiverExtrapolation : MonoBehaviour
     {
-        public bool useVelocityBlending;
+        public MessageBus messageBus;
 
+        [Space]
         public InterpolationType extrapolationType;
-        [SerializeField] private MessageBus messageBus;
-        [SerializeField] private bool useAcceleration;
+        public bool useAcceleration;
 
         private MessageMock local;
         private MessageMock remote;

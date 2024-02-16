@@ -15,6 +15,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         [SerializeField] private MessageBus messageBus;
         [SerializeField] private GameObject lostText;
+        [SerializeField] private GameObject pointMark;
 
         [SerializeField] private bool avarageAcceleration;
 
@@ -64,21 +65,25 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private IEnumerator StartSendPackages()
         {
-            yield return new WaitForSeconds(messageBus.InitialLag);
-
             while (true)
             {
                 if (packageLost > 0)
                     packageLost--;
                 else if (!UnityEngine.Input.GetKey(KeyCode.Space))
                 {
-                    Vector3 acceleration = CalculateAverageAcceleration();
-
-                    messageBus.Send(UnityEngine.Time.unscaledTime, characterController.transform.position, characterController.velocity, acceleration);
+                    messageBus.Send(UnityEngine.Time.unscaledTime,characterController.transform.position, characterController.velocity, CalculateAverageAcceleration());
+                    PutMark();
                 }
 
-                yield return new WaitForSeconds(messageBus.PackageSentRate + (Random.Range(0, messageBus.Jitter) * messageBus.PackageSentRate));
+                yield return new WaitForSeconds(messageBus.PackageSentRate);
             }
+        }
+
+        private void PutMark()
+        {
+            var mark = Instantiate(pointMark);
+            mark.transform.position =characterController.transform.position + Vector3.up * 0.1f;
+            mark.SetActive(true);
         }
 
         private Vector3 CalculateAverageAcceleration()

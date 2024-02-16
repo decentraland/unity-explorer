@@ -1,8 +1,10 @@
 ﻿using Castle.Core.Internal;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -12,40 +14,57 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private readonly List<MessageMock> passedMessages = new ();
 
         public MessageBus messageBus;
-
-        [Space]
-        [Header("INTERPOLATION")]
-        public bool isInterpolating;
-        public InterpolationType interpolationType;
-        public float minPositionDelta;
-        public MessageMock endPoint;
-
-        [Space]
-        [Header("EXTRAPOLATION")]
-        public bool isExtrapolating;
-        public float minSpeed = 0.1f;
-        public float linearExtrapolationTime = 0.33f;
-        public int dampedExtrapolationSteps = 2;
-
-        public float extDuration;
-        public Vector3 extVelocity;
-
-        [Space]
-        [Header("BLENDING")]
-        public bool isBlending;
-        public float blendExtra;
-        public bool useBlend;
+        public GameObject mark;
 
         [Space]
         [Header("DEBUG")]
         public int Incoming;
         public int Processed;
 
+        [Space]
+        [Header("INTERPOLATION")]
+        public bool isInterpolating;
+        public InterpolationType interpolationType;
+        public float minPositionDelta;
+        [Space]
+        public MessageMock endPoint;
+
+        [Space]
+        [Header("EXTRAPOLATION")]
+        public bool useExtrapolation;
+        public bool isExtrapolating;
+        public float minSpeed = 0.1f;
+        public float linearExtrapolationTime = 0.33f;
+        public int dampedExtrapolationSteps = 2;
+        [Space]
+        public float extDuration;
+        public Vector3 extVelocity;
+
+        [Space]
+        [Header("BLENDING")]
+        public bool useBlend;
+        public bool isBlending;
+        public float blendExtra;
+
         private bool isFirst = true;
 
-        private void Awake()
+        private void Start()
         {
-            messageBus.MessageSent += newMessage => incomingMessages.Enqueue(newMessage);
+            messageBus.MessageSent += newMessage =>
+                UniTask.Delay(TimeSpan.FromSeconds(messageBus.InitialLag + (messageBus.PackageSentRate * Random.Range(0, messageBus.Jitter))))
+                       .ContinueWith(() =>
+                        {
+                            incomingMessages.Enqueue(newMessage);
+                            PutMark(newMessage);
+                        })
+                       .Forget();
+
+            void PutMark(MessageMock newMessage)
+            {
+                GameObject markPoint = Instantiate(mark);
+                markPoint.transform.position = newMessage.position + (Vector3.up * 0.11f);
+                markPoint.SetActive(true);
+            }
         }
 
         private void Update()
@@ -69,7 +88,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 }
 
                 // Stop extrapolation when message arrives
-                if (isExtrapolating)
+                if (useExtrapolation && isExtrapolating)
                 {
                     isExtrapolating = false;
                     StopAllCoroutines();
@@ -88,7 +107,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     }
                 }
             }
-            else if (!passedMessages.IsNullOrEmpty() && !isExtrapolating && passedMessages[^1].velocity.sqrMagnitude > minSpeed)
+            else if (useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty() && passedMessages[^1].velocity.sqrMagnitude > minSpeed)
             {
                 StartCoroutine(Extrapolate());
                 return;
@@ -114,13 +133,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             Vector3 remoteOldPosition = remote.position - (remote.velocity * timeDiff);
 
             var t = 0f;
-            var totalDuration = timeDiff + blendExtra;
+            float totalDuration = timeDiff + blendExtra;
 
             while (t < totalDuration)
             {
-                t += UnityEngine.Time.deltaTime;
+                t += Time.deltaTime;
 
-                var lerpValue = t / totalDuration;
+                float lerpValue = t / totalDuration;
 
                 // Interpolate velocity
                 Vector3 lerpedVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue);
@@ -137,6 +156,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             // transform.position = remote.position;
             passedMessages.Add(remote);
+
             passedMessages.Add(new MessageMock
             {
                 timestamp = remote.timestamp + blendExtra,
@@ -160,15 +180,17 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             while (isExtrapolating)
             {
-                extDuration += UnityEngine.Time.deltaTime;
+                extDuration += Time.deltaTime;
 
+                // Damp velocity
                 if (extDuration > linearExtrapolationTime && extDuration < maxDuration)
                     extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / maxDuration);
                 else if (extDuration >= maxDuration)
                     extVelocity = Vector3.zero;
 
+                // Apply extrapolation
                 if (extVelocity.sqrMagnitude > minSpeed)
-                    transform.position += extVelocity * UnityEngine.Time.deltaTime;
+                    transform.position += extVelocity * Time.deltaTime;
 
                 yield return null;
             }
@@ -197,7 +219,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
                 while (t < totalDuration)
                 {
-                    t += UnityEngine.Time.deltaTime;
+                    t += Time.deltaTime;
                     transform.position = interpolation(start, end, t, totalDuration);
                     yield return null;
                 }
