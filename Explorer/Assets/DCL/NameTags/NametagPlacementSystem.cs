@@ -53,7 +53,7 @@ namespace DCL.Nametags
 
             NametagView nametagView = nametagViewPool.Get();
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.Username.text = $"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>";;
+            nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>");
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
@@ -84,7 +84,8 @@ namespace DCL.Nametags
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTagPosition(NametagView view, Camera camera, Vector3 characterPosition)
         {
-            view.transform.position = camera.WorldToScreenPoint(characterPosition + (Vector3.up * 2.2f));
+            view.transform.position = characterPosition + (Vector3.up * 2.2f);
+            view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
         }
     }
 }

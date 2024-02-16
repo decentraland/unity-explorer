@@ -136,10 +136,8 @@ namespace DCL.PluginSystem.Global
             NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct)).Value.GetComponent<NametagView>();
             GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagParent, ct: ct)).Value;
 
-            GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity);
-
             nametagViewPool = new ObjectPool<NametagView>(
-                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
+                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, null),
                 actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
                 actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
