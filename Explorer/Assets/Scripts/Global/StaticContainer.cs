@@ -41,8 +41,6 @@ namespace Global
     {
         private ProvidedInstance<CharacterObject> characterObject;
         public WorldProxy GlobalWorldProxy = new ();
-
-        // public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
         public MainPlayerReferences MainPlayerReferences = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -190,10 +188,7 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
-
-                // new CameraModeAreaPlugin(container.MainPlayerReferences.MainPlayerTransform),
-                // new CameraModeAreaPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new CameraModeAreaPlugin(container.GlobalWorldProxy),
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData),
                 new MainPlayerTriggerAreaPlugin(container.MainPlayerReferences.MainPlayerAvatarBase, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR

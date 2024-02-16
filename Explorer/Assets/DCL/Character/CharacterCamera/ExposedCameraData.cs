@@ -1,3 +1,4 @@
+using DCL.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -14,6 +15,7 @@ namespace DCL.CharacterCamera
         public CanBeDirty<Quaternion> WorldRotation = new (Quaternion.identity, EQUALITY_COMPARER_WITH_ERROR);
         public CanBeDirty<bool> PointerIsLocked;
         public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
+        public EntityProxy CameraEntityProxy = new ();
 
         CanBeDirty<Vector3> IExposedCameraData.WorldPosition => WorldPosition;
         CanBeDirty<Quaternion> IExposedCameraData.WorldRotation => WorldRotation;

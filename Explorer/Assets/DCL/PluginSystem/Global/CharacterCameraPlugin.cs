@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using Arch.Core;
+using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -8,6 +9,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
+using DCL.Utilities;
 using ECS.Prioritization.Components;
 using System.Threading;
 using UnityEngine;
@@ -59,7 +61,7 @@ namespace DCL.PluginSystem.Global
             cinemachinePreset.Brain.ControlledObject = cinemachinePreset.Brain.gameObject;
 
             // Create a special camera entity
-            world.Create(
+            Entity cameraEntity = world.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
                 new CursorComponent(),
@@ -70,6 +72,8 @@ namespace DCL.PluginSystem.Global
                 cameraSamplingData,
                 realmSamplingData
             );
+
+            exposedCameraData.CameraEntityProxy.SetEntity(cameraEntity);
 
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);

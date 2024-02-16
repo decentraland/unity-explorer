@@ -23,18 +23,12 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly World globalWorld;
-        private Entity cameraEntity;
+        private readonly Entity cameraEntity;
 
-        // private CameraComponent cameraComponent;
-        // private ref CameraComponent cameraComponent => ref globalWorld.Get<CameraComponent>(cameraEntity);
-
-        public CameraModeAreaHandlerSystem(World world, WorldProxy globalWorldProxy) : base(world)
+        public CameraModeAreaHandlerSystem(World world, WorldProxy globalWorldProxy, EntityProxy cameraEntityProxy) : base(world)
         {
             globalWorld = globalWorldProxy.World;
-
-            // TODO: Propagate the CameraEntity from the global CharacterCameraPlugin somehow...
-            // cameraComponent = globalWorldProxy.GetWorld().Get<CameraComponent>(cameraEntity);
-            globalWorld!.Query(new QueryDescription().WithAll<CameraComponent>(), entity => { cameraEntity = entity; });
+            cameraEntity = cameraEntityProxy.Entity!.Value;
         }
 
         protected override void Update(float t)
