@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using System;
 
 namespace DCL.PluginSystem.Global
 {
@@ -9,6 +10,9 @@ namespace DCL.PluginSystem.Global
 
     public interface IDCLGlobalPlugin : IDCLPlugin
     {
+        /// <summary>
+        ///     Create dependencies which require the global world and additional arguments
+        /// </summary>
         void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments);
     }
 }
