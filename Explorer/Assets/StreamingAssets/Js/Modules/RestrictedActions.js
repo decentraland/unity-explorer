@@ -1,5 +1,19 @@
 module.exports.movePlayerTo = async function(message) {
-    console.log('JSMODULE: movePlayerTo')
+    if (message.cameraTarget != undefined) {
+        UnityRestrictedActionsApi.MovePlayerTo(
+            message.newRelativePosition.x,
+            message.newRelativePosition.y,
+            message.newRelativePosition.z,
+            message.cameraTarget.x,
+            message.cameraTarget.y,
+            message.cameraTarget.z)
+    } else {
+        UnityRestrictedActionsApi.MovePlayerTo(
+            message.newRelativePosition.x,
+            message.newRelativePosition.y,
+            message.newRelativePosition.z)
+    }
+    
     return {};
 }
 
