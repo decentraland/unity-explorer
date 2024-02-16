@@ -4,6 +4,7 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,10 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class UserIdentityApiWrapper : IDisposable
+    public partial class UserIdentityApiWrapper : IDisposable
     {
+        private static readonly JsonConverter[] JSON_CONVERTER = { new GetUserDataResponseJsonConverter() };
+
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
@@ -39,7 +42,7 @@ namespace SceneRuntime.Apis.Modules
         [PublicAPI("Used by StreamingAssets/Js/Modules/UserIdentity.js")]
         public object GetOwnUserData()
         {
-            async UniTask<GetUserDataResponse> GetOwnUserDataAsync(CancellationToken ct)
+            async UniTask<GetUserDataResponse.Data?> GetOwnUserDataAsync(CancellationToken ct)
             {
                 try
                 {
@@ -47,7 +50,7 @@ namespace SceneRuntime.Apis.Modules
                     Profile? profile = await profileRepository.GetAsync(identity.Address, 0, ct);
 
                     if (profile == null)
-                        return new GetUserDataResponse { containsData = false };
+                        return null;
 
                     Avatar avatar = profile.Avatar;
 
@@ -58,82 +61,47 @@ namespace SceneRuntime.Apis.Modules
                         foreach (URN urn in avatar.SharedWearables)
                             wearablesCache.Add(urn);
 
-                        var response = new GetUserDataResponse
+                        return new GetUserDataResponse.Data
                         {
-                            containsData = true,
-                            data = new GetUserDataResponse.Data
+                            version = profile.Version,
+                            displayName = profile.DisplayName,
+                            publicKey = identity.Address,
+                            hasConnectedWeb3 = profile.HasConnectedWeb3,
+                            userId = profile.UserId,
+                            avatar = new GetUserDataResponse.Data.Avatar
                             {
-                                version = profile.Version,
-                                displayName = profile.DisplayName,
-                                publicKey = identity.Address,
-                                hasConnectedWeb3 = profile.HasConnectedWeb3,
-                                userId = profile.UserId,
-                                avatar = new GetUserDataResponse.Data.Avatar
+                                snapshots = new GetUserDataResponse.Data.Avatar.Snapshot
                                 {
-                                    snapshots = new GetUserDataResponse.Data.Avatar.Snapshot
-                                    {
-                                        body = avatar.BodySnapshotUrl,
-                                        face256 = avatar.FaceSnapshotUrl,
-                                    },
-                                    wearables = wearablesCache,
-                                    bodyShape = avatar.BodyShape,
-                                    eyeColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.EyesColor)}",
-                                    hairColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.HairColor)}",
-                                    skinColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.SkinColor)}",
+                                    body = avatar.BodySnapshotUrl,
+                                    face256 = avatar.FaceSnapshotUrl,
                                 },
+                                wearables = wearablesCache,
+                                bodyShape = avatar.BodyShape,
+                                eyeColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.EyesColor)}",
+                                hairColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.HairColor)}",
+                                skinColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.SkinColor)}",
                             },
                         };
-
-                        return response;
                     }
                 }
                 catch (Exception e)
                 {
                     sceneExceptionsHandler.OnEngineException(e);
 
-                    return new GetUserDataResponse { containsData = false };
+                    return null;
                 }
             }
 
             return GetOwnUserDataAsync(lifeCycleCts.Token)
+                  .ContinueWith(ToUserDataResponseJson)
                   .AsTask()
                   .ToPromise();
         }
 
-        [Serializable]
-        private struct GetUserDataResponse
+        private static string ToUserDataResponseJson(GetUserDataResponse.Data? data)
         {
-            public bool containsData;
-            public Data data;
-
-            [Serializable]
-            public struct Data
-            {
-                public string? publicKey;
-                public string displayName;
-                public bool hasConnectedWeb3;
-                public string userId;
-                public int version;
-                public Avatar avatar;
-
-                [Serializable]
-                public struct Avatar
-                {
-                    public string bodyShape;
-                    public string eyeColor;
-                    public string hairColor;
-                    public string skinColor;
-                    public List<string> wearables;
-                    public Snapshot snapshots;
-
-                    [Serializable]
-                    public struct Snapshot
-                    {
-                        public string body;
-                        public string face256;
-                    }
-                }
-            }
+            var response = new GetUserDataResponse { data = data };
+            return JsonConvert.SerializeObject(response, JSON_CONVERTER);
         }
     }
 }

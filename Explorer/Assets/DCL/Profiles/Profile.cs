@@ -14,7 +14,21 @@ namespace DCL.Profiles
 
         public string UserId { get; internal set; }
         public string Name { get; internal set; }
-        public string DisplayName => $"{VALID_NAME_CHARACTERS.Match(Name).Value}#{UserId[^4..]}";
+
+        public string DisplayName
+        {
+            get
+            {
+                var result = "";
+                MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
+
+                foreach (Match match in matches)
+                    result += match.Value;
+
+                return $"{result}#{UserId[^4..]}";
+            }
+        }
+
         public string UnclaimedName { get; internal set; }
         public bool HasClaimedName { get; internal set; }
         public bool HasConnectedWeb3 { get; internal set; }
@@ -44,7 +58,7 @@ namespace DCL.Profiles
         public IReadOnlyCollection<string>? Interests => interests;
         public IReadOnlyCollection<string>? Links => links;
 
-        internal Profile() { }
+        public Profile() { }
 
         public Profile(string userId, string name, Avatar avatar)
         {
