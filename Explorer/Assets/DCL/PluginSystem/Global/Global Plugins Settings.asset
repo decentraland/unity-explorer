@@ -116,6 +116,32 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BackpackSettings>k__BackingField:
+          <CategoryIconsMapping>k__BackingField:
+            m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityInfoPanelBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityColorMappings>k__BackingField:
+            m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <PageButtonView>k__BackingField:
+            m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -162,11 +188,31 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        ChatEntryPrefab:
+          m_AssetGUID: 9e9bf5fb9ee9c452f858e423651a52ca
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ChatEntryConfiguration>k__BackingField:
+          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         avatarBase:
           m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        nametagView:
+          m_AssetGUID: fabfcdf867b484665b44c8a158bd8eb4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        nametagParent:
+          m_AssetGUID: bd2233d5950ee4b4c96fc19f60d8c582
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

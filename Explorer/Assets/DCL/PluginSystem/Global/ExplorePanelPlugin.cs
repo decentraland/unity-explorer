@@ -3,15 +3,16 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
-using DCL.Backpack.BackpackBus;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.Navmap;
-using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.Settings;
-using DCL.UI;
+using DCL.UserInAppInitializationFlow;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Global.Dynamic;
@@ -20,25 +21,27 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+
 namespace DCL.PluginSystem.Global
 {
-    public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
+    public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IMVCManager mvcManager;
+
+        private readonly BackpackSubPlugin backpackSubPlugin;
         private readonly MapRendererContainer mapRendererContainer;
+        private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IProfileRepository profileRepository;
         private readonly ITeleportController teleportController;
-        private readonly BackpackSettings backpackSettings;
-        private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
-        private readonly IWebRequestController webRequestController;
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableCatalog wearableCatalog;
-        private readonly IComponentPoolsRegistry poolsRegistry;
-        private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
-        private NavmapController navmapController;
-        private BackpackControler backpackController;
+        private readonly IWebBrowser webBrowser;
+        private readonly IWebRequestController webRequestController;
+
+        private NavmapController? navmapController;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -46,70 +49,64 @@ namespace DCL.PluginSystem.Global
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
             ITeleportController teleportController,
-            BackpackSettings backpackSettings,
-            BackpackCommandBus backpackCommandBus,
-            BackpackEventBus backpackEventBus,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IWearableCatalog wearableCatalog,
-            IComponentPoolsRegistry poolsRegistry,
-            CharacterPreviewInputEventBus characterPreviewInputEventBus)
+            ICharacterPreviewFactory characterPreviewFactory,
+            IProfileRepository profileRepository,
+            IWeb3Authenticator web3Authenticator,
+            IUserInAppInitializationFlow userInAppInitializationFlow,
+            IWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
             this.teleportController = teleportController;
-            this.backpackSettings = backpackSettings;
-            this.backpackCommandBus = backpackCommandBus;
-            this.backpackEventBus = backpackEventBus;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
-            this.wearableCatalog = wearableCatalog;
-            this.poolsRegistry = poolsRegistry;
-            this.characterPreviewInputEventBus = characterPreviewInputEventBus;
+            this.profileRepository = profileRepository;
+            this.web3Authenticator = web3Authenticator;
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.webBrowser = webBrowser;
+
+            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog);
         }
 
-        public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
+        public override void Dispose()
         {
-            ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
-            ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
+            navmapController?.Dispose();
+            backpackSubPlugin.Dispose();
+        }
+
+        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
+        {
+            ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
+            ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController, webRequestController, mvcManager);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
-            (ProvidedAsset<NFTColorsSO> rarityColorMappings, ProvidedAsset<NftTypeIconSO> categoryIconsMapping, ProvidedAsset<NftTypeIconSO> rarityBackgroundsMapping, ProvidedAsset<NftTypeIconSO> rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
-                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityColorMappings, ct),
-                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
+            var settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+            PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
-            SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            var pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>();
-            var characterPreviewFactory = new CharacterPreviewFactory(poolsRegistry);
-            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog, pageButtonView, poolsRegistry, characterPreviewInputEventBus, characterPreviewFactory);
-            await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            {
+                backpackInitialization.Invoke(ref builder, arguments);
 
-            mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
-                PersistentExplorePanelOpenerController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
-            );
+                mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow)));
 
-            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
+                mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
+                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager)
+                );
+            };
         }
 
-        public void Dispose()
-        {
-            navmapController.Dispose();
-            backpackController.Dispose();
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            backpackController.InjectToWorld(ref builder, arguments.PlayerEntity);
-        }
+        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {
@@ -125,6 +122,9 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject MinimapPrefab;
+
+            [field: SerializeField]
+            public BackpackSettings BackpackSettings { get; private set; }
         }
     }
 }

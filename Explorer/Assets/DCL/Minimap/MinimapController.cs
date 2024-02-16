@@ -46,13 +46,14 @@ namespace DCL.Minimap
             ViewFactoryMethod viewFactory,
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
-            IPlacesAPIService placesAPIService
+            IPlacesAPIService placesAPIService,
+            TrackPlayerPositionSystem system
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
             this.placesAPIService = placesAPIService;
-            SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery));
+            SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
         }
 
         protected override void OnViewInstantiated()
