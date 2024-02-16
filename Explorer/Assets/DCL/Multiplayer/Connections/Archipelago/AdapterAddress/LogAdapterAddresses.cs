@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.AdapterAddress
+namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
 {
     public class LogAdapterAddresses : IAdapterAddresses
     {

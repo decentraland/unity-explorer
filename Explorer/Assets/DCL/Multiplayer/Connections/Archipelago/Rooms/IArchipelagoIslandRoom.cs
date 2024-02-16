@@ -1,6 +1,6 @@
 using LiveKit.Rooms;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
+namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public interface IArchipelagoIslandRoom
     {

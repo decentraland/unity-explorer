@@ -4,7 +4,7 @@ using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Threading;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
+namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
     public interface IArchipelagoLiveConnection
     {

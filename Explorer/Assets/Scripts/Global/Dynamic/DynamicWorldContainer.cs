@@ -28,7 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using LiveKit.Internal.FFIClients.Pools;
 using Unity.Mathematics;
 using UnityEngine;

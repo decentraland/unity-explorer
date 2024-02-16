@@ -1,13 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using System;
 using System.Threading;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.AdapterAddress
+namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
 {
     public class WebRequestsAdapterAddresses : IAdapterAddresses
     {

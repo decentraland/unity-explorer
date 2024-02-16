@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
+namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
     public class LogArchipelagoLiveConnection : IArchipelagoLiveConnection
     {

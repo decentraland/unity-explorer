@@ -7,7 +7,7 @@ using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections
+namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
     public class WebSocketArchipelagoLiveConnection : IArchipelagoLiveConnection
     {

@@ -1,5 +1,5 @@
 using Arch.SystemGroups;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.Systems;
 using LiveKit.Internal.FFIClients;

@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
+namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
     public interface IArchipelagoSignFlow
     {

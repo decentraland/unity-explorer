@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections;
+using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Typing;
@@ -12,7 +12,7 @@ using System;
 using System.Threading;
 using Vector3 = UnityEngine.Vector3;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow
+namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
     public class LiveConnectionArchipelagoSignFlow : IArchipelagoSignFlow
     {

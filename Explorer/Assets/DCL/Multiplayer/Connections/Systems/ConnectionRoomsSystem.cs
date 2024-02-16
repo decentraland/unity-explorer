@@ -1,6 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using ECS.Abstract;
 using ECS.Groups;
 

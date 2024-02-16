@@ -1,9 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.AdapterAddress;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.LiveConnections;
-using DCL.Multiplayer.Connections.Credentials.Archipelago.SignFlow;
+using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
+using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
+using DCL.Multiplayer.Connections.Archipelago.SignFlow;
+using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Typing;
@@ -17,7 +18,7 @@ using System.Buffers;
 using System.Net.WebSockets;
 using System.Threading;
 
-namespace DCL.Multiplayer.Connections.Credentials.Archipelago.Rooms
+namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public class ArchipelagoIslandRoom : IArchipelagoIslandRoom
     {
