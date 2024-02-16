@@ -47,7 +47,7 @@ namespace SceneRuntime.Apis.Modules
                     Profile? profile = await profileRepository.GetAsync(identity.Address, 0, ct);
 
                     if (profile == null)
-                        return new GetUserDataResponse { data = null };
+                        return new GetUserDataResponse { containsData = false };
 
                     Avatar avatar = profile.Avatar;
 
@@ -60,6 +60,7 @@ namespace SceneRuntime.Apis.Modules
 
                         var response = new GetUserDataResponse
                         {
+                            containsData = true,
                             data = new GetUserDataResponse.Data
                             {
                                 version = profile.Version,
@@ -90,7 +91,7 @@ namespace SceneRuntime.Apis.Modules
                 {
                     sceneExceptionsHandler.OnEngineException(e);
 
-                    return new GetUserDataResponse { data = null };
+                    return new GetUserDataResponse { containsData = false };
                 }
             }
 
@@ -102,7 +103,8 @@ namespace SceneRuntime.Apis.Modules
         [Serializable]
         private struct GetUserDataResponse
         {
-            public Data? data;
+            public bool containsData;
+            public Data data;
 
             [Serializable]
             public struct Data
