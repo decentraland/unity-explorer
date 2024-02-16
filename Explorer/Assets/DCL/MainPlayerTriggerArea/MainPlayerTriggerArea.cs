@@ -7,6 +7,9 @@ namespace DCL.MainPlayerTriggerArea
     {
         public BoxCollider boxCollider;
 
+        public Action OnEnteredTrigger;
+        public Action OnExitedTrigger;
+
         public void OnTriggerEnter(Collider other)
         {
             OnEnteredTrigger?.Invoke();
@@ -22,8 +25,5 @@ namespace DCL.MainPlayerTriggerArea
             OnEnteredTrigger = null;
             OnExitedTrigger = null;
         }
-
-        public event Action OnEnteredTrigger;
-        public event Action OnExitedTrigger;
     }
 }

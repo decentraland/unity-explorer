@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            var mainPlayerTriggerAreaHandlerSystem = MainPlayerTriggerAreaHandlerSystem.InjectToWorld(ref builder, mainPlayerTriggerAreaPoolRegistry, mainPlayerAvatarBase);
+            var mainPlayerTriggerAreaHandlerSystem = MainPlayerTriggerAreaHandlerSystem.InjectToWorld(ref builder, mainPlayerTriggerAreaPoolRegistry, mainPlayerAvatarBase, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(mainPlayerTriggerAreaHandlerSystem);
         }
 

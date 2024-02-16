@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System;
 using UnityEngine;
 
@@ -21,18 +22,18 @@ namespace DCL.MainPlayerTriggerArea
     {
         private readonly IComponentPool<MainPlayerTriggerArea> poolRegistry;
         private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        public MainPlayerTriggerAreaHandlerSystem(World world, IComponentPool<MainPlayerTriggerArea> poolRegistry, MainPlayerAvatarBase mainPlayerAvatarBase) : base(world)
+        public MainPlayerTriggerAreaHandlerSystem(World world, IComponentPool<MainPlayerTriggerArea> poolRegistry, MainPlayerAvatarBase mainPlayerAvatarBase, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.poolRegistry = poolRegistry;
             this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
         {
             if (!mainPlayerAvatarBase.Configured) return;
-
-            // TODO: Handle 'current scene' with sceneProvider
 
             UpdateMainPlayerTriggerAreaQuery(World);
         }
@@ -42,6 +43,17 @@ namespace DCL.MainPlayerTriggerArea
         {
             MainPlayerTriggerArea triggerAreaMonoBehaviour = mainPlayerTriggerAreaComponent.MonoBehaviour;
 
+            if (!sceneStateProvider.IsCurrent)
+            {
+                if (triggerAreaMonoBehaviour != null)
+                {
+                    // triggerAreaMonoBehaviour.OnExitedTrigger?.Invoke();
+                    triggerAreaMonoBehaviour.boxCollider.enabled = false;
+                }
+
+                return;
+            }
+
             if (mainPlayerTriggerAreaComponent.IsDirty)
             {
                 mainPlayerTriggerAreaComponent.IsDirty = false;
@@ -49,7 +61,6 @@ namespace DCL.MainPlayerTriggerArea
                 if (triggerAreaMonoBehaviour == null)
                 {
                     triggerAreaMonoBehaviour = poolRegistry.Get();
-                    triggerAreaMonoBehaviour.boxCollider.enabled = true; // TODO: Disable when returning to pool...
                     mainPlayerTriggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
                 }
 
@@ -67,6 +78,9 @@ namespace DCL.MainPlayerTriggerArea
 
             if (transformComponent.Cached.WorldRotation != triggerAreaTransform.rotation)
                 triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
+
+            if (!triggerAreaMonoBehaviour.boxCollider.enabled)
+                triggerAreaMonoBehaviour.boxCollider.enabled = true; // TODO: Disable when returning to pool...
         }
 
         public void FinalizeComponents(in Query query)
