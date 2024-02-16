@@ -103,7 +103,7 @@ namespace DCL.CharacterPreview
                     Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
 
-                    rotation.y += pointerEventData.delta.x * rotationModifier;
+                    rotation.y -= pointerEventData.delta.x * rotationModifier;
                     var quaternion = Quaternion.Euler(rotation);
 
                     characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
