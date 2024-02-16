@@ -148,13 +148,8 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        emptyParcels:
-          m_AssetGUID: 35bedc705b5a3bc48a2801dc62a3f2b1
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        ownedParcels:
-          m_AssetGUID: a160048636f0c6a43b91e491836f503b
+        parsedParcels:
+          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

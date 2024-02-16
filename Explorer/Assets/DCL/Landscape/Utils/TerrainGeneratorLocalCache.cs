@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Landscape.Utils
 {
@@ -84,7 +84,7 @@ namespace DCL.Landscape.Utils
         private static string GetPath(int seed) =>
             Application.persistentDataPath + FILE_NAME + $"_{seed}.data";
 
-        public static TerrainLocalCache Load(int seed, bool force)
+        public static async UniTask<TerrainLocalCache> Load(int seed, bool force)
         {
             var localCache = new TerrainLocalCache();
 
@@ -96,10 +96,13 @@ namespace DCL.Landscape.Utils
             if (!File.Exists(path))
                 return localCache;
 
-            var formatter = new BinaryFormatter();
+            await using (var fileStream = new FileStream(path, FileMode.Open))
+                localCache = await UniTask.RunOnThreadPool(() =>
+                {
+                    var formatter = new BinaryFormatter();
+                    return (TerrainLocalCache)formatter.Deserialize(fileStream);
+                });
 
-            using FileStream fileStream = File.Open(path, FileMode.Open);
-            localCache = (TerrainLocalCache)formatter.Deserialize(fileStream);
             localCache.isValid = true;
 
             return localCache;
@@ -111,14 +114,18 @@ namespace DCL.Landscape.Utils
 
     public class TerrainGeneratorLocalCache
     {
-        private readonly TerrainLocalCache localCache;
+        private TerrainLocalCache localCache;
         private readonly bool isValid;
         private readonly int seed;
 
-        public TerrainGeneratorLocalCache(int seed, bool force)
+        public TerrainGeneratorLocalCache(int seed)
         {
             this.seed = seed;
-            localCache = TerrainLocalCache.Load(seed, force);
+        }
+
+        public async UniTask Load(bool force)
+        {
+            localCache = await TerrainLocalCache.Load(seed, force);
         }
 
         public void Save()
@@ -174,8 +181,7 @@ namespace DCL.Landscape.Utils
 
         public void SaveTreeInstances(int offsetX, int offsetZ, TreeInstance[] instances)
         {
-            TreeInstanceDTO[] flattenedTrees = instances.Select(TreeInstanceDTO.Copy).ToArray();
-            localCache.trees.Add(new int2(offsetX, offsetZ), flattenedTrees);
+            localCache.trees.Add(new int2(offsetX, offsetZ), instances.Select(TreeInstanceDTO.Copy).ToArray());
         }
 
         public void SaveDetailLayer(int offsetX, int offsetZ, int layer, int[,] detailLayer)
@@ -217,8 +223,6 @@ namespace DCL.Landscape.Utils
             int dim2 = array.GetLength(1);
             int dim3 = array.GetLength(2);
 
-            Debug.Log($"{dim1}/{dim2}/{dim3}");
-
             var flattenedArray = new T[dim1 * dim2 * dim3];
 
             for (var i = 0; i < dim1; i++)
@@ -232,7 +236,7 @@ namespace DCL.Landscape.Utils
             return (flattenedArray, dim1, dim2, dim3);
         }
 
-        private static T[,] UnFlatten<T>(T[] flattenedArray, int rowCount, int colCount)
+        private static T[,] UnFlatten<T>(IReadOnlyList<T> flattenedArray, int rowCount, int colCount)
         {
             var array = new T[rowCount, colCount];
 
@@ -246,7 +250,7 @@ namespace DCL.Landscape.Utils
             return array;
         }
 
-        private static T[,,] UnFlatten<T>(T[] flattenedArray, int dim1, int dim2, int dim3)
+        private static T[,,] UnFlatten<T>(IReadOnlyList<T> flattenedArray, int dim1, int dim2, int dim3)
         {
             var array = new T[dim1, dim2, dim3];
 

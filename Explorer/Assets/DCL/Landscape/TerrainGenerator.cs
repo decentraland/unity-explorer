@@ -9,7 +9,6 @@ using DCL.Landscape.Utils;
 using StylizedGrass;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -53,16 +52,18 @@ namespace DCL.Landscape
         private float terrainDataCount;
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGeneratorLocalCache localCache;
+        private readonly bool forceCacheRegen;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
         {
+            this.forceCacheRegen = forceCacheRegen;
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
             noiseGenCache = new NoiseGeneratorCache();
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, forceCacheRegen);
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed);
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -80,6 +81,10 @@ namespace DCL.Landscape
             try
             {
                 timeProfiler.StartMeasure();
+
+                timeProfiler.StartMeasure();
+                await localCache.Load(forceCacheRegen);
+                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Load Local Cache"));
 
                 random = new Random((uint)terrainGenData.seed);
 
@@ -116,6 +121,7 @@ namespace DCL.Landscape
                 {
                     KeyValuePair<int2, TerrainData> generateTerrainDataAsync = await GenerateTerrainDataAsync(x, z, worldSeed, cancellationToken, processReport);
                     terrainDataDictionary.Add(generateTerrainDataAsync.Key, generateTerrainDataAsync.Value);
+                    await UniTask.Yield(cancellationToken);
                 }
 
                 if (withHoles)
@@ -269,6 +275,7 @@ namespace DCL.Landscape
                 {
                     bool[,] holes = localCache.GetHoles(key.x, key.y);
                     value.SetHoles(0, 0, holes);
+                    await UniTask.Yield(cancellationToken);
                 }
 
                 timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles {t}ms"));
