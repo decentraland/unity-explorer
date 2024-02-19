@@ -10,6 +10,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -42,7 +43,7 @@ namespace SceneRunner.Tests
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(),
+                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
                 Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>());
         }
 

@@ -10,6 +10,7 @@ using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
@@ -21,6 +22,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using Microsoft.ClearScript;
+using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -48,6 +50,7 @@ namespace SceneRunner
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
+        private readonly IMVCManager mvcManager;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -58,6 +61,7 @@ namespace SceneRunner
             ISceneEntityFactory entityFactory,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             IEthereumApi ethereumApi,
+            IMVCManager mvcManager,
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache)
         {
@@ -69,6 +73,7 @@ namespace SceneRunner
             this.entityFactory = entityFactory;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.ethereumApi = ethereumApi;
+            this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
         }
@@ -193,6 +198,9 @@ namespace SceneRunner
                 ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
+
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
+            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);

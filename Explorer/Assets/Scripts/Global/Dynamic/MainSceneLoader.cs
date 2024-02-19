@@ -126,6 +126,8 @@ namespace Global.Dynamic
                     identityCache,
                     settings.StartPosition);
 
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager);
+
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();

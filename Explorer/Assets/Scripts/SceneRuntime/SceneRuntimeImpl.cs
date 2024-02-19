@@ -35,6 +35,7 @@ namespace SceneRuntime
         private EngineApiWrapper? engineApi;
         private EthereumApiWrapper? ethereumApi;
         private RuntimeWrapper? runtimeWrapper;
+        private RestrictedActionsAPIWrapper restrictedActionsApi;
         private UserIdentityApiWrapper? userIdentity;
 
         public SceneRuntimeImpl(
@@ -95,6 +96,7 @@ namespace SceneRuntime
             userIdentity?.Dispose();
             engine.Dispose();
             runtimeWrapper?.Dispose();
+            restrictedActionsApi?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -110,6 +112,11 @@ namespace SceneRuntime
         public void RegisterEthereumApi(IEthereumApi ethereumApi)
         {
             engine.AddHostObject("UnityEthereumApi", this.ethereumApi = new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler));
+        }
+
+        public void RegisterRestrictedActionsApi(IRestrictedActionsAPI api)
+        {
+            engine.AddHostObject("UnityRestrictedActionsApi", restrictedActionsApi = new RestrictedActionsAPIWrapper(api));
         }
 
         public void RegisterUserIdentityApi(IProfileRepository profileRepository, IWeb3IdentityCache identityCache)
