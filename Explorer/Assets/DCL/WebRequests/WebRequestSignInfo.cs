@@ -17,5 +17,8 @@ namespace DCL.WebRequests
         {
             this.StringToSign = stringToSign;
         }
+
+        public override string ToString() =>
+            $"WebRequestSignInfo: Content to sign {StringToSign}";
     }
 }
