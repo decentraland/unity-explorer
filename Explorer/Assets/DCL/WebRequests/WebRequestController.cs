@@ -181,7 +181,7 @@ namespace DCL.WebRequests
 
         private void SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
         {
-            using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(signInfo.SignUrl);
+            using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(signInfo.StringToSign);
 
             var i = 0;
 
