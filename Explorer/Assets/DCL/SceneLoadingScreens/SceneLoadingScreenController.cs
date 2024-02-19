@@ -135,17 +135,11 @@ namespace DCL.SceneLoadingScreens
         {
             tips = await sceneTipsProvider.GetAsync(ct);
 
-            List<SceneTips.Tip> list = ListPool<SceneTips.Tip>.Get();
-
             if (tips.Random)
-                tips.Tips.Shuffle(list);
-            else
-                list.AddRange(tips.Tips);
+                tips.Tips.Shuffle();
 
-            foreach (SceneTips.Tip tip in list)
+            foreach (SceneTips.Tip tip in tips.Tips)
                 viewInstance.AddTip(tip);
-
-            ListPool<SceneTips.Tip>.Release(list);
         }
 
         private async UniTask WaitUntilWorldIsLoadedAsync(float progressProportion, CancellationToken ct)
@@ -192,6 +186,7 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.HideAllTips();
             viewInstance.ShowTip(index);
+            viewInstance.Background.color = tips.Tips[index].BackgroundColor;
 
             currentTip = index;
         }
@@ -208,8 +203,16 @@ namespace DCL.SceneLoadingScreens
                 int prevTip = currentTip;
                 currentTip = index;
 
-                await viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct);
-                await viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct);
+                var backgroundTask = viewInstance.Background.DOBlendableColor(tips.Tips[index].BackgroundColor, 1f)
+                                                 .ToUniTask(cancellationToken: ct);
+
+                async UniTask HideAndShow()
+                {
+                    await viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct);
+                    await viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct);
+                }
+
+                await UniTask.WhenAll(backgroundTask, HideAndShow());
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
