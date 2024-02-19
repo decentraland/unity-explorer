@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             var meta = await MetaDataAsync(token);
             Debug.Log($"Send request with meta {meta.ToJson()}");
 
-            var result = await webRequests.SignedFetch(
+            var result = await webRequests.SignedFetchAsync(
                 new CommonArguments(URLAddress.FromString(sceneHandleUrl)),
                 meta.ToJson(),
                 token
@@ -79,6 +79,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ParcelIdAsync(CancellationToken token)
         {
+            //TODO to actual id fetching
+            return "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq";
             var position = characterObject.Position;
             var parcel = ParcelMathHelper.WorldToGridPosition(position);
             var result = await placesAPIService.GetPlaceAsync(parcel, token);
