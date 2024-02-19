@@ -28,6 +28,8 @@ namespace DCL.Multiplayer.Connections.Demo
     {
         [SerializeField] private string aboutUrl = string.Empty;
 
+        public static string TestIdentityCache = "ArchipelagoTestIdentity";
+
         private BaseUnityLoopSystem system = null!;
 
         private void Start()
@@ -53,7 +55,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 new MemoryWeb3IdentityCache(),
                 new PlayerPrefsIdentityProvider(
                     new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(),
-                    "ArchipelagoTestIdentity"
+                    TestIdentityCache
                 )
             );
 
