@@ -442,7 +442,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6ea304ea47121ef49b33f2fc6c32c8e1, type: 2}
+  - {fileID: 2100000, guid: 5aceb99e378a45c44b15a3a83361935e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -901,9 +901,11 @@ MonoBehaviour:
   passedMark: {fileID: 0}
   Incoming: 0
   Passed: 0
+  isInterpolating: 0
+  isExtrapolating: 0
+  isBlending: 0
   interpolationType: 1
   minPositionDelta: 0.01
-  isInterpolating: 0
   endPoint:
     timestamp: 0
     position: {x: 0, y: 0, z: 0}
@@ -913,12 +915,10 @@ MonoBehaviour:
   minSpeed: 0.1
   linearExtrapolationTime: 0.33
   dampedExtrapolationSteps: 2
-  isExtrapolating: 0
   extDuration: 0
   extVelocity: {x: 0, y: 0, z: 0}
   useBlend: 1
   blendExtra: 0
-  isBlending: 0
 --- !u!23 &579518768
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1599,7 +1599,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf6a4b096f4d8f42a37f6f2b5d054de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PackageSentRate: 0.1
+  PackageSentRate: 0.5
   PackagesJitter: 0
   Latency: 1
   LatencyJitter: 0
@@ -1883,28 +1883,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   messageBus: {fileID: 1672578178}
-  receivedMark: {fileID: 57191068}
-  passedMark: {fileID: 367780082}
+  receivedMark: {fileID: 367780082}
+  passedMark: {fileID: 57191068}
   Incoming: 0
   Passed: 0
+  isInterpolating: 0
+  isExtrapolating: 0
+  isBlending: 0
   interpolationType: 1
   minPositionDelta: 0.01
-  isInterpolating: 0
   endPoint:
     timestamp: 0
     position: {x: 0, y: 0, z: 0}
     velocity: {x: 0, y: 0, z: 0}
     acceleration: {x: 0, y: 0, z: 0}
-  useExtrapolation: 0
+  useExtrapolation: 1
   minSpeed: 0.1
   linearExtrapolationTime: 0.33
   dampedExtrapolationSteps: 2
-  isExtrapolating: 0
   extDuration: 0
   extVelocity: {x: 0, y: 0, z: 0}
   useBlend: 0
   blendExtra: 0
-  isBlending: 0
 --- !u!96 &2142167751
 TrailRenderer:
   serializedVersion: 3

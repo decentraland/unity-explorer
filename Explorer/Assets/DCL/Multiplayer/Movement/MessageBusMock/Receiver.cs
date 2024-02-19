@@ -20,12 +20,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [Header("DEBUG")]
         public int Incoming;
         public int Passed;
+        public bool isInterpolating;
+        public bool isExtrapolating;
+        public bool isBlending;
 
         [Header("INTERPOLATION")]
         public InterpolationType interpolationType;
         public float minPositionDelta;
         [Space]
-        public bool isInterpolating;
         public MessageMock endPoint;
 
         [Header("EXTRAPOLATION")]
@@ -33,17 +35,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public float minSpeed = 0.1f;
         public float linearExtrapolationTime = 0.33f;
         public int dampedExtrapolationSteps = 2;
+
         [Space]
-        public bool isExtrapolating;
         public float extDuration;
         public Vector3 extVelocity;
 
         [Header("BLENDING")]
         public bool useBlend;
         public float blendExtra;
-
-        [Space]
-        public bool isBlending;
 
         private bool isFirst = true;
 
@@ -102,7 +101,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 if (endPoint.timestamp > passedMessages[^1].timestamp)
                     Interpolate(start: passedMessages[^1], endPoint);
             }
-            else if (useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty() && passedMessages[^1].velocity.sqrMagnitude > minSpeed)
+            else if (passedMessages.Count > 1 && useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty())
                 StartCoroutine(Extrapolate());
         }
 
@@ -136,7 +135,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             // Debug.Log($"{timeDiff} | {remote.timestamp - passedMessages[^2].timestamp}  |  {local.timestamp - passedMessages[^2].timestamp}");
             // Debug.Log(Vector3.Distance(local.position, remoteOldPosition));
 
-            blendExtra = local.timestamp - passedMessages[^2].timestamp;
+            blendExtra = 0f; //local.timestamp - passedMessages[^2].timestamp;
 
             var t = 0f;
             float totalDuration = timeDiff + blendExtra;
@@ -160,15 +159,17 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 yield return null;
             }
 
-            // transform.position = remote.position;
             AddToPassed(remote);
 
-            AddToPassed(new MessageMock
+            if (blendExtra > 0f)
             {
-                timestamp = remote.timestamp + blendExtra,
-                position = transform.position,
-                velocity = remote.velocity,
-            });
+                AddToPassed(new MessageMock
+                {
+                    timestamp = remote.timestamp + blendExtra,
+                    position = transform.position,
+                    velocity = remote.velocity,
+                });
+            }
 
             isBlending = false;
         }
@@ -191,7 +192,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 // Damp velocity
                 if (extDuration > linearExtrapolationTime && extDuration < maxDuration)
                     extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / maxDuration);
-                else if (extDuration >= maxDuration)
+                else if (extDuration >= maxDuration && extVelocity != Vector3.zero)
                     extVelocity = Vector3.zero;
 
                 // Apply extrapolation
@@ -218,17 +219,19 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             isInterpolating = true;
 
-            if (Vector3.Distance(start.position, endPoint.position) > minPositionDelta)
+            float timeDiff = end.timestamp - start.timestamp;
+
+            float correctionTime = incomingMessages.Count * Time.smoothDeltaTime;
+            float totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 3f);
+
+            var t = 0f;
+
+            if (CannotSkip())
             {
-                float timeDiff = end.timestamp - start.timestamp;
-                float correctionTime = Mathf.Min(timeDiff / 2f, incomingMessages.Count * Time.smoothDeltaTime);
-                float totalDuration = timeDiff - correctionTime;
-
-                var t = 0f;
-
                 while (t < totalDuration)
                 {
                     t += Time.deltaTime;
+
                     transform.position = interpolation(start, end, t, totalDuration);
                     yield return null;
                 }
@@ -238,6 +241,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             AddToPassed(end);
 
             isInterpolating = false;
+
+            // we can skip interpolation between 2 equal positions only if we have more messages in a queue (to not fall down to pure extrapolation approach)
+            bool CannotSkip() =>
+                incomingMessages.Count == 0 || Vector3.Distance(start.position, endPoint.position) > minPositionDelta;
         }
     }
 }
