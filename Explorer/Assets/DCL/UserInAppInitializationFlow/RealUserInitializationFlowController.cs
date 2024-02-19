@@ -34,7 +34,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
         private readonly Vector2Int startParcel;
-        private readonly bool disableLandscape;
+        private readonly bool enableLandscape;
         private readonly ILandscapeInitialization landscapeInitialization;
 
         private AsyncLoadProcessReport? loadReport;
@@ -44,7 +44,7 @@ namespace DCL.UserInAppInitializationFlow
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             Vector2Int startParcel,
-            bool disableLandscape,
+            bool enableLandscape,
             ILandscapeInitialization landscapeInitialization)
         {
             this.teleportController = teleportController;
@@ -52,7 +52,7 @@ namespace DCL.UserInAppInitializationFlow
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.startParcel = startParcel;
-            this.disableLandscape = disableLandscape;
+            this.enableLandscape = enableLandscape;
             this.landscapeInitialization = landscapeInitialization;
         }
 
@@ -83,7 +83,7 @@ namespace DCL.UserInAppInitializationFlow
 
             CreateAvatarPromise(world, ownPlayerEntity, ownProfile);
 
-            if (!disableLandscape)
+            if (enableLandscape)
                 await LoadLandscapeAsync(ct);
 
             await TeleportToSpawnPointAsync(ct);

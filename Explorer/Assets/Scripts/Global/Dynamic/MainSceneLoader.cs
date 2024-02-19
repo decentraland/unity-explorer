@@ -40,7 +40,7 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
-        [SerializeField] private bool disableLandscape;
+        [SerializeField] private bool enableLandscape;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -91,7 +91,7 @@ namespace Global.Dynamic
         showLoading = true
     #endif
 
-    disableLandscape = false;
+    enableLandscape = true;
 #endif
 
             try
@@ -136,7 +136,7 @@ namespace Global.Dynamic
                     web3Authenticator,
                     identityCache,
                     settings.StartPosition,
-                    disableLandscape);
+                    enableLandscape);
 
                 if (!isLoaded)
                 {

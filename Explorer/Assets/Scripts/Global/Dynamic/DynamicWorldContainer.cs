@@ -79,7 +79,7 @@ namespace Global.Dynamic
             IWeb3VerifiedAuthenticator web3Authenticator,
             IWeb3IdentityCache web3IdentityCache,
             Vector2Int startParcel,
-            bool disableLandscape)
+            bool enableLandscape)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -117,7 +117,7 @@ namespace Global.Dynamic
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
-                container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel, disableLandscape, landscapePlugin);
+                container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel, enableLandscape, landscapePlugin);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
