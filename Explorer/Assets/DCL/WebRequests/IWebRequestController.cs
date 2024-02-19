@@ -6,6 +6,7 @@ using DCL.WebRequests.AudioClips;
 using DCL.WebRequests.GenericHead;
 using System;
 using System.Threading;
+using Utility.Time;
 
 namespace DCL.WebRequests
 {
@@ -63,7 +64,7 @@ namespace DCL.WebRequests
             CancellationToken ct
         )
         {
-            var unixTimestamp = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            int unixTimestamp = DateTime.UtcNow.UnixTime();
             string path = new Uri(commonArguments.URL).AbsolutePath;
             string payload = $"post:{path}:{unixTimestamp}:{jsonMetaData}".ToLower();
 
