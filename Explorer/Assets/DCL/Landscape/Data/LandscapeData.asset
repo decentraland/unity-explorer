@@ -12,10 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea8585d6b62c43dc930571ffc5cd35f8, type: 3}
   m_Name: LandscapeData
   m_EditorClassIdentifier: 
-  density: 16
-  assets:
-  - {fileID: 11400000, guid: 7ec3e3a6c5d070242a00ad458969f6d9, type: 2}
-  - {fileID: 11400000, guid: 4040beb28607f7a4ba895a7b0bd80cab, type: 2}
-  groundTile: {fileID: 585727946956803367, guid: 5c1b4141bc08ddc42a5bbbdda2b72b92, type: 3}
+  showSatelliteView: 1
+  drawTerrain: 1
+  drawTerrainDetails: 1
   mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
   terrainData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}

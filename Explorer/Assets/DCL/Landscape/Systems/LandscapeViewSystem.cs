@@ -31,6 +31,8 @@ namespace DCL.Landscape.Systems
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
         private bool isViewRendered;
+        private readonly List<Renderer> satelliteRenderers = new ();
+        private bool satelliteRenderersEnabled = true;
 
         private LandscapeViewSystem(World world,
             LandscapeData landscapeData,
@@ -49,7 +51,21 @@ namespace DCL.Landscape.Systems
             if (textureContainer.IsComplete() && !isViewRendered)
                 InitializeSatelliteView();
 
-            if (terrainGenerator.IsTerrainGenerated()) { UpdateTerrainVisibilityQuery(World); }
+            if (terrainGenerator.IsTerrainGenerated())
+                UpdateTerrainVisibilityQuery(World);
+
+            UpdateSatelliteView();
+        }
+
+        private void UpdateSatelliteView()
+        {
+            if (satelliteRenderersEnabled != landscapeData.showSatelliteView)
+            {
+                satelliteRenderersEnabled = landscapeData.showSatelliteView;
+
+                foreach (Renderer satelliteRenderer in satelliteRenderers)
+                    satelliteRenderer.forceRenderingOff = !satelliteRenderersEnabled;
+            }
         }
 
         [Query]
@@ -66,8 +82,8 @@ namespace DCL.Landscape.Systems
                 Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
                 bool isVisible = GeometryUtility.TestPlanesAABB(planes, bounds);
 
-                terrain.drawHeightmap = isVisible;
-                terrain.drawTreesAndFoliage = isVisible;
+                terrain.drawHeightmap = isVisible && landscapeData.drawTerrain;
+                terrain.drawTreesAndFoliage = isVisible && landscapeData.drawTerrainDetails;
             }
         }
 
@@ -78,8 +94,6 @@ namespace DCL.Landscape.Systems
             var worldBounds = new Bounds(localBounds.center + terrainPosition, localBounds.size);
             return worldBounds;
         }
-
-
 
         private void InitializeSatelliteView()
         {
@@ -109,6 +123,7 @@ namespace DCL.Landscape.Systems
                     Renderer satelliteRenderer = groundTile.GetComponent<Renderer>();
                     satelliteRenderer.SetPropertyBlock(materialPropertyBlock);
                     groundTile.name = $"SatelliteView {x},{y}";
+                    satelliteRenderers.Add(satelliteRenderer);
                 }
             }
 

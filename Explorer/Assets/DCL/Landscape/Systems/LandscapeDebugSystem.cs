@@ -4,10 +4,12 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.Landscape.Settings;
 using ECS.Abstract;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.Landscape.Systems
 {
@@ -17,13 +19,15 @@ namespace DCL.Landscape.Systems
     {
         private const float UNITY_DEFAULT_LOD_BIAS = 0.8f;
         private readonly RealmPartitionSettingsAsset realmPartitionSettings;
+        private readonly LandscapeData landscapeData;
         private readonly ElementBinding<int> lodBias;
         private readonly ElementBinding<int> detailDensity;
         private readonly ElementBinding<int> detailDistance;
 
-        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, RealmPartitionSettingsAsset realmPartitionSettings) : base(world)
+        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
+            this.landscapeData = landscapeData;
 
             lodBias = new ElementBinding<int>(100);
             detailDensity = new ElementBinding<int>(100);
@@ -33,7 +37,25 @@ namespace DCL.Landscape.Systems
                         .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
                         .AddIntSliderField("LOD bias %", lodBias, 1, 150)
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
-                        .AddIntSliderField("Detail Distance", detailDistance, 0, 300);
+                        .AddIntSliderField("Detail Distance", detailDistance, 0, 300)
+                        .AddToggleField("Terrain", OnTerrainToggle, landscapeData.drawTerrain)
+                        .AddToggleField("Details", OnDetailToggle, landscapeData.drawTerrainDetails)
+                        .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.showSatelliteView);
+        }
+
+        private void OnTerrainToggle(ChangeEvent<bool> evt)
+        {
+            landscapeData.drawTerrain = evt.newValue;
+        }
+
+        private void OnDetailToggle(ChangeEvent<bool> evt)
+        {
+            landscapeData.drawTerrainDetails = evt.newValue;
+        }
+
+        private void OnSatelliteToggle(ChangeEvent<bool> evt)
+        {
+            landscapeData.showSatelliteView = evt.newValue;
         }
 
         private void OnLoadRadiusConfirm(int value)
