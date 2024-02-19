@@ -10,10 +10,10 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.PlacesAPIService;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -87,7 +87,13 @@ namespace DCL.Multiplayer.Connections.Demo
             );
 
             var character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
-            var gateKeeperRoom = new GateKeeperSceneRoom(new WebRequestController(identityCache), identityCache);
+            var webRequests = new WebRequestController(identityCache);
+
+            var gateKeeperRoom = new GateKeeperSceneRoom(
+                webRequests,
+                character,
+                new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests))
+            );
 
             system = new ConnectionRoomsSystem(world, new IArchipelagoIslandRoom.Fake(), gateKeeperRoom);
 
