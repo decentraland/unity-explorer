@@ -12,6 +12,13 @@ namespace CommunicationData.URLHelpers
             this.urn = urn;
         }
 
+        public URN(int urn)
+        {
+            this.urn = urn.ToString();
+        }
+
+        public bool Equals(int other) => Equals(other.ToString());
+
         public bool Equals(URN other) =>
             Equals(other.urn);
 
@@ -96,6 +103,9 @@ namespace CommunicationData.URLHelpers
 
             return index != -1 ? urn[..index] : urn;
         }
+
+        public static implicit operator URN(int urn) =>
+            urn.ToString();
 
         public static implicit operator string(URN urn) =>
             urn.urn;

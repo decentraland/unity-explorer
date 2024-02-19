@@ -1,0 +1,162 @@
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
+using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Landscape.Interface;
+using DCL.ParcelsService;
+using DCL.Profiles;
+using DCL.SceneLoadingScreens;
+using DCL.Web3.Identities;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
+using MVC;
+using System;
+using System.Threading;
+using UnityEngine;
+using Avatar = DCL.Profiles.Avatar;
+using LoadAvatarPromise = ECS.StreamableLoading.Common.AssetPromise<
+    DCL.Profiles.Profile,
+    DCL.Profiles.GetProfileIntention>;
+
+namespace DCL.UserInAppInitializationFlow
+{
+    public class RealUserInitializationFlowController : IUserInAppInitializationFlow
+    {
+        private const float LOADING_PROGRESS_PROFILE = 0.1f;
+        private const float LOADING_PROGRESS_LANDSCAPE = 0.9f;
+        private const float LOADING_PROGRESS_TELEPORT = 0.95f;
+        private const float LOADING_PROGRESS_COMPLETE = 1f;
+
+        private readonly ITeleportController teleportController;
+        private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileRepository profileRepository;
+        private readonly Vector2Int startParcel;
+        private readonly bool disableLandscape;
+        private readonly ILandscapeInitialization landscapeInitialization;
+
+        private AsyncLoadProcessReport? loadReport;
+
+        public RealUserInitializationFlowController(ITeleportController teleportController,
+            IMVCManager mvcManager,
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileRepository profileRepository,
+            Vector2Int startParcel,
+            bool disableLandscape,
+            ILandscapeInitialization landscapeInitialization)
+        {
+            this.teleportController = teleportController;
+            this.mvcManager = mvcManager;
+            this.web3IdentityCache = web3IdentityCache;
+            this.profileRepository = profileRepository;
+            this.startParcel = startParcel;
+            this.disableLandscape = disableLandscape;
+            this.landscapeInitialization = landscapeInitialization;
+        }
+
+        public async UniTask ExecuteAsync(bool showAuthentication,
+            bool showLoading,
+            World world,
+            Entity playerEntity,
+            CancellationToken ct)
+        {
+            loadReport = AsyncLoadProcessReport.Create();
+
+            if (showAuthentication)
+                await ShowAuthenticationScreenAsync(ct);
+
+            UniTask showLoadingScreenAsyncTask = LoadCharacterAndWorldAsync(world, playerEntity, ct);
+
+            if (showLoading)
+                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), showLoadingScreenAsyncTask);
+            else
+                await showLoadingScreenAsyncTask;
+        }
+
+        private async UniTask LoadCharacterAndWorldAsync(World world, Entity ownPlayerEntity, CancellationToken ct)
+        {
+            Profile ownProfile = await GetOwnProfileAsync(ct);
+
+            loadReport!.ProgressCounter.Value = LOADING_PROGRESS_PROFILE;
+
+            CreateAvatarPromise(world, ownPlayerEntity, ownProfile);
+
+            if (!disableLandscape)
+                await LoadLandscapeAsync(ct);
+
+            await TeleportToSpawnPointAsync(ct);
+
+            loadReport.ProgressCounter.Value = LOADING_PROGRESS_COMPLETE;
+            loadReport.CompletionSource.TrySetResult();
+        }
+
+        private async UniTask LoadLandscapeAsync(CancellationToken ct)
+        {
+            var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+            await UniTask.WhenAny(landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_LANDSCAPE),
+                landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
+        }
+
+        private void CreateAvatarPromise(World world, Entity playerEntity, Profile profile)
+        {
+            const int VERSION = 0;
+
+            // Add the profile into the player entity so it will create the avatar in world
+            var promise = LoadAvatarPromise.Create(world,
+                new GetProfileIntention(profile.UserId, VERSION,
+                    new CommonLoadingArguments($"profiles/{profile.UserId}?version={VERSION}")),
+                PartitionComponent.TOP_PRIORITY);
+
+            ref LoadAvatarPromise previousPromise = ref world.TryGetRef<LoadAvatarPromise>(playerEntity, out bool found);
+
+            if (found)
+            {
+                previousPromise.ForgetLoading(world);
+                world.Set(playerEntity, promise);
+            }
+            else
+                world.Add(playerEntity, promise);
+        }
+
+        private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
+        {
+            if (web3IdentityCache.Identity == null) return CreateRandomProfile();
+
+            return await profileRepository.GetAsync(web3IdentityCache.Identity.Address, 0, ct)
+                   ?? CreateRandomProfile();
+        }
+
+        private Profile CreateRandomProfile() =>
+            new (web3IdentityCache.Identity?.Address ?? "fakeUserId", "Player",
+                new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor()));
+
+        private async UniTask TeleportToSpawnPointAsync(CancellationToken ct)
+        {
+            var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_TELEPORT),
+                teleportController.TeleportToSceneSpawnPointAsync(
+                    startParcel, teleportLoadReport, ct));
+        }
+
+        private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
+        {
+            var timeout = TimeSpan.FromMinutes(2);
+
+            await mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)), ct);
+        }
+
+        private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
+        {
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+        }
+    }
+}

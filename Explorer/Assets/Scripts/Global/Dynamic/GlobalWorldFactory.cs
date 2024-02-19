@@ -1,14 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
-using CRDT;
-using CrdtEcsBridge.Components;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.Character;
-using DCL.Character.Components;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -29,15 +27,11 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
-using ECS.Unity.Transforms.Components;
-using Ipfs;
 using SceneRunner;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD.Systems;
-using DCL.ResourcesUnloading;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -100,7 +94,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public (GlobalWorld world, Entity playerEntity) Create(ISceneFactory sceneFactory,
+        public (GlobalWorld, Entity) Create(ISceneFactory sceneFactory,
             IEmptyScenesWorldFactory emptyScenesWorldFactory)
         {
             var world = World.Create();
@@ -119,7 +113,7 @@ namespace Global.Dynamic
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(webRequestController, assetBundlesURL),
@@ -139,8 +133,10 @@ namespace Global.Dynamic
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings);
+
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
@@ -178,9 +174,10 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            staticContainer.GlobalWorld.SetWorld(world);
+            staticContainer.GlobalWorldProxy.SetWorld(world);
 
             return (globalWorld, playerEntity);
+            ;
         }
     }
 }

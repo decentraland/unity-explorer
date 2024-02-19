@@ -1,4 +1,5 @@
-﻿using DCL.Landscape.Settings;
+﻿using DCL.Landscape.Config;
+using DCL.Landscape.Settings;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -11,8 +12,8 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(LandscapeSettings))] [field: Space]
         [field: SerializeField] public StaticSettings.RealmPartitionSettingsRef realmPartitionSettings;
         [field: SerializeField] public LandscapeDataRef landscapeData;
-        [field: SerializeField] public ParcelsRef emptyParcels;
-        [field: SerializeField] public ParcelsRef ownedParcels;
+        [field: SerializeField] public ParcelsRef parsedParcels;
+
 
         [Serializable]
         public class LandscapeDataRef : AssetReferenceT<LandscapeData>
@@ -21,7 +22,7 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
-        public class ParcelsRef : AssetReferenceT<TextAsset>
+        public class ParcelsRef : AssetReferenceT<ParcelData>
         {
             public ParcelsRef(string guid) : base(guid) { }
         }

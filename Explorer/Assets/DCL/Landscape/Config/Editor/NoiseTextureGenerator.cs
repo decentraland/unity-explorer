@@ -84,7 +84,7 @@ namespace DCL.Landscape.Config.Editor
 
                 if (!isRendered)
                 {
-                    resultBuffer.SetData(GetResultNoise());
+                    resultBuffer.SetData(GetResultNoise(textureSize));
                     targetShader.SetBuffer(0, NoiseEditorUtils.CS_NOISE_BUFFER, resultBuffer);
                     targetShader.SetFloat(NoiseEditorUtils.CS_WIDTH, textureSize);
                     targetShader.Dispatch(0, textureSize / 8, textureSize / 8, 1);
@@ -95,7 +95,7 @@ namespace DCL.Landscape.Config.Editor
             DrawNoise();
         }
 
-        protected abstract NativeArray<float> GetResultNoise();
+        protected abstract NativeArray<float> GetResultNoise(int textureSize);
 
         protected abstract JobHandle ScheduleJobs(int textureSize);
 

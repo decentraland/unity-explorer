@@ -24,6 +24,16 @@ MonoBehaviour:
       Severity: 4
     - Category: UNSPECIFIED
       Severity: 1
+    - Category: LANDSCAPE
+      Severity: 3
+    - Category: LANDSCAPE
+      Severity: 2
+    - Category: LANDSCAPE
+      Severity: 0
+    - Category: LANDSCAPE
+      Severity: 4
+    - Category: LANDSCAPE
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE

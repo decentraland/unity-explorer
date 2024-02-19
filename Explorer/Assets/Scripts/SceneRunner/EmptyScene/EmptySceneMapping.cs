@@ -1,4 +1,5 @@
-﻿using Ipfs;
+﻿using DCL.Ipfs;
+using Ipfs;
 using System;
 using System.Collections.Generic;
 
@@ -7,8 +8,8 @@ namespace SceneRunner.EmptyScene
     [Serializable]
     public class EmptySceneMapping
     {
-        public IpfsTypes.ContentDefinition grass;
-        public IpfsTypes.ContentDefinition environment;
+        public ContentDefinition grass;
+        public ContentDefinition environment;
     }
 
     [Serializable]

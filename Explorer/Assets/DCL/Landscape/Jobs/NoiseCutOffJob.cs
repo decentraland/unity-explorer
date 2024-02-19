@@ -10,7 +10,7 @@ namespace DCL.Landscape.Jobs
         private NativeArray<float> targetArray;
         [ReadOnly] private readonly float finalCutOff;
 
-        public NoiseCutOffJob(ref NativeArray<float> targetArray, float finalCutOff)
+        public NoiseCutOffJob(NativeArray<float> targetArray, float finalCutOff)
         {
             this.targetArray = targetArray;
             this.finalCutOff = finalCutOff;

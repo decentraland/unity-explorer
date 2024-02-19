@@ -1,19 +1,35 @@
-﻿using DCL.Optimization.Pools;
-using DCL.SDKComponents.SceneUI.Classes;
-using System;
+﻿using DCL.SDKComponents.SceneUI.Classes;
+using DCL.SDKComponents.SceneUI.Utils;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
-    public struct UIInputComponent: IPoolableComponentProvider<DCLInputText>
+    public class UIInputComponent
     {
-        public DCLInputText Input;
+        public readonly TextField TextField = new ();
+        public readonly TextFieldPlaceholder Placeholder = new ();
+        public bool IsOnValueChangedTriggered;
+        public bool IsOnSubmitTriggered;
 
-        DCLInputText IPoolableComponentProvider<DCLInputText>.PoolableComponent => Input;
-        Type IPoolableComponentProvider<DCLInputText>.PoolableComponentType => typeof(DCLInputText);
+        internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
+        internal EventCallback<KeyDownEvent> currentOnSubmit;
+
+        public void Initialize(string textFieldName, string styleClass)
+        {
+            TextField.name = textFieldName;
+            TextField.AddToClassList(styleClass);
+            TextField.pickingMode = PickingMode.Position;
+            Placeholder.SetupTextField(TextField);
+
+            IsOnValueChangedTriggered = false;
+            IsOnSubmitTriggered = false;
+            this.RegisterInputCallbacks();
+        }
 
         public void Dispose()
         {
-            Input.Dispose();
+            this.UnregisterInputCallbacks();
+            Placeholder.Dispose();
         }
     }
 }

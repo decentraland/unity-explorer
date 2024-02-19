@@ -100,6 +100,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Birch01 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: b1bb6ffb23f15bf4fbb9885bbeb2208f, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.07566532
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: b1bb6ffb23f15bf4fbb9885bbeb2208f, type: 3}
+      propertyPath: m_LODs.Array.data[3].screenRelativeHeight
+      value: 0.021002166
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6367646867474405593, guid: b1bb6ffb23f15bf4fbb9885bbeb2208f, type: 3}
     m_RemovedGameObjects:

@@ -270,14 +270,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ebb9ffde2df4ff4936c991393d7bcb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  clearCache: 0
   worldSeed: 111
-  digHoles: 0
+  digHoles: 1
   centerTerrain: 1
   hideTrees: 0
   hideDetails: 0
-  genData: {fileID: 11400000, guid: 9b0a048c7455730458966d5e5bc725c4, type: 2}
-  emptyParcelsData: {fileID: 4900000, guid: 35bedc705b5a3bc48a2801dc62a3f2b1, type: 3}
-  ownedParcelsData: {fileID: 4900000, guid: a160048636f0c6a43b91e491836f503b, type: 3}
+  genData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
+  parcelData: {fileID: 11400000, guid: 86bf0204cf3bb75429342452a2a460af, type: 2}
 --- !u!4 &1359845491
 Transform:
   m_ObjectHideFlags: 0

@@ -26,14 +26,14 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IEmptyScenesWorldFactory emptyScenesWorldFactory;
         private readonly URLAddress mappingURL;
 
-        private EmptyScenesWorld sharedWorld;
+        private EmptyScenesWorld? sharedWorld;
 
         /// <summary>
         ///     Indicates that mapping could not be loaded and the whole logic will be skipped
         /// </summary>
         public bool Inactive { get; private set; }
 
-        internal EmptySceneData emptySceneData { get; private set; }
+        internal EmptySceneData? emptySceneData { get; private set; }
 
         public LoadEmptySceneSystemLogic(
             IWebRequestController webRequestController,
@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                     if (sharedWorld == null)
                     {
-                        sharedWorld = emptyScenesWorldFactory.Create(emptySceneData);
+                        sharedWorld = emptyScenesWorldFactory.Create(emptySceneData!);
                         sharedWorld.SystemGroupWorld.Initialize();
                     }
                 }
@@ -84,11 +84,11 @@ namespace ECS.SceneLifeCycle.Systems
 
             // pick one of available scenes randomly based on coordinates
             Vector2Int parcel = intent.DefinitionComponent.Parcels[0];
-            EmptySceneMapping choice = emptySceneData.Mappings[Mathf.Abs(parcel.GetHashCode()) % emptySceneData.Mappings.Count];
+            EmptySceneMapping choice = emptySceneData!.Mappings[Mathf.Abs(parcel.GetHashCode()) % emptySceneData.Mappings.Count];
 
             var emptyScene = EmptySceneFacade.Create(
                 new EmptySceneFacade.Args(sharedWorld.FakeEntitiesMap, sharedWorld.EcsWorld, world, choice, componentPoolsRegistry,
-                    ParcelMathHelper.GetPositionByParcelPosition(parcel), partition, sharedWorld.MutexSync));
+                    ParcelMathHelper.GetPositionByParcelPosition(parcel), new SceneShortInfo(parcel, "EMPTY SCENE"), partition, sharedWorld.MutexSync));
 
             return emptyScene;
         }

@@ -107,21 +107,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 32f2b877400526d4cbf648ba5c5064b4
-    m_Address: Assets/DCL/Landscape/Data/LandscapeData.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 35bedc705b5a3bc48a2801dc62a3f2b1
-    m_Address: Assets/DCL/Landscape/Data/EmptyParcels.txt
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a160048636f0c6a43b91e491836f503b
-    m_Address: Assets/DCL/Landscape/Data/OwnedParcels.txt
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37fc70977aa8e4023aadf578a73db58b
     m_Address: PageButton
     m_ReadOnly: 0
@@ -204,6 +189,36 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
     m_Address: LODSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9e9bf5fb9ee9c452f858e423651a52ca
+    m_Address: ChatEntry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6afb31861b85441b6ab2b988819bb96a
+    m_Address: ChatEntryConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fabfcdf867b484665b44c8a158bd8eb4
+    m_Address: NameTag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd2233d5950ee4b4c96fc19f60d8c582
+    m_Address: NametagParent
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32f2b877400526d4cbf648ba5c5064b4
+    m_Address: Assets/DCL/Landscape/Data/LandscapeData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86bf0204cf3bb75429342452a2a460af
+    m_Address: Assets/DCL/Landscape/Data/ParcelData.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -14,6 +14,7 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Ipfs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Web3;
 using ECS.Prioritization.Components;
@@ -67,13 +68,13 @@ namespace SceneRunner
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
+            var sceneDefinition = new SceneEntityDefinition();
 
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl[(lastSlash + 1)..];
             var baseUrl = URLDomain.FromString(jsCodeUrl[..(lastSlash + 1)]);
 
-            sceneDefinition.metadata = new IpfsTypes.SceneMetadata
+            sceneDefinition.metadata = new SceneMetadata
             {
                 main = mainScenePath,
                 runtimeVersion = "7",
@@ -96,9 +97,9 @@ namespace SceneRunner
             using var request = UnityWebRequest.Get(rawSceneJsonPath);
             await request.SendWebRequest().WithCancellation(ct);
 
-            IpfsTypes.SceneMetadata sceneMetadata = JsonUtility.FromJson<IpfsTypes.SceneMetadata>(request.downloadHandler.text);
+            SceneMetadata sceneMetadata = JsonUtility.FromJson<SceneMetadata>(request.downloadHandler.text);
 
-            var sceneDefinition = new IpfsTypes.SceneEntityDefinition
+            var sceneDefinition = new SceneEntityDefinition
             {
                 id = directoryName,
                 metadata = sceneMetadata,

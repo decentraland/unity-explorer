@@ -2,8 +2,8 @@
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Landscape.Components;
 using ECS.ComponentsPooling;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
@@ -26,6 +26,8 @@ namespace SceneRunner.EmptyScene
 
         private Args args;
 
+        public SceneShortInfo Info => args.ShortInfo;
+
         internal Entity sceneRoot { get; private set; } = Entity.Null;
 
         //internal Entity grass { get; private set; } = Entity.Null;
@@ -33,10 +35,8 @@ namespace SceneRunner.EmptyScene
 
         private EmptySceneFacade() { }
 
-        public async UniTask DisposeAsync()
+        public void Dispose()
         {
-            await UniTask.SwitchToThreadPool();
-
             using (MutexSync.Scope _ = args.MutexSync.GetScope())
             {
                 // Remove from map
@@ -50,7 +50,13 @@ namespace SceneRunner.EmptyScene
 
             POOL.Release(this);
 
-            args = default;
+            args = default(Args);
+        }
+
+        public async UniTask DisposeAsync()
+        {
+            await UniTask.SwitchToThreadPool();
+            Dispose();
         }
 
         public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
@@ -136,6 +142,7 @@ namespace SceneRunner.EmptyScene
             public readonly EmptySceneMapping Mapping;
             public readonly IComponentPoolsRegistry ComponentPools;
             public readonly Vector3 BasePosition;
+            public readonly SceneShortInfo ShortInfo;
             public readonly IPartitionComponent ParentPartition;
             public readonly MutexSync MutexSync;
 
@@ -146,6 +153,7 @@ namespace SceneRunner.EmptyScene
                 EmptySceneMapping mapping,
                 IComponentPoolsRegistry componentPools,
                 Vector3 basePosition,
+                SceneShortInfo shortInfo,
                 IPartitionComponent parentPartition,
                 MutexSync mutexSync)
             {
@@ -155,6 +163,7 @@ namespace SceneRunner.EmptyScene
                 Mapping = mapping;
                 ComponentPools = componentPools;
                 BasePosition = basePosition;
+                ShortInfo = shortInfo;
                 ParentPartition = parentPartition;
                 MutexSync = mutexSync;
             }
