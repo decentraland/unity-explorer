@@ -167,9 +167,9 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
-        ///     CameraModeArea SDK component
+        ///     Avatars Trigger Area for SDK components (e.g. CameraModeArea, AvatarModifierArea)
         /// </summary>
-        public const string PLAYER_TRIGGER_AREA = nameof(PLAYER_TRIGGER_AREA);
+        public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

@@ -3,20 +3,22 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.CharacterCamera;
+using DCL.CharacterTriggerArea.Components;
+using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.MainPlayerTriggerArea;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateBefore(typeof(MainPlayerTriggerAreaHandlerSystem))]
+    [UpdateBefore(typeof(CharacterTriggerAreaHandlerSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
@@ -38,16 +40,17 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         }
 
         [Query]
-        [None(typeof(MainPlayerTriggerAreaComponent))]
+        [None(typeof(CharacterTriggerAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
             var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
 
-            World.Add(entity, new MainPlayerTriggerAreaComponent
+            World.Add(entity, new CharacterTriggerAreaComponent
             {
                 areaSize = pbCameraModeArea.Area,
-                OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode),
+                targetOnlyMainPlayer = true,
+                OnEnteredTrigger = avatarCo => OnEnteredCameraModeArea(targetCameraMode),
                 OnExitedTrigger = OnExitedCameraModeArea,
                 IsDirty = true,
             });
@@ -55,15 +58,15 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref MainPlayerTriggerAreaComponent mainPlayerTriggerAreaComponent)
+        private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
         {
             if (!pbCameraModeArea.IsDirty) return;
 
             var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
-            mainPlayerTriggerAreaComponent.OnEnteredTrigger = () => OnEnteredCameraModeArea(targetCameraMode);
-            mainPlayerTriggerAreaComponent.OnExitedTrigger = OnExitedCameraModeArea;
-            mainPlayerTriggerAreaComponent.areaSize = pbCameraModeArea.Area;
-            mainPlayerTriggerAreaComponent.IsDirty = true;
+            characterTriggerAreaComponent.OnEnteredTrigger = avatarCollider => OnEnteredCameraModeArea(targetCameraMode);
+            characterTriggerAreaComponent.OnExitedTrigger = OnExitedCameraModeArea;
+            characterTriggerAreaComponent.areaSize = pbCameraModeArea.Area;
+            characterTriggerAreaComponent.IsDirty = true;
         }
 
         private void OnEnteredCameraModeArea(CameraMode targetCameraMode)
@@ -74,7 +77,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             camera.AddCameraInputLock();
         }
 
-        private void OnExitedCameraModeArea()
+        private void OnExitedCameraModeArea(Collider avatarCollider)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
 

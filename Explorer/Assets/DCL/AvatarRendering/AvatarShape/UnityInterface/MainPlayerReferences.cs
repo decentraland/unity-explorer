@@ -1,4 +1,4 @@
-using DCL.Character.Components;
+
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface

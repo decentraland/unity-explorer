@@ -17,14 +17,14 @@ MonoBehaviour:
   - rid: 1268264040174714880
   - rid: 7387084847885844480
   - rid: 4753057106328551424
-  - rid: 847852471823106050
+  - rid: 847852549536219136
   references:
     version: 2
     RefIds:
-    - rid: 847852471823106050
-      type: {class: MainPlayerTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 847852549536219136
+      type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        MainPlayerTriggerAreaPrefab:
+        CharacterTriggerAreaPrefab:
           m_AssetGUID: c8e610a7440c44bfc88cfdb9d738cfc6
           m_SubObjectName: 
           m_SubObjectType: 
