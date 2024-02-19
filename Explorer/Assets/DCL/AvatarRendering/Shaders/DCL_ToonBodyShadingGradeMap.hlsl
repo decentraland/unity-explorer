@@ -219,7 +219,7 @@ float4 fragShadingGradeMap(VertexOutput i, half facing : VFACE) : SV_TARGET
         }
 
         int nMatCap_SamplerArr_ID = _MatCap_SamplerArr_ID;
-        float4 _MatCap_Sampler_var = SAMPLE_MATCAP(float4(TRANSFORM_TEX(_Rot_MatCapUV_var, _MatCap_Sampler), nMatCap_SamplerArr_ID, _BlurLevelMatcap));
+        float4 _MatCap_Sampler_var = SAMPLE_MATCAP(TRANSFORM_TEX(_Rot_MatCapUV_var, _MatCap_Sampler), nMatCap_SamplerArr_ID, _BlurLevelMatcap));
         int nSet_MatcapMaskArr_ID = _Set_MatcapMaskArr_ID;
         float4 _Set_MatcapMask_var = SAMPLE_SET_MATCAPMASK(TRANSFORM_TEX(Set_UV0, _Set_MatcapMask), nSet_MatcapMaskArr_ID);
 

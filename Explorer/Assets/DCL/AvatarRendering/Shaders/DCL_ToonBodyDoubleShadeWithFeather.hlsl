@@ -127,7 +127,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         float3 Set_BaseColor = lerp( (_BaseColor.rgb*_MainTex_var.rgb), ((_BaseColor.rgb*_MainTex_var.rgb)*Set_LightColor), _Is_LightColor_Base );
         //v.2.0.5
         int n1st_ShadeMapArrID = _1st_ShadeMapArr_ID;
-        float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap),n1st_ShadeMapArrID),_MainTex_var,_Use_BaseAs1st);
+        float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap),n1st_ShadeMapArrID),float4(Set_BaseColor.rgb, _MainTex_var.a),_Use_BaseAs1st);
         float3 Set_1st_ShadeColor = lerp( (_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb), ((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_1st_Shade );
         //v.2.0.5
         int n2nd_ShadeMapArrID = _2nd_ShadeMapArr_ID;
@@ -282,7 +282,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
                         float3 Set_BaseColor = lerp((_BaseColor.rgb*_MainTex_var.rgb*_LightIntensity), ((_BaseColor.rgb*_MainTex_var.rgb)*Set_LightColor), _Is_LightColor_Base);
                         //v.2.0.5
                         int n1st_ShadeMapArrID = _1st_ShadeMapArr_ID;
-                        float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap), n1st_ShadeMapArrID), _MainTex_var, _Use_BaseAs1st);
+                        float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap), n1st_ShadeMapArrID), float4(Set_BaseColor.rgb, _MainTex_var.a), _Use_BaseAs1st);
                         float3 Set_1st_ShadeColor = lerp((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb*_LightIntensity), ((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_1st_Shade);
                         //v.2.0.5
                         int n2nd_ShadeMapArrID = _2nd_ShadeMapArr_ID;
@@ -359,7 +359,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
                     float3 Set_BaseColor = lerp((_BaseColor.rgb*_MainTex_var.rgb*_LightIntensity), ((_BaseColor.rgb*_MainTex_var.rgb)*Set_LightColor), _Is_LightColor_Base);
                     //v.2.0.5
                     int n1st_ShadeMapArrID = _1st_ShadeMapArr_ID;
-                    float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap), n1st_ShadeMapArrID), _MainTex_var, _Use_BaseAs1st);
+                    float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap), n1st_ShadeMapArrID), float4(Set_BaseColor.rgb, _MainTex_var.a), _Use_BaseAs1st);
                     float3 Set_1st_ShadeColor = lerp((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb*_LightIntensity), ((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_1st_Shade);
                     //v.2.0.5
                     int n2nd_ShadeMapArrID = _2nd_ShadeMapArr_ID;
