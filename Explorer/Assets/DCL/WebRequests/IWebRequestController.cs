@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.AudioClips;
 using DCL.WebRequests.GenericHead;
+using System;
 using System.Threading;
 
 namespace DCL.WebRequests
@@ -58,15 +59,24 @@ namespace DCL.WebRequests
         public static UniTask<GenericPostRequest> SignedFetch(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            string? jsonMetaData,
+            string jsonMetaData,
             CancellationToken ct
-        ) =>
-            controller.PostAsync(
+        )
+        {
+            var unixTimestamp = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            string path = new Uri(commonArguments.URL).AbsolutePath;
+            string payload = $"post:{path}:{unixTimestamp}:{jsonMetaData}".ToLower();
+
+            return controller.PostAsync(
                 commonArguments,
                 GenericPostArguments.Empty,
                 ct,
-                signInfo: jsonMetaData is null ? null : new WebRequestSignInfo(jsonMetaData)
+                signInfo: new WebRequestSignInfo(payload),
+                headersInfo: new WebRequestHeadersInfo()
+                            .Add("x-identity-timestamp", unixTimestamp.ToString())
+                            .Add("x-identity-metadata", jsonMetaData)
             );
+        }
 
         public static UniTask<GenericPostRequest> SignedFetch(
             this IWebRequestController controller,
