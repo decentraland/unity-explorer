@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -28,8 +27,8 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using LiveKit.Internal.FFIClients.Pools;
 using Unity.Mathematics;
 using UnityEngine;
@@ -116,14 +115,17 @@ namespace Global.Dynamic
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
-            var multiPool = new ThreadSafeMultiPool();
-
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
                 container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel);
 
+            var multiPool = new ThreadSafeMultiPool();
+
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, web3IdentityCache, multiPool);
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, web3IdentityCache);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, web3IdentityCache, multiPool)),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),

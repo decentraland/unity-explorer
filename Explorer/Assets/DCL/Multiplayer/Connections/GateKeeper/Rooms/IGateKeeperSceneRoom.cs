@@ -1,9 +1,10 @@
 using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Rooms;
+using System;
 
-namespace DCL.Multiplayer.Connections.Archipelago.Rooms
+namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
-    public interface IArchipelagoIslandRoom
+    public interface IGateKeeperSceneRoom
     {
         void Start();
 
@@ -13,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         IRoom Room();
 
-        class Fake : IArchipelagoIslandRoom
+        class Fake : IGateKeeperSceneRoom
         {
             public void Start()
             {
@@ -33,9 +34,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         }
     }
 
-    public static class ArchipelagoIslandRoomExtensions
+    public static class GateKeeperSceneRoomExtensions
     {
-        public static void StartIfNotRunning(this IArchipelagoIslandRoom room)
+        public static void StartIfNotRunning(this IGateKeeperSceneRoom room)
         {
             if (!room.IsRunning())
                 room.Start();

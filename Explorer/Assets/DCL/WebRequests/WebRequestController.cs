@@ -27,6 +27,10 @@ namespace DCL.WebRequests
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityProvider;
 
+        public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(new WebRequestsAnalyticsContainer(), web3IdentityCache)
+        {
+        }
+
         public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer,
             IWeb3IdentityCache web3IdentityProvider)
         {
