@@ -9,10 +9,8 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Utilities;
 using ECS.Abstract;
-using ECS.LifeCycle;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
@@ -21,9 +19,10 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [UpdateBefore(typeof(CharacterTriggerAreaHandlerSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     [ThrottlingEnabled]
-    public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem
     {
         private static CameraMode cameraModeBeforeLastAreaEnter; // There's only 1 camera at a time
+
         private readonly World globalWorld;
         private readonly Entity cameraEntity;
 
@@ -48,8 +47,8 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             World.Add(entity, new CharacterTriggerAreaComponent
             {
-                areaSize = pbCameraModeArea.Area,
-                targetOnlyMainPlayer = true,
+                AreaSize = pbCameraModeArea.Area,
+                TargetOnlyMainPlayer = true,
                 OnEnteredTrigger = avatarCo => OnEnteredCameraModeArea(targetCameraMode),
                 OnExitedTrigger = OnExitedCameraModeArea,
                 IsDirty = true,
@@ -65,7 +64,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
             characterTriggerAreaComponent.OnEnteredTrigger = avatarCollider => OnEnteredCameraModeArea(targetCameraMode);
             characterTriggerAreaComponent.OnExitedTrigger = OnExitedCameraModeArea;
-            characterTriggerAreaComponent.areaSize = pbCameraModeArea.Area;
+            characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
             characterTriggerAreaComponent.IsDirty = true;
         }
 
@@ -86,11 +85,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputLocks == 0)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            throw new NotImplementedException();
         }
     }
 }

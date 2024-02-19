@@ -34,7 +34,6 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            //ignore
             characterTriggerAreaPoolRegistry.Dispose();
         }
 
@@ -54,12 +53,13 @@ namespace DCL.PluginSystem.World
         private async UniTask CreateCharacterTriggerAreaPoolAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
         {
             CharacterTriggerArea.CharacterTriggerArea characterTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterTriggerAreaPrefab, ct: ct)).Value.GetComponent<CharacterTriggerArea.CharacterTriggerArea>();
-
-            var parentContainer = new GameObject("CharacterTriggerAreaPool");
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity, parentContainer.transform));
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease);
             characterTriggerAreaPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterTriggerArea.CharacterTriggerArea>();
 
             cacheCleaner.Register(characterTriggerAreaPoolRegistry);
         }
+
+        private void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
+            area.BoxCollider.enabled = false;
     }
 }

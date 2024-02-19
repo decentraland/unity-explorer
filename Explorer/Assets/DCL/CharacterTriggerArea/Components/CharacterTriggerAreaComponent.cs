@@ -1,6 +1,7 @@
 using DCL.ECSComponents;
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.CharacterTriggerArea.Components
 {
@@ -8,16 +9,16 @@ namespace DCL.CharacterTriggerArea.Components
     {
         public Action<Collider> OnEnteredTrigger;
         public Action<Collider> OnExitedTrigger;
-        public Vector3 areaSize;
+        public Vector3 AreaSize;
         public CharacterTriggerArea MonoBehaviour;
-        public bool targetOnlyMainPlayer;
+        public bool TargetOnlyMainPlayer;
 
-        public CharacterTriggerAreaComponent(Vector3 areaSize, Action<Collider> OnEnteredTrigger, Action<Collider> OnExitedTrigger, bool targetOnlyMainPlayer = false)
+        public CharacterTriggerAreaComponent(Vector3 areaSize, Action<Collider> onEnteredTrigger, Action<Collider> onExitedTrigger, bool targetOnlyMainPlayer = false)
         {
-            this.areaSize = areaSize;
-            this.OnEnteredTrigger = OnEnteredTrigger;
-            this.OnExitedTrigger = OnExitedTrigger;
-            this.targetOnlyMainPlayer = targetOnlyMainPlayer;
+            AreaSize = areaSize;
+            OnEnteredTrigger = onEnteredTrigger;
+            OnExitedTrigger = onExitedTrigger;
+            TargetOnlyMainPlayer = targetOnlyMainPlayer;
 
             MonoBehaviour = null;
 
