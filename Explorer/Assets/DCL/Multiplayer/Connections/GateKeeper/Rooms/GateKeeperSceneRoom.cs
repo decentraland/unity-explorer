@@ -62,11 +62,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             Debug.Log($"Send request with meta {meta.ToJson()}");
 
             var result = await webRequests.SignedFetch(
-                new CommonArguments(
-                    URLAddress.FromString(sceneHandleUrl),
-                    attemptsCount: 3,
-                    timeout: 10_000
-                ),
+                new CommonArguments(URLAddress.FromString(sceneHandleUrl)),
                 meta.ToJson(),
                 token
             );

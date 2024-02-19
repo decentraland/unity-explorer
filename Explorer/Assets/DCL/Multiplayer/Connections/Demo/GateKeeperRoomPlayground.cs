@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             var identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
             var character = new ICharacterObject.Fake(Vector3.zero);
-            var webRequests = new WebRequestController(identityCache);
+            var webRequests = new LogWebRequestController(new WebRequestController(identityCache));
             var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests));
 
             new GateKeeperSceneRoom(

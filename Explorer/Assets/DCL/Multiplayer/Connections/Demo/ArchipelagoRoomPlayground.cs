@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.WebRequests;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -41,7 +42,11 @@ namespace DCL.Multiplayer.Connections.Demo
 
             var adapterAddresses = new LogAdapterAddresses(
                 new RefinedAdapterAddresses(
-                    new WebRequestsAdapterAddresses()
+                    new WebRequestsAdapterAddresses(
+                        new LogWebRequestController(
+                            IWebRequestController.DEFAULT
+                        )
+                    )
                 ),
                 Debug.Log
             );
