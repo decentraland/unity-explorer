@@ -15,19 +15,16 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private ChatController chatController;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IChatMessagesBus chatMessagesBus,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
-            this.chatEntryConfiguration = chatEntryConfiguration;
         }
 
         public void Dispose()
