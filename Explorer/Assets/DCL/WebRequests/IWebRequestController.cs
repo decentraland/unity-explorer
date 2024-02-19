@@ -1,7 +1,7 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics;
 using DCL.WebRequests.AudioClips;
 using DCL.WebRequests.GenericHead;
 using System.Threading;
@@ -78,5 +78,29 @@ namespace DCL.WebRequests
                 new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
             )
         );
+    }
+
+    public static class WebRequestControllerExtensions
+    {
+        public static UniTask<GenericPostRequest> SignedFetch(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            string? jsonMetaData,
+            CancellationToken ct
+        ) =>
+            controller.PostAsync(
+                commonArguments,
+                GenericPostArguments.Empty,
+                ct,
+                signInfo: jsonMetaData is null ? null : new WebRequestSignInfo(jsonMetaData)
+            );
+
+        public static UniTask<GenericPostRequest> SignedFetch(
+            this IWebRequestController controller,
+            string url,
+            string? jsonMetaData,
+            CancellationToken ct
+        ) =>
+            controller.SignedFetch(new CommonArguments(URLAddress.FromString(url)), jsonMetaData, ct);
     }
 }
