@@ -377,4 +377,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d8c4d0ac3f844dcacb0f6b37cd3185b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aboutUrl: 
+  gateKeeperUrl: https://comms-gatekeeper.decentraland.zone/get-scene-adapter
