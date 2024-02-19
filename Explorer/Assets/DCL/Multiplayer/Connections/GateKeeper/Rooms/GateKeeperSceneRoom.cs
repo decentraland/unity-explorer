@@ -6,6 +6,7 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using LiveKit.Rooms;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -48,7 +49,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public IRoom Room() =>
             throw new NotImplementedException();
 
-        private CancellationToken CancellationToken()
+        private CancellationToken StopPreviousAndNewCancellationToken()
         {
             Stop();
             cancellationTokenSource = new CancellationTokenSource();
@@ -57,8 +58,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTaskVoid RunAsync()
         {
-            var token = CancellationToken();
-            var meta = await MetaDataAsync();
+            var token = StopPreviousAndNewCancellationToken();
+            var meta = await MetaDataAsync(token);
             Debug.Log($"Send request with meta {meta.ToJson()}");
 
             var result = await webRequests.SignedFetch(
@@ -70,17 +71,17 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             Debug.Log($"Result {result.UnityWebRequest.result}");
         }
 
-        private async UniTask<MetaData> MetaDataAsync()
+        private async UniTask<MetaData> MetaDataAsync(CancellationToken token)
         {
-            (string parcelId, string realmName) = await UniTask.WhenAll(ParcelIdAsync(), RealmNameAsync());
+            (string parcelId, string realmName) = await UniTask.WhenAll(ParcelIdAsync(token), RealmNameAsync());
             return new MetaData(realmName, parcelId);
         }
 
-        private async UniTask<string> ParcelIdAsync()
+        private async UniTask<string> ParcelIdAsync(CancellationToken token)
         {
             var position = characterObject.Position;
             var parcel = ParcelMathHelper.WorldToGridPosition(position);
-            var result = await placesAPIService.GetPlaceAsync(parcel, CancellationToken());
+            var result = await placesAPIService.GetPlaceAsync(parcel, token);
             return result.EnsureNotNull($"parcel not found on coordinates {parcel}").id;
         }
 
@@ -89,6 +90,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             UniTask.FromResult("TODO"); //TODO
 
         [Serializable]
+        [SuppressMessage("ReSharper", "NotAccessedField.Local")]
         private struct MetaData
         {
             public string realmName;
