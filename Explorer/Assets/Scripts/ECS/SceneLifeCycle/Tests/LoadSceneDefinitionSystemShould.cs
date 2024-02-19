@@ -29,8 +29,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
-                Substitute.For<IWeb3IdentityCache>()), cache, new MutexSync());
+            new (world, TestSuite.TestWebRequestController.INSTANCE, cache, new MutexSync());
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {

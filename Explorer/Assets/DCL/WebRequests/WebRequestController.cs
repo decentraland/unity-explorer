@@ -25,17 +25,16 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
-        private readonly IWeb3IdentityCache web3IdentityProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
-        public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(new WebRequestsAnalyticsContainer(), web3IdentityCache)
+        public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(IWebRequestsAnalyticsContainer.DEFAULT, web3IdentityCache)
         {
         }
 
-        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer,
-            IWeb3IdentityCache web3IdentityProvider)
+        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache)
         {
             this.analyticsContainer = analyticsContainer;
-            this.web3IdentityProvider = web3IdentityProvider;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public UniTask<GenericGetRequest> GetAsync(
@@ -137,7 +136,7 @@ namespace DCL.WebRequests
                 {
                     analyticsContainer.OnRequestStarted(request);
 
-                    await unityWebRequest.SendWebRequest().WithCancellation(ct);
+                    await unityWebRequest.SendWebRequest()!.WithCancellation(ct);
 
                     // if no exception is thrown Request is successful
                     return request;
@@ -182,7 +181,7 @@ namespace DCL.WebRequests
 
         private void SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
         {
-            using AuthChain authChain = web3IdentityProvider.EnsuredIdentity().Sign(signInfo.SignUrl);
+            using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(signInfo.SignUrl);
 
             var i = 0;
 
