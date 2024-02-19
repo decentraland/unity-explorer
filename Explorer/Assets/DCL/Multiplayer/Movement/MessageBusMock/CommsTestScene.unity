@@ -918,6 +918,7 @@ MonoBehaviour:
   extDuration: 0
   extVelocity: {x: 0, y: 0, z: 0}
   useBlend: 1
+  maxBlendSpeed: 30
   blendExtra: 0
 --- !u!23 &579518768
 MeshRenderer:
@@ -1903,7 +1904,8 @@ MonoBehaviour:
   dampedExtrapolationSteps: 2
   extDuration: 0
   extVelocity: {x: 0, y: 0, z: 0}
-  useBlend: 0
+  useBlend: 1
+  maxBlendSpeed: 30
   blendExtra: 0
 --- !u!96 &2142167751
 TrailRenderer:

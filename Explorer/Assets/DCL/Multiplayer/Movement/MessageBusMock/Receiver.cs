@@ -35,13 +35,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public float minSpeed = 0.1f;
         public float linearExtrapolationTime = 0.33f;
         public int dampedExtrapolationSteps = 2;
-
         [Space]
         public float extDuration;
         public Vector3 extVelocity;
 
         [Header("BLENDING")]
         public bool useBlend;
+        public float maxBlendSpeed = 30f;
+        [Space]
         public float blendExtra;
 
         private bool isFirst = true;
@@ -122,7 +123,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             isBlending = true;
 
-            if (Vector3.Distance(local.position, remote.position) < minPositionDelta)
+            float positionDiff = Vector3.Distance(local.position, remote.position);
+
+            if (positionDiff < minPositionDelta)
             {
                 AddToPassed(remote);
                 isBlending = false;
@@ -132,6 +135,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             float timeDiff = remote.timestamp - local.timestamp;
             Vector3 remoteOldPosition = remote.position - (remote.velocity * timeDiff);
 
+
+
             // Debug.Log($"{timeDiff} | {remote.timestamp - passedMessages[^2].timestamp}  |  {local.timestamp - passedMessages[^2].timestamp}");
             // Debug.Log(Vector3.Distance(local.position, remoteOldPosition));
 
@@ -140,9 +145,18 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             var t = 0f;
             float totalDuration = timeDiff + blendExtra;
 
+            var slowDownFactor = 1f;
+            float speed = positionDiff / totalDuration;
+
+            if (speed > maxBlendSpeed)
+            {
+                float desiredDuration = positionDiff / maxBlendSpeed;
+                slowDownFactor = desiredDuration / totalDuration;
+            }
+
             while (t < totalDuration)
             {
-                t += Time.deltaTime;
+                t += Time.deltaTime / slowDownFactor;
 
                 float lerpValue = t / totalDuration;
 
