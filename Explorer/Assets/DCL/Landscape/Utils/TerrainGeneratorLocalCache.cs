@@ -84,7 +84,7 @@ namespace DCL.Landscape.Utils
         private static string GetPath(int seed) =>
             Application.persistentDataPath + FILE_NAME + $"_{seed}.data";
 
-        public static async UniTask<TerrainLocalCache> Load(int seed, bool force)
+        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, bool force)
         {
             var localCache = new TerrainLocalCache();
 
@@ -123,9 +123,9 @@ namespace DCL.Landscape.Utils
             this.seed = seed;
         }
 
-        public async UniTask Load(bool force)
+        public async UniTask LoadAsync(bool force)
         {
-            localCache = await TerrainLocalCache.Load(seed, force);
+            localCache = await TerrainLocalCache.LoadAsync(seed, force);
         }
 
         public void Save()

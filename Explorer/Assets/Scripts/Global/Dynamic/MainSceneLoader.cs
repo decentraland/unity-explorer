@@ -83,12 +83,15 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            // To avoid configuration issues, force full flow on build
-            showSplash = true;
-            showAuthentication = true;
-            showLoading = true;
-            disableLandscape = false;
+#if !UNITY_EDITOR
+    #if !DEVELOPMENT_BUILD
+        // To avoid configuration issues, force full flow on build
+        showSplash = true;
+        showAuthentication = true;
+        showLoading = true
+    #endif
+
+    disableLandscape = false;
 #endif
 
             try

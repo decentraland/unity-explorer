@@ -83,7 +83,7 @@ namespace DCL.Landscape
                 timeProfiler.StartMeasure();
 
                 timeProfiler.StartMeasure();
-                await localCache.Load(forceCacheRegen);
+                await localCache.LoadAsync(forceCacheRegen);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Load Local Cache"));
 
                 random = new Random((uint)terrainGenData.seed);
@@ -127,14 +127,14 @@ namespace DCL.Landscape
                 if (withHoles)
                 {
                     timeProfiler.StartMeasure();
-                    await DigHoles(terrainDataDictionary, cancellationToken);
+                    await DigHolesAsync(terrainDataDictionary, cancellationToken);
                     timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Holes"));
                 }
 
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
 
                 timeProfiler.StartMeasure();
-                await GenerateChunks(terrainDataDictionary, cancellationToken);
+                await GenerateChunksAsync(terrainDataDictionary, cancellationToken);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
@@ -247,7 +247,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask GenerateChunks(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
+        private async UniTask GenerateChunksAsync(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
         {
             for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
             for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
@@ -265,7 +265,7 @@ namespace DCL.Landscape
         /// </summary>
         /// <param name="terrainDatas"></param>
         /// <param name="cancellationToken"></param>
-        private async UniTask DigHoles(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
+        private async UniTask DigHolesAsync(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
         {
             if (localCache.IsValid())
             {
