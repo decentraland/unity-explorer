@@ -88,7 +88,7 @@ namespace Global.Dynamic
         // To avoid configuration issues, force full flow on build
         showSplash = true;
         showAuthentication = true;
-        showLoading = true
+        showLoading = true;
     #endif
 
     enableLandscape = true;
