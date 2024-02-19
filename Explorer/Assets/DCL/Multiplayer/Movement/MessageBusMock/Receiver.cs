@@ -42,6 +42,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [Header("BLENDING")]
         public bool useBlend;
         public float maxBlendSpeed = 30f;
+        public float maxBlendExtraTime = 0.33f;
+
         [Space]
         public float blendExtra;
 
@@ -135,14 +137,28 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             float timeDiff = remote.timestamp - local.timestamp;
             Vector3 remoteOldPosition = remote.position - (remote.velocity * timeDiff);
 
+            var avarageMessageSentRate = 0f;
 
+            if (passedMessages.Count > 4)
+            {
+                avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp;
+                avarageMessageSentRate += passedMessages[^3].timestamp - passedMessages[^4].timestamp;
+                avarageMessageSentRate += passedMessages[^4].timestamp - passedMessages[^5].timestamp;
 
-            // Debug.Log($"{timeDiff} | {remote.timestamp - passedMessages[^2].timestamp}  |  {local.timestamp - passedMessages[^2].timestamp}");
-            // Debug.Log(Vector3.Distance(local.position, remoteOldPosition));
+                avarageMessageSentRate /= 3;
+            }
+            else if (passedMessages.Count > 3)
+            {
+                avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp;
+                avarageMessageSentRate += passedMessages[^3].timestamp - passedMessages[^4].timestamp;
 
-            blendExtra = 0f; //local.timestamp - passedMessages[^2].timestamp;
+                avarageMessageSentRate /= 2;
+            }
+            else if (passedMessages.Count > 2) { avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp; }
 
-            var t = 0f;
+            blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxBlendExtraTime);
+            Debug.Log($"{blendExtra} | {timeDiff} | {avarageMessageSentRate}  |  {avarageMessageSentRate - timeDiff}");
+
             float totalDuration = timeDiff + blendExtra;
 
             var slowDownFactor = 1f;
@@ -153,6 +169,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 float desiredDuration = positionDiff / maxBlendSpeed;
                 slowDownFactor = desiredDuration / totalDuration;
             }
+
+            var t = 0f;
 
             while (t < totalDuration)
             {
