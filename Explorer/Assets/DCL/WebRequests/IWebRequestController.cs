@@ -57,7 +57,7 @@ namespace DCL.WebRequests
                 )
             );
 
-        public static UniTask<GenericPostRequest> SignedFetch(
+        public static UniTask<GenericPostRequest> SignedFetchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             string jsonMetaData,
@@ -79,13 +79,13 @@ namespace DCL.WebRequests
             );
         }
 
-        public static UniTask<GenericPostRequest> SignedFetch(
+        public static UniTask<GenericPostRequest> SignedFetchAsync(
             this IWebRequestController controller,
             string url,
             string? jsonMetaData,
             CancellationToken ct
         ) =>
-            controller.SignedFetch(new CommonArguments(URLAddress.FromString(url)), jsonMetaData, ct);
+            controller.SignedFetchAsync(new CommonArguments(URLAddress.FromString(url)), jsonMetaData, ct);
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data
