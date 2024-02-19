@@ -12,14 +12,11 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
-using DCL.Web3.Authenticators;
-using DCL.Web3.Identities;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Net.WebSockets;
-using System.Threading;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
@@ -27,8 +24,6 @@ namespace DCL.Multiplayer.Connections.Demo
     public class ArchipelagoRoomPlayground : MonoBehaviour
     {
         [SerializeField] private string aboutUrl = string.Empty;
-
-        public const string TEST_IDENTITY_CACHE = "ArchipelagoTestIdentity";
 
         private BaseUnityLoopSystem system = null!;
 
@@ -50,24 +45,6 @@ namespace DCL.Multiplayer.Connections.Demo
                 ),
                 Debug.Log
             );
-
-            IWeb3IdentityCache identityCache = new ProxyIdentityCache(
-                new MemoryWeb3IdentityCache(),
-                new PlayerPrefsIdentityProvider(
-                    new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(),
-                    TEST_IDENTITY_CACHE
-                )
-            );
-
-            if (identityCache.Identity is null)
-            {
-                var identity = await new DappWeb3Authenticator.Default(identityCache)
-                   .LoginAsync(CancellationToken.None);
-
-                identityCache.Identity = identity;
-            }
-
-            identityCache.Identity = new LogWeb3Identity(identityCache.Identity);
 
             var memoryPool = new ArrayMemoryPool();
 
@@ -100,7 +77,8 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            var character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
+            var identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
+            var character = new ICharacterObject.Fake(Vector3.zero);
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake());
 

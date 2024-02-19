@@ -58,6 +58,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             var token = CancellationToken();
             var meta = await MetaDataAsync();
+            Debug.Log($"Send request with meta {meta.ToJson()}");
             var result = await webRequests.SignedFetch(sceneHandleUrl, meta.ToJson(), token);
             Debug.Log($"Result {result.UnityWebRequest.result}");
         }
