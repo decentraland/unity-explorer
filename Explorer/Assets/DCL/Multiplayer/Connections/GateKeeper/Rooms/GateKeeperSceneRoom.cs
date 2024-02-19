@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.PlacesAPIService;
@@ -59,7 +60,17 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             var token = CancellationToken();
             var meta = await MetaDataAsync();
             Debug.Log($"Send request with meta {meta.ToJson()}");
-            var result = await webRequests.SignedFetch(sceneHandleUrl, meta.ToJson(), token);
+
+            var result = await webRequests.SignedFetch(
+                new CommonArguments(
+                    URLAddress.FromString(sceneHandleUrl),
+                    attemptsCount: 3,
+                    timeout: 10_000
+                ),
+                meta.ToJson(),
+                token
+            );
+
             Debug.Log($"Result {result.UnityWebRequest.result}");
         }
 
