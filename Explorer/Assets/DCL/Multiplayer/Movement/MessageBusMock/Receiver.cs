@@ -251,15 +251,15 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             isInterpolating = true;
 
-            float timeDiff = end.timestamp - start.timestamp;
-
-            float correctionTime = incomingMessages.Count * Time.smoothDeltaTime;
-            float totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 3f);
-
-            var t = 0f;
-
             if (CannotSkip())
             {
+                float timeDiff = end.timestamp - start.timestamp;
+
+                float correctionTime = incomingMessages.Count * Time.smoothDeltaTime;
+                float totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 3f);
+
+                var t = 0f;
+
                 while (t < totalDuration)
                 {
                     t += Time.deltaTime;
@@ -274,7 +274,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             isInterpolating = false;
 
-            // we can skip interpolation between 2 equal positions only if we have more messages in a queue (to not fall down to pure extrapolation approach)
+            // we can skip interpolation between 2 equal positions only if we have more messages in a queue (to not fall into pure extrapolation approach)
             bool CannotSkip() =>
                 incomingMessages.Count == 0 || Vector3.Distance(start.position, endPoint.position) > minPositionDelta;
         }
