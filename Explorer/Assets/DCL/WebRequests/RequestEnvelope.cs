@@ -39,7 +39,7 @@ namespace DCL.WebRequests
             this.signInfo = signInfo;
         }
 
-        public override readonly string ToString() =>
+        public override string ToString() =>
             "RequestEnvelope:"
             + $"\nWebRequestType: {typeof(TWebRequest).Name}"
             + $"\nWebRequestArgs: {typeof(TWebRequest).Name}"
