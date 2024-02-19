@@ -1,7 +1,9 @@
+using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -83,7 +85,7 @@ namespace DCL.WebRequests
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private  void SetHeaders(UnityWebRequest unityWebRequest)
+        private void SetHeaders(UnityWebRequest unityWebRequest)
         {
             if (headersInfo.HasValue == false)
                 return;
@@ -107,12 +109,23 @@ namespace DCL.WebRequests
             using AuthChain authChain = web3IdentityCache.EnsuredIdentity().Sign(signInfo.Value.StringToSign);
 
             var i = 0;
+#if DEBUG
+            var sb = new StringBuilder();
+#endif
 
             foreach (AuthLink link in authChain)
             {
-                unityWebRequest.SetRequestHeader($"x-identity-auth-chain-{i}", link.ToJson());
+                var name = $"x-identity-auth-chain-{i}";
+                string value = link.ToJson();
+                unityWebRequest.SetRequestHeader(name, value);
+#if DEBUG
+                sb.AppendLine($"Header {name}: {value}");
+#endif
                 i++;
             }
+#if DEBUG
+            ReportHub.Log(Diagnostics.ReportCategory.GENERIC_WEB_REQUEST, sb);
+#endif
         }
     }
 }
