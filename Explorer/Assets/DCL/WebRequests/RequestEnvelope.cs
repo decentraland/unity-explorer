@@ -9,15 +9,15 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
+    public readonly struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
     {
         public readonly string ReportCategory;
         public readonly CommonArguments CommonArguments;
-        public CancellationToken Ct;
+        public readonly CancellationToken Ct;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
         private readonly TWebRequestArgs args;
-        private WebRequestHeadersInfo? headersInfo;
-        private WebRequestSignInfo? signInfo;
+        private readonly WebRequestHeadersInfo? headersInfo;
+        private readonly WebRequestSignInfo? signInfo;
 
         private const string NONE = "NONE";
 
