@@ -21,6 +21,9 @@ namespace DCL.WebRequests
             return this;
         }
 
+        public WebRequestHeadersInfo Add(string key, string value) =>
+            Add(new WebRequestHeader(key, value));
+
         public void Dispose()
         {
             if (value != null)
