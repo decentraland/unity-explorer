@@ -74,7 +74,6 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null);
 
         static readonly IWebRequestController DEFAULT = new WebRequestController(
-            new WebRequestsAnalyticsContainer(),
             new PlayerPrefsIdentityProvider(
                 new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
             )
