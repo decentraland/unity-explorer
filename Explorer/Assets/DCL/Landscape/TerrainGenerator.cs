@@ -53,6 +53,8 @@ namespace DCL.Landscape
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGeneratorLocalCache localCache;
         private readonly bool forceCacheRegen;
+        private readonly List<Terrain> terrains;
+        private bool isTerrainGenerated;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -64,7 +66,14 @@ namespace DCL.Landscape
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
             localCache = new TerrainGeneratorLocalCache(terrainGenData.seed);
+            terrains = new List<Terrain>();
         }
+
+        public IReadOnlyList<Terrain> GetTerrains() =>
+            terrains;
+
+        public bool IsTerrainGenerated() =>
+            isTerrainGenerated;
 
         public async UniTask GenerateTerrainAsync(
             uint worldSeed = 1,
@@ -152,6 +161,8 @@ namespace DCL.Landscape
 
                 if (!localCache.IsValid())
                     localCache.Save();
+
+                isTerrainGenerated = true;
             }
         }
 
@@ -175,6 +186,9 @@ namespace DCL.Landscape
             if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
                 return;
 
+            Transform cliffsRoot = new GameObject("Cliffs").transform;
+            cliffsRoot.SetParent(rootGo.transform);
+
             CreateCliffCornerAt(new Vector3(terrainGenData.terrainSize, 0, terrainGenData.terrainSize), Quaternion.identity);
             CreateCliffCornerAt(new Vector3(terrainGenData.terrainSize, 0, 0), Quaternion.Euler(0, 90, 0));
             CreateCliffCornerAt(new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
@@ -185,7 +199,7 @@ namespace DCL.Landscape
                 Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
                 side.position = new Vector3(terrainGenData.terrainSize, 0, i + 16);
                 side.rotation = Quaternion.Euler(0, 90, 0);
-                side.SetParent(rootGo.transform, true);
+                side.SetParent(cliffsRoot, true);
             }
 
             for (var i = 0; i < terrainGenData.terrainSize; i += 16)
@@ -193,7 +207,7 @@ namespace DCL.Landscape
                 Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
                 side.position = new Vector3(i, 0, terrainGenData.terrainSize);
                 side.rotation = Quaternion.identity;
-                side.SetParent(rootGo.transform, true);
+                side.SetParent(cliffsRoot, true);
             }
 
             for (var i = 0; i < terrainGenData.terrainSize; i += 16)
@@ -201,7 +215,7 @@ namespace DCL.Landscape
                 Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
                 side.position = new Vector3(0, 0, i);
                 side.rotation = Quaternion.Euler(0, 270, 0);
-                side.SetParent(rootGo.transform, true);
+                side.SetParent(cliffsRoot, true);
             }
 
             for (var i = 0; i < terrainGenData.terrainSize; i += 16)
@@ -209,16 +223,18 @@ namespace DCL.Landscape
                 Transform side = Object.Instantiate(terrainGenData.cliffSide).transform;
                 side.position = new Vector3(i + 16, 0, 0);
                 side.rotation = Quaternion.Euler(0, 180, 0);
-                side.SetParent(rootGo.transform, true);
+                side.SetParent(cliffsRoot, true);
             }
-        }
 
-        private void CreateCliffCornerAt(Vector3 position, Quaternion rotation)
-        {
-            Transform neCorner = Object.Instantiate(terrainGenData.cliffCorner).transform;
-            neCorner.position = position;
-            neCorner.rotation = rotation;
-            neCorner.SetParent(rootGo.transform, true);
+            return;
+
+            void CreateCliffCornerAt(Vector3 position, Quaternion rotation)
+            {
+                Transform neCorner = Object.Instantiate(terrainGenData.cliffCorner).transform;
+                neCorner.position = position;
+                neCorner.rotation = rotation;
+                neCorner.SetParent(cliffsRoot, true);
+            }
         }
 
         private async UniTask SetupEmptyParcelDataAsync(CancellationToken cancellationToken)
@@ -394,6 +410,8 @@ namespace DCL.Landscape
             terrainObject.transform.SetParent(rootGo.transform, false);
 
             //AddColormapRenderer(terrainObject); Disabled for now
+
+            terrains.Add(terrain);
         }
 
         private static void AddColormapRenderer(GameObject terrainObject)
@@ -807,7 +825,6 @@ namespace DCL.Landscape
 
             return result;
         }
-
 
         // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
         private void FreeMemory()

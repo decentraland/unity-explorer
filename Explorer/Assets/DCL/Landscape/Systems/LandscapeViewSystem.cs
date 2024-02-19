@@ -1,10 +1,13 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
 using ECS.Abstract;
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
@@ -13,7 +16,7 @@ namespace DCL.Landscape.Systems
 {
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class LandscapeSatelliteViewSystem : BaseUnityLoopSystem
+    public partial class LandscapeViewSystem : BaseUnityLoopSystem
     {
         private const int PARCEL_SIZE = 16;
         private const int CHUNK_SIZE = 40;
@@ -23,17 +26,20 @@ namespace DCL.Landscape.Systems
 
         private readonly LandscapeData landscapeData;
         private readonly MapRendererTextureContainer textureContainer;
+        private readonly TerrainGenerator terrainGenerator;
         private readonly Transform landscapeParentObject;
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
         private bool isViewRendered;
 
-        private LandscapeSatelliteViewSystem(World world,
+        private LandscapeViewSystem(World world,
             LandscapeData landscapeData,
-            MapRendererTextureContainer textureContainer) : base(world)
+            MapRendererTextureContainer textureContainer,
+            TerrainGenerator terrainGenerator) : base(world)
         {
             this.landscapeData = landscapeData;
             this.textureContainer = textureContainer;
+            this.terrainGenerator = terrainGenerator;
             landscapeParentObject = new GameObject("Satellite View").transform;
             materialPropertyBlock = new MaterialPropertyBlock();
         }
@@ -42,7 +48,38 @@ namespace DCL.Landscape.Systems
         {
             if (textureContainer.IsComplete() && !isViewRendered)
                 InitializeSatelliteView();
+
+            if (terrainGenerator.IsTerrainGenerated()) { UpdateTerrainVisibilityQuery(World); }
         }
+
+        [Query]
+        private void UpdateTerrainVisibility(in Entity _, in CameraComponent cameraComponent)
+        {
+            Camera camera = cameraComponent.Camera;
+            IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
+
+            for (var i = 0; i < terrains.Count; i++)
+            {
+                Terrain terrain = terrains[i];
+
+                Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+                Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
+                bool isVisible = GeometryUtility.TestPlanesAABB(planes, bounds);
+
+                terrain.drawHeightmap = isVisible;
+                terrain.drawTreesAndFoliage = isVisible;
+            }
+        }
+
+        private Bounds GetTerrainBoundsInWorldSpace(Terrain terrain)
+        {
+            Bounds localBounds = terrain.terrainData.bounds;
+            Vector3 terrainPosition = terrain.transform.position;
+            var worldBounds = new Bounds(localBounds.center + terrainPosition, localBounds.size);
+            return worldBounds;
+        }
+
+
 
         private void InitializeSatelliteView()
         {
