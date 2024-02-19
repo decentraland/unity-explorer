@@ -3,9 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
-using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -14,17 +12,18 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
 {
-    public class ArchipelagoRoomPlayground : MonoBehaviour
+    public class GateKeeperRoomPlayground : MonoBehaviour
     {
         [SerializeField] private string aboutUrl = string.Empty;
 
@@ -74,17 +73,6 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            var signFlow = new LiveConnectionArchipelagoSignFlow(
-                new LogArchipelagoLiveConnection(
-                    new WebSocketArchipelagoLiveConnection(
-                        new ClientWebSocket(),
-                        memoryPool
-                    )
-                ),
-                memoryPool,
-                multiPool
-            );
-
             var messagePipeHub = new MessagePipesHub();
 
             //TODO message pipe with new approach, in PR with scene room
@@ -99,8 +87,9 @@ namespace DCL.Multiplayer.Connections.Demo
             );
 
             var character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
-            system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake());
+            var gateKeeperRoom = new GateKeeperSceneRoom(new WebRequestController(identityCache), identityCache);
+
+            system = new ConnectionRoomsSystem(world, new IArchipelagoIslandRoom.Fake(), gateKeeperRoom);
 
             while (this)
             {
