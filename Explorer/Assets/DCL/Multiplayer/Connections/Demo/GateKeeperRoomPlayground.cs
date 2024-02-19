@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 new MemoryWeb3IdentityCache(),
                 new PlayerPrefsIdentityProvider(
                     new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(),
-                    ArchipelagoRoomPlayground.TestIdentityCache
+                    ArchipelagoRoomPlayground.TEST_IDENTITY_CACHE
                 )
             );
 
