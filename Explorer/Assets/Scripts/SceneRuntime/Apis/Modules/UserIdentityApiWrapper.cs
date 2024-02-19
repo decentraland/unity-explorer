@@ -58,7 +58,7 @@ namespace SceneRuntime.Apis.Modules
                     {
                         wearablesCache.Clear();
 
-                        foreach (URN urn in avatar.SharedWearables)
+                        foreach (URN urn in avatar.UniqueWearables)
                             wearablesCache.Add(urn);
 
                         return new GetUserDataResponse.Data
