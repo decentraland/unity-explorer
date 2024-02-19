@@ -15,16 +15,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private ChatController chatController;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IChatMessagesBus chatMessagesBus)
+            IChatMessagesBus chatMessagesBus,
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
+            this.chatEntryConfiguration = chatEntryConfiguration;
         }
 
         public void Dispose()
@@ -63,12 +66,6 @@ namespace DCL.PluginSystem.Global
             public class ChatViewRef : ComponentReference<ChatView>
             {
                 public ChatViewRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class ChatEntryViewRef : ComponentReference<ChatEntryView>
-            {
-                public ChatEntryViewRef(string guid) : base(guid) { }
             }
         }
     }
