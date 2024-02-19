@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void Update()
         {
             // Simulate package lost
-            if (UnityEngine.Input.GetKeyUp(KeyCode.RightShift))
+            if (Input.GetKeyUp(KeyCode.RightShift))
             {
                 packageLost++;
                 lostText.SetActive(false);
@@ -69,9 +69,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             {
                 if (packageLost > 0)
                     packageLost--;
-                else if (!UnityEngine.Input.GetKey(KeyCode.Space))
+                else if (!Input.GetKey(KeyCode.Space))
                 {
-                    messageBus.Send(UnityEngine.Time.unscaledTime,characterController.transform.position, characterController.velocity, CalculateAverageAcceleration());
+                    messageBus.Send(Time.unscaledTime, characterController.transform.position, characterController.velocity, CalculateAverageAcceleration());
                     PutMark();
                 }
 
@@ -81,15 +81,15 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void PutMark()
         {
-            var mark = Instantiate(pointMark);
-            mark.transform.position =characterController.transform.position + Vector3.up * 0.1f;
+            GameObject mark = Instantiate(pointMark);
+            mark.transform.position = characterController.transform.position + (Vector3.up * 0.1f);
             mark.SetActive(true);
         }
 
         private Vector3 CalculateAverageAcceleration()
         {
             if (!avarageAcceleration)
-                return velocityHistory.Count != 0 ? (velocityHistory[^1] - characterController.velocity) / UnityEngine.Time.fixedDeltaTime : Vector3.zero;
+                return velocityHistory.Count != 0 ? (velocityHistory[^1] - characterController.velocity) / Time.fixedDeltaTime : Vector3.zero;
 
             Vector3 acceleration = Vector3.zero;
 
@@ -101,7 +101,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     Vector3 v1 = velocityHistory[^(i + 1)]; // Earlier velocity
                     Vector3 v2 = velocityHistory[^i]; // Later velocity
 
-                    acceleration += (v2 - v1) / UnityEngine.Time.fixedDeltaTime;
+                    acceleration += (v2 - v1) / Time.fixedDeltaTime;
                 }
 
                 acceleration /= velocityHistory.Count - 1; // Correct division for averaging
