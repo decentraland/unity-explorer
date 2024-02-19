@@ -30,6 +30,7 @@
     "com.unity.visualscripting": "1.8.0",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#1.6.0",
     "net.tnrd.nsubstitute": "https://github.com/decentraland/Unity3D-NSubstitute.git",
+    "superscrollview": "https://github.com/decentraland/unity-explorer-packages.git?path=/SuperScrollView",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",

@@ -401,6 +401,13 @@
       "dependencies": {},
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
+    "superscrollview": {
+      "version": "https://github.com/decentraland/unity-explorer-packages.git?path=/SuperScrollView",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8e1478ec9f8fe2f5fbe1249ceeb31cdc764d1465"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,

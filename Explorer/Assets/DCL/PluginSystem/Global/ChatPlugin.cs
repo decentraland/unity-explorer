@@ -2,11 +2,8 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
-using DCL.DebugUtilities;
 using MVC;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -40,13 +37,11 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
-            ChatEntryView chatEntryView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryPrefab, ct: ct)).Value.GetComponent<ChatEntryView>();
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
 
             chatController = new ChatController(
                 ChatController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
-                chatEntryView,
                 chatEntryConfiguration,
                 chatMessagesBus);
 
@@ -60,9 +55,6 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public ChatViewRef ChatPanelPrefab;
-
-            [field: SerializeField]
-            public ChatEntryViewRef ChatEntryPrefab;
 
             [field: SerializeField]
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
