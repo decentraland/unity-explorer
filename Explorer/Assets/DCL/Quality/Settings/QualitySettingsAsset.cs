@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+#nullable disable
 
 namespace DCL.Quality
 {
@@ -12,7 +14,14 @@ namespace DCL.Quality
         // Draw quality tab from the settings
 
         // Custom
-        [SerializeField] private List<QualityCustomLevel> customSettings;
+        [SerializeField] internal List<QualityCustomLevel> customSettings;
+
+        /// <summary>
+        ///     This list is needed to avoid reflection to get all possible renderer features
+        /// </summary>
+        [SerializeField] internal List<ScriptableRendererFeature> allRendererFeatures;
+
+        [SerializeField] internal bool updateInEditor;
 
         [Serializable]
         public class QualityCustomLevel
@@ -24,22 +33,5 @@ namespace DCL.Quality
 
             [SerializeField] internal FogSettings fogSettings;
         }
-
-        // Draw fog
-    }
-
-    /// <summary>
-    ///     it's a copy from the Unity's Fog (FogEditor)
-    /// </summary>
-    [Serializable]
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class FogSettings
-    {
-        public bool m_Fog;
-        public Color m_FogColor;
-        public FogMode m_FogMode = FogMode.Linear;
-        public float m_FogDensity;
-        public float m_LinearFogStart;
-        public float m_LinearFogEnd;
     }
 }

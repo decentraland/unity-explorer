@@ -1,5 +1,4 @@
-using System;
-using System.Linq.Expressions;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Rendering.Universal;
 using UnityEditor.UIElements;
@@ -13,22 +12,27 @@ namespace DCL.Quality
     [CustomEditor(typeof(QualitySettingsAsset))]
     public class QualitySettingsAssetEditor : UnityEditor.Editor
     {
+        private readonly HashSet<ScriptableRendererFeature> tempFeatures = new ();
+        private SerializedProperty allRendererFeatures;
         private GUIStyle boldLabel;
 
         private VisualElement currentLevelContainer;
         private SerializedProperty customSettings;
         private GUIStyle popup;
         private UnityEditor.Editor qualitySettingsEditor;
-        private UnityEditor.Editor rendererDataEditor;
 
         private SerializedObject qualitySettingSerializedObject;
+        private UnityEditor.Editor rendererDataEditor;
         private int selectedQuality;
         private new QualitySettingsAsset target;
+        private SerializedProperty updateInEditor;
 
         private void OnEnable()
         {
             target = (QualitySettingsAsset)base.target;
-            customSettings = serializedObject.FindProperty("customSettings");
+            customSettings = serializedObject.FindProperty(nameof(QualitySettingsAsset.customSettings));
+            allRendererFeatures = serializedObject.FindProperty(nameof(QualitySettingsAsset.allRendererFeatures));
+            updateInEditor = serializedObject.FindProperty(nameof(QualitySettingsAsset.updateInEditor));
 
             qualitySettingsEditor = CreateEditor(QualitySettings.GetQualitySettings());
         }
@@ -51,12 +55,17 @@ namespace DCL.Quality
             container.Add(defaultQualitySettingsFoldout);
 
             VisualElement customSettingsFoldout = CreateHeaderFoldout("Custom Settings");
+
+            customSettingsFoldout.Add(DrawUpdateInEditor());
             currentLevelContainer = new VisualElement();
             currentLevelContainer.style.paddingLeft = 20;
+            currentLevelContainer.style.paddingTop = 10;
             customSettingsFoldout.Add(new IMGUIContainer(DrawQualityLevel));
             customSettingsFoldout.Add(currentLevelContainer);
 
             container.Add(customSettingsFoldout);
+
+            container.Add(new IMGUIContainer(DrawAllRendererFeatures));
 
             if (EditorUtility.IsPersistent(target))
             {
@@ -72,10 +81,15 @@ namespace DCL.Quality
             var foldout = new Foldout();
             foldout.viewDataKey = $"{nameof(QualitySettingsAssetEditor)}_{label}";
             foldout.text = label;
-            foldout.style.unityFontStyleAndWeight = FontStyle.Bold;
+
             foldout.style.paddingBottom = 7;
             foldout.style.paddingTop = 7;
-            foldout.style.fontSize = 14;
+
+            Label foldOutLabel = foldout.Q<Label>();
+
+            foldOutLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            foldOutLabel.style.fontSize = 14;
+
             return foldout;
         }
 
@@ -175,6 +189,61 @@ namespace DCL.Quality
 
             // Use ScriptableRendererDataEditor
             return CreateEditor(rendererData, typeof(ScriptableRendererDataEditor));
+        }
+
+        private void DrawAllRendererFeatures()
+        {
+            tempFeatures.Clear();
+
+            QualitySettings.GetRenderPipelineAssetsForPlatform
+                (BuildTargetGroup.Standalone.ToString(), out HashSet<UniversalRenderPipelineAsset> allAssets);
+
+            foreach (UniversalRenderPipelineAsset asset in allAssets)
+            {
+                ScriptableRendererData[] data = URPReflection.GetRendererDataList(asset);
+
+                foreach (ScriptableRendererData rendererData in data)
+                foreach (ScriptableRendererFeature rendererFeature in rendererData.rendererFeatures)
+                    tempFeatures.Add(rendererFeature);
+            }
+
+            // Change the property if the value has changed
+            List<ScriptableRendererFeature> serializedAssets = target.allRendererFeatures;
+
+            if (!tempFeatures.SetEquals(serializedAssets))
+            {
+                allRendererFeatures.arraySize = tempFeatures.Count;
+
+                var i = 0;
+
+                foreach (ScriptableRendererFeature feature in tempFeatures)
+                {
+                    allRendererFeatures.GetArrayElementAtIndex(i).objectReferenceValue = feature;
+                    i++;
+                }
+
+                serializedObject.ApplyModifiedProperties();
+            }
+
+            GUI.enabled = false;
+            EditorGUILayout.PropertyField(allRendererFeatures);
+            GUI.enabled = true;
+        }
+
+        private VisualElement DrawUpdateInEditor()
+        {
+            var propertyField = new PropertyField(updateInEditor);
+            propertyField.Bind(serializedObject);
+
+            propertyField.RegisterValueChangeCallback(evt =>
+            {
+                if (evt.changedProperty.boolValue)
+                    QualitySettingsEditorListener.Start(target);
+                else
+                    QualitySettingsEditorListener.Stop();
+            });
+
+            return propertyField;
         }
 
         private void InitStyles()
