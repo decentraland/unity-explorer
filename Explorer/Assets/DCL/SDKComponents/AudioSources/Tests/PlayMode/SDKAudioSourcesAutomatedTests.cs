@@ -7,6 +7,7 @@ using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using Global;
+using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner;
@@ -119,7 +120,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, Substitute.For<IMVCManager>());
 
             return (staticContainer, sceneSharedContainer);
         }

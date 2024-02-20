@@ -19,8 +19,10 @@ module.exports.changeRealm = async function(message) {
 }
 
 module.exports.openExternalUrl = async function(message) {
-    console.log('JSMODULE: openExternalUrl')
-    return {};
+    const isSuccess = UnityRestrictedActionsApi.OpenExternalUrl(message.url)
+    return {
+        success: isSuccess
+    };
 }
 
 module.exports.openNftDialog = async function(message) {
