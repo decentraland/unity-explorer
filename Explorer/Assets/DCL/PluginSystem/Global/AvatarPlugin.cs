@@ -46,15 +46,15 @@ namespace DCL.PluginSystem.Global
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
-        private TextureArrayContainer textureArrayContainer;
-
         private IComponentPool<AvatarBase> avatarPoolRegistry;
         private IExtendedObjectPool<Material> celShadingMaterialPool;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
-        private IComponentPool<Transform> transformPoolRegistry;
-
         private IObjectPool<NametagView> nametagViewPool;
+
+        private TextureArrayContainer textureArrayContainer;
+
+        private IComponentPool<Transform> transformPoolRegistry;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -140,27 +140,28 @@ namespace DCL.PluginSystem.Global
 
             nametagViewPool = new ObjectPool<NametagView>(
                 () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
-                actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
-                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
+                actionOnGet: nametagView => nametagView.gameObject.SetActive(true),
+                actionOnRelease: nametagView => nametagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
+            Material? activatedMaterial = TextureArrayContainerFactory.ActivateMaterial(providedMaterial.Value);
 
-            textureArrayContainer = TextureArrayContainerFactory.GetCached(providedMaterial.Value.shader);
+            textureArrayContainer = TextureArrayContainerFactory.GetCached(activatedMaterial.shader);
 
             celShadingMaterialPool = new ExtendedObjectPool<Material>(
                 () =>
                 {
-                    var mat = new Material(providedMaterial.Value);
+                    var mat = new Material(activatedMaterial);
                     return mat;
                 },
                 actionOnRelease: mat =>
                 {
                     // reset material so it does not contain any old properties
-                    mat.CopyPropertiesFromMaterial(providedMaterial.Value);
+                    mat.CopyPropertiesFromMaterial(activatedMaterial);
                 },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
                 defaultCapacity: settings.defaultMaterialCapacity);

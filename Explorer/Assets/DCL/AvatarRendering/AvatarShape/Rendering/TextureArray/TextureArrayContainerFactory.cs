@@ -32,6 +32,19 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                     // new (new TextureArrayHandler(OTHER_TEXTURE_ARRAY_SIZE, OCCLUSION_MAP_ARR_SHADER_ID, OCCLUSION_MAP_ARR_TEX_SHADER_ID), OCCLUSION_MAP_ORIGINAL_TEXTURE_ID),
                 });
 
+        public static Material ActivateMaterial(Material material)
+        {
+            if (material.shader.name == "DCL/DCL_Toon")
+            {
+                var activatedMaterial = new Material(material);
+                activatedMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
+                activatedMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
+                return activatedMaterial;
+            }
+
+            return material;
+        }
+
         public static TextureArrayContainer GetCached(Shader shader)
         {
             return shader.name switch
