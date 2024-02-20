@@ -17,11 +17,8 @@ namespace DCL.SDKComponents.Tween.Systems
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<SDKTweenComponent> sdkTweenComponentPool;
-
-        public TweenLoaderSystem(World world, IComponentPool<SDKTweenComponent> sdkTweenComponentPool) : base(world)
+        public TweenLoaderSystem(World world) : base(world)
         {
-            this.sdkTweenComponentPool = sdkTweenComponentPool;
         }
 
         protected override void Update(float t)
@@ -31,33 +28,29 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        [None(typeof(TweenComponent))]
+        [None(typeof(SDKTweenComponent))]
         private void LoadTween(in Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            var tweenComponent = new TweenComponent();
+            SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
+                {
+                    IsDirty = true,
+                    CurrentTweenModel = new SDKTweenModel(pbTween),
+                };
 
-            SDKTweenComponent sdkTweenComponent = sdkTweenComponentPool.Get();
-
-            sdkTweenComponent.IsDirty = true;
-
-            if (sdkTweenComponent.CurrentTweenModel == null) { sdkTweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween); }
-            else { sdkTweenComponent.CurrentTweenModel.Update(pbTween); }
-
-            tweenComponent.SDKTweenComponent = sdkTweenComponent;
-            World.Add(entity, tweenComponent);
+            World.Add(entity, sdkTweenComponent);
         }
 
         [Query]
-        private void UpdateTween(ref PBTween pbTween, ref TweenComponent tweenComponent)
+        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.SDKTweenComponent.CurrentTweenModel))
+            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CurrentTweenModel))
             {
-                tweenComponent.SDKTweenComponent.CurrentTweenModel.Update(pbTween);
-                tweenComponent.SDKTweenComponent.IsDirty = true;
+                tweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween);
+                tweenComponent.IsDirty = true;
             }
         }
     }

@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.Tween.Helpers
 
         public static bool AreSameModels(PBTween modelA, SDKTweenModel modelB)
         {
-            if (modelA == null || modelB == null)
+            if (modelA == null)
                 return false;
 
             if (modelB.ModeCase != modelA.ModeCase
