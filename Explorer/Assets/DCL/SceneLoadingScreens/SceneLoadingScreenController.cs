@@ -206,13 +206,13 @@ namespace DCL.SceneLoadingScreens
                 var backgroundTask = viewInstance.Background.DOBlendableColor(tips.Tips[index].BackgroundColor, 1f)
                                                  .ToUniTask(cancellationToken: ct);
 
-                async UniTask HideAndShow()
+                async UniTask HideAndShowAsync()
                 {
                     await viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct);
                     await viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct);
                 }
 
-                await UniTask.WhenAll(backgroundTask, HideAndShow());
+                await UniTask.WhenAll(backgroundTask, HideAndShowAsync());
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
