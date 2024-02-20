@@ -334,15 +334,17 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #ifdef _DCL_TEXTURE_ARRAYS
     #define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex
     #define DCL_SAMPLE_TEX2DARRAY(tex,coord) tex.Sample (sampler##tex,coord)
+    #define DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(tex) Texture2DArray tex;
+    #define DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(tex,coord) tex.Sample (sampler_MainTexArr,coord)
     #define DCL_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod) tex.SampleLevel (sampler##tex,coord,lod)
 
     DCL_DECLARE_TEX2DARRAY(_BaseMapArr);
     DCL_DECLARE_TEX2DARRAY(_BumpMapArr);
     DCL_DECLARE_TEX2DARRAY(_EmissionMapArr);
     DCL_DECLARE_TEX2DARRAY(_MainTexArr);
-    DCL_DECLARE_TEX2DARRAY(_1st_ShadeMapArr);
-    DCL_DECLARE_TEX2DARRAY(_2nd_ShadeMapArr);
-    DCL_DECLARE_TEX2DARRAY(_NormalMapArr);
+    DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(_1st_ShadeMapArr);
+    DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(_2nd_ShadeMapArr);
+    DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(_NormalMapArr);
     DCL_DECLARE_TEX2DARRAY(_Set_1st_ShadePositionArr); 
     DCL_DECLARE_TEX2DARRAY(_Set_2nd_ShadePositionArr);
     DCL_DECLARE_TEX2DARRAY(_ShadingGradeMapArr);
@@ -353,7 +355,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
     DCL_DECLARE_TEX2DARRAY(_NormalMapForMatCapArr);
     DCL_DECLARE_TEX2DARRAY(_Set_MatcapMaskArr);
     DCL_DECLARE_TEX2DARRAY(_Emissive_TexArr);
-    DCL_DECLARE_TEX2DARRAY(_ClippingMaskArr);
+    DCL_DECLARE_TEX2DARRAY_DEFAULT_SAMPLER(_ClippingMaskArr);
     DCL_DECLARE_TEX2DARRAY(_AngelRing_SamplerArr);
     DCL_DECLARE_TEX2DARRAY(_Outline_SamplerArr);
     DCL_DECLARE_TEX2DARRAY(_OutlineTexArr);
@@ -364,10 +366,10 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
     #define SAMPLE_BASEMAP(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY(_BaseMapArr, float3(uv, texArrayID))
     #define SAMPLE_BUMPMAP(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY(_BumpMapArr, float3(uv, texArrayID))
     #define SAMPLE_EMISSIONMAP(uv,texArrayID)                   DCL_SAMPLE_TEX2DARRAY(_EmissionMapArr, float3(uv, texArrayID))
-    #define SAMPLE_MAINTEX(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY(_MainTexArr, float3(uv, texArrayID))
-    #define SAMPLE_1ST_SHADEMAP(uv,texArrayID)                  DCL_SAMPLE_TEX2DARRAY(_1st_ShadeMapArr, float3(uv, texArrayID))
-    #define SAMPLE_2ND_SHADEMAP(uv,texArrayID)                  DCL_SAMPLE_TEX2DARRAY(_2nd_ShadeMapArr, float3(uv, texArrayID))
-    #define SAMPLE_NORMALMAP(uv,texArrayID)                     DCL_SAMPLE_TEX2DARRAY(_NormalMapArr, float3(uv, texArrayID))
+    #define SAMPLE_MAINTEX(uv,texArrayID)                       DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_MainTexArr, float3(uv, texArrayID))
+    #define SAMPLE_1ST_SHADEMAP(uv,texArrayID)                  DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_1st_ShadeMapArr, float3(uv, texArrayID))
+    #define SAMPLE_2ND_SHADEMAP(uv,texArrayID)                  DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_2nd_ShadeMapArr, float3(uv, texArrayID))
+    #define SAMPLE_NORMALMAP(uv,texArrayID)                     DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_NormalMapArr, float3(uv, texArrayID))
     #define SAMPLE_SET_1ST_SHADEPOSITION(uv,texArrayID)         DCL_SAMPLE_TEX2DARRAY(_Set_1st_ShadePositionArr, float3(uv, texArrayID)) 
     #define SAMPLE_SET_2ND_SHADEPOSITION(uv,texArrayID)         DCL_SAMPLE_TEX2DARRAY(_Set_2nd_ShadePositionArr, float3(uv, texArrayID))
     #define SAMPLE_SHADINGGRADEMAP(uv,texArrayID,lod)           DCL_SAMPLE_TEX2DARRAY_LOD(_ShadingGradeMapArr, float3(uv, texArrayID), lod)
@@ -378,7 +380,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
     #define SAMPLE_NORMALMAPFORMATCAP(uv,texArrayID)            DCL_SAMPLE_TEX2DARRAY(_NormalMapForMatCapArr, float3(uv, texArrayID))
     #define SAMPLE_SET_MATCAPMASK(uv,texArrayID)                DCL_SAMPLE_TEX2DARRAY(_Set_MatcapMaskArr, float3(uv, texArrayID))
     #define SAMPLE_EMISSIVE(uv,texArrayID)                      DCL_SAMPLE_TEX2DARRAY(_Emissive_TexArr, float3(uv, texArrayID))
-    #define SAMPLE_CLIPPINGMASK(uv,texArrayID)                  DCL_SAMPLE_TEX2DARRAY(_ClippingMaskArr, float3(uv, texArrayID))
+    #define SAMPLE_CLIPPINGMASK(uv,texArrayID)                  DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_ClippingMaskArr, float3(uv, texArrayID))
     #define SAMPLE_ANGELRING(uv,texArrayID)                     DCL_SAMPLE_TEX2DARRAY(_AngelRing_SamplerArr, float3(uv, texArrayID))
     #define SAMPLE_OUTLINE(uv,texArrayID,lod)                   DCL_SAMPLE_TEX2DARRAY_LOD(_Outline_SamplerArr, float3(uv, texArrayID), lod)
     #define SAMPLE_OUTLINETEX(uv,texArrayID)                    DCL_SAMPLE_TEX2DARRAY(_OutlineTexArr, float3(uv, texArrayID))
