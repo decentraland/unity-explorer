@@ -51,5 +51,17 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
 
             // entityTransformComponent = AddTransformToEntity(entity);
         }
+
+        [Test]
+        public void SetupCharacterTriggerAreaCorrectly() { }
+
+        [Test]
+        public void UpdateCharacterTriggerAreaCorrectly() { }
+
+        [Test]
+        public void UpdateCameraModeOnTriggerAreaEnter() { }
+
+        [Test] // Deal with camera mode input locks
+        public void HandleCameraModeResetCorrectlyOnTriggerAreaExit() { }
     }
 }

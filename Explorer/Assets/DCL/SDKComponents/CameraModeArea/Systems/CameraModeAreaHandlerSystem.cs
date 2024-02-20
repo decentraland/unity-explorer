@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             characterTriggerAreaComponent.IsDirty = true;
         }
 
-        private void OnEnteredCameraModeArea(CameraMode targetCameraMode)
+        internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
             cameraModeBeforeLastAreaEnter = camera.Mode;
@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             camera.AddCameraInputLock();
         }
 
-        private void OnExitedCameraModeArea(Collider avatarCollider)
+        internal void OnExitedCameraModeArea(Collider avatarCollider)
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntity);
 
