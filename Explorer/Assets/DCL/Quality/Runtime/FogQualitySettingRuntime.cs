@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.Quality.Runtime
 {
-    public class FogQualitySettingRuntime : IQualitySettingRuntime
+    public partial class FogQualitySettingRuntime : IQualitySettingRuntime
     {
         private PersistentSetting<bool> active;
         private PersistentSetting<float> density;
@@ -39,6 +39,12 @@ namespace DCL.Quality.Runtime
             RenderSettings.fogStartDistance = startDistance.Value;
             RenderSettings.fogEndDistance = endDistance.Value;
         }
+
+        internal float Density => RenderSettings.fogDensity;
+        internal float EndDistance => RenderSettings.fogEndDistance;
+        internal float StartDistance => RenderSettings.fogStartDistance;
+        internal FogMode Mode => RenderSettings.fogMode;
+        internal Color Color => RenderSettings.fogColor;
 
         internal void OverrideActive(bool active)
         {

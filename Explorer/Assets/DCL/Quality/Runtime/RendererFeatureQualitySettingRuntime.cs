@@ -2,13 +2,15 @@ using UnityEngine.Rendering.Universal;
 
 namespace DCL.Quality.Runtime
 {
-    public class RendererFeatureQualitySettingRuntime<T> : IQualitySettingRuntime where T: ScriptableRendererFeature
+    public partial class RendererFeatureQualitySettingRuntime<T> : IQualitySettingRuntime where T: ScriptableRendererFeature
     {
         private readonly IRendererFeaturesCache rendererFeaturesCache;
 
         private PersistentSetting<bool> active;
 
         public bool IsActive => rendererFeaturesCache.GetRendererFeature<T>()?.isActive ?? false;
+
+        internal string name => rendererFeaturesCache.GetRendererFeature<T>()?.name ?? typeof(T).Name;
 
         public RendererFeatureQualitySettingRuntime(IRendererFeaturesCache rendererFeaturesCache)
         {

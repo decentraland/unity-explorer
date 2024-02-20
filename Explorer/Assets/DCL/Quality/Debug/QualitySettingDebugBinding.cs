@@ -3,25 +3,12 @@ using DCL.Quality.Runtime;
 
 namespace DCL.Quality.Debug
 {
-    public abstract class QualitySettingDebugBinding<T> : IQualitySettingDebugBinding where T: IQualitySettingRuntime
+    public static class QualitySettingDebugBinding
     {
-        protected readonly T runtime;
-        private readonly string name;
-
-        protected QualitySettingDebugBinding(T runtime, string name)
-        {
-            this.runtime = runtime;
-            this.name = name;
-        }
-
-        public void AddElements(DebugWidgetBuilder builder)
+        public static void AddElements<T>(DebugWidgetBuilder builder, T runtime, string name) where T: IQualitySettingRuntime
         {
             // Add label and toggle
             builder.AddControl(new DebugConstLabelDef(name), new DebugToggleDef(evt => runtime.SetActive(evt.newValue), runtime.IsActive));
-
-            AddElementsInternal(builder);
         }
-
-        protected virtual void AddElementsInternal(DebugWidgetBuilder builder) { }
     }
 }

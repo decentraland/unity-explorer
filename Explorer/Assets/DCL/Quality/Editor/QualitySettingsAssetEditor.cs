@@ -23,7 +23,6 @@ namespace DCL.Quality
 
         private SerializedObject qualitySettingSerializedObject;
         private UnityEditor.Editor rendererDataEditor;
-        private int selectedQuality;
         private new QualitySettingsAsset target;
         private SerializedProperty updateInEditor;
 
@@ -106,11 +105,14 @@ namespace DCL.Quality
             // I don't know to implement it with UI Toolkit
             EnsureCustomSettingsSize(qualityLevels.Length);
 
-            int prev = selectedQuality;
-            selectedQuality = EditorGUILayout.Popup("Select Quality Level", selectedQuality, qualityLevels, popup);
+            int prev = QualitySettings.GetQualityLevel();
+            int selectedQuality = EditorGUILayout.Popup("Select Quality Level", prev, qualityLevels, popup);
 
             if (prev != selectedQuality)
+            {
+                QualitySettings.SetQualityLevel(selectedQuality);
                 DrawQualitySelector();
+            }
         }
 
         private void EnsureCustomSettingsSize(int newSize)
@@ -159,6 +161,8 @@ namespace DCL.Quality
 
         private void DrawQualitySelector()
         {
+            int selectedQuality = QualitySettings.GetQualityLevel();
+
             currentLevelContainer.Clear();
 
             var field = new PropertyField(customSettings.GetArrayElementAtIndex(selectedQuality));

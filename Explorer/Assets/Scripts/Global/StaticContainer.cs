@@ -15,6 +15,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
+using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
@@ -51,6 +52,8 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
 
         public CharacterContainer CharacterContainer { get; private set; }
+
+        public QualityContainer QualityContainer { get; private set; }
 
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
@@ -152,8 +155,8 @@ namespace Global
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
+            container.QualityContainer = QualityContainer.Create(settingsContainer);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;

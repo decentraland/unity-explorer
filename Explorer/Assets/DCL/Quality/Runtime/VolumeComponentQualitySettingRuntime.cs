@@ -1,3 +1,5 @@
+using DCL.DebugUtilities;
+using System;
 using UnityEngine.Rendering;
 
 namespace DCL.Quality.Runtime
@@ -45,5 +47,7 @@ namespace DCL.Quality.Runtime
         public void ApplyPreset(QualitySettingsAsset.QualityCustomLevel preset) { }
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset) { }
+
+        public void AddDebugView(DebugWidgetBuilder debugWidgetBuilder) { }
     }
 }

@@ -7,7 +7,7 @@ namespace DCL.Quality
     [InitializeOnLoad]
     public static class QualitySettingsEditorListener
     {
-        private static readonly QualityRuntimeFactory FACTORY = new (new RendererFeaturesCache());
+        private static readonly IRendererFeaturesCache CACHE = new RendererFeaturesCache();
 
         private static IQualityLevelController qualityLevelController;
 
@@ -64,7 +64,7 @@ namespace DCL.Quality
             if (qualityLevelController != null)
                 return;
 
-            qualityLevelController = FACTORY.Create(asset);
+            qualityLevelController = QualityRuntimeFactory.Create(CACHE, asset);
         }
     }
 }

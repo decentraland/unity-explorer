@@ -1,3 +1,5 @@
+using DCL.DebugUtilities;
+using System;
 using UnityEngine.Rendering;
 
 namespace DCL.Quality.Runtime
@@ -29,5 +31,7 @@ namespace DCL.Quality.Runtime
         {
             globalVolume.sharedProfile = currentPreset.volumeProfile;
         }
+
+        public void AddDebugView(DebugWidgetBuilder debugWidgetBuilder) { }
     }
 }

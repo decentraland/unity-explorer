@@ -49,6 +49,10 @@ namespace DCL.Quality.Runtime
             QualitySettings.SetQualityLevel(index, true);
         }
 
-        public void AddDebugViews(DebugWidgetBuilder debugWidgetBuilder) { }
+        public void AddDebugViews(DebugWidgetBuilder debugWidgetBuilder)
+        {
+            foreach (IQualitySettingRuntime? settingRuntime in runtimes)
+                settingRuntime.AddDebugView(debugWidgetBuilder);
+        }
     }
 }

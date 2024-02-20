@@ -1,21 +1,22 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Quality.Runtime;
-using UnityEngine;
+using DCL.Quality.Debug;
 
-namespace DCL.Quality.Debug
+namespace DCL.Quality.Runtime
 {
-    public class FogSettingsDebugBinding : QualitySettingDebugBinding<FogQualitySettingRuntime>
+    public partial class FogQualitySettingRuntime
     {
-        private ElementBinding<float>? densityBinding;
-
-        public FogSettingsDebugBinding(FogQualitySettingRuntime runtime) : base(runtime, "Fog") { }
-
-        protected override void AddElementsInternal(DebugWidgetBuilder builder)
+        public void AddDebugView(DebugWidgetBuilder debugWidgetBuilder)
         {
-            densityBinding = new ElementBinding<float>(RenderSettings.fogDensity, f => RenderSettings.fogDensity = f);
+            QualitySettingDebugBinding.AddElements(debugWidgetBuilder, this, "Fog");
 
-            builder.AddFloatField("Density", densityBinding);
+            debugWidgetBuilder.AddFloatField("Density", new ElementBinding<float>(Density, OverrideDensity));
+            debugWidgetBuilder.AddFloatField("End Distance", new ElementBinding<float>(EndDistance, OverrideEndDistance));
+            debugWidgetBuilder.AddFloatField("Start Distance", new ElementBinding<float>(StartDistance, OverrideStartDistance));
+
+            // TODO enum and color support
+            // debugWidgetBuilder.AddEnumField("Mode", new ElementBinding<FogMode>(runtime.Mode, runtime.OverrideMode));
+            // debugWidgetBuilder.AddColorField("Color", new ElementBinding<Color>(runtime.Color, runtime.OverrideColor));
         }
     }
 }

@@ -8,22 +8,15 @@ using UnityEngine.SceneManagement;
 
 namespace DCL.Quality.Runtime
 {
-    public class QualityRuntimeFactory
+    public static class QualityRuntimeFactory
     {
-        private readonly IRendererFeaturesCache rendererFeaturesCache;
-
-        public QualityRuntimeFactory(IRendererFeaturesCache rendererFeaturesCache)
-        {
-            this.rendererFeaturesCache = rendererFeaturesCache;
-        }
-
-        public IQualityLevelController Create(QualitySettingsAsset settingsAsset)
+        public static IQualityLevelController Create(IRendererFeaturesCache rendererFeaturesCache, QualitySettingsAsset settingsAsset)
         {
             var runtimes = new List<IQualitySettingRuntime>();
 
             runtimes.Add(CreateFogRuntime());
             runtimes.Add(CreateGlobalVolume());
-            CreateRendererFeaturesRuntimes(settingsAsset, runtimes);
+            CreateRendererFeaturesRuntimes(rendererFeaturesCache, settingsAsset, runtimes);
 
             return new QualityLevelController(runtimes, settingsAsset.customSettings);
         }
@@ -35,7 +28,7 @@ namespace DCL.Quality.Runtime
         ///     Create a separate class for every renderer feature type possibly available
         /// </summary>
         /// <param name="runtimes"></param>
-        private void CreateRendererFeaturesRuntimes(QualitySettingsAsset settingsAsset, List<IQualitySettingRuntime> runtimes)
+        private static void CreateRendererFeaturesRuntimes(IRendererFeaturesCache rendererFeaturesCache, QualitySettingsAsset settingsAsset, List<IQualitySettingRuntime> runtimes)
         {
             var processedTypes = new HashSet<Type>();
 
