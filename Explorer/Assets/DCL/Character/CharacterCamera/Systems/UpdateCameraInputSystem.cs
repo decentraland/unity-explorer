@@ -37,6 +37,8 @@ namespace DCL.CharacterCamera.Systems
             cameraInput.Delta = cursorComponent.CursorIsLocked ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
 
             cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
+
+            if (freeCameraActions.Sprint.IsPressed()) { cameraInput.FreeMovement *= 10; }
         }
     }
 }

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0488ab1caa9420ab61e97ee71c3d310, type: 3}
+  m_Name: Final_HeightMap
+  m_EditorClassIdentifier: 
+  settings:
+    invert: 0
+    normalize: 1
+    scale: 200
+    octaves: 3
+    persistance: 0.338
+    lacunarity: 2
+    seed: 1
+    offset: {x: 0, y: 0}
+    cutoff: 1
+    noiseType: 1
+    baseValue: 0
+    multiplyValue: 1
+    divideValue: 9.95
+  operations:
+  - operation: 0
+    noise: {fileID: 11400000, guid: 9c77fb8d5e4c2f34aa2299f12ba5920f, type: 2}
+  - operation: 2
+    noise: {fileID: 11400000, guid: 7395fc850ad7b964cafcbeb87b2a3ec1, type: 2}
+  - operation: 3
+    noise: {fileID: 11400000, guid: 74dfc00caeced5e4593da65ce037cef7, type: 2}
+  finalCutOff: -2

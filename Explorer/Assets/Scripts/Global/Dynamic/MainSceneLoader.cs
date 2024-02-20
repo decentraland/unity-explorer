@@ -7,6 +7,8 @@ using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
+using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
@@ -17,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
 
@@ -37,6 +40,8 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
+        [SerializeField] private bool enableLandscape;
+
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private IWeb3IdentityCache? identityCache;
@@ -78,11 +83,15 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            // To avoid configuration issues, force full flow on build
-            showSplash = true;
-            showAuthentication = true;
-            showLoading = true;
+#if !UNITY_EDITOR
+    #if !DEVELOPMENT_BUILD
+        // To avoid configuration issues, force full flow on build
+        showSplash = true;
+        showAuthentication = true;
+        showLoading = true;
+    #endif
+
+    enableLandscape = true;
 #endif
 
             try
@@ -124,7 +133,8 @@ namespace Global.Dynamic
                     dynamicSettings,
                     web3Authenticator,
                     identityCache,
-                    settings.StartPosition);
+                    settings.StartPosition,
+                    enableLandscape);
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager);
 
