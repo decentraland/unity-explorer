@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -60,6 +59,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         public void Run(MessageMock from, MessageMock to)
         {
+            if (from?.timestamp > to.timestamp) return;
+
             start = from;
             end = to;
 

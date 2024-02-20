@@ -13,13 +13,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public readonly Queue<MessageMock> IncomingMessages = new ();
         private readonly List<MessageMock> passedMessages = new ();
 
+        public int Incoming;
+        public int Passed;
+
+        [Space]
         public MessageBus messageBus;
         public GameObject receivedMark;
         public GameObject passedMark;
-
-        [Header("DEBUG")]
-        public int Incoming;
-        public int Passed;
 
         private Interpolation interpolation;
         private Extrapolation extrapolation;
@@ -60,21 +60,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (IncomingMessages.Count > 0)
             {
-                var endPoint = IncomingMessages.Dequeue();
+                MessageMock remote = IncomingMessages.Dequeue();
 
                 if (extrapolation.enabled)
                 {
-                    blend.Run(extrapolation.Stop(), endPoint);
+                    // AddToPassed(extrapolation.Stop());
+                    blend.Run(extrapolation.Stop(), remote);
                     return;
                 }
 
-                var startPoint = passedMessages.Count > 0 ? passedMessages[^1] : null;
-                interpolation.Run(startPoint, endPoint);
+                interpolation.Run(
+                    from: passedMessages.Count > 0 ? passedMessages[^1] : null,
+                    to: remote);
             }
             else if (passedMessages.Count > 1 && !extrapolation.enabled && !passedMessages.IsNullOrEmpty())
-            {
                 extrapolation.Run(passedMessages[^1]);
-            }
 
             // {
             //     // Stop extrapolation when message arrives
@@ -141,9 +141,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             //         StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
             //         return;
             //     }
-            //
-            //     if (endPoint.timestamp > passedMessages[^1].timestamp)
-            //         Interpolate(start: passedMessages[^1], endPoint);
             // }
         }
 

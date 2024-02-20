@@ -896,11 +896,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d02361bc2146ed9782da2a2c01cf68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Incoming: 0
+  Passed: 0
   messageBus: {fileID: 1672578178}
   receivedMark: {fileID: 687028449}
   passedMark: {fileID: 0}
-  Incoming: 0
-  Passed: 0
 --- !u!23 &579518768
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1581,10 +1581,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf6a4b096f4d8f42a37f6f2b5d054de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PackageSentRate: 0.33
-  PackagesJitter: 0
+  PackageSentRate: 0.5
+  PackagesJitter: 3
   Latency: 1
-  LatencyJitter: 0
+  LatencyJitter: 0.3
 --- !u!4 &1672578179
 Transform:
   m_ObjectHideFlags: 0
@@ -1867,11 +1867,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d02361bc2146ed9782da2a2c01cf68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Incoming: 0
+  Passed: 0
   messageBus: {fileID: 1672578178}
   receivedMark: {fileID: 367780082}
   passedMark: {fileID: 57191068}
-  Incoming: 0
-  Passed: 0
 --- !u!96 &2142167751
 TrailRenderer:
   serializedVersion: 3
@@ -2036,8 +2036,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89daa3961cca4daca45a1aebd4282eb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSpeed: 30
+  maxSpeed: 15
   maxExtraTime: 0
+  minPositionDelta: 0.1
   Time: 0
   Velocity: {x: 0, y: 0, z: 0}
   blendExtra: 0

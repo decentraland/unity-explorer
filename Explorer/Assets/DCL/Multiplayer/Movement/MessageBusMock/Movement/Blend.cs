@@ -7,6 +7,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
     {
         public float maxSpeed = 30f;
         public float maxExtraTime;
+        public float minPositionDelta = 0.1f;
 
         [Space]
         public float Time;
@@ -20,26 +21,28 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
         private MessageMock startRemote;
 
         private Vector3 remoteOldPosition;
+        private float slowedTime;
+
+        private float slowDownFactor;
 
         public event Action<MessageMock> PointPassed;
 
         private void Update()
         {
-            // blendDuration += Time.deltaTime;
-            // Time += UnityEngine.Time.deltaTime/ slowDownFactor;
-
             Time += UnityEngine.Time.deltaTime;
 
-            if (Time < totalDuration)
+            slowedTime = Time / slowDownFactor;
+
+            if (slowedTime < totalDuration)
             {
-                float lerpValue = Time / totalDuration;
+                float lerpValue = slowedTime / totalDuration;
 
                 // Interpolate velocity
                 Velocity = startLocal.velocity + ((startRemote.velocity - startLocal.velocity) * lerpValue);
 
                 // Calculate the position at time t
-                Vector3 projectedLocal = startLocal.position + (Velocity * Time);
-                Vector3 projectedRemote = remoteOldPosition + (startRemote.velocity * Time);
+                Vector3 projectedLocal = startLocal.position + (Velocity * slowedTime);
+                Vector3 projectedRemote = remoteOldPosition + (startRemote.velocity * slowedTime);
 
                 // Apply the interpolated position
                 transform.position = projectedLocal + ((projectedRemote - projectedLocal) * lerpValue);
@@ -62,40 +65,30 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
 
         private void OnEnable()
         {
+            float positionDiff = Vector3.Distance(startLocal.position, startRemote.position);
+
+            if (positionDiff < minPositionDelta)
             {
-            //     float positionDiff = Vector3.Distance(local.position, remote.position);
-            //
-            //     if (positionDiff < minPositionDelta)
-            //     {
-            //         AddToPassed(remote);
-            //         isBlending = false;
-            //         yield break;
-            //     }
-            //
-            //     float timeDiff = remote.timestamp - local.timestamp;
-            //     blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxBlendExtraTime);
-            //
-            //     // Debug.Log($"{blendExtra} | {timeDiff} | {avarageMessageSentRate}  |  {avarageMessageSentRate - timeDiff}");
-            //
-            //     float totalDuration = timeDiff + blendExtra;
-            //
-            //     var slowDownFactor = 1f;
-            //     float speed = positionDiff / totalDuration;
-            //
-            //     if (speed > maxBlendSpeed)
-            //     {
-            //         float desiredDuration = positionDiff / maxBlendSpeed;
-            //         slowDownFactor = desiredDuration / totalDuration;
-            //     }
-            //
-            //     var t = 0f;
-            //     blendDuration = 0f;
+                PointPassed?.Invoke(startRemote);
+                enabled = false;
+                return;
+            }
+
+            float timeDiff = startRemote.timestamp - startLocal.timestamp;
+            // blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxExtraTime);
+            totalDuration = timeDiff + blendExtra;
+
+            slowDownFactor = 1f;
+            float speed = positionDiff / totalDuration;
+
+            if (speed > maxSpeed)
+            {
+                float desiredDuration = positionDiff / maxSpeed;
+                slowDownFactor = desiredDuration / totalDuration;
             }
 
             Time = 0f;
-
-            float timeDiff = startRemote.timestamp - startLocal.timestamp;
-            totalDuration = timeDiff + blendExtra;
+            slowedTime = 0f;
 
             remoteOldPosition = startRemote.position - (startRemote.velocity * timeDiff);
         }
