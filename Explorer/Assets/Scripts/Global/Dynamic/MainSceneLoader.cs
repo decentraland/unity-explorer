@@ -122,8 +122,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!);
-
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     staticContainer!,
                     scenePluginSettingsContainer,
@@ -137,6 +135,8 @@ namespace Global.Dynamic
                     identityCache,
                     settings.StartPosition,
                     enableLandscape);
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager);
 
                 if (!isLoaded)
                 {

@@ -32,6 +32,7 @@ MonoBehaviour:
   - rid: 4340256219339423747
   - rid: 4340256301410942981
   - rid: 7249412338407702528
+  - rid: 7162477498503790594
   references:
     version: 2
     RefIds:
@@ -187,6 +188,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <FallbackTipsConfiguration>k__BackingField:
+          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
@@ -209,11 +215,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ChatEntryPrefab:
           m_AssetGUID: 9e9bf5fb9ee9c452f858e423651a52ca
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <ChatEntryConfiguration>k__BackingField:
-          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -298,6 +299,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 7162477498503790594
+      type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ExternalUrlPromptPrefab:
+          m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 7249412338407702528
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:
