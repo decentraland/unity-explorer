@@ -6,7 +6,7 @@ using DCL.WebRequests.AudioClips;
 using DCL.WebRequests.GenericHead;
 using System;
 using System.Threading;
-using Utility.Time;
+using Utility.Times;
 
 namespace DCL.WebRequests
 {
@@ -78,14 +78,6 @@ namespace DCL.WebRequests
                             .Add("x-identity-metadata", jsonMetaData)
             );
         }
-
-        public static UniTask<GenericPostRequest> SignedFetchAsync(
-            this IWebRequestController controller,
-            string url,
-            string? jsonMetaData,
-            CancellationToken ct
-        ) =>
-            controller.SignedFetchAsync(new CommonArguments(URLAddress.FromString(url)), jsonMetaData, ct);
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data
