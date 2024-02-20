@@ -188,6 +188,7 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new TweenPlugin(componentsContainer.ComponentPoolsRegistry),
+                new AnimatorPlugin(componentsContainer.ComponentPoolsRegistry),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
 
 #if UNITY_EDITOR

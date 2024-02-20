@@ -148,6 +148,12 @@
         public const string TWEEN = nameof(TWEEN);
 
         /// <summary>
+        ///     Animator Related
+        /// </summary>
+        public const string ANIMATOR = nameof(ANIMATOR);
+
+
+        /// <summary>
         ///     Wearable related
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
