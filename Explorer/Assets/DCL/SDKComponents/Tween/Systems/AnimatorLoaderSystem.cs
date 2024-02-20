@@ -7,6 +7,8 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Unity.Groups;
+using Google.Protobuf.Collections;
+using System.Collections.Generic;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Systems
@@ -16,8 +18,7 @@ namespace DCL.SDKComponents.Tween.Systems
     [ThrottlingEnabled]
     public partial class AnimatorLoaderSystem : BaseUnityLoopSystem
     {
-        private AnimatorLoaderSystem(World world) : base(world)
-        { }
+        private AnimatorLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -30,7 +31,7 @@ namespace DCL.SDKComponents.Tween.Systems
         [None(typeof(SDKAnimatorComponent))]
         private void LoadTween(in Entity entity, ref PBAnimator pbAnimator)
         {
-            var sdkAnimationStates = ListPool<SDKAnimationState>.Get();
+            List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
 
             for (var i = 0; i < pbAnimator.States.Count; i++)
             {
@@ -39,7 +40,12 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkAnimationStates.Add(sdkAnimationState);
             }
 
-            SDKAnimatorComponent sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates);
+            if (pbAnimator.IsDirty)
+            {
+                var a = 1;
+            }
+
+            var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates);
 
             World.Add(entity, sdkAnimatorComponent);
         }
@@ -47,44 +53,20 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void UpdateTween(ref PBAnimator pbAnimator, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            if (pbAnimator.IsDirty)// || !TweenSDKComponentHelper.AreSameModels(pbAnimator, animatorComponent.SDKTweenComponent.CurrentTweenModel))
+            if (!pbAnimator.IsDirty) return;
+
+            // || Check if models are different? not sure if its needed, as new models should be dirty always
+
+            sdkAnimatorComponent.IsDirty = true;
+            List<SDKAnimationState> sdkAnimationStates = sdkAnimatorComponent.SDKAnimationStates;
+            sdkAnimationStates.Clear();
+
+            RepeatedField<PBAnimationState> pbAnimatorStates = pbAnimator.States;
+
+            for (var i = 0; i < pbAnimatorStates.Count; i++)
             {
-                var sdkAnimationStates = sdkAnimatorComponent.SDKAnimationStates;
-                var pbAnimationStates = pbAnimator.States;
-
-                if (pbAnimationStates.Count < sdkAnimationStates.Count)
-                {
-                    for (int i = pbAnimationStates.Count - 1; i < sdkAnimationStates.Count; i++)
-                    {
-                        sdkAnimationStatePool.Release(sdkAnimationStates[i]);
-                    }
-                    sdkAnimationStates.RemoveRange(pbAnimationStates.Count -1, sdkAnimationStates.Count-pbAnimationStates.Count);
-                }
-
-                for (var i = 0; i < pbAnimationStates.Count; i++)
-                {
-                    var pbAnimationState = pbAnimationStates[i];
-
-                    SDKAnimationState sdkAnimationState;
-
-                    if (i > sdkAnimationStates.Count)
-                    {
-                        sdkAnimationState = sdkAnimationStatePool.Get();
-                        sdkAnimationStates.Add(sdkAnimationState);
-                    }
-                    else { sdkAnimationState = sdkAnimationStates[i]; }
-
-                    sdkAnimationState.Update(
-                        pbAnimationState.Clip,
-                        pbAnimationState.Playing,
-                        pbAnimationState.GetWeight(),
-                        pbAnimationState.GetSpeed(),
-                        pbAnimationState.GetLoop(),
-                        pbAnimationState.GetShouldReset()
-                        );
-                }
-
-                sdkAnimatorComponent.IsDirty = true;
+                var sdkAnimationState = new SDKAnimationState(pbAnimatorStates[i]);
+                sdkAnimationStates.Add(sdkAnimationState);
             }
         }
     }

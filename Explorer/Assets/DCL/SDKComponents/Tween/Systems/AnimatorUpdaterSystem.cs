@@ -31,20 +31,7 @@ namespace DCL.SDKComponents.Tween.Systems
     [ThrottlingEnabled]
     public partial class AnimatorUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private const int MILLISECONDS_CONVERSION_INT = 1000;
-
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<SDKAnimatorComponent> sdkAnimatorPool;
-        private readonly IComponentPool<SDKAnimationState> sdkAnimationStatePool;
-        private readonly List<DG.Tweening.Tween> transformTweens = new ();
-        private Tweener tempTweener;
-
-        public AnimatorUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKAnimatorComponent> sdkAnimatorPool, IComponentPool<SDKAnimationState> sdkAnimationStatePool) : base(world)
-        {
-            this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.sdkAnimatorPool = sdkAnimatorPool;
-            this.sdkAnimationStatePool = sdkAnimationStatePool;
-        }
+        public AnimatorUpdaterSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -66,52 +53,48 @@ namespace DCL.SDKComponents.Tween.Systems
         [All(typeof(SDKAnimatorComponent))]
         private void FinalizeComponents(ref CRDTEntity sdkEntity, ref SDKAnimatorComponent tweenComponent)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref SDKAnimatorComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleEntityDestruction(ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
 
         [Query]
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref SDKAnimatorComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
 
         [Query]
-        [All(typeof(AnimatorComponent))]
-        private void UpdateAnimationState(ref AnimatorComponent animatorComponent, ref GltfContainerComponent component)
+        [All(typeof(SDKAnimatorComponent))]
+        private void UpdateAnimationState(ref SDKAnimatorComponent animatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
-            if (component.State.Value != LoadingState.Finished || !animatorComponent.SDKAnimatorComponent.IsDirty) return;
+            if (gltfContainerComponent.State.Value != LoadingState.Finished || !animatorComponent.IsDirty) return;
 
-            if (component.Promise is not { Result: { } }) return;
+            if (gltfContainerComponent.Promise is not { Result: { } }) return;
 
-            if (component.Promise.Result.Value.Asset.Animations.Count == 0) return;
+            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
+            if (gltfAnimations.Count == 0) return;
 
             {
-                animatorComponent.SDKAnimatorComponent.IsDirty = false;
+                animatorComponent.IsDirty = false;
 
-                if (!animatorComponent.SDKAnimatorComponent.SDKAnimation.IsInitialized)
+                if (!animatorComponent.SDKAnimation.IsInitialized)
                 {
-                    foreach (var animation in component.Promise.Result.Value.Asset.Animations)
-                    {
-                        SetupAnimation(animation);
-                    }
-                    animatorComponent.SDKAnimatorComponent.SDKAnimation.IsInitialized = true;
+                    foreach (Animation animation in gltfAnimations) { SetupAnimation(animation); }
+
+                    animatorComponent.SDKAnimation.IsInitialized = true;
                 }
 
-                SetAnimationState(animatorComponent.SDKAnimatorComponent.SDKAnimationStates, component.Promise.Result.Value.Asset.Animations.First());
+                foreach (Animation animation in gltfAnimations) { SetAnimationState(animatorComponent.SDKAnimationStates, animation); }
             }
         }
 
         private static void SetupAnimation(Animation animation)
         {
-            int layerIndex = 0;
+            var layerIndex = 0;
 
             animation.playAutomatically = true;
             animation.enabled = true;
@@ -130,114 +113,37 @@ namespace DCL.SDKComponents.Tween.Systems
             }
         }
 
-
-        private static void SetAnimationState(IList<SDKAnimationState> animationState, Animation animation)
+        private static void SetAnimationState(IList<SDKAnimationState> sdkAnimationStates, Animation animation)
         {
-            if (animationState.Count == 0)
+            if (sdkAnimationStates.Count == 0)
                 return;
 
-            for (int i = 0; i < animationState.Count; i++)
+            for (var i = 0; i < sdkAnimationStates.Count; i++)
             {
-                var state = animationState[i];
-                AnimationState unityState = animation[state.Clip];
+                SDKAnimationState state = sdkAnimationStates[i];
+                AnimationState animationState = animation[state.Clip];
 
-                if (!unityState)
-                    continue;
+                if (!animationState) continue;
 
-                unityState.weight = state.Weight;
+                animationState.weight = state.Weight;
 
-                unityState.wrapMode = state.Loop ? WrapMode.Loop : WrapMode.Default;
+                animationState.wrapMode = state.Loop ? WrapMode.Loop : WrapMode.Default;
 
-                unityState.clip.wrapMode = unityState.wrapMode;
-                unityState.speed = state.Speed;
-                unityState.enabled = state.Playing;
+                animationState.clip.wrapMode = animationState.wrapMode;
+                animationState.speed = state.Speed;
+                animationState.enabled = state.Playing;
 
                 if (state.ShouldReset && animation.IsPlaying(state.Clip))
                 {
                     animation.Stop(state.Clip);
 
                     //Manually sample the animation. If the reset is not played again the frame 0 wont be applied
-                    unityState.clip.SampleAnimation(animation.gameObject, 0);
+                    animationState.clip.SampleAnimation(animation.gameObject, 0);
                 }
 
                 if (state.Playing && !animation.IsPlaying(state.Clip))
                     animation.Play(state.Clip);
             }
-        }
-
-
-        private void UpdateTweenState(TransformComponent transformComponent, CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
-        {
-            float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
-            var tweenStateDirty = false;
-            TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.IsPlaying);
-
-            //We only update the state if we changed status OR if the tween is playing and the current time has changed
-            if (newState != sdkTweenComponent.TweenStateStatus)
-            {
-                sdkTweenComponent.TweenStateStatus = newState;
-                tweenStateDirty = true;
-            }
-
-            if (sdkTweenComponent.IsPlaying && !sdkTweenComponent.CurrentTime.Equals(currentTime))
-            {
-                sdkTweenComponent.CurrentTime = currentTime;
-                tweenStateDirty = true;
-            }
-
-            if (!tweenStateDirty) return;
-
-            TweenSDKComponentHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-            TweenSDKComponentHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
-        }
-
-        private void SetupTweener(TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, Transform entityTransform, SDKTweenModel tweenModel, float durationInSeconds, bool isPlaying)
-        {
-            tempTweener = sdkTweenComponent.Tweener;
-
-            //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
-            // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-            DOTween.TweensByTarget(entityTransform, true, transformTweens);
-            if (transformTweens.Count > 0) transformTweens[0].Rewind(false);
-
-            tempTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
-        }
-
-        private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
-        {
-            //sdkTweenComponent.Tweener.Kill();
-            //ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
-            //tweenComponentPool.Release(sdkTweenComponent);
-        }
-
-        private Tweener SetupPositionTween(Transform entityTransform, Vector3 startPosition,
-            Vector3 endPosition, float durationInSeconds, Ease ease, bool faceDirection)
-        {
-            if (faceDirection) entityTransform.forward = (endPosition - startPosition).normalized;
-
-            entityTransform.localPosition = startPosition;
-            return entityTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
-        }
-
-        private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
-        {
-            if (!isPlaying) { return TweenStateStatus.TsPaused; }
-
-            return currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
-        }
-
-        private Tweener SetupRotationTween(Transform entityTransform, Quaternion startRotation,
-            Quaternion endRotation, float durationInSeconds, Ease ease)
-        {
-            entityTransform.localRotation = startRotation;
-            return entityTransform.DOLocalRotateQuaternion(endRotation, durationInSeconds).SetEase(ease).SetAutoKill(false);
-        }
-
-        private Tweener SetupScaleTween(Transform entityTransform, Vector3 startScale,
-            Vector3 endScale, float durationInSeconds, Ease ease)
-        {
-            entityTransform.localScale = startScale;
-            return entityTransform.DOScale(endScale, durationInSeconds).SetEase(ease).SetAutoKill(false);
         }
     }
 }
