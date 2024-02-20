@@ -34,8 +34,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             webSocket.ConnectAsync(new Uri(adapterUrl), token)!.AsUniTask(false);
 
         public UniTask DisconnectAsync(CancellationToken token) =>
-
-            //webSocket.DisconnectAsync(token)!.AsUniTask();
             webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
 
         public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
@@ -74,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                    };
         }
 
-        public string AsText(WebSocketReceiveResult result, byte[] buffer)
+        private static string AsText(WebSocketReceiveResult result, byte[] buffer)
         {
             if (result.MessageType is not WebSocketMessageType.Text)
                 throw new NotSupportedException(
