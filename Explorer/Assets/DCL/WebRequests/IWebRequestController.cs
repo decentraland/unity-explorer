@@ -64,7 +64,7 @@ namespace DCL.WebRequests
             CancellationToken ct
         )
         {
-            int unixTimestamp = DateTime.UtcNow.UnixTime();
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string path = new Uri(commonArguments.URL).AbsolutePath;
             string payload = $"post:{path}:{unixTimestamp}:{jsonMetaData}".ToLower();
 
@@ -74,7 +74,7 @@ namespace DCL.WebRequests
                 ct,
                 signInfo: new WebRequestSignInfo(payload),
                 headersInfo: new WebRequestHeadersInfo()
-                            .Add("x-identity-timestamp", unixTimestamp.ToString())
+                            .Add("x-identity-timestamp", unixTimestamp.ToString()!)
                             .Add("x-identity-metadata", jsonMetaData)
             );
         }
