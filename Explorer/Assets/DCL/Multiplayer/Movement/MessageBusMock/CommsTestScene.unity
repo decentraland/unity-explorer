@@ -920,6 +920,11 @@ MonoBehaviour:
   useBlend: 1
   maxBlendSpeed: 30
   maxBlendExtraTime: 0.33
+  blendTargetPoint:
+    timestamp: 0
+    position: {x: 0, y: 0, z: 0}
+    velocity: {x: 0, y: 0, z: 0}
+    acceleration: {x: 0, y: 0, z: 0}
   blendExtra: 0
 --- !u!23 &579518768
 MeshRenderer:
@@ -1602,9 +1607,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PackageSentRate: 0.33
-  PackagesJitter: 2
+  PackagesJitter: 0.5
   Latency: 1
-  LatencyJitter: 0.1
+  LatencyJitter: 0
 --- !u!4 &1672578179
 Transform:
   m_ObjectHideFlags: 0
@@ -1908,6 +1913,11 @@ MonoBehaviour:
   useBlend: 1
   maxBlendSpeed: 30
   maxBlendExtraTime: 0.33
+  blendTargetPoint:
+    timestamp: 0
+    position: {x: 0, y: 0, z: 0}
+    velocity: {x: 0, y: 0, z: 0}
+    acceleration: {x: 0, y: 0, z: 0}
   blendExtra: 0
 --- !u!96 &2142167751
 TrailRenderer:

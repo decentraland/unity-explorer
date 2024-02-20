@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
@@ -43,6 +44,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public bool useBlend;
         public float maxBlendSpeed = 30f;
         public float maxBlendExtraTime = 0.33f;
+        public float blendDuration;
+        public Vector3 blendVelocity;
+
+        public MessageMock blendTargetPoint;
 
         [Space]
         public float blendExtra;
@@ -68,7 +73,12 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (isInterpolating || isBlending) return;
 
-            if (incomingMessages.Count > 0)
+            if (incomingMessages.Count == 0)
+            {
+                if (passedMessages.Count > 1 && useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty())
+                    StartCoroutine(Extrapolate());
+            }
+            else
             {
                 // Next interpolation point
                 endPoint = incomingMessages.Dequeue();
@@ -82,30 +92,75 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 }
 
                 // Stop extrapolation when message arrives
-                if (isExtrapolating && endPoint.timestamp > passedMessages[^1].timestamp + extDuration)
+                if (isExtrapolating)
                 {
-                    isExtrapolating = false;
+                    if (endPoint.timestamp > passedMessages[^1].timestamp + extDuration)
+                    {
+                        isExtrapolating = false;
+
+                        AddToPassed(new MessageMock
+                        {
+                            timestamp = passedMessages[^1].timestamp + extDuration,
+                            position = transform.position,
+                            velocity = extVelocity,
+                        });
+
+                        if (useBlend)
+                        {
+                            blendTargetPoint = endPoint;
+                            StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
+                            return;
+                        }
+                    }
+                    else if (useBlend && endPoint.timestamp > passedMessages[^1].timestamp)
+                    {
+                        isExtrapolating = false;
+
+                        float currentTimestamp = passedMessages[^1].timestamp + extDuration;
+
+                        AddToPassed(new MessageMock
+                        {
+                            timestamp = currentTimestamp,
+                            position = transform.position,
+                            velocity = extVelocity,
+                        });
+
+                        float deltaT = currentTimestamp - endPoint.timestamp;
+
+                        blendTargetPoint = new MessageMock
+                        {
+                            timestamp = currentTimestamp + 0.001f,
+                            position = endPoint.position + (endPoint.velocity * deltaT),
+                            velocity = endPoint.velocity,
+                        };
+
+                        StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
+                        return;
+                    }
+                    else { return; }
+                }
+
+                if (isBlending && endPoint.timestamp > blendTargetPoint.timestamp)
+                {
                     StopAllCoroutines();
 
                     AddToPassed(new MessageMock
                     {
-                        timestamp = passedMessages[^1].timestamp + extDuration,
+                        timestamp = passedMessages[^1].timestamp + blendDuration,
                         position = transform.position,
-                        velocity = extVelocity,
+                        velocity = blendVelocity,
                     });
 
-                    if (useBlend)
-                    {
-                        StartCoroutine(Blend(passedMessages[^1], endPoint));
-                        return;
-                    }
+                    blendTargetPoint = endPoint;
+
+                    StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
+                    return;
                 }
+
 
                 if (endPoint.timestamp > passedMessages[^1].timestamp)
                     Interpolate(start: passedMessages[^1], endPoint);
             }
-            else if (passedMessages.Count > 1 && useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty())
-                StartCoroutine(Extrapolate());
         }
 
         private static void PutMark(MessageMock newMessage, GameObject mark, float f)
@@ -157,7 +212,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             else if (passedMessages.Count > 2) { avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp; }
 
             blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxBlendExtraTime);
-            Debug.Log($"{blendExtra} | {timeDiff} | {avarageMessageSentRate}  |  {avarageMessageSentRate - timeDiff}");
+
+            // Debug.Log($"{blendExtra} | {timeDiff} | {avarageMessageSentRate}  |  {avarageMessageSentRate - timeDiff}");
 
             float totalDuration = timeDiff + blendExtra;
 
@@ -171,18 +227,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             }
 
             var t = 0f;
+            blendDuration = 0f;
 
             while (t < totalDuration)
             {
+                blendDuration += Time.deltaTime;
+
                 t += Time.deltaTime / slowDownFactor;
 
                 float lerpValue = t / totalDuration;
 
                 // Interpolate velocity
-                Vector3 lerpedVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue);
+                blendVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue);
 
                 // Calculate the position at time t
-                Vector3 projectedLocal = local.position + (lerpedVelocity * t);
+                Vector3 projectedLocal = local.position + (blendVelocity * t);
                 Vector3 projectedRemote = remoteOldPosition + (remote.velocity * t);
 
                 // Apply the interpolated position
