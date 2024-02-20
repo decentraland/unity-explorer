@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.Multiplayer.Movement.MessageBusMock;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.Multiplayer.Movement.ECS
@@ -7,6 +8,7 @@ namespace DCL.Multiplayer.Movement.ECS
     public class MessagePipeSettings : ScriptableObject
     {
         public int InboxCount;
+        public InterpolationType InterpolationType;
 
         [Space]
         public int PackageLost;

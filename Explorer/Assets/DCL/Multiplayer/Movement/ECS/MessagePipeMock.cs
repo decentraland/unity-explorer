@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public class MessagePipeMock
     {
-        public readonly Queue<MessageMock> MailBox = new ();
+        public readonly Queue<MessageMock> IncomingMessages = new ();
 
         private readonly MessagePipeSettings settings;
         private readonly CharacterController playerCharacter;
@@ -37,6 +37,8 @@ namespace DCL.Multiplayer.Movement.ECS
 
             StartSendPackages(cts.Token).Forget();
         }
+
+        public InterpolationType InterpolationType => settings.InterpolationType;
 
         private async UniTask StartSendPackages(CancellationToken ctsToken)
         {
@@ -75,8 +77,8 @@ namespace DCL.Multiplayer.Movement.ECS
                                              + (settings.PackageSentRate * Random.Range(0, settings.PackagesJitter))))
                    .ContinueWith(() =>
                     {
-                        MailBox.Enqueue(message);
-                        settings.InboxCount = MailBox.Count;
+                        IncomingMessages.Enqueue(message);
+                        settings.InboxCount = IncomingMessages.Count;
 
                         // PutMark(newMessage, receivedMark, 0.11f); Received mark
                     })

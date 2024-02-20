@@ -15,6 +15,7 @@ using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement.ECS;
+using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -129,6 +130,8 @@ namespace DCL.PluginSystem.Global
             var messagePipeMock = new MessagePipeMock(settings, staticContainerCharacterContainer.CharacterObject.Controller);
 
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
+            PeerReplicaMockSystem.InjectToWorld(ref builder, messagePipeMock);
+
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
         }
 

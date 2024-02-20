@@ -19,6 +19,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Movement.ECS;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Abstract;
@@ -236,6 +237,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new FeetIKComponent(),
                     new HandsIKComponent(),
                     new HeadIKComponent(),
+                    new InterpolationComponent(transformComp.Transform),
                     // new JumpInputComponent(),
                     // new MovementInputComponent(),
                     characterControllerSettings
