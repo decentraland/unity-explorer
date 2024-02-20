@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -35,21 +34,18 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
-            sceneFacade.DisposeAsync().Forget();
-
-            scenesCache.Remove(definitionComponent.Parcels);
-
             // Keep definition so it won't be downloaded again = Cache in ECS itself
-            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
+            World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        [None(typeof(ISceneFacade))]
         private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(
+                entity);
         }
     }
 }

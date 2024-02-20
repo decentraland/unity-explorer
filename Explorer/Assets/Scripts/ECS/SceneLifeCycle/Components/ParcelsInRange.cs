@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.Components
 {
+    [Obsolete("No longer used by Increasing Radius Systems")]
     public readonly struct ParcelsInRange
     {
         public readonly int LoadRadius;

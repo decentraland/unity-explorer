@@ -5,10 +5,10 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
-using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -32,11 +32,11 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
             wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
             mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
-            realmData = new RealmData(new IpfsRealm(URLDomain.EMPTY));
+            realmData = new RealmData(new TestIpfsRealm());
             system = new ResolveWearableThumbnailSystem(world);
         }
 
-        private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)
+        private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {
             IWearable wearable = Substitute.For<IWearable>();
             wearable.GetUrn().Returns(urn);

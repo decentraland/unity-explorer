@@ -13,6 +13,8 @@ using ECS.StreamableLoading.Common.Components;
 using Realm;
 using SceneRunner.Scene;
 using System.Threading;
+using SceneRunner;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -47,16 +49,17 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
-        private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref PartitionComponent partition)
+        private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
+            ref PartitionComponent partition)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed) return;
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<ISceneFacade> result) && result.Succeeded)
+            if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
-                ISceneFacade scene = result.Asset;
+                var scene = result.Asset;
 
-                int fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
+                var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 
                 async UniTaskVoid RunOnThreadPoolAsync()
                 {
@@ -80,7 +83,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinition, ref PartitionComponent partition)
+        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinition,
+            ref PartitionComponent partition)
         {
             if (!partition.IsDirty) return;
             if (sceneDefinition.IsEmpty) return; // Never tweak FPS of empty scenes

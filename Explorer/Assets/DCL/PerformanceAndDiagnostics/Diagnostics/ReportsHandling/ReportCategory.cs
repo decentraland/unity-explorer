@@ -116,9 +116,9 @@
         public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
 
         /// <summary>
-        ///     Everything related to Scenes audio source components
+        ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
         /// </summary>
-        public const string AUDIO_STREAM = nameof(AUDIO_STREAM);
+        public const string MEDIA_STREAM = nameof(MEDIA_STREAM);
 
         /// <summary>
         ///     Everything related to prioritization
@@ -149,10 +149,22 @@
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
+        public const string LOD = nameof(LOD);
+
         /// <summary>
-        ///     Everything related to Scenes audio source components
+        ///     AvatarAttach SDK component
+        /// </summary>
+        public const string AVATAR_ATTACH = nameof(AVATAR_ATTACH);
+
+        /// <summary>
+        ///     VideoPlayer SDK component
         /// </summary>
         public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
+
+        /// <summary>
+        ///     Scene's restricted actions
+        /// </summary>
+        public const string RESTRICTED_ACTIONS = nameof(RESTRICTED_ACTIONS);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

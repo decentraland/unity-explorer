@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,27 +9,27 @@ namespace DCL.AvatarRendering.DemoScripts
     public class AvatarRandomizer
     {
         public string BodyShape;
-        public List<string> upper_body;
-        public List<string> lower_body;
-        public List<string> feet;
-        public List<string> hair;
-        public List<string> mouth;
-        public List<string> eyes;
-        public List<string> eyebros;
+        public List<URN> upper_body;
+        public List<URN> lower_body;
+        public List<URN> feet;
+        public List<URN> hair;
+        public List<URN> mouth;
+        public List<URN> eyes;
+        public List<URN> eyebros;
 
         public AvatarRandomizer(string bodyShape)
         {
             BodyShape = bodyShape;
-            upper_body = new List<string>();
-            lower_body = new List<string>();
-            feet = new List<string>();
-            hair = new List<string>();
-            mouth = new List<string>();
-            eyes = new List<string>();
-            eyebros = new List<string>();
+            upper_body = new List<URN>();
+            lower_body = new List<URN>();
+            feet = new List<URN>();
+            hair = new List<URN>();
+            mouth = new List<URN>();
+            eyes = new List<URN>();
+            eyebros = new List<URN>();
         }
 
-        public string[] GetRandomAvatarWearables()
+        public URN[] GetRandomAvatarWearables()
         {
             return new[]
             {

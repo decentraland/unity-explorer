@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using Ipfs;
 using System;
 using System.Collections.Generic;
@@ -12,10 +13,10 @@ namespace SceneRunner.Scene
         private readonly Dictionary<string, string> fileToHash;
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
-        public SceneHashedContent(IReadOnlyList<IpfsTypes.ContentDefinition> contentDefinitions, URLDomain contentBaseUrl)
+        public SceneHashedContent(IReadOnlyList<ContentDefinition> contentDefinitions, URLDomain contentBaseUrl)
         {
             fileToHash = new Dictionary<string, string>(contentDefinitions.Count, StringComparer.OrdinalIgnoreCase);
-            foreach (IpfsTypes.ContentDefinition contentDefinition in contentDefinitions) fileToHash[contentDefinition.file] = contentDefinition.hash;
+            foreach (ContentDefinition contentDefinition in contentDefinitions) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
             this.contentBaseUrl = contentBaseUrl;
         }

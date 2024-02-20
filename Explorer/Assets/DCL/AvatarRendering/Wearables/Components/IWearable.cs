@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetHash();
 
-        string GetUrn();
+        URN GetUrn();
 
         string GetName();
 
