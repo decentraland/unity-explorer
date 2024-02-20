@@ -45,7 +45,7 @@ namespace DCL.Chat
 
             ChatMessage itemData = chatMessages[index];
 
-            LoopListViewItem2 item = listView.NewListViewItem(itemData.SentByOwnUser ? "ChatEntryOwn" : "ChatEntry");
+            LoopListViewItem2 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
 
             ChatEntryView itemScript = item.GetComponent<ChatEntryView>();
             itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
