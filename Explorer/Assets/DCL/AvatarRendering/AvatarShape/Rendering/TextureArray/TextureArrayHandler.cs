@@ -37,8 +37,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             Graphics.CopyTexture(texture, srcElement: 0, srcMip: 0, slot.TextureArray, dstElement: slot.UsedSlotIndex, dstMip: 0);
             material.SetInteger(arrayID, slot.UsedSlotIndex);
             material.SetTexture(textureID, slot.TextureArray);
-            material.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-            material.EnableKeyword("_DCL_COMPUTE_SKINNING");
             return slot;
         }
     }
