@@ -2,6 +2,10 @@ using DCL.Utilities.Extensions;
 
 namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
+    /// <summary>
+    /// Provides a way to assign a value to immutable object implements a interior mutability pattern from rust
+    /// https://doc.rust-lang.org/book/ch15-05-interior-mutability.html
+    /// </summary>
     public interface IInterior<T>
     {
         void Assign(T value, out T? previous);
