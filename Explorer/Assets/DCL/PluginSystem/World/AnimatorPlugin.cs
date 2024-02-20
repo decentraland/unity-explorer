@@ -1,10 +1,8 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Systems;
+using DCL.SDKComponents.Animator.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -20,8 +18,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             ResetDirtyFlagSystem<PBAnimator>.InjectToWorld(ref builder);
-            AnimatorLoaderSystem.InjectToWorld(ref builder);
-            AnimatorUpdaterSystem.InjectToWorld(ref builder);
+            AnimatorHandlerSystem.InjectToWorld(ref builder);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

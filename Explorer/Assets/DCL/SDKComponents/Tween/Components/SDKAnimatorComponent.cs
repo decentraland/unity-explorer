@@ -1,22 +1,18 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Systems;
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace DCL.SDKComponents.Tween.Components
+namespace DCL.SDKComponents.Animator.Components
 {
     public struct SDKAnimatorComponent
     {
-        public bool IsDirty { get; set; }
+        public bool IsDirty;
         public readonly List<SDKAnimationState> SDKAnimationStates;
-        public SDKAnimation SDKAnimation;
 
         public SDKAnimatorComponent(List<SDKAnimationState> sdkAnimationStates)
         {
             SDKAnimationStates = sdkAnimationStates;
             IsDirty = true;
-            SDKAnimation = default;
         }
     }
 
@@ -39,20 +35,4 @@ namespace DCL.SDKComponents.Tween.Components
             ShouldReset = pbAnimationState.GetShouldReset();
         }
     }
-
-    public struct SDKAnimation
-    {
-        public bool dirty { get; set; }
-        public readonly Animation Animation;
-        public bool IsInitialized;
-
-        public SDKAnimation(Animation animation)
-        {
-            Animation = animation;
-            dirty = false;
-            IsInitialized = false;
-        }
-    }
-
-
 }
