@@ -15,7 +15,7 @@ namespace DCL.PluginSystem.Global
             this.archipelagoIslandRoom = archipelagoIslandRoom;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
         {
             IFFIClient.Default.EnsureInitialize();
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom);
