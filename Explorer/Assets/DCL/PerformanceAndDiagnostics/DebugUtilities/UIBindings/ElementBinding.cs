@@ -8,8 +8,6 @@ namespace DCL.DebugUtilities.UIBindings
     /// </summary>
     public class ElementBinding<T> : IBinding
     {
-        public event Action<T> OnValueChanged;
-
         private T tempValue;
 
         private bool tempValueIsDirty;
@@ -27,9 +25,12 @@ namespace DCL.DebugUtilities.UIBindings
             }
         }
 
-        public ElementBinding(T defaultValue)
+        public event Action<T> OnValueChanged;
+
+        public ElementBinding(T defaultValue, Action<T> onValueChange = null)
         {
             Value = defaultValue;
+            if (onValueChange != null) OnValueChanged += onValueChange;
         }
 
         /// <summary>

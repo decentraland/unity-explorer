@@ -157,9 +157,9 @@
         public const string AVATAR_ATTACH = nameof(AVATAR_ATTACH);
 
         /// <summary>
-        ///     VideoPlayer SDK component
+        ///     Quality related logs
         /// </summary>
-        public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
+        public const string QUALITY = nameof(QUALITY);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

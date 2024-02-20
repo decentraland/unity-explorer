@@ -1,0 +1,19 @@
+{
+    "name": "DCL.Quality",
+    "rootNamespace": "",
+    "references": [
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+        "GUID:4725c02394ab4ce19f889e4e8001f989"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
