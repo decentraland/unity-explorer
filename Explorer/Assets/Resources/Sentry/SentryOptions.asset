@@ -25,7 +25,7 @@ MonoBehaviour:
   <AutoAwakeTraces>k__BackingField: 0
   <AutoSessionTracking>k__BackingField: 1
   <AutoSessionTrackingInterval>k__BackingField: 30000
-  <ReleaseOverride>k__BackingField: <REPLACE_RELEASE>
+  <ReleaseOverride>k__BackingField: 0.1.0-alpha
   <EnvironmentOverride>k__BackingField: <REPLACE_ENVIRONMENT>
   <AttachStacktrace>k__BackingField: 1
   <AttachScreenshot>k__BackingField: 0

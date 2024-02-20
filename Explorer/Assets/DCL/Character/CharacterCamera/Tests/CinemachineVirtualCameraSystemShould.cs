@@ -55,7 +55,6 @@ namespace DCL.CharacterCamera.Tests
             freeCameraData = Substitute.For<ICinemachineFreeCameraData>();
             freeCameraData.Camera.Returns(freeCamera);
             freeCameraData.POV.Returns(freeCamPov);
-            freeCameraData.Speed.Returns(3f);
 
             CinemachineBrain brain = cinemachineObj.AddComponent<CinemachineBrain>();
             cinemachinePreset = Substitute.For<ICinemachinePreset>();
