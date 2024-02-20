@@ -901,19 +901,7 @@ MonoBehaviour:
   passedMark: {fileID: 0}
   Incoming: 0
   Passed: 0
-  isExtrapolating: 0
   isBlending: 0
-  endPoint:
-    timestamp: 0
-    position: {x: 0, y: 0, z: 0}
-    velocity: {x: 0, y: 0, z: 0}
-    acceleration: {x: 0, y: 0, z: 0}
-  useExtrapolation: 1
-  minSpeed: 0.1
-  linearExtrapolationTime: 0.33
-  dampedExtrapolationSteps: 2
-  extDuration: 0
-  extVelocity: {x: 0, y: 0, z: 0}
   useBlend: 1
   maxBlendSpeed: 30
   maxBlendExtraTime: 0.33
@@ -1606,7 +1594,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PackageSentRate: 0.33
-  PackagesJitter: 0.5
+  PackagesJitter: 0
   Latency: 1
   LatencyJitter: 0
 --- !u!4 &1672578179
@@ -1802,6 +1790,7 @@ GameObject:
   - component: {fileID: 2142167748}
   - component: {fileID: 2142167747}
   - component: {fileID: 2142167753}
+  - component: {fileID: 2142167754}
   - component: {fileID: 2142167750}
   - component: {fileID: 2142167752}
   - component: {fileID: 2142167751}
@@ -1894,19 +1883,7 @@ MonoBehaviour:
   passedMark: {fileID: 57191068}
   Incoming: 0
   Passed: 0
-  isExtrapolating: 0
   isBlending: 0
-  endPoint:
-    timestamp: 0
-    position: {x: 0, y: 0, z: 0}
-    velocity: {x: 0, y: 0, z: 0}
-    acceleration: {x: 0, y: 0, z: 0}
-  useExtrapolation: 1
-  minSpeed: 0.1
-  linearExtrapolationTime: 0.33
-  dampedExtrapolationSteps: 2
-  extDuration: 0
-  extVelocity: {x: 0, y: 0, z: 0}
   useBlend: 1
   maxBlendSpeed: 30
   maxBlendExtraTime: 0.33
@@ -2050,5 +2027,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   receiver: {fileID: 2142167750}
-  interpolationType: 0
+  interpolationType: 1
   minPositionDelta: 0.1
+  Time: 0
+--- !u!114 &2142167754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142167746}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acb51fe798bf4f6e8f9440d90b069ed1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minSpeed: 0.1
+  linearExtrapolationTime: 0.33
+  dampedExtrapolationSteps: 2
+  Time: 0
+  Velocity: {x: 0, y: 0, z: 0}

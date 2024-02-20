@@ -1,5 +1,6 @@
 ﻿using Castle.Core.Internal;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Movement.MessageBusMock.Movement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,17 +22,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [Header("DEBUG")]
         public int Incoming;
         public int Passed;
-        public bool isExtrapolating;
         public bool isBlending;
-
-        [Header("EXTRAPOLATION")]
-        public bool useExtrapolation;
-        public float minSpeed = 0.1f;
-        public float linearExtrapolationTime = 0.33f;
-        public int dampedExtrapolationSteps = 2;
-        [Space]
-        public float extDuration;
-        public Vector3 extVelocity;
 
         [Header("BLENDING")]
         public bool useBlend;
@@ -39,17 +30,20 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public float maxBlendExtraTime = 0.33f;
         public float blendDuration;
         public Vector3 blendVelocity;
-
         public MessageMock blendTargetPoint;
 
         [Space]
         public float blendExtra;
 
         private Interpolation interpolation;
+        private Extrapolation extrapolation;
 
         private void Awake()
         {
+            extrapolation = GetComponent<Extrapolation>();
             interpolation = GetComponent<Interpolation>();
+
+            extrapolation.enabled = false;
             interpolation.enabled = false;
 
             interpolation.PointPassed += AddToPassed;
@@ -77,13 +71,28 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             if (IncomingMessages.Count > 0)
             {
                 var endPoint = IncomingMessages.Dequeue();
+
+                if (extrapolation.enabled)
+                {
+                    extrapolation.enabled = false;
+
+                    passedMessages.Add(new MessageMock
+                    {
+                        timestamp = passedMessages[^1].timestamp + extrapolation.Time,
+                        position = transform.position,
+                        velocity = extrapolation.Velocity,
+                    });
+                }
+
                 var startPoint = passedMessages.Count > 0 ? passedMessages[^1] : null;
 
-                interpolation.Interpolate(startPoint, endPoint);
+                interpolation.Run(startPoint, endPoint);
+            }
+            else if (passedMessages.Count > 1 && !extrapolation.enabled && !passedMessages.IsNullOrEmpty())
+            {
+                extrapolation.Run(passedMessages[^1]);
             }
 
-            // if (isInterpolating || isBlending) return;
-            //
             // if (incomingMessages.Count == 0)
             // {
             //     if (passedMessages.Count > 1 && useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty())
@@ -173,17 +182,17 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             // }
         }
 
+        private void AddToPassed(MessageMock message)
+        {
+            passedMessages.Add(message);
+            PutMark(message, passedMark, 0.2f);
+        }
+
         private static void PutMark(MessageMock newMessage, GameObject mark, float f)
         {
             GameObject markPoint = Instantiate(mark);
             markPoint.transform.position = newMessage.position + (Vector3.up * f);
             markPoint.SetActive(true);
-        }
-
-        private void AddToPassed(MessageMock message)
-        {
-            passedMessages.Add(message);
-            PutMark(message, passedMark, 0.2f);
         }
 
         // private IEnumerator Blend(MessageMock local, MessageMock remote)
@@ -275,33 +284,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         //     isBlending = false;
         // }
         //
-        // private IEnumerator Extrapolate()
-        // {
-        //     isExtrapolating = true;
-        //
-        //     extDuration = 0f;
-        //     extVelocity = passedMessages[^1].velocity;
-        //
-        //     Vector3 initialVelocity = extVelocity;
-        //
-        //     float maxDuration = linearExtrapolationTime * dampedExtrapolationSteps;
-        //
-        //     while (isExtrapolating)
-        //     {
-        //         extDuration += Time.deltaTime;
-        //
-        //         // Damp velocity
-        //         if (extDuration > linearExtrapolationTime && extDuration < maxDuration)
-        //             extVelocity = Vector3.Lerp(initialVelocity, Vector3.zero, extDuration / maxDuration);
-        //         else if (extDuration >= maxDuration && extVelocity != Vector3.zero)
-        //             extVelocity = Vector3.zero;
-        //
-        //         // Apply extrapolation
-        //         if (extVelocity.sqrMagnitude > minSpeed)
-        //             transform.position += extVelocity * Time.deltaTime;
-        //
-        //         yield return null;
-        //     }
-        // }
+
     }
 }
