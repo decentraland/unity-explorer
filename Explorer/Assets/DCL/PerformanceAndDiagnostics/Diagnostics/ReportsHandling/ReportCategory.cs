@@ -167,6 +167,11 @@
         public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
 
         /// <summary>
+        ///     Scene's restricted actions
+        /// </summary>
+        public const string RESTRICTED_ACTIONS = nameof(RESTRICTED_ACTIONS);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);

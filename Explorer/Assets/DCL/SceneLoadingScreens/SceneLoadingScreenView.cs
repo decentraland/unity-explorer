@@ -40,11 +40,8 @@ namespace DCL.SceneLoadingScreens
         [SerializeField]
         private Sprite[] fallbackSprites = null!;
 
-        [SerializeField]
-        private LoadingBackgroundView backgroundImageTemplate = null!;
-
-        [SerializeField]
-        private Transform backgroundParent = null!;
+        [field: SerializeField]
+        public Image Background { get; private set; }
 
         [SerializeField]
         private TipBreadcrumb breadcrumbPrefab = null!;
@@ -55,7 +52,6 @@ namespace DCL.SceneLoadingScreens
         public event Action<int>? OnBreadcrumbClicked;
 
         private readonly List<TipView> tips = new ();
-        private readonly List<LoadingBackgroundView> backgrounds = new ();
         private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
 
         public void ClearTips()
@@ -66,12 +62,8 @@ namespace DCL.SceneLoadingScreens
             foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
                 Destroy(breadcrumb.gameObject);
 
-            foreach (LoadingBackgroundView background in backgrounds)
-                Destroy(background.gameObject);
-
             tips.Clear();
             tipsBreadcrumbs.Clear();
-            backgrounds.Clear();
         }
 
         public void AddTip(SceneTips.Tip tip)
@@ -88,22 +80,17 @@ namespace DCL.SceneLoadingScreens
 
             view.Image.sprite = icon;
 
-            LoadingBackgroundView background = Instantiate(backgroundImageTemplate, backgroundParent);
-            background.Image.sprite = icon;
-
             TipBreadcrumb breadcrumb = Instantiate(breadcrumbPrefab, breadcrumbParent);
             int breadcrumbIndex = tipsBreadcrumbs.Count;
             breadcrumb.Button.onClick.AddListener(() => OnBreadcrumbClicked?.Invoke(breadcrumbIndex));
 
             tips.Add(view);
             tipsBreadcrumbs.Add(breadcrumb);
-            backgrounds.Add(background);
         }
 
         public void ShowTip(int index)
         {
             tips[index].gameObject.SetActive(true);
-            backgrounds[index].gameObject.SetActive(true);
 
             foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
                 breadcrumb.Unselect();
@@ -115,9 +102,6 @@ namespace DCL.SceneLoadingScreens
         {
             foreach (TipView? view in tips)
                 view.gameObject.SetActive(false);
-
-            foreach (LoadingBackgroundView background in backgrounds)
-                background.gameObject.SetActive(false);
         }
 
         public async UniTask ShowTipWithFadeAsync(int index, float duration, CancellationToken ct)
@@ -125,33 +109,19 @@ namespace DCL.SceneLoadingScreens
             ShowTip(index);
 
             tips[index].RootCanvasGroup.alpha = 0f;
-            backgrounds[index].RootCanvasGroup.alpha = 0f;
 
-            UniTask tipFadeTask = tips[index]
-                                 .RootCanvasGroup.DOFade(1f, duration)
-                                 .ToUniTask(cancellationToken: ct);
-
-            UniTask backgroundFadeTask = backgrounds[index]
-                                        .RootCanvasGroup.DOFade(1f, duration)
-                                        .ToUniTask(cancellationToken: ct);
-
-            await UniTask.WhenAll(tipFadeTask, backgroundFadeTask);
+            await tips[index]
+                 .RootCanvasGroup.DOFade(1f, duration)
+                 .ToUniTask(cancellationToken: ct);
         }
 
         public async UniTask HideTipWithFadeAsync(int index, float duration, CancellationToken ct)
         {
-            UniTask tipFadeTask = tips[index]
-                                 .RootCanvasGroup.DOFade(0f, duration)
-                                 .ToUniTask(cancellationToken: ct);
-
-            UniTask backgroundFadeTask = backgrounds[index]
-                                        .RootCanvasGroup.DOFade(0f, duration)
-                                        .ToUniTask(cancellationToken: ct);
-
-            await UniTask.WhenAll(tipFadeTask, backgroundFadeTask);
+            await tips[index]
+                 .RootCanvasGroup.DOFade(0f, duration)
+                 .ToUniTask(cancellationToken: ct);
 
             tips[index].gameObject.SetActive(false);
-            backgrounds[index].gameObject.SetActive(false);
         }
     }
 }
