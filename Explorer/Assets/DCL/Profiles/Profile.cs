@@ -86,6 +86,9 @@ namespace DCL.Profiles
             foreach (Match match in matches)
                 result += match.Value;
 
+            if (HasClaimedName)
+                return result;
+
             return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
         }
     }
