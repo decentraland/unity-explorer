@@ -213,7 +213,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c8e610a7440c44bfc88cfdb9d738cfc6
-    m_Address: Assets/DCL/CharacterTriggerArea/Assets/CharacterTriggerArea.prefab
+    m_Address: CharacterTriggerArea
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
