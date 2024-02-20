@@ -20,7 +20,6 @@ namespace DCL.SDKComponents.Tween.Tests
     {
         private Entity entity;
         private PBTween pbTween;
-        private IComponentPool<SDKTweenComponent> sdkPool;
         private TweenLoaderSystem tweenLoaderSystem;
 
 
@@ -30,14 +29,9 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            var poolsRegistry = new ComponentPoolsRegistry(
-                new Dictionary<Type, IComponentPool> { }, null);
-
-            sdkPool = poolsRegistry.AddComponentPool<SDKTweenComponent>();
-
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), sdkPool);
+            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>());
             var crdtEntity = new CRDTEntity(1);
-            tweenLoaderSystem = new TweenLoaderSystem(world, sdkPool);
+            tweenLoaderSystem = new TweenLoaderSystem(world);
 
             var startVector = new Decentraland.Common.Vector3() { X = 0, Y = 0, Z = 0};
             var endVector = new Decentraland.Common.Vector3() { X = 10, Y = 0, Z = 0 };
@@ -64,72 +58,49 @@ namespace DCL.SDKComponents.Tween.Tests
         [TearDown]
         public void TearDown()
         {
-            sdkPool.Clear();
             system?.Dispose();
             tweenLoaderSystem?.Dispose();
-        }
-
-        [Test]
-        public void DestroyingEntityReturnsSDKTweenToPool()
-        {
-            UnityEngine.Assertions.Assert.IsTrue(sdkPool.CountInactive == 0);
-
-            world.Add<DeleteEntityIntention>(entity);
-            system.Update(0);
-
-            UnityEngine.Assertions.Assert.IsTrue(sdkPool.CountInactive == 1);
-        }
-
-        [Test]
-        public void RemovingPBTweenFromEntityReturnsSDKTweenToPool()
-        {
-            UnityEngine.Assertions.Assert.IsTrue(sdkPool.CountInactive == 0);
-
-            world.Remove<PBTween>(entity);
-            system.Update(0);
-
-            UnityEngine.Assertions.Assert.IsTrue(sdkPool.CountInactive == 1);
         }
 
 
         [Test]
         public void ChangingPBTweenCurrentTimeUpdatesTheTweenStateStatus()
         {
-            world.Query(new QueryDescription().WithAll<TweenComponent>(), (ref TweenComponent comp) =>
-                Assert.IsTrue(comp.SDKTweenComponent.CurrentTime.Equals(DEFAULT_CURRENT_TIME_0) &&
-                              comp.SDKTweenComponent.TweenStateStatus == TweenStateStatus.TsActive ));
+            world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
+                Assert.IsTrue(comp.CurrentTime.Equals(DEFAULT_CURRENT_TIME_0) &&
+                              comp.TweenStateStatus == TweenStateStatus.TsActive ));
 
             pbTween.CurrentTime = DEFAULT_CURRENT_TIME_1;
             tweenLoaderSystem.Update(0);
             system.Update(0);
 
-            world.Query(new QueryDescription().WithAll<TweenComponent>(), (ref TweenComponent comp) =>
-                Assert.IsTrue(comp.SDKTweenComponent.CurrentTime.Equals(DEFAULT_CURRENT_TIME_1) &&
-                              comp.SDKTweenComponent.TweenStateStatus == TweenStateStatus.TsCompleted));
+            world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
+                Assert.IsTrue(comp.CurrentTime.Equals(DEFAULT_CURRENT_TIME_1) &&
+                              comp.TweenStateStatus == TweenStateStatus.TsCompleted));
         }
 
         [Test]
         public void ChangingPBTweenPlayingValueUpdatesTheTweenStateStatus()
         {
-            world.Query(new QueryDescription().WithAll<TweenComponent>(), (ref TweenComponent comp) =>
-                Assert.IsTrue(comp.SDKTweenComponent.IsPlaying &&
-                              comp.SDKTweenComponent.TweenStateStatus == TweenStateStatus.TsActive));
+            world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
+                Assert.IsTrue(comp.IsPlaying &&
+                              comp.TweenStateStatus == TweenStateStatus.TsActive));
 
             pbTween.Playing = false;
             tweenLoaderSystem.Update(0);
             system.Update(0);
 
-            world.Query(new QueryDescription().WithAll<TweenComponent>(), (ref TweenComponent comp) =>
-                Assert.IsTrue(!comp.SDKTweenComponent.IsPlaying &&
-                              comp.SDKTweenComponent.TweenStateStatus == TweenStateStatus.TsPaused));
+            world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
+                Assert.IsTrue(!comp.IsPlaying &&
+                              comp.TweenStateStatus == TweenStateStatus.TsPaused));
 
             pbTween.Playing = true;
             tweenLoaderSystem.Update(0);
             system.Update(0);
 
-            world.Query(new QueryDescription().WithAll<TweenComponent>(), (ref TweenComponent comp) =>
-                Assert.IsTrue(comp.SDKTweenComponent.IsPlaying &&
-                              comp.SDKTweenComponent.TweenStateStatus == TweenStateStatus.TsActive));
+            world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
+                Assert.IsTrue(comp.IsPlaying &&
+                              comp.TweenStateStatus == TweenStateStatus.TsActive));
         }
 
     }

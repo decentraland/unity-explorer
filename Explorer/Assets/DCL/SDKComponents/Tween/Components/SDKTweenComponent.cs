@@ -3,7 +3,7 @@ using DG.Tweening;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public class SDKTweenComponent
+    public struct SDKTweenComponent
     {
         public bool IsDirty { get; set; }
         public bool IsPlaying { get; set; }
@@ -13,23 +13,18 @@ namespace DCL.SDKComponents.Tween.Components
         public SDKTweenModel CurrentTweenModel { get; set; }
     }
 
-    public class SDKTweenModel
+    public readonly struct SDKTweenModel
     {
-        public EasingFunction EasingFunction;
-        public PBTween.ModeOneofCase ModeCase;
-        public float CurrentTime;
-        public float Duration;
-        public bool IsPlaying;
-        public Scale Scale;
-        public Rotate Rotate;
-        public Move Move;
+        public readonly EasingFunction EasingFunction;
+        public readonly PBTween.ModeOneofCase ModeCase;
+        public readonly float CurrentTime;
+        public readonly float Duration;
+        public readonly bool IsPlaying;
+        public readonly Scale Scale;
+        public readonly Rotate Rotate;
+        public readonly Move Move;
 
         public SDKTweenModel(PBTween pbTween)
-        {
-            Update(pbTween);
-        }
-
-        public void Update(PBTween pbTween)
         {
             EasingFunction = pbTween.EasingFunction;
             ModeCase = pbTween.ModeCase;

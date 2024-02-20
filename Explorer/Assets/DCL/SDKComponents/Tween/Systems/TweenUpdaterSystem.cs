@@ -67,14 +67,12 @@ namespace DCL.SDKComponents.Tween.Systems
         };
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<SDKTweenComponent> tweenComponentPool;
         private readonly List<DG.Tweening.Tween> transformTweens = new ();
         private Tweener tempTweener;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<SDKTweenComponent> tweenComponentPool) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.tweenComponentPool = tweenComponentPool;
         }
 
         protected override void Update(float t)
@@ -84,8 +82,8 @@ namespace DCL.SDKComponents.Tween.Systems
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
 
-            World.Remove<TweenComponent>(in HandleEntityDestruction_QueryDescription);
-            World.Remove<TweenComponent>(in HandleComponentRemoval_QueryDescription);
+            World.Remove<SDKTweenComponent>(in HandleEntityDestruction_QueryDescription);
+            World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         public void FinalizeComponents(in Query query)
@@ -94,32 +92,30 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        [All(typeof(TweenComponent))]
-        private void FinalizeComponents(ref CRDTEntity sdkEntity, ref TweenComponent tweenComponent)
+        [All(typeof(SDKTweenComponent))]
+        private void FinalizeComponents(ref CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
+            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref TweenComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleEntityDestruction(ref SDKTweenComponent tweenComponent, ref CRDTEntity sdkEntity)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
+            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent);
         }
 
         [Query]
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref TweenComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, ref CRDTEntity sdkEntity)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
+            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent);
         }
 
         [Query]
-        [All(typeof(TweenComponent))]
-        private void UpdateTweenSequence(ref TweenComponent tweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity)
+        [All(typeof(SDKTweenComponent))]
+        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity)
         {
-            SDKTweenComponent sdkTweenComponent = tweenComponent.SDKTweenComponent;
-
             if (!sdkTweenComponent.IsDirty) { UpdateTweenState(transformComponent, sdkEntity, sdkTweenComponent); }
             else
             {
@@ -219,7 +215,6 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             sdkTweenComponent.Tweener.Kill();
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
-            tweenComponentPool.Release(sdkTweenComponent);
         }
 
         private Tweener SetupPositionTween(Transform entityTransform, Vector3 startPosition,
