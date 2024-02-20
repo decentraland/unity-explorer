@@ -6,6 +6,7 @@ using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -26,6 +27,7 @@ namespace DCL.CharacterTriggerArea.Tests
         private GameObject fakeMainPlayerGO;
         private GameObject fakeMainPlayerAvatarGO;
         private CharacterTriggerArea characterTriggerArea;
+        private MainPlayerReferences mainPlayerReferences;
 
         [SetUp]
         public async void Setup()
@@ -45,7 +47,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             fakeMainPlayerAvatarGO = new GameObject();
 
-            var mainPlayerReferences = new MainPlayerReferences
+            mainPlayerReferences = new MainPlayerReferences
             {
                 MainPlayerAvatarBase = new MainPlayerAvatarBase(),
                 MainPlayerTransform = new MainPlayerTransform(),
@@ -75,7 +77,7 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
-        public async Task SetupMonoBehaviourCorrectly()
+        public async Task SetupTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -100,7 +102,7 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
-        public async Task UpdateMonoBehaviourCorrectly()
+        public async Task UpdateTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -216,23 +218,274 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
-        public async Task ResetTriggerAreaEffectOnSceneLeave() { }
+        public async Task HandlePlayerLeaveSceneCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var enterTriggerCalled = false;
+            var exitTriggerCalled = false;
+
+            var pbComponent = new PBCameraModeArea();
+
+            var component = new CharacterTriggerAreaComponent
+            {
+                AreaSize = Vector3.one * 4,
+                OnEnteredTrigger = collider => enterTriggerCalled = true,
+                OnExitedTrigger = collider => exitTriggerCalled = true,
+                IsDirty = true,
+            };
+
+            world.Add(entity, component, pbComponent);
+
+            system.Update(0);
+
+            Assert.IsFalse(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+
+            // Move character inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            await UniTask.Yield();
+
+            Assert.IsTrue(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+            enterTriggerCalled = false;
+
+            // Simulate "getting outside current scene"
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            system.Update(0);
+
+            Assert.IsTrue(exitTriggerCalled);
+            Assert.IsFalse(enterTriggerCalled);
+            Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
+        }
 
         [Test]
-        public async Task HandleComponentRemoveCorrectly() { }
+        public async Task HandleComponentRemoveCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var enterTriggerCalled = false;
+            var exitTriggerCalled = false;
+
+            var pbComponent = new PBCameraModeArea();
+
+            var component = new CharacterTriggerAreaComponent
+            {
+                AreaSize = Vector3.one * 4,
+                OnEnteredTrigger = collider => enterTriggerCalled = true,
+                OnExitedTrigger = collider => exitTriggerCalled = true,
+                IsDirty = true,
+            };
+
+            world.Add(entity, component, pbComponent);
+
+            system.Update(0);
+
+            Assert.IsFalse(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+
+            // Move character inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            await UniTask.Yield();
+
+            Assert.IsTrue(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+            enterTriggerCalled = false;
+
+            // Remove component
+            world.Remove<PBCameraModeArea>(entity);
+
+            system.Update(0);
+
+            Assert.IsTrue(exitTriggerCalled);
+            Assert.IsFalse(enterTriggerCalled);
+            Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
+            Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
+        }
 
         [Test]
-        public async Task HandleEntityDestructionCorrectly() { }
+        public async Task HandleEntityDestructionCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var enterTriggerCalled = false;
+            var exitTriggerCalled = false;
+
+            var pbComponent = new PBCameraModeArea();
+
+            var component = new CharacterTriggerAreaComponent
+            {
+                AreaSize = Vector3.one * 4,
+                OnEnteredTrigger = collider => enterTriggerCalled = true,
+                OnExitedTrigger = collider => exitTriggerCalled = true,
+                IsDirty = true,
+            };
+
+            world.Add(entity, component, pbComponent);
+
+            system.Update(0);
+
+            Assert.IsFalse(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+
+            // Move character inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            await UniTask.Yield();
+
+            Assert.IsTrue(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+            enterTriggerCalled = false;
+
+            // Flag entity for deletion
+            world.Add<DeleteEntityIntention>(entity);
+
+            system.Update(0);
+
+            Assert.IsTrue(exitTriggerCalled);
+            Assert.IsFalse(enterTriggerCalled);
+            Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
+            Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
+        }
 
         [Test]
-        public async Task DisableTriggerColliderWhenMainPlayerIsOutOfScene() { }
+        public async Task TriggerOnEnterIfPlayerAlreadyInside()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Move character inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            var enterTriggerCalled = false;
+            var exitTriggerCalled = false;
+
+            var pbComponent = new PBCameraModeArea();
+
+            var component = new CharacterTriggerAreaComponent
+            {
+                AreaSize = Vector3.one * 4,
+                OnEnteredTrigger = collider => enterTriggerCalled = true,
+                OnExitedTrigger = collider => exitTriggerCalled = true,
+                IsDirty = true,
+            };
+
+            world.Add(entity, component, pbComponent);
+
+            Assert.IsFalse(exitTriggerCalled);
+            Assert.IsFalse(enterTriggerCalled);
+
+            system.Update(0);
+            await UniTask.Yield();
+
+            Assert.IsTrue(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+        }
 
         [Test]
-        public async Task WaitUntilAvatarBaseIsConfiguredBeforeActing() { }
+        public async Task WaitUntilAvatarBaseIsConfiguredBeforeActing()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Move character inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            // Use fresh non-initialized MainPlayerAvatarBase
+            mainPlayerReferences.MainPlayerAvatarBase = new MainPlayerAvatarBase();
+
+            var enterTriggerCalled = false;
+            var exitTriggerCalled = false;
+
+            var pbComponent = new PBCameraModeArea();
+
+            var component = new CharacterTriggerAreaComponent
+            {
+                AreaSize = Vector3.one * 4,
+                OnEnteredTrigger = collider => enterTriggerCalled = true,
+                OnExitedTrigger = collider => exitTriggerCalled = true,
+                IsDirty = true,
+            };
+
+            world.Add(entity, component, pbComponent);
+
+            Assert.IsFalse(exitTriggerCalled);
+            Assert.IsFalse(enterTriggerCalled);
+
+            system.Update(0);
+            await UniTask.Yield();
+
+            Assert.IsFalse(exitTriggerCalled);
+            Assert.IsFalse(enterTriggerCalled);
+
+            mainPlayerReferences.MainPlayerAvatarBase.SetAvatarBase(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
+
+            system.Update(0);
+            await UniTask.Yield();
+
+            Assert.IsTrue(enterTriggerCalled);
+            Assert.IsFalse(exitTriggerCalled);
+        }
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        public async Task DiscriminateCharacterTypeCorrectly(bool onlyMainPlayer) { }
+        public async Task DiscriminateCharacterTypeCorrectly(bool onlyMainPlayer)
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            GameObject? fakeOtherPlayerGO = await Addressables.LoadAssetAsync<GameObject>("Character Object");
+            fakeOtherPlayerGO = Object.Instantiate(fakeOtherPlayerGO.GetComponent<CharacterObject>()).gameObject;
+            fakeOtherPlayerGO.transform.position = Vector3.zero;
+
+            var enterTriggerCalls = 0;
+            var exitTriggerCalls = 0;
+
+            var pbComponent = new PBCameraModeArea();
+
+            var component = new CharacterTriggerAreaComponent
+            {
+                AreaSize = Vector3.one * 4,
+                OnEnteredTrigger = collider => enterTriggerCalls++,
+                OnExitedTrigger = collider => exitTriggerCalls++,
+                TargetOnlyMainPlayer = onlyMainPlayer,
+                IsDirty = true,
+            };
+
+            world.Add(entity, component, pbComponent);
+
+            system.Update(0);
+
+            Assert.AreEqual(0, enterTriggerCalls);
+            Assert.AreEqual(0, exitTriggerCalls);
+
+            // Move both characters inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+            fakeOtherPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            await UniTask.Yield();
+
+            Assert.AreEqual(0, exitTriggerCalls);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, enterTriggerCalls);
+
+            // Move both characters outside area
+            fakeMainPlayerGO.transform.position += Vector3.one * 30;
+            fakeOtherPlayerGO.transform.position += Vector3.one * 30;
+
+            await UniTask.Yield();
+
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, enterTriggerCalls);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, exitTriggerCalls);
+
+            // Cleanup
+            Object.DestroyImmediate(fakeOtherPlayerGO);
+        }
     }
 }
