@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             if (identityCache.Identity is null)
             {
-                var identity = await new DappWeb3Authenticator.Default(identityCache)
+                IWeb3Identity? identity = await new DappWeb3Authenticator.Default(identityCache)
                    .LoginAsync(CancellationToken.None);
 
                 identityCache.Identity = identity;

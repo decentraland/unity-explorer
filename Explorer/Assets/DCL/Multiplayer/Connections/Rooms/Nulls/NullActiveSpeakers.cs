@@ -9,6 +9,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
     {
         public static readonly NullActiveSpeakers INSTANCE = new ();
 
+        public int Count => 0;
+
         public event Action? Updated;
 
         public IEnumerator<string> GetEnumerator()
@@ -18,7 +20,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();
-
-        public int Count => 0;
     }
 }

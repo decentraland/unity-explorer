@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
@@ -82,7 +83,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            var identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
             var character = new ICharacterObject.Fake(Vector3.zero);
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake());

@@ -58,11 +58,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTaskVoid RunAsync()
         {
-            var token = StopPreviousAndNewCancellationToken();
-            var meta = await MetaDataAsync(token);
+            CancellationToken token = StopPreviousAndNewCancellationToken();
+            MetaData meta = await MetaDataAsync(token);
             Debug.Log($"Send request with meta {meta.ToJson()}");
 
-            var result = await webRequests.SignedFetchAsync(
+            GenericPostRequest result = await webRequests.SignedFetchAsync(
                 new CommonArguments(URLAddress.FromString(sceneHandleUrl)),
                 meta.ToJson(),
                 token
@@ -81,9 +81,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             //TODO to actual id fetching
             return "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq";
-            var position = characterObject.Position;
-            var parcel = ParcelMathHelper.WorldToGridPosition(position);
-            var result = await placesAPIService.GetPlaceAsync(parcel, token);
+            Vector3 position = characterObject.Position;
+            Vector2Int parcel = ParcelMathHelper.WorldToGridPosition(position);
+            PlacesData.PlaceInfo result = await placesAPIService.GetPlaceAsync(parcel, token);
             return result.EnsureNotNull($"parcel not found on coordinates {parcel}").id;
         }
 

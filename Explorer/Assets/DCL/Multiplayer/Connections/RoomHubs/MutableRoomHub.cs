@@ -24,13 +24,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public void AssignIslandRoom(IRoom playRoom)
         {
-            islandPlayRoom.Assign(playRoom, out var previous);
+            islandPlayRoom.Assign(playRoom, out IRoom? previous);
             multiPool.TryRelease(previous);
         }
 
         public void AssignSceneRoom(IRoom playRoom)
         {
-            scenePlayRoom.Assign(playRoom, out var previous);
+            scenePlayRoom.Assign(playRoom, out IRoom? previous);
             multiPool.TryRelease(previous);
         }
     }

@@ -1,3 +1,5 @@
+using System;
+
 namespace DCL.Multiplayer.Connections.Typing
 {
     public struct LightResult<T>
@@ -9,8 +11,8 @@ namespace DCL.Multiplayer.Connections.Typing
 
         public LightResult(T result)
         {
-            this.Result = result;
-            this.Success = true;
+            Result = result;
+            Success = true;
         }
     }
 
@@ -22,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Typing
         public static void EnsureSuccess<T>(this LightResult<T> result, string errorMessage)
         {
             if (result.Success == false)
-                throw new System.Exception($"Result is failure: {errorMessage}");
+                throw new Exception($"Result is failure: {errorMessage}");
         }
     }
 }

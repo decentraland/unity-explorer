@@ -13,13 +13,6 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
     public class MessagePipe : IMessagePipe
     {
-        private readonly IDataPipe dataPipe;
-        private readonly IMultiPool multiPool;
-        private readonly IMemoryPool memoryPool;
-        private readonly MessageParser<Packet> messageParser;
-
-        private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
-
         private static readonly ISet<string> SUPPORTED_TYPES = new HashSet<string>
         {
             nameof(Position),
@@ -30,6 +23,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             nameof(Scene),
             nameof(Voice),
         };
+        private readonly IDataPipe dataPipe;
+        private readonly IMultiPool multiPool;
+        private readonly IMemoryPool memoryPool;
+        private readonly MessageParser<Packet> messageParser;
+
+        private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool) : this(
             dataPipe,
@@ -55,10 +54,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private void DataPipeOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            var packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
+            Packet? packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
             var name = packet.MessageCase.ToString()!;
 
-            foreach (var action in SubscribersList(name))
+            foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
                 action((packet, participant));
         }
 
@@ -75,8 +74,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             SubscribersList(CURRENT_TYPE)
                .Add(tuple =>
                     {
-                        var packet = tuple.Item1!;
-                        var participant = tuple.Item2!;
+                        Packet packet = tuple.Item1!;
+                        Participant participant = tuple.Item2!;
 
                         var receivedMessage = new ReceivedMessage<T>(
                             Payload<T>(packet),
@@ -92,7 +91,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private List<Action<(Packet, Participant)>> SubscribersList(string typeName)
         {
-            if (subscribers.TryGetValue(typeName, out var list) == false)
+            if (subscribers.TryGetValue(typeName, out List<Action<(Packet, Participant)>>? list) == false)
                 subscribers[typeName] = list = new List<Action<(Packet, Participant)>>();
 
             return list!;
@@ -109,7 +108,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.Scene => (packet.Scene as T).EnsureNotNull(),
                 Packet.MessageOneofCase.Voice => (packet.Voice as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => throw new ArgumentOutOfRangeException(),
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(),
             };
     }
 }

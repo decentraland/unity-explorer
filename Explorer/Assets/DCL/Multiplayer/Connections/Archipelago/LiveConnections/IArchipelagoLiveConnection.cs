@@ -26,13 +26,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
     {
         public static async UniTask SendAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
-            using var memory = memoryPool.Memory(message);
+            using MemoryWrap memory = memoryPool.Memory(message);
             message.WriteTo(memory);
             await connection.SendAsync(memory, token);
         }
 
         /// <summary>
-        /// Takes ownership for the data and returns the ownership for the result
+        ///     Takes ownership for the data and returns the ownership for the result
         /// </summary>
         public static async UniTask<MemoryWrap> SendAndReceiveAsync(this IArchipelagoLiveConnection archipelagoLiveConnection, MemoryWrap data, CancellationToken token)
         {
@@ -42,9 +42,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public static async UniTask<MemoryWrap> SendAndReceiveAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
-            using var memory = memoryPool.Memory(message);
+            using MemoryWrap memory = memoryPool.Memory(message);
             message.WriteTo(memory);
-            var result = await connection.SendAndReceiveAsync(memory, token);
+            MemoryWrap result = await connection.SendAndReceiveAsync(memory, token);
             return result;
         }
 
