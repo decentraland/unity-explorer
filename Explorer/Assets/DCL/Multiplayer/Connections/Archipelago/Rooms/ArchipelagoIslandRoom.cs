@@ -118,9 +118,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             var token = CancellationToken();
             await ConnectToArchipelagoAsync(token);
-
             signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token);
+            await SendHeartbeatIntervalsAsync(token);
+        }
 
+        private async UniTask SendHeartbeatIntervalsAsync(CancellationToken token)
+        {
             while (token.IsCancellationRequested == false)
             {
                 await signFlow.SendHeartbeatAsync(characterObject.Position, token);
