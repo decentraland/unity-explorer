@@ -63,22 +63,22 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        [All(typeof(TweenComponent))]
-        private void FinalizeComponents(ref CRDTEntity sdkEntity, ref TweenComponent tweenComponent)
+        [All(typeof(SDKAnimatorComponent))]
+        private void FinalizeComponents(ref CRDTEntity sdkEntity, ref SDKAnimatorComponent tweenComponent)
         {
             CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref TweenComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleEntityDestruction(ref SDKAnimatorComponent tweenComponent, ref CRDTEntity sdkEntity)
         {
             CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
 
         [Query]
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref TweenComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(ref SDKAnimatorComponent tweenComponent, ref CRDTEntity sdkEntity)
         {
             CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent.SDKTweenComponent);
         }
@@ -98,7 +98,10 @@ namespace DCL.SDKComponents.Tween.Systems
 
                 if (!animatorComponent.SDKAnimatorComponent.SDKAnimation.IsInitialized)
                 {
-                    SetupAnimation(component.Promise.Result.Value.Asset.Animations.First());
+                    foreach (var animation in component.Promise.Result.Value.Asset.Animations)
+                    {
+                        SetupAnimation(animation);
+                    }
                     animatorComponent.SDKAnimatorComponent.SDKAnimation.IsInitialized = true;
                 }
 

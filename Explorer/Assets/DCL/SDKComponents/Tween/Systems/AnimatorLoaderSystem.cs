@@ -4,11 +4,10 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Unity.Groups;
-using System;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
@@ -17,58 +16,39 @@ namespace DCL.SDKComponents.Tween.Systems
     [ThrottlingEnabled]
     public partial class AnimatorLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<SDKAnimatorComponent> sdkAnimatorPool;
-        private readonly IComponentPool<SDKAnimationState> sdkAnimationStatePool;
-
-        public AnimatorLoaderSystem(World world, IComponentPool<SDKAnimatorComponent> sdkAnimatorPool, IComponentPool<SDKAnimationState> sdkAnimationStatePool) : base(world)
-        {
-            this.sdkAnimatorPool = sdkAnimatorPool;
-            this.sdkAnimationStatePool = sdkAnimationStatePool;
-        }
+        private AnimatorLoaderSystem(World world) : base(world)
+        { }
 
         protected override void Update(float t)
         {
             UpdateTweenQuery(World);
             LoadTweenQuery(World);
+            ListPool<int>.Get();
         }
 
         [Query]
-        [None(typeof(AnimatorComponent))]
+        [None(typeof(SDKAnimatorComponent))]
         private void LoadTween(in Entity entity, ref PBAnimator pbAnimator)
         {
-            var animatorComponent = new AnimatorComponent();
-
-            SDKAnimatorComponent sdkAnimatorComponent = sdkAnimatorPool.Get();
-            sdkAnimatorComponent.SDKAnimationStates.Clear();
+            var sdkAnimationStates = ListPool<SDKAnimationState>.Get();
 
             for (var i = 0; i < pbAnimator.States.Count; i++)
             {
                 PBAnimationState pbAnimationState = pbAnimator.States[i];
-                var sdkAnimationState = sdkAnimationStatePool.Get();
-
-                sdkAnimationState.Update(
-                    pbAnimationState.Clip,
-                    pbAnimationState.Playing,
-                    pbAnimationState.GetWeight(),
-                    pbAnimationState.GetSpeed(),
-                    pbAnimationState.GetLoop(),
-                    pbAnimationState.GetShouldReset());
-
-                sdkAnimatorComponent.SDKAnimationStates.Add(sdkAnimationState);
+                var sdkAnimationState = new SDKAnimationState(pbAnimationState);
+                sdkAnimationStates.Add(sdkAnimationState);
             }
 
-            sdkAnimatorComponent.IsDirty = true;
-            animatorComponent.SDKAnimatorComponent = sdkAnimatorComponent;
+            SDKAnimatorComponent sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates);
 
-            World.Add(entity, animatorComponent);
+            World.Add(entity, sdkAnimatorComponent);
         }
 
         [Query]
-        private void UpdateTween(ref PBAnimator pbAnimator, ref AnimatorComponent animatorComponent)
+        private void UpdateTween(ref PBAnimator pbAnimator, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
             if (pbAnimator.IsDirty)// || !TweenSDKComponentHelper.AreSameModels(pbAnimator, animatorComponent.SDKTweenComponent.CurrentTweenModel))
             {
-                var sdkAnimatorComponent = animatorComponent.SDKAnimatorComponent;
                 var sdkAnimationStates = sdkAnimatorComponent.SDKAnimationStates;
                 var pbAnimationStates = pbAnimator.States;
 
