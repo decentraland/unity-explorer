@@ -2,7 +2,15 @@
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
-    public static class Interpolation
+    public enum InterpolationType
+    {
+        Linear,
+        Hermite,
+        Bezier,
+        VelocityBlending,
+    }
+
+    public static class Interpolate
     {
         /// <summary>
         ///     Linear Interpolation. Just wrapper around built-in Vector3.Lerp

@@ -19,11 +19,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Move()
         {
-            float horizontal = UnityEngine.Input.GetAxis("Horizontal");
-            float vertical = UnityEngine.Input.GetAxis("Vertical");
+            float horizontal = Input.GetAxis("Horizontal");
+            float vertical = Input.GetAxis("Vertical");
 
             Vector3 movement = new Vector3(horizontal, 0, vertical);
-            controller.Move(movement * speed * UnityEngine.Time.deltaTime);
+            controller.Move(movement * speed * Time.deltaTime);
         }
 
     }

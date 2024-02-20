@@ -37,8 +37,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 transform.position = extrapolationType switch
                                      {
                                          InterpolationType.VelocityBlending => ProjectiveVelocityBlending(local, remote, t, messageBus.PackageSentRate),
-                                         InterpolationType.Hermite => Interpolation.Hermite(local, projectedRemote, t, messageBus.PackageSentRate),
-                                         InterpolationType.Bezier => Interpolation.Bezier(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.Hermite => Interpolate.Hermite(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.Bezier => Interpolate.Bezier(local, projectedRemote, t, messageBus.PackageSentRate),
                                      };
             }
         }

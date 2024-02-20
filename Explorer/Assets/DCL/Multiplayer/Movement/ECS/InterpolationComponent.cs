@@ -77,11 +77,11 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             return type switch
                    {
-                       InterpolationType.Linear => Interpolation.Linear,
-                       InterpolationType.VelocityBlending => Interpolation.ProjectiveVelocityBlending,
-                       InterpolationType.Hermite => Interpolation.Hermite,
-                       InterpolationType.Bezier => Interpolation.Bezier,
-                       _ => Interpolation.Linear,
+                       InterpolationType.Linear => Interpolate.Linear,
+                       InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending,
+                       InterpolationType.Hermite => Interpolate.Hermite,
+                       InterpolationType.Bezier => Interpolate.Bezier,
+                       _ => Interpolate.Linear,
                    };
         }
     }
