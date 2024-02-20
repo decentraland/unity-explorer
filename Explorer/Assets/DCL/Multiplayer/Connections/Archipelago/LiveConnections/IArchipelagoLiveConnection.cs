@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
     public interface IArchipelagoLiveConnection
     {
-        bool Connected();
+        bool IsConnected { get; }
 
         UniTask ConnectAsync(string adapterUrl, CancellationToken token);
 
@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public static async UniTask WaitDisconnectAsync(this IArchipelagoLiveConnection connection, CancellationToken token)
         {
-            while (token.IsCancellationRequested == false && connection.Connected())
+            while (token.IsCancellationRequested == false && connection.IsConnected)
                 await UniTask.Yield();
         }
     }

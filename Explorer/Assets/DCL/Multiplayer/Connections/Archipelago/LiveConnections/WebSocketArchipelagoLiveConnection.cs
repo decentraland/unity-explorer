@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.memoryPool = memoryPool;
         }
 
-        public bool Connected() =>
+        public bool IsConnected =>
             webSocket.State is WebSocketState.Open;
 
         public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>

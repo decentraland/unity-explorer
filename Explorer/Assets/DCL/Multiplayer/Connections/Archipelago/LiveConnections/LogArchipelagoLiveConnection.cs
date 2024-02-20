@@ -21,17 +21,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.log = log;
         }
 
-        public bool Connected()
+        public bool IsConnected
         {
-            bool result = origin.Connected();
-
-            if (previousConnected != result)
+            get
             {
-                log($"ArchipelagoLiveConnection connected: {result}");
-                previousConnected = result;
-            }
+                bool result = origin.IsConnected;
 
-            return result;
+                if (previousConnected != result)
+                {
+                    log($"ArchipelagoLiveConnection connected: {result}");
+                    previousConnected = result;
+                }
+
+                return result;
+            }
         }
 
         public async UniTask ConnectAsync(string adapterUrl, CancellationToken token)
