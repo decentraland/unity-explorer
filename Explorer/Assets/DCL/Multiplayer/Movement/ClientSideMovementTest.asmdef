@@ -2,7 +2,8 @@
     "name": "ClientSideMovementTest",
     "rootNamespace": "",
     "references": [
-        "UniTask"
+        "UniTask",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

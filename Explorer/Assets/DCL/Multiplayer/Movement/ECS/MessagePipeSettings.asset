@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dcaac58b3d742e6a074b969cb3cab6b, type: 3}
+  m_Name: MessagePipeSettings
+  m_EditorClassIdentifier: 
+  startButton:
+    m_Name: Start Button
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 4dbd37e4-3d5d-4985-a396-33f98bda7b37
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 8af3bf02-45d5-4511-90f1-1b0d22c6018e
+      m_Path: <Keyboard>/p
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Start Button
+      m_Flags: 0
+    m_Flags: 0
+  packageLostButton:
+    m_Name: Package Lost Button
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 9e7bebc9-2add-480c-b644-657fa68d821b
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 6ba9aa9d-6172-42d2-b414-e2032a7a30d8
+      m_Path: <Keyboard>/rightAlt
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Package Lost Button
+      m_Flags: 0
+    m_Flags: 0
+  packageBlockButton:
+    m_Name: Package Block Button
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: c1ccda70-3d18-411c-86a9-92e1039e3d19
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 8565d808-fa8b-4064-b024-52008f35d01e
+      m_Path: <Keyboard>/leftAlt
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Package Block Button
+      m_Flags: 0
+    m_Flags: 0
+  StartSending: 1
+  PackageLost: 0
+  PackageSentRate: 0.33
+  PackagesJitter: 0
+  Latency: 1
+  LatencyJitter: 0
+  InboxCount: 32

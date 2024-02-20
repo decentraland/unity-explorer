@@ -10,9 +10,11 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.Character.Plugin;
 using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Movement.ECS;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -21,6 +23,7 @@ using ECS;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -41,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
         private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly CharacterContainer staticContainerCharacterContainer;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
@@ -55,13 +59,13 @@ namespace DCL.PluginSystem.Global
 
         private IObjectPool<NametagView> nametagViewPool;
 
-        public AvatarPlugin(
-            IComponentPoolsRegistry poolsRegistry,
+        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             IPerformanceBudget frameTimeCapBudget,
             IPerformanceBudget memoryBudget,
             IRealmData realmData,
             MainPlayerAvatarBase mainPlayerAvatarBase,
+            CharacterContainer staticContainerCharacterContainer,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration)
@@ -70,6 +74,7 @@ namespace DCL.PluginSystem.Global
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
             this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.staticContainerCharacterContainer = staticContainerCharacterContainer;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -119,6 +124,10 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
 
             //Debug scripts
+            string path = "Assets/DCL/Multiplayer/Movement/ECS/MessagePipeSettings.asset";
+            MessagePipeSettings settings = AssetDatabase.LoadAssetAtPath<MessagePipeSettings>(path);
+            var messagePipeMock = new MessagePipeMock(settings, staticContainerCharacterContainer.CharacterObject.Controller);
+
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
         }

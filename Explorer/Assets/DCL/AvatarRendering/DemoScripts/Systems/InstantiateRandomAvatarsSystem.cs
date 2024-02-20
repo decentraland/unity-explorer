@@ -25,7 +25,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -237,8 +236,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new FeetIKComponent(),
                     new HandsIKComponent(),
                     new HeadIKComponent(),
-                    new JumpInputComponent(),
-                    new MovementInputComponent(),
+                    // new JumpInputComponent(),
+                    // new MovementInputComponent(),
                     characterControllerSettings
                 );
             }

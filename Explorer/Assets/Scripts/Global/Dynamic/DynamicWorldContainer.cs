@@ -131,6 +131,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     realmData,
                     staticContainer.MainPlayerAvatarBase,
+                    staticContainer.CharacterContainer,
                     debugBuilder,
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration),
