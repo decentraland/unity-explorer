@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Landscape.Settings
 {
@@ -8,6 +7,7 @@ namespace DCL.Landscape.Settings
         public bool showSatelliteView;
         public bool drawTerrain;
         public bool drawTerrainDetails;
+        public float detailDistance = 200;
         public Transform mapChunk;
         public TerrainGenerationData terrainData;
     }

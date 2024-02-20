@@ -52,7 +52,8 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
-            LandscapeViewSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer, terrainGenerator);
+            LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            LandscapeSatelliteSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
         }
 
         public void Dispose()

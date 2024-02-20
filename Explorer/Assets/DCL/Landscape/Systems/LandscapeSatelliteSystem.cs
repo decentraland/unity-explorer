@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
@@ -14,10 +12,14 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Landscape.Systems
 {
+    /// <summary>
+    ///     This system is the one that creates the ground textures for the satellite view, also manages their visibility status based on the settings data
+    /// </summary>
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class LandscapeViewSystem : BaseUnityLoopSystem
+    public partial class LandscapeSatelliteSystem : BaseUnityLoopSystem
     {
+        private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
         private const int PARCEL_SIZE = 16;
         private const int CHUNK_SIZE = 40;
         private const int GENESIS_HALF_PARCEL_WIDTH = 150;
@@ -26,22 +28,25 @@ namespace DCL.Landscape.Systems
 
         private readonly LandscapeData landscapeData;
         private readonly MapRendererTextureContainer textureContainer;
-        private readonly TerrainGenerator terrainGenerator;
-        private readonly Transform landscapeParentObject;
-        private readonly MaterialPropertyBlock materialPropertyBlock;
-        private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
-        private bool isViewRendered;
+        private Transform landscapeParentObject;
+        private MaterialPropertyBlock materialPropertyBlock;
         private readonly List<Renderer> satelliteRenderers = new ();
+
+        private bool isViewRendered;
         private bool satelliteRenderersEnabled = true;
 
-        private LandscapeViewSystem(World world,
+        private LandscapeSatelliteSystem(World world,
             LandscapeData landscapeData,
-            MapRendererTextureContainer textureContainer,
-            TerrainGenerator terrainGenerator) : base(world)
+            MapRendererTextureContainer textureContainer) : base(world)
         {
             this.landscapeData = landscapeData;
             this.textureContainer = textureContainer;
-            this.terrainGenerator = terrainGenerator;
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
             landscapeParentObject = new GameObject("Satellite View").transform;
             materialPropertyBlock = new MaterialPropertyBlock();
         }
@@ -50,9 +55,6 @@ namespace DCL.Landscape.Systems
         {
             if (textureContainer.IsComplete() && !isViewRendered)
                 InitializeSatelliteView();
-
-            if (terrainGenerator.IsTerrainGenerated())
-                UpdateTerrainVisibilityQuery(World);
 
             UpdateSatelliteView();
         }
@@ -66,33 +68,6 @@ namespace DCL.Landscape.Systems
                 foreach (Renderer satelliteRenderer in satelliteRenderers)
                     satelliteRenderer.forceRenderingOff = !satelliteRenderersEnabled;
             }
-        }
-
-        [Query]
-        private void UpdateTerrainVisibility(in Entity _, in CameraComponent cameraComponent)
-        {
-            Camera camera = cameraComponent.Camera;
-            IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
-
-            for (var i = 0; i < terrains.Count; i++)
-            {
-                Terrain terrain = terrains[i];
-
-                Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
-                Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
-                bool isVisible = GeometryUtility.TestPlanesAABB(planes, bounds);
-
-                terrain.drawHeightmap = isVisible && landscapeData.drawTerrain;
-                terrain.drawTreesAndFoliage = isVisible && landscapeData.drawTerrainDetails;
-            }
-        }
-
-        private Bounds GetTerrainBoundsInWorldSpace(Terrain terrain)
-        {
-            Bounds localBounds = terrain.terrainData.bounds;
-            Vector3 terrainPosition = terrain.transform.position;
-            var worldBounds = new Bounds(localBounds.center + terrainPosition, localBounds.size);
-            return worldBounds;
         }
 
         private void InitializeSatelliteView()

@@ -28,8 +28,9 @@ namespace DCL.Landscape
     public class TerrainGenerator : ITerrainGenerator, IDisposable
     {
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
-        private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.7f;
-        private const float PROGRESS_COUNTER_DIG_HOLES = 0.9f;
+        private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.6f;
+        private const float PROGRESS_COUNTER_DIG_HOLES = 0.75f;
+        private const float PROGRESS_SPAWN_TERRAIN = 0.25f;
 
         private const int UNITY_MAX_COVERAGE_VALUE = 255;
         private const int UNITY_MAX_INSTANCE_COUNT = 16;
@@ -49,6 +50,7 @@ namespace DCL.Landscape
         private readonly ReportData reportData;
 
         private int processedTerrainDataCount;
+        private int spawnedTerrainDataCount;
         private float terrainDataCount;
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGeneratorLocalCache localCache;
@@ -65,7 +67,7 @@ namespace DCL.Landscape
             noiseGenCache = new NoiseGeneratorCache();
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed);
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize);
             terrains = new List<Terrain>();
         }
 
@@ -143,7 +145,7 @@ namespace DCL.Landscape
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
 
                 timeProfiler.StartMeasure();
-                await GenerateChunksAsync(terrainDataDictionary, cancellationToken);
+                await GenerateChunksAsync(terrainDataDictionary, processReport, cancellationToken);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
@@ -263,7 +265,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask GenerateChunksAsync(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
+        private async UniTask GenerateChunksAsync(Dictionary<int2, TerrainData> terrainDatas, AsyncLoadProcessReport processReport, CancellationToken cancellationToken)
         {
             for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
             for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
@@ -273,6 +275,8 @@ namespace DCL.Landscape
                 TerrainData terrainData = terrainDatas[new int2(x, z)];
                 GenerateTerrainChunk(x, z, terrainData, terrainGenData.terrainMaterial);
                 await UniTask.Yield();
+                spawnedTerrainDataCount++;
+                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + (spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
             }
         }
 
@@ -406,6 +410,8 @@ namespace DCL.Landscape
             terrain.materialTemplate = material;
             terrain.detailObjectDistance = 200;
             terrain.enableHeightmapRayTracing = false;
+            terrain.drawHeightmap = false;
+            terrain.drawTreesAndFoliage = false;
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
 

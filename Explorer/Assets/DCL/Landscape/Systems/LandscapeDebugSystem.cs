@@ -23,6 +23,7 @@ namespace DCL.Landscape.Systems
         private readonly ElementBinding<int> lodBias;
         private readonly ElementBinding<int> detailDensity;
         private readonly ElementBinding<int> detailDistance;
+        private readonly ElementBinding<int> cullDistance;
 
         public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
         {
@@ -32,12 +33,14 @@ namespace DCL.Landscape.Systems
             lodBias = new ElementBinding<int>(100);
             detailDensity = new ElementBinding<int>(100);
             detailDistance = new ElementBinding<int>(80);
+            cullDistance = new ElementBinding<int>(200);
 
             debugBuilder.AddWidget("Landscape")
                         .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
-                        .AddIntSliderField("LOD bias %", lodBias, 1, 150)
+                        .AddIntSliderField("LOD bias %", lodBias, 1, 250)
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
-                        .AddIntSliderField("Detail Distance", detailDistance, 0, 300)
+                        .AddIntSliderField("Grass Distance", detailDistance, 0, 300)
+                        .AddIntSliderField("Chunk Cull Distance", cullDistance, 1, 10000)
                         .AddToggleField("Terrain", OnTerrainToggle, landscapeData.drawTerrain)
                         .AddToggleField("Details", OnDetailToggle, landscapeData.drawTerrainDetails)
                         .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.showSatelliteView);
@@ -77,6 +80,8 @@ namespace DCL.Landscape.Systems
 
             if (Math.Abs(QualitySettings.terrainDetailDistance - tempDistance) > 0.005f)
                 QualitySettings.terrainDetailDistance = tempDistance;
+
+            landscapeData.detailDistance = cullDistance.Value;
         }
     }
 }

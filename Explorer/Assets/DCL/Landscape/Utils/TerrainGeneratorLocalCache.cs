@@ -68,9 +68,9 @@ namespace DCL.Landscape.Utils
 
         private TerrainLocalCache() { }
 
-        public void SaveToFile(int seed)
+        public void SaveToFile(int seed, int chunkSize)
         {
-            string path = GetPath(seed);
+            string path = GetPath(seed, chunkSize);
 
             if (File.Exists(path))
                 File.Delete(path);
@@ -81,14 +81,14 @@ namespace DCL.Landscape.Utils
             formatter.Serialize(fileStream, this);
         }
 
-        private static string GetPath(int seed) =>
-            Application.persistentDataPath + FILE_NAME + $"_{seed}.data";
+        private static string GetPath(int seed, int chunkSize) =>
+            Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}.data";
 
-        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, bool force)
+        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, bool force)
         {
             var localCache = new TerrainLocalCache();
 
-            string path = GetPath(seed);
+            string path = GetPath(seed, chunkSize);
 
             if (force && File.Exists(path))
                 File.Delete(path);
@@ -117,20 +117,22 @@ namespace DCL.Landscape.Utils
         private TerrainLocalCache localCache;
         private readonly bool isValid;
         private readonly int seed;
+        private readonly int chunkSize;
 
-        public TerrainGeneratorLocalCache(int seed)
+        public TerrainGeneratorLocalCache(int seed, int chunkSize)
         {
             this.seed = seed;
+            this.chunkSize = chunkSize;
         }
 
         public async UniTask LoadAsync(bool force)
         {
-            localCache = await TerrainLocalCache.LoadAsync(seed, force);
+            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, force);
         }
 
         public void Save()
         {
-            localCache.SaveToFile(seed);
+            localCache.SaveToFile(seed, chunkSize);
         }
 
         public bool IsValid() =>
