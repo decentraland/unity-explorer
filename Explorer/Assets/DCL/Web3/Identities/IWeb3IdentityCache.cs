@@ -45,7 +45,7 @@ namespace DCL.Web3.Identities
 
     public static class Web3IdentityCacheExtensions
     {
-        public static IWeb3Identity EnsuredIdentity(this IWeb3IdentityCache cache, string errorMessage)
+        public static IWeb3Identity EnsuredIdentity(this IWeb3IdentityCache cache, string errorMessage = "Identity is not found")
         {
             if (cache.Identity == null)
                 throw new InvalidOperationException(errorMessage);

@@ -151,7 +151,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask<LightResult<string>> WelcomePeerIdAsync(string adapterUrl, CancellationToken token)
         {
-            var identity = web3IdentityCache.EnsuredIdentity("Identity is not found");
+            var identity = web3IdentityCache.EnsuredIdentity();
             await signFlow.ConnectAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;
             string messageForSign = await signFlow.MessageForSignAsync(ethereumAddress, token);
