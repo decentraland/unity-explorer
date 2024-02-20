@@ -452,11 +452,11 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         half4 finalRGBA = half4(finalColor,1);
     #elif _IS_CLIPPING_MODE
         //DoubleShadeWithFeather_Clipping
-        fixed4 finalRGBA = fixed4(finalColor,1);
+        half4 finalRGBA = half4(finalColor,1);
     #elif _IS_CLIPPING_TRANSMODE
         //DoubleShadeWithFeather_TransClipping
         float Set_Opacity = SATURATE_IF_SDR((_Inverse_Clipping_var+_Tweak_transparency));
-        fixed4 finalRGBA = fixed4(finalColor,Set_Opacity);
+        half4 finalRGBA = half4(finalColor,Set_Opacity);
     #endif
     
     return finalRGBA;
