@@ -2,10 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Movement.MessageBusMock.Movement;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
@@ -22,31 +20,23 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         [Header("DEBUG")]
         public int Incoming;
         public int Passed;
-        public bool isBlending;
-
-        [Header("BLENDING")]
-        public bool useBlend;
-        public float maxBlendSpeed = 30f;
-        public float maxBlendExtraTime = 0.33f;
-        public float blendDuration;
-        public Vector3 blendVelocity;
-        public MessageMock blendTargetPoint;
-
-        [Space]
-        public float blendExtra;
 
         private Interpolation interpolation;
         private Extrapolation extrapolation;
+        private Blend blend;
 
         private void Awake()
         {
             extrapolation = GetComponent<Extrapolation>();
             interpolation = GetComponent<Interpolation>();
+            blend = GetComponent<Blend>();
 
             extrapolation.enabled = false;
             interpolation.enabled = false;
+            blend.enabled = false;
 
             interpolation.PointPassed += AddToPassed;
+            blend.PointPassed += AddToPassed;
         }
 
         private void Start()
@@ -66,7 +56,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             Incoming = IncomingMessages.Count;
             Passed = passedMessages.Count;
 
-            if (interpolation.enabled) return;
+            if (interpolation.enabled || blend.enabled) return;
 
             if (IncomingMessages.Count > 0)
             {
@@ -74,18 +64,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
                 if (extrapolation.enabled)
                 {
-                    extrapolation.enabled = false;
-
-                    passedMessages.Add(new MessageMock
-                    {
-                        timestamp = passedMessages[^1].timestamp + extrapolation.Time,
-                        position = transform.position,
-                        velocity = extrapolation.Velocity,
-                    });
+                    blend.Run(extrapolation.Stop(), endPoint);
+                    return;
                 }
 
                 var startPoint = passedMessages.Count > 0 ? passedMessages[^1] : null;
-
                 interpolation.Run(startPoint, endPoint);
             }
             else if (passedMessages.Count > 1 && !extrapolation.enabled && !passedMessages.IsNullOrEmpty())
@@ -93,24 +76,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 extrapolation.Run(passedMessages[^1]);
             }
 
-            // if (incomingMessages.Count == 0)
             // {
-            //     if (passedMessages.Count > 1 && useExtrapolation && !isExtrapolating && !passedMessages.IsNullOrEmpty())
-            //         StartCoroutine(Extrapolate());
-            // }
-            // else
-            // {
-            //     // Next interpolation point
-            //     endPoint = incomingMessages.Dequeue();
-            //
-            //     if (isFirst)
-            //     {
-            //         isFirst = false;
-            //         transform.position = endPoint.position;
-            //         AddToPassed(endPoint);
-            //         return;
-            //     }
-            //
             //     // Stop extrapolation when message arrives
             //     if (isExtrapolating)
             //     {
@@ -157,7 +123,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             //             StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
             //             return;
             //         }
-            //         else { return; }
             //     }
             //
             //     if (isBlending && endPoint.timestamp > blendTargetPoint.timestamp)
@@ -194,96 +159,5 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             markPoint.transform.position = newMessage.position + (Vector3.up * f);
             markPoint.SetActive(true);
         }
-
-        // private IEnumerator Blend(MessageMock local, MessageMock remote)
-        // {
-        //     isBlending = true;
-        //
-        //     float positionDiff = Vector3.Distance(local.position, remote.position);
-        //
-        //     if (positionDiff < minPositionDelta)
-        //     {
-        //         AddToPassed(remote);
-        //         isBlending = false;
-        //         yield break;
-        //     }
-        //
-        //     float timeDiff = remote.timestamp - local.timestamp;
-        //     Vector3 remoteOldPosition = remote.position - (remote.velocity * timeDiff);
-        //
-        //     var avarageMessageSentRate = 0f;
-        //
-        //     if (passedMessages.Count > 4)
-        //     {
-        //         avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp;
-        //         avarageMessageSentRate += passedMessages[^3].timestamp - passedMessages[^4].timestamp;
-        //         avarageMessageSentRate += passedMessages[^4].timestamp - passedMessages[^5].timestamp;
-        //
-        //         avarageMessageSentRate /= 3;
-        //     }
-        //     else if (passedMessages.Count > 3)
-        //     {
-        //         avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp;
-        //         avarageMessageSentRate += passedMessages[^3].timestamp - passedMessages[^4].timestamp;
-        //
-        //         avarageMessageSentRate /= 2;
-        //     }
-        //     else if (passedMessages.Count > 2) { avarageMessageSentRate += passedMessages[^2].timestamp - passedMessages[^3].timestamp; }
-        //
-        //     blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxBlendExtraTime);
-        //
-        //     // Debug.Log($"{blendExtra} | {timeDiff} | {avarageMessageSentRate}  |  {avarageMessageSentRate - timeDiff}");
-        //
-        //     float totalDuration = timeDiff + blendExtra;
-        //
-        //     var slowDownFactor = 1f;
-        //     float speed = positionDiff / totalDuration;
-        //
-        //     if (speed > maxBlendSpeed)
-        //     {
-        //         float desiredDuration = positionDiff / maxBlendSpeed;
-        //         slowDownFactor = desiredDuration / totalDuration;
-        //     }
-        //
-        //     var t = 0f;
-        //     blendDuration = 0f;
-        //
-        //     while (t < totalDuration)
-        //     {
-        //         blendDuration += Time.deltaTime;
-        //
-        //         t += Time.deltaTime / slowDownFactor;
-        //
-        //         float lerpValue = t / totalDuration;
-        //
-        //         // Interpolate velocity
-        //         blendVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue);
-        //
-        //         // Calculate the position at time t
-        //         Vector3 projectedLocal = local.position + (blendVelocity * t);
-        //         Vector3 projectedRemote = remoteOldPosition + (remote.velocity * t);
-        //
-        //         // Apply the interpolated position
-        //         transform.position = projectedLocal + ((projectedRemote - projectedLocal) * lerpValue);
-        //
-        //         yield return null;
-        //     }
-        //
-        //     AddToPassed(remote);
-        //
-        //     if (blendExtra > 0f)
-        //     {
-        //         AddToPassed(new MessageMock
-        //         {
-        //             timestamp = remote.timestamp + blendExtra,
-        //             position = transform.position,
-        //             velocity = remote.velocity,
-        //         });
-        //     }
-        //
-        //     isBlending = false;
-        // }
-        //
-
     }
 }

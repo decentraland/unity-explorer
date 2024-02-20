@@ -38,6 +38,19 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
             enabled = true;
         }
 
+        public MessageMock Stop()
+        {
+            enabled = false;
+
+            return new MessageMock
+            {
+                timestamp = start.timestamp + Time,
+                position = transform.position,
+                velocity = Velocity,
+                acceleration = Vector3.zero,
+            };
+        }
+
         private Vector3 DampVelocity()
         {
             if (Time > linearExtrapolationTime && Time < maxDuration)

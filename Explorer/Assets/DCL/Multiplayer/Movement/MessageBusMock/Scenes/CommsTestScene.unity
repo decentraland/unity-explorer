@@ -901,18 +901,6 @@ MonoBehaviour:
   passedMark: {fileID: 0}
   Incoming: 0
   Passed: 0
-  isBlending: 0
-  useBlend: 1
-  maxBlendSpeed: 30
-  maxBlendExtraTime: 0.33
-  blendDuration: 0
-  blendVelocity: {x: 0, y: 0, z: 0}
-  blendTargetPoint:
-    timestamp: 0
-    position: {x: 0, y: 0, z: 0}
-    velocity: {x: 0, y: 0, z: 0}
-    acceleration: {x: 0, y: 0, z: 0}
-  blendExtra: 0
 --- !u!23 &579518768
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1791,6 +1779,7 @@ GameObject:
   - component: {fileID: 2142167747}
   - component: {fileID: 2142167753}
   - component: {fileID: 2142167754}
+  - component: {fileID: 2142167755}
   - component: {fileID: 2142167750}
   - component: {fileID: 2142167752}
   - component: {fileID: 2142167751}
@@ -1883,18 +1872,6 @@ MonoBehaviour:
   passedMark: {fileID: 57191068}
   Incoming: 0
   Passed: 0
-  isBlending: 0
-  useBlend: 1
-  maxBlendSpeed: 30
-  maxBlendExtraTime: 0.33
-  blendDuration: 0
-  blendVelocity: {x: 0, y: 0, z: 0}
-  blendTargetPoint:
-    timestamp: 0
-    position: {x: 0, y: 0, z: 0}
-    velocity: {x: 0, y: 0, z: 0}
-    acceleration: {x: 0, y: 0, z: 0}
-  blendExtra: 0
 --- !u!96 &2142167751
 TrailRenderer:
   serializedVersion: 3
@@ -2047,3 +2024,20 @@ MonoBehaviour:
   dampedExtrapolationSteps: 2
   Time: 0
   Velocity: {x: 0, y: 0, z: 0}
+--- !u!114 &2142167755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142167746}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89daa3961cca4daca45a1aebd4282eb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxSpeed: 30
+  maxExtraTime: 0
+  Time: 0
+  Velocity: {x: 0, y: 0, z: 0}
+  blendExtra: 0
