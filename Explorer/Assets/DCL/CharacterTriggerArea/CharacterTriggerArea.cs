@@ -29,8 +29,6 @@ namespace DCL.CharacterTriggerArea
 
         public void Dispose()
         {
-            Debug.Log("DISPOSED!");
-
             BoxCollider.enabled = false;
             ForceOnTriggerExit();
             ClearEvents();
