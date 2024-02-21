@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace DCL.Quality
 {
-    public class QualityContainer
+    public class QualityContainer : IDisposable
     {
         private readonly List<Action> onDebugViewUpdate = new (50);
 
@@ -38,6 +38,11 @@ namespace DCL.Quality
                 RendererFeaturesCache = rendererFeaturesCache,
                 QualityLevelController = controller,
             };
+        }
+
+        public void Dispose()
+        {
+            QualityLevelController.Dispose();
         }
 
         public void AddDebugViews(IDebugContainerBuilder debugContainerBuilder)
