@@ -134,44 +134,13 @@ jobs:
               
               # Specify the path to the manifest.json file
               $jsonFilePath = "Explorer\Packages\manifest.json"
+              
+              # Replace the first string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' | Set-Content -Path $jsonFilePath
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' | Set-Content -Path $jsonFilePath
           
-              Write-Host "Original manifest.json content:"
-              Get-Content -Path $jsonFilePath
-          
-              # Check if specific strings are present in manifest.json
-              Write-Host "Checking for specific strings in manifest.json"
-              $content = Get-Content -Path $jsonFilePath -Raw
-              if ($content -match 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader') {
-                Write-Host "Found StylizedGrassShader path"
-              } else {
-                Write-Host "StylizedGrassShader path not found"
-              }
-                
-              if ($content -match 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2') {
-                Write-Host "Found StylizedWater2 path"
-              } else {
-                Write-Host "StylizedWater2 path not found"
-              }
-          
-              if ($content -match 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo') {
-                Write-Host "Found AVProVideo path"
-              } else {
-                Write-Host "AVProVideo path not found"
-              }
-          
-              $content = $content -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader'
-              Set-Content -Path $jsonFilePath -Value $content
-          
-              $content = Get-Content -Path $jsonFilePath -Raw
-              $content = $content -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2'
-              Set-Content -Path $jsonFilePath -Value $content
-          
-              $content = Get-Content -Path $jsonFilePath -Raw
-              $content = $content -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo'
-              Set-Content -Path $jsonFilePath -Value $content
-          
-              # Display the modified content of manifest.json
-              Write-Host "Modified manifest.json content:"
+              # Display the content of manifest.json
               Get-Content -Path $jsonFilePath
 
               # Display list of files
