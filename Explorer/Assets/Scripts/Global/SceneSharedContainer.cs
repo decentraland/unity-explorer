@@ -2,6 +2,7 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.PluginSystem.World.Dependencies;
+using MVC;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime.Factory;
@@ -16,7 +17,7 @@ namespace Global
     {
         public ISceneFactory SceneFactory { get; private set; }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer)
+        public static SceneSharedContainer Create(in StaticContainer staticContainer, IMVCManager mvcManager)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -38,7 +39,8 @@ namespace Global
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
                     sharedDependencies.EntityFactory,
                     staticContainer.EntityCollidersGlobalCache,
-                    staticContainer.EthereumApi
+                    staticContainer.EthereumApi,
+                    mvcManager
                 ),
             };
         }

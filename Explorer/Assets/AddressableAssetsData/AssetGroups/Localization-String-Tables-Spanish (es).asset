@@ -17,26 +17,8 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 09434d9d66ece403f94143828bfde904
   m_SerializeEntries:
-  - m_GUID: 407d506da6012446f8fc8579ed5095f4
-    m_Address: UI Text Localization Table_es
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - Locale-es
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bb34d8547f7784b15bf8a312c4aea603
     m_Address: Tests Localization Table_es
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - Locale-es
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 206e8c615a687435bbcc13a2f11fdcc6
-    m_Address: Authentication_es
-    m_ReadOnly: 1
-    m_SerializedLabels:
-    - Locale-es
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 96b7969c6bd9b45c8a6feb5cc88da1dc
-    m_Address: SceneLoadingScreen_es
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-es

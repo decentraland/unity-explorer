@@ -2,6 +2,7 @@ using DCL.AssetsProvision;
 using DCL.SceneLoadingScreens;
 using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -9,10 +10,13 @@ namespace DCL.PluginSystem.Global
     {
         public struct LoadingScreenPluginSettings : IDCLPluginSettings
         {
-            [field: Header(nameof(LoadingScreenPlugin) + "." + nameof(Web3AuthPluginSettings))]
+            [field: Header(nameof(LoadingScreenPlugin) + "." + nameof(LoadingScreenPluginSettings))]
             [field: Space]
             [field: SerializeField]
             public LoadingScreenObjectRef LoadingScreenPrefab { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<SceneTipsConfigurationSO> FallbackTipsConfiguration { get; private set; }
 
             [field: SerializeField]
             public string FallbackTipsTable { get; private set; }
