@@ -49,7 +49,6 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private IRestrictedActionsAPI restrictedActionsAPI;
         private World playerWorld;
         private Entity playerEntity;
 
@@ -202,7 +201,7 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
-            restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, playerWorld, playerEntity, sceneData);
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, playerWorld, playerEntity, sceneData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
