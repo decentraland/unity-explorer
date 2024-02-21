@@ -33,7 +33,16 @@ namespace DCL.PluginSystem.Editor
                 foreach (Type type in types)
                 {
                     if (type == typeof(NoExposedPluginSettings)) continue;
-                    if (targetObj.settings.Find(x => x.GetType() == type) != null) continue;
+
+                    try
+                    {
+                        if (targetObj.settings.Find(x => x.GetType() == type) != null) continue;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                        continue;
+                    }
 
                     menu.AddItem(new GUIContent(type.FullName), false, () =>
                     {

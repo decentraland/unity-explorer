@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_ChargeBarV2
   m_Shader: {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED
   m_InvalidKeywords: []
@@ -18,6 +20,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -51,13 +54,12 @@ Material:
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
-    - _fillHead: 0.464655
+    - _fillHead: 1
     - _fillTail: 0
     - _fillTails: 0.5
     m_Colors:
     - Color_80b3604e6ba44946a43c678e0e7394af: {r: 1, g: 0, b: 0.26052088, a: 1}
-    - Color_989feb42c0074e3caa405393ba881f21: {r: 0.9529411, g: 0, b: 0.03656221,
-        a: 1}
+    - Color_989feb42c0074e3caa405393ba881f21: {r: 0.9529411, g: 0, b: 0.03656221, a: 1}
     - _BackgroundColor: {r: 1, g: 1, b: 1, a: 1}
     - _color01: {r: 1, g: 0.7372549, b: 0.35686275, a: 1}
   m_BuildTextureStacks: []
