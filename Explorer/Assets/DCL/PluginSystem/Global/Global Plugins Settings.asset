@@ -27,6 +27,7 @@ MonoBehaviour:
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
+  - rid: 3022170012058910723
   - rid: 1841402216112979969
   - rid: 4340256219339423747
   - rid: 4340256301410942981
@@ -158,6 +159,24 @@ MonoBehaviour:
       data:
         MinimapPrefab:
           m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3022170012058910723
+      type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        realmPartitionSettings:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        landscapeData:
+          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        parsedParcels:
+          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

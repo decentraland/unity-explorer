@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (loadEmptySceneSystemLogic.Inactive)
                     throw new ArgumentException("Empty scene loading is inactive");
 
-                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.FlowAsync(intention, partition, ct));
+                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.FlowAsync(World, intention, partition, ct));
             }
 
             return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));

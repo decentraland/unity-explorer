@@ -23,8 +23,10 @@ namespace DCL.SkyBox.Rendering
 
             private const string SKYBOX_CUBEMAP_TEXTURE_NAME = "_SkyBox_Cubemap_Texture";
             private const string STARBOX_CUBEMAP_TEXTURE_NAME = "_StarBox_Cubemap_Texture";
+            private const string SPACE_CUBEMAP_TEXTURE_NAME = "_Space_Cubemap_Texture";
             private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(SKYBOX_CUBEMAP_TEXTURE_NAME);
             private static readonly int s_StarBoxCubemapTextureID = Shader.PropertyToID(STARBOX_CUBEMAP_TEXTURE_NAME);
+            private static readonly int s_SpaceCubemapTextureID = Shader.PropertyToID(SPACE_CUBEMAP_TEXTURE_NAME);
             private static readonly int s_SunPosID = Shader.PropertyToID("_SunPos");
             private readonly TimeOfDayRenderingModel timeOfDayRenderingModel;
 
@@ -37,22 +39,30 @@ namespace DCL.SkyBox.Rendering
             private RTHandle m_cameraColorTarget_RTHandle;
             private RTHandle m_cameraDepthTarget_RTHandle;
             private Mesh m_cubeMesh;
+            private Cubemap m_spaceCubemap;
 
-            internal DCL_RenderPass_DrawSkyBox(TimeOfDayRenderingModel timeOfDayRenderingModel)
+            private bool bComputeStarMap = false;
+
+            internal DCL_RenderPass_DrawSkyBox(TimeOfDayRenderingModel timeOfDayRenderingModel, bool _bComputeStarMap)
             {
+                bComputeStarMap = _bComputeStarMap;
+                bComputeStarMap = false;
                 this.timeOfDayRenderingModel = timeOfDayRenderingModel;
                 MakeCube();
             }
 
             internal void Setup(ProceduralSkyBoxSettings_Draw _featureSettings, Material _material, RTHandle _cameraColorTarget, RTHandle _cameraDepthTarget, RTHandle _SkyBox_Cubemap_Texture,
-                RTHandle _StarBox_Cubemap_Texture)
+                RTHandle _StarBox_Cubemap_Texture, Cubemap _spaceCubemap)
             {
+                bComputeStarMap = false;
                 m_Material_Draw = _material;
                 m_Settings_Draw = _featureSettings;
                 m_cameraColorTarget_RTHandle = _cameraColorTarget;
                 m_cameraDepthTarget_RTHandle = _cameraDepthTarget;
                 m_SkyBoxCubeMap_RTHandle = _SkyBox_Cubemap_Texture;
                 m_StarBoxCubeMap_RTHandle = _StarBox_Cubemap_Texture;
+                m_spaceCubemap = _spaceCubemap;
+                //m_spaceCubemap.dimension = TextureDimension.Cube;
             }
 
             // This method is called before executing the render pass.
@@ -93,11 +103,14 @@ namespace DCL.SkyBox.Rendering
                 using (new ProfilingScope(cmd, new ProfilingSampler(PROFILER_TAG)))
                 {
                     CoreUtils.SetRenderTarget(cmd, m_cameraColorTarget_RTHandle, m_cameraDepthTarget_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
+                    cmd.SetGlobalTexture(s_SpaceCubemapTextureID, m_spaceCubemap);
+                    if (bComputeStarMap == true)
+                        cmd.SetGlobalTexture(s_StarBoxCubemapTextureID, m_StarBoxCubeMap_RTHandle);
                     cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, m_SkyBoxCubeMap_RTHandle);
-                    cmd.SetGlobalTexture(s_StarBoxCubemapTextureID, m_StarBoxCubeMap_RTHandle);
 
-                    //cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
-                    cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Stars, properties: null);
+                    cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
+                    if (bComputeStarMap == true)
+                        cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Stars, properties: null);
                     cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
                 }
 
