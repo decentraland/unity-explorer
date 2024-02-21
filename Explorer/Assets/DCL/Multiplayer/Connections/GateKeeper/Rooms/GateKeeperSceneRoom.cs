@@ -24,8 +24,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private readonly IMultiPool multiPool;
         private readonly string sceneHandleUrl;
         private readonly InteriorRoom room = new ();
+        private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
 
         private CancellationTokenSource? cancellationTokenSource;
+        private MetaData? previousMetaData;
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
@@ -66,11 +68,26 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTaskVoid RunAsync()
         {
+            //TODO run in background
             CancellationToken token = StopPreviousAndNewCancellationToken();
-            string connectionString = await ConnectionStringAsync(token);
-            Debug.Log($"String is: {connectionString}");
-            await ConnectToRoomAsync(connectionString, token);
-            //TODO start checking position of player and reconnect on request
+
+            while (token.IsCancellationRequested == false)
+            {
+                //TODO but this on main thread
+                MetaData meta = await MetaDataAsync(token);
+
+                if (meta.Equals(previousMetaData) == false)
+                {
+                    string connectionString = await ConnectionStringAsync(meta, token);
+                    Debug.Log($"String is: {connectionString}");
+                    await ConnectToRoomAsync(connectionString, token);
+                }
+
+                previousMetaData = meta;
+                await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
+
+                //TODO start checking position of player and reconnect on request
+            }
         }
 
         private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
@@ -81,9 +98,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             multiPool.TryRelease(previous);
         }
 
-        private async UniTask<string> ConnectionStringAsync(CancellationToken token)
+        private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            MetaData meta = await MetaDataAsync(token);
             GenericPostRequest result = await webRequests.SignedFetchAsync(sceneHandleUrl, meta.ToJson(), token);
             var response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             return response.adapter;
@@ -124,6 +140,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;
+
+
         }
 
         [Serializable]
