@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Castle.Components.DictionaryAdapter.Xml;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CRDT.Deserializer;
@@ -25,6 +26,7 @@ using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules;
 using SceneRuntime.Factory;
 using System;
 using System.Collections.Generic;
@@ -47,6 +49,9 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
+        private IRestrictedActionsAPI restrictedActionsAPI;
+        private World playerWorld;
+        private Entity playerEntity;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -117,6 +122,12 @@ namespace SceneRunner
 
         public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
             CreateSceneAsync(sceneData, partitionProvider, ct);
+
+        public void SetPlayerEntity(World world, Entity entity)
+        {
+            playerWorld = world;
+            playerEntity = entity;
+        }
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
@@ -191,7 +202,7 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
-            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
+            restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, playerWorld, playerEntity, sceneData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
