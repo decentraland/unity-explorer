@@ -32,6 +32,10 @@ namespace DCL.Quality
             [SerializeField] internal VolumeProfile volumeProfile;
 
             [SerializeField] internal FogSettings fogSettings;
+
+            [SerializeField] internal bool lensFlareEnabled;
+
+            [SerializeField] internal LensFlareComponentSRP lensFlareComponent;
         }
     }
 }

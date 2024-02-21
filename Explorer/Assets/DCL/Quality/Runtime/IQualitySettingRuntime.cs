@@ -7,9 +7,11 @@ namespace DCL.Quality.Runtime
     /// <summary>
     ///     Allows to modify the given quality setting at runtime
     /// </summary>
-    public interface IQualitySettingRuntime
+    public interface IQualitySettingRuntime : IDisposable
     {
         bool IsActive { get; }
+
+        void IDisposable.Dispose() { }
 
         /// <summary>
         ///     Modifies persistent state to manipulate the quality setting at runtime

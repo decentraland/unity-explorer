@@ -32,6 +32,9 @@ namespace DCL.Quality.Runtime
         public void Dispose()
         {
             QualitySettings.activeQualityLevelChanged -= OnQualityLevelChanged;
+
+            foreach (IQualitySettingRuntime runtime in runtimes)
+                runtime.Dispose();
         }
 
         private void OnQualityLevelChanged(int from, int to)

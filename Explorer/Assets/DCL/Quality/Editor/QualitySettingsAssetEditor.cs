@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace DCL.Quality
 {
     [CustomEditor(typeof(QualitySettingsAsset))]
-    public class QualitySettingsAssetEditor : UnityEditor.Editor
+    public partial class QualitySettingsAssetEditor : UnityEditor.Editor
     {
         private readonly HashSet<ScriptableRendererFeature> tempFeatures = new ();
         private SerializedProperty allRendererFeatures;
@@ -117,39 +117,18 @@ namespace DCL.Quality
 
         private void EnsureCustomSettingsSize(int newSize)
         {
-            VolumeProfile CreateNewAsset(int index)
-            {
-                VolumeProfile profile = CreateInstance<VolumeProfile>();
-
-                //profile.hideFlags = HideFlags.HideInInspector;
-                profile.name = $"Custom Volume Profile {index}";
-                return profile;
-            }
-
             serializedObject.Update();
 
             int oldSize = customSettings.arraySize;
 
             if (oldSize < newSize)
-            {
                 customSettings.arraySize = newSize;
 
-                for (int i = oldSize; i < newSize; i++)
-                {
-                    // Create a profile as a subasset
-                    VolumeProfile newProfile = CreateNewAsset(i);
+            ValidateVolumeProfileAttached();
+            ValidateLensFlareAssetsAttached();
 
-                    // Store this new effect as a subasset so we can reference it safely afterwards
-                    AssetDatabase.AddObjectToAsset(newProfile, base.target);
-
-                    SerializedProperty element = customSettings.GetArrayElementAtIndex(i)
-                                                               .FindPropertyRelative(nameof(QualitySettingsAsset.QualityCustomLevel.volumeProfile));
-
-                    element.objectReferenceValue = newProfile;
-                }
-
-                serializedObject.ApplyModifiedProperties();
-
+            if (serializedObject.ApplyModifiedProperties())
+            {
                 // Force save
                 if (EditorUtility.IsPersistent(base.target))
                 {

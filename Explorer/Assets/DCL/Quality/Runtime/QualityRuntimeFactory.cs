@@ -15,11 +15,15 @@ namespace DCL.Quality.Runtime
             var runtimes = new List<IQualitySettingRuntime>();
 
             runtimes.Add(CreateFogRuntime());
+            runtimes.Add(CreateLensFlareRuntime());
             runtimes.Add(CreateGlobalVolume());
             CreateRendererFeaturesRuntimes(rendererFeaturesCache, settingsAsset, runtimes);
 
             return new QualityLevelController(runtimes, settingsAsset.customSettings);
         }
+
+        private static IQualitySettingRuntime CreateLensFlareRuntime() =>
+            new LensFlareQualitySettingRuntime();
 
         private static IQualitySettingRuntime CreateFogRuntime() =>
             new FogQualitySettingRuntime();
@@ -60,7 +64,7 @@ namespace DCL.Quality.Runtime
             if (globalVol == null)
                 globalVol = new GameObject(GLOBAL_VOLUME_NAME);
 
-            globalVol.hideFlags = HideFlags.NotEditable;
+            globalVol.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
 
             Volume? volume = globalVol.GetComponent<Volume>();
 

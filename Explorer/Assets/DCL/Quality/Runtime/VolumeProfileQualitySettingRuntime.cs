@@ -2,6 +2,7 @@ using DCL.DebugUtilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
+using Utility;
 
 namespace DCL.Quality.Runtime
 {
@@ -16,6 +17,11 @@ namespace DCL.Quality.Runtime
         public VolumeProfileQualitySettingRuntime(Volume globalVolume)
         {
             this.globalVolume = globalVolume;
+        }
+
+        public void Dispose()
+        {
+            UnityObjectUtils.SafeDestroyGameObject(globalVolume);
         }
 
         public void SetActive(bool active)

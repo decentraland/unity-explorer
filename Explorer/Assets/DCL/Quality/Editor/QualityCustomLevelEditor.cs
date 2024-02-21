@@ -28,8 +28,38 @@ namespace DCL.Quality
                 container.Add(imgui);
             }
 
+            container.Add(CreateLensFlare(property));
+
             container.Add(CreateHeader("Fog"));
             container.Add(fsprop);
+            return container;
+        }
+
+        private VisualElement CreateLensFlare(SerializedProperty property)
+        {
+            SerializedProperty lensFlareEnabled = property.FindPropertyRelative(nameof(QualitySettingsAsset.QualityCustomLevel.lensFlareEnabled));
+            SerializedProperty lensFlareAsset = property.FindPropertyRelative(nameof(QualitySettingsAsset.QualityCustomLevel.lensFlareComponent));
+
+            var lensFlareEnabledProp = new PropertyField(lensFlareEnabled, "Lens Flare Enabled");
+            lensFlareEnabledProp.Bind(property.serializedObject);
+
+            var lensFlareAssetEditor = UnityEditor.Editor.CreateEditor(lensFlareAsset.objectReferenceValue);
+            var imgui = new IMGUIContainer(lensFlareAssetEditor.OnInspectorGUI);
+
+            var container = new VisualElement();
+
+            container.Add(CreateHeader("Lens Flare"));
+
+            container.Add(lensFlareEnabledProp);
+
+            lensFlareEnabledProp.RegisterValueChangeCallback(c =>
+            {
+                if (c.changedProperty.boolValue)
+                    container.Add(imgui);
+                else if (imgui.parent == container)
+                    container.Remove(imgui);
+            });
+
             return container;
         }
 

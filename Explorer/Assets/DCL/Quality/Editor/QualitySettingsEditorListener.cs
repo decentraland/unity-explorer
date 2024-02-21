@@ -1,6 +1,9 @@
 using DCL.Quality.Runtime;
+using System;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Callbacks;
+using UnityEditor.Compilation;
 
 namespace DCL.Quality
 {
@@ -19,6 +22,13 @@ namespace DCL.Quality
                 return;
 
             EditorApplication.delayCall += TryStart;
+
+            CompilationPipeline.compilationStarted += OnCompilationStarted;
+        }
+
+        private static void OnCompilationStarted(object obj)
+        {
+            Stop();
         }
 
         private static void TryStart()
