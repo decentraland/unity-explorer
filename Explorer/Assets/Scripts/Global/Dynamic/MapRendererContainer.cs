@@ -7,13 +7,15 @@ namespace Global.Dynamic
 {
     public class MapRendererContainer
     {
+        public MapRendererTextureContainer TextureContainer { get; private set; }
         public IMapRenderer MapRenderer { get; private set; }
 
         public static async UniTask<MapRendererContainer> CreateAsync(StaticContainer staticContainer, MapRendererSettings settings, CancellationToken ct)
         {
-            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(staticContainer.AssetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController));
+            var textureContainer = new MapRendererTextureContainer();
+            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(staticContainer.AssetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController, textureContainer));
             await mapRenderer.InitializeAsync(ct);
-            return new MapRendererContainer { MapRenderer = mapRenderer };
+            return new MapRendererContainer { MapRenderer = mapRenderer, TextureContainer = textureContainer };
         }
     }
 }

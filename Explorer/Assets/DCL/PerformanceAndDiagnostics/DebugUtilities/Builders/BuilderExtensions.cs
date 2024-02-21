@@ -51,6 +51,14 @@ namespace DCL.DebugUtilities
             return builder;
         }
 
+        public static DebugWidgetBuilder AddIntSliderField(this DebugWidgetBuilder builder, string labelName, ElementBinding<int> elementBinding, int min, int max)
+        {
+            var label = new DebugConstLabelDef(labelName);
+            var field = new DebugIntSliderDef(elementBinding, min, max);
+            builder.AddControl(label, field);
+            return builder;
+        }
+
         public static DebugWidgetBuilder AddMarker(this DebugWidgetBuilder builder, string markerName, ElementBinding<ulong> binding, DebugLongMarkerDef.Unit unit)
         {
             var label = new DebugConstLabelDef(markerName);
