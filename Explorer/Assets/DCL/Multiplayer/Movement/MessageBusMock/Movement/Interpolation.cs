@@ -40,14 +40,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             float correctionTime = receiver.IncomingMessages.Count * UnityEngine.Time.smoothDeltaTime;
             totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
 
-            interpolation = interpolationType switch
-                            {
-                                InterpolationType.Linear => Interpolate.Linear,
-                                InterpolationType.Hermite => Interpolate.Hermite,
-                                InterpolationType.Bezier => Interpolate.Bezier,
-                                InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending,
-                                _ => Interpolate.Linear,
-                            };
+            interpolation = GetInterpolationFunc(interpolationType);
         }
 
         private void OnDisable()
@@ -69,6 +62,18 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 OnDisable();
             else
                 enabled = true;
+        }
+
+        private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)
+        {
+            return type switch
+                   {
+                       InterpolationType.Linear => Interpolate.Linear,
+                       InterpolationType.Hermite => Interpolate.Hermite,
+                       InterpolationType.Bezier => Interpolate.Bezier,
+                       InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending,
+                       _ => Interpolate.Linear,
+                   };
         }
     }
 }

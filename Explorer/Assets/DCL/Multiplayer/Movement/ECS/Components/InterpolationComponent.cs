@@ -7,26 +7,27 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public struct InterpolationComponent
     {
-        public readonly List<MessageMock> passedMessages;
-
-        private readonly Transform transform;
-        private bool isFirst;
+        private const float MIN_POSITION_DELTA = 0.1f;
 
         public bool Enabled;
 
-        private MessageMock start;
-        public MessageMock end;
+        public readonly List<MessageMock> PassedMessages;
+        private readonly Transform transform;
 
-        public float Time;
+        private float time;
+
+        private MessageMock start;
+        private MessageMock end;
+        private float totalDuration;
 
         private Func<MessageMock, MessageMock, float, float, Vector3> interpolationFunc;
-        private float totalDuration;
+        private bool isFirst;
 
         public InterpolationComponent(Transform transform)
         {
             this.transform = transform;
 
-            passedMessages = new List<MessageMock>();
+            PassedMessages = new List<MessageMock>();
 
             isFirst = true;
             Enabled = false;
@@ -34,7 +35,7 @@ namespace DCL.Multiplayer.Movement.ECS
             interpolationFunc = null;
             start = null;
             end = null;
-            Time = 0f;
+            time = 0f;
             totalDuration = 0f;
         }
 
@@ -42,45 +43,50 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             if (!Enabled) return;
 
-            if (Time < totalDuration)
-            {
-                Time += deltaTime;
-                transform.position = interpolationFunc(start, end, Time, totalDuration);
-            }
-            else
-            {
-                transform.position = end.position;
-                passedMessages.Add(end);
+            time += deltaTime;
 
-                Enabled = false;
-            }
+            if (time < totalDuration)
+                transform.position = interpolationFunc(start, end, time, totalDuration);
+            else
+                Disable();
         }
 
-        public void Run(MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear)
+        public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear)
         {
-            if (isFirst)
-            {
-                transform.position = to.position;
-                passedMessages.Add(to);
-                isFirst = false;
-            }
+            if (from?.timestamp > to.timestamp) return;
+
+            start = from;
+            end = to;
+
+            if (isFirst || (Vector3.Distance(from.position, to.position) < MIN_POSITION_DELTA && inboxMessages > 0))
+                Disable();
             else
-            {
-                Enabled = true;
-                Time = 0f;
+                Enable(inboxMessages, type);
+        }
 
-                start = passedMessages[^1];
-                end = to;
+        private void Enable(int inboxMessages, InterpolationType type)
+        {
+            time = 0f;
 
-                float timeDiff = to.timestamp - start.timestamp;
-                float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
-                totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
-            }
+            float timeDiff = end.timestamp - start.timestamp;
+            float correctionTime = inboxMessages * Time.smoothDeltaTime;
+            totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
 
             interpolationFunc = GetInterpolationFunc(type);
+
+            Enabled = true;
         }
 
-        public static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)
+        private void Disable()
+        {
+            transform.position = end.position;
+            PassedMessages.Add(end);
+            isFirst = false;
+
+            Enabled = false;
+        }
+
+        private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)
         {
             return type switch
                    {

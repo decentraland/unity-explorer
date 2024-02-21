@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     {
                         ext.Enabled = false;
 
-                        @int.passedMessages.Add(new MessageMock
+                        @int.PassedMessages.Add(new MessageMock
                         {
                             timestamp = ext.Start.timestamp + ext.Time,
                             position = ext.Transform.position,
@@ -49,16 +49,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         });
                     }
 
-                    @int.Run(incomingMessages.Dequeue(), incomingMessages.Count, incomingMessages.InterpolationType);
+                    var start = @int.PassedMessages.Count > 0 ? @int.PassedMessages[^1] : null;
+                    @int.Run(start, incomingMessages.Dequeue(), incomingMessages.Count, incomingMessages.InterpolationType);
                     @int.Update(UnityEngine.Time.deltaTime);
                 }
                 else
                 {
                     if (ext.Enabled)
                         ext.Update(UnityEngine.Time.deltaTime);
-                    else if (@int.passedMessages.Count > 1)
+                    else if (@int.PassedMessages.Count > 1)
                     {
-                        ext.Run(@int.passedMessages[^1]);
+                        ext.Run(@int.PassedMessages[^1]);
                         ext.Update(UnityEngine.Time.deltaTime);
                     }
                 }
