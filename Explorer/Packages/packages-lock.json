@@ -8,7 +8,7 @@
       "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
     "avprovideo": {
-      "version": "https://github.com/decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
       "depth": 0,
       "source": "git",
       "dependencies": {},
