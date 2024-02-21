@@ -21,12 +21,12 @@ namespace DCL.SDKComponents.Animator.Systems
     [ThrottlingEnabled]
     public partial class AnimatorHandlerSystem : BaseUnityLoopSystem
     {
-        private AnimatorHandlerSystem(World world) : base(world) { }
+        public AnimatorHandlerSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            UpdateAnimatorQuery(World);
             LoadAnimatorQuery(World);
+            UpdateAnimatorQuery(World);
 
             UpdateAnimationStateQuery(World);
 
@@ -49,21 +49,19 @@ namespace DCL.SDKComponents.Animator.Systems
         private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
             //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
-            if (gltfContainerComponent.Promise.Result != null)
-            {
-                List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
 
-                foreach (Animation animation in gltfAnimations) { InitializeAnimation(animation); }
+            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
 
-                ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
-            }
+            foreach (Animation animation in gltfAnimations) { InitializeAnimation(animation); }
+
+            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
         }
 
         [Query]
         [None(typeof(SDKAnimatorComponent))]
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
-            //Until the GLTF Container is not fully loaded we do not create the SDKAnimator
+            //Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
             if (gltfContainerComponent.State.Value != LoadingState.Finished) return;
             if (gltfContainerComponent.Promise is not { Result: { } }) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animations.Count == 0) return;
@@ -82,6 +80,7 @@ namespace DCL.SDKComponents.Animator.Systems
             var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates);
 
             World.Add(entity, sdkAnimatorComponent);
+            pbAnimator.IsDirty = false;
         }
 
         [Query]
@@ -90,6 +89,7 @@ namespace DCL.SDKComponents.Animator.Systems
             if (!pbAnimator.IsDirty) return;
 
             sdkAnimatorComponent.IsDirty = true;
+            pbAnimator.IsDirty = false;
             List<SDKAnimationState> sdkAnimationStates = sdkAnimatorComponent.SDKAnimationStates;
             sdkAnimationStates.Clear();
 
@@ -105,7 +105,7 @@ namespace DCL.SDKComponents.Animator.Systems
         [Query]
         private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
-            if (sdkAnimatorComponent.IsDirty && gltfContainerComponent.Promise.Result != null)
+            if (sdkAnimatorComponent.IsDirty)
             {
                 List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
                 sdkAnimatorComponent.IsDirty = false;
