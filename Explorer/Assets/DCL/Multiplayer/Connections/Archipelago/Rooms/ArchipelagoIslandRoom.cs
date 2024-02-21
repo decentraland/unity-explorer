@@ -128,7 +128,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             while (token.IsCancellationRequested == false)
             {
                 var position = characterObject.Position;
-                await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThread();
+                await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
                 await signFlow.SendHeartbeatAsync(position, token);
                 await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
             }
@@ -150,7 +150,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
-            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThread();
+            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             string adapterUrl = await adapterAddresses.AdapterUrlAsync(aboutUrl, token);
             var welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");

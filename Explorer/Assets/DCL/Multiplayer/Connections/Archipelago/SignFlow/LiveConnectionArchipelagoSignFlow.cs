@@ -95,7 +95,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
         public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
         {
-            await ExecuteOnThreadPoolScope.NewScope();
+            await ExecuteOnThreadPoolScope.NewScopeAsync();
             while (token.IsCancellationRequested == false)
             {
                 var response = await connection.ReceiveAsync(token);
