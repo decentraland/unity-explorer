@@ -58,7 +58,9 @@ namespace DCL.CharacterMotion.Systems
         private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, in PlayerLookAtIntent lookAtIntent)
         {
             // Rotate player to look at camera target
-            Vector3 newLookDirection = (lookAtIntent.LookAtTarget - transform.Position).normalized;
+            Vector3 newLookDirection = lookAtIntent.LookAtTarget - transform.Position;
+            newLookDirection.y = rigidTransform.LookDirection.y;
+            newLookDirection.Normalize();
             rigidTransform.LookDirection = newLookDirection;
             transform.Transform.forward = newLookDirection;
 
