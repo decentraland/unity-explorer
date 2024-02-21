@@ -93,6 +93,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
+            QualityContainer.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
