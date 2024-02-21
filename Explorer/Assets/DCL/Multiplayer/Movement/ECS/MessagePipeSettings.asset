@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dcaac58b3d742e6a074b969cb3cab6b, type: 3}
   m_Name: MessagePipeSettings
   m_EditorClassIdentifier: 
-  InboxCount: 5
+  InboxCount: 4
   InterpolationType: 1
-  PackageLost: 0
+  PackageLost: 3
   StartSending: 1
   PackageSentRate: 0.33
   PackagesJitter: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
     m_SingletonActionBindings:
     - m_Name: 
       m_Id: 6ba9aa9d-6172-42d2-b414-e2032a7a30d8
-      m_Path: <Keyboard>/rightAlt
+      m_Path: <Keyboard>/m
       m_Interactions: 
       m_Processors: 
       m_Groups: 
@@ -64,7 +64,7 @@ MonoBehaviour:
     m_SingletonActionBindings:
     - m_Name: 
       m_Id: 8565d808-fa8b-4064-b024-52008f35d01e
-      m_Path: <Keyboard>/leftAlt
+      m_Path: <Keyboard>/x
       m_Interactions: 
       m_Processors: 
       m_Groups: 

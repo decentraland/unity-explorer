@@ -10,12 +10,14 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public class MessagePipeMock
     {
-        public readonly Queue<MessageMock> IncomingMessages = new ();
+        private readonly Queue<MessageMock> IncomingMessages = new ();
 
         private readonly MessagePipeSettings settings;
         private readonly CharacterController playerCharacter;
 
         private readonly CancellationTokenSource cts;
+        public InterpolationType InterpolationType => settings.InterpolationType;
+        public int Count => IncomingMessages.Count;
 
         public MessagePipeMock(MessagePipeSettings settings, CharacterController playerCharacter)
         {
@@ -38,7 +40,13 @@ namespace DCL.Multiplayer.Movement.ECS
             StartSendPackages(cts.Token).Forget();
         }
 
-        public InterpolationType InterpolationType => settings.InterpolationType;
+        public MessageMock Dequeue()
+        {
+            MessageMock message = IncomingMessages.Dequeue();
+            settings.InboxCount = IncomingMessages.Count;
+
+            return message;
+        }
 
         private async UniTask StartSendPackages(CancellationToken ctsToken)
         {
@@ -52,9 +60,10 @@ namespace DCL.Multiplayer.Movement.ECS
 
                 if (settings.PackageLost > 0)
                     settings.PackageLost--;
-                else if (!this.settings.packageBlockButton.IsPressed())
+                else if (!settings.packageBlockButton.IsPressed())
                 {
                     Send(Time.time, playerCharacter.transform.position, playerCharacter.velocity);
+
                     // PutMark(); send mark
                 }
 

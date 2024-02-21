@@ -4,7 +4,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
 {
     public class Extrapolation : MonoBehaviour
     {
-        public float minSpeed = 0.1f;
+        public float minSpeed = 0.01f;
         public float linearExtrapolationTime = 0.33f;
         public int dampedExtrapolationSteps = 2;
 
