@@ -19,8 +19,7 @@ using Vector3 = UnityEngine.Vector3;
 namespace DCL.Landscape.Systems
 {
     /// <summary>
-    ///     This system updates every terrain visibility (terrain and trees) based on the camera position and distance settings
-    ///     We schedule a parallel job to calculate the frustum and distance culling and then we use the job results to set-up the correct flags
+    ///     This system updates every cliff and water chunk renderers visibility  based on the camera position and distance settings
     /// </summary>
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
