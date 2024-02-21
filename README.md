@@ -16,11 +16,11 @@ npm run build-protocol
 
 ### Components 
 - [ ] `Animator`
-- [ ] `AudioSource`
-- [ ] `AudioStream`
+- [x] `AudioSource`
+- [x] `AudioStream`
 - [ ] `AvatarAttach`
 - [ ] `AvatarModifierArea`
-- [ ] `AvatarShape`
+- [x] `AvatarShape`
 - [x] `Billboard`
 - [x] `CRDT_MESSAGE_HEADER_LENGTH`
 - [ ] `CameraMode`
@@ -31,8 +31,8 @@ npm run build-protocol
 - [x] `Material`
 - [x] `MeshCollider`
 - [x] `MeshRenderer`
-- [ ] `Name`
-- [ ] `NftShape`
+- [x] `Name`
+- [x] `NftShape`
 - [x] `PointerEvents`
 - [x] `PointerEventsResult`
 - [ ] `PointerLock`
@@ -44,19 +44,19 @@ npm run build-protocol
 - [ ] `SyncComponents`
 - [x] `TextShape`
 - [x] `Transform`
-- [ ] `Tween`
-- [ ] `TweenSequence`
+- [x] `Tween`
+- [x] `TweenSequence`
 - [ ] `TweenState`
-- [ ] `UiBackground`
-- [ ] `UiCanvasInformation`
-- [ ] `UiDropdown`
-- [ ] `UiDropdownResult`
-- [ ] `UiInput`
-- [ ] `UiInputResult`
-- [ ] `UiText`
-- [ ] `UiTransform`
-- [ ] `VideoEvent`
-- [ ] `VideoPlayer`
+- [x] `UiBackground`
+- [x] `UiCanvasInformation`
+- [x] `UiDropdown`
+- [x] `UiDropdownResult`
+- [x] `UiInput`
+- [x] `UiInputResult`
+- [x] `UiText`
+- [x] `UiTransform`
+- [x] `VideoEvent`
+- [x] `VideoPlayer`
 - [x] `VisibilityComponent`
 
 ## Runtime API
