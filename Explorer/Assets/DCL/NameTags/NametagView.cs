@@ -1,5 +1,4 @@
-using Sentry;
-using System;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -11,23 +10,50 @@ namespace DCL.Nametags
         public TMP_Text Username { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text MessageContent { get; private set; }
+
+        [field: SerializeField]
         public SpriteRenderer Background { get; private set; }
 
         [field: SerializeField]
-        public GameObject VerifiedIcon { get; private set; }
+        public RectTransform MessageContentRectTransform { get; private set; }
 
-        private Vector3 backgroundLocalScale;
-
-        public void Start()
-        {
-            backgroundLocalScale = Background.transform.localScale;
-        }
+        private bool isBubbleExpanded = false;
 
         public void SetUsername(string username)
         {
             Username.text = username;
-            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight);
-            Background.transform.localScale = new Vector3(Username.preferredWidth + 0.2f, 0.2f, backgroundLocalScale.z);
+            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + 0.15f);
+            Background.size = new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f);
+
+            //Animate("really long string really long string really long string really long string really long string really long string really long string ");
+        }
+
+        public void SetChatMessage(string chatMessage)
+        {
+            StartChatBubbleFlowAsync(chatMessage).Forget();
+        }
+
+        private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage)
+        {
+            if(!isBubbleExpanded)
+                AnimateIn(chatMessage);
+
+            await UniTask.Delay(5000);
+            AnimateOut();
+        }
+
+        private void AnimateIn(string messageContent)
+        {
+            isBubbleExpanded = true;
+            Vector2 preferredSize = MessageContent.GetPreferredValues(messageContent, MessageContentRectTransform.sizeDelta.x, 0);
+            preferredSize.x = MessageContentRectTransform.sizeDelta.x;
+            Background.size = preferredSize;
+        }
+
+        private void AnimateOut()
+        {
+            isBubbleExpanded = false;
         }
 
     }

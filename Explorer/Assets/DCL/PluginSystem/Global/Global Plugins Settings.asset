@@ -227,12 +227,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         nametagView:
-          m_AssetGUID: fabfcdf867b484665b44c8a158bd8eb4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        nametagParent:
-          m_AssetGUID: bd2233d5950ee4b4c96fc19f60d8c582
+          m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
