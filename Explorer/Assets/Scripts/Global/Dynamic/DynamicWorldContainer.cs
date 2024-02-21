@@ -158,7 +158,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, web3IdentityCache, characterPreviewFactory),
-                new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
+                //new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
