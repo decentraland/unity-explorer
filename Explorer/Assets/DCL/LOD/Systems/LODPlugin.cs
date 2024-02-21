@@ -58,9 +58,7 @@ namespace DCL.LOD
         {
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset);
-
             UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue);
-
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
 
             LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
