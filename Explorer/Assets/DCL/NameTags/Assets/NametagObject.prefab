@@ -34,7 +34,7 @@ Transform:
   - {fileID: 8736261668784474907}
   - {fileID: 4776442481111019983}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7915797373785868185
 MonoBehaviour:
@@ -52,6 +52,84 @@ MonoBehaviour:
   <MessageContent>k__BackingField: {fileID: 1264101715097455992}
   <Background>k__BackingField: {fileID: 2640253797295083812}
   <MessageContentRectTransform>k__BackingField: {fileID: 4776442481111019983}
+  <backgroundEaseAnimationCurve>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 16.851782
+      outSlope: 16.851782
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.056315154
+      value: 0.9490107
+      inSlope: 1.6299248
+      outSlope: 1.6299248
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.43831533
+    - serializedVersion: 3
+      time: 0.17854533
+      value: 1.104037
+      inSlope: 0.008592178
+      outSlope: 0.008592178
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.425271
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.31338143
+      value: 0.961939
+      inSlope: -0.13121316
+      outSlope: -0.13121316
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.60323316
+    - serializedVersion: 3
+      time: 0.41472816
+      value: 1.0553901
+      inSlope: -0.14087199
+      outSlope: -0.14087199
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 1
+      outWeight: 0.38746333
+    - serializedVersion: 3
+      time: 0.5747551
+      value: 0.97697055
+      inSlope: 0.50411373
+      outSlope: 0.50411373
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.47392246
+    - serializedVersion: 3
+      time: 0.6990756
+      value: 1.0039835
+      inSlope: 0.10740929
+      outSlope: 0.10740929
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.6021761
+      outWeight: 0.18645906
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: -0.013237535
+      outSlope: -0.013237535
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   <FixedWidth>k__BackingField: 2.5
 --- !u!210 &317692783042627670
 SortingGroup:

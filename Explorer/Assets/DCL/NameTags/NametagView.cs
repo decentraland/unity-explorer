@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
-using System;
 using TMPro;
 using UnityEngine;
 using Utility;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
+using DG.Tweening;
 
 namespace DCL.Nametags
 {
@@ -23,14 +23,19 @@ namespace DCL.Nametags
         public RectTransform MessageContentRectTransform { get; private set; }
 
         [field: SerializeField]
+        internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
+
+        [field: SerializeField]
         public float FixedWidth { get; private set; }
-        private const float MARGIN_OFFSET = 0.5f;
-        private static Vector2 messageContentAnchoredPosition = new (0,MARGIN_OFFSET / 3);
+        private const float MARGIN_OFFSET_WIDTH = 0.5f;
+        private const float MARGIN_OFFSET_HEIGHT = 0.7f;
+        private static readonly Vector2 MESSAGE_CONTENT_ANCHORED_POSITION = new (0,MARGIN_OFFSET_HEIGHT / 3);
 
         private bool isBubbleExpanded = false;
 
         private void Start()
         {
+            SetUsername(StringUtils.GenerateRandomString(Random.Range(3,10)));
             GenerateRandomMsgsAsync().Forget();
         }
 
@@ -63,7 +68,7 @@ namespace DCL.Nametags
             if(!isBubbleExpanded)
                 AnimateIn(chatMessage);
 
-            await UniTask.Delay(2000);
+            await UniTask.Delay(4000);
             AnimateOut();
         }
 
@@ -71,24 +76,30 @@ namespace DCL.Nametags
         {
             MessageContent.gameObject.SetActive(true);
             isBubbleExpanded = true;
-            
+
             Vector2 preferredSize = MessageContent.GetPreferredValues(messageContent, FixedWidth, 0);
             preferredSize.x = MessageContentRectTransform.sizeDelta.x;
             MessageContentRectTransform.sizeDelta = preferredSize;
-            MessageContentRectTransform.anchoredPosition = messageContentAnchoredPosition;
+            MessageContentRectTransform.anchoredPosition = MESSAGE_CONTENT_ANCHORED_POSITION;
             MessageContent.text = messageContent;
-            preferredSize.x = MessageContentRectTransform.sizeDelta.x + MARGIN_OFFSET;
-            preferredSize.y += MARGIN_OFFSET;
-            Username.rectTransform.anchoredPosition = new Vector2((-preferredSize.x / 2) + (Username.preferredWidth / 2) + (MARGIN_OFFSET / 2), MessageContentRectTransform.sizeDelta.y + (MARGIN_OFFSET / 3));
-            Background.size = preferredSize;
+            preferredSize.x = MessageContentRectTransform.sizeDelta.x + MARGIN_OFFSET_WIDTH;
+            preferredSize.y += MARGIN_OFFSET_HEIGHT;
+
+            MessageContent.DOFade(1, 0.2f);
+            Username.rectTransform.DOAnchorPos(new Vector2((-preferredSize.x / 2) + (Username.preferredWidth / 2) + (MARGIN_OFFSET_WIDTH / 2), MessageContentRectTransform.sizeDelta.y + (MARGIN_OFFSET_HEIGHT / 3)), 0.2f);
+            DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, 1).SetEase(backgroundEaseAnimationCurve);
+
         }
+
+
 
         private void AnimateOut()
         {
-            MessageContent.gameObject.SetActive(false);
             isBubbleExpanded = false;
-            Username.rectTransform.anchoredPosition = Vector2.zero;
-            Background.size = new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f);
+
+            Username.rectTransform.DOAnchorPos(Vector2.zero, 0.2f);
+            MessageContent.DOFade(0, 0.2f).OnComplete(()=>MessageContent.gameObject.SetActive(false));
+            DOTween.To(() => Background.size, x=> Background.size = x, new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f), 1).SetEase(backgroundEaseAnimationCurve);
         }
 
     }
