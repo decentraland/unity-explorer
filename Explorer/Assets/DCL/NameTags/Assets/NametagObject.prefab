@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6881943969416278642}
   - component: {fileID: 7915797373785868185}
+  - component: {fileID: 317692783042627670}
   m_Layer: 0
   m_Name: NametagObject
   m_TagString: Untagged
@@ -48,9 +49,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Username>k__BackingField: {fileID: 4673612476327640102}
-  <MessageContent>k__BackingField: {fileID: 0}
+  <MessageContent>k__BackingField: {fileID: 1264101715097455992}
   <Background>k__BackingField: {fileID: 2640253797295083812}
-  <MessageContentRectTransform>k__BackingField: {fileID: 0}
+  <MessageContentRectTransform>k__BackingField: {fileID: 4776442481111019983}
+  <FixedWidth>k__BackingField: 2.5
+--- !u!210 &317692783042627670
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2762607534160686148}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
 --- !u!1 &6264427440247897687
 GameObject:
   m_ObjectHideFlags: 0
