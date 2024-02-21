@@ -35,11 +35,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 @int.Update(UnityEngine.Time.deltaTime);
             else
             {
-                if (incomingMessages.Count > 0)
+                if (incomingMessages.Count != 0)
                 {
                     if (ext.Enabled)
                     {
                         @int.PassedMessages.Add(ext.Stop());
+
                         // MessageMock? local = ext.Stop();
                         // MessageMock? remote = incomingMessages.Dequeue();
                         //

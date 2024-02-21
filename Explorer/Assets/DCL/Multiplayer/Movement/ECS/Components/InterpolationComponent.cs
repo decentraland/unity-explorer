@@ -45,9 +45,24 @@ namespace DCL.Multiplayer.Movement.ECS
             time += deltaTime;
 
             if (time < totalDuration)
+            {
                 transform.position = interpolationFunc(start, end, time, totalDuration);
+                UpdateRotation();
+            }
             else
                 Disable();
+        }
+
+        private void UpdateRotation()
+        {
+            Vector3 flattenedDiff = end.position - transform.position;
+            flattenedDiff.y = 0;
+
+            if (flattenedDiff != Vector3.zero)
+            {
+                Quaternion lookRotation = Quaternion.LookRotation(flattenedDiff, Vector3.up);
+                transform.rotation = lookRotation;
+            }
         }
 
         public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear)
