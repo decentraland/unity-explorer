@@ -5,7 +5,7 @@ using Unity.Mathematics;
 
 namespace DCL.Landscape.Jobs
 {
-    public struct VisibleBounds
+    public struct TerrainVisibility
     {
         public AABB Bounds;
         public bool IsVisible;
@@ -14,14 +14,14 @@ namespace DCL.Landscape.Jobs
     }
 
     [BurstCompile]
-    public struct UpdateBoundariesCullingJob : IJobParallelFor
+    public struct UpdateTerrainVisibilityJob : IJobParallelFor
     {
-        private NativeArray<VisibleBounds> terrainVisibilities;
+        private NativeArray<TerrainVisibility> terrainVisibilities;
         private readonly float3 cameraPosition;
         private readonly float detailDistanceSqr;
         [ReadOnly] private NativeArray<float4> cameraPlanes;
 
-        public UpdateBoundariesCullingJob(NativeArray<VisibleBounds> terrainVisibilities, NativeArray<float4> cameraPlanes, float3 cameraPosition, float detailDistance)
+        public UpdateTerrainVisibilityJob(NativeArray<TerrainVisibility> terrainVisibilities, NativeArray<float4> cameraPlanes, float3 cameraPosition, float detailDistance)
         {
             this.terrainVisibilities = terrainVisibilities;
             this.cameraPlanes = cameraPlanes;
@@ -31,7 +31,7 @@ namespace DCL.Landscape.Jobs
 
         public void Execute(int i)
         {
-            VisibleBounds terrain = terrainVisibilities[i];
+            TerrainVisibility terrain = terrainVisibilities[i];
             bool isVisible = TestPlanesAABB(terrain.Bounds);
             var isAtDistance = true;
 
