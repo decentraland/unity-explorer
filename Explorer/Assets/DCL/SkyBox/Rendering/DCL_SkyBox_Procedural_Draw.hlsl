@@ -6,6 +6,7 @@
 
 samplerCUBE _SkyBox_Cubemap_Texture;
 samplerCUBE _StarBox_Cubemap_Texture;
+samplerCUBE _Space_Cubemap_Texture;
 half4 _Tex_HDR;
 half4 _Tint;
 half _Exposure; // HDR exposure
@@ -48,6 +49,30 @@ v2f vert (appdata_t v)
 fixed4 frag (v2f i) : SV_Target
 {
     half4 tex = texCUBE (_SkyBox_Cubemap_Texture, i.texcoord);
+    half3 c = DecodeHDR (tex, _Tex_HDR);
+    c = c * _Tint.rgb * unity_ColorSpaceDouble.rgb;
+    c *= _Exposure;
+    return tex;
+    return half4(c, 1);
+}
+
+v2f vert_space (appdata_t v)
+{
+    v2f o;
+    UNITY_SETUP_INSTANCE_ID(v);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+    //const float3 rotated = RotateAroundYInDegrees(v.vertex, _SunPos.y);
+    const float3 rotated = mul(_SunPos, v.vertex);
+    o.vertex = UnityObjectToClipPos(rotated);
+    //o.vertex = UnityObjectToClipPos(v.vertex);
+    o.vertex.z = 0.0f;
+    o.texcoord = v.vertex;
+    return o;
+}
+
+fixed4 frag_space (v2f i) : SV_Target
+{
+    half4 tex = texCUBE (_Space_Cubemap_Texture, i.texcoord);
     half3 c = DecodeHDR (tex, _Tex_HDR);
     c = c * _Tint.rgb * unity_ColorSpaceDouble.rgb;
     c *= _Exposure;

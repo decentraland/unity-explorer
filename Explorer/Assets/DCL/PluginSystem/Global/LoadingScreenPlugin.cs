@@ -29,12 +29,14 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LoadingScreenPluginSettings settings, CancellationToken ct)
         {
             SceneLoadingScreenView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LoadingScreenPrefab, ct: ct)).Value;
+            SceneTipsConfigurationSO fallbackTipsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.FallbackTipsConfiguration, ct: ct)).Value;
 
             ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod? authScreenFactory =
                 SceneLoadingScreenController.CreateLazily(prefab, null);
 
             var tipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
-                settings.FallbackTipsTable, settings.FallbackImagesTable, TimeSpan.FromSeconds(settings.TipDisplayDuration));
+                fallbackTipsConfig, settings.FallbackTipsTable, settings.FallbackImagesTable,
+                TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
             await tipsProvider.InitializeAsync(ct);
 

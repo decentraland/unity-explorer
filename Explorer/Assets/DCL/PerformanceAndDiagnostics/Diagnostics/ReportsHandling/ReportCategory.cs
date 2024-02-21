@@ -131,6 +131,11 @@
         public const string MOTION = nameof(MOTION);
 
         /// <summary>
+        ///     Everything related to the procedural landscape generation
+        /// </summary>
+        public const string LANDSCAPE = nameof(LANDSCAPE);
+
+        /// <summary>
         ///     Input
         /// </summary>
         public const string INPUT = nameof(INPUT);
@@ -160,6 +165,11 @@
         ///     VideoPlayer SDK component
         /// </summary>
         public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
+
+        /// <summary>
+        ///     Scene's restricted actions
+        /// </summary>
+        public const string RESTRICTED_ACTIONS = nameof(RESTRICTED_ACTIONS);
 
         /// <summary>
         ///     CameraModeArea SDK component

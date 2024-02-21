@@ -111,6 +111,52 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          $sshPath = "$env:USERPROFILE\.ssh"
+          if (-not (Test-Path -Path $sshPath)) {
+            New-Item -Path $sshPath -ItemType Directory
+          }
+          
+          $knownHostsPath = Join-Path $sshPath 'known_hosts'
+          
+          # Download GitHub public keys and append them to the known_hosts file
+          (Invoke-WebRequest -Uri 'https://api.github.com/meta' | ConvertFrom-Json).ssh_keys | ForEach-Object {
+            Add-Content -Path $knownHostsPath -Value ("github.com " + $_)
+          }
+        
+          # Set proper permissions on the known_hosts file
+          attrib.exe +R +H $knownHostsPath
+          
+      - name: Clone Packages To Use Locally
+        run: |
+              # Clone the repository
+              git clone git@github.com:decentraland/unity-explorer-packages.git
+              
+              # Display message
+              Write-Host "Editing package manifest"
+              
+              # Specify the path to the manifest.json file
+              $jsonFilePath = "Explorer\Packages\manifest.json"
+              
+              # Replace the first string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' | Set-Content -Path $jsonFilePath
+              
+              # Replace the second string in manifest.json
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
+              
+              # Display the content of manifest.json
+              Get-Content -Path $jsonFilePath
+
+              # Display list of files
+              ls
+
+
       - uses: decentraland/unity-builder@0.7
         id: build
         timeout-minutes: 120
@@ -119,6 +165,8 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
+          sshAgent: ${{ env.SSH_AUTH_SOCK }}
+          allowDirtyBuild: true
 
       # Upload artifact
       - name: Upload windows artifact

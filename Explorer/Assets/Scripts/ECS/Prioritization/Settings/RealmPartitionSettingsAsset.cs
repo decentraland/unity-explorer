@@ -14,7 +14,7 @@ namespace ECS.Prioritization
         public float AggregateAngleTolerance { get; private set; }
 
         [field: SerializeField]
-        public int MaxLoadingDistanceInParcels { get; private set; }
+        public int MaxLoadingDistanceInParcels { get; set; }
 
         [field: SerializeField] [field: Min(1)]
         public int UnloadingDistanceToleranceInParcels { get; private set; } = 1;

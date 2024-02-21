@@ -27,10 +27,12 @@ MonoBehaviour:
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
+  - rid: 3022170012058910723
   - rid: 1841402216112979969
   - rid: 4340256219339423747
   - rid: 4340256301410942981
   - rid: 7249412338407702528
+  - rid: 7162477498503790594
   references:
     version: 2
     RefIds:
@@ -160,11 +162,34 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 3022170012058910723
+      type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        realmPartitionSettings:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        landscapeData:
+          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        parsedParcels:
+          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4107643854440628226
       type: {class: LoadingScreenPlugin/LoadingScreenPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <LoadingScreenPrefab>k__BackingField:
           m_AssetGUID: 605506dac7ec04ed09953980478e93d4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <FallbackTipsConfiguration>k__BackingField:
+          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -190,11 +215,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ChatEntryPrefab:
           m_AssetGUID: 9e9bf5fb9ee9c452f858e423651a52ca
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <ChatEntryConfiguration>k__BackingField:
-          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -279,6 +299,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 7162477498503790594
+      type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ExternalUrlPromptPrefab:
+          m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 7249412338407702528
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:
