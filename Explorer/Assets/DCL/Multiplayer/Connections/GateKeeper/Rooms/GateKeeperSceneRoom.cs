@@ -59,16 +59,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTaskVoid RunAsync()
         {
             CancellationToken token = StopPreviousAndNewCancellationToken();
+            string connectionString = await ConnectionStringAsync(token);
+            Debug.Log($"String is: {connectionString}");
+        }
+
+        private async UniTask<string> ConnectionStringAsync(CancellationToken token)
+        {
             MetaData meta = await MetaDataAsync(token);
-            Debug.Log($"Send request with meta {meta.ToJson()}");
-
-            GenericPostRequest result = await webRequests.SignedFetchAsync(
-                new CommonArguments(URLAddress.FromString(sceneHandleUrl)),
-                meta.ToJson(),
-                token
-            );
-
-            Debug.Log($"Result {result.UnityWebRequest.result}");
+            GenericPostRequest result = await webRequests.SignedFetchAsync(sceneHandleUrl, meta.ToJson(), token);
+            var response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            return response.adapter;
         }
 
         private async UniTask<MetaData> MetaDataAsync(CancellationToken token)
@@ -106,6 +106,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;
+        }
+
+        [Serializable]
+        private struct AdapterResponse
+        {
+            public string adapter;
         }
     }
 }
