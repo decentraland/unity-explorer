@@ -41,8 +41,6 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public void Update(float deltaTime)
         {
-            if (!Enabled) return;
-
             time += deltaTime;
 
             if (time < totalDuration)

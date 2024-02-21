@@ -18,23 +18,20 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
         private void Update()
         {
             Time += UnityEngine.Time.deltaTime;
-
             Velocity = DampVelocity();
 
             if (Velocity.sqrMagnitude > minSpeed)
                 transform.position += Velocity * UnityEngine.Time.deltaTime;
         }
 
-        private void OnEnable()
-        {
-            Time = 0f;
-            Velocity = start.velocity;
-            maxDuration = linearExtrapolationTime * dampedExtrapolationSteps;
-        }
-
         public void Run(MessageMock from)
         {
             start = from;
+
+            Time = 0f;
+            Velocity = start.velocity;
+            maxDuration = linearExtrapolationTime * dampedExtrapolationSteps;
+
             enabled = true;
         }
 

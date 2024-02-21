@@ -9,51 +9,66 @@ namespace DCL.Multiplayer.Movement.ECS
         private const float LINEAR_EXTRAPOLATION_TIME = 0.33f;
         private const int DAMPED_EXTRAPOLATION_STEPS = 2;
 
-        public readonly Transform Transform;
-        private readonly float maxDuration;
+        private readonly Transform transform;
+        private float maxDuration;
 
         public bool Enabled;
 
-        public MessageMock Start;
-        public float Time;
-        public Vector3 Velocity;
+        private MessageMock start;
+        private float time;
+        private Vector3 velocity;
 
         public ExtrapolationComponent(Transform transform)
         {
-            Transform = transform;
+            this.transform = transform;
 
-            Start = null;
-            maxDuration = LINEAR_EXTRAPOLATION_TIME * DAMPED_EXTRAPOLATION_STEPS;
+            start = null;
 
-            Time = 0f;
-            Velocity = Vector3.zero;
+            time = 0f;
+            maxDuration = 0f;
+            velocity = Vector3.zero;
             Enabled = false;
         }
 
         public void Update(float deltaTime)
         {
-            Time += deltaTime;
-            Velocity = DampVelocity();
+            time += deltaTime;
+            velocity = DampVelocity();
 
-            if (Velocity.sqrMagnitude > MIN_SPEED)
-                Transform.position += Velocity * UnityEngine.Time.deltaTime;
+            if (velocity.sqrMagnitude > MIN_SPEED)
+                transform.position += velocity * deltaTime;
         }
 
         public void Run(MessageMock from)
         {
-            Start = from;
+            start = from;
 
-            Time = 0f;
-            Velocity = from.velocity;
+            time = 0f;
+            velocity = from.velocity;
+            maxDuration = LINEAR_EXTRAPOLATION_TIME * DAMPED_EXTRAPOLATION_STEPS;
+
             Enabled = true;
+        }
+
+        public MessageMock Stop()
+        {
+            Enabled = false;
+
+            return new MessageMock
+            {
+                timestamp = start.timestamp + time,
+                position = transform.position,
+                velocity = velocity,
+                acceleration = Vector3.zero,
+            };
         }
 
         private Vector3 DampVelocity()
         {
-            if (Time > LINEAR_EXTRAPOLATION_TIME && Time < maxDuration)
-                return Vector3.Lerp(Start.velocity, Vector3.zero, Time / maxDuration);
+            if (time > LINEAR_EXTRAPOLATION_TIME && time < maxDuration)
+                return Vector3.Lerp(start.velocity, Vector3.zero, time / maxDuration);
 
-            return Time >= maxDuration ? Vector3.zero : Velocity;
+            return time >= maxDuration ? Vector3.zero : velocity;
         }
     }
 }

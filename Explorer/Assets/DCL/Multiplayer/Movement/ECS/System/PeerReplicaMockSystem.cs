@@ -4,9 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using ECS.Abstract;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
@@ -37,17 +35,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 if (incomingMessages.Count > 0)
                 {
                     if (ext.Enabled)
-                    {
-                        ext.Enabled = false;
-
-                        @int.PassedMessages.Add(new MessageMock
-                        {
-                            timestamp = ext.Start.timestamp + ext.Time,
-                            position = ext.Transform.position,
-                            velocity = ext.Velocity,
-                            acceleration = Vector3.zero,
-                        });
-                    }
+                        @int.PassedMessages.Add(ext.Stop());
 
                     var start = @int.PassedMessages.Count > 0 ? @int.PassedMessages[^1] : null;
                     @int.Run(start, incomingMessages.Dequeue(), incomingMessages.Count, incomingMessages.InterpolationType);
