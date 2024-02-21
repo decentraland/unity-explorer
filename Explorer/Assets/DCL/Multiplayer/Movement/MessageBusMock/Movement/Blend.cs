@@ -13,16 +13,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
         public float Time;
         public Vector3 Velocity;
 
-        public float blendExtra;
-
-        private float totalDuration;
-
         private MessageMock startLocal;
         private MessageMock startRemote;
 
         private Vector3 remoteOldPosition;
-        private float slowedTime;
 
+        public float blendExtra;
+        private float totalDuration;
+        private float slowedTime;
         private float slowDownFactor;
 
         public event Action<MessageMock> PointPassed;
@@ -32,7 +30,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
             Time += UnityEngine.Time.deltaTime;
 
             slowedTime = Time / slowDownFactor;
-
             if (slowedTime < totalDuration)
             {
                 float lerpValue = slowedTime / totalDuration;
@@ -74,23 +71,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
                 return;
             }
 
+            Time = 0f;
+            slowedTime = 0f;
+
             float timeDiff = startRemote.timestamp - startLocal.timestamp;
             // blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxExtraTime);
             totalDuration = timeDiff + blendExtra;
+            remoteOldPosition = startRemote.position - (startRemote.velocity * timeDiff);
 
             slowDownFactor = 1f;
             float speed = positionDiff / totalDuration;
-
             if (speed > maxSpeed)
             {
                 float desiredDuration = positionDiff / maxSpeed;
                 slowDownFactor = desiredDuration / totalDuration;
             }
-
-            Time = 0f;
-            slowedTime = 0f;
-
-            remoteOldPosition = startRemote.position - (startRemote.velocity * timeDiff);
         }
 
         public void Run(MessageMock local, MessageMock remote)

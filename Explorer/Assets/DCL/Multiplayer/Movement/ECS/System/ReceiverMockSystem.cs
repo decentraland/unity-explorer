@@ -4,7 +4,9 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Movement.MessageBusMock;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
@@ -13,6 +15,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [LogCategory(ReportCategory.AVATAR)]
     public partial class ReceiverMockSystem : BaseUnityLoopSystem
     {
+        private const float MIN_POSITION_DELTA = 0.1f;
         private readonly MessagePipeMock incomingMessages;
 
         private ReceiverMockSystem(World world, MessagePipeMock incomingMessages) : base(world)
@@ -26,7 +29,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         }
 
         [Query]
-        private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext)
+        private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, ref BlendComponent blend)
         {
             if (@int.Enabled)
                 @int.Update(UnityEngine.Time.deltaTime);
@@ -35,9 +38,28 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 if (incomingMessages.Count > 0)
                 {
                     if (ext.Enabled)
+                    {
                         @int.PassedMessages.Add(ext.Stop());
+                        // MessageMock? local = ext.Stop();
+                        // MessageMock? remote = incomingMessages.Dequeue();
+                        //
+                        // if (Vector3.Distance(local.position, remote.position) < MIN_POSITION_DELTA)
+                        //     blend.Run(local, remote);
+                        // else
+                        //     @int.PassedMessages.Add(remote);
+                    }
 
-                    var start = @int.PassedMessages.Count > 0 ? @int.PassedMessages[^1] : null;
+                    // if (blend.Enabled)
+                    // {
+                    //     (MessageMock startedRemote, MessageMock extra) = blend.Update(UnityEngine.Time.deltaTime);
+                    //
+                    //     if (blend.Enabled) return;
+                    //
+                    //     @int.PassedMessages.Add(startedRemote);
+                    //     if (extra != null) @int.PassedMessages.Add(extra);
+                    // }
+
+                    MessageMock? start = @int.PassedMessages.Count > 0 ? @int.PassedMessages[^1] : null;
                     @int.Run(start, incomingMessages.Dequeue(), incomingMessages.Count, incomingMessages.InterpolationType);
                     @int.Update(UnityEngine.Time.deltaTime);
                 }

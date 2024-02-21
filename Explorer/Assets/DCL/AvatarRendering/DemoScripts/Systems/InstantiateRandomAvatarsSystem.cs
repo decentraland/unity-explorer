@@ -241,6 +241,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new ReplicaMovementComponent(null),
                     new InterpolationComponent(transformComp.Transform),
                     new ExtrapolationComponent(transformComp.Transform),
+                    new BlendComponent(transformComp.Transform),
 
                     // new JumpInputComponent(),
                     // new MovementInputComponent(),

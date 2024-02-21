@@ -73,7 +73,7 @@ namespace DCL.Multiplayer.Movement.ECS
             float timeDiff = end.timestamp - start.timestamp;
             float correctionTime = inboxMessages * Time.smoothDeltaTime;
 
-            // TODO: make clamping based on maxSpeed (or as function of start/end.speed)
+            // TODO: make clamping based on maxSpeed (or as function of start/end.speed) instead of current approach?
             totalDuration = isFirst
                 ? FIRST_DURATION
                 : Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);

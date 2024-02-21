@@ -48,6 +48,7 @@ namespace DCL.Multiplayer.Movement.ECS
             maxDuration = LINEAR_EXTRAPOLATION_TIME * DAMPED_EXTRAPOLATION_STEPS;
 
             Enabled = true;
+            Update(Time.deltaTime);
         }
 
         public MessageMock Stop()
