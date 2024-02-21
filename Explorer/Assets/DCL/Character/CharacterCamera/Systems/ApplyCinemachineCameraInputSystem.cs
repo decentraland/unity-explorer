@@ -60,13 +60,13 @@ namespace DCL.CharacterCamera.Systems
             switch (camera.Mode)
             {
                 case CameraMode.ThirdPerson:
-                    cinemachinePreset.ThirdPersonCameraData.Camera.transform.LookAt(lookAtIntent.LookAtTarget);
+                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
                     break;
                 case CameraMode.FirstPerson:
-                    cinemachinePreset.FirstPersonCameraData.Camera.transform.LookAt(lookAtIntent.LookAtTarget);
+                    cinemachinePreset.ForceFirstPersonCameraLookAt(lookAtIntent);
                     break;
                 case CameraMode.Free:
-                    cinemachinePreset.FreeCameraData.Camera.transform.LookAt(lookAtIntent.LookAtTarget);
+                    cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
                     break;
             }
 

@@ -65,7 +65,7 @@ namespace CrdtEcsBridge.RestrictedActions
             }
 
             MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget);
-            RotateCamera(newAbsoluteCameraTarget);
+            RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 
         private async UniTask OpenUrlAsync(string url)
@@ -87,14 +87,14 @@ namespace CrdtEcsBridge.RestrictedActions
                 world.Add(playerEntity.Value, new PlayerLookAtIntent(newCameraTarget.Value));
         }
 
-        private void RotateCamera(Vector3? newCameraTarget)
+        private void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)
         {
             if (newCameraTarget == null || world == null)
                 return;
 
             // Rotate camera to look at new target (through ApplyCinemachineCameraInputSystem -> ForceLookAtQuery)
             var camera = world.CacheCamera();
-            world.Add(camera, new CameraLookAtIntent(newCameraTarget.Value));
+            world.Add(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
         private bool IsPositionValid(Vector3 floorPosition)
