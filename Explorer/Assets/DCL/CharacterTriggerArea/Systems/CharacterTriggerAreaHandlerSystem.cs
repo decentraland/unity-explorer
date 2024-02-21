@@ -52,7 +52,12 @@ namespace DCL.CharacterTriggerArea.Systems
 
             if (!sceneStateProvider.IsCurrent)
             {
-                ResetCharacterTriggerAreaEffect(triggerAreaMonoBehaviour);
+                if (triggerAreaMonoBehaviour != null)
+                {
+                    // We don't use Dispose() here because we want to keep the configured OnEnter/OnExit events
+                    triggerAreaMonoBehaviour.BoxCollider.enabled = false;
+                    triggerAreaMonoBehaviour.ForceOnTriggerExit();
+                }
 
                 return;
             }
@@ -93,7 +98,6 @@ namespace DCL.CharacterTriggerArea.Systems
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref CharacterTriggerAreaComponent component)
         {
-            ResetCharacterTriggerAreaEffect(component.MonoBehaviour);
             poolRegistry.Release(component.MonoBehaviour);
         }
 
@@ -101,14 +105,12 @@ namespace DCL.CharacterTriggerArea.Systems
         [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea))]
         private void HandleComponentRemoval(ref CharacterTriggerAreaComponent component)
         {
-            ResetCharacterTriggerAreaEffect(component.MonoBehaviour);
             poolRegistry.Release(component.MonoBehaviour);
         }
 
         [Query]
         private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent component)
         {
-            ResetCharacterTriggerAreaEffect(component.MonoBehaviour);
             poolRegistry.Release(component.MonoBehaviour);
             World.Remove<CharacterTriggerAreaComponent>(entity);
         }
@@ -116,14 +118,6 @@ namespace DCL.CharacterTriggerArea.Systems
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
-        }
-
-        private void ResetCharacterTriggerAreaEffect(CharacterTriggerArea triggerAreaMonoBehaviour)
-        {
-            if (triggerAreaMonoBehaviour == null) return;
-
-            triggerAreaMonoBehaviour.BoxCollider.enabled = false;
-            triggerAreaMonoBehaviour.ForceOnTriggerExit();
         }
     }
 }

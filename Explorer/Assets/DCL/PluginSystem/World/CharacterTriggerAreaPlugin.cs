@@ -60,6 +60,6 @@ namespace DCL.PluginSystem.World
         }
 
         private void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
-            area.BoxCollider.enabled = false;
+            area.Dispose();
     }
 }

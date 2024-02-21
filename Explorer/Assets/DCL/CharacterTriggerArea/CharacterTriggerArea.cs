@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.CharacterTriggerArea
 {
-    public class CharacterTriggerArea : MonoBehaviour
+    public class CharacterTriggerArea : MonoBehaviour, IDisposable
     {
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
 
@@ -25,6 +25,15 @@ namespace DCL.CharacterTriggerArea
 
             OnExitedTrigger?.Invoke(other);
             detectedColliders.Remove(other);
+        }
+
+        public void Dispose()
+        {
+            Debug.Log("DISPOSED!");
+
+            BoxCollider.enabled = false;
+            ForceOnTriggerExit();
+            ClearEvents();
         }
 
         public event Action<Collider> OnEnteredTrigger;

@@ -28,6 +28,7 @@ namespace DCL.CharacterTriggerArea.Tests
         private GameObject fakeMainPlayerAvatarGO;
         private CharacterTriggerArea characterTriggerArea;
         private MainPlayerReferences mainPlayerReferences;
+        private IComponentPoolsRegistry poolsRegistry;
 
         [SetUp]
         public async void Setup()
@@ -57,19 +58,20 @@ namespace DCL.CharacterTriggerArea.Tests
             mainPlayerReferences.MainPlayerTransform.SetTransform(fakeMainPlayerGO.transform);
 
             // Setup system
-            IComponentPoolsRegistry poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
-            IComponentPool<CharacterTriggerArea> characterTriggerAreaPool = Substitute.For<IComponentPool<CharacterTriggerArea>>();
-            poolsRegistry.GetReferenceTypePool<CharacterTriggerArea>().Returns(characterTriggerAreaPool);
-            characterTriggerAreaPool.Get().Returns(characterTriggerArea);
-
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
+
+            poolsRegistry = new ComponentPoolsRegistry();
+            poolsRegistry.AddGameObjectPool(() => characterTriggerArea, onRelease: area => area.Dispose());
+            IComponentPool<CharacterTriggerArea> characterTriggerAreaPool = poolsRegistry.GetReferenceTypePool<CharacterTriggerArea>();
+
             system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerReferences, sceneStateProvider);
         }
 
         [TearDown]
         public void Teardown()
         {
+            poolsRegistry.Dispose();
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
             Object.DestroyImmediate(fakeMainPlayerGO);
             Object.DestroyImmediate(fakeMainPlayerAvatarGO);
@@ -301,6 +303,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Remove<PBCameraModeArea>(entity);
 
             system.Update(0);
+            await UniTask.Yield();
 
             Assert.IsTrue(exitTriggerCalled);
             Assert.IsFalse(enterTriggerCalled);
@@ -347,6 +350,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Add<DeleteEntityIntention>(entity);
 
             system.Update(0);
+            await UniTask.Yield();
 
             Assert.IsTrue(exitTriggerCalled);
             Assert.IsFalse(enterTriggerCalled);
