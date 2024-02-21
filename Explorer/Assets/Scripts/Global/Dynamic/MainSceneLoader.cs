@@ -131,6 +131,7 @@ namespace Global.Dynamic
                     skyBoxSceneData,
                     settings.StaticLoadPositions,
                     settings.SceneLoadRadius,
+                    settings.Realms,
                     dynamicSettings,
                     web3Authenticator,
                     identityCache);

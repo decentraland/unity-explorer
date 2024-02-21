@@ -1,4 +1,5 @@
 using DCL.DebugUtilities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -49,10 +50,10 @@ namespace DCL.Quality.Runtime
             QualitySettings.SetQualityLevel(index, true);
         }
 
-        public void AddDebugViews(DebugWidgetBuilder debugWidgetBuilder)
+        public void AddDebugViews(DebugWidgetBuilder debugWidgetBuilder, List<Action> onUpdate)
         {
             foreach (IQualitySettingRuntime? settingRuntime in runtimes)
-                settingRuntime.AddDebugView(debugWidgetBuilder);
+                settingRuntime.AddDebugView(debugWidgetBuilder, onUpdate);
         }
     }
 }

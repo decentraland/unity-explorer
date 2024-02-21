@@ -113,14 +113,14 @@ MonoBehaviour:
   - volumeProfile: {fileID: 8971067228855834029}
     fogSettings:
       m_Fog: 0
-      m_FogColor: {r: 0, g: 0, b: 0, a: 0}
-      m_FogMode: 0
-      m_FogDensity: 0
+      m_FogColor: {r: 0.8352941, g: 0.29178533, b: 0.48649436, a: 0.16862746}
+      m_FogMode: 1
+      m_FogDensity: 0.5
       m_LinearFogStart: 0
       m_LinearFogEnd: 0
   allRendererFeatures:
   - {fileID: 3744200642740411402, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
-  - {fileID: -6764587993781465859, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
+  - {fileID: 6679116756635411162, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: 3744200642740411402, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -1469935332951457073, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -5135254060917694649, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}

@@ -1,5 +1,6 @@
 using DCL.DebugUtilities;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Quality.Runtime
 {
@@ -7,6 +8,6 @@ namespace DCL.Quality.Runtime
     {
         void SetLevel(int index);
 
-        void AddDebugViews(DebugWidgetBuilder debugWidgetBuilder);
+        void AddDebugViews(DebugWidgetBuilder debugWidgetBuilder, List<Action> onUpdate);
     }
 }

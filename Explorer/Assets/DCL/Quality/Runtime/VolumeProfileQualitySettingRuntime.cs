@@ -1,5 +1,6 @@
 using DCL.DebugUtilities;
 using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 
 namespace DCL.Quality.Runtime
@@ -10,12 +11,12 @@ namespace DCL.Quality.Runtime
 
         private readonly Volume globalVolume;
 
+        public bool IsActive => globalVolume.enabled;
+
         public VolumeProfileQualitySettingRuntime(Volume globalVolume)
         {
             this.globalVolume = globalVolume;
         }
-
-        public bool IsActive => globalVolume.enabled;
 
         public void SetActive(bool active)
         {
@@ -32,6 +33,6 @@ namespace DCL.Quality.Runtime
             globalVolume.sharedProfile = currentPreset.volumeProfile;
         }
 
-        public void AddDebugView(DebugWidgetBuilder debugWidgetBuilder) { }
+        public void AddDebugView(DebugWidgetBuilder debugWidgetBuilder, List<Action> onUpdate) { }
     }
 }

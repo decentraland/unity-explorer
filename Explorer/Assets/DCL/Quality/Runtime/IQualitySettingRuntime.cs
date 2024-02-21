@@ -1,4 +1,6 @@
 using DCL.DebugUtilities;
+using System;
+using System.Collections.Generic;
 
 namespace DCL.Quality.Runtime
 {
@@ -27,6 +29,6 @@ namespace DCL.Quality.Runtime
         /// <param name="currentPreset"></param>
         void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset);
 
-        void AddDebugView(DebugWidgetBuilder debugWidgetBuilder);
+        void AddDebugView(DebugWidgetBuilder debugWidgetBuilder, List<Action> onUpdate);
     }
 }
