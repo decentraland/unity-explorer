@@ -1,9 +1,12 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Character;
+using DCL.Multiplayer.Connections.Credentials;
+using DCL.Multiplayer.Connections.Pools;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -18,19 +21,24 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private readonly IWebRequestController webRequests;
         private readonly ICharacterObject characterObject;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IMultiPool multiPool;
         private readonly string sceneHandleUrl;
+        private readonly InteriorRoom room = new ();
+
         private CancellationTokenSource? cancellationTokenSource;
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
             ICharacterObject characterObject,
             IPlacesAPIService placesAPIService,
+            IMultiPool multiPool,
             string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-handler"
         )
         {
             this.webRequests = webRequests;
             this.characterObject = characterObject;
             this.placesAPIService = placesAPIService;
+            this.multiPool = multiPool;
             this.sceneHandleUrl = sceneHandleUrl;
         }
 
@@ -61,6 +69,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             CancellationToken token = StopPreviousAndNewCancellationToken();
             string connectionString = await ConnectionStringAsync(token);
             Debug.Log($"String is: {connectionString}");
+            await ConnectToRoomAsync(connectionString, token);
+            //TODO start checking position of player and reconnect on request
+        }
+
+        private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
+        {
+            Room newRoom = multiPool.Get<Room>();
+            await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
+            room.Assign(newRoom, out IRoom? previous);
+            multiPool.TryRelease(previous);
         }
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
