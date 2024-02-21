@@ -21,6 +21,7 @@ namespace DCL.AsyncLoadReporting
             }
         }
 
+
         public static async UniTask PropagateAsync(this AsyncLoadProcessReport report, AsyncLoadProcessReport destination, CancellationToken ct,
             float offset = 0f, float until = 1f, TimeSpan? timeout = null)
         {

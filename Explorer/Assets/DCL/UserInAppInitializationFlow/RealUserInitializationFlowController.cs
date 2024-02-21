@@ -4,6 +4,7 @@ using DCL.AsyncLoadReporting;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Landscape.Interface;
 using DCL.ParcelsService;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
@@ -23,11 +24,18 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInitializationFlowController : IUserInAppInitializationFlow
     {
+        private const float LOADING_PROGRESS_PROFILE = 0.1f;
+        private const float LOADING_PROGRESS_LANDSCAPE = 0.9f;
+        private const float LOADING_PROGRESS_TELEPORT = 0.95f;
+        private const float LOADING_PROGRESS_COMPLETE = 1f;
+
         private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
         private readonly Vector2Int startParcel;
+        private readonly bool enableLandscape;
+        private readonly ILandscapeInitialization landscapeInitialization;
 
         private AsyncLoadProcessReport? loadReport;
 
@@ -35,13 +43,17 @@ namespace DCL.UserInAppInitializationFlow
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            Vector2Int startParcel)
+            Vector2Int startParcel,
+            bool enableLandscape,
+            ILandscapeInitialization landscapeInitialization)
         {
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.startParcel = startParcel;
+            this.enableLandscape = enableLandscape;
+            this.landscapeInitialization = landscapeInitialization;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -67,14 +79,25 @@ namespace DCL.UserInAppInitializationFlow
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
-            loadReport!.ProgressCounter.Value = 0.2f;
+            loadReport!.ProgressCounter.Value = LOADING_PROGRESS_PROFILE;
 
             CreateAvatarPromise(world, ownPlayerEntity, ownProfile);
 
+            if (enableLandscape)
+                await LoadLandscapeAsync(ct);
+
             await TeleportToSpawnPointAsync(ct);
 
-            loadReport.ProgressCounter.Value = 1f;
+            loadReport.ProgressCounter.Value = LOADING_PROGRESS_COMPLETE;
             loadReport.CompletionSource.TrySetResult();
+        }
+
+        private async UniTask LoadLandscapeAsync(CancellationToken ct)
+        {
+            var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+            await UniTask.WhenAny(landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_LANDSCAPE),
+                landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
         }
 
         private void CreateAvatarPromise(World world, Entity playerEntity, Profile profile)
@@ -119,7 +142,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, 0.8f),
+            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_TELEPORT),
                 teleportController.TeleportToSceneSpawnPointAsync(
                     startParcel, teleportLoadReport, ct));
         }

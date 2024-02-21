@@ -22,7 +22,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public readonly IpfsPath IpfsPath;
         public readonly bool IsEmpty;
         public readonly bool IsSDK7;
-        public readonly ParcelMathHelper.SceneGeometry SceneGeometry; 
+        public readonly ParcelMathHelper.SceneGeometry SceneGeometry;
+        public int InternalJobIndex;
 
         public SceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath)
         {
@@ -33,6 +34,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IsEmpty = false;
             IsSDK7 = definition.metadata?.runtimeVersion == "7";
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
+            InternalJobIndex = -1;
         }
 
         /// <summary>
@@ -61,6 +63,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //No runtime version in metadata
             IsSDK7 = false;
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
+
+            InternalJobIndex = -1;
         }
     }
 }
