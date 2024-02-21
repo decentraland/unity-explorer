@@ -44,15 +44,15 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
 
-            dataPipe.DataReceived += DataPipeOnDataReceived;
+            dataPipe.DataReceived += OnDataReceived;
         }
 
         ~MessagePipe()
         {
-            dataPipe.DataReceived -= DataPipeOnDataReceived;
+            dataPipe.DataReceived -= OnDataReceived;
         }
 
-        private void DataPipeOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
             Packet? packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
             var name = packet.MessageCase.ToString()!;
