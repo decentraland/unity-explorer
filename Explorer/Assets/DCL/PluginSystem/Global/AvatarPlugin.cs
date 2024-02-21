@@ -127,7 +127,7 @@ namespace DCL.PluginSystem.Global
             //Debug scripts
             string path = "Assets/DCL/Multiplayer/Movement/ECS/MessagePipeSettings.asset";
             MessagePipeSettings settings = AssetDatabase.LoadAssetAtPath<MessagePipeSettings>(path);
-            var messagePipeMock = new MessagePipeMock(settings, staticContainerCharacterContainer.CharacterObject.Controller);
+            var messagePipeMock = new MessagePipeMock(settings, staticContainerCharacterContainer.CharacterObject.Controller, arguments.PlayerEntity, builder.World);
 
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
             ReceiverMockSystem.InjectToWorld(ref builder, messagePipeMock);

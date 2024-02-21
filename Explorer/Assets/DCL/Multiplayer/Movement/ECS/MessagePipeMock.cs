@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using System;
 using System.Collections.Generic;
@@ -14,15 +16,19 @@ namespace DCL.Multiplayer.Movement.ECS
 
         private readonly MessagePipeSettings settings;
         private readonly CharacterController playerCharacter;
+        private readonly Entity playerEntity;
+        private readonly World world;
 
         private readonly CancellationTokenSource cts;
         public InterpolationType InterpolationType => settings.InterpolationType;
         public int Count => IncomingMessages.Count;
 
-        public MessagePipeMock(MessagePipeSettings settings, CharacterController playerCharacter)
+        public MessagePipeMock(MessagePipeSettings settings, CharacterController playerCharacter, Entity playerEntity, World world)
         {
             this.settings = settings;
             this.playerCharacter = playerCharacter;
+            this.playerEntity = playerEntity;
+            this.world = world;
 
             this.settings.InboxCount = 0;
             this.settings.PackageLost = 0;
@@ -62,8 +68,7 @@ namespace DCL.Multiplayer.Movement.ECS
                     settings.PackageLost--;
                 else if (!settings.packageBlockButton.IsPressed())
                 {
-                    Send(Time.time, playerCharacter.transform.position, playerCharacter.velocity);
-
+                    Send(Time.time, playerCharacter.transform.position, playerCharacter.velocity, world.Get<CharacterAnimationComponent>(playerEntity));
                     // PutMark(); send mark
                 }
 
@@ -71,13 +76,14 @@ namespace DCL.Multiplayer.Movement.ECS
             }
         }
 
-        private void Send(float timestamp, Vector3 position, Vector3 velocity)
+        private void Send(float timestamp, Vector3 position, Vector3 velocity, CharacterAnimationComponent animState)
         {
             var message = new MessageMock
             {
                 timestamp = timestamp,
                 position = position,
                 velocity = velocity,
+                animState = animState.States,
             };
 
             UniTask.Delay(

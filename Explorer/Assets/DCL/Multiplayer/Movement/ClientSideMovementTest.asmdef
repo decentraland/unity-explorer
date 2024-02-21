@@ -4,7 +4,8 @@
     "references": [
         "UniTask",
         "Unity.InputSystem",
-        "ECS"
+        "ECS",
+        "CharacterMotion"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

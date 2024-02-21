@@ -1,7 +1,4 @@
-﻿using DCL.CharacterMotion.Animation;
-using UnityEngine;
-
-namespace DCL.CharacterMotion.Components
+﻿namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {

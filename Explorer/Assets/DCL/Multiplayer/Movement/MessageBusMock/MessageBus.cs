@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -33,5 +34,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public Vector3 position;
         public Vector3 velocity;
         public Vector3 acceleration;
+
+        public AnimationStates animState;
     }
 }
