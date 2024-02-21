@@ -11,11 +11,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(InstantiateRandomAvatarsSystem))]
     [LogCategory(ReportCategory.AVATAR)]
-    public partial class PeerReplicaMockSystem : BaseUnityLoopSystem
+    public partial class ReceiverMockSystem : BaseUnityLoopSystem
     {
         private readonly MessagePipeMock incomingMessages;
 
-        private PeerReplicaMockSystem(World world, MessagePipeMock incomingMessages) : base(world)
+        private ReceiverMockSystem(World world, MessagePipeMock incomingMessages) : base(world)
         {
             this.incomingMessages = incomingMessages;
         }

@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Movement.ECS
     public struct InterpolationComponent
     {
         private const float MIN_POSITION_DELTA = 0.1f;
+        private const float FIRST_DURATION = 0.5f;
 
         public bool Enabled;
 
@@ -51,12 +52,15 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear)
         {
-            if (from?.timestamp > to.timestamp) return;
+            if (from?.timestamp >= to.timestamp) return;
 
-            start = from;
+            start = isFirst
+                ? new MessageMock { position = transform.position, velocity = Vector3.zero, timestamp = 0f }
+                : from;
+
             end = to;
 
-            if (isFirst || (Vector3.Distance(from.position, to.position) < MIN_POSITION_DELTA && inboxMessages > 0))
+            if (Vector3.Distance(start!.position, end.position) < MIN_POSITION_DELTA && inboxMessages > 0)
                 Disable();
             else
                 Enable(inboxMessages, type);
@@ -68,7 +72,11 @@ namespace DCL.Multiplayer.Movement.ECS
 
             float timeDiff = end.timestamp - start.timestamp;
             float correctionTime = inboxMessages * Time.smoothDeltaTime;
-            totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
+
+            // TODO: make clamping based on maxSpeed (or as function of start/end.speed)
+            totalDuration = isFirst
+                ? FIRST_DURATION
+                : Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
 
             interpolationFunc = GetInterpolationFunc(type);
 
