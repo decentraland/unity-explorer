@@ -17,7 +17,6 @@ using UnityEngine.Pool;
 namespace DCL.SDKComponents.Animator.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateAfter(typeof(AnimatorLoaderSystem))]
     [LogCategory(ReportCategory.ANIMATOR)]
     [ThrottlingEnabled]
     public partial class AnimatorHandlerSystem : BaseUnityLoopSystem
