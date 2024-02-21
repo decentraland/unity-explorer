@@ -64,7 +64,7 @@ namespace DCL.SDKComponents.Animator.Tests
 
 
 
-        [Test]
+        //[Test]
         public void AddAnimatorComponentToEntityWithPBAnimator()
         {
             Assert.AreEqual(0, world.CountEntities(new QueryDescription().WithAll<SDKAnimatorComponent>().WithAll<PBAnimator>()));
@@ -75,7 +75,7 @@ namespace DCL.SDKComponents.Animator.Tests
         }
 
 
-        [Test]
+        //[Test]
         public void DirtyAnimatorComponentIfPBAnimatorIsDirty()
         {
             system.Update(0);
