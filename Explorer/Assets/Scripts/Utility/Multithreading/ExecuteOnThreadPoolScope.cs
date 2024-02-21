@@ -12,13 +12,13 @@ namespace Utility.Multithreading
             this.returnOnMainThreadOnDispose = returnOnMainThreadOnDispose;
         }
 
-        public static async UniTask<ExecuteOnThreadPoolScope> NewScope()
+        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeAsync()
         {
             await UniTask.SwitchToThreadPool();
             return new ExecuteOnThreadPoolScope(false);
         }
 
-        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnMainThread()
+        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnMainThreadAsync()
         {
             await UniTask.SwitchToThreadPool();
             return new ExecuteOnThreadPoolScope(false);
