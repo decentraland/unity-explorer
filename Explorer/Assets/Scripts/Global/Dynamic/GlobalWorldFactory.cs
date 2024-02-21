@@ -176,6 +176,8 @@ namespace Global.Dynamic
 
             staticContainer.GlobalWorldProxy.SetWorld(world);
 
+            sceneFactory.SetPlayerEntity(globalWorld.EcsWorld, playerEntity);
+
             return (globalWorld, playerEntity);
             ;
         }

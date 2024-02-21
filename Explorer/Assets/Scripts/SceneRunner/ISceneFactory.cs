@@ -1,6 +1,6 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -47,5 +47,12 @@ namespace SceneRunner
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
         UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct);
+
+        /// <summary>
+        ///     Used for passing the player entity from the global world to the scene world
+        /// </summary>
+        /// <param name="world">World where the player entity exists</param>
+        /// <param name="entity">Player entity</param>
+        void SetPlayerEntity(World world, Entity entity);
     }
 }

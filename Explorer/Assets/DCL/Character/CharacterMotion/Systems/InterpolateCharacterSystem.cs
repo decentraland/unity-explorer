@@ -31,6 +31,7 @@ namespace DCL.CharacterMotion.Systems
         {
             InterpolateQuery(World, t);
             TeleportPlayerQuery(World);
+            MovePlayerQuery(World);
         }
 
         [Query]
@@ -46,7 +47,18 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerTeleportIntent))]
+        private void MovePlayer(in Entity entity,in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerMoveIntent moveIntent)
+        {
+            platformComponent.CurrentPlatform = null;
+
+            // Move the character inside the scene
+            controller.transform.position = moveIntent.Position;
+
+            World.Remove<PlayerMoveIntent>(entity);
+        }
+
+        [Query]
+        [None(typeof(PlayerTeleportIntent), typeof(PlayerMoveIntent))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
