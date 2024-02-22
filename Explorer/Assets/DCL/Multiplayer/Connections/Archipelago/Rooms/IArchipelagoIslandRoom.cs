@@ -1,44 +1,8 @@
 using DCL.Multiplayer.Connections.Rooms;
-using LiveKit.Rooms;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
-    public interface IArchipelagoIslandRoom
+    public interface IArchipelagoIslandRoom : IConnectiveRoom
     {
-        void Start();
-
-        void Stop();
-
-        bool IsRunning();
-
-        IRoom Room();
-
-        class Fake : IArchipelagoIslandRoom
-        {
-            public void Start()
-            {
-                //ignore
-            }
-
-            public void Stop()
-            {
-                //ignore
-            }
-
-            public bool IsRunning() =>
-                true;
-
-            public IRoom Room() =>
-                NullRoom.INSTANCE;
-        }
-    }
-
-    public static class ArchipelagoIslandRoomExtensions
-    {
-        public static void StartIfNotRunning(this IArchipelagoIslandRoom room)
-        {
-            if (!room.IsRunning())
-                room.Start();
-        }
     }
 }

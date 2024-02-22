@@ -28,6 +28,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private readonly string sceneHandleUrl;
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
+        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Sleep);
 
         private CancellationTokenSource? cancellationTokenSource;
         private MetaData? previousMetaData;
@@ -58,8 +59,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             cancellationTokenSource?.Dispose();
         }
 
-        public bool IsRunning() =>
-            cancellationTokenSource is { IsCancellationRequested: false };
+        public IConnectiveRoom.State CurrentState() =>
+            roomState.Value();//TODO change state
 
         public IRoom Room() =>
             room;
@@ -74,6 +75,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTaskVoid RunAsync()
         {
             CancellationToken token = StopPreviousAndNewCancellationToken();
+            roomState.Set(IConnectiveRoom.State.Starting);
 
             while (token.IsCancellationRequested == false)
             {
@@ -88,7 +90,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             if (meta.Equals(previousMetaData) == false)
             {
-                await using var _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
                 string connectionString = await ConnectionStringAsync(meta, token);
                 Debug.Log($"String is: {connectionString}");
                 await ConnectToRoomAsync(connectionString, token);
@@ -103,6 +104,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
             room.Assign(newRoom, out IRoom? previous);
             multiPool.TryRelease(previous);
+            roomState.Set(IConnectiveRoom.State.Running);
             Debug.Log("Successful connection");
         }
 
@@ -115,7 +117,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<MetaData> MetaDataAsync(CancellationToken token)
         {
-            await using var _ = await ExecuteOnMainThreadScope.NewScopeWithReturnOnThreadPoolAsync();
             string parcelId = await ParcelIdAsync(token);
             return new MetaData(realmData.RealmName, parcelId);
         }

@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using Unity.Mathematics;
 using UnityEngine;
@@ -88,7 +89,7 @@ namespace Global.Dynamic
             if (!result)
                 return (null, false);
 
-            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder;
+            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
 
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
@@ -127,7 +128,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, debugBuilder),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),

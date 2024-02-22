@@ -32,6 +32,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private readonly string aboutUrl;
         private readonly TimeSpan heartbeatsInterval;
         private readonly InteriorRoom room = new ();
+        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Sleep);
 
         private CancellationTokenSource? cancellationTokenSource;
 
@@ -86,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         public void Start()
         {
-            if (IsRunning())
+            if (CurrentState() is not IConnectiveRoom.State.Sleep)
                 throw new InvalidOperationException("Room is already running");
 
             RunAsync().Forget();
@@ -98,14 +99,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             cancellationTokenSource?.Dispose();
         }
 
-        public bool IsRunning() =>
-            cancellationTokenSource is { IsCancellationRequested: false };
+        public IConnectiveRoom.State CurrentState() =>
+            roomState.Value();
 
         public IRoom Room()
         {
-            if (IsRunning() == false)
-                throw new InvalidOperationException("Room is not running");
-
+            EnsureRunning();
             return room;
         }
 
@@ -119,6 +118,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private async UniTask RunAsync()
         {
             CancellationToken token = CancellationToken();
+            roomState.Set(IConnectiveRoom.State.Starting);
             await ConnectToArchipelagoAsync(token);
             signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token);
             await SendHeartbeatIntervalsAsync(token);
@@ -139,8 +139,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private void OnNewConnectionString(string connectionString)
         {
-            if (IsRunning() == false) throw new Exception("Is not running");
+            if (CurrentState() is IConnectiveRoom.State.Sleep) throw new InvalidOperationException("Room is not running");
             ConnectToRoomAsync(connectionString, cancellationTokenSource!.Token).Forget();
+        }
+
+        private void EnsureRunning()
+        {
+            if (CurrentState() is not IConnectiveRoom.State.Running) throw new Exception("Is not running");
         }
 
         private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
@@ -149,6 +154,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
             room.Assign(newRoom, out IRoom? previous);
             multiPool.TryRelease(previous);
+            roomState.Set(IConnectiveRoom.State.Running);
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)

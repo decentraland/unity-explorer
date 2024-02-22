@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Rooms;
 using ECS.Abstract;
 
 namespace DCL.Multiplayer.Connections.Systems
@@ -25,8 +26,8 @@ namespace DCL.Multiplayer.Connections.Systems
 
         protected override void Update(float t)
         {
-            archipelagoIslandRoom.StartIfNotRunning();
-            gateKeeperSceneRoom.StartIfNotRunning();
+            archipelagoIslandRoom.StartIfNot();
+            gateKeeperSceneRoom.StartIfNot();
         }
     }
 }
