@@ -2,6 +2,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
@@ -201,7 +202,19 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount,
             TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent)
         {
-            Material avatarMaterial = celShadingMaterial.Get();
+            Material avatarMaterial = null;
+            if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) ||
+                meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) ||
+                meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
+            {
+                avatarMaterial = new Material(Shader.Find("DCL/DCL_Avatar_Facial_Features"));
+                avatarMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
+                avatarMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
+            }
+            else
+            {
+                avatarMaterial = celShadingMaterial.Get();
+            }
 
             TextureArraySlot?[] slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
 
