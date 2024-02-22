@@ -6,6 +6,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using ECS.Abstract;
 using UnityEngine;
 

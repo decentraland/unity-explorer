@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;

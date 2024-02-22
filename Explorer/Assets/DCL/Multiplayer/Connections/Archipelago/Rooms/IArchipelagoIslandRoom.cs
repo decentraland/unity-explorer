@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms

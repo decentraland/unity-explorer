@@ -1,7 +1,6 @@
 using LiveKit.Rooms;
-using System;
 
-namespace DCL.Multiplayer.Connections.Rooms
+namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
     public interface IConnectiveRoom
     {
