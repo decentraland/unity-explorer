@@ -43,10 +43,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
-                        new ClientWebSocket(),
-                        new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-                    ) //.WithAutoReconnect() TODO
-                   .WithLog(),
+                    new ClientWebSocket(),
+                    new ArrayMemoryPool(ArrayPool<byte>.Shared!)
+                ),
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
                 multiPool
             ).WithLog(),
