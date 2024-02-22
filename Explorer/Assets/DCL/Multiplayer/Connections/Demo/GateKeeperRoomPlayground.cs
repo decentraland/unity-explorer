@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.PlacesAPIService;
 using DCL.Web3.Identities;
@@ -39,10 +40,8 @@ namespace DCL.Multiplayer.Connections.Demo
 
             new GateKeeperSceneRoom(
                 webRequests,
-                character,
-                places,
+                new LogMetaDataSource(new MetaDataSource(realmData, character, places)),
                 multiPool,
-                realmData,
                 gateKeeperUrl
             ).Start();
         }

@@ -1,30 +1,23 @@
 using Cysharp.Threading.Tasks;
-using DCL.Character;
 using DCL.Multiplayer.Connections.Credentials;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Rooms;
-using DCL.PlacesAPIService;
-using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using ECS;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
-using Utility;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
     public class GateKeeperSceneRoom : IGateKeeperSceneRoom
     {
+        private readonly IMetaDataSource metaDataSource;
         private readonly IWebRequestController webRequests;
-        private readonly ICharacterObject characterObject;
-        private readonly IPlacesAPIService placesAPIService;
         private readonly IMultiPool multiPool;
-        private readonly IRealmData realmData;
         private readonly string sceneHandleUrl;
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
@@ -35,18 +28,14 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            ICharacterObject characterObject,
-            IPlacesAPIService placesAPIService,
+            IMetaDataSource metaDataSource,
             IMultiPool multiPool,
-            IRealmData realmData,
             string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter"
         )
         {
             this.webRequests = webRequests;
-            this.characterObject = characterObject;
-            this.placesAPIService = placesAPIService;
+            this.metaDataSource = metaDataSource;
             this.multiPool = multiPool;
-            this.realmData = realmData;
             this.sceneHandleUrl = sceneHandleUrl;
         }
 
@@ -61,7 +50,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         }
 
         public IConnectiveRoom.State CurrentState() =>
-            roomState.Value();//TODO change state
+            roomState.Value();
 
         public IRoom Room() =>
             room;
@@ -87,7 +76,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask TryToConnectToNewRoom(CancellationToken token)
         {
-            MetaData meta = await MetaDataAsync(token);
+            MetaData meta = await metaDataSource.MetaDataAsync(token);
 
             if (meta.Equals(previousMetaData) == false)
             {
@@ -104,6 +93,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             var newRoom = multiPool.Get<LogRoom>();
             await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
             room.Assign(newRoom, out IRoom? previous);
+            previous?.Disconnect();
             multiPool.TryRelease(previous);
             roomState.Set(IConnectiveRoom.State.Running);
             Debug.Log("Successful connection");
@@ -114,37 +104,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             GenericPostRequest result = await webRequests.SignedFetchAsync(sceneHandleUrl, meta.ToJson(), token);
             var response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             return response.adapter;
-        }
-
-        private async UniTask<MetaData> MetaDataAsync(CancellationToken token)
-        {
-            string parcelId = await ParcelIdAsync(token);
-            return new MetaData(realmData.RealmName, parcelId);
-        }
-
-        private async UniTask<string> ParcelIdAsync(CancellationToken token)
-        {
-            Vector3 position = characterObject.Position;
-            Vector2Int parcel = ParcelMathHelper.WorldToGridPosition(position);
-            PlacesData.PlaceInfo result = await placesAPIService.GetPlaceAsync(parcel, token);
-            return result.EnsureNotNull($"parcel not found on coordinates {parcel}").id;
-        }
-
-        [Serializable]
-        [SuppressMessage("ReSharper", "NotAccessedField.Local")]
-        private struct MetaData
-        {
-            public string realmName;
-            public string sceneId;
-
-            public MetaData(string realmName, string sceneId)
-            {
-                this.realmName = realmName;
-                this.sceneId = sceneId;
-            }
-
-            public string ToJson() =>
-                JsonUtility.ToJson(this)!;
         }
 
         [Serializable]
