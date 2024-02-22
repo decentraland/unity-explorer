@@ -169,6 +169,7 @@ jobs:
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
+          no_output_timeout: 1h
 
       # Upload artifact
       - name: Upload windows artifact
