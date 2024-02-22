@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             IPlacesAPIService placesAPIService,
             IMultiPool multiPool,
             IRealmData realmData,
-            string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-handler"
+            string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter"
         )
         {
             this.webRequests = webRequests;
