@@ -41,7 +41,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
             .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
-            .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo>();
+            .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo>();
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
@@ -171,13 +171,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
 
                 if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-                {
                     World.Add(data.Entity, SceneLODInfo.Create());
-                }
+                else if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.ROAD)
+                    World.Add(data.Entity, RoadInfo.Create());
                 else
-                {
                     CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
-                }
 
                 promisesCreated++;
             }
@@ -186,7 +184,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
-        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
         private void StartUnloading([Data] float unloadingSqrDistance, in Entity entity, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.RawSqrDistance < unloadingSqrDistance) return;

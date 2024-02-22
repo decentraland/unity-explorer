@@ -27,10 +27,12 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        public ResolveVisualSceneStateSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
+        public ResolveVisualSceneStateSystem(World world, ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
+            this.visualSceneStateResolver = visualSceneStateResolver;
         }
 
         protected override void Update(float t)
@@ -43,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void AddSceneVisualState(in Entity entity, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             VisualSceneState visualSceneState = new VisualSceneState();
-            VisualSceneStateUtils.ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent, lodSettingsAsset);
+            visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent, lodSettingsAsset);
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }

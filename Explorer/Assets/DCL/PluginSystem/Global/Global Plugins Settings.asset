@@ -315,6 +315,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <RoadCoordinatesAsset>k__BackingField:
+          m_AssetGUID: ef5038abf3d930a4993db8bbe7c74a9f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 8147919132522971138
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:

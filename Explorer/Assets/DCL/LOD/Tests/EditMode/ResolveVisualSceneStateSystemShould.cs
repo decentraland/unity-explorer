@@ -1,4 +1,5 @@
-﻿using DCL.Ipfs;
+﻿using System.Collections.Generic;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -21,7 +22,7 @@ namespace DCL.LOD.Tests
                 2, 4
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
-            system = new ResolveVisualSceneStateSystem(world, lodSettings);
+            system = new ResolveVisualSceneStateSystem(world, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>()));
         }
 
         /*[Test]

@@ -7,6 +7,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.Ipfs;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
@@ -17,6 +18,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.Systems;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace DCL.LOD
@@ -33,6 +35,8 @@ namespace DCL.LOD
         private readonly IPerformanceBudget memoryBudget;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+
+        private VisualSceneStateResolver visualSceneStateResolver;
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder, IAssetsProvisioner assetsProvisioner, ISceneReadinessReportQueue sceneReadinessReportQueue)
@@ -52,16 +56,29 @@ namespace DCL.LOD
         public async UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
         {
             lodSettingsAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.LodSettingAsset, ct: ct)).Value;
+            string roadCoordinatesText = (await assetsProvisioner.ProvideMainAssetAsync(settings.RoadCoordinatesAsset, ct: ct)).Value.text;
+
+            List<string> roadCoordinatesList = JsonConvert.DeserializeObject<List<string>>(roadCoordinatesText);
+            HashSet<Vector2Int> roadCoordinatesHashSet = new HashSet<Vector2Int>();
+            foreach (string roadCoordinate in roadCoordinatesList)
+            {
+                roadCoordinatesHashSet.Add(IpfsHelper.DecodePointer(roadCoordinate));
+            }
+            
+            visualSceneStateResolver = new VisualSceneStateResolver(roadCoordinatesHashSet);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset);
+            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
             UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue);
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
 
             LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
+
+            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget);
+            UnloadRoadSystem.InjectToWorld(ref builder);
         }
 
         public void Dispose()
@@ -76,5 +93,8 @@ namespace DCL.LOD
         [field: Space]
         [field: SerializeField]
         public StaticSettings.LODSettingsRef LodSettingAsset { get; set; }
+        [field: Space]
+        [field: SerializeField]
+        public AssetReferenceTextAsset RoadCoordinatesAsset { get; set; }
     }
 }
