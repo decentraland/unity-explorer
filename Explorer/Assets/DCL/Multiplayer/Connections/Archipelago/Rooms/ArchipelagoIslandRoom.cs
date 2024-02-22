@@ -125,6 +125,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask SendHeartbeatIntervalsAsync(CancellationToken token)
         {
+            await UniTask.SwitchToMainThread(token);
             while (token.IsCancellationRequested == false)
             {
                 var position = characterObject.Position;
