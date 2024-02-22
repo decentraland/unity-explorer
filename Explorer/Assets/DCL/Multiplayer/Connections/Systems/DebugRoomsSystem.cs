@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
@@ -16,32 +17,48 @@ namespace DCL.Multiplayer.Connections.Systems
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+
+        private readonly ElementBinding<string> stateScene;
+        private readonly ElementBinding<string> remoteParticipantsScene;
+
         private string? previous;
 
         public DebugRoomsSystem(
             World world,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
-            IDebugContainerBuilder _
+            IDebugContainerBuilder debugBuilder
         ) : base(world)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
 
-            // this.debugBuilder.AddWidget("Rooms")
-            //     //.AddToggleField("Island Room", OnArchipelagoIslandRoomToggle, archipelagoIslandRoom.IsRunning)
-            //     //.AddToggleField("Scene Room", OnGateKeeperSceneRoomToggle, gateKeeperSceneRoom.IsRunning);
-            //    .AddMarker()
+            stateScene = new ElementBinding<string>(string.Empty);
+            remoteParticipantsScene = new ElementBinding<string>(string.Empty);
+
+            debugBuilder.AddWidget("Rooms")!
+                        .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
+                        .AddCustomMarker("State", stateScene)!
+                        .AddCustomMarker("Remote Participants", remoteParticipantsScene);
         }
 
         protected override void Update(float t)
         {
-            var text = $"{HealthInfo(archipelagoIslandRoom, "Island Room")}\n{HealthInfo(gateKeeperSceneRoom, "Scene Room")}";
+            var text = $"{HealthInfo(archipelagoIslandRoom, "Island Room")}";
             if (text != previous) Debug.Log(text);
             previous = text;
+
+            stateScene.SetAndUpdate(gateKeeperSceneRoom.CurrentState().ToString());
+
+            remoteParticipantsScene.SetAndUpdate(
+                (gateKeeperSceneRoom.CurrentState() is IConnectiveRoom.State.Running
+                    ? gateKeeperSceneRoom.Room().Participants.RemoteParticipantSids().Count
+                    : 0
+                ).ToString()
+            );
         }
 
-        private string HealthInfo(IConnectiveRoom connectiveRoom, string name) =>
-            $"Health of {name}: state {connectiveRoom.CurrentState()}; participantsCount {(connectiveRoom.CurrentState() is IConnectiveRoom.State.Running ? connectiveRoom.Room().Participants.RemoteParticipantSids().Count : 0)}";
+        private static string HealthInfo(IConnectiveRoom connectiveRoom, string name) =>
+            $"{name}: {connectiveRoom.CurrentState()}; participantsCount {(connectiveRoom.CurrentState() is IConnectiveRoom.State.Running ? connectiveRoom.Room().Participants.RemoteParticipantSids().Count : 0)}";
     }
 }
