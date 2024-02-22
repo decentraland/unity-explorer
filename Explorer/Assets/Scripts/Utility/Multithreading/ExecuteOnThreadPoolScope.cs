@@ -21,7 +21,7 @@ namespace Utility.Multithreading
         public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnMainThreadAsync()
         {
             await UniTask.SwitchToThreadPool();
-            return new ExecuteOnThreadPoolScope(false);
+            return new ExecuteOnThreadPoolScope(true);
         }
 
         public async ValueTask DisposeAsync()
