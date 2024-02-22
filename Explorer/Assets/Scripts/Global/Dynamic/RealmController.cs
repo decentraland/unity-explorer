@@ -12,7 +12,6 @@ using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using Ipfs;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;

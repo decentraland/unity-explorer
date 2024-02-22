@@ -8,7 +8,6 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.LOD;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
