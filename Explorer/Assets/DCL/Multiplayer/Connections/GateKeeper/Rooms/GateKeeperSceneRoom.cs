@@ -99,6 +99,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
             room.Assign(newRoom, out IRoom? previous);
             multiPool.TryRelease(previous);
+            Debug.Log("Successful connection");
         }
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
@@ -117,15 +118,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ParcelIdAsync(CancellationToken token)
         {
-            //TODO to actual id fetching
-            return "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq";
             Vector3 position = characterObject.Position;
             Vector2Int parcel = ParcelMathHelper.WorldToGridPosition(position);
             PlacesData.PlaceInfo result = await placesAPIService.GetPlaceAsync(parcel, token);
             return result.EnsureNotNull($"parcel not found on coordinates {parcel}").id;
         }
 
-        //TODO include name and sceneId
+        //TODO include name
         private UniTask<string> RealmNameAsync() =>
             UniTask.FromResult("TODO"); //TODO
 
