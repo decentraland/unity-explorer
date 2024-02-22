@@ -160,7 +160,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
-            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             string adapterUrl = await adapterAddresses.AdapterUrlAsync(aboutUrl, token);
             LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
@@ -168,6 +167,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask<LightResult<string>> WelcomePeerIdAsync(string adapterUrl, CancellationToken token)
         {
+            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
             await signFlow.ConnectAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;

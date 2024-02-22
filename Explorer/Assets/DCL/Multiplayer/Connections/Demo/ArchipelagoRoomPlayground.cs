@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Character;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
@@ -26,6 +25,7 @@ namespace DCL.Multiplayer.Connections.Demo
     public class ArchipelagoRoomPlayground : MonoBehaviour
     {
         [SerializeField] private string aboutUrl = string.Empty;
+        [SerializeField] private LoonCharacterObject loonCharacterObject = new ();
 
         private BaseUnityLoopSystem system = null!;
 
@@ -64,11 +64,11 @@ namespace DCL.Multiplayer.Connections.Demo
                     new WebSocketArchipelagoLiveConnection(
                         new ClientWebSocket(),
                         memoryPool
-                    ).WithAutoReconnect()
-                ),
+                    )
+                ).WithLog(),
                 memoryPool,
                 multiPool
-            );
+            ).WithLog();
 
             var messagePipeHub = new MessagePipesHub();
 
@@ -84,8 +84,7 @@ namespace DCL.Multiplayer.Connections.Demo
             );
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
-            var character = new ICharacterObject.Fake(Vector3.zero);
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, loonCharacterObject, aboutUrl);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake());
 
             while (this)
