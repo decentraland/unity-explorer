@@ -95,6 +95,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         public void Stop()
         {
+            roomState.Set(IConnectiveRoom.State.Sleep);
             cancellationTokenSource?.Cancel();
             cancellationTokenSource?.Dispose();
         }

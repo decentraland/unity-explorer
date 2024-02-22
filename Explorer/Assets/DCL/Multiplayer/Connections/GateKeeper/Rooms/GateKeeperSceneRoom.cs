@@ -55,6 +55,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         public void Stop()
         {
+            roomState.Set(IConnectiveRoom.State.Sleep);
             cancellationTokenSource?.Cancel();
             cancellationTokenSource?.Dispose();
         }
