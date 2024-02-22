@@ -16,6 +16,11 @@ namespace ECS
         bool ScenesAreFixed { get; }
 
         /// <summary>
+        ///     Name of the realm
+        /// </summary>
+        string RealmName { get; }
+
+        /// <summary>
         ///     Whether the data was set at least once
         /// </summary>
         bool Configured { get; }

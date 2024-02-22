@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -101,10 +102,15 @@ namespace Global.Dynamic
 
             await UniTask.SwitchToMainThread();
 
-            ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
+            var url = realm.Append(new URLPath("/about"));
+
+            ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-            realmData.Reconfigure(new IpfsRealm(web3IdentityCache, webRequestController, realm, result));
+            realmData.Reconfigure(
+                new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
+                result.configurations.realmName.EnsureNotNull("Realm name not found")
+            );
 
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
