@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace MVC
@@ -13,9 +14,10 @@ namespace MVC
         ///     Called externally to schedule a view opening
         /// </summary>
         /// <param name="command"></param>
+        /// <param name="ct">Additional cancellation token from the caller side</param>
         /// <typeparam name="TView"></typeparam>
         /// <typeparam name="TInputData"></typeparam>
-        UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: IView;
+        UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView;
 
         void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: IView;
     }

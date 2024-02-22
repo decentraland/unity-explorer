@@ -10,13 +10,15 @@ using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
+using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.SkyBox;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
+using DCL.SkyBox;
+using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -54,6 +56,8 @@ namespace Global.Dynamic
         public IProfileRepository ProfileRepository { get; private set; } = null!;
 
         public ParcelServiceContainer ParcelServiceContainer { get; private set; }
+
+        public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -95,7 +99,9 @@ namespace Global.Dynamic
             List<string> realms,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            Vector2Int startParcel,
+            bool enableLandscape)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -121,16 +127,20 @@ namespace Global.Dynamic
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
             var wearableCatalog = new WearableCatalog();
-            var backpackCommandBus = new BackpackCommandBus();
-            var backpackEventBus = new BackpackEventBus();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var chatMessagesBus = new ChatMessagesBus(debugBuilder);
+            var webBrowser = new UnityAppWebBrowser();
             ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
+
+            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer);
+
+            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
+                container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel, enableLandscape, landscapePlugin);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -160,25 +170,27 @@ namespace Global.Dynamic
                     mapRendererContainer,
                     placesAPIService,
                     parcelServiceContainer.TeleportController,
-                    dynamicSettings.BackpackSettings,
-                    backpackCommandBus,
-                    backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     web3IdentityCache,
                     wearableCatalog,
-                    characterPreviewFactory
-                ),
+                    characterPreviewFactory,
+                    container.ProfileRepository,
+                    web3Authenticator,
+                    container.UserInAppInitializationFlow,
+                    webBrowser),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, web3IdentityCache, characterPreviewFactory),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, web3IdentityCache, characterPreviewFactory),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData, staticContainer.QualityContainer.RendererFeaturesCache),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
+                new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
+                landscapePlugin,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

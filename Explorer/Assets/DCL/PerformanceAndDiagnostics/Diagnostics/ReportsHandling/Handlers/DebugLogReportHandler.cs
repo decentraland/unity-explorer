@@ -48,6 +48,7 @@ namespace DCL.Diagnostics
             { ReportCategory.MOTION, ColorUtility.ToHtmlStringRGB(new Color(0.792f, 0.463f, 0.812f)) },
             { ReportCategory.INPUT, ColorUtility.ToHtmlStringRGB(new Color(0.776f, 0.851f, 0.357f)) },
             { ReportCategory.WEARABLE, ColorUtility.ToHtmlStringRGB(new Color(0.318f, 0.902f, 0.859f)) },
+            { ReportCategory.RESTRICTED_ACTIONS, ColorUtility.ToHtmlStringRGB(new Color(0.42f, 0.92f, 0.63f)) },
         };
 
         // Redirect Logs to the default Unity logger

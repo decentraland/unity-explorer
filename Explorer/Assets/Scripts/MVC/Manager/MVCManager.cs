@@ -9,12 +9,11 @@ namespace MVC
 {
     public class MVCManager : IMVCManager
     {
-        public IReadOnlyDictionary<Type, IController> Controllers => controllers;
-
         private readonly Dictionary<Type, IController> controllers;
         private readonly IWindowsStackManager windowsStackManager;
         private readonly CancellationTokenSource destructionCancellationTokenSource;
         private readonly IPopupCloserView popupCloser;
+        public IReadOnlyDictionary<Type, IController> Controllers => controllers;
 
         public MVCManager(
             IWindowsStackManager windowsStackManager,
@@ -28,6 +27,14 @@ namespace MVC
             popupCloser = popupCloserView;
         }
 
+        public void Dispose()
+        {
+            foreach (IController controllersValue in controllers.Values)
+                controllersValue.Dispose();
+
+            destructionCancellationTokenSource?.Dispose();
+        }
+
         /// <summary>
         ///     Instead of a builder just expose a method
         ///     to add controller gradually (from different plug-ins).
@@ -39,11 +46,14 @@ namespace MVC
             controllers.Add(typeof(IController<TView, TInputData>), controller);
         }
 
-        public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: IView
+        public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
             // Find the controller
             IController controller = controllers[typeof(IController<TView, TInputData>)];
-            CancellationToken ct = destructionCancellationTokenSource.Token;
+
+            ct = ct.Equals(default(CancellationToken))
+                ? destructionCancellationTokenSource.Token
+                : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionCancellationTokenSource.Token).Token;
 
             switch (controller.Layer)
             {
@@ -156,14 +166,6 @@ namespace MVC
         {
             do { await popupCloser.CloseButton.OnClickAsync(ct); }
             while (currentController != windowsStackManager.TopMostPopup);
-        }
-
-        public void Dispose()
-        {
-            foreach (IController controllersValue in controllers.Values)
-                controllersValue.Dispose();
-
-            destructionCancellationTokenSource?.Dispose();
         }
     }
 }

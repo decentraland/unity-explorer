@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -10,7 +11,8 @@ namespace DCL.Backpack.CharacterPreview
     {
         private readonly BackpackEventBus backpackEventBus;
 
-        public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus) : base(view, previewFactory)
+        public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, World world)
+            : base(view, previewFactory, world)
         {
             this.backpackEventBus = backpackEventBus;
             backpackEventBus.EquipEvent += OnEquipped;
