@@ -1,12 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using ECS.Abstract;
-using ECS.Groups;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
-    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class ConnectionRoomsSystem : BaseUnityLoopSystem
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
