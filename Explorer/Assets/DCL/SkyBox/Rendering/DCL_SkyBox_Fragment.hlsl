@@ -173,7 +173,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
 
     // Get the ray from the camera to the fragment and its length (which is the far point of the ray passing through the atmosphere)
     float3 vEyeRay = normalize(IN.direction);
-    if(vEyeRay.y >= -0.02) // Sky
+    if(vEyeRay.y >= -0.03) // Sky
     {
         float fUp = vEyeRay.y;
         // Calculate the length of the "atmosphere"
@@ -272,8 +272,10 @@ float4 sk_frag(sk_v2f IN) : SV_Target
     //float3 vGroundColor = _Exposure * (vIn + COLOR_2_LINEAR(_GroundColor) * vOut);
     float3 vGroundColor = _Exposure * (vIn + (_GroundColor) * vOut);
     float3 vSkyColor    = _Exposure * (vIn * getRayleighPhase(vSunPos.xyz, -vEyeRay));
-    float interp = pow(1.0f - ((vIn.r + vIn.b + vIn.g) / 3.0f), 10.0f);
-    vSkyColor = lerp(vSkyColor, float3(0.06, 0.02, 0.14), float3(interp, interp, interp));
+    
+    // Below code mixes in some purple to the space atmosphere
+    // float interp = pow(1.0f - ((vIn.r + vIn.b + vIn.g) / 3.0f), 10.0f);
+    // vSkyColor = lerp(vSkyColor, float3(0.06, 0.02, 0.14), float3(interp, interp, interp));
 
     // The sun should have a stable intensity in its course in the sky. Moreover it should match the highlight of a purely specular material.
     // This matching was done using the standard shader BRDF1 on the 5/31/2017
@@ -285,7 +287,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
     half y = vEyeRay.y / _SKY_GROUND_THRESHOLD;
     half3 vCol = lerp(vSkyColor, vGroundColor, saturate(-y));
 
-    if(y > 0.0)
+    if(y > -0.03)
     {
         vCol += vSunColour_Intensity * calcSunAttenuation(vSunPos.xyz, vEyeRay, _SunSize, _SunSizeConvergence);
         vCol += calcSunAttenuation(vMoonPos.xyz, vEyeRay, _MoonSize, _MoonSizeConvergence);
