@@ -4,11 +4,9 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
-using DCL.Multiplayer.Connections.Credentials;
-using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;
@@ -27,15 +25,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private readonly IAdapterAddresses adapterAddresses;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IArchipelagoSignFlow signFlow;
-        private readonly IMultiPool multiPool;
         private readonly ICharacterObject characterObject;
-
+        private readonly IConnectiveRoom connectiveRoom;
         private readonly string aboutUrl;
-        private readonly TimeSpan heartbeatsInterval;
-        private readonly InteriorRoom room = new ();
-        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Sleep);
 
-        private CancellationTokenSource? cancellationTokenSource;
+        private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
 
         public ArchipelagoIslandRoom(ICharacterObject characterObject, IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool) : this(
             new RefinedAdapterAddresses(
@@ -62,100 +56,53 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IMultiPool multiPool,
             ICharacterObject characterObject,
             string aboutUrl
-        ) : this(
-            adapterAddresses,
-            web3IdentityCache,
-            signFlow,
-            multiPool,
-            characterObject,
-            aboutUrl
-          , TimeSpan.FromSeconds(1)
-        ) { }
-
-        public ArchipelagoIslandRoom(IAdapterAddresses adapterAddresses, IWeb3IdentityCache web3IdentityCache, IArchipelagoSignFlow signFlow, IMultiPool multiPool, ICharacterObject characterObject,
-            string aboutUrl,
-            TimeSpan heartbeatsInterval)
+        )
         {
             this.adapterAddresses = adapterAddresses;
             this.web3IdentityCache = web3IdentityCache;
             this.signFlow = signFlow;
-            this.multiPool = multiPool;
             this.characterObject = characterObject;
             this.aboutUrl = aboutUrl;
-            this.heartbeatsInterval = heartbeatsInterval;
+
+            connectiveRoom = new ConnectiveRoom(
+                PrewarmAsync,
+                SendHeartbeatAsync,
+                multiPool
+            );
         }
 
-        public void Start()
-        {
-            if (CurrentState() is not IConnectiveRoom.State.Sleep)
-                throw new InvalidOperationException("Room is already running");
+        public void Start() =>
+            connectiveRoom.Start();
 
-            RunAsync().Forget();
-        }
-
-        public void Stop()
-        {
-            roomState.Set(IConnectiveRoom.State.Sleep);
-            cancellationTokenSource?.Cancel();
-            cancellationTokenSource?.Dispose();
-        }
+        public void Stop() =>
+            connectiveRoom.Stop();
 
         public IConnectiveRoom.State CurrentState() =>
-            roomState.Value();
+            connectiveRoom.CurrentState();
 
-        public IRoom Room()
-        {
-            EnsureRunning();
-            return room;
-        }
+        public IRoom Room() =>
+            connectiveRoom.Room();
 
-        private CancellationToken CancellationToken()
+        private async UniTask PrewarmAsync(CancellationToken token)
         {
-            Stop();
-            cancellationTokenSource = new CancellationTokenSource();
-            return cancellationTokenSource.Token;
-        }
-
-        private async UniTask RunAsync()
-        {
-            CancellationToken token = CancellationToken();
-            roomState.Set(IConnectiveRoom.State.Starting);
             await ConnectToArchipelagoAsync(token);
-            signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token);
-            await SendHeartbeatIntervalsAsync(token);
+            signFlow.StartListeningForConnectionStringAsync(newString => OnNewConnectionString(newString, token), token);
         }
 
-        private async UniTask SendHeartbeatIntervalsAsync(CancellationToken token)
+        private async UniTask SendHeartbeatAsync(ConnectToRoomAsyncDelegate connectDelegate, CancellationToken token)
         {
+            this.connectToRoomAsyncDelegate = connectDelegate;
             await UniTask.SwitchToMainThread(token);
-
-            while (token.IsCancellationRequested == false)
-            {
-                var position = characterObject.Position;
-                await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
-                await signFlow.SendHeartbeatAsync(position, token);
-                await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
-            }
+            var position = characterObject.Position;
+            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
+            await signFlow.SendHeartbeatAsync(position, token);
         }
 
-        private void OnNewConnectionString(string connectionString)
+        private void OnNewConnectionString(string connectionString, CancellationToken token)
         {
             if (CurrentState() is IConnectiveRoom.State.Sleep) throw new InvalidOperationException("Room is not running");
-            ConnectToRoomAsync(connectionString, cancellationTokenSource!.Token).Forget();
-        }
-
-        private void EnsureRunning()
-        {
-            if (CurrentState() is not IConnectiveRoom.State.Running) throw new Exception("Is not running");
-        }
-
-        private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
-        {
-            Room newRoom = multiPool.Get<Room>();
-            await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
-            room.Assign(newRoom, out IRoom? previous);
-            multiPool.TryRelease(previous);
-            roomState.Set(IConnectiveRoom.State.Running);
+            connectToRoomAsyncDelegate.EnsureNotNull("Connection delegate is not passed yet");
+            connectToRoomAsyncDelegate!(connectionString, token).Forget();
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
