@@ -494,11 +494,13 @@ namespace DCL.CharacterTriggerArea.Tests
 
         private async Task WaitForPhysics()
         {
-            await UniTask.Yield();
-            await UniTask.Yield();
-            await UniTask.Yield();
-            await UniTask.Yield();
-            await UniTask.Yield();
+            var framesToWait = 10;
+
+            for (var i = 0; i < framesToWait; i++)
+            {
+                Physics.Simulate(0.01f);
+                await UniTask.Yield();
+            }
         }
     }
 }
