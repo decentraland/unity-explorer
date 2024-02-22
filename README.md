@@ -64,20 +64,21 @@ npm run build-protocol
 ## In Progress
 - [ ] `CommsApi`
 - [ ] `CommunicationsController`
-- [x] `EngineApi`
 - [ ] `EnvironmentApi`
-- [x] `EthereumController`
 - [ ] `Players`
 - [ ] `PortableExperiences`
 - [ ] `RestrictedActions`
-- [x] `Runtime`
 - [ ] `Scene`
-- [x] `SignedFetch`
 - [ ] `Testing`
 - [ ] `UserActionModule`
 - [ ] `UserIdentity`
 
 ## Completed
+
+- [x] `SignedFetch`
+- [x] `Runtime`
+- [x] `EngineApi`
+- [x] `EthereumController`
 
 ## Regenerate protocol
 
