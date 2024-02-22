@@ -9,7 +9,7 @@ namespace DCL.Quality
         public static PersistentSetting<bool> CreateBool(string key, bool defaultValue)
         {
             PersistentSetting<bool>.getValue ??= static (key, defaultValue) => PlayerPrefs.GetInt(key, defaultValue ? 1 : 0) == 1;
-            ;
+
             PersistentSetting<bool>.setValue ??= static (key, value) => PlayerPrefs.SetInt(key, value ? 1 : 0);
 
             return new PersistentSetting<bool>(key, defaultValue);
