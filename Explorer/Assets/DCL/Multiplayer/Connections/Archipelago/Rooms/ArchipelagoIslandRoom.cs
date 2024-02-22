@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 new WebSocketArchipelagoLiveConnection(
                     new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-                ),
+                ).WithAutoReconnect(),
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
                 multiPool
             ),
@@ -126,6 +126,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private async UniTask SendHeartbeatIntervalsAsync(CancellationToken token)
         {
             await UniTask.SwitchToMainThread(token);
+
             while (token.IsCancellationRequested == false)
             {
                 var position = characterObject.Position;

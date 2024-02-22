@@ -64,7 +64,7 @@ namespace DCL.Multiplayer.Connections.Demo
                     new WebSocketArchipelagoLiveConnection(
                         new ClientWebSocket(),
                         memoryPool
-                    )
+                    ).WithAutoReconnect()
                 ),
                 memoryPool,
                 multiPool
