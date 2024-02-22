@@ -13,6 +13,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
@@ -57,7 +58,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             cancellationTokenSource is { IsCancellationRequested: false };
 
         public IRoom Room() =>
-            throw new NotImplementedException();
+            room;
 
         private CancellationToken StopPreviousAndNewCancellationToken()
         {
@@ -68,26 +69,28 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTaskVoid RunAsync()
         {
-            //TODO run in background
             CancellationToken token = StopPreviousAndNewCancellationToken();
 
             while (token.IsCancellationRequested == false)
             {
-                //TODO but this on main thread
-                MetaData meta = await MetaDataAsync(token);
-
-                if (meta.Equals(previousMetaData) == false)
-                {
-                    string connectionString = await ConnectionStringAsync(meta, token);
-                    Debug.Log($"String is: {connectionString}");
-                    await ConnectToRoomAsync(connectionString, token);
-                }
-
-                previousMetaData = meta;
+                await TryToConnectToNewRoom(token);
                 await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
-
-                //TODO start checking position of player and reconnect on request
             }
+        }
+
+        private async UniTask TryToConnectToNewRoom(CancellationToken token)
+        {
+            MetaData meta = await MetaDataAsync(token);
+
+            if (meta.Equals(previousMetaData) == false)
+            {
+                await using var _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
+                string connectionString = await ConnectionStringAsync(meta, token);
+                Debug.Log($"String is: {connectionString}");
+                await ConnectToRoomAsync(connectionString, token);
+            }
+
+            previousMetaData = meta;
         }
 
         private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
@@ -107,6 +110,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<MetaData> MetaDataAsync(CancellationToken token)
         {
+            await using var _ = await ExecuteOnMainThreadScope.NewScopeWithReturnOnThreadPoolAsync();
             (string parcelId, string realmName) = await UniTask.WhenAll(ParcelIdAsync(token), RealmNameAsync());
             return new MetaData(realmName, parcelId);
         }
@@ -140,8 +144,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;
-
-
         }
 
         [Serializable]
