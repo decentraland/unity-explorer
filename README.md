@@ -14,17 +14,22 @@ npm run build-protocol
 
 ## SDK7 Integration Progress
 
-### Components 
+### Components
+
+## In Progress
 - [ ] `Animator`
-- [x] `AudioSource`
-- [x] `AudioStream`
+- [ ] `PointerLock`
 - [ ] `AvatarAttach`
 - [ ] `AvatarModifierArea`
-- [x] `AvatarShape`
-- [x] `Billboard`
-- [x] `CRDT_MESSAGE_HEADER_LENGTH`
 - [ ] `CameraMode`
 - [ ] `CameraModeArea`
+
+## Completed
+- [x] `AudioSource`
+- [x] `AudioStream`
+- [x] `AvatarShape`
+- [x] `Billboard`
+
 - [x] `EngineInfo`
 - [x] `GltfContainer`
 - [x] `GltfContainerLoadingState`
@@ -35,18 +40,13 @@ npm run build-protocol
 - [x] `NftShape`
 - [x] `PointerEvents`
 - [x] `PointerEventsResult`
-- [ ] `PointerLock`
-- [ ] `RESERVED_LOCAL_ENTITIES`
-- [ ] `RESERVED_STATIC_ENTITIES`
 - [x] `Raycast`
 - [x] `RaycastResult`
-- [ ] `SYSTEMS_REGULAR_PRIORITY`
-- [ ] `SyncComponents`
 - [x] `TextShape`
 - [x] `Transform`
 - [x] `Tween`
 - [x] `TweenSequence`
-- [ ] `TweenState`
+- [x] `TweenState`
 - [x] `UiBackground`
 - [x] `UiCanvasInformation`
 - [x] `UiDropdown`
@@ -60,20 +60,24 @@ npm run build-protocol
 - [x] `VisibilityComponent`
 
 ## Runtime API
+
+## In Progress
 - [ ] `CommsApi`
 - [ ] `CommunicationsController`
 - [x] `EngineApi`
 - [ ] `EnvironmentApi`
-- [ ] `EthereumController`
+- [x] `EthereumController`
 - [ ] `Players`
 - [ ] `PortableExperiences`
 - [ ] `RestrictedActions`
-- [x] `Runtime` (partially)
+- [x] `Runtime`
 - [ ] `Scene`
-- [ ] `SignedFetch`
+- [x] `SignedFetch`
 - [ ] `Testing`
 - [ ] `UserActionModule`
 - [ ] `UserIdentity`
+
+## Completed
 
 ## Regenerate protocol
 
