@@ -187,8 +187,9 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
-                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterTriggerAreaPlugin(container.MainPlayerReferences, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
@@ -204,6 +205,5 @@ namespace Global
 
             return (container, true);
         }
-
     }
 }
