@@ -31,7 +31,7 @@ MonoBehaviour:
   - rid: 4340256301410942981
   - rid: 7249412338407702528
   - rid: 7162477498503790594
-  - rid: 2174542015712198658
+  - rid: 2174542042650378245
   references:
     version: 2
     RefIds:
@@ -157,7 +157,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 2174542015712198658
+    - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
         <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
@@ -296,8 +296,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 6784895267130048513
-      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
     - rid: 7162477498503790594
       type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

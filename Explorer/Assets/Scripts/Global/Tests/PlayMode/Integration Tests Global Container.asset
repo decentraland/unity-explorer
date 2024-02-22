@@ -16,7 +16,6 @@ MonoBehaviour:
   - rid: 6784895265395441664
   - rid: 6784895265412481024
   - rid: 6784895265412481025
-  - rid: 6784895267130048514
   - rid: 1268264197252972544
   - rid: 8147919284940570626
   - rid: 1841402216112979968
@@ -80,8 +79,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 6784895267130048514
-      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
     - rid: 8147919284940570626
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:
