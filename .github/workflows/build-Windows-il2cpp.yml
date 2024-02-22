@@ -32,6 +32,7 @@ jobs:
 
     name: Build
     runs-on: bigwin
+    timeout-minutes: 120
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
       - name: Set SHA env variable
