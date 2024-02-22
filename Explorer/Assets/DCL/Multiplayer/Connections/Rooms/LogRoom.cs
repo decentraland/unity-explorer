@@ -39,6 +39,8 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public event Room.MetaDelegate? RoomMetadataChanged;
 
+        public LogRoom() : this(new Room()) { }
+
         public LogRoom(IRoom origin) : this(origin, Debug.Log) { }
 
         public LogRoom(IRoom origin, Action<string> log)

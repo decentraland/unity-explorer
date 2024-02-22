@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         public IReadOnlyCollection<string> RemoteParticipantSids()
         {
             IReadOnlyCollection<string> sids = origin.RemoteParticipantSids();
-            log($"{PREFIX} remote sids {string.Join(", ", sids)}");
+            log($"{PREFIX} remote sids {(sids.Count > 0 ? string.Join(", ", sids) : "empty")} ");
             return sids;
         }
     }
