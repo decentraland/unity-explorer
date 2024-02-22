@@ -17,6 +17,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
+using DCL.TeleportPrompt;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -165,6 +166,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
+                new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 landscapePlugin,
             };

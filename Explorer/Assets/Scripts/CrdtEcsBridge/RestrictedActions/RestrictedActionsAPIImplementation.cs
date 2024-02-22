@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
+using DCL.TeleportPrompt;
 using JetBrains.Annotations;
 using MVC;
 using SceneRunner.Scene;
@@ -68,6 +69,17 @@ namespace CrdtEcsBridge.RestrictedActions
             RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 
+        public void TeleportTo(Vector2Int coords)
+        {
+            if (!sceneStateProvider.IsCurrent)
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TeleportTo: Player is not inside of scene");
+                return;
+            }
+
+            TeleportAsync(coords).Forget();
+        }
+
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
@@ -107,6 +119,12 @@ namespace CrdtEcsBridge.RestrictedActions
             }
 
             return false;
+        }
+
+        private async UniTask TeleportAsync(Vector2Int coords)
+        {
+            await UniTask.SwitchToMainThread();
+            await mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
         }
 
         public void Dispose() { }
