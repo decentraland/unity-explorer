@@ -36,14 +36,38 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         [Query]
         [None(typeof(CharacterTriggerAreaComponent))]
         [All(typeof(TransformComponent))]
-        private void SetupAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea) { }
+        private void SetupAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea)
+        {
+            World.Add(entity, new CharacterTriggerAreaComponent
+            {
+                AreaSize = pbAvatarModifierArea.Area,
+                TargetOnlyMainPlayer = false,
+                OnEnteredTrigger = OnEnteredAvatarModifierArea,
+                OnExitedTrigger = OnExitedAvatarModifierArea,
+                IsDirty = true,
+            });
+        }
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent) { }
+        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
+        {
+            if (!pbAvatarModifierArea.IsDirty) return;
 
-        internal void OnEnteredAvatarModifierArea(Collider avatarCollider) { }
+            characterTriggerAreaComponent.OnEnteredTrigger = OnEnteredAvatarModifierArea;
+            characterTriggerAreaComponent.OnExitedTrigger = OnExitedAvatarModifierArea;
+            characterTriggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
+            characterTriggerAreaComponent.IsDirty = true;
+        }
 
-        internal void OnExitedAvatarModifierArea(Collider avatarCollider) { }
+        internal void OnEnteredAvatarModifierArea(Collider avatarCollider)
+        {
+            Debug.Log("PRAVS - ENTERED AREA!");
+        }
+
+        internal void OnExitedAvatarModifierArea(Collider avatarCollider)
+        {
+            Debug.Log("PRAVS - EXITED AREA!");
+        }
     }
 }
