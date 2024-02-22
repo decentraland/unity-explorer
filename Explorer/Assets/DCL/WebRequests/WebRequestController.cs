@@ -46,8 +46,7 @@ namespace DCL.WebRequests
                     attemptsLeft--;
 
                     // Print verbose
-                    ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TWebRequest).Name} from {commonArguments.URL.ToString()}.\n"
-                    ReportHub.Log(envelope.ReportCategory, $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL}.\n"
+                    ReportHub.LogError(envelope.ReportCategory, $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL}.\n"
                                                        + $"Attempt Left: {attemptsLeft}");
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
