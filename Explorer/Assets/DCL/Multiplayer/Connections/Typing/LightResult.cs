@@ -2,7 +2,7 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Typing
 {
-    public struct LightResult<T>
+    public readonly struct LightResult<T>
     {
         public static readonly LightResult<T> FAILURE = new ();
 
@@ -14,6 +14,11 @@ namespace DCL.Multiplayer.Connections.Typing
             Result = result;
             Success = true;
         }
+
+        public override string ToString() =>
+            Success
+                ? $"Result is success: {Result}"
+                : "Result is failure";
     }
 
     public static class LightResultExtensions

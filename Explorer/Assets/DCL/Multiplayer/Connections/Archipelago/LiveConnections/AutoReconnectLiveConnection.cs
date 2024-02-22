@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
+using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 
@@ -12,9 +14,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         private readonly Action<string> log;
         private string? cachedAdapterUrl;
 
-        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(origin, Debug.LogWarning)
-        {
-        }
+        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(
+            origin,
+            m => Debug.Log($"{ReportCategory.ARCHIPELAGO_REQUEST}: {m}")
+        ) { }
 
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin, Action<string> log)
         {
@@ -36,26 +39,39 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return origin.DisconnectAsync(token);
         }
 
-        public UniTask SendAsync(MemoryWrap data, CancellationToken token) =>
-            origin.SendAsync(data, token);
+        public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
+        {
+            try { await origin.SendAsync(data, token); }
+            catch (SocketException e)
+            {
+                log($"Connection lost on sending, trying to reconnect... {e}");
+                await EnsureReconnect(token);
+                await SendAsync(data, token);
+            }
+        }
 
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
         {
-            try
-            {
-                var result = await origin.ReceiveAsync(token);
-                return result;
-            }
+            try { return await origin.ReceiveAsync(token); }
             catch (ConnectionClosedException)
             {
-                log("Connection closed on receiving, trying to reconnect...");
-
-                if (cachedAdapterUrl == null)
-                    throw new Exception("Connection closed on receiving, no found cached adapter url");
-
-                await origin.ConnectAsync(cachedAdapterUrl, token);
+                log("Connection error on receiving, ensure to reconnect...");
+                await EnsureReconnect(token);
                 return await ReceiveAsync(token);
             }
+        }
+
+        private async UniTask EnsureReconnect(CancellationToken token)
+        {
+            if (origin.IsConnected == false) await origin.ConnectAsync(CachedAdapterUrl(), token);
+        }
+
+        private string CachedAdapterUrl()
+        {
+            if (cachedAdapterUrl == null)
+                throw new Exception("Connection closed on receiving, no found cached adapter url");
+
+            return cachedAdapterUrl;
         }
     }
 }

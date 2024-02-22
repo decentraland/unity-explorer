@@ -42,12 +42,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
-                    new ClientWebSocket(),
-                    new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-                ).WithAutoReconnect(),
+                        new ClientWebSocket(),
+                        new ArrayMemoryPool(ArrayPool<byte>.Shared!)
+                    ) //.WithAutoReconnect() TODO
+                   .WithLog(),
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
                 multiPool
-            ),
+            ).WithLog(),
             multiPool,
             characterObject,
             "https://realm-provider.decentraland.zone/main/about"

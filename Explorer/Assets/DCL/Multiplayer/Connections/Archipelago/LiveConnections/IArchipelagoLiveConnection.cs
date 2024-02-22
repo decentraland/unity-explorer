@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using Nethereum.Model;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
@@ -24,7 +25,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
     public static class ArchipelagoLiveConnectionExtensions
     {
-        public static IArchipelagoLiveConnection WithAutoReconnect(this IArchipelagoLiveConnection connection) => new AutoReconnectLiveConnection(connection);
+        public static IArchipelagoLiveConnection WithAutoReconnect(this IArchipelagoLiveConnection connection) =>
+            new AutoReconnectLiveConnection(connection);
+
+        public static IArchipelagoLiveConnection WithLog(this IArchipelagoLiveConnection connection) =>
+            new LogArchipelagoLiveConnection(connection);
 
         public static async UniTask SendAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
