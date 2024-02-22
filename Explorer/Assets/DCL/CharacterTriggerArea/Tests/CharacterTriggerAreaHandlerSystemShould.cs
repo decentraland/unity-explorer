@@ -204,7 +204,7 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(enterTriggerCalled);
             Assert.IsFalse(exitTriggerCalled);
@@ -213,7 +213,7 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character outside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position + (Vector3.one * 50);
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(exitTriggerCalled);
             Assert.IsFalse(enterTriggerCalled);
@@ -248,7 +248,7 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(enterTriggerCalled);
             Assert.IsFalse(exitTriggerCalled);
@@ -293,7 +293,7 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(enterTriggerCalled);
             Assert.IsFalse(exitTriggerCalled);
@@ -303,7 +303,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Remove<PBCameraModeArea>(entity);
 
             system.Update(0);
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(exitTriggerCalled);
             Assert.IsFalse(enterTriggerCalled);
@@ -340,7 +340,7 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(enterTriggerCalled);
             Assert.IsFalse(exitTriggerCalled);
@@ -350,7 +350,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Add<DeleteEntityIntention>(entity);
 
             system.Update(0);
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(exitTriggerCalled);
             Assert.IsFalse(enterTriggerCalled);
@@ -386,7 +386,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.IsFalse(enterTriggerCalled);
 
             system.Update(0);
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(enterTriggerCalled);
             Assert.IsFalse(exitTriggerCalled);
@@ -423,7 +423,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.IsFalse(enterTriggerCalled);
 
             system.Update(0);
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsFalse(exitTriggerCalled);
             Assert.IsFalse(enterTriggerCalled);
@@ -431,7 +431,7 @@ namespace DCL.CharacterTriggerArea.Tests
             mainPlayerReferences.MainPlayerAvatarBase.SetAvatarBase(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
 
             system.Update(0);
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.IsTrue(enterTriggerCalled);
             Assert.IsFalse(exitTriggerCalled);
@@ -474,7 +474,7 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
             fakeOtherPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.AreEqual(0, exitTriggerCalls);
             Assert.AreEqual(onlyMainPlayer ? 1 : 2, enterTriggerCalls);
@@ -483,13 +483,22 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeMainPlayerGO.transform.position += Vector3.one * 30;
             fakeOtherPlayerGO.transform.position += Vector3.one * 30;
 
-            await UniTask.Yield();
+            await WaitForPhysics();
 
             Assert.AreEqual(onlyMainPlayer ? 1 : 2, enterTriggerCalls);
             Assert.AreEqual(onlyMainPlayer ? 1 : 2, exitTriggerCalls);
 
             // Cleanup
             Object.DestroyImmediate(fakeOtherPlayerGO);
+        }
+
+        private async Task WaitForPhysics()
+        {
+            await UniTask.Yield();
+            await UniTask.Yield();
+            await UniTask.Yield();
+            await UniTask.Yield();
+            await UniTask.Yield();
         }
     }
 }
