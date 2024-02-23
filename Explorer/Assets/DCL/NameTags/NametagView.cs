@@ -121,10 +121,10 @@ namespace DCL.Nametags
             backgroundFinalSize.x = Username.preferredWidth + 0.3f;
             backgroundFinalSize.y = Username.preferredHeight + 0.2f;
 
-            Username.rectTransform.DOAnchorPos(Vector2.zero, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
-            MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
+            Username.rectTransform.DOAnchorPos(Vector2.zero, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
+            MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
             MessageContent.DOColor(finishColor, ANIMATION_DURATION / 4);
-            DOTween.To(() => Background.size, x=> Background.size = x, backgroundFinalSize, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
+            DOTween.To(() => Background.size, x=> Background.size = x, backgroundFinalSize, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
         }
 
     }
