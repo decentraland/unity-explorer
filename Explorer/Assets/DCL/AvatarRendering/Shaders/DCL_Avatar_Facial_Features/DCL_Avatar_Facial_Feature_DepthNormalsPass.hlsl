@@ -6,8 +6,22 @@
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
 
+#ifdef _DCL_COMPUTE_SKINNING
+// Skinning structure
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+    float4 tangent;
+};
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+#endif
+
 struct Attributes
 {
+    #if _DCL_COMPUTE_SKINNING
+        uint index                  : SV_VertexID;
+    #endif
     float4 positionOS   : POSITION;
     float4 tangentOS    : TANGENT;
     float2 texcoord     : TEXCOORD0;
@@ -43,8 +57,13 @@ Varyings DepthNormalsVertex(Attributes input)
     output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
+    #ifdef _DCL_COMPUTE_SKINNING
+        VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position);
+        VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent);
+    #else
+        VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+        VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
+    #endif
 
     half3 viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
     #if defined(_NORMALMAP)
