@@ -16,14 +16,12 @@ MonoBehaviour:
   - rid: 6784895264912310272
   - rid: 6784895265412481026
   - rid: 6784895265412481027
-  - rid: 6784895267130048513
   - rid: 1268264176566403074
   - rid: 5215741520409264128
   - rid: 5215741520409264129
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 8147919132522971138
-  - rid: 56198586647707649
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
@@ -33,13 +31,10 @@ MonoBehaviour:
   - rid: 4340256301410942981
   - rid: 7249412338407702528
   - rid: 7162477498503790594
+  - rid: 2174542042650378245
   references:
     version: 2
     RefIds:
-    - rid: 56198586647707649
-      type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
-      data:
-        <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -162,6 +157,10 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 2174542042650378245
+      type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
+      data:
+        <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -292,8 +291,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 6784895267130048513
-      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
     - rid: 7162477498503790594
       type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
