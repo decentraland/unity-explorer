@@ -84,6 +84,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBCameraModeArea>.Create(ComponentID.CAMERA_MODE_AREA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
