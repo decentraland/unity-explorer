@@ -17,8 +17,6 @@ namespace SceneRuntime.Apis.Modules
 {
     public partial class UserIdentityApiWrapper : IDisposable
     {
-        private static readonly JsonConverter[] JSON_CONVERTER = { new GetUserDataResponseJsonConverter() };
-
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
@@ -93,15 +91,15 @@ namespace SceneRuntime.Apis.Modules
             }
 
             return GetOwnUserDataAsync(lifeCycleCts.Token)
-                  .ContinueWith(ToUserDataResponseJson)
+                  .ContinueWith(ToUserDataResponse)
                   .AsTask()
                   .ToPromise();
         }
 
-        private static string ToUserDataResponseJson(GetUserDataResponse.Data? data)
+        private static GetUserDataResponse ToUserDataResponse(GetUserDataResponse.Data? data)
         {
             var response = new GetUserDataResponse { data = data };
-            return JsonConvert.SerializeObject(response, JSON_CONVERTER);
+            return response;
         }
     }
 }
