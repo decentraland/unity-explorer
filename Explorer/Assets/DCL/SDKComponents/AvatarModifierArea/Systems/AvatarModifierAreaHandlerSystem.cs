@@ -62,12 +62,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         internal void OnEnteredAvatarModifierArea(Collider avatarCollider)
         {
-            Debug.Log("PRAVS - ENTERED AREA!");
+            // Grab the AvatarShape of the collider's entity from the GlobalWorld
+            // and toggle its HiddenByModifierArea
         }
 
         internal void OnExitedAvatarModifierArea(Collider avatarCollider)
         {
-            Debug.Log("PRAVS - EXITED AREA!");
+            // Grab the AvatarShape of the collider's entity from the GlobalWorld
+            // and toggle its HiddenByModifierArea
         }
     }
 }

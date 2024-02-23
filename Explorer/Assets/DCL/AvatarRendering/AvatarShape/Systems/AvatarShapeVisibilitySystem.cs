@@ -26,14 +26,25 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             UpdatePlayerFirstPersonQuery(World, camera.GetCameraComponent(World));
+            UpdateAvatarsVisibilityStateQuery(World);
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
         private void UpdatePlayerFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape)
         {
-            bool shouldBeHidden = camera.Mode == CameraMode.FirstPerson;
+            UpdateVisibilityState(ref avatarShape, avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson);
+        }
 
+        [Query]
+        [None(typeof(PlayerComponent))]
+        private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape)
+        {
+            UpdateVisibilityState(ref avatarShape, avatarShape.HiddenByModifierArea);
+        }
+
+        private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, bool shouldBeHidden)
+        {
             switch (avatarShape.IsVisible)
             {
                 case true when shouldBeHidden:
