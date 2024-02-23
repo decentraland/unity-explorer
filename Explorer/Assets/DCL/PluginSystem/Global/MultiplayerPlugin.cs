@@ -12,6 +12,8 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles;
 using LiveKit.Internal.FFIClients;
+using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
 
 namespace DCL.PluginSystem.Global
 {
@@ -20,13 +22,17 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IProfileRepository profileRepository;
+        private readonly IMemoryPool memoryPool;
+        private readonly IMultiPool multiPool;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IProfileRepository profileRepository, IDebugContainerBuilder debugContainerBuilder)
+        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IProfileRepository profileRepository, IMemoryPool memoryPool, IMultiPool multiPool, IDebugContainerBuilder debugContainerBuilder)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
             this.profileRepository = profileRepository;
+            this.memoryPool = memoryPool;
+            this.multiPool = multiPool;
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
@@ -38,7 +44,13 @@ namespace DCL.PluginSystem.Global
 
             DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom);
-            MultiplayerProfilesSystem.InjectToWorld(ref builder, new EntityParticipantTable(), new ThreadSafeRemoteAnnouncements(roomHub), new RemoteProfiles(profileRepository), new ProfileBroadcast(roomHub));
+
+            MultiplayerProfilesSystem.InjectToWorld(ref builder,
+                new EntityParticipantTable(),
+                new ThreadSafeRemoteAnnouncements(roomHub),
+                new RemoteProfiles(profileRepository),
+                new ProfileBroadcast(roomHub, memoryPool, multiPool)
+            );
         }
     }
 }

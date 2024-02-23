@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
-        private IRoom? assigned;
+        private IRoom assigned = NullRoom.INSTANCE;
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
@@ -40,23 +40,22 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             previous = assigned;
 
-            if (previous != null)
-            {
-                previous.Disconnect();
+            previous.Disconnect();
 
-                previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
-                previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
-                previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
-                previous.TrackPublished -= RoomOnTrackPublished;
-                previous.TrackUnpublished -= RoomOnTrackUnpublished;
-                previous.TrackSubscribed -= RoomOnTrackSubscribed;
-                previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
-                previous.TrackMuted -= RoomOnTrackMuted;
-                previous.TrackUnmuted -= RoomOnTrackUnmuted;
-                previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
-                previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
-                previous.ConnectionUpdated -= RoomOnConnectionUpdated;
-            }
+            previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+            previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
+            previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
+            previous.TrackPublished -= RoomOnTrackPublished;
+            previous.TrackUnpublished -= RoomOnTrackUnpublished;
+            previous.TrackSubscribed -= RoomOnTrackSubscribed;
+            previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
+            previous.TrackMuted -= RoomOnTrackMuted;
+            previous.TrackUnmuted -= RoomOnTrackUnmuted;
+            previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
+            previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
+            previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+
+            previous = previous is NullRoom ? null : previous;
 
             assigned = room;
 
