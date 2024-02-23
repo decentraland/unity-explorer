@@ -131,6 +131,11 @@
         public const string MOTION = nameof(MOTION);
 
         /// <summary>
+        ///     Everything related to the procedural landscape generation
+        /// </summary>
+        public const string LANDSCAPE = nameof(LANDSCAPE);
+
+        /// <summary>
         ///     Input
         /// </summary>
         public const string INPUT = nameof(INPUT);
@@ -141,6 +146,11 @@
         public const string AVATAR = nameof(AVATAR);
 
         public const string PROFILE = nameof(PROFILE);
+
+        /// <summary>
+        ///     Tweens Related
+        /// </summary>
+        public const string TWEEN = nameof(TWEEN);
 
         /// <summary>
         ///     Wearable related

@@ -33,6 +33,7 @@ namespace DCL.WebRequests.Analytics
             DebugWidgetBuilder widget = debugContainerBuilder.AddWidget("Web Requests")
                                                              .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
+
             foreach (Type requestType in requestTypes)
             {
                 var bindings = new Dictionary<string, ElementBinding<ulong>>(0);

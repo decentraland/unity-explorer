@@ -32,8 +32,8 @@
             Cull Off
 
             HLSLPROGRAM
-                #pragma vertex vert
-                #pragma fragment frag
+                #pragma vertex vert_space
+                #pragma fragment frag_space
                 #pragma target 3.0                
             ENDHLSL
         }
