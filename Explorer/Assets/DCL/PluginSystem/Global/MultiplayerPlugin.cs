@@ -3,7 +3,14 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.RemoteAnnouncements;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Multiplayer.Profiles.Systems;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.Profiles;
 using LiveKit.Internal.FFIClients;
 
 namespace DCL.PluginSystem.Global
@@ -12,20 +19,26 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IProfileRepository profileRepository;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IDebugContainerBuilder debugContainerBuilder)
+        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IProfileRepository profileRepository, IDebugContainerBuilder debugContainerBuilder)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.profileRepository = profileRepository;
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
         {
             IFFIClient.Default.EnsureInitialize();
+
+            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+
             DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom);
+            MultiplayerProfilesSystem.InjectToWorld(ref builder, new EntityParticipantTable(), new ThreadSafeRemoteAnnouncements(roomHub), new RemoteProfiles(profileRepository), new ProfileBroadcast(roomHub));
         }
     }
 }
