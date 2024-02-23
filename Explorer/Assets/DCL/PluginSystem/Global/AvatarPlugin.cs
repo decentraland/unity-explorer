@@ -37,7 +37,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
-        private readonly bool enableNametags;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
@@ -55,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private IComponentPool<Transform> transformPoolRegistry;
 
         private IObjectPool<NametagView> nametagViewPool;
+        private ProvidedAsset<NametagsData> nametagsData;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -65,8 +65,7 @@ namespace DCL.PluginSystem.Global
             MainPlayerAvatarBase mainPlayerAvatarBase,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration,
-            bool enableNametags)
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -75,7 +74,6 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
-            this.enableNametags = enableNametags;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
@@ -94,6 +92,7 @@ namespace DCL.PluginSystem.Global
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
+            nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
         }
@@ -123,8 +122,8 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            if(enableNametags)
-                NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
+            NametagsDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, nametagsData.Value);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -202,10 +201,20 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceMaterial celShadingMaterial;
 
             [field: SerializeField]
+            public NametagsDataRef nametagsData;
+
+            [field: SerializeField]
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
+
+
+            [Serializable]
+            public class NametagsDataRef : AssetReferenceT<NametagsData>
+            {
+                public NametagsDataRef(string guid) : base(guid) { }
+            }
         }
     }
 }
