@@ -896,10 +896,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d02361bc2146ed9782da2a2c01cf68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxPosition: 10
   Incoming: 0
   Passed: 0
-  interpolationType: 0
   messageBus: {fileID: 1672578178}
   receivedMark: {fileID: 687028449}
   passedMark: {fileID: 0}
@@ -1583,10 +1581,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf6a4b096f4d8f42a37f6f2b5d054de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PackageSentRate: 0.33
-  PackagesJitter: 0
+  PackageSentRate: 0.5
+  PackagesJitter: 3
   Latency: 1
-  LatencyJitter: 0
+  LatencyJitter: 0.3
 --- !u!4 &1672578179
 Transform:
   m_ObjectHideFlags: 0
@@ -1850,7 +1848,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2142167746}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.02, y: 0.867, z: -9.57}
+  m_LocalPosition: {x: 0, y: 0.867, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1869,10 +1867,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d02361bc2146ed9782da2a2c01cf68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxPosition: 10
   Incoming: 0
   Passed: 0
-  interpolationType: 1
   messageBus: {fileID: 1672578178}
   receivedMark: {fileID: 367780082}
   passedMark: {fileID: 57191068}
@@ -2011,7 +2007,6 @@ MonoBehaviour:
   interpolationType: 1
   minPositionDelta: 0.1
   Time: 0
-  IsProjected: 0
 --- !u!114 &2142167754
 MonoBehaviour:
   m_ObjectHideFlags: 0

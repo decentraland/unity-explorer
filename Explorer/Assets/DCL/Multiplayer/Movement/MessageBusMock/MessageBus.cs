@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
@@ -22,6 +23,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 timestamp = timestamp,
                 position = position,
                 velocity = velocity,
+                acceleration = acceleration,
             });
         }
     }
@@ -32,6 +34,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public float timestamp;
         public Vector3 position;
         public Vector3 velocity;
+        public Vector3 acceleration;
 
         public AnimationStates animState;
         public bool isStunned;

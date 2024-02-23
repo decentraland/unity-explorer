@@ -1,30 +1,19 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Movement.MessageBusMock.Movement;
-using NSubstitute.Exceptions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
     public class Receiver : MonoBehaviour
     {
-        private const float MIN_POSITION_DELTA = 0.01f;
-
-        private const float MIN_SPEED = 0.01f;
-
         public readonly Queue<MessageMock> IncomingMessages = new ();
         private readonly List<MessageMock> passedMessages = new ();
 
-        public float MaxPosition = 10f;
-
         public int Incoming;
         public int Passed;
-
-        [Header("INTERPOLATION")]
-        public InterpolationType interpolationType;
 
         [Space]
         public MessageBus messageBus;
@@ -33,14 +22,22 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private Interpolation interpolation;
         private Extrapolation extrapolation;
+        private Blend blend;
 
         private void Awake()
         {
-            interpolation = new Interpolation(transform);
-            extrapolation = new Extrapolation(transform);
+            extrapolation = GetComponent<Extrapolation>();
+            interpolation = GetComponent<Interpolation>();
+            blend = GetComponent<Blend>();
+
+            extrapolation.enabled = false;
+            interpolation.enabled = false;
+            blend.enabled = false;
+
+            interpolation.PointPassed += AddToPassed;
+            blend.PointPassed += AddToPassed;
         }
 
-        // Network simulation
         private void Start()
         {
             messageBus.MessageSent += newMessage =>
@@ -58,126 +55,92 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             Incoming = IncomingMessages.Count;
             Passed = passedMessages.Count;
 
-            if (interpolation.IsRunning)
-            {
-                interpolation.Update(Time.deltaTime)?.AddToPassed(passedMessages, passedMark);
-                return;
-            }
+            if (interpolation.enabled || blend.enabled) return;
 
-            if (passedMessages.Count == 0 && IncomingMessages.Count == 0) return;
-            if (passedMessages.Count == 0 && IncomingMessages.Count == 1)
-            {
-                Teleport(IncomingMessages.Dequeue());
-                return;
-            }
-
-            if (passedMessages.Count == 1 && IncomingMessages.Count == 0) return;
-            if (passedMessages.Count == 1 && IncomingMessages.Count == 1)
-            {
-                StartInterpolation(IncomingMessages.Dequeue());
-                return;
-            }
-
-
-
-            if (HasNoMessages())
-            {
-                if (extrapolation.IsRunning)
-                    extrapolation.Update(Time.deltaTime);
-                else if (passedMessages[^1].velocity.sqrMagnitude > MIN_SPEED)
-                {
-                    extrapolation.Run(passedMessages[^1], messageBus.PackageSentRate, MIN_SPEED);
-                    extrapolation.Update(Time.deltaTime);
-                }
-
-                return;
-            }
-
-            if (HasNewMessages())
+            if (IncomingMessages.Count > 0)
             {
                 MessageMock remote = IncomingMessages.Dequeue();
-                if (remote.timestamp < passedMessages[^1].timestamp) return;
 
-                if (!extrapolation.IsRunning)
-                    StartInterpolation(remote);
-                else
+                if (extrapolation.enabled)
                 {
-                    MessageMock local = extrapolation.Stop();
-                    passedMessages.Add(local);
-
-                    float positionDiff = Vector3.Distance(local.position, remote.position);
-
-                    // if(positionDiff < MIN_POSITION_DELTA || positionDiff > MaxPosition)
-                    // {
-                    //     // but it falls then into pure extrapolation
-                    //     Teleport(remote);
-                    //     return;
-                    // }
-
-                    float timeDiff = remote.timestamp - local.timestamp;
-                    float speed = positionDiff / timeDiff;
-                    if (speed < 15)
-                    {
-                        interpolation.Run(local, remote, interpolationType, IncomingMessages.Count);
-                        interpolation.Update(Time.deltaTime)?.AddToPassed(passedMessages, passedMark);
-                    }
-                    else
-                    {
-                        passedMessages.Add(remote);
-
-                        MessageMock projectedRemote = new MessageMock
-                        {
-                            timestamp = remote.timestamp + messageBus.PackageSentRate,
-                            position = remote.position + (remote.velocity * messageBus.PackageSentRate),
-                            velocity = remote.velocity,
-                        };
-
-                        extrapolation.Run(local, projectedRemote, MIN_SPEED);
-                        extrapolation.Update(Time.deltaTime);
-                    }
-
-                    // ELSE -> Adjust extrapolation!
+                    // var local =
+                    blend.Run(extrapolation.Stop(), remote);
+                    return;
                 }
+
+                interpolation.Run(
+                    from: passedMessages.Count > 0 ? passedMessages[^1] : null,
+                    to: remote);
             }
+            else if (passedMessages.Count > 1 && !extrapolation.enabled)
+                extrapolation.Run(passedMessages[^1]);
 
-            //// ---- Extrapolate (with blend inside) ----
-            // if(FirstMessageArrived)                teleport()                   <------
-            // if(SecondIsNotArrived)                 wait                         <------
-
-            // if(isInterpolating)                    interpolate.Update           <------
-            // if(NoNewMessages)                      extrapolate.Start? + Update  <------
-
-            // if(HasNewMessages)
-            //   if(PointIsOlder)                     wait                         <------
-            //   if(!isExtrapolating)                 interpolate.Start + Update   <------
-            //   if(isExtrapolating)
-            //       1. if(acceptableToInterpolate(current, end)) interpolation.Start  <------
-            //       2. adjust extrapolations: - (calculate start, calculate end)      <------
-        }
-
-        private void StartInterpolation(MessageMock to)
-        {
-            MessageMock from = passedMessages[^1];
-
-            if (Vector3.Distance(from.position, to.position) < MIN_POSITION_DELTA && IncomingMessages.Count > 0)
-                Teleport(to);
-            else
-            {
-                interpolation.Run(from, to, interpolationType, IncomingMessages.Count);
-                interpolation.Update(Time.deltaTime)?.AddToPassed(passedMessages, passedMark);
-            }
-        }
-
-        private bool HasNoMessages() =>
-            IncomingMessages.Count == 0;
-
-        private bool HasNewMessages() =>
-            IncomingMessages.Count != 0;
-
-        private void Teleport(MessageMock to)
-        {
-            transform.position = to.position;
-            AddToPassed(to);
+            // {
+            //     // Stop extrapolation when message arrives
+            //     if (isExtrapolating)
+            //     {
+            //         if (endPoint.timestamp > passedMessages[^1].timestamp + extDuration)
+            //         {
+            //             isExtrapolating = false;
+            //
+            //             AddToPassed(new MessageMock
+            //             {
+            //                 timestamp = passedMessages[^1].timestamp + extDuration,
+            //                 position = transform.position,
+            //                 velocity = extVelocity,
+            //             });
+            //
+            //             if (useBlend)
+            //             {
+            //                 blendTargetPoint = endPoint;
+            //                 StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
+            //                 return;
+            //             }
+            //         }
+            //         else if (useBlend && endPoint.timestamp > passedMessages[^1].timestamp)
+            //         {
+            //             isExtrapolating = false;
+            //
+            //             float currentTimestamp = passedMessages[^1].timestamp + extDuration;
+            //
+            //             AddToPassed(new MessageMock
+            //             {
+            //                 timestamp = currentTimestamp,
+            //                 position = transform.position,
+            //                 velocity = extVelocity,
+            //             });
+            //
+            //             float deltaT = currentTimestamp - endPoint.timestamp;
+            //
+            //             blendTargetPoint = new MessageMock
+            //             {
+            //                 timestamp = currentTimestamp + 0.001f,
+            //                 position = endPoint.position + (endPoint.velocity * deltaT),
+            //                 velocity = endPoint.velocity,
+            //             };
+            //
+            //             StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
+            //             return;
+            //         }
+            //     }
+            //
+            //     if (isBlending && endPoint.timestamp > blendTargetPoint.timestamp)
+            //     {
+            //         StopAllCoroutines();
+            //
+            //         AddToPassed(new MessageMock
+            //         {
+            //             timestamp = passedMessages[^1].timestamp + blendDuration,
+            //             position = transform.position,
+            //             velocity = blendVelocity,
+            //         });
+            //
+            //         blendTargetPoint = endPoint;
+            //
+            //         StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
+            //         return;
+            //     }
+            // }
         }
 
         private void AddToPassed(MessageMock message)
@@ -191,25 +154,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             GameObject markPoint = Instantiate(mark);
             markPoint.transform.position = newMessage.position + (Vector3.up * f);
             markPoint.SetActive(true);
-        }
-    }
-
-    public static class MessageMockExtensions
-    {
-        public static void AddToPassed(this MessageMock message, List<MessageMock> passedMessages, GameObject passedMark)
-        {
-            if (message == null) return;
-
-            passedMessages.Add(message);
-            PutMark(message, passedMark, 0.2f);
-            return;
-
-            void PutMark(MessageMock newMessage, GameObject mark, float f)
-            {
-                GameObject markPoint = Object.Instantiate(mark);
-                markPoint.transform.position = newMessage.position + (Vector3.up * f);
-                markPoint.SetActive(true);
-            }
         }
     }
 }

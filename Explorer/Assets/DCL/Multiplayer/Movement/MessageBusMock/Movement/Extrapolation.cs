@@ -2,91 +2,58 @@
 
 namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
 {
-    public class Extrapolation
+    public class Extrapolation : MonoBehaviour
     {
-        private readonly Transform transform;
+        public float minSpeed = 0.01f;
+        public float linearExtrapolationTime = 0.33f;
+        public int dampedExtrapolationSteps = 2;
 
-        public bool IsRunning;
+        [Space]
+        public float Time;
+        public Vector3 Velocity;
 
         private MessageMock start;
-        private MessageMock end;
+        private float maxDuration;
 
-        private float time;
-        private Vector3 velocity;
-
-        private float minSpeed;
-        private float totalDuration;
-
-        public Extrapolation(Transform transform)
+        private void Update()
         {
-            this.transform = transform;
+            Time += UnityEngine.Time.deltaTime;
+            Velocity = DampVelocity();
+
+            if (Velocity.sqrMagnitude > minSpeed)
+                transform.position += Velocity * UnityEngine.Time.deltaTime;
         }
 
-        public void Run(MessageMock from, float packageSentRate, float minSpeed, bool lastStep = false)
+        public void Run(MessageMock from)
         {
             start = from;
 
-            end = new MessageMock
-            {
-                timestamp = from.timestamp + packageSentRate,
-                position = from.position + (from.velocity * packageSentRate),
-                velocity = lastStep ? from.velocity / 2 : Vector3.zero,
-            };
+            Time = 0f;
+            Velocity = start.velocity;
+            maxDuration = linearExtrapolationTime * dampedExtrapolationSteps;
 
-            totalDuration = packageSentRate;
-
-            velocity = start.velocity;
-            time = 0f;
-            this.minSpeed = minSpeed;
-
-            IsRunning = true;
-        }
-
-        public void Run(MessageMock from, MessageMock to, float minSpeed)
-        {
-            start = from;
-
-            end = to;
-            totalDuration = to.timestamp - from.timestamp;
-
-            velocity = start.velocity;
-            time = 0f;
-            this.minSpeed = minSpeed;
-
-            IsRunning = true;
-        }
-
-        public void Update(float deltaTime)
-        {
-            time += deltaTime;
-
-            // velocity = DampVelocity();
-            if (velocity.sqrMagnitude < minSpeed)
-                return;
-
-            if (time < totalDuration)
-            {
-                transform.position = Interpolate.Hermite(start, end, time, totalDuration);
-                velocity = start.velocity + ((end.velocity - start.velocity) * time / totalDuration);
-            }
-            else
-            {
-                transform.position = end.position;
-                velocity = end.velocity;
-                Run(Stop(), totalDuration, minSpeed, true);
-            }
+            enabled = true;
         }
 
         public MessageMock Stop()
         {
-            IsRunning = false;
+            enabled = false;
 
             return new MessageMock
             {
-                timestamp = start.timestamp + time,
+                timestamp = start.timestamp + Time,
                 position = transform.position,
-                velocity = velocity,
+                velocity = Velocity,
+                acceleration = Vector3.zero,
             };
+        }
+
+        private Vector3 DampVelocity()
+        {
+            if (Time > linearExtrapolationTime && Time < maxDuration)
+                return Vector3.Lerp(start.velocity, Vector3.zero, Time / maxDuration);
+
+            return Time >= maxDuration ? Vector3.zero : Velocity;
         }
     }
 }
