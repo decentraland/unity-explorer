@@ -81,8 +81,6 @@ namespace DCL.Landscape.Systems
                 InitializeWaterVisibility();
             }
 
-            if (!isSetupDone) return;
-
             UpdateCliffsVisibility();
             UpdateWaterVisibility();
 
