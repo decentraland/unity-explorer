@@ -6,7 +6,7 @@ namespace SceneRuntime.Apis.Modules
     public partial class UserIdentityApiWrapper
     {
         [Serializable]
-        private struct GetUserDataResponse
+        public struct GetUserDataResponse
         {
             public Data? data;
 
