@@ -79,7 +79,8 @@ namespace Global.Dynamic
             IWeb3VerifiedAuthenticator web3Authenticator,
             IWeb3IdentityCache web3IdentityCache,
             Vector2Int startParcel,
-            bool enableLandscape)
+            bool enableLandscape,
+            bool enableNametags)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -136,7 +137,8 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBase,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    chatEntryConfiguration),
+                    chatEntryConfiguration,
+                    enableNametags),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),

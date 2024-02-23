@@ -37,6 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly bool enableNametags;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
@@ -64,7 +65,8 @@ namespace DCL.PluginSystem.Global
             MainPlayerAvatarBase mainPlayerAvatarBase,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            bool enableNametags)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -73,6 +75,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.enableNametags = enableNametags;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
@@ -120,7 +123,8 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
+            if(enableNametags)
+                NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)

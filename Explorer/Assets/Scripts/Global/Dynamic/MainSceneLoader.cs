@@ -41,6 +41,7 @@ namespace Global.Dynamic
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
         [SerializeField] private bool enableLandscape;
+        [SerializeField] private bool enableNametags;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -134,7 +135,8 @@ namespace Global.Dynamic
                     web3Authenticator,
                     identityCache,
                     settings.StartPosition,
-                    enableLandscape);
+                    enableLandscape,
+                    enableNametags);
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager);
 
