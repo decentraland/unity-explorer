@@ -20,6 +20,9 @@ namespace DCL.Nametags
         public SpriteRenderer Background { get; private set; }
 
         [field: SerializeField]
+        public SpriteRenderer BubblePeak { get; private set; }
+
+        [field: SerializeField]
         public RectTransform MessageContentRectTransform { get; private set; }
 
         [field: SerializeField]
@@ -29,10 +32,16 @@ namespace DCL.Nametags
         public float FixedWidth { get; private set; }
         private const float MARGIN_OFFSET_WIDTH = 0.5f;
         private const float MARGIN_OFFSET_HEIGHT = 0.7f;
-        private const float ANIMATION_DURATION = 1.5f;
+        private const float ANIMATION_DURATION = 0.7f;
+        private readonly Color startColor = new (1,1,1,1);
+        private readonly Color finishColor = new (1,1,1,0);
         private static readonly Vector2 MESSAGE_CONTENT_ANCHORED_POSITION = new (0,MARGIN_OFFSET_HEIGHT / 3);
 
-        private bool isBubbleExpanded = false;
+        private bool isBubbleExpanded;
+        private Vector2 usernameFinalPosition;
+        private Vector2 preferredSize;
+        private Vector2 backgroundFinalSize;
+        private Vector2 textContentInitialPosition;
 
         private void Start()
         {
@@ -43,10 +52,9 @@ namespace DCL.Nametags
         public void SetUsername(string username)
         {
             Username.text = username;
-            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + 0.15f);
-            Background.size = new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f);
-
-            //Animate("really long string really long string really long string really long string really long string really long string really long string ");
+            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + 0.2f);
+            Username.rectTransform.anchoredPosition = Vector2.zero;
+            Background.size = new Vector2(Username.preferredWidth + 0.3f, Username.preferredHeight + 0.2f);
         }
 
         private async UniTaskVoid GenerateRandomMsgsAsync()
@@ -76,31 +84,47 @@ namespace DCL.Nametags
         private void AnimateIn(string messageContent)
         {
             MessageContent.gameObject.SetActive(true);
+            BubblePeak.gameObject.SetActive(true);
             isBubbleExpanded = true;
 
-            Vector2 preferredSize = MessageContent.GetPreferredValues(messageContent, FixedWidth, 0);
+            //Calculate message content preferred size with fixed width
+            preferredSize = MessageContent.GetPreferredValues(messageContent, FixedWidth, 0);
             preferredSize.x = MessageContentRectTransform.sizeDelta.x;
             MessageContentRectTransform.sizeDelta = preferredSize;
-            MessageContentRectTransform.anchoredPosition = MESSAGE_CONTENT_ANCHORED_POSITION;
+
+            //Calculate the initial message content position to animate after
+            textContentInitialPosition.x = preferredSize.x / 2;
+            textContentInitialPosition.y = -preferredSize.y;
+            MessageContentRectTransform.anchoredPosition = textContentInitialPosition;
+
+            //Set message content and calculate the preferred size of the background with the addition of a margin
             MessageContent.text = messageContent;
             preferredSize.x = MessageContentRectTransform.sizeDelta.x + MARGIN_OFFSET_WIDTH;
             preferredSize.y += MARGIN_OFFSET_HEIGHT;
 
-            MessageContent.DOFade(1, ANIMATION_DURATION);
-            Username.rectTransform.DOAnchorPos(new Vector2((-preferredSize.x / 2) + (Username.preferredWidth / 2) + (MARGIN_OFFSET_WIDTH / 2), MessageContentRectTransform.sizeDelta.y + (MARGIN_OFFSET_HEIGHT / 3)), ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
+            //set the username final position based on previous calculations
+            usernameFinalPosition.x = (-preferredSize.x / 2) + (Username.preferredWidth / 2) + (MARGIN_OFFSET_WIDTH / 2);
+            usernameFinalPosition.y = MessageContentRectTransform.sizeDelta.y + (MARGIN_OFFSET_HEIGHT / 3);
+
+            //Start all animations
+            MessageContent.DOColor(startColor, ANIMATION_DURATION);
+            Username.rectTransform.DOAnchorPos(usernameFinalPosition, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
+            MessageContent.rectTransform.DOAnchorPos(MESSAGE_CONTENT_ANCHORED_POSITION, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
             DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
-
         }
-
-
 
         private void AnimateOut()
         {
             isBubbleExpanded = false;
+            BubblePeak.gameObject.SetActive(false);
+
+            backgroundFinalSize.x = Username.preferredWidth + 0.3f;
+            backgroundFinalSize.y = Username.preferredHeight + 0.2f;
 
             Username.rectTransform.DOAnchorPos(Vector2.zero, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
-            MessageContent.DOFade(0, ANIMATION_DURATION/4).OnComplete(()=>MessageContent.gameObject.SetActive(false));
-            DOTween.To(() => Background.size, x=> Background.size = x, new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f), ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
+            MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
+            MessageContent.DOColor(finishColor, ANIMATION_DURATION / 4);
+            DOTween.To(() => Background.size, x=> Background.size = x, backgroundFinalSize, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
         }
 
     }
