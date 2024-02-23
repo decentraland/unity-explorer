@@ -15,21 +15,10 @@ module.exports.getUserData = async function(message) {
     
     return {
         data: {
-            publicKey: data.publicKey,
-            displayName: data.displayName,
-            hasConnectedWeb3: data.hasConnectedWeb3,
-            userId: data.userId,
-            version: data.version,
+            ...data,
             avatar: {
-                bodyShape: avatar.bodyShape,
-                eyeColor: avatar.eyeColor,
-                hairColor: avatar.hairColor,
-                skinColor: avatar.skinColor,
-                wearables: wearables,
-                snapshots: {
-                    body: avatar.snapshots.body,
-                    face256: avatar.snapshots.face256
-                },
+                ...avatar,
+                wearables: wearables
             }
         }
     };
