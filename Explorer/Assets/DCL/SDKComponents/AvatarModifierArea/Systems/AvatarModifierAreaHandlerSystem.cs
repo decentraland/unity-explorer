@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
@@ -20,6 +22,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     [ThrottlingEnabled]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem
     {
+        private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
 
         public AvatarModifierAreaHandlerSystem(World world, WorldProxy globalWorldProxy) : base(world)
@@ -62,14 +65,42 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         internal void OnEnteredAvatarModifierArea(Collider avatarCollider)
         {
-            // Grab the AvatarShape of the collider's entity from the GlobalWorld
-            // and toggle its HiddenByModifierArea
+            var found = false;
+
+            // There's no way to do a Query/InlineQuery getting both entity and TransformComponent...
+            globalWorld.Query(in AVATAR_BASE_QUERY,
+                entity =>
+                {
+                    if (found) return;
+
+                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
+
+                    if (avatarCollider.transform == entityTransform)
+                    {
+                        globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = true;
+                        found = true;
+                    }
+                });
         }
 
         internal void OnExitedAvatarModifierArea(Collider avatarCollider)
         {
-            // Grab the AvatarShape of the collider's entity from the GlobalWorld
-            // and toggle its HiddenByModifierArea
+            var found = false;
+
+            // There's no way to do a Query/InlineQuery getting both entity and TransformComponent...
+            globalWorld.Query(in AVATAR_BASE_QUERY,
+                entity =>
+                {
+                    if (found) return;
+
+                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
+
+                    if (avatarCollider.transform == entityTransform)
+                    {
+                        globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = false;
+                        found = true;
+                    }
+                });
         }
     }
 }
