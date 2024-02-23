@@ -10,13 +10,11 @@ using UnityEngine.UIElements;
 
 namespace DCL.Nametags
 {
-    [LogCategory(ReportCategory.AVATAR)]
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class NametagsDebugSystem : BaseUnityLoopSystem
+    public class NametagsDebugController
     {
         private readonly NametagsData nametagsData;
 
-        public NametagsDebugSystem(World world, IDebugContainerBuilder debugBuilder,NametagsData nametagsData) : base(world)
+        public NametagsDebugController(IDebugContainerBuilder debugBuilder,NametagsData nametagsData)
         {
             this.nametagsData = nametagsData;
 
@@ -27,11 +25,6 @@ namespace DCL.Nametags
         private void OnShowNametagsToggled(ChangeEvent<bool> evt)
         {
             nametagsData.showNameTags = evt.newValue;
-        }
-
-        protected override void Update(float t)
-        {
-
         }
     }
 }

@@ -103,6 +103,7 @@ namespace DCL.PluginSystem.Global
             Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
+            new NametagsDebugController(debugContainerBuilder, nametagsData.Value);
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
@@ -123,7 +124,6 @@ namespace DCL.PluginSystem.Global
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
-            NametagsDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, nametagsData.Value);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
