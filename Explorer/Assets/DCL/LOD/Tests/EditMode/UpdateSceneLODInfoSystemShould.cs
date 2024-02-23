@@ -69,7 +69,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue);
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform);
         }
 
 

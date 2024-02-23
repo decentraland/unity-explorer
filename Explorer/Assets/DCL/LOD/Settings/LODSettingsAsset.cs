@@ -11,5 +11,6 @@ namespace DCL.LOD
         [field: SerializeField] public int[] LodPartitionBucketThresholds { get; set; } = { 1, 2, 5 };
 
         [field: SerializeField] public Color[] LODDebugColors { get; set; } = { Color.green, Color.yellow, Color.red };
+        [field: SerializeField] public GameObject FaillingCube { get; set; }
     }
 }

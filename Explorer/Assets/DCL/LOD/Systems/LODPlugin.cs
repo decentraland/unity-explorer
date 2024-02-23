@@ -72,12 +72,11 @@ namespace DCL.LOD
         {
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue);
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform);
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
 
-            LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
-
-            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget);
+            LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, new GameObject("LOD_DEBUG_TOOLS").transform);
+            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, new GameObject("ROADS").transform);
             UnloadRoadSystem.InjectToWorld(ref builder);
         }
 

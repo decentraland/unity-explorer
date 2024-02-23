@@ -26,11 +26,13 @@ namespace DCL.LOD
         
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
-        
-        public RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget) : base(world)
+        private readonly Transform roadParent;
+
+        public RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, Transform roadParent) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
+            this.roadParent = roadParent;
         }
 
         protected override void Update(float t)
@@ -54,7 +56,7 @@ namespace DCL.LOD
                 if (result.Succeeded)
                 {
                     roadInfo.AssetBundleReference = result.Asset;
-                    GameObject.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
+                    Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity, roadParent);
                 }
                 else
                     ReportHub.LogWarning(GetReportCategory(),
@@ -70,7 +72,7 @@ namespace DCL.LOD
             
             roadInfo.CurrentRoadPromise =
                 Promise.Create(World,
-                    GetAssetBundleIntention.FromHash("road",
+                    GetAssetBundleIntention.FromHash("simpleRoad",
                         permittedSources: AssetSource.EMBEDDED,
                         customEmbeddedSubDirectory: URLSubdirectory.FromString("roads")),
                     partitionComponent); 

@@ -36,8 +36,10 @@ namespace DCL.LOD.Systems
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
+        private readonly Transform lodsTransformParent;
+
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
@@ -45,6 +47,7 @@ namespace DCL.LOD.Systems
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.lodsTransformParent = lodsTransformParent;
         }
 
         protected override void Update(float t)
@@ -82,6 +85,7 @@ namespace DCL.LOD.Systems
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                         instantiatedLOD, result.Asset, lodCache);
+                    sceneLODInfo.CurrentLOD.Value.Root.transform.SetParent(lodsTransformParent);
                 }
                 else
                 {
@@ -136,6 +140,7 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.CurrentLOD = cachedAsset;
                 sceneLODInfo.IsDirty = false;
                 CheckSceneReadiness(sceneDefinitionComponent);
+                sceneLODInfo.CurrentLOD.Value.Root.transform.SetParent(lodsTransformParent);
             }
             else
             {
