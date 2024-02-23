@@ -1,0 +1,64 @@
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Utilities.Extensions;
+using Decentraland.Kernel.Comms.Rfc4;
+using LiveKit.Proto;
+using LiveKit.Rooms.Participants;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
+{
+    public class ThreadSafeRemoteAnnouncements : IRemoteAnnouncements
+    {
+        private readonly IRoomHub roomHub;
+        private readonly List<RemoteAnnouncement> list = new ();
+        private readonly Semaphore semaphore = new (1, 1);
+
+        public ThreadSafeRemoteAnnouncements(IRoomHub roomHub)
+        {
+            this.roomHub = roomHub;
+
+            this.roomHub.IslandRoom().DataPipe.DataReceived += DataPipeOnDataReceived;
+            this.roomHub.SceneRoom().DataPipe.DataReceived += DataPipeOnDataReceived;
+        }
+
+        ~ThreadSafeRemoteAnnouncements()
+        {
+            this.roomHub.IslandRoom().DataPipe.DataReceived -= DataPipeOnDataReceived;
+            this.roomHub.SceneRoom().DataPipe.DataReceived -= DataPipeOnDataReceived;
+        }
+
+        private void DataPipeOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        {
+            //TODO deduplication
+            var response = Packet.Parser!.ParseFrom(data).EnsureNotNull();
+
+            if (response.MessageCase is Packet.MessageOneofCase.ProfileVersion)
+            {
+                uint version = response.ProfileVersion!.ProfileVersion;
+                string walletId = participant.Identity;
+                ThreadSafeAdd(new RemoteAnnouncement((int)version, walletId));
+            }
+        }
+
+        public bool NewBunchAvailable()
+        {
+            semaphore.WaitOne();
+            bool result = list.Count > 0;
+            semaphore.Release();
+            return result;
+        }
+
+        public OwnedBunch<RemoteAnnouncement> Bunch() =>
+            new (semaphore, list);
+
+        private void ThreadSafeAdd(RemoteAnnouncement remoteAnnouncement)
+        {
+            semaphore.WaitOne();
+            list.Add(remoteAnnouncement);
+            semaphore.Release();
+        }
+    }
+}

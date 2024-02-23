@@ -1,0 +1,29 @@
+using System;
+using System.Collections.Generic;
+
+namespace DCL.Multiplayer.Profiles.Bunches
+
+{
+    /// <summary>
+    /// Takes ownership of a list, and allows to read it safely, on dispose it would be cleaned and considered as performed
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public readonly struct Bunch<T> : IDisposable where T: struct
+    {
+        private readonly List<T> list;
+
+        public Bunch(List<T> list)
+        {
+            this.list = list;
+        }
+
+        /// <returns>Don't save the link for the list, can be mutated at any time!</returns>
+        public IReadOnlyList<T> List() =>
+            list;
+
+        public void Dispose()
+        {
+            list.Clear();
+        }
+    }
+}
