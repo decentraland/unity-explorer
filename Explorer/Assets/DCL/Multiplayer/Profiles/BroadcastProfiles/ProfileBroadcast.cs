@@ -18,9 +18,11 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         private const string TOPIC = "Topic";
         private const int CURRENT_VERSION = 1;
 
-        public ProfileBroadcast(IRoomHub roomHub)
+        public ProfileBroadcast(IRoomHub roomHub, IMemoryPool memoryPool, IMultiPool multiPool)
         {
             this.roomHub = roomHub;
+            this.memoryPool = memoryPool;
+            this.multiPool = multiPool;
         }
 
         public void NotifyRemotes()
