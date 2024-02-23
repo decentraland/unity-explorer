@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,12 +8,12 @@ public class SkyboxController : MonoBehaviour
 {
     private bool pause = false;
 
-    [HideInInspector] 
+    [HideInInspector]
     public int SecondsInDay = 86400;
     public bool playOnStart = false;
     public float speed = 1*60;
 
-    [HideInInspector] 
+    [HideInInspector]
     public float _naturalTime = 0;
     private float _normalizedTime;
 
@@ -25,48 +26,71 @@ public class SkyboxController : MonoBehaviour
     [Header("Directional Light")]
     public Light directionalLight;
     public AnimationClip lightAnimation;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient directionalColorRamp;
     private Animation _lightAnimator;
 
     [Header("Skybox Color")]
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient skyZenitColor;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient skyHorizonColor;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient skyNadirColor;
 
     [InspectorName("Rim Light Color")]
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient rimColorRamp;
 
     [Header("Indirect Lighting")]
     [InspectorName("Enabled")]
     public bool indirectLight = true;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient indirectSkyRamp;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient indirectEquatorRamp;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient groundEquatorRamp;
 
     [Header("Clouds")]
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient cloudsColorRamp;
 
 
     [Header("Fog")]
     [InspectorName("Enabled")]
     public bool fog = true;
-    [GradientUsage(true)] 
+    [GradientUsage(true)]
     public Gradient fogColorRamp;
 
     [Header("UI")]
-    public TextMeshProUGUI textUI;   
+    public TextMeshProUGUI textUI;
+    private bool isInitialized;
 
-    void Awake()
+#if UNITY_EDITOR
+
+    public bool editMode;
+
+    public void Awake()
     {
+        //Added the flag to allow editing of the prefab in a separate scene
+        //that doesn't have the regular plugin init flow
+        if(editMode)
+            Initialize(null, null, null);
+    }
+#endif
+
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip)
+    {
+        if(skyboxMat != null)
+            skyboxMaterial = skyboxMat;
+
+        if(dirLight != null)
+            directionalLight = dirLight;
+
+        if(skyboxAnimationClip != null)
+            lightAnimation = skyboxAnimationClip;
+
         //setup skybox material
         if(!skyboxMaterial)
         {
@@ -113,7 +137,9 @@ public class SkyboxController : MonoBehaviour
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.001f;
-        } 
+        }
+
+        isInitialized = true;
     }
 
     void Start()
@@ -124,6 +150,9 @@ public class SkyboxController : MonoBehaviour
 
     void Update()
     {
+        if (!isInitialized)
+            return;
+
         //update natural and relative time
         if(!pause)
         {
@@ -147,6 +176,7 @@ public class SkyboxController : MonoBehaviour
 
         UpdateTimeUI();
     }
+
     public void UpdateSkybox()
     {
         UpdateIndirectLight();
@@ -156,15 +186,15 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Auxiliary method for the Inspector to Pause the cycle 
+    /// Auxiliary method for the Inspector to Pause the cycle
     /// </summary>
     public void Pause()
     {
         pause = true;
     }
-    
+
     /// <summary>
-    /// Auxiliary method for the Inspector to Play the cycle 
+    /// Auxiliary method for the Inspector to Play the cycle
     /// </summary>
     public void Play()
     {
@@ -255,7 +285,7 @@ public class SkyboxController : MonoBehaviour
     {
         //change the color of the light based on the color ramp
         directionalLight.color = directionalColorRamp.Evaluate(_normalizedTime);
-        
+
         //sample the right frame of the animation
         if(lightAnimation)
         {

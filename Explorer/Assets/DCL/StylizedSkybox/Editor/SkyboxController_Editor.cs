@@ -6,7 +6,7 @@ public class SkyboxControllerEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        
+
         SkyboxController skyboxController = (SkyboxController)target;
 
         skyboxController.SetTime(EditorGUILayout.Slider("Time", skyboxController._naturalTime, 0, skyboxController.SecondsInDay));
