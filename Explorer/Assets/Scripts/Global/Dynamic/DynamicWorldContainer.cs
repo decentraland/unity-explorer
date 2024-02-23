@@ -73,7 +73,7 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
-            SkyBoxSceneData skyBoxSceneData,
+            //SkyBoxSceneData skyBoxSceneData,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,

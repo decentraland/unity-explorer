@@ -68,8 +68,13 @@ public class SkyboxController : MonoBehaviour
     void Awake()
     {
         //setup skybox material
-        if(skyboxMaterial)
+        if(!skyboxMaterial)
         {
+            Debug.LogWarning("Skybox Controller: No skybox material assigned");
+        }
+        else
+        {
+            //assign skybox to render settings
             RenderSettings.skybox = skyboxMaterial;
         }
 
@@ -80,6 +85,9 @@ public class SkyboxController : MonoBehaviour
         }
         else
         {
+            //assign light to render settings
+            RenderSettings.sun = directionalLight;
+
             //create animation component in runtime and assign animation clip
             _lightAnimator = directionalLight.gameObject.AddComponent<Animation>();
 
@@ -164,7 +172,7 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Auxiliary function for the Inspector to set an specific timer
+    /// Sets the time of the skybox to an specific second
     /// </summary>
     /// <param name="seconds"></param>
     public void SetTime(float seconds)

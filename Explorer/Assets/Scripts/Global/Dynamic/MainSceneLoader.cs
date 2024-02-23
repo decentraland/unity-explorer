@@ -31,7 +31,7 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
-        [SerializeField] private SkyBoxSceneData skyBoxSceneData = null!;
+        //[SerializeField] private SkyBoxSceneData skyBoxSceneData = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private string realmUrl = "https://peer.decentraland.org";
@@ -127,7 +127,7 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
-                    skyBoxSceneData,
+                    //skyBoxSceneData,
                     settings.StaticLoadPositions,
                     settings.SceneLoadRadius,
                     dynamicSettings,
