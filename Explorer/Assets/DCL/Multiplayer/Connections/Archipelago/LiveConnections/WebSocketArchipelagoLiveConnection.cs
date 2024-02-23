@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                 byte[] buffer = data.DangerousBuffer();
 
                 await webSocket.SendAsync(
-                    buffer,
+                    new ArraySegment<byte>(buffer, 0, data.Length),
                     WebSocketMessageType.Binary,
                     true,
                     token

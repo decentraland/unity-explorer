@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 
@@ -53,9 +54,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
         {
-            log($"ArchipelagoLiveConnection SendAsync start with size: {data.Length}");
+            log($"ArchipelagoLiveConnection SendAsync start with size: {data.Length} and content: {DataString(data)}");
             await origin.SendAsync(data, token);
-            log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length}");
+            log($"ArchipelagoLiveConnection SendAsync finished with size: {data.Length} and content: {DataString(data)}");
         }
 
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
@@ -64,6 +65,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             MemoryWrap result = await origin.ReceiveAsync(token);
             log($"ArchipelagoLiveConnection ReceiveAsync finished with size: {result.Length}");
             return result;
+        }
+
+        private static string DataString(MemoryWrap memoryWrap)
+        {
+            var span = memoryWrap.Span();
+            var sb = new StringBuilder(span.Length * 2);
+            foreach (byte b in span)
+            {
+                sb.Append(b.ToString("X2"));
+                sb.Append(" ");
+            }
+
+            return sb.ToString();
         }
     }
 }

@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 new WebSocketArchipelagoLiveConnection(
                     new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-                ),
+                ).WithLog(),
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
                 multiPool
             ).WithLog(),
