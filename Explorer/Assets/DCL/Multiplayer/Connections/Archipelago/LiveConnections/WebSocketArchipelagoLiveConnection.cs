@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                            $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"
                        ),
                        WebSocketMessageType.Binary => CopiedMemory(buffer, result.Count),
-                       WebSocketMessageType.Close => throw new ConnectionClosedException(),
+                       WebSocketMessageType.Close => throw new ConnectionClosedException(webSocket),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
