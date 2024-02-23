@@ -57,14 +57,20 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (interpolation.enabled || blend.enabled) return;
 
+            if (IncomingMessages.Count == 0 && !extrapolation.enabled && passedMessages.Count > 1) // && !blend.enabled)
+            {
+                extrapolation.Run(passedMessages[^1]);
+                return;
+            }
+
             if (IncomingMessages.Count > 0)
             {
                 MessageMock remote = IncomingMessages.Dequeue();
 
                 if (extrapolation.enabled)
                 {
-                    // var local =
-                    blend.Run(extrapolation.Stop(), remote);
+                    var local = extrapolation.Stop();
+                    blend.Run(local, remote);
                     return;
                 }
 
@@ -72,8 +78,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     from: passedMessages.Count > 0 ? passedMessages[^1] : null,
                     to: remote);
             }
-            else if (passedMessages.Count > 1 && !extrapolation.enabled)
-                extrapolation.Run(passedMessages[^1]);
 
             // {
             //     // Stop extrapolation when message arrives
