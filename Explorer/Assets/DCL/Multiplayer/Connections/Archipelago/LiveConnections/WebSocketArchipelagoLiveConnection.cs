@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Typing;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
@@ -39,16 +40,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
         {
             using (data)
-            {
-                byte[] buffer = data.DangerousBuffer();
-
-                await webSocket.SendAsync(
-                    new ArraySegment<byte>(buffer, 0, data.Length),
-                    WebSocketMessageType.Binary,
-                    true,
-                    token
-                )!;
-            }
+                await webSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token)!;
         }
 
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
