@@ -47,12 +47,12 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             float lerpValue = Mathf.Max(0, t / totalDuration);
 
-            Vector3 projectedRemote = remote.position + (remote.velocity * t) + (remote.acceleration * (0.5f * t * t));
+            Vector3 projectedRemote = remote.position + (remote.velocity * t);
 
             if (lerpValue < 1f)
             {
                 Vector3 lerpedVelocity = local.velocity + ((remote.velocity - local.velocity) * lerpValue); // Interpolated velocity
-                Vector3 projectedLocal = local.position + (lerpedVelocity * t) + (remote.acceleration * (0.5f * t * t));
+                Vector3 projectedLocal = local.position + (lerpedVelocity * t);
 
                 return projectedLocal + ((projectedRemote - projectedLocal) * lerpValue); // interpolate positions
             }
@@ -76,7 +76,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 {
                     position = transform.position,
                     velocity = remote.velocity,
-                    acceleration = remote.acceleration,
                 };
 
                 t = 0f; // Reset time since the new package
@@ -86,15 +85,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             {
                 position = newMessage.position,
                 velocity = newMessage.velocity,
-                acceleration = useAcceleration ? newMessage.acceleration : Vector3.zero,
             };
 
             projectedRemote = new MessageMock
             {
                 timestamp = remote.timestamp + messageBus.PackageSentRate,
-                position = remote.position + (remote.velocity * messageBus.PackageSentRate) + (remote.acceleration * (0.5f * messageBus.PackageSentRate * messageBus.PackageSentRate)),
-                velocity = remote.velocity + (remote.acceleration * messageBus.PackageSentRate),
-                acceleration = remote.acceleration,
+                position = remote.position + (remote.velocity * messageBus.PackageSentRate) ,
+                velocity = remote.velocity,
             };
         }
     }

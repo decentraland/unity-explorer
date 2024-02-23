@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement.ECS
             totalDuration = 0f;
         }
 
-        public void Update(float deltaTime)
+        public MessageMock Update(float deltaTime)
         {
             time += deltaTime;
 
@@ -48,9 +48,9 @@ namespace DCL.Multiplayer.Movement.ECS
             {
                 transform.position = interpolationFunc(start, end, time, totalDuration);
                 UpdateRotation();
+                return null;
             }
-            else
-                Disable();
+            else return Disable();
         }
 
         private void UpdateRotation()
@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.Movement.ECS
             }
         }
 
-        public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear)
+        public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear, bool isBlend = false)
         {
             if (from?.timestamp >= to.timestamp) return;
 
@@ -98,13 +98,15 @@ namespace DCL.Multiplayer.Movement.ECS
             Enabled = true;
         }
 
-        private void Disable()
+        private MessageMock Disable()
         {
             transform.position = end.position;
             PassedMessages.Add(end);
             isFirst = false;
 
             Enabled = false;
+
+            return end;
         }
 
         private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)

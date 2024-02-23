@@ -2,7 +2,7 @@
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
-    public class SenderMovement : MonoBehaviour
+    public class SenderMove : MonoBehaviour
     {
         public float speed = 5.0f;
         private CharacterController controller;

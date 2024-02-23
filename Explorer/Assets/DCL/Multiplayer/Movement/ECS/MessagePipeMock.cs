@@ -20,6 +20,8 @@ namespace DCL.Multiplayer.Movement.ECS
         private readonly World world;
 
         private readonly CancellationTokenSource cts;
+
+        private MessageMock lastSend;
         public InterpolationType InterpolationType => settings.InterpolationType;
         public int Count => IncomingMessages.Count;
 
@@ -68,7 +70,10 @@ namespace DCL.Multiplayer.Movement.ECS
                     settings.PackageLost--;
                 else if (!settings.packageBlockButton.IsPressed())
                 {
-                    Send(Time.time, playerCharacter.transform.position, playerCharacter.velocity, world.Get<CharacterAnimationComponent>(playerEntity));
+                    Send(Time.unscaledTime, playerCharacter.transform.position, playerCharacter.velocity,
+                        world.Get<CharacterAnimationComponent>(playerEntity),
+                        world.Get<StunComponent>(playerEntity));
+
                     // PutMark(); send mark
                 }
 
@@ -76,7 +81,7 @@ namespace DCL.Multiplayer.Movement.ECS
             }
         }
 
-        private void Send(float timestamp, Vector3 position, Vector3 velocity, CharacterAnimationComponent animState)
+        private void Send(float timestamp, Vector3 position, Vector3 velocity, CharacterAnimationComponent animState, StunComponent stun)
         {
             var message = new MessageMock
             {
@@ -84,6 +89,7 @@ namespace DCL.Multiplayer.Movement.ECS
                 position = position,
                 velocity = velocity,
                 animState = animState.States,
+                isStunned = stun.IsStunned,
             };
 
             UniTask.Delay(
@@ -92,6 +98,7 @@ namespace DCL.Multiplayer.Movement.ECS
                                              + (settings.PackageSentRate * Random.Range(0, settings.PackagesJitter))))
                    .ContinueWith(() =>
                     {
+                        lastSend = message;
                         IncomingMessages.Enqueue(message);
                         settings.InboxCount = IncomingMessages.Count;
 

@@ -1,79 +1,57 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.MessageBusMock
+namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
 {
-    public class Interpolation : MonoBehaviour
+    public class Interpolation
     {
-        public Receiver receiver;
+        private readonly Transform transform;
 
-        public InterpolationType interpolationType;
-        public float minPositionDelta = 0.1f;
+        public bool IsRunning;
 
-        [Space]
-        public float Time;
+        private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
 
         private MessageMock start;
         private MessageMock end;
+        private float time;
         private float totalDuration;
 
-        private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
-        private bool isFirst = true;
-
-        public event Action<MessageMock> PointPassed;
-
-        private void Update()
+        public Interpolation(Transform transform)
         {
-            Time += UnityEngine.Time.deltaTime;
-
-            if (Time < totalDuration)
-                transform.position = interpolation(start, end, Time, totalDuration);
-            else
-                enabled = false;
+            this.transform = transform;
         }
 
-        private void OnEnable()
+        public void Run(MessageMock from, MessageMock to, InterpolationType interpolationType, int inboxCount)
         {
-            Time = 0f;
-
-            float timeDiff = end.timestamp - start.timestamp;
-            float correctionTime = receiver.IncomingMessages.Count * UnityEngine.Time.smoothDeltaTime;
-            totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
-
-            interpolation = GetInterpolationFunc(interpolationType);
-        }
-
-        private void OnDisable()
-        {
-            transform.position = end.position;
-            PointPassed?.Invoke(end);
-            isFirst = false;
-        }
-
-        public void Run(MessageMock from, MessageMock to)
-        {
-            if (from?.timestamp > to.timestamp) return;
-
             start = from;
             end = to;
 
-            // Can skip
-            if (isFirst || (Vector3.Distance(from.position, to.position) < minPositionDelta && receiver.IncomingMessages.Count > 0))
-                OnDisable();
-            else
-                enabled = true;
+            interpolation = Interpolate.GetInterpolationFunc(interpolationType);
+
+            time = 0f;
+
+            float timeDiff = end.timestamp - start.timestamp;
+            float speedUpTime = inboxCount * Time.smoothDeltaTime; // time correction
+            totalDuration = Mathf.Max(timeDiff - speedUpTime, timeDiff / 4f);
+
+            IsRunning = true;
         }
 
-        private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)
+        public MessageMock Update(float deltaTime)
         {
-            return type switch
-                   {
-                       InterpolationType.Linear => Interpolate.Linear,
-                       InterpolationType.Hermite => Interpolate.Hermite,
-                       InterpolationType.Bezier => Interpolate.Bezier,
-                       InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending,
-                       _ => Interpolate.Linear,
-                   };
+            time += deltaTime;
+
+            if (time < totalDuration)
+                transform.position = interpolation(start, end, time, totalDuration);
+            else
+            {
+                IsRunning = false;
+                transform.position = end.position;
+                return end;
+            }
+
+            return null;
         }
+
     }
 }

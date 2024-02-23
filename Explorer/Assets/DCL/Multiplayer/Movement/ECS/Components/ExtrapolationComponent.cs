@@ -60,7 +60,6 @@ namespace DCL.Multiplayer.Movement.ECS
                 timestamp = start.timestamp + time,
                 position = transform.position,
                 velocity = velocity,
-                acceleration = Vector3.zero,
             };
         }
 

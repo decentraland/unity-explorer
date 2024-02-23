@@ -22,7 +22,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 timestamp = timestamp,
                 position = position,
                 velocity = velocity,
-                acceleration = acceleration,
             });
         }
     }
@@ -33,8 +32,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public float timestamp;
         public Vector3 position;
         public Vector3 velocity;
-        public Vector3 acceleration;
 
         public AnimationStates animState;
+        public bool isStunned;
     }
 }

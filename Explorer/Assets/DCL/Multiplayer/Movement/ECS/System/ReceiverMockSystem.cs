@@ -42,14 +42,21 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 UpdateAnimations(@int.PassedMessages[^1], ref anim, view);
 
             if (@int.Enabled)
-                @int.Update(UnityEngine.Time.deltaTime);
+            {
+                MessageMock? passed = @int.Update(UnityEngine.Time.deltaTime);
+
+                if (passed != null)
+                    UpdateAnimations(passed, ref anim, view);
+            }
             else
             {
                 if (incomingMessages.Count != 0)
                 {
                     if (ext.Enabled)
                     {
+                        MessageMock? passed = ext.Stop();
                         @int.PassedMessages.Add(ext.Stop());
+                        UpdateAnimations(passed, ref anim, view);
 
                         // MessageMock? local = ext.Stop();
                         // MessageMock? remote = incomingMessages.Dequeue();
@@ -73,7 +80,9 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     MessageMock? start = @int.PassedMessages.Count > 0 ? @int.PassedMessages[^1] : null;
 
                     @int.Run(start, incomingMessages.Dequeue(), incomingMessages.Count, incomingMessages.InterpolationType);
-                    @int.Update(UnityEngine.Time.deltaTime);
+
+                    MessageMock? passed2 = @int.Update(UnityEngine.Time.deltaTime);
+                    if (passed2 != null) UpdateAnimations(passed2, ref anim, view);
                 }
                 else
                 {
@@ -88,14 +97,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
         }
 
-        private void UpdateAnimations(MessageMock message, ref CharacterAnimationComponent animationComponent, IAvatarView view)
+        private static void UpdateAnimations(MessageMock message, ref CharacterAnimationComponent animationComponent, IAvatarView view)
         {
             animationComponent.States = message.animState;
 
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
 
-            // view.SetAnimatorBool(AnimationHashes.STUNNED, stunComponent.IsStunned);
+            if (view.GetAnimatorBool(AnimationHashes.JUMPING))
+                view.SetAnimatorTrigger(AnimationHashes.JUMP);
+
+            view.SetAnimatorBool(AnimationHashes.STUNNED, message.isStunned);
             view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
             view.SetAnimatorBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
             view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
