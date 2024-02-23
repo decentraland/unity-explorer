@@ -59,7 +59,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            var signFlow = new LiveConnectionArchipelagoSignFlow(
+            IArchipelagoSignFlow signFlow = new LiveConnectionArchipelagoSignFlow(
                 new LogArchipelagoLiveConnection(
                     new WebSocketArchipelagoLiveConnection(
                         new ClientWebSocket(),

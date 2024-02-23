@@ -14,6 +14,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         private readonly Action<string> log;
         private string? cachedAdapterUrl;
 
+        public bool IsConnected => origin.IsConnected;
+
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(
             origin,
             m => Debug.Log($"{ReportCategory.ARCHIPELAGO_REQUEST}: {m}")
@@ -24,8 +26,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.origin = origin;
             this.log = log;
         }
-
-        public bool IsConnected => origin.IsConnected;
 
         public UniTask ConnectAsync(string adapterUrl, CancellationToken token)
         {

@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             GenericPostRequest result = await webRequests.SignedFetchAsync(sceneHandleUrl, meta.ToJson(), token);
-            var response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             return response.adapter;
         }
 

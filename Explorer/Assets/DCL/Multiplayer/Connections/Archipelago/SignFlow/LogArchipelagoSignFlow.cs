@@ -8,10 +8,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
     public class LogArchipelagoSignFlow : IArchipelagoSignFlow
     {
+        private const string PREFIX = "LogArchipelagoSignFlow:";
         private readonly IArchipelagoSignFlow origin;
         private readonly Action<string> log;
-
-        private const string PREFIX = "LogArchipelagoSignFlow:";
 
         public LogArchipelagoSignFlow(IArchipelagoSignFlow origin) : this(origin, Debug.Log) { }
 
@@ -39,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
         {
             log($"{PREFIX} WelcomePeerIdAsync start for json {signedMessageAuthChainJson}");
-            var result = await origin.WelcomePeerIdAsync(signedMessageAuthChainJson, token);
+            LightResult<string> result = await origin.WelcomePeerIdAsync(signedMessageAuthChainJson, token);
             log($"{PREFIX} WelcomePeerIdAsync finish for json {result} with result {result}");
             return result;
         }

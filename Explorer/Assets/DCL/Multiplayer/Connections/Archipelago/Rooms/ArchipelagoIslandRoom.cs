@@ -16,6 +16,7 @@ using System;
 using System.Buffers;
 using System.Net.WebSockets;
 using System.Threading;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
@@ -91,10 +92,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask SendHeartbeatAsync(ConnectToRoomAsyncDelegate connectDelegate, CancellationToken token)
         {
-            this.connectToRoomAsyncDelegate = connectDelegate;
+            connectToRoomAsyncDelegate = connectDelegate;
             await UniTask.SwitchToMainThread(token);
-            var position = characterObject.Position;
-            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
+            Vector3 position = characterObject.Position;
+            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             await signFlow.SendHeartbeatAsync(position, token);
         }
 
@@ -114,7 +115,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask<LightResult<string>> WelcomePeerIdAsync(string adapterUrl, CancellationToken token)
         {
-            await using var _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
+            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
             await signFlow.ConnectAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;

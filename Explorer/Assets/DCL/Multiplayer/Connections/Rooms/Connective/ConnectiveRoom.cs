@@ -88,7 +88,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            var newRoom = multiPool.Get<LogRoom>();
+            LogRoom newRoom = multiPool.Get<LogRoom>();
             await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
             room.Assign(newRoom, out IRoom? previous);
             previous?.Disconnect();

@@ -69,8 +69,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         private static string DataString(MemoryWrap memoryWrap)
         {
-            var span = memoryWrap.Span();
+            Span<byte> span = memoryWrap.Span();
             var sb = new StringBuilder(span.Length * 2);
+
             foreach (byte b in span)
             {
                 sb.Append(b.ToString("X2"));

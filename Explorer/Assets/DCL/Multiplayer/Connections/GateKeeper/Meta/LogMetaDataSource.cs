@@ -23,7 +23,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public async UniTask<MetaData> MetaDataAsync(CancellationToken token)
         {
             log($"{PREFIX} MetaDataAsync start");
-            var result = await origin.MetaDataAsync(token);
+            MetaData result = await origin.MetaDataAsync(token);
             log($"{PREFIX} MetaDataAsync finish {result.ToJson()}");
             return result;
         }
