@@ -37,25 +37,6 @@ namespace DCL.SDKComponents.Animator.Systems
             World.Remove<SDKAnimatorComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDeletion(ref SDKAnimatorComponent sdkAnimatorComponent)
-        {
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
-        }
-
-        [Query]
-        [None(typeof(PBAnimator), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
-        {
-            //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
-
-            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
-
-            foreach (Animation animation in gltfAnimations) { InitializeAnimation(animation); }
-
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
-        }
 
         [Query]
         [None(typeof(SDKAnimatorComponent))]
@@ -77,7 +58,10 @@ namespace DCL.SDKComponents.Animator.Systems
                 sdkAnimationStates.Add(sdkAnimationState);
             }
 
-            var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates);
+            var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
+                {
+                    IsDirty = true,
+                };
 
             World.Add(entity, sdkAnimatorComponent);
             pbAnimator.IsDirty = false;
@@ -103,6 +87,26 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDeletion(ref SDKAnimatorComponent sdkAnimatorComponent)
+        {
+            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+        }
+
+        [Query]
+        [None(typeof(PBAnimator), typeof(DeleteEntityIntention))]
+        private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
+        {
+            //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
+
+            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
+
+            foreach (Animation animation in gltfAnimations) { InitializeAnimation(animation); }
+
+            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+        }
+
+        [Query]
         private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (sdkAnimatorComponent.IsDirty)
@@ -110,7 +114,11 @@ namespace DCL.SDKComponents.Animator.Systems
                 List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
                 sdkAnimatorComponent.IsDirty = false;
 
-                foreach (Animation animation in gltfAnimations) { SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animation); }
+                for (var i = 0; i < gltfAnimations.Count; i++)
+                {
+                    Animation animation = gltfAnimations[i];
+                    SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animation);
+                }
             }
         }
 
@@ -142,29 +150,29 @@ namespace DCL.SDKComponents.Animator.Systems
 
             for (var i = 0; i < sdkAnimationStates.Count; i++)
             {
-                SDKAnimationState state = sdkAnimationStates[i];
-                AnimationState animationState = animation[state.Clip];
+                SDKAnimationState sdkAnimationState = sdkAnimationStates[i];
+                AnimationState animationState = animation[sdkAnimationState.Clip];
 
                 if (!animationState) continue;
 
-                animationState.weight = state.Weight;
+                animationState.weight = sdkAnimationState.Weight;
 
-                animationState.wrapMode = state.Loop ? WrapMode.Loop : WrapMode.Default;
+                animationState.wrapMode = sdkAnimationState.Loop ? WrapMode.Loop : WrapMode.Default;
 
                 animationState.clip.wrapMode = animationState.wrapMode;
-                animationState.speed = state.Speed;
-                animationState.enabled = state.Playing;
+                animationState.speed = sdkAnimationState.Speed;
+                animationState.enabled = sdkAnimationState.Playing;
 
-                if (state.ShouldReset && animation.IsPlaying(state.Clip))
+                if (sdkAnimationState.ShouldReset && animation.IsPlaying(sdkAnimationState.Clip))
                 {
-                    animation.Stop(state.Clip);
+                    animation.Stop(sdkAnimationState.Clip);
 
                     //Manually sample the animation. If the reset is not played again the frame 0 wont be applied
                     animationState.clip.SampleAnimation(animation.gameObject, 0);
                 }
 
-                if (state.Playing && !animation.IsPlaying(state.Clip))
-                    animation.Play(state.Clip);
+                if (sdkAnimationState.Playing && !animation.IsPlaying(sdkAnimationState.Clip))
+                    animation.Play(sdkAnimationState.Clip);
             }
         }
     }
