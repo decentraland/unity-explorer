@@ -14,66 +14,71 @@ npm run build-protocol
 
 ## SDK7 Integration Progress
 
-### Components 
+### Components
+
+## In Progress
 - [ ] `Animator`
-- [ ] `AudioSource`
-- [ ] `AudioStream`
+- [ ] `PointerLock`
 - [ ] `AvatarAttach`
 - [ ] `AvatarModifierArea`
-- [ ] `AvatarShape`
-- [x] `Billboard`
-- [x] `CRDT_MESSAGE_HEADER_LENGTH`
 - [ ] `CameraMode`
 - [ ] `CameraModeArea`
+
+## Completed
+- [x] `AudioSource`
+- [x] `AudioStream`
+- [x] `AvatarShape`
+- [x] `Billboard`
+
 - [x] `EngineInfo`
 - [x] `GltfContainer`
 - [x] `GltfContainerLoadingState`
 - [x] `Material`
 - [x] `MeshCollider`
 - [x] `MeshRenderer`
-- [ ] `Name`
-- [ ] `NftShape`
+- [x] `Name`
+- [x] `NftShape`
 - [x] `PointerEvents`
 - [x] `PointerEventsResult`
-- [ ] `PointerLock`
-- [ ] `RESERVED_LOCAL_ENTITIES`
-- [ ] `RESERVED_STATIC_ENTITIES`
 - [x] `Raycast`
 - [x] `RaycastResult`
-- [ ] `SYSTEMS_REGULAR_PRIORITY`
-- [ ] `SyncComponents`
 - [x] `TextShape`
 - [x] `Transform`
-- [ ] `Tween`
-- [ ] `TweenSequence`
-- [ ] `TweenState`
-- [ ] `UiBackground`
-- [ ] `UiCanvasInformation`
-- [ ] `UiDropdown`
-- [ ] `UiDropdownResult`
-- [ ] `UiInput`
-- [ ] `UiInputResult`
-- [ ] `UiText`
-- [ ] `UiTransform`
-- [ ] `VideoEvent`
-- [ ] `VideoPlayer`
+- [x] `Tween`
+- [x] `TweenSequence`
+- [x] `TweenState`
+- [x] `UiBackground`
+- [x] `UiCanvasInformation`
+- [x] `UiDropdown`
+- [x] `UiDropdownResult`
+- [x] `UiInput`
+- [x] `UiInputResult`
+- [x] `UiText`
+- [x] `UiTransform`
+- [x] `VideoEvent`
+- [x] `VideoPlayer`
 - [x] `VisibilityComponent`
 
 ## Runtime API
+
+## In Progress
 - [ ] `CommsApi`
 - [ ] `CommunicationsController`
-- [x] `EngineApi`
 - [ ] `EnvironmentApi`
-- [ ] `EthereumController`
 - [ ] `Players`
 - [ ] `PortableExperiences`
 - [ ] `RestrictedActions`
-- [x] `Runtime` (partially)
 - [ ] `Scene`
-- [ ] `SignedFetch`
 - [ ] `Testing`
 - [ ] `UserActionModule`
 - [ ] `UserIdentity`
+
+## Completed
+
+- [x] `SignedFetch`
+- [x] `Runtime`
+- [x] `EngineApi`
+- [x] `EthereumController`
 
 ## Regenerate protocol
 
