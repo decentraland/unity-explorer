@@ -19,7 +19,6 @@ namespace DCL.CharacterTriggerArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
-    [ThrottlingEnabled]
     public partial class CharacterTriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<CharacterTriggerArea> poolRegistry;
@@ -46,40 +45,34 @@ namespace DCL.CharacterTriggerArea.Systems
         }
 
         [Query]
-        private void UpdateCharacterTriggerArea(ref TransformComponent transformComponent, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
+        private void UpdateCharacterTriggerArea(ref TransformComponent transformComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            CharacterTriggerArea triggerAreaMonoBehaviour = characterTriggerAreaComponent.MonoBehaviour;
+            CharacterTriggerArea triggerAreaMonoBehaviour = triggerAreaComponent.MonoBehaviour;
 
             if (!sceneStateProvider.IsCurrent)
             {
-                if (triggerAreaMonoBehaviour != null)
-                {
-                    // We don't use Dispose() here because we want to keep the configured OnEnter/OnExit events
-                    triggerAreaMonoBehaviour.BoxCollider.enabled = false;
-                    triggerAreaMonoBehaviour.ForceOnTriggerExit();
-                }
-
+                triggerAreaMonoBehaviour?.Dispose();
                 return;
             }
 
-            if (characterTriggerAreaComponent.IsDirty)
+            if (triggerAreaComponent.IsDirty)
             {
-                characterTriggerAreaComponent.IsDirty = false;
+                triggerAreaComponent.IsDirty = false;
 
                 if (triggerAreaMonoBehaviour == null)
                 {
                     triggerAreaMonoBehaviour = poolRegistry.Get();
-                    characterTriggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
+                    Debug.Log("PRAVS - Instantiated pooled GO", triggerAreaMonoBehaviour.transform);
+                    triggerAreaMonoBehaviour.EnteredThisFrame = triggerAreaComponent.EnteredThisFrame;
+                    triggerAreaMonoBehaviour.ExitedThisFrame = triggerAreaComponent.ExitedThisFrame;
 
-                    if (characterTriggerAreaComponent.TargetOnlyMainPlayer)
+                    if (triggerAreaComponent.TargetOnlyMainPlayer)
                         triggerAreaMonoBehaviour.TargetTransform = mainPlayerReferences.MainPlayerTransform.Transform;
+
+                    triggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
                 }
 
-                // Values that may have been updated from the SDK scene
-                triggerAreaMonoBehaviour.ClearEvents();
-                triggerAreaMonoBehaviour.OnEnteredTrigger += characterTriggerAreaComponent.OnEnteredTrigger;
-                triggerAreaMonoBehaviour.OnExitedTrigger += characterTriggerAreaComponent.OnExitedTrigger;
-                characterTriggerAreaComponent.MonoBehaviour.BoxCollider.size = characterTriggerAreaComponent.AreaSize;
+                triggerAreaComponent.MonoBehaviour.BoxCollider.size = triggerAreaComponent.AreaSize;
             }
 
             Transform triggerAreaTransform = triggerAreaMonoBehaviour.transform;

@@ -8,48 +8,39 @@ namespace DCL.CharacterTriggerArea
     {
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
 
-        private readonly HashSet<Collider> detectedColliders = new ();
+        // [field: NonSerialized]
+        public HashSet<Transform> EnteredThisFrame;
+
+        // [field: NonSerialized]
+        public HashSet<Transform> ExitedThisFrame;
         [field: NonSerialized] public Transform TargetTransform;
+
+        // TODO: does this fuck up systems reading of the hashsets???
+        // private void LateUpdate()
+        // {
+        //     EnteredThisFrame.Clear();
+        //     ExitedThisFrame.Clear();
+        // }
 
         public void OnTriggerEnter(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            detectedColliders.Add(other);
-            OnEnteredTrigger?.Invoke(other);
+            EnteredThisFrame.Add(other.transform);
         }
 
         public void OnTriggerExit(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            OnExitedTrigger?.Invoke(other);
-            detectedColliders.Remove(other);
+            ExitedThisFrame.Add(other.transform);
         }
 
         public void Dispose()
         {
             BoxCollider.enabled = false;
-            ForceOnTriggerExit();
-            ClearEvents();
-        }
-
-        public event Action<Collider> OnEnteredTrigger;
-        public event Action<Collider> OnExitedTrigger;
-
-        public void ForceOnTriggerExit()
-        {
-            if (detectedColliders.Count == 0) return;
-
-            foreach (Collider detectedCollider in detectedColliders) { OnExitedTrigger?.Invoke(detectedCollider); }
-
-            detectedColliders.Clear();
-        }
-
-        public void ClearEvents()
-        {
-            OnEnteredTrigger = null;
-            OnExitedTrigger = null;
+            EnteredThisFrame.Clear();
+            ExitedThisFrame.Clear();
         }
     }
 }

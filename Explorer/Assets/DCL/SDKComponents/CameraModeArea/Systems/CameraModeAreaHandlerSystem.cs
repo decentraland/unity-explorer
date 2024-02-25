@@ -16,7 +16,9 @@ using UnityEngine;
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateBefore(typeof(CharacterTriggerAreaHandlerSystem))]
+
+    // [UpdateBefore(typeof(CharacterTriggerAreaHandlerSystem))]
+    [UpdateAfter(typeof(CharacterTriggerAreaHandlerSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem
@@ -45,40 +47,33 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
-            var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
-
-            World.Add(entity, new CharacterTriggerAreaComponent
-            {
-                AreaSize = pbCameraModeArea.Area,
-                TargetOnlyMainPlayer = true,
-                OnEnteredTrigger = avatarCo => OnEnteredCameraModeArea(targetCameraMode),
-                OnExitedTrigger = OnExitedCameraModeArea,
-                IsDirty = true,
-            });
+            World.Add(entity, new CharacterTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true));
         }
 
         [Query]
         [All(typeof(TransformComponent))]
         private void UpdateCameraModeArea(ref PBCameraModeArea pbCameraModeArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
         {
-            if (!pbCameraModeArea.IsDirty) return;
+            if (characterTriggerAreaComponent.EnteredThisFrame!.Count > 0) { OnEnteredCameraModeArea((CameraMode)pbCameraModeArea.Mode); }
+            else if (characterTriggerAreaComponent.ExitedThisFrame!.Count > 0) { OnExitedCameraModeArea(); }
 
-            var targetCameraMode = (CameraMode)pbCameraModeArea.Mode;
-            characterTriggerAreaComponent.OnEnteredTrigger = avatarCollider => OnEnteredCameraModeArea(targetCameraMode);
-            characterTriggerAreaComponent.OnExitedTrigger = OnExitedCameraModeArea;
-            characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
-            characterTriggerAreaComponent.IsDirty = true;
+            if (pbCameraModeArea.IsDirty)
+            {
+                characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
+                characterTriggerAreaComponent.IsDirty = true;
+            }
         }
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
+            Debug.Log($"PRAVS - ENTERED Camera Mode Area! {targetCameraMode}");
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Entity!.Value);
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
         }
 
-        internal void OnExitedCameraModeArea(Collider avatarCollider)
+        internal void OnExitedCameraModeArea()
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Entity!.Value);
 
@@ -87,6 +82,8 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputLocks == 0)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
+
+            Debug.Log($"PRAVS - EXITED Camera Mode Area! {camera.Mode}");
         }
     }
 }

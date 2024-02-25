@@ -46,6 +46,8 @@ namespace DCL.PluginSystem.World
         {
             var characterTriggerAreaHandlerSystem = CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerReferences, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(characterTriggerAreaHandlerSystem);
+
+            CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

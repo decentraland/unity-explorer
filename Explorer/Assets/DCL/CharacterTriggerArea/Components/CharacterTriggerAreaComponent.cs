@@ -1,5 +1,5 @@
 using DCL.ECSComponents;
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -7,20 +7,20 @@ namespace DCL.CharacterTriggerArea.Components
 {
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
-        public Action<Collider> OnEnteredTrigger;
-        public Action<Collider> OnExitedTrigger;
         public Vector3 AreaSize;
         public CharacterTriggerArea MonoBehaviour;
         public bool TargetOnlyMainPlayer;
+        public readonly HashSet<Transform> EnteredThisFrame;
+        public readonly HashSet<Transform> ExitedThisFrame;
 
-        public CharacterTriggerAreaComponent(Vector3 areaSize, Action<Collider> onEnteredTrigger, Action<Collider> onExitedTrigger, bool targetOnlyMainPlayer = false)
+        public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false)
         {
             AreaSize = areaSize;
-            OnEnteredTrigger = onEnteredTrigger;
-            OnExitedTrigger = onExitedTrigger;
             TargetOnlyMainPlayer = targetOnlyMainPlayer;
 
             MonoBehaviour = null;
+            EnteredThisFrame = new HashSet<Transform>();
+            ExitedThisFrame = new HashSet<Transform>();
 
             IsDirty = true;
         }

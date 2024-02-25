@@ -189,8 +189,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalled = true,
-                OnExitedTrigger = collider => exitTriggerCalled = true,
+
+                // OnEnteredTrigger = collider => enterTriggerCalled = true,
+                // OnExitedTrigger = collider => exitTriggerCalled = true,
                 IsDirty = true,
             };
 
@@ -233,8 +234,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalled = true,
-                OnExitedTrigger = collider => exitTriggerCalled = true,
+
+                // OnEnteredTrigger = collider => enterTriggerCalled = true,
+                // OnExitedTrigger = collider => exitTriggerCalled = true,
                 IsDirty = true,
             };
 
@@ -278,8 +280,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalled = true,
-                OnExitedTrigger = collider => exitTriggerCalled = true,
+
+                // OnEnteredTrigger = collider => enterTriggerCalled = true,
+                // OnExitedTrigger = collider => exitTriggerCalled = true,
                 IsDirty = true,
             };
 
@@ -325,8 +328,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalled = true,
-                OnExitedTrigger = collider => exitTriggerCalled = true,
+
+                // OnEnteredTrigger = collider => enterTriggerCalled = true,
+                // OnExitedTrigger = collider => exitTriggerCalled = true,
                 IsDirty = true,
             };
 
@@ -375,8 +379,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalled = true,
-                OnExitedTrigger = collider => exitTriggerCalled = true,
+
+                // OnEnteredTrigger = collider => enterTriggerCalled = true,
+                // OnExitedTrigger = collider => exitTriggerCalled = true,
                 IsDirty = true,
             };
 
@@ -412,8 +417,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalled = true,
-                OnExitedTrigger = collider => exitTriggerCalled = true,
+
+                // OnEnteredTrigger = collider => enterTriggerCalled = true,
+                // OnExitedTrigger = collider => exitTriggerCalled = true,
                 IsDirty = true,
             };
 
@@ -457,8 +463,9 @@ namespace DCL.CharacterTriggerArea.Tests
             var component = new CharacterTriggerAreaComponent
             {
                 AreaSize = Vector3.one * 4,
-                OnEnteredTrigger = collider => enterTriggerCalls++,
-                OnExitedTrigger = collider => exitTriggerCalls++,
+
+                // OnEnteredTrigger = collider => enterTriggerCalls++,
+                // OnExitedTrigger = collider => exitTriggerCalls++,
                 TargetOnlyMainPlayer = onlyMainPlayer,
                 IsDirty = true,
             };
