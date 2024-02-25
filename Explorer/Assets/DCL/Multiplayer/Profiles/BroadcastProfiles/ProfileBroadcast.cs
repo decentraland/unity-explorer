@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -5,8 +6,8 @@ using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
-using System;
 using System.Collections.Generic;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
@@ -25,9 +26,9 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             this.multiPool = multiPool;
         }
 
-        public void NotifyRemotes()
+        public async UniTaskVoid NotifyRemotesAsync()
         {
-            //TODO on background thread
+            await using var _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
             using var versionWrap = multiPool.TempResource<AnnounceProfileVersion>();
             versionWrap.value.ProfileVersion = CURRENT_VERSION;
             var version = versionWrap.value;
@@ -40,18 +41,17 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
             using var memory = memoryPool.Memory(packet);
             packet.WriteTo(memory);
-            var span = memory.Span();
 
-            NotifyRemotes(roomHub.IslandRoom(), span);
-            NotifyRemotes(roomHub.SceneRoom(), span);
+            NotifyRemotesAsync(roomHub.IslandRoom(), memory);
+            NotifyRemotesAsync(roomHub.SceneRoom(), memory);
         }
 
-        private static void NotifyRemotes(IRoom room, Span<byte> data)
+        private static void NotifyRemotesAsync(IRoom room, MemoryWrap data)
         {
             //TODO time debounce
             //TODO remove allocation on list
             var remotes = new List<string>(room.Participants.RemoteParticipantSids());
-            room.DataPipe.PublishData(data, TOPIC, remotes);
+            room.DataPipe.PublishData(data.Span(), TOPIC, remotes);
         }
     }
 }
