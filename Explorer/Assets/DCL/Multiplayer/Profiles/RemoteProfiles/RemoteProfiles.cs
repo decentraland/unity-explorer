@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
             this.profileRepository = profileRepository;
         }
 
-        public void Download(IReadOnlyList<RemoteAnnouncement> list)
+        public void Download(ICollection<RemoteAnnouncement> list)
         {
             //TODO consider which option for performance would be better, just everything, to download or by chuncks, question about concurrency for web requests
             foreach (RemoteAnnouncement remoteAnnouncement in list)
