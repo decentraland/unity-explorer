@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Profiles;
-using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         {
             //TODO consider which option for performance would be better, just everything, to download or by chuncks, question about concurrency for web requests
             foreach (RemoteAnnouncement remoteAnnouncement in list)
-                DownloadAsync(remoteAnnouncement).Forget();
+                TryDownloadAsync(remoteAnnouncement).Forget();
         }
 
         public bool NewBunchAvailable() =>
@@ -31,11 +31,17 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         public Bunch<RemoteProfile> Bunch() =>
             new (remoteProfiles);
 
-        private async UniTaskVoid DownloadAsync(RemoteAnnouncement remoteAnnouncement)
+        private async UniTaskVoid TryDownloadAsync(RemoteAnnouncement remoteAnnouncement)
         {
             var profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, CancellationToken.None);
-            profile.EnsureNotNull($"Profile not found: {remoteAnnouncement.WalletId} {remoteAnnouncement.Version}");
-            remoteProfiles.Add(new RemoteProfile(profile!, remoteAnnouncement.WalletId));
+
+            if (profile is null)
+            {
+                ReportHub.LogError(ReportCategory.PROFILE, $"Profile not found {remoteAnnouncement}");
+                return;
+            }
+
+            remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId));
         }
     }
 }
