@@ -1,6 +1,6 @@
 namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 {
-    public struct RemoteAnnouncement
+    public readonly struct RemoteAnnouncement
     {
         public readonly int Version;
         public readonly string WalletId;
@@ -10,5 +10,8 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
             this.Version = version;
             this.WalletId = walletId;
         }
+
+        public override string ToString() =>
+            $"(RemoteAnnouncement: {{ Version: {Version}, WalletId: {WalletId} }})";
     }
 }
