@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             if (remoteAnnouncements.NewBunchAvailable())
             {
                 using var bunch = remoteAnnouncements.Bunch();
-                var list = bunch.List();
+                var list = bunch.Collection();
                 remoteProfiles.Download(list);
             }
 

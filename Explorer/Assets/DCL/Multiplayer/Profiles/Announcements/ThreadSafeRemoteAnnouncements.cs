@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
         private readonly IRoomHub roomHub;
         private readonly MessageParser<Packet> parser;
         private readonly IMultiPool multiPool;
-        private readonly List<RemoteAnnouncement> list = new ();
+        private readonly HashSet<RemoteAnnouncement> list = new ();
         private readonly Semaphore semaphore = new (1, 1);
 
         public ThreadSafeRemoteAnnouncements(IRoomHub roomHub, IMultiPool multiPool)
