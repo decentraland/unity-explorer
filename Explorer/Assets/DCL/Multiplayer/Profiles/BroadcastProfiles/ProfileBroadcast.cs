@@ -31,8 +31,14 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             versionWrap.value.ProfileVersion = CURRENT_VERSION;
             var version = versionWrap.value;
 
-            using var memory = memoryPool.Memory(version);
-            version.WriteTo(memory);
+            using var packetWrap = multiPool.TempResource<Packet>();
+            var packet = packetWrap.value;
+
+            packet.ClearMessage();
+            packet.ProfileVersion = version;
+
+            using var memory = memoryPool.Memory(packet);
+            packet.WriteTo(memory);
             var span = memory.Span();
 
             NotifyRemotes(roomHub.IslandRoom(), span);
