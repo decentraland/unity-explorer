@@ -1,4 +1,6 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -39,9 +41,11 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
         private void DataPipeOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
             //TODO deduplication
-            var response = parser.ParseFrom(data).EnsureNotNull();
 
-            if (response.MessageCase is Packet.MessageOneofCase.ProfileVersion)
+            if (TryParse(data, out var response) == false)
+                return;
+
+            if (response!.MessageCase is Packet.MessageOneofCase.ProfileVersion)
             {
                 uint version = response.ProfileVersion!.ProfileVersion;
                 string walletId = participant.Identity;
@@ -49,6 +53,25 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
             }
 
             multiPool.Release(response);
+        }
+
+        private bool TryParse(ReadOnlySpan<byte> data, out Packet? packet)
+        {
+            try
+            {
+                packet = parser.ParseFrom(data).EnsureNotNull();
+                return true;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(
+                    ReportCategory.ARCHIPELAGO_REQUEST,
+                    $"Someone sent invalid packet: {data.Length} {data.HexReadableString()} {e}"
+                );
+
+                packet = null;
+                return false;
+            }
         }
 
         public bool NewBunchAvailable()
