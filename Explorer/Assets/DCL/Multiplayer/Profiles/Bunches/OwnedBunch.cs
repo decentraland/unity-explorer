@@ -11,22 +11,22 @@ namespace DCL.Multiplayer.Profiles.Bunches
     public readonly struct OwnedBunch<T> : IDisposable where T: struct
     {
         private readonly Semaphore ownership;
-        private readonly List<T> list;
+        private readonly ISet<T> set;
 
-        public OwnedBunch(Semaphore ownership, List<T> list)
+        public OwnedBunch(Semaphore ownership, ISet<T> set)
         {
             ownership.WaitOne();
             this.ownership = ownership;
-            this.list = list;
+            this.set = set;
         }
 
         /// <returns>Don't save the link for the list, can be mutated at any time!</returns>
-        public IReadOnlyList<T> List() =>
-            list;
+        public ICollection<T> Collection() =>
+            set;
 
         public void Dispose()
         {
-            list.Clear();
+            set.Clear();
             ownership.Release();
         }
     }
