@@ -2,6 +2,8 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
+using Google.Protobuf;
+using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Proto;
 using LiveKit.Rooms.Participants;
 using System;
@@ -13,12 +15,16 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
     public class ThreadSafeRemoteAnnouncements : IRemoteAnnouncements
     {
         private readonly IRoomHub roomHub;
+        private readonly MessageParser<Packet> parser;
+        private readonly IMultiPool multiPool;
         private readonly List<RemoteAnnouncement> list = new ();
         private readonly Semaphore semaphore = new (1, 1);
 
-        public ThreadSafeRemoteAnnouncements(IRoomHub roomHub)
+        public ThreadSafeRemoteAnnouncements(IRoomHub roomHub, IMultiPool multiPool)
         {
             this.roomHub = roomHub;
+            this.multiPool = multiPool;
+            parser = new MessageParser<Packet>(multiPool.Get<Packet>);
 
             this.roomHub.IslandRoom().DataPipe.DataReceived += DataPipeOnDataReceived;
             this.roomHub.SceneRoom().DataPipe.DataReceived += DataPipeOnDataReceived;
@@ -33,7 +39,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
         private void DataPipeOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
             //TODO deduplication
-            var response = Packet.Parser!.ParseFrom(data).EnsureNotNull();
+            var response = parser.ParseFrom(data).EnsureNotNull();
 
             if (response.MessageCase is Packet.MessageOneofCase.ProfileVersion)
             {
@@ -41,6 +47,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
                 string walletId = participant.Identity;
                 ThreadSafeAdd(new RemoteAnnouncement((int)version, walletId));
             }
+            multiPool.Release(response);
         }
 
         public bool NewBunchAvailable()
