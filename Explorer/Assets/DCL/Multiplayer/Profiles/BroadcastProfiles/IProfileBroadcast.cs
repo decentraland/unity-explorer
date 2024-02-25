@@ -1,9 +1,11 @@
+using Cysharp.Threading.Tasks;
+
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
     public interface IProfileBroadcast
     {
-        //TODO send profiles to new connected remote participants
+        //TODO send profiles to only new connected remote participants
 
-        void NotifyRemotes();
+        UniTaskVoid NotifyRemotesAsync();
     }
 }

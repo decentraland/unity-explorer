@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Profiles.Systems
                 CreateRemoteEntities(list);
             }
 
-            profileBroadcast.NotifyRemotes();
+            profileBroadcast.NotifyRemotesAsync();
 
             //TODO remove scheme
             //1 receive signal announce profile
