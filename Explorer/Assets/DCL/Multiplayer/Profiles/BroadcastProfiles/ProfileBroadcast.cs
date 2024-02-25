@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         public void NotifyRemotes()
         {
+            //TODO on background thread
             using var versionWrap = multiPool.TempResource<AnnounceProfileVersion>();
             versionWrap.value.ProfileVersion = CURRENT_VERSION;
             var version = versionWrap.value;
