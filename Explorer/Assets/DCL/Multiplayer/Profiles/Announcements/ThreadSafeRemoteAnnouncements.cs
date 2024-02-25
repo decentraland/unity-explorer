@@ -47,6 +47,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
                 string walletId = participant.Identity;
                 ThreadSafeAdd(new RemoteAnnouncement((int)version, walletId));
             }
+
             multiPool.Release(response);
         }
 
