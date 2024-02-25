@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Profiles.Bunches
         }
 
         /// <returns>Don't save the link for the list, can be mutated at any time!</returns>
-        public IReadOnlyList<T> List() =>
+        public IReadOnlyCollection<T> Collection() =>
             list;
 
         public void Dispose()
