@@ -49,7 +49,9 @@ namespace DCL.PluginSystem.Global
                 new EntityParticipantTable(),
                 new ThreadSafeRemoteAnnouncements(roomHub, multiPool),
                 new RemoteProfiles(profileRepository),
+                new DebounceProfileBroadcast(
                 new ProfileBroadcast(roomHub, memoryPool, multiPool)
+                )
             );
         }
     }
