@@ -44,8 +44,8 @@ namespace DCL.Multiplayer.Profiles.Systems
             if (remoteProfiles.NewBunchAvailable())
             {
                 using var bunch = remoteProfiles.Bunch();
-                var list = bunch.List();
-                CreateRemoteEntities(list);
+                var collection = bunch.Collection();
+                TryCreateRemoteEntities(collection);
             }
 
             profileBroadcast.NotifyRemotesAsync();
@@ -57,13 +57,19 @@ namespace DCL.Multiplayer.Profiles.Systems
             //4 auto flow of avatar
         }
 
-        private void CreateRemoteEntities(IEnumerable<RemoteProfile> list)
+        private void TryCreateRemoteEntities(IEnumerable<RemoteProfile> list)
         {
             foreach (RemoteProfile remoteProfile in list)
-            {
-                var entity = World!.Create(remoteProfile.Profile);
-                entityParticipantTable.Register(remoteProfile.WalletId, entity);
-            }
+                TryCreateRemoteEntity(remoteProfile);
+        }
+
+        private void TryCreateRemoteEntity(in RemoteProfile profile)
+        {
+            if (entityParticipantTable.Has(profile.WalletId))
+                return;
+
+            var entity = World!.Create(profile.Profile);
+            entityParticipantTable.Register(profile.WalletId, entity);
         }
     }
 }
