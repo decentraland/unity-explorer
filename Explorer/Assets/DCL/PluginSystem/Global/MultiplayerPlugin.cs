@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.Global
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new EntityParticipantTable(),
-                new ThreadSafeRemoteAnnouncements(roomHub),
+                new ThreadSafeRemoteAnnouncements(roomHub, multiPool),
                 new RemoteProfiles(profileRepository),
                 new ProfileBroadcast(roomHub, memoryPool, multiPool)
             );
