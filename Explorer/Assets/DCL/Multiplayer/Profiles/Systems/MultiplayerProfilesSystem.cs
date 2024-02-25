@@ -10,6 +10,13 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.Systems
 {
+    /// <summary>
+    /// The scheme
+    /// 1 receive signal announce profile
+    /// 2 fetch the profile
+    /// 3 assign profile to the entity
+    /// 4 auto flow of avatar
+    /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
@@ -49,12 +56,6 @@ namespace DCL.Multiplayer.Profiles.Systems
             }
 
             profileBroadcast.NotifyRemotesAsync();
-
-            //TODO remove scheme
-            //1 receive signal announce profile
-            //2 fetch the profile
-            //3 assign profile to the entity
-            //4 auto flow of avatar
         }
 
         private void TryCreateRemoteEntities(IEnumerable<RemoteProfile> list)
