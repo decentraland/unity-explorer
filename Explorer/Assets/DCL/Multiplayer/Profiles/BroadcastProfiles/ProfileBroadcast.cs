@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
         private const string TOPIC = "Topic";
-        private const int CURRENT_VERSION = 1;
+        private const int CURRENT_PROFILE_VERSION = 0;
 
         public ProfileBroadcast(IRoomHub roomHub, IMemoryPool memoryPool, IMultiPool multiPool)
         {
@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         {
             await using var _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
             using var versionWrap = multiPool.TempResource<AnnounceProfileVersion>();
-            versionWrap.value.ProfileVersion = CURRENT_VERSION;
+            versionWrap.value.ProfileVersion = CURRENT_PROFILE_VERSION;
             var version = versionWrap.value;
 
             using var packetWrap = multiPool.TempResource<Packet>();
