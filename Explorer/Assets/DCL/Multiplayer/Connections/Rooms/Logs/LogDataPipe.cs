@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             DataReceived?.Invoke(data, participant, kind);
         }
 
-        public void PublishData(Span<byte> data, string topic, IReadOnlyList<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy)
+        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy)
         {
             log($"{PREFIX} publish data {data.Length} bytes to {topic} - {string.Join(", ", destinationSids)} - {kind}");
             origin.PublishData(data, topic, destinationSids, kind);
