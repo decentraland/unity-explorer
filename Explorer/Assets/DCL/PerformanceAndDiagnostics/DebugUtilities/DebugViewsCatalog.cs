@@ -51,5 +51,8 @@ namespace DCL.DebugUtilities
 
         [field: SerializeField]
         public VisualTreeAsset Vector3Field { get; private set; }
+
+        [field: SerializeField]
+        public VisualTreeAsset DropdownField { get; private set; }
     }
 }
