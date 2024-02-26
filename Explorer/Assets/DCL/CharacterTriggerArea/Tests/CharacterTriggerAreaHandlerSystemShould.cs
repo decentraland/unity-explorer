@@ -245,7 +245,7 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
-        public async Task HandleComponentRemoveCorrectly()
+        public async Task HandleCameraModeAreaComponentRemoveCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -272,6 +272,44 @@ namespace DCL.CharacterTriggerArea.Tests
 
             // Remove component
             world.Remove<PBCameraModeArea>(entity);
+
+            system.Update(0);
+            await WaitForPhysics();
+
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
+            Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
+            Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
+        }
+
+        [Test]
+        public async Task HandleAvatarModifierAreaComponentRemoveCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var pbComponent = new PBAvatarModifierArea();
+
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
+
+            world.Add(entity, component, pbComponent);
+
+            system.Update(0);
+
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+
+            // Move character inside area
+            fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
+
+            await WaitForPhysics();
+
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+            component.EnteredThisFrame.Clear();
+
+            // Remove component
+            world.Remove<PBAvatarModifierArea>(entity);
 
             system.Update(0);
             await WaitForPhysics();
