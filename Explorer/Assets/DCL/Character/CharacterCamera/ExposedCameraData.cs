@@ -10,12 +10,12 @@ namespace DCL.CharacterCamera
     {
         private static readonly IEqualityComparer<Quaternion> EQUALITY_COMPARER_WITH_ERROR =
             QuaternionUtils.CreateEqualityComparer(QuaternionUtils.DEFAULT_ERROR * 100);
-        public readonly EntityProxy CameraEntityProxy = new ();
 
         public CanBeDirty<Vector3> WorldPosition;
         public CanBeDirty<Quaternion> WorldRotation = new (Quaternion.identity, EQUALITY_COMPARER_WITH_ERROR);
         public CanBeDirty<bool> PointerIsLocked;
         public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
+        public EntityProxy CameraEntityProxy { get; } = new ();
 
         CanBeDirty<Vector3> IExposedCameraData.WorldPosition => WorldPosition;
         CanBeDirty<Quaternion> IExposedCameraData.WorldRotation => WorldRotation;

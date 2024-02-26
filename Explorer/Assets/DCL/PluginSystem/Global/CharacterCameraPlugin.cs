@@ -21,9 +21,9 @@ namespace DCL.PluginSystem.Global
     public class CharacterCameraPlugin : IDCLGlobalPlugin<CharacterCameraSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly RealmSamplingData realmSamplingData;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
 
         public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, CameraSamplingData cameraSamplingData, ExposedCameraData exposedCameraData)
