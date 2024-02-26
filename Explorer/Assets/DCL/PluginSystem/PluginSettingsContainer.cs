@@ -12,7 +12,7 @@ namespace DCL.PluginSystem
     {
         // We should initialize this by a custom inspector
         // ReSharper disable once CollectionNeverUpdated.Global
-        [SerializeReference] [PluginSettingsTitle] internal List<IDCLPluginSettings> settings;
+        [SerializeReference] internal List<IDCLPluginSettings> settings;
 
         public T GetSettings<T>() where T: IDCLPluginSettings
         {

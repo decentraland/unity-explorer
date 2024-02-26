@@ -8,6 +8,8 @@ namespace DCL.DebugUtilities.UIBindings
     /// </summary>
     public class ElementBinding<T> : IBinding
     {
+        public event Action<T> OnValueChanged;
+
         private T tempValue;
 
         private bool tempValueIsDirty;
@@ -25,15 +27,9 @@ namespace DCL.DebugUtilities.UIBindings
             }
         }
 
-        /// <summary>
-        ///     Called when the value changes from the VisualElement
-        /// </summary>
-        public event EventCallback<ChangeEvent<T>> OnValueChanged;
-
-        public ElementBinding(T defaultValue, EventCallback<ChangeEvent<T>> onValueChange = null)
+        public ElementBinding(T defaultValue)
         {
             Value = defaultValue;
-            if (onValueChange != null) OnValueChanged += onValueChange;
         }
 
         /// <summary>
@@ -44,8 +40,6 @@ namespace DCL.DebugUtilities.UIBindings
         {
             this.element = element;
             this.element.value = Value;
-
-            this.element.RegisterValueChangedCallback(evt => OnValueChanged?.Invoke(evt));
 
             Update();
         }
@@ -64,7 +58,10 @@ namespace DCL.DebugUtilities.UIBindings
         public void Update()
         {
             if (tempValueIsDirty)
+            {
                 element.value = tempValue;
+                OnValueChanged?.Invoke(element.value);
+            }
 
             tempValueIsDirty = false;
         }
@@ -77,7 +74,6 @@ namespace DCL.DebugUtilities.UIBindings
 
         public void Release()
         {
-            element.UnregisterValueChangedCallback(OnValueChanged);
             element = null;
         }
     }
