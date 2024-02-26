@@ -1,8 +1,4 @@
-﻿#nullable enable
-
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using System;
-using System.Buffers;
+﻿using System;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
@@ -68,7 +64,6 @@ namespace SocketIOClient.Transport.WebSockets
 #endif
 
         private readonly ClientWebSocket _ws;
-        private readonly IMemoryPool memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
         public WebSocketState State => (WebSocketState)_ws.State;
 
@@ -82,28 +77,27 @@ namespace SocketIOClient.Transport.WebSockets
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
+        public async Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
         {
             WebSocketMessageType msgType = WebSocketMessageType.Text;
 
             if (type == TransportMessageType.Binary) { msgType = WebSocketMessageType.Binary; }
 
-            await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
+            await _ws.SendAsync(new ArraySegment<byte>(bytes), msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
-            var memory = memoryPool.Memory(bufferSize);
-            byte[] buffer = memory.DangerousBuffer();
+            var buffer = new byte[bufferSize];
+            System.Net.WebSockets.WebSocketReceiveResult result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
 
-            System.Net.WebSockets.WebSocketReceiveResult? result = await _ws.ReceiveAsync(buffer, cancellationToken)!
-                                                                            .ConfigureAwait(false);
-            return new WebSocketReceiveResult(
-                memory,
-                result.Count,
-                result.EndOfMessage,
-                (TransportMessageType)result.MessageType
-            );
+            return new WebSocketReceiveResult
+            {
+                Count = result.Count,
+                MessageType = (TransportMessageType)result.MessageType,
+                EndOfMessage = result.EndOfMessage,
+                Buffer = buffer,
+            };
         }
 
         public void AddHeader(string key, string val)

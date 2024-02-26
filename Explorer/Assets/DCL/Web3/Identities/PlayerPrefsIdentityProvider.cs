@@ -4,17 +4,16 @@ namespace DCL.Web3.Identities
 {
     public partial class PlayerPrefsIdentityProvider : IWeb3IdentityCache
     {
-        private const string DEFAULT_PREFS_KEY = "Web3Authentication.Identity";
+        private const string PREFS_KEY = "Web3Authentication.Identity";
 
-        private readonly string playerPrefsKey;
         private readonly IWeb3IdentityJsonSerializer identitySerializer;
 
         public IWeb3Identity? Identity
         {
             get
             {
-                if (!PlayerPrefs.HasKey(playerPrefsKey)) return null;
-                string json = PlayerPrefs.GetString(playerPrefsKey, string.Empty)!;
+                if (!PlayerPrefs.HasKey(PREFS_KEY)) return null;
+                string json = PlayerPrefs.GetString(PREFS_KEY, "");
                 if (string.IsNullOrEmpty(json)) return null;
                 return identitySerializer.Deserialize(json);
             }
@@ -24,21 +23,20 @@ namespace DCL.Web3.Identities
                 if (value == null)
                     Clear();
                 else
-                    PlayerPrefs.SetString(playerPrefsKey, identitySerializer.Serialize(value));
+                    PlayerPrefs.SetString(PREFS_KEY, identitySerializer.Serialize(value));
             }
         }
 
-        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, string playerPrefsKey = DEFAULT_PREFS_KEY)
+        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer)
         {
             this.identitySerializer = identitySerializer;
-            this.playerPrefsKey = playerPrefsKey;
         }
 
         public void Dispose() { }
 
         public void Clear()
         {
-            PlayerPrefs.DeleteKey(playerPrefsKey);
+            PlayerPrefs.DeleteKey(PREFS_KEY);
         }
     }
 }

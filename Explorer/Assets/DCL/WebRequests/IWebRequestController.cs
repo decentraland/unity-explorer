@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics;
 using DCL.WebRequests.AudioClips;
 using DCL.WebRequests.GenericHead;
 using System.Threading;
@@ -72,12 +70,5 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.AUDIO_CLIP_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null);
-
-        static readonly IWebRequestController DEFAULT = new WebRequestController(
-            new WebRequestsAnalyticsContainer(),
-            new PlayerPrefsIdentityProvider(
-                new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
-            )
-        );
     }
 }
