@@ -176,48 +176,38 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
-        public async Task TriggerEnterExitEventsCorrectly()
+        public async Task TrackEnterExitCollectionsCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var enterTriggerCalled = false;
-            var exitTriggerCalled = false;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalled = true,
-                // OnExitedTrigger = collider => exitTriggerCalled = true,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.IsFalse(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.IsTrue(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
-            enterTriggerCalled = false;
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+            component.EnteredThisFrame.Clear();
 
             // Move character outside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position + (Vector3.one * 50);
 
             await WaitForPhysics();
 
-            Assert.IsTrue(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
         }
 
         [Test]
@@ -226,43 +216,33 @@ namespace DCL.CharacterTriggerArea.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var enterTriggerCalled = false;
-            var exitTriggerCalled = false;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalled = true,
-                // OnExitedTrigger = collider => exitTriggerCalled = true,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.IsFalse(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.IsTrue(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
-            enterTriggerCalled = false;
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+            component.EnteredThisFrame.Clear();
 
             // Simulate "getting outside current scene"
             sceneStateProvider.IsCurrent.Returns(false);
 
             system.Update(0);
 
-            Assert.IsTrue(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
             Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
         }
 
@@ -272,35 +252,25 @@ namespace DCL.CharacterTriggerArea.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var enterTriggerCalled = false;
-            var exitTriggerCalled = false;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalled = true,
-                // OnExitedTrigger = collider => exitTriggerCalled = true,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.IsFalse(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.IsTrue(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
-            enterTriggerCalled = false;
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+            component.EnteredThisFrame.Clear();
 
             // Remove component
             world.Remove<PBCameraModeArea>(entity);
@@ -308,8 +278,8 @@ namespace DCL.CharacterTriggerArea.Tests
             system.Update(0);
             await WaitForPhysics();
 
-            Assert.IsTrue(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
             Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
             Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
         }
@@ -320,35 +290,25 @@ namespace DCL.CharacterTriggerArea.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            var enterTriggerCalled = false;
-            var exitTriggerCalled = false;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalled = true,
-                // OnExitedTrigger = collider => exitTriggerCalled = true,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.IsFalse(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.IsTrue(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
-            enterTriggerCalled = false;
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+            component.EnteredThisFrame.Clear();
 
             // Flag entity for deletion
             world.Add<DeleteEntityIntention>(entity);
@@ -356,14 +316,14 @@ namespace DCL.CharacterTriggerArea.Tests
             system.Update(0);
             await WaitForPhysics();
 
-            Assert.IsTrue(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(1, component.ExitedThisFrame.Count);
             Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
             Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
         }
 
         [Test]
-        public async Task TriggerOnEnterIfPlayerAlreadyInside()
+        public async Task DetectCharacterWhenAlreadyInside()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -371,34 +331,24 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            var enterTriggerCalled = false;
-            var exitTriggerCalled = false;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalled = true,
-                // OnExitedTrigger = collider => exitTriggerCalled = true,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
-            Assert.IsFalse(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             system.Update(0);
             await WaitForPhysics();
 
-            Assert.IsTrue(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
         [Test]
-        public async Task WaitUntilAvatarBaseIsConfiguredBeforeActing()
+        public async Task WaitUntilAvatarBaseIsConfiguredBeforeDetecting()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -409,38 +359,28 @@ namespace DCL.CharacterTriggerArea.Tests
             // Use fresh non-initialized MainPlayerAvatarBase
             mainPlayerReferences.MainPlayerAvatarBase = new MainPlayerAvatarBase();
 
-            var enterTriggerCalled = false;
-            var exitTriggerCalled = false;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalled = true,
-                // OnExitedTrigger = collider => exitTriggerCalled = true,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
-            Assert.IsFalse(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             system.Update(0);
             await WaitForPhysics();
 
-            Assert.IsFalse(exitTriggerCalled);
-            Assert.IsFalse(enterTriggerCalled);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             mainPlayerReferences.MainPlayerAvatarBase.SetAvatarBase(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
 
             system.Update(0);
             await WaitForPhysics();
 
-            Assert.IsTrue(enterTriggerCalled);
-            Assert.IsFalse(exitTriggerCalled);
+            Assert.AreEqual(1, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
         [Test]
@@ -455,27 +395,16 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeOtherPlayerGO = Object.Instantiate(fakeOtherPlayerGO.GetComponent<CharacterObject>()).gameObject;
             fakeOtherPlayerGO.transform.position = Vector3.zero;
 
-            var enterTriggerCalls = 0;
-            var exitTriggerCalls = 0;
-
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one * 4,
-
-                // OnEnteredTrigger = collider => enterTriggerCalls++,
-                // OnExitedTrigger = collider => exitTriggerCalls++,
-                TargetOnlyMainPlayer = onlyMainPlayer,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4, targetOnlyMainPlayer: onlyMainPlayer);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.AreEqual(0, enterTriggerCalls);
-            Assert.AreEqual(0, exitTriggerCalls);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
             // Move both characters inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
@@ -483,8 +412,9 @@ namespace DCL.CharacterTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(0, exitTriggerCalls);
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, enterTriggerCalls);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredThisFrame.Count);
+            Assert.AreEqual(0, component.ExitedThisFrame.Count);
+            component.EnteredThisFrame.Clear();
 
             // Move both characters outside area
             fakeMainPlayerGO.transform.position += Vector3.one * 30;
@@ -492,8 +422,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, enterTriggerCalls);
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, exitTriggerCalls);
+            Assert.AreEqual(0, component.EnteredThisFrame.Count);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.ExitedThisFrame.Count);
 
             // Cleanup
             Object.DestroyImmediate(fakeOtherPlayerGO);
@@ -501,6 +431,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
         private async Task WaitForPhysics()
         {
+            // Wait several frames to allow CI detect physics on its non-deterministic hardware.
             var framesToWait = 10;
 
             for (var i = 0; i < framesToWait; i++)
