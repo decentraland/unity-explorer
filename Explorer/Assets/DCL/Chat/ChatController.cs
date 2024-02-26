@@ -1,26 +1,26 @@
 using Cysharp.Threading.Tasks;
 using MVC;
-using SuperScrollView;
-using System.Collections.Generic;
+using System;
 using System.Threading;
-using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.Chat
 {
     public partial class ChatController : ControllerBase<ChatView>
     {
+        private readonly ChatEntryView chatEntryView;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-
-        private List<ChatMessage> chatMessages = new List<ChatMessage>();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
+            ChatEntryView chatEntryView,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus) : base(viewFactory)
         {
+            this.chatEntryView = chatEntryView;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
 
@@ -35,23 +35,6 @@ namespace DCL.Chat
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
-            viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-        }
-
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
-        {
-            if (index < 0 || index >= chatMessages.Count)
-                return null;
-
-            ChatMessage itemData = chatMessages[index];
-
-            LoopListViewItem2 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
-
-            ChatEntryView itemScript = item.GetComponent<ChatEntryView>();
-            itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
-            itemScript.SetItemData(itemData);
-
-            return item;
         }
 
         private void CloseChat()
@@ -80,9 +63,13 @@ namespace DCL.Chat
         private void CreateChatEntry(ChatMessage chatMessage)
         {
             viewInstance.ResetChatEntriesFadeout();
-            chatMessages.Add(chatMessage);
-            viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
-            viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count-1, 0);
+            //TODO: pool based on the virtual list pooling integration
+            ChatEntryView entryView = Object.Instantiate(chatEntryView, viewInstance.MessagesContainer);
+            entryView.AnimateChatEntry();
+            entryView.Initialise(chatEntryConfiguration);
+            entryView.SetUsername(chatMessage.Sender, chatMessage.WalletAddress);
+            entryView.entryText.text = chatMessage.Message;
+            entryView.SetSentByUser(chatMessage.SentByOwnUser);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

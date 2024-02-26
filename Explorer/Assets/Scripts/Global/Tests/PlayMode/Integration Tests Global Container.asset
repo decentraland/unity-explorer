@@ -16,10 +16,10 @@ MonoBehaviour:
   - rid: 6784895265395441664
   - rid: 6784895265412481024
   - rid: 6784895265412481025
+  - rid: 6784895267130048514
   - rid: 1268264197252972544
   - rid: 8147919284940570626
   - rid: 1841402216112979968
-  - rid: 2174542042650378246
   references:
     version: 2
     RefIds:
@@ -43,10 +43,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
-    - rid: 2174542042650378246
-      type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
-      data:
-        <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
     - rid: 6784895265395441664
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -84,6 +80,8 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 6784895267130048514
+      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
     - rid: 8147919284940570626
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:

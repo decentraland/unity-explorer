@@ -192,8 +192,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9e9bf5fb9ee9c452f858e423651a52ca
+    m_Address: ChatEntry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6afb31861b85441b6ab2b988819bb96a
     m_Address: ChatEntryConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fabfcdf867b484665b44c8a158bd8eb4
+    m_Address: NameTag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd2233d5950ee4b4c96fc19f60d8c582
+    m_Address: NametagParent
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
