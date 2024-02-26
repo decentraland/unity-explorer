@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DCL.Diagnostics;
 using UnityEngine;
 using TMPro;
 
@@ -81,7 +82,7 @@ public class SkyboxController : MonoBehaviour
         //setup skybox material
         if(!skyboxMaterial)
         {
-            Debug.LogWarning("Skybox Controller: No skybox material assigned");
+            ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: No skybox material assigned");
         }
         else
         {
@@ -92,7 +93,7 @@ public class SkyboxController : MonoBehaviour
         //setup directional light
         if(DirectionalLight == null)
         {
-            Debug.LogWarning("Skybox Controller: Directional Light has not been assigned");
+            ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: Directional Light has not been assigned");
         }
         else
         {
@@ -104,7 +105,7 @@ public class SkyboxController : MonoBehaviour
 
             if(LightAnimation == null)
             {
-                Debug.LogWarning("Skybox Controller: Directional Light animation has not been assigned");
+                ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: Directional Light animation has not been assigned");
             }
             else
             {
@@ -245,7 +246,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateIndirectLight()
     {
-        if(IndirectLight) //TODO: replace this by delegate / event
+        if(IndirectLight)
         {
             RenderSettings.ambientSkyColor = IndirectSkyRamp.Evaluate(NormalizedTime);
             RenderSettings.ambientEquatorColor = IndirectEquatorRamp.Evaluate(NormalizedTime);
@@ -277,7 +278,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateFog()
     {
-        if(Fog) //TODO: replace this by delegate / event
+        if(Fog)
         {
             RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime);
         }
