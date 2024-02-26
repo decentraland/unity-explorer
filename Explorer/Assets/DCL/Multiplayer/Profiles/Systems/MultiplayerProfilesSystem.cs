@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
@@ -11,11 +12,11 @@ using System.Collections.Generic;
 namespace DCL.Multiplayer.Profiles.Systems
 {
     /// <summary>
-    /// The scheme
-    /// 1 receive signal announce profile
-    /// 2 fetch the profile
-    /// 3 assign profile to the entity
-    /// 4 auto flow of avatar
+    ///     The scheme
+    ///     1 receive signal announce profile
+    ///     2 fetch the profile
+    ///     3 assign profile to the entity
+    ///     4 auto flow of avatar
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
@@ -41,19 +42,19 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         protected override void Update(float t)
         {
-            using (var bunch = remoteAnnouncements.Bunch())
+            using (OwnedBunch<RemoteAnnouncement> bunch = remoteAnnouncements.Bunch())
             {
                 if (bunch.Available() == false)
                     return;
 
-                var list = bunch.Collection();
+                IReadOnlyCollection<RemoteAnnouncement> list = bunch.Collection();
                 remoteProfiles.Download(list);
             }
 
             if (remoteProfiles.NewBunchAvailable())
             {
-                using var bunch = remoteProfiles.Bunch();
-                var collection = bunch.Collection();
+                using Bunch<RemoteProfile> bunch = remoteProfiles.Bunch();
+                IReadOnlyCollection<RemoteProfile> collection = bunch.Collection();
                 TryCreateRemoteEntities(collection);
             }
 
@@ -71,7 +72,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             if (entityParticipantTable.Has(profile.WalletId))
                 return;
 
-            var entity = World!.Create(profile.Profile);
+            Entity entity = World!.Create(profile.Profile);
             entityParticipantTable.Register(profile.WalletId, entity);
         }
     }
