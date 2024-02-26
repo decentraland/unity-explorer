@@ -12,6 +12,8 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 
 namespace DCL.PluginSystem.Global
 {
@@ -29,9 +31,12 @@ namespace DCL.PluginSystem.Global
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
-
-            //debugContainerBuilder.AddWidget("Skybox");
-            //.AddToggleField("enable skybox", OnEnableSkybox, true);
+           
+            debugContainerBuilder.AddWidget("Skybox")
+                .AddSingleButton("Play", () => skyboxController.Play())
+                .AddSingleButton("Pause", () => skyboxController.Pause());
+                //.AddControl(new DebugIntSliderDef(skyboxController.SetTime(new ElementBinding<int>(skyboxController.NaturalTime), 0, skyboxController.SecondsInDay)), new DebugConstLabelDef("Time"));
+                //.AddControl(new DebugIntSliderDef(skyboxController.Speed = new ElementBinding<int>(60), 0, 60), new DebugConstLabelDef("Speed"))
         }
 
         public void Dispose()

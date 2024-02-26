@@ -9,7 +9,7 @@ public class SkyboxControllerEditor : Editor
 
         SkyboxController skyboxController = (SkyboxController)target;
 
-        skyboxController.SetTime(EditorGUILayout.Slider("Time", skyboxController._naturalTime, 0, skyboxController.SecondsInDay));
+        skyboxController.SetTime(EditorGUILayout.Slider("Time", skyboxController.NaturalTime, 0, skyboxController.SecondsInDay));
         GUILayout.BeginHorizontal();
         {
             if (GUILayout.Button("00:00"))
