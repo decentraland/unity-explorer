@@ -51,6 +51,11 @@
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
 
         /// <summary>
+        ///     Archipelago requests
+        /// </summary>
+        public const string ARCHIPELAGO_REQUEST = nameof(ARCHIPELAGO_REQUEST);
+
+        /// <summary>
         ///     Unspecified ECS World Exceptions
         /// </summary>
         public const string ECS = nameof(ECS);
@@ -167,9 +172,9 @@
         public const string AVATAR_ATTACH = nameof(AVATAR_ATTACH);
 
         /// <summary>
-        ///     Quality related logs
+        ///     VideoPlayer SDK component
         /// </summary>
-        public const string QUALITY = nameof(QUALITY);
+        public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
 
         /// <summary>
         ///     Scene's restricted actions

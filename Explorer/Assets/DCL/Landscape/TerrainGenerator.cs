@@ -56,10 +56,7 @@ namespace DCL.Landscape
         private readonly TerrainGeneratorLocalCache localCache;
         private readonly bool forceCacheRegen;
         private readonly List<Terrain> terrains;
-        private readonly List<Transform> cliffs = new ();
-        private Transform ocean;
         private bool isTerrainGenerated;
-        private bool showTerrainByDefault;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -80,25 +77,18 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated() =>
             isTerrainGenerated;
 
-        public Transform GetOcean() =>
-            ocean;
-
-        public IReadOnlyList<Transform> GetCliffs() =>
-            cliffs;
-
         public async UniTask GenerateTerrainAsync(
             uint worldSeed = 1,
             bool withHoles = true,
             bool centerTerrain = true,
             bool hideTrees = false,
             bool hideDetails = false,
-            bool showTerrainByDefault = false,
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
             this.hideDetails = hideDetails;
             this.hideTrees = hideTrees;
-            this.showTerrainByDefault = showTerrainByDefault;
+
             try
             {
                 timeProfiler.StartMeasure();
@@ -118,6 +108,14 @@ namespace DCL.Landscape
                 rootGo = GameObject.Find("Generated Terrain");
                 if (rootGo != null) UnityObjectUtils.SafeDestroy(rootGo);
                 rootGo = new GameObject("Generated Terrain");
+
+                timeProfiler.StartMeasure();
+                SpawnMiscAsync();
+                GenerateCliffs();
+                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Misc & Cliffs"));
+
+                if (centerTerrain)
+                    rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
 
                 terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
                 processedTerrainDataCount = 0;
@@ -147,15 +145,6 @@ namespace DCL.Landscape
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
 
                 timeProfiler.StartMeasure();
-                SpawnMiscAsync();
-                GenerateCliffs();
-
-                if (centerTerrain)
-                    rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
-
-                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Misc & Cliffs"));
-
-                timeProfiler.StartMeasure();
                 await GenerateChunksAsync(terrainDataDictionary, processReport, cancellationToken);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
@@ -181,7 +170,7 @@ namespace DCL.Landscape
 
         private void SpawnMiscAsync()
         {
-            ocean = Object.Instantiate(terrainGenData.ocean).transform;
+            Transform ocean = Object.Instantiate(terrainGenData.ocean).transform;
             ocean.SetParent(rootGo.transform, true);
 
             Transform wind = Object.Instantiate(terrainGenData.wind).transform;
@@ -213,7 +202,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(terrainGenData.terrainSize, 0, i + 16);
                 side.rotation = Quaternion.Euler(0, 90, 0);
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             for (var i = 0; i < terrainGenData.terrainSize; i += 16)
@@ -222,7 +210,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(i, 0, terrainGenData.terrainSize);
                 side.rotation = Quaternion.identity;
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             for (var i = 0; i < terrainGenData.terrainSize; i += 16)
@@ -231,7 +218,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(0, 0, i);
                 side.rotation = Quaternion.Euler(0, 270, 0);
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             for (var i = 0; i < terrainGenData.terrainSize; i += 16)
@@ -240,7 +226,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(i + 16, 0, 0);
                 side.rotation = Quaternion.Euler(0, 180, 0);
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             return;
@@ -251,7 +236,6 @@ namespace DCL.Landscape
                 neCorner.position = position;
                 neCorner.rotation = rotation;
                 neCorner.SetParent(cliffsRoot, true);
-                cliffs.Add(neCorner);
             }
         }
 
@@ -426,8 +410,8 @@ namespace DCL.Landscape
             terrain.materialTemplate = material;
             terrain.detailObjectDistance = 200;
             terrain.enableHeightmapRayTracing = false;
-            terrain.drawHeightmap = showTerrainByDefault;
-            terrain.drawTreesAndFoliage = showTerrainByDefault;
+            terrain.drawHeightmap = false;
+            terrain.drawTreesAndFoliage = false;
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
 

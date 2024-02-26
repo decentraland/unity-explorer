@@ -5,6 +5,7 @@ on:
   
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -74,6 +75,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         
+      - name: Download and Decrypt Required Packages into Project Folder
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY_BASE64 }}" | base64 -d > private.gpg
+          gpg --batch --import private.gpg
+          curl -L "https://renderer-artifacts.decentraland.org/artifacts/requiredPackages-desktop.unitypackage.gpg" -o requiredPackages.unitypackage.gpg
+          gpg --output requiredPackages.unitypackage --decrypt requiredPackages.unitypackage.gpg
+          mv requiredPackages.unitypackage Explorer/Assets/RequiredPackages/
+
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
 
