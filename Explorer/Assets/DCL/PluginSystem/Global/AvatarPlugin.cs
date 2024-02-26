@@ -127,7 +127,7 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
 
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
@@ -135,9 +135,9 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct)).Value.EnsureGetComponent<NametagView>();
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.EnsureGetComponent<NametagView>();
 
-            GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagParent, ct: ct)).Value;
+            GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagParent, ct: ct)).Value;
 
             GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity)!;
 
@@ -150,7 +150,7 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
+            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
 
             celShadingMaterialPool = new ExtendedObjectPool<Material>(
                 () => new Material(providedMaterial.Value),
@@ -171,7 +171,7 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
+            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.ComputeShader, ct: ct);
             computeShaderPool = new ExtendedObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
@@ -187,24 +187,34 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(AvatarPlugin) + "." + nameof(AvatarShapeSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject avatarBase = null!;
+            private AssetReferenceGameObject? avatarBase;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject nametagView = null!;
+            private AssetReferenceGameObject? nametagView;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject nametagParent = null!;
+            private AssetReferenceGameObject? nametagParent;
 
             [field: SerializeField]
-            public AssetReferenceMaterial celShadingMaterial = null!;
+            private AssetReferenceMaterial? celShadingMaterial;
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
-            public AssetReferenceComputeShader computeShader = null!;
+            private AssetReferenceComputeShader? computeShader;
+
+            public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
+
+            public AssetReferenceGameObject NametagView => nametagView.EnsureNotNull();
+
+            public AssetReferenceGameObject NametagParent => nametagParent.EnsureNotNull();
+
+            public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
+
+            public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
         }
     }
 }
