@@ -7,49 +7,35 @@ namespace DCL.CharacterTriggerArea
     public class CharacterTriggerArea : MonoBehaviour, IDisposable
     {
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
+        public HashSet<Transform> EnteredThisFrame;
+        public HashSet<Transform> ExitedThisFrame;
 
-        private readonly HashSet<Collider> detectedColliders = new ();
+        private readonly HashSet<Transform> currentAvatarsInside = new ();
         [field: NonSerialized] public Transform TargetTransform;
 
         public void OnTriggerEnter(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            detectedColliders.Add(other);
-            OnEnteredTrigger?.Invoke(other);
+            EnteredThisFrame.Add(other.transform);
+            currentAvatarsInside.Add(other.transform);
         }
 
         public void OnTriggerExit(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            OnExitedTrigger?.Invoke(other);
-            detectedColliders.Remove(other);
+            ExitedThisFrame.Add(other.transform);
+            currentAvatarsInside.Remove(other.transform);
         }
 
         public void Dispose()
         {
             BoxCollider.enabled = false;
-            ForceOnTriggerExit();
-            ClearEvents();
-        }
 
-        public event Action<Collider> OnEnteredTrigger;
-        public event Action<Collider> OnExitedTrigger;
+            foreach (Transform avatarTransform in currentAvatarsInside) { ExitedThisFrame.Add(avatarTransform); }
 
-        public void ForceOnTriggerExit()
-        {
-            if (detectedColliders.Count == 0) return;
-
-            foreach (Collider detectedCollider in detectedColliders) { OnExitedTrigger?.Invoke(detectedCollider); }
-
-            detectedColliders.Clear();
-        }
-
-        public void ClearEvents()
-        {
-            OnEnteredTrigger = null;
-            OnExitedTrigger = null;
+            currentAvatarsInside.Clear();
         }
     }
 }

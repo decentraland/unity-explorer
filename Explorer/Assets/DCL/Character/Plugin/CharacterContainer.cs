@@ -68,15 +68,11 @@ namespace DCL.Character.Plugin
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        public Entity CreatePlayerEntity(World world, MainPlayerTransform mainPlayerTransform)
-        {
-            mainPlayerTransform.SetTransform(characterObject.Value.Transform);
-
-            return world.Create(
+        public Entity CreatePlayerEntity(World world) =>
+            world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
                 new CharacterTransform(characterObject.Value.Transform));
-        }
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {

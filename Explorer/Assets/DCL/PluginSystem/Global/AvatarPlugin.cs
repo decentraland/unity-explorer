@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
-        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
             IPerformanceBudget frameTimeCapBudget,
             IPerformanceBudget memoryBudget,
             IRealmData realmData,
-            MainPlayerAvatarBase mainPlayerAvatarBase,
+            MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration)
@@ -69,7 +69,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
-            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -109,7 +109,7 @@ namespace DCL.PluginSystem.Global
             cacheCleaner.Register(computeShaderPool);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
-                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBase);
+                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
@@ -140,8 +140,8 @@ namespace DCL.PluginSystem.Global
 
             nametagViewPool = new ObjectPool<NametagView>(
                 () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
-                actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
-                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
+                actionOnGet: nametagView => nametagView.gameObject.SetActive(true),
+                actionOnRelease: nametagView => nametagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 

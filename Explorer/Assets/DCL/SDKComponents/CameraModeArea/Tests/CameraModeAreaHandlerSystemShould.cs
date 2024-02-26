@@ -129,7 +129,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // exit trigger area
-            system.OnExitedCameraModeArea(null);
+            system.OnExitedCameraModeArea();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
@@ -148,13 +148,13 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // exit 1st trigger area
-            system.OnExitedCameraModeArea(null);
+            system.OnExitedCameraModeArea();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(secondTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
             // exit last trigger area
-            system.OnExitedCameraModeArea(null);
+            system.OnExitedCameraModeArea();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);

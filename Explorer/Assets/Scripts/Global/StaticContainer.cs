@@ -40,7 +40,7 @@ namespace Global
     {
         private ProvidedInstance<CharacterObject> characterObject;
         public WorldProxy GlobalWorldProxy = new ();
-        public MainPlayerReferences MainPlayerReferences = new ();
+        public MainPlayerAvatarBaseProxy MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -177,7 +177,7 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorldProxy),
-                new AvatarAttachPlugin(container.MainPlayerReferences.MainPlayerAvatarBase),
+                new AvatarAttachPlugin(container.MainPlayerAvatarBaseProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
@@ -187,8 +187,9 @@ namespace Global
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
-                new CharacterTriggerAreaPlugin(container.MainPlayerReferences, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
+
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
 
 #if UNITY_EDITOR

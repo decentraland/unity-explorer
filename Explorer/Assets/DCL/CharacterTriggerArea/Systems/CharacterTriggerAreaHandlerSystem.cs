@@ -1,8 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -19,23 +19,24 @@ namespace DCL.CharacterTriggerArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
-    [ThrottlingEnabled]
     public partial class CharacterTriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<CharacterTriggerArea> poolRegistry;
-        private readonly MainPlayerReferences mainPlayerReferences;
+        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly Transform mainPlayerTransform;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public CharacterTriggerAreaHandlerSystem(World world, IComponentPool<CharacterTriggerArea> poolRegistry, MainPlayerReferences mainPlayerReferences, ISceneStateProvider sceneStateProvider) : base(world)
+        public CharacterTriggerAreaHandlerSystem(World world, IComponentPool<CharacterTriggerArea> poolRegistry, MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider, ICharacterObject characterObject) : base(world)
         {
             this.poolRegistry = poolRegistry;
-            this.mainPlayerReferences = mainPlayerReferences;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
+            mainPlayerTransform = characterObject.Transform;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerReferences.MainPlayerAvatarBase.Configured) return;
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
 
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
@@ -46,40 +47,33 @@ namespace DCL.CharacterTriggerArea.Systems
         }
 
         [Query]
-        private void UpdateCharacterTriggerArea(ref TransformComponent transformComponent, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
+        private void UpdateCharacterTriggerArea(ref TransformComponent transformComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            CharacterTriggerArea triggerAreaMonoBehaviour = characterTriggerAreaComponent.MonoBehaviour;
+            CharacterTriggerArea triggerAreaMonoBehaviour = triggerAreaComponent.MonoBehaviour;
 
             if (!sceneStateProvider.IsCurrent)
             {
-                if (triggerAreaMonoBehaviour != null)
-                {
-                    // We don't use Dispose() here because we want to keep the configured OnEnter/OnExit events
-                    triggerAreaMonoBehaviour.BoxCollider.enabled = false;
-                    triggerAreaMonoBehaviour.ForceOnTriggerExit();
-                }
-
+                triggerAreaMonoBehaviour?.Dispose();
                 return;
             }
 
-            if (characterTriggerAreaComponent.IsDirty)
+            if (triggerAreaComponent.IsDirty)
             {
-                characterTriggerAreaComponent.IsDirty = false;
+                triggerAreaComponent.IsDirty = false;
 
                 if (triggerAreaMonoBehaviour == null)
                 {
                     triggerAreaMonoBehaviour = poolRegistry.Get();
-                    characterTriggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
+                    triggerAreaMonoBehaviour.EnteredThisFrame = triggerAreaComponent.EnteredThisFrame;
+                    triggerAreaMonoBehaviour.ExitedThisFrame = triggerAreaComponent.ExitedThisFrame;
 
-                    if (characterTriggerAreaComponent.TargetOnlyMainPlayer)
-                        triggerAreaMonoBehaviour.TargetTransform = mainPlayerReferences.MainPlayerTransform.Transform;
+                    if (triggerAreaComponent.TargetOnlyMainPlayer)
+                        triggerAreaMonoBehaviour.TargetTransform = mainPlayerTransform;
+
+                    triggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
                 }
 
-                // Values that may have been updated from the SDK scene
-                triggerAreaMonoBehaviour.ClearEvents();
-                triggerAreaMonoBehaviour.OnEnteredTrigger += characterTriggerAreaComponent.OnEnteredTrigger;
-                triggerAreaMonoBehaviour.OnExitedTrigger += characterTriggerAreaComponent.OnExitedTrigger;
-                characterTriggerAreaComponent.MonoBehaviour.BoxCollider.size = characterTriggerAreaComponent.AreaSize;
+                triggerAreaComponent.MonoBehaviour.BoxCollider.size = triggerAreaComponent.AreaSize;
             }
 
             Transform triggerAreaTransform = triggerAreaMonoBehaviour.transform;

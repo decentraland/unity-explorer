@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Setup system
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
-            var mainPlayerAvatarBase = new MainPlayerAvatarBase();
+            var mainPlayerAvatarBase = new MainPlayerAvatarBaseProxy();
             mainPlayerAvatarBase.SetAvatarBase(playerAvatarBase);
             system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase, sceneStateProvider);
 

@@ -42,11 +42,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IWearableAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
 
-        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, MainPlayerAvatarBase mainPlayerAvatarBase) : base(world)
+            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.memoryBudget = memoryBudget;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
-            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
         }
 
         protected override void Update(float t)
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
             if (World.TryGet(entity, out AvatarBase avatarBase))
-                mainPlayerAvatarBase.SetAvatarBase(avatarBase);
+                mainPlayerAvatarBaseProxy.SetAvatarBase(avatarBase);
         }
 
         [Query]
