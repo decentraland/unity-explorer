@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
+    "avprovideo": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "21358a186f934f16d49f2989f1ef0c535046600f"
+    },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
       "depth": 0,
@@ -91,7 +98,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.4",
+      "version": "1.8.8",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -138,6 +145,25 @@
       "depth": 1,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.entities": {
+      "version": "1.0.16",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.8.8",
+        "com.unity.serialization": "3.1.1",
+        "com.unity.collections": "2.1.4",
+        "com.unity.mathematics": "1.2.6",
+        "com.unity.modules.assetbundle": "1.0.0",
+        "com.unity.modules.audio": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0",
+        "com.unity.test-framework.performance": "3.0.2",
+        "com.unity.nuget.mono-cecil": "1.11.4",
+        "com.unity.scriptablebuildpipeline": "1.20.2",
+        "com.unity.profiling.core": "1.0.2"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.ext.nunit": {
@@ -296,6 +322,16 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.serialization": {
+      "version": "3.1.1",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.collections": "2.1.4",
+        "com.unity.burst": "1.7.2"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.settings-manager": {
       "version": "2.0.1",
       "depth": 2,
@@ -409,6 +445,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "decentraland.grassshader": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1b6ff73eccc95157197fed7d3609ad063b212709"
+    },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#1.6.0",
       "depth": 0,
@@ -422,6 +465,15 @@
       "source": "git",
       "dependencies": {},
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
+    },
+    "sc.stylizedwater2": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.render-pipelines.universal": "10.3.2"
+      },
+      "hash": "1b6ff73eccc95157197fed7d3609ad063b212709"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

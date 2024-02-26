@@ -6,9 +6,7 @@ namespace DCL.DebugUtilities.Views
     {
         protected override void ConnectBindings()
         {
-            Toggle toggle = this.Q<Toggle>();
-            toggle.SetValueWithoutNotify(definition.InitialState);
-            toggle.RegisterValueChangedCallback(definition.OnToggle);
+            definition.Binding.Connect(this.Q<Toggle>());
         }
 
         public new class UxmlFactory : UxmlFactory<DebugToggleElement, UxmlTraits> { }

@@ -8,6 +8,7 @@ using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
+using DCL.MapRenderer.ComponentsFactory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
@@ -15,6 +16,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
+using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
@@ -51,6 +53,8 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
 
         public CharacterContainer CharacterContainer { get; private set; }
+
+        public QualityContainer QualityContainer { get; private set; }
 
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
@@ -90,6 +94,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
+            QualityContainer.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -152,8 +157,8 @@ namespace Global
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
+            container.QualityContainer = QualityContainer.Create(settingsContainer);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -187,6 +192,7 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
+                new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
 
 #if UNITY_EDITOR
@@ -203,5 +209,6 @@ namespace Global
 
             return (container, true);
         }
+
     }
 }

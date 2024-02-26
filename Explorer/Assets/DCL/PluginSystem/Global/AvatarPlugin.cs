@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private IComponentPool<Transform> transformPoolRegistry;
 
         private IObjectPool<NametagView> nametagViewPool;
+        private ProvidedAsset<NametagsData> nametagsData;
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -97,6 +98,7 @@ namespace DCL.PluginSystem.Global
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
+            nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
         }
@@ -107,6 +109,7 @@ namespace DCL.PluginSystem.Global
             Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
+            new NametagsDebugController(debugContainerBuilder, nametagsData.Value);
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
@@ -132,7 +135,7 @@ namespace DCL.PluginSystem.Global
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
             ReceiverMockSystem.InjectToWorld(ref builder, messagePipeMock);
 
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -210,10 +213,20 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceMaterial celShadingMaterial;
 
             [field: SerializeField]
+            public NametagsDataRef nametagsData;
+
+            [field: SerializeField]
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
+
+
+            [Serializable]
+            public class NametagsDataRef : AssetReferenceT<NametagsData>
+            {
+                public NametagsDataRef(string guid) : base(guid) { }
+            }
         }
     }
 }
