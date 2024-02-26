@@ -69,6 +69,7 @@ namespace DCL.Profiles
             try
             {
                 await ipfs.PublishAsync(entity, ct, files);
+                profileCache.Set(profile.UserId, profile);
             }
             finally
             {

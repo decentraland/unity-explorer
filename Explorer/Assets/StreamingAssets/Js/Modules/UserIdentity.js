@@ -1,4 +1,25 @@
 module.exports.getUserData = async function(message) {
-    console.log('JSMODULE: getUserData')
-    return {};
+    const result = await UnityUserIdentityApi.GetOwnUserData();
+    const data = result.data;
+    
+    if (!data) {
+        return {};
+    }
+    
+    const avatar = data.avatar;
+    const wearables = Array(avatar.wearables.Count);
+    
+    for (let i = 0; i < avatar.wearables.Count; i++) {
+        wearables.push(avatar.wearables[i]);
+    }
+    
+    return {
+        data: {
+            ...data,
+            avatar: {
+                ...avatar,
+                wearables: wearables
+            }
+        }
+    };
 }
