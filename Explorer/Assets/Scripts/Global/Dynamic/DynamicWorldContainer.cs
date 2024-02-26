@@ -133,7 +133,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     realmData,
-                    staticContainer.MainPlayerReferences.MainPlayerAvatarBase,
+                    staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration),

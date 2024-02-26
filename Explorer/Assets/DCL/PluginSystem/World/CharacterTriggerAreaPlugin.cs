@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -20,16 +21,18 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly MainPlayerReferences mainPlayerReferences;
+        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly ICharacterObject characterObject;
 
         private IComponentPool<CharacterTriggerArea.CharacterTriggerArea> characterTriggerAreaPoolRegistry;
 
-        public CharacterTriggerAreaPlugin(MainPlayerReferences mainPlayerReferences, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public CharacterTriggerAreaPlugin(MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
-            this.mainPlayerReferences = mainPlayerReferences;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.characterObject = characterObject;
         }
 
         public void Dispose()
@@ -44,7 +47,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            var characterTriggerAreaHandlerSystem = CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerReferences, sharedDependencies.SceneStateProvider);
+            var characterTriggerAreaHandlerSystem = CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
             finalizeWorldSystems.Add(characterTriggerAreaHandlerSystem);
 
             CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder);

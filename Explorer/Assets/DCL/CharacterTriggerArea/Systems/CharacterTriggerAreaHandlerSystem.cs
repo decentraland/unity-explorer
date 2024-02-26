@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -21,19 +22,21 @@ namespace DCL.CharacterTriggerArea.Systems
     public partial class CharacterTriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<CharacterTriggerArea> poolRegistry;
-        private readonly MainPlayerReferences mainPlayerReferences;
+        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly Transform mainPlayerTransform;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public CharacterTriggerAreaHandlerSystem(World world, IComponentPool<CharacterTriggerArea> poolRegistry, MainPlayerReferences mainPlayerReferences, ISceneStateProvider sceneStateProvider) : base(world)
+        public CharacterTriggerAreaHandlerSystem(World world, IComponentPool<CharacterTriggerArea> poolRegistry, MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider, ICharacterObject characterObject) : base(world)
         {
             this.poolRegistry = poolRegistry;
-            this.mainPlayerReferences = mainPlayerReferences;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
+            mainPlayerTransform = characterObject.Transform;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerReferences.MainPlayerAvatarBase.Configured) return;
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
 
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
@@ -65,7 +68,7 @@ namespace DCL.CharacterTriggerArea.Systems
                     triggerAreaMonoBehaviour.ExitedThisFrame = triggerAreaComponent.ExitedThisFrame;
 
                     if (triggerAreaComponent.TargetOnlyMainPlayer)
-                        triggerAreaMonoBehaviour.TargetTransform = mainPlayerReferences.MainPlayerTransform.Transform;
+                        triggerAreaMonoBehaviour.TargetTransform = mainPlayerTransform;
 
                     triggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
                 }

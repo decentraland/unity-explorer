@@ -108,7 +108,7 @@ namespace Global.Dynamic
             var builder = new ArchSystemsWorldBuilder<World>(world);
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
-            Entity playerEntity = characterContainer.CreatePlayerEntity(world, staticContainer.MainPlayerReferences.MainPlayerTransform);
+            Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 

@@ -27,8 +27,10 @@ namespace DCL.CharacterTriggerArea.Tests
         private GameObject fakeMainPlayerGO;
         private GameObject fakeMainPlayerAvatarGO;
         private CharacterTriggerArea characterTriggerArea;
-        private MainPlayerReferences mainPlayerReferences;
+        private MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
         private IComponentPoolsRegistry poolsRegistry;
+        private IComponentPool<CharacterTriggerArea> characterTriggerAreaPool;
+        private ICharacterObject characterObject;
 
         [SetUp]
         public async void Setup()
@@ -48,14 +50,10 @@ namespace DCL.CharacterTriggerArea.Tests
 
             fakeMainPlayerAvatarGO = new GameObject();
 
-            mainPlayerReferences = new MainPlayerReferences
-            {
-                MainPlayerAvatarBase = new MainPlayerAvatarBase(),
-                MainPlayerTransform = new MainPlayerTransform(),
-            };
-
-            mainPlayerReferences.MainPlayerAvatarBase.SetAvatarBase(fakeMainPlayerAvatarGO.AddComponent<AvatarBase>());
-            mainPlayerReferences.MainPlayerTransform.SetTransform(fakeMainPlayerGO.transform);
+            mainPlayerAvatarBaseProxy = new MainPlayerAvatarBaseProxy();
+            mainPlayerAvatarBaseProxy.SetAvatarBase(fakeMainPlayerAvatarGO.AddComponent<AvatarBase>());
+            characterObject = Substitute.For<ICharacterObject>();
+            characterObject.Transform.Returns(fakeMainPlayerGO.transform);
 
             // Setup system
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
@@ -63,9 +61,9 @@ namespace DCL.CharacterTriggerArea.Tests
 
             poolsRegistry = new ComponentPoolsRegistry();
             poolsRegistry.AddGameObjectPool(() => characterTriggerArea, onRelease: area => area.Dispose());
-            IComponentPool<CharacterTriggerArea> characterTriggerAreaPool = poolsRegistry.GetReferenceTypePool<CharacterTriggerArea>();
+            characterTriggerAreaPool = poolsRegistry.GetReferenceTypePool<CharacterTriggerArea>();
 
-            system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerReferences, sceneStateProvider);
+            system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
         }
 
         [TearDown]
@@ -356,8 +354,9 @@ namespace DCL.CharacterTriggerArea.Tests
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
-            // Use fresh non-initialized MainPlayerAvatarBase
-            mainPlayerReferences.MainPlayerAvatarBase = new MainPlayerAvatarBase();
+            // Use fresh non-initialized MainPlayerAvatarBaseProxy
+            mainPlayerAvatarBaseProxy = new MainPlayerAvatarBaseProxy();
+            system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 
             var pbComponent = new PBCameraModeArea();
 
@@ -374,7 +373,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
-            mainPlayerReferences.MainPlayerAvatarBase.SetAvatarBase(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
+            mainPlayerAvatarBaseProxy.SetAvatarBase(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
 
             system.Update(0);
             await WaitForPhysics();
