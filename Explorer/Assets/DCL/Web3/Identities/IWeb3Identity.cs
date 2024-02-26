@@ -13,37 +13,5 @@ namespace DCL.Web3.Identities
         AuthChain AuthChain { get; }
 
         AuthChain Sign(string entityId);
-
-        class Random : IWeb3Identity
-        {
-            public Random(IWeb3Account? account = null) : this(
-                NethereumAccount.CreateRandom().Address,
-                DateTime.MaxValue,
-                account ?? NethereumAccount.CreateRandom(),
-                false,
-                AuthChain.Create()
-            ) { }
-
-            private Random(Web3Address address, DateTime expiration, IWeb3Account ephemeralAccount, bool isExpired, AuthChain authChain)
-            {
-                Address = address;
-                Expiration = expiration;
-                EphemeralAccount = ephemeralAccount;
-                IsExpired = isExpired;
-                AuthChain = authChain;
-            }
-
-            public Web3Address Address { get; }
-            public DateTime Expiration { get; }
-            public IWeb3Account EphemeralAccount { get; }
-            public bool IsExpired { get; }
-            public AuthChain AuthChain { get; }
-
-            public AuthChain Sign(string entityId) =>
-                throw new Exception("RandomIdentity cannot sign anything");
-
-            public void Dispose() =>
-                AuthChain.Dispose();
-        }
     }
 }
