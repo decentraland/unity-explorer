@@ -24,6 +24,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private Extrapolation extrapolation;
         private Blend blend;
 
+        public bool UseBlendInterpolation;
+
         private void Awake()
         {
             extrapolation = GetComponent<Extrapolation>();
@@ -36,12 +38,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             interpolation.PointPassed += AddToPassed;
             blend.PointPassed += AddToPassed;
-        }
 
-        private void Start()
-        {
             messageBus.MessageSent += newMessage =>
-                UniTask.Delay(TimeSpan.FromSeconds(messageBus.Latency + (messageBus.Latency * Random.Range(0, messageBus.LatencyJitter)) + (messageBus.PackageSentRate * Random.Range(0, messageBus.PackagesJitter))))
+                UniTask.Delay(TimeSpan.FromSeconds(messageBus.Latency))
                        .ContinueWith(() =>
                         {
                             IncomingMessages.Enqueue(newMessage);
@@ -57,7 +56,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (interpolation.enabled || blend.enabled) return;
 
-            if (IncomingMessages.Count == 0 && !extrapolation.enabled && passedMessages.Count > 1) // && !blend.enabled)
+            if (IncomingMessages.Count == 0 && !blend.enabled && !extrapolation.enabled && passedMessages.Count > 1)
             {
                 extrapolation.Run(passedMessages[^1]);
                 return;
@@ -69,9 +68,20 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
                 if (extrapolation.enabled)
                 {
-                    var local = extrapolation.Stop();
-                    blend.Run(local, remote);
-                    return;
+                    if (remote.timestamp < extrapolation.start.timestamp + extrapolation.Time)
+                        return;
+
+                    MessageMock local = extrapolation.Stop();
+                    AddToPassed(local);
+
+                    if (UseBlendInterpolation)
+                    {
+                        blend.Run(local, remote);
+                        return;
+                    }
+
+                    // - Adjust for far away (Teleport) and slowed down (max speed) interpolations
+                    // - Redefine (project) remote point and make such interpolation interaptable
                 }
 
                 interpolation.Run(

@@ -74,7 +74,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     PutMark();
                 }
 
-                yield return new WaitForSeconds(messageBus.PackageSentRate);
+                yield return new WaitForSeconds(messageBus.PackageSentRate + (messageBus.Latency * Random.Range(0, messageBus.LatencyJitter)) + (messageBus.PackageSentRate * Random.Range(0, messageBus.PackagesJitter)));
             }
         }
 

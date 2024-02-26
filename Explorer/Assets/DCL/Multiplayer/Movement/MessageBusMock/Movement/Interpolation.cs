@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Multiplayer.Movement.MessageBusMock.Movement;
+using System;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
@@ -9,6 +10,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         public InterpolationType interpolationType;
         public float minPositionDelta = 0.1f;
+        public float speedUpFactor = 1f;
 
         [Space]
         public float Time;
@@ -37,7 +39,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             Time = 0f;
 
             float timeDiff = end.timestamp - start.timestamp;
-            float correctionTime = receiver.IncomingMessages.Count * UnityEngine.Time.smoothDeltaTime;
+            float correctionTime = (speedUpFactor + receiver.IncomingMessages.Count) * UnityEngine.Time.smoothDeltaTime;
             totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
 
             interpolation = GetInterpolationFunc(interpolationType);
@@ -52,13 +54,19 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         public void Run(MessageMock from, MessageMock to)
         {
-            if (from?.timestamp > to.timestamp) return;
-
             start = from;
             end = to;
 
+            if (start == null)
+            {
+                OnDisable();
+                return;
+            }
+
+            if (start.timestamp > end.timestamp) return;
+
             // Can skip
-            if (isFirst || (Vector3.Distance(from.position, to.position) < minPositionDelta && receiver.IncomingMessages.Count > 0))
+            if (Vector3.Distance(from.position, to.position) < minPositionDelta && receiver.IncomingMessages.Count > 0)
                 OnDisable();
             else
                 enabled = true;

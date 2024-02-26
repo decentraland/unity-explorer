@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
         public float Time;
         public Vector3 Velocity;
 
-        private MessageMock start;
+        public MessageMock start;
         private float maxDuration;
 
         private void Update()
