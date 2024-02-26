@@ -73,6 +73,17 @@ namespace DCL.Nametags
         }
 
         [Query]
+        [All(typeof(ChatBubbleComponent))]
+        private void ProcessChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent)
+        {
+            if (nametagsData.showChatBubbles)
+            {
+
+            }
+            World.Remove<ChatBubbleComponent>(e);
+        }
+
+        [Query]
         [All(typeof(DeleteEntityIntention))]
         private void RemoveTag(NametagView nametagView)
         {

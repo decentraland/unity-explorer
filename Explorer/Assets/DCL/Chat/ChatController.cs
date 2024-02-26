@@ -36,6 +36,7 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
+            //viewInstance.ToggleChatBubblesBubbles.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
