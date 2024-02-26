@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
-namespace DCL.AssetsProvision
+namespace DCL.AssetsProvision.Provisions
 {
     public class ErrorTraceAssetsProvisioner : IAssetsProvisioner
     {

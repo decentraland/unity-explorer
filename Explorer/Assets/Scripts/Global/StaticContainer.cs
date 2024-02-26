@@ -132,7 +132,10 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            var addressablesProvisioner = new AddressablesProvisioner().WithErrorTrace();
+            var addressablesProvisioner = new AddressablesProvisioner()
+                                         .WithValidates()
+                                         .WithErrorTrace();
+
             container.AssetsProvisioner = addressablesProvisioner;
             container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
 
@@ -205,6 +208,5 @@ namespace Global
 
             return (container, true);
         }
-
     }
 }
