@@ -7,12 +7,9 @@ using DCL.ResourcesUnloading;
 using SceneRunner.Scene;
 using UnityEngine;
 
-#if AV_PRO_PRESENT
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
 using DCL.ECSComponents;
-using ECS.ComponentsPooling.Systems;
-using ECS.LifeCycle;
 using RenderHeads.Media.AVProVideo;
-using System.Collections.Generic;
 #endif
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
@@ -25,7 +22,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
         public MediaPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool, IPerformanceBudget frameTimeBudget)
         {
-#if AV_PRO_PRESENT
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.componentPoolsRegistry = componentPoolsRegistry;
 
             this.videoTexturePool = videoTexturePool;
@@ -39,7 +36,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter)
         {
-#if AV_PRO_PRESENT
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, sceneStateProvider, frameTimeBudget);

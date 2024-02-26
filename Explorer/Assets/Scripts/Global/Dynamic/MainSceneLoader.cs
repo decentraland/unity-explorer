@@ -130,19 +130,24 @@ namespace Global.Dynamic
                     skyBoxSceneData,
                     settings.StaticLoadPositions,
                     settings.SceneLoadRadius,
+                    settings.Realms,
                     dynamicSettings,
                     web3Authenticator,
                     identityCache,
                     settings.StartPosition,
                     enableLandscape);
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager);
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
+                    identityCache, dynamicWorldContainer.ProfileRepository);
 
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
+                    dynamicWorldContainer!.ProfileRepository);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -153,7 +158,7 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
                 await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
