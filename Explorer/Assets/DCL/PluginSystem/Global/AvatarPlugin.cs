@@ -17,6 +17,7 @@ using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
+using DCL.Utilities.Extensions;
 using ECS;
 using System;
 using System.Runtime.CompilerServices;
@@ -47,13 +48,14 @@ namespace DCL.PluginSystem.Global
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
-        private IExtendedObjectPool<Material> celShadingMaterialPool;
-        private IExtendedObjectPool<ComputeShader> computeShaderPool;
+        // late init
+        private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
+        private IExtendedObjectPool<Material> celShadingMaterialPool = null!;
+        private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
-        private IComponentPool<Transform> transformPoolRegistry;
+        private IComponentPool<Transform> transformPoolRegistry = null!;
 
-        private IObjectPool<NametagView> nametagViewPool;
+        private IObjectPool<NametagView> nametagViewPool = null!;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -92,7 +94,7 @@ namespace DCL.PluginSystem.Global
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
 
-            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
+            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -125,18 +127,25 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct))
+                                         .Value
+                                         .GetComponent<AvatarBase>()
+                                         .EnsureNotNull("AvatarBase component not found on the prefab");
 
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct)).Value.GetComponent<NametagView>();
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct))
+                                       .Value
+                                       .GetComponent<NametagView>()
+                                       .EnsureNotNull("NametagView component not found on the prefab");
+
             GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagParent, ct: ct)).Value;
 
-            GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity);
+            GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity)!;
 
             nametagViewPool = new ObjectPool<NametagView>(
                 () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
@@ -161,7 +170,7 @@ namespace DCL.PluginSystem.Global
 
             for (var i = 0; i < settings.defaultMaterialCapacity; i++)
             {
-                Material prewarmedMaterial = celShadingMaterialPool.Get();
+                Material prewarmedMaterial = celShadingMaterialPool.Get()!;
                 celShadingMaterialPool.Release(prewarmedMaterial);
             }
         }
@@ -173,7 +182,7 @@ namespace DCL.PluginSystem.Global
 
             for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
             {
-                ComputeShader prewarmedShader = computeShaderPool.Get();
+                ComputeShader prewarmedShader = computeShaderPool.Get()!;
                 computeShaderPool.Release(prewarmedShader);
             }
         }
@@ -184,24 +193,24 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(AvatarPlugin) + "." + nameof(AvatarShapeSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject avatarBase;
+            public AssetReferenceGameObject avatarBase = null!;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject nametagView;
+            public AssetReferenceGameObject nametagView = null!;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject nametagParent;
+            public AssetReferenceGameObject nametagParent = null!;
 
             [field: SerializeField]
-            public AssetReferenceMaterial celShadingMaterial;
+            public AssetReferenceMaterial celShadingMaterial = null!;
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
-            public AssetReferenceComputeShader computeShader;
+            public AssetReferenceComputeShader computeShader = null!;
         }
     }
 }
