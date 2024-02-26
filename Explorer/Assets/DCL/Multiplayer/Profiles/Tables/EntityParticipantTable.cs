@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace DCL.Multiplayer.Profiles.Tables
 {
     /// <summary>
-    /// NOT Thread-safe
+    ///     NOT Thread-safe
     /// </summary>
     public class EntityParticipantTable : IEntityParticipantTable
     {

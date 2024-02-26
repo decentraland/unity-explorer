@@ -34,15 +34,15 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 
         ~ThreadSafeRemoteAnnouncements()
         {
-            this.roomHub.IslandRoom().DataPipe.DataReceived -= DataPipeOnDataReceived;
-            this.roomHub.SceneRoom().DataPipe.DataReceived -= DataPipeOnDataReceived;
+            roomHub.IslandRoom().DataPipe.DataReceived -= DataPipeOnDataReceived;
+            roomHub.SceneRoom().DataPipe.DataReceived -= DataPipeOnDataReceived;
         }
 
         private void DataPipeOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
             //TODO deduplication
 
-            if (TryParse(data, out var response) == false)
+            if (TryParse(data, out Packet? response) == false)
                 return;
 
             if (response!.MessageCase is Packet.MessageOneofCase.ProfileVersion)
@@ -79,7 +79,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 
         private void ThreadSafeAdd(RemoteAnnouncement remoteAnnouncement)
         {
-            using var _ = mutex.GetScope();
+            using MutexSync.Scope _ = mutex.GetScope();
             list.Add(remoteAnnouncement);
         }
     }

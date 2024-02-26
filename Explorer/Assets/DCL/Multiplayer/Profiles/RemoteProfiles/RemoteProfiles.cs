@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
             this.profileRepository = profileRepository;
         }
 
-        public void Download(ICollection<RemoteAnnouncement> list)
+        public void Download(IReadOnlyCollection<RemoteAnnouncement> list)
         {
             //TODO consider which option for performance would be better, just everything, to download or by chuncks, question about concurrency for web requests
             foreach (RemoteAnnouncement remoteAnnouncement in list)
@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
         private async UniTaskVoid TryDownloadAsync(RemoteAnnouncement remoteAnnouncement)
         {
-            var profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, CancellationToken.None);
+            Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, CancellationToken.None);
 
             if (profile is null)
             {
