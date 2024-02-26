@@ -12,4 +12,18 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
         Bunch<RemoteProfile> Bunch();
     }
+
+    public static class RemoteProfilesExtensions
+    {
+        public static void Download(this IRemoteProfiles remoteProfiles, IRemoteAnnouncements remoteAnnouncements)
+        {
+            using OwnedBunch<RemoteAnnouncement> bunch = remoteAnnouncements.Bunch();
+
+            if (bunch.Available() == false)
+                return;
+
+            IReadOnlyCollection<RemoteAnnouncement> list = bunch.Collection();
+            remoteProfiles.Download(list);
+        }
+    }
 }
