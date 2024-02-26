@@ -1,7 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterTriggerArea.Components;
@@ -10,16 +10,14 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Utilities;
 using ECS.Abstract;
-using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateBefore(typeof(CharacterTriggerAreaHandlerSystem))]
+    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
-    [ThrottlingEnabled]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem
     {
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
@@ -41,29 +39,27 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea)
         {
-            World.Add(entity, new CharacterTriggerAreaComponent
-            {
-                AreaSize = pbAvatarModifierArea.Area,
-                TargetOnlyMainPlayer = false,
-                OnEnteredTrigger = OnEnteredAvatarModifierArea,
-                OnExitedTrigger = OnExitedAvatarModifierArea,
-                IsDirty = true,
-            });
+            World.Add(entity, new CharacterTriggerAreaComponent(areaSize: pbAvatarModifierArea.Area, targetOnlyMainPlayer: false));
         }
 
         [Query]
         [All(typeof(TransformComponent))]
         private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
         {
-            if (!pbAvatarModifierArea.IsDirty) return;
+            if (characterTriggerAreaComponent.EnteredThisFrame!.Count > 0)
+                foreach (Transform avatarTransform in characterTriggerAreaComponent.EnteredThisFrame) { OnEnteredAvatarModifierArea(avatarTransform); }
 
-            characterTriggerAreaComponent.OnEnteredTrigger = OnEnteredAvatarModifierArea;
-            characterTriggerAreaComponent.OnExitedTrigger = OnExitedAvatarModifierArea;
-            characterTriggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
-            characterTriggerAreaComponent.IsDirty = true;
+            if (characterTriggerAreaComponent.ExitedThisFrame!.Count > 0)
+                foreach (Transform avatarTransform in characterTriggerAreaComponent.ExitedThisFrame) { OnExitedAvatarModifierArea(avatarTransform); }
+
+            if (pbAvatarModifierArea.IsDirty)
+            {
+                characterTriggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
+                characterTriggerAreaComponent.IsDirty = true;
+            }
         }
 
-        internal void OnEnteredAvatarModifierArea(Collider avatarCollider)
+        internal void OnEnteredAvatarModifierArea(Transform avatarTransform)
         {
             var found = false;
 
@@ -75,7 +71,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                     Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
 
-                    if (avatarCollider.transform == entityTransform)
+                    if (avatarTransform == entityTransform)
                     {
                         globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = true;
                         found = true;
@@ -83,7 +79,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 });
         }
 
-        internal void OnExitedAvatarModifierArea(Collider avatarCollider)
+        internal void OnExitedAvatarModifierArea(Transform avatarTransform)
         {
             var found = false;
 
@@ -95,7 +91,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                     Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
 
-                    if (avatarCollider.transform == entityTransform)
+                    if (avatarTransform == entityTransform)
                     {
                         globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = false;
                         found = true;
