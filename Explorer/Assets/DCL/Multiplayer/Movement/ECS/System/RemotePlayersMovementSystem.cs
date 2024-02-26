@@ -11,11 +11,13 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PhysicsSystemGroup))]
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
@@ -32,8 +34,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         protected override void Update(float t)
         {
-            // settings.InboxCount = inbox.Count;
-
             UpdateRemotePlayersMovementQuery(World,t);
         }
 
@@ -47,25 +47,26 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float t, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
-            ref CharacterAnimationComponent anim, in IAvatarView view)
+        private void UpdateRemotePlayersMovement([Data] float t, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, in IAvatarView view)
         {
-            settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
-
             if(!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out var playerInbox))
                 return;
+
+            settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
+            settings.InboxCount = playerInbox.Count;
+
+            CharacterAnimationComponent anim = new CharacterAnimationComponent();
 
             if (@int.Enabled)
             {
                 MessageMock? passed = @int.Update(t);
-                InterpolateAnimations(ref anim, @int.Start, @int.End, t);
-
-                if (passed != null)
-                    AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
+                // InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                if (passed != null) AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
 
                 return;
             }
 
+            // if (playerInbox.Count < 2)  return;
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
             {
                 if (!ext.Enabled)
@@ -90,13 +91,27 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 }
 
                 if (remotePlayerMovement.PassedMessages.Count == 0
-                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) < settings.MinPositionDelta
-                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
+                    || Vector3.SqrMagnitude(remotePlayerMovement.PassedMessages[^1].position - remote.position) < settings.MinPositionDelta
+                    // || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
                     )
                 {
                     // Teleport
+
+                    for (var i = 0; i < settings.SamePositionTeleportFilterCount; i++)
+                    {
+                        var next = playerInbox.Peek();
+
+                        if (Vector3.SqrMagnitude(next.position - remote.position) < settings.MinPositionDelta)
+                        {
+                            AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
+                            remote = playerInbox.Dequeue();
+                        }
+                        else
+                            break;
+                    }
+
                     @int.Transform.position = remote.position;
-                    // replicaMovement.PassedMessages.Clear();
+                    remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
                 else
@@ -104,10 +119,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
         }
 
+
+
         private static void AddToPassed(MessageMock passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             remotePlayerMovement.PassedMessages.Add(passed);
-            UpdateAnimations(passed, ref anim, view);
+            // UpdateAnimations(passed, ref anim, view);
         }
 
         private static void UpdateAnimations(MessageMock message, ref CharacterAnimationComponent animationComponent, IAvatarView view)

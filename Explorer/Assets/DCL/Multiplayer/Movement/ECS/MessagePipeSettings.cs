@@ -61,5 +61,7 @@ namespace DCL.Multiplayer.Movement.ECS
         [field: SerializeField] public InputAction packageBlockButton { get; set; }
         public MovementKind LastMove { get; set; }
         public bool LastJump { get; set; }
+        public float TimeScale { get; set; }
+        public int SamePositionTeleportFilterCount { get; set; }
     }
 }

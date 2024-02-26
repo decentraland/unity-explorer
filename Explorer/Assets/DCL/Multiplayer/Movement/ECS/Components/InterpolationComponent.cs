@@ -40,13 +40,20 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             time += deltaTime / slowDownFactor;
 
-            if (time > totalDuration)
-                return Disable();
+            if (time < totalDuration)
+            {
+                Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
+                UpdateRotation();
 
+                return null;
+            }
+
+            time = totalDuration;
             Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
             UpdateRotation();
 
-            return null;
+            Debug.Log($"VVV {time} --- {totalDuration} --- {time/totalDuration}");
+            return Disable();
         }
 
         private void UpdateRotation()
@@ -67,17 +74,17 @@ namespace DCL.Multiplayer.Movement.ECS
             slowDownFactor = 1f;
             totalDuration = End.timestamp - Start.timestamp;
 
-            // if (IsBlend)
-            // {
-            //     float positionDiff = Vector3.Distance(start.position, end.position);
-            //     float speed = positionDiff / totalDuration;
-            //
-            //     if (speed > settings.MaxBlendSpeed)
-            //     {
-            //         float desiredDuration = positionDiff / settings.MaxBlendSpeed;
-            //         slowDownFactor = desiredDuration / totalDuration;
-            //     }
-            // }
+            if (IsBlend)
+            {
+                float positionDiff = Vector3.Distance(Start.position, End.position);
+                float speed = positionDiff / totalDuration;
+
+                if (speed > settings.MaxBlendSpeed)
+                {
+                    float desiredDuration = positionDiff / settings.MaxBlendSpeed;
+                    slowDownFactor = desiredDuration / totalDuration;
+                }
+            }
             // else
             // {
             //     float correctionTime = (settings.SpeedUpFactor + inboxMessages) * Time.smoothDeltaTime;
@@ -98,14 +105,14 @@ namespace DCL.Multiplayer.Movement.ECS
 
             IsBlend = isBlend;
 
-            if(Start != null) Start.position = Transform.position;
+            // if(Start != null) Start.position = Transform.position;
+
             Enable(inboxMessages);
         }
 
         private MessageMock Disable()
         {
-            // Transform.position = end.position;
-            End.position = Transform.position;
+            Transform.position = End.position;
             Enabled = false;
 
             return End;

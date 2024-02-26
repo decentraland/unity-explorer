@@ -1,26 +1,18 @@
 ﻿using Arch.Core;
 using Arch.System;
-using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.MessageBusMock;
-using ECS.Abstract;
 using System;
 using UnityEngine;
 using IDebugContainerBuilder = DCL.DebugUtilities.IDebugContainerBuilder;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(InstantiateRandomAvatarsSystem))]
-    [LogCategory(ReportCategory.AVATAR)]
-    public partial class ReceiverMockSystem : BaseUnityLoopSystem
+    public partial class ReceiverMockSystem
     {
         private readonly MessagePipeMock pipe;
         private readonly DebugWidgetVisibilityBinding debugVisibilityBinding;
@@ -50,7 +42,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private readonly ElementBinding<string> status;
 
-        private ReceiverMockSystem(World world, IDebugContainerBuilder debugBuilder, MessagePipeMock pipe) : base(world)
+        private ReceiverMockSystem(World world, IDebugContainerBuilder debugBuilder, MessagePipeMock pipe)
         {
             this.pipe = pipe;
 
@@ -123,7 +115,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 ;
         }
 
-        protected override void Update(float t)
+        protected void Update(float t)
         {
             status.Value = pipe.Settings.StartSending ? "<color=green>ON</color>" : "<color=red>OFF</color>";
 
@@ -153,7 +145,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             // public InterpolationType BlendType;
             pipe.Settings.MaxBlendSpeed = blendMaxSpeed.Value;
 
-            UpdateInterpolationQuery(World);
+            // UpdateInterpolationQuery(World);
         }
 
         [Query]

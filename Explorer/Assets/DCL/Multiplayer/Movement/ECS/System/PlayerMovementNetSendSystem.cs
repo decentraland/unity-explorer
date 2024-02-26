@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             else
             {
                 mesPerSecTimer = 1;
-                Debug.Log($"VVV ------- MES PER SEC: <color={GetColorBasedOnMesPerSec(MessagesSentInSec)}> {MessagesSentInSec} </color> ----------");
+                // Debug.Log($"VVV ------- MES PER SEC: <color={GetColorBasedOnMesPerSec(MessagesSentInSec)}> {MessagesSentInSec} </color> ----------");
                 MessagesSentInSec = 0;
             }
         }
@@ -74,6 +74,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
         [All(typeof(PlayerComponent))]
         private void SendPlayerNetMovement(ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
         {
+            UnityEngine.Time.timeScale = settings.TimeScale;
+
             // Debug.Log($"VVV vel = {playerCharacter.velocity.sqrMagnitude}");
             if (lastSentMessage == null)
             {
@@ -82,7 +84,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
 
             float timeDiff = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
-            if (MessagesSentInSec >= 10) return;
+            // if (MessagesSentInSec >= 10) return;
 
             foreach (SendRuleBase sendRule in settings.SendRules)
                 if (sendRule.IsEnabled
@@ -116,7 +118,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
             string color = GetColorBasedOnDeltaTime(deltaTime);
-            Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
+            // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
 
             lastSentMessage = new MessageMock
             {

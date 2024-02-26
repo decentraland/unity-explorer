@@ -33,10 +33,15 @@ namespace DCL.Multiplayer.Movement.Settings
         InputAction packageBlockButton { get; set; }
         MovementKind LastMove { get; set; }
         bool LastJump { get; set; }
+
+        float TimeScale { get; set; }
+        int SamePositionTeleportFilterCount { get; set; }
     }
 
     public class MultiplayerSpatialStateSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
+        [field: SerializeField] public float TimeScale { get; set; }
+        [field: SerializeField] public int SamePositionTeleportFilterCount { get; set; }
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public int PassedMessages { get; set; }
         [field: SerializeField] public int PackageLost { get; set; }

@@ -238,9 +238,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 World.Create(avatarShape,
                     transformComp,
-                    characterController,
+                    // characterController,
+                    // new CharacterAnimationComponent(),
+
                     // new CharacterRigidTransform(),
-                    new CharacterAnimationComponent(),
                     // new CharacterPlatformComponent(),
                     // new StunComponent(),
                     // new FeetIKComponent(),

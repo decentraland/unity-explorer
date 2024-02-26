@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36736ce96ff04f67aaec3d8efa0026b3, type: 3}
   m_Name: MultiplayerSpatialStateSettings
   m_EditorClassIdentifier: 
-  <InboxCount>k__BackingField: 1
-  <PassedMessages>k__BackingField: 64
+  <TimeScale>k__BackingField: 1
+  <SamePositionTeleportFilterCount>k__BackingField: 100
+  <InboxCount>k__BackingField: 7
+  <PassedMessages>k__BackingField: 58
   <PackageLost>k__BackingField: 0
   <StartSending>k__BackingField: 0
   <SendRules>k__BackingField:
-  - {fileID: 11400000, guid: eeef1791b29d5b7459bb7c5aa37c3f05, type: 2}
-  - {fileID: 11400000, guid: 7a32bfec5494ccf49b16bb6a8d0f4afe, type: 2}
+  - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
   <PackagesJitter>k__BackingField: 0
   <Latency>k__BackingField: 0
   <LatencyJitter>k__BackingField: 0
@@ -26,13 +27,13 @@ MonoBehaviour:
   <MinTeleportDistance>k__BackingField: 50
   <InterpolationType>k__BackingField: 1
   <SpeedUpFactor>k__BackingField: 0
-  <useBlend>k__BackingField: 1
+  <useBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
-  <MaxBlendSpeed>k__BackingField: 30
-  <useExtrapolation>k__BackingField: 1
+  <MaxBlendSpeed>k__BackingField: 10
+  <useExtrapolation>k__BackingField: 0
   <MinSpeed>k__BackingField: 0.01
-  <LinearTime>k__BackingField: 0.33
-  <DampedSteps>k__BackingField: 1
+  <LinearTime>k__BackingField: 0.1
+  <DampedSteps>k__BackingField: 2
   <startButton>k__BackingField:
     m_Name: start Button
     m_Type: 0
@@ -78,7 +79,7 @@ MonoBehaviour:
     - m_Name: 
       m_Id: c6763a19-ebe6-421f-b5e8-167c88c7750a
       m_Path: <Keyboard>/x
-      m_Interactions: 
+      m_Interactions: Press(behavior=2)
       m_Processors: 
       m_Groups: 
       m_Action: package Block Button
