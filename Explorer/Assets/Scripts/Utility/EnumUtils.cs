@@ -36,6 +36,37 @@ namespace Utility
                    };
         }
 
+        public static unsafe int ToInt<T>(T @enum) where T: unmanaged, Enum
+        {
+            return sizeof(T) switch
+                   {
+                       sizeof(byte) => *(byte*)&@enum,
+                       sizeof(short) => *(short*)&@enum,
+                       sizeof(int) => *(int*)&@enum,
+                       sizeof(long) => (int)*(long*)&@enum,
+                       _ => 0,
+                   };
+        }
+
+        public static unsafe T FromInt<T>(int value) where T: unmanaged, Enum
+        {
+            switch (sizeof(T))
+            {
+                case sizeof(byte):
+                    var @byte = (byte)value;
+                    return Unsafe.As<byte, T>(ref @byte);
+                case sizeof(short):
+                    var @short = (short)value;
+                    return Unsafe.As<short, T>(ref @short);
+                case sizeof(int):
+                    return Unsafe.As<int, T>(ref value);
+                case sizeof(long):
+                    var @long = (long)value;
+                    return Unsafe.As<long, T>(ref @long);
+                default: return default(T);
+            }
+        }
+
         public static unsafe bool HasFlag<T>(T x, T y) where T: unmanaged, Enum
         {
             switch (sizeof(T))

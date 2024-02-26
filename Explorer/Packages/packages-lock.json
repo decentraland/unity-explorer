@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
+    "avprovideo": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "21358a186f934f16d49f2989f1ef0c535046600f"
+    },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
       "depth": 0,
@@ -443,6 +450,13 @@
       "source": "git",
       "dependencies": {},
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
+    },
+    "superscrollview": {
+      "version": "https://github.com/decentraland/unity-explorer-packages.git?path=/SuperScrollView",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8e1478ec9f8fe2f5fbe1249ceeb31cdc764d1465"
     },
     "sc.stylizedwater2": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
