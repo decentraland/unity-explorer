@@ -74,13 +74,6 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
             }
         }
 
-        public bool NewBunchAvailable()
-        {
-            using var _ = mutex.GetScope();
-            bool result = list.Count > 0;
-            return result;
-        }
-
         public OwnedBunch<RemoteAnnouncement> Bunch() =>
             new (mutex, list);
 
