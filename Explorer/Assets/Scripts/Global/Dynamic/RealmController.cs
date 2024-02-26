@@ -173,6 +173,7 @@ namespace Global.Dynamic
                 World world = globalWorld.EcsWorld;
                 FindLoadedScenes();
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+                world.Query(new QueryDescription().WithAll<ProcessesScenePointers>(), (ref ProcessesScenePointers scenePointers) => scenePointers.Value.Dispose());
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.Dispose();
