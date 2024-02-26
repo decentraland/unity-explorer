@@ -1,4 +1,6 @@
-﻿using MVC;
+﻿using DCL.UI;
+using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,15 +9,33 @@ namespace DCL.TeleportPrompt
     public class TeleportPromptView : ViewBase, IView
     {
         [field: SerializeField]
-        public Button CloseButton { get; private set; }
+        public ImageView placeImage;
 
         [field: SerializeField]
-        public Button ContinueButton { get; private set; }
+        public Sprite defaultImage;
 
         [field: SerializeField]
-        public Button CancelButton { get; private set; }
+        public GameObject placeInfoContainer;
 
         [field: SerializeField]
-        public TMPro.TextMeshProUGUI CoordsText { get; private set; }
+        public GameObject loadingPlaceContainer;
+
+        [field: SerializeField]
+        public GameObject loadingSpinner;
+
+        [field: SerializeField]
+        public TMP_Text location;
+
+        [field: SerializeField]
+        public TMP_Text placeName;
+
+        [field: SerializeField]
+        public TMP_Text placeCreator;
+
+        [field: SerializeField]
+        public Button continueButton;
+
+        [field: SerializeField]
+        public Button cancelButton;
     }
 }

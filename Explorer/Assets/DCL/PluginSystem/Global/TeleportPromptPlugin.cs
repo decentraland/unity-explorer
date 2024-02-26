@@ -3,7 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Input;
 using DCL.ParcelsService;
+using DCL.PlacesAPIService;
 using DCL.TeleportPrompt;
+using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -16,16 +18,22 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
+        private readonly IWebRequestController webRequestController;
+        private readonly IPlacesAPIService placesAPIService;
         private TeleportPromptController teleportPromptController;
 
         public TeleportPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             ITeleportController teleportController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IWebRequestController webRequestController,
+            IPlacesAPIService placesAPIService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
+            this.webRequestController = webRequestController;
+            this.placesAPIService = placesAPIService;
         }
 
         public async UniTask InitializeAsync(TeleportPromptSettings promptSettings, CancellationToken ct)
@@ -35,7 +43,9 @@ namespace DCL.PluginSystem.Global
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
                 new DCLCursor(),
                 teleportController,
-                mvcManager);
+                mvcManager,
+                webRequestController,
+                placesAPIService);
 
             mvcManager.RegisterController(teleportPromptController);
         }
