@@ -91,7 +91,6 @@ namespace Global.Dynamic
                 return (null, false);
 
             DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
-            staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
