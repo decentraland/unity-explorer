@@ -15,9 +15,7 @@ public class SkyboxController : MonoBehaviour
 
     [HideInInspector] public float NaturalTime = 0;
     [HideInInspector] public float NormalizedTime = 0;
-
-    [SerializeField]
-    private Material skyboxMaterial;
+    [SerializeField] private Material skyboxMaterial;
 
     [Header("Refresh Time")]
     public float RefreshTime = 5;
@@ -32,37 +30,25 @@ public class SkyboxController : MonoBehaviour
     private Animation lightAnimator;
 
     [Header("Skybox Color")]
-    [GradientUsage(true)]
-    public Gradient SkyZenitColorRamp;
-    [GradientUsage(true)]
-    public Gradient SkyHorizonColorRamp;
-    [GradientUsage(true)]
-    public Gradient SkyNadirColorRamp;
+    [GradientUsage(true)] public Gradient SkyZenitColorRamp;
+    [GradientUsage(true)] public Gradient SkyHorizonColorRamp;
+    [GradientUsage(true)] public Gradient SkyNadirColorRamp;
 
     [InspectorName("Rim Light Color")]
-    [GradientUsage(true)]
-    public Gradient RimColorRamp;
+    [GradientUsage(true)] public Gradient RimColorRamp;
 
     [Header("Indirect Lighting")]
-    [InspectorName("Enabled")]
-    public bool IndirectLight = true;
-    [GradientUsage(true)]
-    public Gradient IndirectSkyRamp;
-    [GradientUsage(true)]
-    public Gradient indirectEquatorRamp;
-    [GradientUsage(true)]
-    public Gradient GroundEquatorRamp;
+    [InspectorName("Enabled")] public bool IndirectLight = true;
+    [GradientUsage(true)] public Gradient IndirectSkyRamp;
+    [GradientUsage(true)] public Gradient IndirectEquatorRamp;
+    [GradientUsage(true)] public Gradient GroundEquatorRamp;
 
     [Header("Clouds")]
-    [GradientUsage(true)]
-    public Gradient CloudsColorRamp;
-
+    [GradientUsage(true)] public Gradient CloudsColorRamp;
 
     [Header("Fog")]
-    [InspectorName("Enabled")]
-    public bool Fog = true;
-    [GradientUsage(true)]
-    public Gradient FogColorRamp;
+    [InspectorName("Enabled")] public bool Fog = true;
+    [GradientUsage(true)] public Gradient FogColorRamp;
 
     [Header("UI")]
     public TextMeshProUGUI textUI;
@@ -80,16 +66,6 @@ public class SkyboxController : MonoBehaviour
             Initialize(null, null, null);
     }
 #endif
-
-    /// <summary>
-    /// Set the material of the skybox and modify the Render Settings
-    /// </summary>
-    /// <param name="skyboxMaterial"></param>
-    public void SetSkyboxMaterial(Material skyboxMaterial)
-    {
-        this.skyboxMaterial = skyboxMaterial;
-        RenderSettings.skybox = this.skyboxMaterial;
-    }
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip)
     {
@@ -205,6 +181,16 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
+    /// Set the material of the skybox and modify the Render Settings
+    /// </summary>
+    /// <param name="skyboxMaterial"></param>
+    public void SetSkyboxMaterial(Material skyboxMaterial)
+    {
+        this.skyboxMaterial = skyboxMaterial;
+        RenderSettings.skybox = this.skyboxMaterial;
+    }
+
+    /// <summary>
     /// Sets the time of the skybox to an specific second
     /// </summary>
     /// <param name="seconds"></param>
@@ -244,22 +230,12 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateSkyboxColor()
     {
-        Color zenitColor = SkyZenitColorRamp.Evaluate(NormalizedTime);
-        Color horizonColor = SkyHorizonColorRamp.Evaluate(NormalizedTime);
-        Color nadirColor = SkyNadirColorRamp.Evaluate(NormalizedTime);
-
-        RenderSettings.skybox.SetColor("_ZenitColor", zenitColor);
-        RenderSettings.skybox.SetColor("_HorizonColor", horizonColor);
-        RenderSettings.skybox.SetColor("_NadirColor", nadirColor);
-
-        Color sunColor = DirectionalColorRamp.Evaluate(NormalizedTime);
-        RenderSettings.skybox.SetColor("_SunColor", sunColor);
-
-        Color rimColor = RimColorRamp.Evaluate(NormalizedTime);
-        RenderSettings.skybox.SetColor("_RimColor", rimColor);
-
-        Color cloudColor = CloudsColorRamp.Evaluate(NormalizedTime);
-        RenderSettings.skybox.SetColor("_CloudsColor", cloudColor);
+        RenderSettings.skybox.SetColor("_ZenitColor", SkyZenitColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor("_HorizonColor", SkyHorizonColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor("_NadirColor", SkyNadirColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor("_SunColor", DirectionalColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor("_RimColor", RimColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor("_CloudsColor", CloudsColorRamp.Evaluate(NormalizedTime));
     }
 
     /// <summary>
@@ -270,13 +246,9 @@ public class SkyboxController : MonoBehaviour
     {
         if(IndirectLight) //TODO: replace this by delegate / event
         {
-            Color skyColor = IndirectSkyRamp.Evaluate(NormalizedTime);
-            Color equatorColor = indirectEquatorRamp.Evaluate(NormalizedTime);
-            Color groundColor = GroundEquatorRamp.Evaluate(NormalizedTime);
-
-            RenderSettings.ambientSkyColor = skyColor;
-            RenderSettings.ambientEquatorColor = equatorColor;
-            RenderSettings.ambientGroundColor = groundColor;
+            RenderSettings.ambientSkyColor = IndirectSkyRamp.Evaluate(NormalizedTime);
+            RenderSettings.ambientEquatorColor = IndirectEquatorRamp.Evaluate(NormalizedTime);
+            RenderSettings.ambientGroundColor = GroundEquatorRamp.Evaluate(NormalizedTime);
         }
     }
 
@@ -306,8 +278,7 @@ public class SkyboxController : MonoBehaviour
     {
         if(Fog) //TODO: replace this by delegate / event
         {
-            Color fogColor = FogColorRamp.Evaluate(NormalizedTime);
-            RenderSettings.fogColor = fogColor;
+            RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime);
         }
     }
 

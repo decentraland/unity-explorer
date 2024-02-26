@@ -234,7 +234,7 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
-  indirectEquatorRamp:
+  IndirectEquatorRamp:
     serializedVersion: 2
     key0: {r: 0.3529281, g: 0.36551747, b: 0.7264151, a: 1}
     key1: {r: 0.8773585, g: 0.8773585, b: 0.8773585, a: 1}
@@ -261,7 +261,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_ColorSpace: 0
+    m_ColorSpace: -1
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
   GroundEquatorRamp:
