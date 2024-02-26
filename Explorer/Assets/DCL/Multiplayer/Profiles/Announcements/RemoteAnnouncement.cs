@@ -7,8 +7,8 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 
         public RemoteAnnouncement(int version, string walletId)
         {
-            this.Version = version;
-            this.WalletId = walletId;
+            Version = version;
+            WalletId = walletId;
         }
 
         public override string ToString() =>

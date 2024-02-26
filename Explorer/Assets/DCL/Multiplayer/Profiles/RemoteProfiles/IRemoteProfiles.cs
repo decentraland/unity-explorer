@@ -6,7 +6,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 {
     public interface IRemoteProfiles
     {
-        void Download(ICollection<RemoteAnnouncement> list);
+        void Download(IReadOnlyCollection<RemoteAnnouncement> list);
 
         bool NewBunchAvailable();
 
