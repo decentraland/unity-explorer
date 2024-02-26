@@ -21,6 +21,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         private Entity entity;
         private World globalWorld;
         private Transform fakeAvatarShapeTransform;
+        private GameObject fakeAvatarGO;
+        private GameObject fakeAvatarBaseGO;
 
         [SetUp]
         public void Setup()
@@ -30,18 +32,27 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             globalWorldProxy.SetWorld(globalWorld);
             system = new AvatarModifierAreaHandlerSystem(world, globalWorldProxy);
 
-            // TODO: Fake an entity with: AvatarBase + TransformComponent + AvatarShape...
-            var fakeAvatarGO = new GameObject("fake avatar GO");
-            fakeAvatarShapeTransform = fakeAvatarGO.transform;
             Entity fakeAvatarEntity = globalWorld.Create();
+            fakeAvatarGO = new GameObject("fake avatar GO");
+            fakeAvatarShapeTransform = fakeAvatarGO.transform;
+            var fakeAvatarBaseGO = new GameObject("fake avatar BASE");
+            AvatarBase fakeAvatarBase = fakeAvatarBaseGO.AddComponent<AvatarBase>();
+            fakeAvatarBaseGO.transform.SetParent(fakeAvatarShapeTransform);
 
-            globalWorld.Add(fakeAvatarEntity, Substitute.For<AvatarBase>(), new TransformComponent
+            globalWorld.Add(fakeAvatarEntity, fakeAvatarBase, new TransformComponent
             {
                 Transform = fakeAvatarShapeTransform,
             }, new AvatarShapeComponent());
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(fakeAvatarGO);
+            Object.DestroyImmediate(fakeAvatarBaseGO);
         }
 
         [Test]
