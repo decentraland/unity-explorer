@@ -136,7 +136,7 @@ namespace Global.Dynamic
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
-            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer);
+            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, enableLandscape);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
                 container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel, enableLandscape, landscapePlugin);
