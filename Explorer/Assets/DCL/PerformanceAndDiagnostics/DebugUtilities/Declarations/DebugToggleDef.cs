@@ -1,5 +1,4 @@
-﻿using DCL.DebugUtilities.UIBindings;
-using UnityEngine.UIElements;
+﻿using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities
 {
@@ -8,16 +7,13 @@ namespace DCL.DebugUtilities
     /// </summary>
     public class DebugToggleDef : IDebugElementDef
     {
-        public readonly ElementBinding<bool> Binding;
+        public readonly bool InitialState;
+        public readonly EventCallback<ChangeEvent<bool>> OnToggle;
 
         public DebugToggleDef(EventCallback<ChangeEvent<bool>> onToggle, bool initialState)
         {
-            Binding = new ElementBinding<bool>(initialState, onToggle);
-        }
-
-        public DebugToggleDef(ElementBinding<bool> binding)
-        {
-            Binding = binding;
+            OnToggle = onToggle;
+            InitialState = initialState;
         }
     }
 }

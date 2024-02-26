@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using DG.Tweening;
-using SuperScrollView;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -31,9 +30,6 @@ namespace DCL.Chat
 
         [field: SerializeField]
         public CanvasGroup ChatEntriesCanvasGroup { get; private set; }
-
-        [field: SerializeField]
-        public LoopListView2 LoopList { get; private set; }
 
         [field: SerializeField]
         public Button CloseChatButton { get; private set; }

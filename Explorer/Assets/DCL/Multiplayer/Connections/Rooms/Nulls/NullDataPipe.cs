@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         public event ReceivedDataDelegate? DataReceived;
 
-        public void PublishData(Span<byte> data, string topic, IReadOnlyList<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy)
+        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy)
         {
             //ignore
         }

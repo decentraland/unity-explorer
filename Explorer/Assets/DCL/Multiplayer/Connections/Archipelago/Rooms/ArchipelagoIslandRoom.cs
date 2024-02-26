@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;

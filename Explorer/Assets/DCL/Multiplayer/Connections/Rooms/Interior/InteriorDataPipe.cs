@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind) =>
             DataReceived?.Invoke(data, participant, kind);
 
-        public void PublishData(Span<byte> data, string topic, IReadOnlyList<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy) =>
+        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy) =>
             assigned.EnsureAssigned().PublishData(data, topic, destinationSids, kind);
     }
 }

@@ -44,7 +44,6 @@ namespace DCL.DebugUtilities
             foreach (DebugWidgetBuilder widgetBuilder in widgets)
             {
                 DebugWidget widget = widgetBuilder.Build(widgetFactoryMethod, controlFactoryMethod, factories);
-                widget.name = widgetBuilder.name;
                 container.containerRoot.Add(widget);
             }
 
