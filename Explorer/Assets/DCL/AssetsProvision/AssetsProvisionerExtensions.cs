@@ -11,5 +11,8 @@ namespace DCL.AssetsProvision
         {
             return assetsProvisioner.ProvideMainAssetAsync(assetReferenceT, ct).ContinueWith(x => x.Value);
         }
+
+        public static ErrorTraceAssetsProvisioner WithErrorTrace(this IAssetsProvisioner origin) =>
+            new (origin);
     }
 }
