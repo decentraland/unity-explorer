@@ -212,8 +212,8 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        ChatEntryPrefab:
-          m_AssetGUID: 9e9bf5fb9ee9c452f858e423651a52ca
+        <ChatEntryConfiguration>k__BackingField:
+          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -237,6 +237,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         celShadingMaterial:
           m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        nametagsData:
+          m_AssetGUID: ac22a06cb5912442f99218b2f2da6592
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
