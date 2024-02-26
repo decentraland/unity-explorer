@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.Bunches
 {
@@ -10,13 +10,12 @@ namespace DCL.Multiplayer.Profiles.Bunches
     /// <typeparam name="T"></typeparam>
     public readonly struct OwnedBunch<T> : IDisposable where T: struct
     {
-        private readonly Semaphore ownership;
+        private readonly MutexSync.Scope ownership;
         private readonly ISet<T> set;
 
-        public OwnedBunch(Semaphore ownership, ISet<T> set)
+        public OwnedBunch(MutexSync ownership, ISet<T> set)
         {
-            ownership.WaitOne();
-            this.ownership = ownership;
+            this.ownership = ownership.GetScope();
             this.set = set;
         }
 
@@ -27,7 +26,7 @@ namespace DCL.Multiplayer.Profiles.Bunches
         public void Dispose()
         {
             set.Clear();
-            ownership.Release();
+            ownership.Dispose();
         }
     }
 }

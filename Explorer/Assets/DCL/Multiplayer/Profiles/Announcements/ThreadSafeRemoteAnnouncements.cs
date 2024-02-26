@@ -10,7 +10,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 {
@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
         private readonly MessageParser<Packet> parser;
         private readonly IMultiPool multiPool;
         private readonly HashSet<RemoteAnnouncement> list = new ();
-        private readonly Semaphore semaphore = new (1, 1);
+        private readonly MutexSync mutex = new ();
 
         public ThreadSafeRemoteAnnouncements(IRoomHub roomHub, IMultiPool multiPool)
         {
@@ -76,20 +76,18 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 
         public bool NewBunchAvailable()
         {
-            semaphore.WaitOne();
+            using var _ = mutex.GetScope();
             bool result = list.Count > 0;
-            semaphore.Release();
             return result;
         }
 
         public OwnedBunch<RemoteAnnouncement> Bunch() =>
-            new (semaphore, list);
+            new (mutex, list);
 
         private void ThreadSafeAdd(RemoteAnnouncement remoteAnnouncement)
         {
-            semaphore.WaitOne();
+            using var _ = mutex.GetScope();
             list.Add(remoteAnnouncement);
-            semaphore.Release();
         }
     }
 }
