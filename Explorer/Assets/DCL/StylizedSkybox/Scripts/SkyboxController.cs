@@ -12,7 +12,7 @@ public class SkyboxController : MonoBehaviour
     [HideInInspector]
     public int SecondsInDay = 86400;
     public bool PlayOnStart = false;
-    public float Speed = 1*60;
+    public float Speed = 1 * 60;
 
     [HideInInspector] public float NaturalTime = 0;
     [HideInInspector] public float NormalizedTime = 0;
@@ -70,17 +70,17 @@ public class SkyboxController : MonoBehaviour
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip)
     {
-        if(skyboxMat != null)
+        if (skyboxMat != null)
             skyboxMaterial = skyboxMat;
 
-        if(dirLight != null)
+        if (dirLight != null)
             DirectionalLight = dirLight;
 
-        if(skyboxAnimationClip != null)
+        if (skyboxAnimationClip != null)
             LightAnimation = skyboxAnimationClip;
 
         //setup skybox material
-        if(!skyboxMaterial)
+        if (!skyboxMaterial)
         {
             ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: No skybox material assigned");
         }
@@ -91,7 +91,7 @@ public class SkyboxController : MonoBehaviour
         }
 
         //setup directional light
-        if(DirectionalLight == null)
+        if (DirectionalLight == null)
         {
             ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: Directional Light has not been assigned");
         }
@@ -103,24 +103,24 @@ public class SkyboxController : MonoBehaviour
             //create animation component in runtime and assign animation clip
             lightAnimator = DirectionalLight.gameObject.AddComponent<Animation>();
 
-            if(LightAnimation == null)
+            if (LightAnimation == null)
             {
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: Directional Light animation has not been assigned");
             }
             else
             {
-                lightAnimator.AddClip(LightAnimation,LightAnimation.name);
+                lightAnimator.AddClip(LightAnimation, LightAnimation.name);
             }
         }
 
         //setup indirect light
-        if(IndirectLight)
+        if (IndirectLight)
         {
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
         }
 
         //setup fog
-        if(Fog)
+        if (Fog)
         {
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
@@ -132,8 +132,8 @@ public class SkyboxController : MonoBehaviour
 
     void Start()
     {
-        SetTime(SecondsInDay/2);
-        if(PlayOnStart) { Play();} else {Pause();}
+        SetTime(SecondsInDay / 2);
+        if (PlayOnStart) { Play(); } else { Pause(); }
     }
 
     void Update()
@@ -142,11 +142,11 @@ public class SkyboxController : MonoBehaviour
             return;
 
         //update natural and relative time
-        if(!pause)
+        if (!pause)
         {
             float deltaTime = (Time.deltaTime * Speed);
             NaturalTime += deltaTime;
-            NormalizedTime +=  deltaTime / SecondsInDay;
+            NormalizedTime += deltaTime / SecondsInDay;
         }
 
         //loops time at the end of the cycle
@@ -157,7 +157,7 @@ public class SkyboxController : MonoBehaviour
 
         //update skybox only after certain time
         sinceLastRefresh += Time.deltaTime;
-        if(sinceLastRefresh >= RefreshTime)
+        if (sinceLastRefresh >= RefreshTime)
         {
             UpdateSkybox();
             sinceLastRefresh = 0;
@@ -246,7 +246,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateIndirectLight()
     {
-        if(IndirectLight)
+        if (IndirectLight)
         {
             RenderSettings.ambientSkyColor = IndirectSkyRamp.Evaluate(NormalizedTime);
             RenderSettings.ambientEquatorColor = IndirectEquatorRamp.Evaluate(NormalizedTime);
@@ -264,7 +264,7 @@ public class SkyboxController : MonoBehaviour
         DirectionalLight.color = DirectionalColorRamp.Evaluate(NormalizedTime);
 
         //sample the right frame of the animation
-        if(LightAnimation)
+        if (LightAnimation)
         {
             lightAnimator[LightAnimation.name].time = NormalizedTime * lightAnimator[LightAnimation.name].length;
             lightAnimator.Play(LightAnimation.name);
@@ -278,7 +278,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateFog()
     {
-        if(Fog)
+        if (Fog)
         {
             RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime);
         }
@@ -289,7 +289,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateTimeUI()
     {
-        if(textUI)
+        if (textUI)
         {
             textUI.text = GetFormatedTime();
         }
