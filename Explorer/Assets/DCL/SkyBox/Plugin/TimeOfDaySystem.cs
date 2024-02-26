@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Quality;
 using DCL.SkyBox.Rendering;
 using ECS.Abstract;
 using System;
@@ -18,7 +17,7 @@ namespace DCL.SkyBox
     {
         private const string NAME = "Time of Day";
 
-        private readonly IRendererFeaturesCache rendererFeaturesCache;
+        private readonly TimeOfDayRenderingModel model;
         private readonly Light light;
 
         private readonly ElementBinding<float> sunLatitude;
@@ -37,9 +36,9 @@ namespace DCL.SkyBox
 
         private float accumulatedSeconds;
 
-        internal TimeOfDaySystem(World world, IDebugContainerBuilder debugBuilder, IRendererFeaturesCache rendererFeaturesCache, Light light) : base(world)
+        internal TimeOfDaySystem(World world, IDebugContainerBuilder debugBuilder, TimeOfDayRenderingModel model, Light light) : base(world)
         {
-            this.rendererFeaturesCache = rendererFeaturesCache;
+            this.model = model;
             this.light = light;
 
             currentDate = DateTime.Now;
@@ -95,7 +94,7 @@ namespace DCL.SkyBox
             // RenderSettings.fogColor = RenderSettings.ambientEquatorColor;
 
             // Update the model
-            rendererFeaturesCache.GetRendererFeature<DCL_RenderFeature_ProceduralSkyBox>()?.RenderingModel.SetStellarPositions(output.SunPos, output.MoonPos);
+            model.SetStellarPositions(output.SunPos, output.MoonPos);
 
             jobHandle = default(JobHandle);
         }

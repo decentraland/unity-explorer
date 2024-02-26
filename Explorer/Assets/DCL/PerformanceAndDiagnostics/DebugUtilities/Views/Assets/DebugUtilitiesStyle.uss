@@ -63,10 +63,6 @@ DebugTextFieldElement {
     align-self: stretch;
 }
 
-DebugDropdownElement {
-    align-self: stretch;
-}
-
 DebugControl {
     margin-bottom: 2;
 }
@@ -157,29 +153,6 @@ DebugToggleElement > .unity-toggle #unity-checkmark {
     border-radius: 3px;
     border-color: rgba(18, 0, 131, 0.59);
     border-width: 2;
-    -unity-font-style: normal;
-}
-
-DropdownField {
-    margin: 0;    
-}
-
-DropdownField > VisualElement {
-    border-radius: 3px;
-    border-color: rgba(18, 0, 131, 0.59);
-    border-width: 2;
-    -unity-font-style: normal;
-    padding: 1px;
-    background-color: rgba(255, 255, 255, 0.75);
-}
-
-.unity-base-popup-field__text {
-    color: #2e2e2e; 
-    margin: 1;
-    padding: 0;
-}
-
-.unity-base-popup-field__label {
     -unity-font-style: normal;
 }
 
