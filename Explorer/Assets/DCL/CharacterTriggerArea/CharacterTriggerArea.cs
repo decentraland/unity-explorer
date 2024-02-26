@@ -6,11 +6,13 @@ namespace DCL.CharacterTriggerArea
 {
     public class CharacterTriggerArea : MonoBehaviour, IDisposable
     {
+        // TODO: CREATE 1 DICTIONARY OF TRANSFORM, ENUM (ENTERED/STAYED/EXITED) ???
+
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
-        public HashSet<Transform> EnteredThisFrame;
-        public HashSet<Transform> ExitedThisFrame;
 
         private readonly HashSet<Transform> currentAvatarsInside = new ();
+        public HashSet<Transform> EnteredThisFrame;
+        public HashSet<Transform> ExitedThisFrame;
         [field: NonSerialized] public Transform TargetTransform;
 
         public void OnTriggerEnter(Collider other)

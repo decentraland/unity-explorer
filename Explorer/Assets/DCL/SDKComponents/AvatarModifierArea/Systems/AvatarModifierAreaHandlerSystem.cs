@@ -64,10 +64,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             if (pbAvatarModifierArea.IsDirty)
             {
-                triggerAreaComponent.IsDirty = true;
-                triggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
+                pbAvatarModifierArea.IsDirty = false;
 
                 modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds);
+
+                triggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
+                triggerAreaComponent.IsDirty = true;
             }
         }
 
