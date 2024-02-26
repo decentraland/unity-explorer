@@ -31,7 +31,8 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             ResetDirtyFlagSystem<PBAvatarModifierArea>.InjectToWorld(ref builder);
-            AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy);
+            var avatarModifierAreaHandlerSystem = AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy);
+            finalizeWorldSystems.Add(avatarModifierAreaHandlerSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

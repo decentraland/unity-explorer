@@ -8,9 +8,14 @@ using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Profiles;
+using DCL.SDKComponents.AvatarModifierArea.Components;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
@@ -18,8 +23,10 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
     [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
-    public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem
+    public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarModifierAreaComponent>();
+        private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarModifierAreaComponent>().WithNone<DeleteEntityIntention, PBAvatarModifierArea>();
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
 
@@ -32,34 +39,39 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         {
             UpdateAvatarModifierAreaQuery(World);
             SetupAvatarModifierAreaQuery(World);
+
+            World.Remove<AvatarModifierAreaComponent>(COMPONENT_REMOVAL_QUERY);
+            World.Remove<AvatarModifierAreaComponent, PBAvatarModifierArea>(ENTITY_DESTRUCTION_QUERY);
         }
 
         [Query]
-        [None(typeof(CharacterTriggerAreaComponent))]
+        [None(typeof(CharacterTriggerAreaComponent), typeof(AvatarModifierAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea)
         {
-            World.Add(entity, new CharacterTriggerAreaComponent(areaSize: pbAvatarModifierArea.Area, targetOnlyMainPlayer: false));
+            World.Add(entity,
+                new CharacterTriggerAreaComponent(areaSize: pbAvatarModifierArea.Area, targetOnlyMainPlayer: false),
+                new AvatarModifierAreaComponent(pbAvatarModifierArea.ExcludeIds));
         }
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref CharacterTriggerAreaComponent characterTriggerAreaComponent)
+        private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            if (characterTriggerAreaComponent.EnteredThisFrame!.Count > 0)
-                foreach (Transform avatarTransform in characterTriggerAreaComponent.EnteredThisFrame) { OnEnteredAvatarModifierArea(avatarTransform); }
+            foreach (Transform avatarTransform in triggerAreaComponent.EnteredThisFrame) { ToggleAvatarHiding(avatarTransform, modifierAreaComponent.ExcludedIds, true); }
 
-            if (characterTriggerAreaComponent.ExitedThisFrame!.Count > 0)
-                foreach (Transform avatarTransform in characterTriggerAreaComponent.ExitedThisFrame) { OnExitedAvatarModifierArea(avatarTransform); }
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedThisFrame) { ToggleAvatarHiding(avatarTransform, modifierAreaComponent.ExcludedIds, false); }
 
             if (pbAvatarModifierArea.IsDirty)
             {
-                characterTriggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
-                characterTriggerAreaComponent.IsDirty = true;
+                triggerAreaComponent.IsDirty = true;
+                triggerAreaComponent.AreaSize = pbAvatarModifierArea.Area;
+
+                modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds);
             }
         }
 
-        internal void OnEnteredAvatarModifierArea(Transform avatarTransform)
+        internal void ToggleAvatarHiding(Transform avatarTransform, HashSet<string> excludedIds, bool shouldHide)
         {
             var found = false;
 
@@ -73,30 +85,26 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                     if (avatarTransform == entityTransform)
                     {
-                        globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = true;
                         found = true;
+
+                        if (globalWorld.TryGet(entity, out Profile profile) && excludedIds.Contains(profile.UserId))
+                            return;
+
+                        globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = shouldHide;
                     }
                 });
         }
 
-        internal void OnExitedAvatarModifierArea(Transform avatarTransform)
+        [Query]
+        [All(typeof(AvatarModifierAreaComponent))]
+        private void FinalizeComponents(in Entity entity)
         {
-            var found = false;
+            World.Remove<AvatarModifierAreaComponent>(entity);
+        }
 
-            // There's no way to do a Query/InlineQuery getting both entity and TransformComponent...
-            globalWorld.Query(in AVATAR_BASE_QUERY,
-                entity =>
-                {
-                    if (found) return;
-
-                    Transform entityTransform = globalWorld.Get<AvatarBase>(entity).transform.parent;
-
-                    if (avatarTransform == entityTransform)
-                    {
-                        globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = false;
-                        found = true;
-                    }
-                });
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeComponentsQuery(World);
         }
     }
 }
