@@ -8,18 +8,6 @@ namespace DCL.Chat
     public class ChatEntryView : MonoBehaviour
     {
         [field: SerializeField]
-        internal RectTransform backgroundRectTransform { get; private set; }
-
-        [field: SerializeField]
-        internal RectTransform textRectTransform { get; private set; }
-
-        [field: SerializeField]
-        internal RectTransform rectTransform { get; private set; }
-
-        [field: SerializeField]
-        internal ContentSizeFitter contentSizeFitter { get; private set; }
-
-        [field: SerializeField]
         internal TMP_Text playerName { get; private set; }
 
         [field: SerializeField]
@@ -29,7 +17,13 @@ namespace DCL.Chat
         internal TMP_Text entryText { get; private set; }
 
         [field: SerializeField]
+        internal TMP_Text walletIdText { get; private set; }
+
+        [field: SerializeField]
         internal Image verifiedIcon { get; private set; }
+
+        [field: SerializeField]
+        internal HorizontalLayoutGroup layoutGroup { get; private set; }
 
         [field: SerializeField]
         internal Image entryBackground { get; private set; }
@@ -37,33 +31,35 @@ namespace DCL.Chat
         [field: SerializeField]
         internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
-        private Vector2 backgroundSize;
+        private ChatEntryConfigurationSO entryConfiguration;
+
+        public void Initialise(ChatEntryConfigurationSO chatEntryConfiguration)
+        {
+            entryConfiguration = chatEntryConfiguration;
+        }
 
         public void SetUsername(string username, string walletId)
         {
-            playerName.text =
-                string.IsNullOrEmpty(walletId) ?
-                    username : $"{username}#<color=#76717E>{walletId.Substring(0,5)}</color>";
+            playerName.text = username;
+            walletIdText.text = walletId;
             verifiedIcon.gameObject.SetActive(string.IsNullOrEmpty(walletId));
+            Color playerNameColor = entryConfiguration.GetNameColor(username);
+            playerName.color = playerNameColor;
+        }
+
+        public void SetSentByUser(bool sentByUser)
+        {
+            layoutGroup.reverseArrangement = sentByUser;
+
+            entryBackground.sprite = sentByUser ? entryConfiguration.ownUsersBackground : entryConfiguration.otherUsersBackground;
+            entryBackground.color = sentByUser ? entryConfiguration.ownUsersEntryColor : entryConfiguration.otherUsersEntryColor;
+            verifiedIcon.sprite = sentByUser ? entryConfiguration.ownUserVerifiedIcon : entryConfiguration.otherUsersVerifiedIcon;
         }
 
         public void AnimateChatEntry()
         {
             chatEntryCanvasGroup.alpha = 0;
             chatEntryCanvasGroup.DOFade(1, 0.5f);
-        }
-
-        public void SetItemData(ChatMessage data)
-        {
-            SetUsername(data.Sender, data.WalletAddress);
-            entryText.text = data.Message;
-
-            contentSizeFitter.SetLayoutVertical();
-            backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + 40, 58);
-
-            backgroundRectTransform.sizeDelta = backgroundSize;
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, backgroundSize.y);
         }
     }
 }
