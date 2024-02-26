@@ -6,16 +6,13 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Chat;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.UIElements;
 
 namespace DCL.Nametags
 {
@@ -25,14 +22,12 @@ namespace DCL.Nametags
     {
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
-        private readonly NametagsData nametagsData;
         private SingleInstanceEntity playerCamera;
 
-        public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool, ChatEntryConfigurationSO chatEntryConfiguration, NametagsData nametagsData) : base(world)
+        public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool, ChatEntryConfigurationSO chatEntryConfiguration) : base(world)
         {
             this.nametagViewPool = nametagViewPool;
             this.chatEntryConfiguration = chatEntryConfiguration;
-            this.nametagsData = nametagsData;
         }
 
         public override void Initialize()
@@ -42,12 +37,6 @@ namespace DCL.Nametags
 
         protected override void Update(float t)
         {
-            if (!nametagsData.showNameTags)
-            {
-                RemoveAllTagsQuery(World);
-                return;
-            }
-
             RemoveTagQuery(World);
 
             CameraComponent camera = playerCamera.GetCameraComponent(World);
@@ -77,14 +66,6 @@ namespace DCL.Nametags
         private void RemoveTag(NametagView nametagView)
         {
             nametagViewPool.Release(nametagView);
-        }
-
-        [Query]
-        [All(typeof(NametagView))]
-        private void RemoveAllTags(Entity e, NametagView nametagView)
-        {
-            nametagViewPool.Release(nametagView);
-            World.Remove<NametagView>(e);
         }
 
         [Query]

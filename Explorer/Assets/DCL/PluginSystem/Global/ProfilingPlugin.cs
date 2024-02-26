@@ -9,7 +9,7 @@ using ProfilingSystem = DCL.Profiling.ECS.ProfilingSystem;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ProfilingPlugin : IDCLGlobalPluginWithoutSettings
+    public class ProfilingPlugin : IDCLGlobalPlugin<ProfilingPlugin.Settings>
     {
         private readonly IProfilingProvider profilingProvider;
         private readonly FrameTimeCapBudget frameTimeCapBudget;
@@ -24,9 +24,17 @@ namespace DCL.PluginSystem.Global
             this.memoryBudget = memoryBudget;
         }
 
+        public void Dispose() { }
+
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             ProfilingSystem.InjectToWorld(ref builder, profilingProvider, frameTimeCapBudget, memoryBudget, debugContainerBuilder);
         }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings { }
     }
 }
