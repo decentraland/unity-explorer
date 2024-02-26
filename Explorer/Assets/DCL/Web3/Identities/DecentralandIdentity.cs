@@ -43,9 +43,9 @@ namespace DCL.Web3.Identities
             var chain = AuthChain.Create();
 
             foreach (AuthLink link in AuthChain)
-                chain.Set(link.type, link);
+                chain.Set(link);
 
-            chain.Set(AuthLinkType.ECDSA_SIGNED_ENTITY, new AuthLink
+            chain.Set(new AuthLink
             {
                 type = AuthLinkType.ECDSA_SIGNED_ENTITY,
                 payload = entityId,
