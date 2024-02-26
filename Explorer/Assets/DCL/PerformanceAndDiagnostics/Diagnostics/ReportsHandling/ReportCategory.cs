@@ -148,6 +148,11 @@
         public const string PROFILE = nameof(PROFILE);
 
         /// <summary>
+        ///     Tweens Related
+        /// </summary>
+        public const string TWEEN = nameof(TWEEN);
+
+        /// <summary>
         ///     Wearable related
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
@@ -162,9 +167,9 @@
         public const string AVATAR_ATTACH = nameof(AVATAR_ATTACH);
 
         /// <summary>
-        ///     VideoPlayer SDK component
+        ///     Quality related logs
         /// </summary>
-        public const string VIDEO_PLAYER = nameof(VIDEO_PLAYER);
+        public const string QUALITY = nameof(QUALITY);
 
         /// <summary>
         ///     Scene's restricted actions
