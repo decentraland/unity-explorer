@@ -41,9 +41,11 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         protected override void Update(float t)
         {
-            if (remoteAnnouncements.NewBunchAvailable())
+            using (var bunch = remoteAnnouncements.Bunch())
             {
-                using var bunch = remoteAnnouncements.Bunch();
+                if (bunch.Available() == false)
+                    return;
+
                 var list = bunch.Collection();
                 remoteProfiles.Download(list);
             }

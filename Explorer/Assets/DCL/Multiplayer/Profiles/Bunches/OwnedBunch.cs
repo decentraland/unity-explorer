@@ -23,6 +23,9 @@ namespace DCL.Multiplayer.Profiles.Bunches
         public ICollection<T> Collection() =>
             set;
 
+        public bool Available() =>
+            set.Count > 0;
+
         public void Dispose()
         {
             set.Clear();
