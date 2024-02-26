@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
+    "avprovideo": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "21358a186f934f16d49f2989f1ef0c535046600f"
+    },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
       "depth": 0,
@@ -41,13 +48,6 @@
       "source": "git",
       "dependencies": {},
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
-    },
-    "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "9e18361a5af531a1b67d5cb42843a8e94de63a2c"
     },
     "com.decentraland.unity-shared-dependencies": {
       "version": "https://github.com/decentraland/unity-shared-dependencies.git",
@@ -452,6 +452,13 @@
         "com.unity.render-pipelines.universal": "10.3.2"
       },
       "hash": "1b6ff73eccc95157197fed7d3609ad063b212709"
+    },
+    "superscrollview": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8e1478ec9f8fe2f5fbe1249ceeb31cdc764d1465"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",
