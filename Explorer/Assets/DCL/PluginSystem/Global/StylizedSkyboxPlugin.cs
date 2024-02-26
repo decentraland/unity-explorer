@@ -22,6 +22,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly Light directionalLight;
         private SkyboxController skyboxController;
+        private ElementBinding<int> timeOfDay;
+        private IDebugContainerBuilder debugContainerBuilder;
 
         public StylizedSkyboxPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -29,14 +31,10 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder
         )
         {
+            timeOfDay = new ElementBinding<int>(0);
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
-           
-            debugContainerBuilder.AddWidget("Skybox")
-                .AddSingleButton("Play", () => skyboxController.Play())
-                .AddSingleButton("Pause", () => skyboxController.Pause());
-                //.AddControl(new DebugIntSliderDef(skyboxController.SetTime(new ElementBinding<int>(skyboxController.NaturalTime), 0, skyboxController.SecondsInDay)), new DebugConstLabelDef("Time"));
-                //.AddControl(new DebugIntSliderDef(skyboxController.Speed = new ElementBinding<int>(60), 0, 60), new DebugConstLabelDef("Speed"))
+            this.debugContainerBuilder = debugContainerBuilder;
         }
 
         public void Dispose()
@@ -54,6 +52,12 @@ namespace DCL.PluginSystem.Global
             AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settings.SkyboxAnimationCycle, ct: ct)).Value;
 
             skyboxController.Initialize(skyboxMaterial, directionalLight, skyboxAnimation);
+
+            debugContainerBuilder.AddWidget("Skybox")
+            .AddSingleButton("Play", () => skyboxController.Play())
+            .AddSingleButton("Pause", () => skyboxController.Pause())
+            .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
+            .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
         public class StylizedSkyboxSettings : IDCLPluginSettings
