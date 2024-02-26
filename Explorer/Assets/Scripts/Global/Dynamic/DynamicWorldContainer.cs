@@ -8,6 +8,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
@@ -70,12 +71,33 @@ namespace Global.Dynamic
             return UniTask.CompletedTask;
         }
 
-        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(StaticContainer staticContainer,
+        private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,
+            IDebugContainerBuilder debugContainerBuilder, List<string> realms)
+        {
+            async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
+            {
+                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+                await UniTask.WhenAll(mvcManager.ShowAsync(
+                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
+                    realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct));
+            }
+
+            debugContainerBuilder.AddWidget("Realm")
+                                 .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
+                                      evt => { ChangeRealmAsync(evt.newValue, CancellationToken.None).Forget(); }), string.Empty), null)
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { ChangeRealmAsync(realm, CancellationToken.None).Forget(); });
+        }
+
+        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
+            StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
             SkyBoxSceneData skyBoxSceneData,
-            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
+            IReadOnlyList<int2> staticLoadPositions,
+            int sceneLoadRadius,
+            List<string> realms,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IWeb3IdentityCache web3IdentityCache,
@@ -89,6 +111,7 @@ namespace Global.Dynamic
                 return (null, false);
 
             DebugContainerBuilder debugBuilder = container.DebugContainer.Builder;
+            staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
@@ -108,7 +131,7 @@ namespace Global.Dynamic
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var chatMessagesBus = new ChatMessagesBus(debugBuilder);
             var webBrowser = new UnityAppWebBrowser();
-            var chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -159,7 +182,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, web3IdentityCache, characterPreviewFactory),
-                new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
+                new SkyBoxPlugin(debugBuilder, skyBoxSceneData, staticContainer.QualityContainer.RendererFeaturesCache),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
@@ -168,6 +191,7 @@ namespace Global.Dynamic
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
+                staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
             };
 
@@ -194,25 +218,9 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
-            BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder);
+            BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder, realms);
 
             return (container, true);
-        }
-
-        private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,
-            IDebugContainerBuilder debugContainerBuilder)
-        {
-            async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
-            {
-                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-                await UniTask.WhenAll(mvcManager.ShowAsync(
-                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                    realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct));
-            }
-
-            debugContainerBuilder.AddWidget("Realm")
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { ChangeRealmAsync(realm, CancellationToken.None).Forget(); });
         }
     }
 }
