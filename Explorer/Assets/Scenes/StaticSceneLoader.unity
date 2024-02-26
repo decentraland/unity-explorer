@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.12731868, g: 0.13414744, b: 0.12107858, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731838, g: 0.13414699, b: 0.12107833, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -179,10 +179,11 @@ MonoBehaviour:
     - sdk6-basic-scene
     - Dance-floor
     - MediaStreaming
+    - user-identity
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
-  useRealAuthentication: 0
-  useStoredCredentials: 0
+  useRealAuthentication: 1
+  useStoredCredentials: 1
   authenticationServerUrl: https://auth-api.decentraland.zone
   authenticationSignatureUrl: https://decentraland.zone/auth/requests
   ethWhitelistMethods:
@@ -190,6 +191,7 @@ MonoBehaviour:
   - eth_call
   - eth_blockNumber
   - eth_signTypedData_v4
+  ownProfileJson: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
