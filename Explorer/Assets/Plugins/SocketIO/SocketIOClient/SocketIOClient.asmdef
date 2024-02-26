@@ -1,9 +1,7 @@
 {
     "name": "SocketIOClient",
     "rootNamespace": "",
-    "references": [
-        "GUID:702f733b4deb246808c6ce84d93b5c9c"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
