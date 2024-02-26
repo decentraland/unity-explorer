@@ -148,6 +148,7 @@ public class SkyboxController : MonoBehaviour
             NormalizedTime +=  deltaTime / SecondsInDay;
         }
 
+        //loops time at the end of the cycle
         if (NaturalTime >= SecondsInDay)
         {
             NaturalTime = NormalizedTime = 0;
