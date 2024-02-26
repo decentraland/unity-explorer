@@ -450,7 +450,7 @@
       "source": "git",
       "dependencies": {},
       "hash": "8e1478ec9f8fe2f5fbe1249ceeb31cdc764d1465"
-    }
+    },
     "sc.stylizedwater2": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
       "depth": 0,
