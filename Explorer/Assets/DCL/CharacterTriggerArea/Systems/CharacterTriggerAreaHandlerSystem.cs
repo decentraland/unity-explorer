@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
@@ -62,7 +61,6 @@ namespace DCL.CharacterTriggerArea.Systems
                 if (triggerAreaMonoBehaviour == null)
                 {
                     triggerAreaMonoBehaviour = poolRegistry.Get();
-                    Debug.Log("PRAVS - Instantiated pooled GO", triggerAreaMonoBehaviour.transform);
                     triggerAreaMonoBehaviour.EnteredThisFrame = triggerAreaComponent.EnteredThisFrame;
                     triggerAreaMonoBehaviour.ExitedThisFrame = triggerAreaComponent.ExitedThisFrame;
 

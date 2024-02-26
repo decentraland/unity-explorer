@@ -1,7 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
@@ -9,18 +9,13 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Utilities;
 using ECS.Abstract;
-using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-
-    // [UpdateBefore(typeof(CharacterTriggerAreaHandlerSystem))]
-    [UpdateAfter(typeof(CharacterTriggerAreaHandlerSystem))]
+    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
-    [ThrottlingEnabled]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem
     {
         private static CameraMode cameraModeBeforeLastAreaEnter; // There's only 1 camera at a time
@@ -66,7 +61,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
-            Debug.Log($"PRAVS - ENTERED Camera Mode Area! {targetCameraMode}");
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Entity!.Value);
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
@@ -82,8 +76,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputLocks == 0)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
-
-            Debug.Log($"PRAVS - EXITED Camera Mode Area! {camera.Mode}");
         }
     }
 }

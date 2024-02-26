@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using ECS.Abstract;
