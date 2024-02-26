@@ -21,6 +21,8 @@ namespace DCL.SDKComponents.Animator.Systems
     [ThrottlingEnabled]
     public partial class AnimatorHandlerSystem : BaseUnityLoopSystem
     {
+        private const int INITIAL_LAYER_INDEX = 0;
+
         public AnimatorHandlerSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -64,6 +66,8 @@ namespace DCL.SDKComponents.Animator.Systems
                 };
 
             World.Add(entity, sdkAnimatorComponent);
+            //The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
+            //or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
         }
 
@@ -87,6 +91,22 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
+        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
+        {
+            if (sdkAnimatorComponent.IsDirty)
+            {
+                List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
+                sdkAnimatorComponent.IsDirty = false;
+
+                for (var i = 0; i < gltfAnimations.Count; i++)
+                {
+                    Animation animation = gltfAnimations[i];
+                    SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animation);
+                }
+            }
+        }
+
+        [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDeletion(ref SDKAnimatorComponent sdkAnimatorComponent)
         {
@@ -106,25 +126,9 @@ namespace DCL.SDKComponents.Animator.Systems
             ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
         }
 
-        [Query]
-        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
-        {
-            if (sdkAnimatorComponent.IsDirty)
-            {
-                List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
-                sdkAnimatorComponent.IsDirty = false;
-
-                for (var i = 0; i < gltfAnimations.Count; i++)
-                {
-                    Animation animation = gltfAnimations[i];
-                    SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animation);
-                }
-            }
-        }
-
         private static void InitializeAnimation(Animation animation)
         {
-            var layerIndex = 0;
+            var layerIndex = INITIAL_LAYER_INDEX;
 
             animation.playAutomatically = true;
             animation.enabled = true;
