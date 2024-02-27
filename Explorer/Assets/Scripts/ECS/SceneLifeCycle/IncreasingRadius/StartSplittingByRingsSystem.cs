@@ -27,6 +27,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
         }
 
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            parcelMathJobifiedHelper.Dispose();
+        }
+
         protected override void Update(float t)
         {
             ProcessRealmQuery(World);
