@@ -153,9 +153,9 @@ jobs:
               $lodsUrl = ${ vars.LODS_DOWNLOAD_URL }
               $output = "lods.zip"
 			  
-			  If($lodsUrl -eq $null) {
-				throw "LODS_DOWNLOAD_URL was not defined please add it as a GitHub variable."
-			  }
+                If($lodsUrl -eq $null) {
+                  throw "LODS_DOWNLOAD_URL was not defined please add it as a GitHub variable."
+                }
 			  
               Write-Host "Downloading lods from: $lodsUrl"
 
