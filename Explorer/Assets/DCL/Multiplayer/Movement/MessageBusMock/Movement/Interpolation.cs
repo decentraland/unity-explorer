@@ -9,6 +9,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public Receiver receiver;
 
         public InterpolationType interpolationType;
+        public InterpolationType blendType;
+
         public float minPositionDelta = 0.1f;
         public float speedUpFactor = 1f;
         public float teleportDistance = 10f;
@@ -25,6 +27,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private bool isBlend;
 
         private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
+        private Func<MessageMock, MessageMock, float, float, Vector3> blend;
 
         public event Action<MessageMock> PointPassed;
 
@@ -33,7 +36,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             Time += UnityEngine.Time.deltaTime / slowDownFactor;
 
             if (Time < totalDuration)
-                transform.position = interpolation(start, end, Time, totalDuration);
+                transform.position = isBlend ? blend(start, end, Time, totalDuration) : interpolation(start, end, Time, totalDuration);
             else
                 enabled = false;
         }
@@ -48,7 +51,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             {
                 float positionDiff = Vector3.Distance(start.position, end.position);
                 float speed = positionDiff / totalDuration;
-                if( speed > MaxSpeed)
+
+                if (speed > MaxSpeed)
                 {
                     float desiredDuration = positionDiff / MaxSpeed;
                     slowDownFactor = desiredDuration / totalDuration;
@@ -61,6 +65,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             }
 
             interpolation = GetInterpolationFunc(interpolationType);
+            blend = GetInterpolationFunc(blendType);
         }
 
         private void OnDisable()
