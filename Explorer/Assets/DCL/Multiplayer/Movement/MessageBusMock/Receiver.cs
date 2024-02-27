@@ -3,7 +3,6 @@ using DCL.Multiplayer.Movement.MessageBusMock.Movement;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -20,11 +19,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public GameObject receivedMark;
         public GameObject passedMark;
 
+        public bool UseBlendInterpolation;
+
         private Interpolation interpolation;
         private Extrapolation extrapolation;
         private Blend blend;
-
-        public bool UseBlendInterpolation;
 
         private void Awake()
         {
@@ -84,9 +83,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     // - Redefine (project) remote point and make such interpolation interaptable
                 }
 
-                interpolation.Run(
-                    from: passedMessages.Count > 0 ? passedMessages[^1] : null,
-                    to: remote);
+                if (passedMessages.Count == 0 || Vector3.Distance(passedMessages[^1].position, remote.position) > interpolation.teleportDistance)
+                    Teleport(remote);
+                else
+                    interpolation.Run(from: passedMessages[^1], to: remote);
             }
 
             // {
@@ -155,6 +155,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             //         return;
             //     }
             // }
+        }
+
+        private void Teleport(MessageMock to)
+        {
+            transform.position = to.position;
+            passedMessages.Clear();
+            passedMessages.Add(to);
         }
 
         private void AddToPassed(MessageMock message)

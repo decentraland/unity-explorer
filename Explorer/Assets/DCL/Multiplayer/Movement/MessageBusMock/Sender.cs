@@ -64,6 +64,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private IEnumerator StartSendPackages()
         {
+            yield return null;
+
             while (true)
             {
                 if (packageLost > 0)

@@ -1,27 +1,30 @@
 using NUnit.Framework;
-using System;
 using TimestampEncodingTests;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Tests
 {
     [TestFixture]
     public class MovementMessageCompressionTests
     {
-        [Test]
-        [TestCase(0.1f, true)]
-        [TestCase(0.255f, false)] // Test edge case of max 8-bit value
-        public void EncodeDecodeTimestampTest(float expectedTimestamp, bool isMoving)
+        [TestCase(0.1f, true, 1.525f, 20.3f, 1.575f)]
+        [TestCase(9.01f, true, 3.05f, 18.03f, 8.125f)]
+        [TestCase(0.255f, false, 15.5f, 32.5f, 15.5f)]
+        public void EncodeDecodePositionTest(float timestamp, bool isMoving, float x, float y, float z)
         {
-            // Act
-            long encoded = TimestampEncoder.Encode(expectedTimestamp, isMoving);
-            (float decodedTimestamp, bool decodedState) = TimestampEncoder.Decode(encoded);
+            long encoded = Encoder.Encode(isMoving, timestamp, x, y, z);
+            (bool decodedIsMoving, float decodedTimestamp, float decodedX, float decodedY, float decodedZ) = Encoder.Decode(encoded);
 
-            // Assert
-            const float ERROR_MARGIN = TimestampEncoder.QUANTUM;
-            bool timestampWithinErrorMargin = Math.Abs(decodedTimestamp - expectedTimestamp) < ERROR_MARGIN;
+            Debug.Log($"{x} | {y} | {z}");
+            Debug.Log($"{decodedX} | {decodedY} | {decodedZ}");
 
-            Assert.IsTrue(timestampWithinErrorMargin, $"Decoded timestamp {decodedTimestamp} is not within error margin of {ERROR_MARGIN} seconds from the expected timestamp {expectedTimestamp}.");
-            Assert.AreEqual(isMoving, decodedState, "Movement state was not correctly encoded/decoded.");
+            const float ErrorMargin = TimestampEncoder.QUANTUM; // Adjust based on expected precision
+
+            Assert.That(decodedTimestamp, Is.InRange(timestamp - ErrorMargin, timestamp + ErrorMargin));
+            Assert.AreEqual(isMoving, decodedIsMoving);
+            Assert.That(decodedX, Is.InRange(x - ErrorMargin, x + ErrorMargin));
+            Assert.That(decodedY, Is.InRange(y - ErrorMargin, y + ErrorMargin));
+            Assert.That(decodedZ, Is.InRange(z - ErrorMargin, z + ErrorMargin));
         }
     }
 }

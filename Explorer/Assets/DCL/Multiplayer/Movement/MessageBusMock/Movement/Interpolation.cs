@@ -11,6 +11,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         public InterpolationType interpolationType;
         public float minPositionDelta = 0.1f;
         public float speedUpFactor = 1f;
+        public float teleportDistance = 10f;
 
         [Space]
         public float Time;
@@ -20,7 +21,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private float totalDuration;
 
         private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
-        private bool isFirst = true;
 
         public event Action<MessageMock> PointPassed;
 
@@ -49,19 +49,12 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             transform.position = end.position;
             PointPassed?.Invoke(end);
-            isFirst = false;
         }
 
         public void Run(MessageMock from, MessageMock to)
         {
             start = from;
             end = to;
-
-            if (start == null)
-            {
-                OnDisable();
-                return;
-            }
 
             if (start.timestamp > end.timestamp) return;
 
