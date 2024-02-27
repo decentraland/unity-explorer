@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Bush
   m_EditorClassIdentifier: 
-  asset: {fileID: 8554576065431432432, guid: a5823f9a4fd6c5e4296e01fa25321c12, type: 3}
+  asset: {fileID: 2281217931661837468, guid: 0b84201e6b7ff9a41aef33f6c69ff90e, type: 3}
   noiseData: {fileID: 11400000, guid: 09c98a00165e56e46ac78f8a5d9a6b1c, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
