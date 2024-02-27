@@ -10,6 +10,7 @@ namespace DCL.Profiles
 
         private string userId;
         private string name;
+        private bool hasClaimedName;
 
         internal HashSet<string>? blocked;
         internal List<string>? interests;
@@ -39,7 +40,18 @@ namespace DCL.Profiles
 
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
-        public bool HasClaimedName { get; internal set; }
+
+        public bool HasClaimedName
+        {
+            get => hasClaimedName;
+
+            internal set
+            {
+                hasClaimedName = value;
+                DisplayName = GenerateDisplayName();
+            }
+        }
+
         public bool HasConnectedWeb3 { get; internal set; }
         public string Description { get; internal set; }
         public int TutorialStep { get; internal set; }
