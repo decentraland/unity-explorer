@@ -64,29 +64,15 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             if (IncomingMessages.Count > 0)
             {
                 MessageMock remote = IncomingMessages.Dequeue();
+                MessageMock local = null;
 
                 if (extrapolation.enabled)
                 {
                     if (remote.timestamp < extrapolation.start.timestamp + extrapolation.Time)
                         return;
 
-                    MessageMock local = extrapolation.Stop();
+                    local = extrapolation.Stop();
                     AddToPassed(local);
-
-                    {
-                        if (Vector3.Distance(passedMessages[^1].position, remote.position) < interpolation.minPositionDelta
-                            || Vector3.Distance(passedMessages[^1].position, remote.position) > interpolation.teleportDistance)
-                            Teleport(remote);
-                        else
-                        {
-                            if (UseBlendInterpolation)
-                                blend.Run(local, remote);
-                            else
-
-                                interpolation.Run(from: passedMessages[^1], to: remote, true);
-                            return;
-                        }
-                    }
 
                     // - Redefine (project) remote point and make such interpolation interaptable
                 }
@@ -96,7 +82,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     || Vector3.Distance(passedMessages[^1].position, remote.position) > interpolation.teleportDistance)
                     Teleport(remote);
                 else
-                    interpolation.Run(from: passedMessages[^1], to: remote);
+                    interpolation.Run(from: passedMessages[^1], to: remote, local != null);
             }
         }
 
