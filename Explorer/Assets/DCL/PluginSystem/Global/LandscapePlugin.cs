@@ -19,29 +19,35 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
     {
-        private TerrainGenerator terrainGenerator = null!;
+        private TerrainGenerator terrainGenerator;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private readonly MapRendererTextureContainer textureContainer;
+        private readonly bool enableLandscape;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
         private NativeArray<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
-        public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer)
+        public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer, bool enableLandscape)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
+            this.enableLandscape = enableLandscape;
+            terrainGenerator = null!;
         }
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
+            landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+
+            if (!enableLandscape) return;
+
             parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
-            landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
 
             emptyParcels = parcelData.Value.GetEmptyParcels();
             ownedParcels = parcelData.Value.GetOwnedParcels();
@@ -51,14 +57,18 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            LandscapeSatelliteSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
+
+            if (!enableLandscape) return;
+
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeSatelliteSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
         }
 
         public void Dispose()
         {
+            if (!enableLandscape) return;
             terrainGenerator.Dispose();
         }
 
