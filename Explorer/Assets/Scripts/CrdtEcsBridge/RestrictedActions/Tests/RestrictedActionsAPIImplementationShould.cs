@@ -11,6 +11,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation;
         private IMVCManager mvcManager;
         private ISceneStateProvider sceneStateProvider;
+        private IGlobalWorldActions globalWorldActions;
         private ISceneData sceneData;
 
         [SetUp]
@@ -19,12 +20,12 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             mvcManager = Substitute.For<IMVCManager>();
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
+            globalWorldActions = Substitute.For<IGlobalWorldActions>();
             sceneData = Substitute.For<ISceneData>();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
                 mvcManager,
                 sceneStateProvider,
-                null,
-                null,
+                globalWorldActions,
                 sceneData);
         }
 

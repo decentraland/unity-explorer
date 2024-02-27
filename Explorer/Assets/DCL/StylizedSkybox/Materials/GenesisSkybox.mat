@@ -1,0 +1,223 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GenesisSkybox
+  m_Shader: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CubemapAsset_1857d7d2fb644b47955ea0627bf61710_Out_0_Cubemap:
+        m_Texture: {fileID: 8900000, guid: 6916db5be836ac04fa4b08138fc15fb9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CubemapAsset_54aae5af9c8149ffac020a732e4f6adc_Out_0_Cubemap:
+        m_Texture: {fileID: 8900000, guid: 0095a9bafa47e9048995bf8ca764aeee, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CubemapAsset_8d2c2c6d8e064c75a81394423d366f83_Out_0_Cubemap:
+        m_Texture: {fileID: 8900000, guid: 0095a9bafa47e9048995bf8ca764aeee, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CubemapAsset_c9297725d32e4696b2fda993656c810d_Out_0_Cubemap:
+        m_Texture: {fileID: 8900000, guid: f61d7b727f05abf47bd40d677f08330d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FarCloudsCubemap:
+        m_Texture: {fileID: 8900000, guid: 0095a9bafa47e9048995bf8ca764aeee, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NearCloudsCubemap:
+        m_Texture: {fileID: 8900000, guid: 6916db5be836ac04fa4b08138fc15fb9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_c7b1ffcc8d6241ce84cfc44d4a04aa43_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: f84bbc63755771a49b76e39b47349034, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SkyboxStars:
+        m_Texture: {fileID: 2800000, guid: 1f19dbb2b85e7a94987d2b6cb4687dde, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _StarsTile:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SunTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_5e299f6b43844d22a7fa29d73012d2d7_Out_0_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 90551b87e65ece04b9a52c69b87a5750, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_a233daa09a8545f8bd5cb9059668d3e3_Out_0_Texture2D:
+        m_Texture: {fileID: 2800000, guid: a859f26ec8cd2cc45b667d0be6e26535, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_e177e9d778994191adb2cf9ecd7e5747_Out_0_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 1f19dbb2b85e7a94987d2b6cb4687dde, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
+    - _BlendTwist: -0.34
+    - _Blend_Twist: 0.1
+    - _BumpScale: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
+    - _CloudBlend: 0.46
+    - _CloudClamp: 0
+    - _CloudDensity: 0.52
+    - _Cloud_Blending: 5
+    - _Cloud_Opacity: 1
+    - _CloudsRotationSpeed: 0.01
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DetailAlbedoMapScale: 1
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _EnvironmentReflections: 1
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
+    - _GroundBlend: 0.144
+    - _GroundSpread: 0.212
+    - _Ground_Blend: 0.4
+    - _Ground_Spread: 0.2
+    - _HorizonBlend: -1
+    - _HorizonSpread: 0.575
+    - _Horizon_Line_Opacity: 1.15
+    - _Horizon_Line_Spread: 1
+    - _Metallic: 0
+    - _NadirBlend: 1
+    - _NormalizedTime: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.005
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _ReceiveShadows: 1
+    - _Rim_Opacity: 1
+    - _Rim_Spread: 0.4
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _SunSize: 0.275
+    - _Surface: 0
+    - _Twist: 0.15
+    - _TwistOffset: 1
+    - _WorkflowMode: 1
+    - _ZWrite: 1
+    - _ZenitBlend: 0.206
+    - _ZenitSpread: 0.291
+    - _Zenit_Blend: 0.2
+    - _Zenit_Spread: 0.3
+    m_Colors:
+    - LightDirection: {r: 10, g: 15, b: 120, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CloudsColor: {r: 0.9641975, g: 0.6027833, b: 0.42632008, a: 1}
+    - _Clouds_Color: {r: 0.9811321, g: 0.9811321, b: 0.9811321, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _HorizonColor: {r: 0.71187705, g: 0.4618328, b: 0.66143316, a: 1}
+    - _Horizon_Line_Color: {r: 0.56981134, g: 0.8824903, b: 1, a: 0}
+    - _LightDirection: {r: 0, g: -0.39794862, b: 0.9174077, a: 0}
+    - _NadirColor: {r: 0.93996, g: 0.40035242, b: 0.4173567, a: 1}
+    - _RimColor: {r: 0.93259734, g: 0.30425715, b: 0.07562345, a: 1}
+    - _Rim_Color: {r: 0.9622642, g: 0.9540234, b: 0.539231, a: 0}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SunColor: {r: 1, g: 0.8648814, b: 0.8628185, a: 1}
+    - _ZenitColor: {r: 0.5571916, g: 0.34438294, b: 0.83510995, a: 1}
+  m_BuildTextureStacks: []
+--- !u!114 &3268039623660159980
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 7

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character.Plugin;
@@ -176,7 +177,7 @@ namespace Global.Dynamic
 
             staticContainer.GlobalWorldProxy.SetWorld(world);
 
-            sceneFactory.SetPlayerEntity(globalWorld.EcsWorld, playerEntity);
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
 
             return (globalWorld, playerEntity);
             ;

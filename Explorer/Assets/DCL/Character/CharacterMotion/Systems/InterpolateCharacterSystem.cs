@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
@@ -31,7 +30,6 @@ namespace DCL.CharacterMotion.Systems
         {
             InterpolateQuery(World, t);
             TeleportPlayerQuery(World);
-            MovePlayerQuery(World);
         }
 
         [Query]
@@ -47,18 +45,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void MovePlayer(in Entity entity,in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerMoveIntent moveIntent)
-        {
-            platformComponent.CurrentPlatform = null;
-
-            // Move the character inside the scene
-            controller.transform.position = moveIntent.Position;
-
-            World.Remove<PlayerMoveIntent>(entity);
-        }
-
-        [Query]
-        [None(typeof(PlayerTeleportIntent), typeof(PlayerMoveIntent))]
+        [None(typeof(PlayerTeleportIntent))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
