@@ -77,6 +77,22 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
+        public async Task SetupMonobehaviourCorrectly()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var pbComponent = new PBCameraModeArea();
+            var component = new CharacterTriggerAreaComponent(areaSize: new Vector3(15, 6, 18));
+
+            world.Add(entity, component, pbComponent);
+
+            system.Update(0);
+
+            Assert.IsNotNull(world.Get<CharacterTriggerAreaComponent>(entity));
+        }
+
+        [Test]
         public async Task SetupTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -87,12 +103,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreNotEqual(characterTriggerArea.BoxCollider.size, targetAreaSize);
 
             var pbComponent = new PBCameraModeArea();
-
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = targetAreaSize,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: targetAreaSize);
 
             world.Add(entity, component, pbComponent);
 
@@ -110,12 +121,7 @@ namespace DCL.CharacterTriggerArea.Tests
             var targetAreaSize = new Vector3(15, 6, 18);
 
             var pbComponent = new PBCameraModeArea();
-
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = targetAreaSize,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: targetAreaSize);
 
             world.Add(entity, component, pbComponent);
 
@@ -143,12 +149,7 @@ namespace DCL.CharacterTriggerArea.Tests
             await UniTask.WaitUntil(() => system != null);
 
             var pbComponent = new PBCameraModeArea();
-
-            var component = new CharacterTriggerAreaComponent
-            {
-                AreaSize = Vector3.one,
-                IsDirty = true,
-            };
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one);
 
             world.Add(entity, component, pbComponent);
 
@@ -186,6 +187,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -197,7 +199,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.EnteredThisFrame.Clear();
+            component.MonoBehaviour.Clear();
 
             // Move character outside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position + (Vector3.one * 50);
@@ -221,6 +223,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -232,7 +235,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.EnteredThisFrame.Clear();
+            component.MonoBehaviour.Clear();
 
             // Simulate "getting outside current scene"
             sceneStateProvider.IsCurrent.Returns(false);
@@ -257,6 +260,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -268,7 +272,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.EnteredThisFrame.Clear();
+            component.MonoBehaviour.Clear();
 
             // Remove component
             world.Remove<PBCameraModeArea>(entity);
@@ -295,6 +299,7 @@ namespace DCL.CharacterTriggerArea.Tests
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -306,7 +311,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.EnteredThisFrame.Clear();
+            component.MonoBehaviour.Clear();
 
             // Flag entity for deletion
             world.Add<DeleteEntityIntention>(entity);
@@ -340,6 +345,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
             await WaitForPhysics();
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -369,6 +375,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
             await WaitForPhysics();
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -377,6 +384,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
             await WaitForPhysics();
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -395,12 +403,12 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeOtherPlayerGO.transform.position = Vector3.zero;
 
             var pbComponent = new PBCameraModeArea();
-
             var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4, targetOnlyMainPlayer: onlyMainPlayer);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
+            component = world.Get<CharacterTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
@@ -413,7 +421,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.EnteredThisFrame.Clear();
+            component.MonoBehaviour.Clear();
 
             // Move both characters outside area
             fakeMainPlayerGO.transform.position += Vector3.one * 30;

@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -10,8 +11,11 @@ namespace DCL.CharacterTriggerArea.Components
         public Vector3 AreaSize;
         public CharacterTriggerArea MonoBehaviour;
         public bool TargetOnlyMainPlayer;
-        public readonly HashSet<Transform> EnteredThisFrame;
-        public readonly HashSet<Transform> ExitedThisFrame;
+
+        private static readonly IReadOnlyCollection<Transform> empty = Array.Empty<Transform>();
+
+        public IReadOnlyCollection<Transform> EnteredThisFrame => MonoBehaviour?.EnteredThisFrame ?? empty;
+        public IReadOnlyCollection<Transform> ExitedThisFrame => MonoBehaviour?.ExitedThisFrame ?? empty;
 
         public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false)
         {
@@ -19,8 +23,6 @@ namespace DCL.CharacterTriggerArea.Components
             TargetOnlyMainPlayer = targetOnlyMainPlayer;
 
             MonoBehaviour = null;
-            EnteredThisFrame = new HashSet<Transform>();
-            ExitedThisFrame = new HashSet<Transform>();
 
             IsDirty = true;
         }

@@ -64,8 +64,6 @@ namespace DCL.CharacterTriggerArea.Systems
                 if (triggerAreaMonoBehaviour == null)
                 {
                     triggerAreaMonoBehaviour = poolRegistry.Get();
-                    triggerAreaMonoBehaviour.EnteredThisFrame = triggerAreaComponent.EnteredThisFrame;
-                    triggerAreaMonoBehaviour.ExitedThisFrame = triggerAreaComponent.ExitedThisFrame;
 
                     if (triggerAreaComponent.TargetOnlyMainPlayer)
                         triggerAreaMonoBehaviour.TargetTransform = mainPlayerTransform;
