@@ -147,6 +147,26 @@ jobs:
 
               # Display list of files
               ls
+              
+      - name: Copy LODs into the build
+        run: |
+              $lodsUrl = ${ vars.LODS_DOWNLOAD_URL }
+              $output = "lods.zip"
+			  
+			  If($lodsUrl -eq $null) {
+				throw "LODS_DOWNLOAD_URL was not defined please add it as a GitHub variable."
+			  }
+			  
+              Write-Host "Downloading lods from: $lodsUrl"
+
+              # Download files locally
+              Start-BitsTransfer -Source $lodsUrl -Destination $output
+
+              # Extract archive
+              Expand-Archive -Path lods.zip -DestinationPath .
+
+              # Copy to correct directory
+              Move-Item -path lods  -Destination Explorer\Assets\StreamingAssets\AssetBundles
 
 
       - uses: decentraland/unity-builder@0.8
