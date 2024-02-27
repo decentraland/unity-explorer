@@ -5,11 +5,11 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public struct ReplicaMovementComponent
     {
-        public List<MessageMock> passedMessages;
+        public readonly List<MessageMock> PassedMessages;
 
         public ReplicaMovementComponent(List<MessageMock> _ = null)
         {
-            this.passedMessages = new List<MessageMock>();
+            PassedMessages = new List<MessageMock>();
         }
     }
 }

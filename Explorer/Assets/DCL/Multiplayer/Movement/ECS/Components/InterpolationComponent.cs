@@ -7,13 +7,9 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public struct InterpolationComponent
     {
-        private const float MIN_POSITION_DELTA = 0.1f;
-        private const float FIRST_DURATION = 0.5f;
-
         public bool Enabled;
 
-        public readonly List<MessageMock> PassedMessages;
-        private readonly Transform transform;
+        public readonly Transform Transform;
 
         private float time;
 
@@ -22,88 +18,99 @@ namespace DCL.Multiplayer.Movement.ECS
         private float totalDuration;
 
         private Func<MessageMock, MessageMock, float, float, Vector3> interpolationFunc;
-        private bool isFirst;
+        private Func<MessageMock, MessageMock, float, float, Vector3> blendFunc;
+
+        private bool isBlend;
+        private float slowDownFactor;
+        private int speedUpFactor;
+        private float MaxSpeed;
 
         public InterpolationComponent(Transform transform)
         {
-            this.transform = transform;
+            Transform = transform;
 
-            PassedMessages = new List<MessageMock>();
-
-            isFirst = true;
             Enabled = false;
+            isBlend = false;
 
             interpolationFunc = null;
+            blendFunc = null;
+
             start = null;
             end = null;
             time = 0f;
             totalDuration = 0f;
+            slowDownFactor = 1f;
+            speedUpFactor = 0;
+            MaxSpeed = 20f;
         }
 
         public MessageMock Update(float deltaTime)
         {
-            time += deltaTime;
+            time += deltaTime / slowDownFactor;
 
-            if (time < totalDuration)
-            {
-                transform.position = interpolationFunc(start, end, time, totalDuration);
-                UpdateRotation();
-                return null;
-            }
-            else return Disable();
+            if (time >= totalDuration) return Disable();
+
+            Transform.position = isBlend ? blendFunc(start, end, time, totalDuration) : interpolationFunc(start, end, time, totalDuration);
+            UpdateRotation();
+            return null;
         }
 
         private void UpdateRotation()
         {
-            Vector3 flattenedDiff = end.position - transform.position;
+            Vector3 flattenedDiff = end.position - Transform.position;
             flattenedDiff.y = 0;
 
             if (flattenedDiff != Vector3.zero)
             {
-                Quaternion lookRotation = Quaternion.LookRotation(flattenedDiff, Vector3.up);
-                transform.rotation = lookRotation;
+                var lookRotation = Quaternion.LookRotation(flattenedDiff, Vector3.up);
+                Transform.rotation = lookRotation;
             }
         }
 
-        public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear, bool isBlend = false)
-        {
-            if (from?.timestamp >= to.timestamp) return;
-
-            start = isFirst
-                ? new MessageMock { position = transform.position, velocity = Vector3.zero, timestamp = 0f }
-                : from;
-
-            end = to;
-
-            if (Vector3.Distance(start!.position, end.position) < MIN_POSITION_DELTA && inboxMessages > 0)
-                Disable();
-            else
-                Enable(inboxMessages, type);
-        }
-
-        private void Enable(int inboxMessages, InterpolationType type)
+        private void Enable(int inboxMessages, InterpolationType intType, InterpolationType blendType)
         {
             time = 0f;
+            slowDownFactor = 1f;
+            totalDuration = end.timestamp - start.timestamp;
 
-            float timeDiff = end.timestamp - start.timestamp;
-            float correctionTime = inboxMessages * Time.smoothDeltaTime;
+            if (isBlend)
+            {
+                float positionDiff = Vector3.Distance(start.position, end.position);
+                float speed = positionDiff / totalDuration;
 
-            // TODO: make clamping based on maxSpeed (or as function of start/end.speed) instead of current approach?
-            totalDuration = isFirst
-                ? FIRST_DURATION
-                : Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
+                if (speed > MaxSpeed)
+                {
+                    float desiredDuration = positionDiff / MaxSpeed;
+                    slowDownFactor = desiredDuration / totalDuration;
+                }
+            }
+            else
+            {
+                float correctionTime = (speedUpFactor + inboxMessages) * Time.smoothDeltaTime;
+                totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
+            }
 
-            interpolationFunc = GetInterpolationFunc(type);
+            interpolationFunc = GetInterpolationFunc(intType);
+            blendFunc = GetInterpolationFunc(blendType);
 
             Enabled = true;
         }
 
+        public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear, InterpolationType blendType = InterpolationType.Linear, bool isBlend = false)
+        {
+            if (from?.timestamp >= to.timestamp) return;
+
+            start = from;
+            end = to;
+
+            this.isBlend = isBlend;
+
+            Enable(inboxMessages, type, blendType);
+        }
+
         private MessageMock Disable()
         {
-            transform.position = end.position;
-            PassedMessages.Add(end);
-            isFirst = false;
-
+            Transform.position = end.position;
             Enabled = false;
 
             return end;

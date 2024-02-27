@@ -8,7 +8,11 @@ namespace DCL.Multiplayer.Movement.ECS
     public class MessagePipeSettings : ScriptableObject
     {
         public int InboxCount;
+        public int PassedMessages;
+
         public InterpolationType InterpolationType;
+        public float MinPositionDelta = 0.1f;
+        public float TeleportationDistance = 50f;
 
         [Space]
         public int PackageLost;

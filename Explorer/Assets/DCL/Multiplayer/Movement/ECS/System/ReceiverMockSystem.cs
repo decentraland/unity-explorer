@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.MessageBusMock;
+using DCL.ParcelsService;
 using ECS.Abstract;
 using System;
 using UnityEngine;
@@ -22,11 +23,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
     public partial class ReceiverMockSystem : BaseUnityLoopSystem
     {
         private const float MIN_POSITION_DELTA = 0.1f;
-        private readonly MessagePipeMock incomingMessages;
+        private readonly MessagePipeMock pipe;
 
-        private ReceiverMockSystem(World world, MessagePipeMock incomingMessages) : base(world)
+        private ReceiverMockSystem(World world, MessagePipeMock pipe) : base(world)
         {
-            this.incomingMessages = incomingMessages;
+            this.pipe = pipe;
         }
 
         protected override void Update(float t)
@@ -38,61 +39,64 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, ref BlendComponent blend,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
-            if (@int.PassedMessages.Count > 0)
-                UpdateAnimations(@int.PassedMessages[^1], ref anim, view);
+            pipe.Settings.InboxCount = pipe.Count;
+            pipe.Settings.PassedMessages = replicaMovement.PassedMessages.Count;
+
+            if (replicaMovement.PassedMessages.Count > 0)
+                UpdateAnimations(replicaMovement.PassedMessages[^1], ref anim, view);
 
             if (@int.Enabled)
             {
                 MessageMock? passed = @int.Update(UnityEngine.Time.deltaTime);
 
                 if (passed != null)
-                    UpdateAnimations(passed, ref anim, view);
-            }
-            else
-            {
-                if (incomingMessages.Count != 0)
                 {
-                    if (ext.Enabled)
-                    {
-                        MessageMock? passed = ext.Stop();
-                        @int.PassedMessages.Add(ext.Stop());
-                        UpdateAnimations(passed, ref anim, view);
+                    UpdateAnimations(passed, ref anim, view);
+                    replicaMovement.PassedMessages.Add(passed);
+                }
 
-                        // MessageMock? local = ext.Stop();
-                        // MessageMock? remote = incomingMessages.Dequeue();
-                        //
-                        // if (Vector3.Distance(local.position, remote.position) < MIN_POSITION_DELTA)
-                        //     blend.Run(local, remote);
-                        // else
-                        //     @int.PassedMessages.Add(remote);
-                    }
+                return;
+            }
 
-                    // if (blend.Enabled)
-                    // {
-                    //     (MessageMock startedRemote, MessageMock extra) = blend.Update(UnityEngine.Time.deltaTime);
-                    //
-                    //     if (blend.Enabled) return;
-                    //
-                    //     @int.PassedMessages.Add(startedRemote);
-                    //     if (extra != null) @int.PassedMessages.Add(extra);
-                    // }
+            if (pipe.Count == 0 && replicaMovement.PassedMessages.Count > 1)
+            {
+                if (!ext.Enabled)
+                    ext.Run(replicaMovement.PassedMessages[^1]);
 
-                    MessageMock? start = @int.PassedMessages.Count > 0 ? @int.PassedMessages[^1] : null;
+                ext.Update(UnityEngine.Time.deltaTime);
+                return;
+            }
 
-                    @int.Run(start, incomingMessages.Dequeue(), incomingMessages.Count, incomingMessages.InterpolationType);
+            if (pipe.Count > 0)
+            {
+                MessageMock remote = pipe.Dequeue();
+                MessageMock local = null;
 
-                    MessageMock? passed2 = @int.Update(UnityEngine.Time.deltaTime);
-                    if (passed2 != null) UpdateAnimations(passed2, ref anim, view);
+                if (ext.Enabled)
+                {
+                    if (remote.timestamp < ext.Start.timestamp + ext.Time)
+                        return;
+
+                    local = ext.Stop();
+                    replicaMovement.PassedMessages.Add(ext.Stop());
+                    UpdateAnimations(local, ref anim, view);
+                }
+
+                if (replicaMovement.PassedMessages.Count == 0
+                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) < pipe.Settings.MinPositionDelta
+                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > pipe.Settings.TeleportationDistance)
+                {
+                    // Teleport
+                    @int.Transform.position = remote.position;
+                    replicaMovement.PassedMessages.Clear();
+                    replicaMovement.PassedMessages.Add(remote);
                 }
                 else
                 {
-                    if (ext.Enabled)
-                        ext.Update(UnityEngine.Time.deltaTime);
-                    else if (@int.PassedMessages.Count > 1)
-                    {
-                        ext.Run(@int.PassedMessages[^1]);
-                        ext.Update(UnityEngine.Time.deltaTime);
-                    }
+                    @int.Run(replicaMovement.PassedMessages[^1], remote, pipe.Count, pipe.InterpolationType, InterpolationType.Hermite, local != null);
+
+                    MessageMock? passed2 = @int.Update(UnityEngine.Time.deltaTime);
+                    if (passed2 != null) UpdateAnimations(passed2, ref anim, view);
                 }
             }
         }

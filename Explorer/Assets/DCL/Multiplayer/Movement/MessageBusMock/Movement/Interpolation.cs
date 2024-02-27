@@ -68,21 +68,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             blend = GetInterpolationFunc(blendType);
         }
 
-        private void OnDisable()
-        {
-            transform.position = end.position;
-            PointPassed?.Invoke(end);
-        }
-
         public void Run(MessageMock from, MessageMock to, bool isBlend = false)
         {
+            if (start.timestamp > end.timestamp) return;
+
             start = from;
             end = to;
             this.isBlend = isBlend;
 
-            if (start.timestamp > end.timestamp) return;
-
             enabled = true;
+        }
+
+        private void OnDisable()
+        {
+            transform.position = end.position;
+            PointPassed?.Invoke(end);
         }
 
         private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)

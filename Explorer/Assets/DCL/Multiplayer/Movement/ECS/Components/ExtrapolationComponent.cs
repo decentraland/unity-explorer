@@ -14,17 +14,17 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public bool Enabled;
 
-        private MessageMock start;
-        private float time;
+        public MessageMock Start;
+        public float Time;
         private Vector3 velocity;
 
         public ExtrapolationComponent(Transform transform)
         {
             this.transform = transform;
 
-            start = null;
+            Start = null;
 
-            time = 0f;
+            Time = 0f;
             maxDuration = 0f;
             velocity = Vector3.zero;
             Enabled = false;
@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public void Update(float deltaTime)
         {
-            time += deltaTime;
+            Time += deltaTime;
             velocity = DampVelocity();
 
             if (velocity.sqrMagnitude > MIN_SPEED)
@@ -41,14 +41,13 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public void Run(MessageMock from)
         {
-            start = from;
+            Start = from;
 
-            time = 0f;
+            Time = 0f;
             velocity = from.velocity;
             maxDuration = LINEAR_EXTRAPOLATION_TIME * DAMPED_EXTRAPOLATION_STEPS;
 
             Enabled = true;
-            Update(Time.deltaTime);
         }
 
         public MessageMock Stop()
@@ -57,7 +56,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
             return new MessageMock
             {
-                timestamp = start.timestamp + time,
+                timestamp = Start.timestamp + Time,
                 position = transform.position,
                 velocity = velocity,
             };
@@ -65,10 +64,10 @@ namespace DCL.Multiplayer.Movement.ECS
 
         private Vector3 DampVelocity()
         {
-            if (time > LINEAR_EXTRAPOLATION_TIME && time < maxDuration)
-                return Vector3.Lerp(start.velocity, Vector3.zero, time / maxDuration);
+            if (Time > LINEAR_EXTRAPOLATION_TIME && Time < maxDuration)
+                return Vector3.Lerp(Start.velocity, Vector3.zero, Time / maxDuration);
 
-            return time >= maxDuration ? Vector3.zero : velocity;
+            return Time >= maxDuration ? Vector3.zero : velocity;
         }
     }
 }

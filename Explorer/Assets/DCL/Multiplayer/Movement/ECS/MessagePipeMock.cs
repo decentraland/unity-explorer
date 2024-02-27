@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Movement.ECS
     {
         private readonly Queue<MessageMock> IncomingMessages = new ();
 
-        private readonly MessagePipeSettings settings;
+        public readonly MessagePipeSettings Settings;
         private readonly CharacterController playerCharacter;
         private readonly Entity playerEntity;
         private readonly World world;
@@ -22,26 +22,26 @@ namespace DCL.Multiplayer.Movement.ECS
         private readonly CancellationTokenSource cts;
 
         private MessageMock lastSend;
-        public InterpolationType InterpolationType => settings.InterpolationType;
+        public InterpolationType InterpolationType => Settings.InterpolationType;
         public int Count => IncomingMessages.Count;
 
         public MessagePipeMock(MessagePipeSettings settings, CharacterController playerCharacter, Entity playerEntity, World world)
         {
-            this.settings = settings;
+            this.Settings = settings;
             this.playerCharacter = playerCharacter;
             this.playerEntity = playerEntity;
             this.world = world;
 
-            this.settings.InboxCount = 0;
-            this.settings.PackageLost = 0;
-            this.settings.StartSending = false;
+            this.Settings.InboxCount = 0;
+            this.Settings.PackageLost = 0;
+            this.Settings.StartSending = false;
 
-            this.settings.startButton.Enable();
-            this.settings.packageLostButton.Enable();
-            this.settings.packageBlockButton.Enable();
+            this.Settings.startButton.Enable();
+            this.Settings.packageLostButton.Enable();
+            this.Settings.packageBlockButton.Enable();
 
-            this.settings.startButton.performed += _ => settings.StartSending = !settings.StartSending;
-            this.settings.packageLostButton.performed += _ => settings.PackageLost++;
+            this.Settings.startButton.performed += _ => settings.StartSending = !settings.StartSending;
+            this.Settings.packageLostButton.performed += _ => settings.PackageLost++;
 
             cts = new CancellationTokenSource();
 
@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Movement.ECS
         public MessageMock Dequeue()
         {
             MessageMock message = IncomingMessages.Dequeue();
-            settings.InboxCount = IncomingMessages.Count;
+            Settings.InboxCount = IncomingMessages.Count;
 
             return message;
         }
@@ -60,15 +60,15 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             while (!ctsToken.IsCancellationRequested)
             {
-                if (!settings.StartSending)
+                if (!Settings.StartSending)
                 {
-                    await UniTask.Delay(TimeSpan.FromSeconds(settings.PackageSentRate), cancellationToken: ctsToken);
+                    await UniTask.Delay(TimeSpan.FromSeconds(Settings.PackageSentRate), cancellationToken: ctsToken);
                     continue;
                 }
 
-                if (settings.PackageLost > 0)
-                    settings.PackageLost--;
-                else if (!settings.packageBlockButton.IsPressed())
+                if (Settings.PackageLost > 0)
+                    Settings.PackageLost--;
+                else if (!Settings.packageBlockButton.IsPressed())
                 {
                     Send(Time.unscaledTime, playerCharacter.transform.position, playerCharacter.velocity,
                         world.Get<CharacterAnimationComponent>(playerEntity),
@@ -77,7 +77,7 @@ namespace DCL.Multiplayer.Movement.ECS
                     // PutMark(); send mark
                 }
 
-                await UniTask.Delay(TimeSpan.FromSeconds(settings.PackageSentRate), cancellationToken: ctsToken);
+                await UniTask.Delay(TimeSpan.FromSeconds(Settings.PackageSentRate), cancellationToken: ctsToken);
             }
         }
 
@@ -93,14 +93,14 @@ namespace DCL.Multiplayer.Movement.ECS
             };
 
             UniTask.Delay(
-                        TimeSpan.FromSeconds(settings.Latency
-                                             + (settings.Latency * Random.Range(0, settings.LatencyJitter))
-                                             + (settings.PackageSentRate * Random.Range(0, settings.PackagesJitter))))
+                        TimeSpan.FromSeconds(Settings.Latency
+                                             + (Settings.Latency * Random.Range(0, Settings.LatencyJitter))
+                                             + (Settings.PackageSentRate * Random.Range(0, Settings.PackagesJitter))))
                    .ContinueWith(() =>
                     {
                         lastSend = message;
                         IncomingMessages.Enqueue(message);
-                        settings.InboxCount = IncomingMessages.Count;
+                        Settings.InboxCount = IncomingMessages.Count;
 
                         // PutMark(newMessage, receivedMark, 0.11f); Received mark
                     })
