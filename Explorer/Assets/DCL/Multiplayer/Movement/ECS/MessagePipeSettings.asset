@@ -12,14 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dcaac58b3d742e6a074b969cb3cab6b, type: 3}
   m_Name: MessagePipeSettings
   m_EditorClassIdentifier: 
-  InboxCount: 0
-  InterpolationType: 1
+  InboxCount: 3
+  PassedMessages: 19
   PackageLost: 0
   StartSending: 1
   PackageSentRate: 0.33
-  PackagesJitter: 2
-  Latency: 1
-  LatencyJitter: 0.3
+  PackagesJitter: 0
+  Latency: 0
+  LatencyJitter: 0
+  MinPositionDelta: 0.01
+  MinTeleportDistance: 30
+  InterpolationType: 1
+  SpeedUpFactor: 0
+  useBlend: 1
+  BlendType: 1
+  MaxBlendSpeed: 10
+  useExtrapolation: 1
+  MinSpeed: 0.01
+  LinearTime: 0.33
+  DampedSteps: 1
   startButton:
     m_Name: Start Button
     m_Type: 0

@@ -1,6 +1,7 @@
 ﻿using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Movement.ECS
 {
@@ -9,21 +10,31 @@ namespace DCL.Multiplayer.Movement.ECS
     {
         public int InboxCount;
         public int PassedMessages;
-
-        public InterpolationType InterpolationType;
-        public float MinPositionDelta = 0.1f;
-        public float TeleportationDistance = 50f;
-
-        [Space]
         public int PackageLost;
         public bool StartSending;
 
-        [Space]
+        [Header("NETWORK")]
         public float PackageSentRate = 0.33f;
-        public float PackagesJitter = 0f;
-
+        public float PackagesJitter;
         public float Latency = 1f;
-        public float LatencyJitter = 0f;
+        public float LatencyJitter;
+
+        [Header("TELEPORTATION")]
+        public float MinPositionDelta = 0.1f;
+        public float MinTeleportDistance = 50f;
+
+        [Header("INTERPOLATION")]
+        public InterpolationType InterpolationType;
+        public float SpeedUpFactor = 1;
+        public bool useBlend = true;
+        public InterpolationType BlendType;
+        public float MaxBlendSpeed = 30;
+
+        [Header("EXTRAPOLATION")]
+        public bool useExtrapolation = true;
+        public float MinSpeed = 0.01f;
+        public float LinearTime = 0.33f;
+        public int DampedSteps = 1;
 
         [Space]
         public InputAction startButton;

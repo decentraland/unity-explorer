@@ -22,7 +22,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [LogCategory(ReportCategory.AVATAR)]
     public partial class ReceiverMockSystem : BaseUnityLoopSystem
     {
-        private const float MIN_POSITION_DELTA = 0.1f;
         private readonly MessagePipeMock pipe;
 
         private ReceiverMockSystem(World world, MessagePipeMock pipe) : base(world)
@@ -36,32 +35,25 @@ namespace DCL.Multiplayer.Movement.ECS.System
         }
 
         [Query]
-        private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, ref BlendComponent blend,
+        private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             pipe.Settings.InboxCount = pipe.Count;
             pipe.Settings.PassedMessages = replicaMovement.PassedMessages.Count;
-
-            if (replicaMovement.PassedMessages.Count > 0)
-                UpdateAnimations(replicaMovement.PassedMessages[^1], ref anim, view);
 
             if (@int.Enabled)
             {
                 MessageMock? passed = @int.Update(UnityEngine.Time.deltaTime);
 
                 if (passed != null)
-                {
-                    UpdateAnimations(passed, ref anim, view);
-                    replicaMovement.PassedMessages.Add(passed);
-                }
-
+                    AddToPassed(passed, ref replicaMovement, ref anim, view);
                 return;
             }
 
-            if (pipe.Count == 0 && replicaMovement.PassedMessages.Count > 1)
+            if (pipe.Count == 0 && replicaMovement.PassedMessages.Count > 1 && pipe.Settings.useExtrapolation)
             {
                 if (!ext.Enabled)
-                    ext.Run(replicaMovement.PassedMessages[^1]);
+                    ext.Run(replicaMovement.PassedMessages[^1], pipe.Settings);
 
                 ext.Update(UnityEngine.Time.deltaTime);
                 return;
@@ -78,27 +70,29 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         return;
 
                     local = ext.Stop();
-                    replicaMovement.PassedMessages.Add(ext.Stop());
-                    UpdateAnimations(local, ref anim, view);
+                    AddToPassed(local, ref replicaMovement, ref anim, view);
                 }
 
                 if (replicaMovement.PassedMessages.Count == 0
                     || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) < pipe.Settings.MinPositionDelta
-                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > pipe.Settings.TeleportationDistance)
+                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > pipe.Settings.MinTeleportDistance)
                 {
                     // Teleport
                     @int.Transform.position = remote.position;
                     replicaMovement.PassedMessages.Clear();
-                    replicaMovement.PassedMessages.Add(remote);
+                    AddToPassed(remote, ref replicaMovement, ref anim, view);
                 }
                 else
                 {
-                    @int.Run(replicaMovement.PassedMessages[^1], remote, pipe.Count, pipe.InterpolationType, InterpolationType.Hermite, local != null);
-
-                    MessageMock? passed2 = @int.Update(UnityEngine.Time.deltaTime);
-                    if (passed2 != null) UpdateAnimations(passed2, ref anim, view);
+                    @int.Run(replicaMovement.PassedMessages[^1], remote, pipe.Count, pipe.Settings, local != null && pipe.Settings.useBlend);
                 }
             }
+        }
+
+        private static void AddToPassed(MessageMock passed,  ref ReplicaMovementComponent replicaMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
+        {
+            replicaMovement.PassedMessages.Add(passed);
+            UpdateAnimations(passed, ref anim, view);
         }
 
         private static void UpdateAnimations(MessageMock message, ref CharacterAnimationComponent animationComponent, IAvatarView view)

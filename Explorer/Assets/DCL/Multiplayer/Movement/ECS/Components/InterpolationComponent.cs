@@ -11,37 +11,31 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public readonly Transform Transform;
 
-        private float time;
-
         private MessageMock start;
         private MessageMock end;
-        private float totalDuration;
 
-        private Func<MessageMock, MessageMock, float, float, Vector3> interpolationFunc;
-        private Func<MessageMock, MessageMock, float, float, Vector3> blendFunc;
+        private float time;
+        private float totalDuration;
+        private float slowDownFactor;
 
         private bool isBlend;
-        private float slowDownFactor;
-        private int speedUpFactor;
-        private float MaxSpeed;
+
+        private MessagePipeSettings settings;
 
         public InterpolationComponent(Transform transform)
         {
             Transform = transform;
+            settings = null;
 
             Enabled = false;
-            isBlend = false;
-
-            interpolationFunc = null;
-            blendFunc = null;
 
             start = null;
             end = null;
             time = 0f;
             totalDuration = 0f;
+
+            isBlend = false;
             slowDownFactor = 1f;
-            speedUpFactor = 0;
-            MaxSpeed = 20f;
         }
 
         public MessageMock Update(float deltaTime)
@@ -50,7 +44,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
             if (time >= totalDuration) return Disable();
 
-            Transform.position = isBlend ? blendFunc(start, end, time, totalDuration) : interpolationFunc(start, end, time, totalDuration);
+            Transform.position = DoTransition(start, end, time, totalDuration, isBlend);
             UpdateRotation();
             return null;
         }
@@ -67,7 +61,7 @@ namespace DCL.Multiplayer.Movement.ECS
             }
         }
 
-        private void Enable(int inboxMessages, InterpolationType intType, InterpolationType blendType)
+        private void Enable(int inboxMessages)
         {
             time = 0f;
             slowDownFactor = 1f;
@@ -78,26 +72,25 @@ namespace DCL.Multiplayer.Movement.ECS
                 float positionDiff = Vector3.Distance(start.position, end.position);
                 float speed = positionDiff / totalDuration;
 
-                if (speed > MaxSpeed)
+                if (speed > settings.MaxBlendSpeed)
                 {
-                    float desiredDuration = positionDiff / MaxSpeed;
+                    float desiredDuration = positionDiff / settings.MaxBlendSpeed;
                     slowDownFactor = desiredDuration / totalDuration;
                 }
             }
             else
             {
-                float correctionTime = (speedUpFactor + inboxMessages) * Time.smoothDeltaTime;
+                float correctionTime = (settings.SpeedUpFactor + inboxMessages) * Time.smoothDeltaTime;
                 totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
             }
-
-            interpolationFunc = GetInterpolationFunc(intType);
-            blendFunc = GetInterpolationFunc(blendType);
 
             Enabled = true;
         }
 
-        public void Run(MessageMock from, MessageMock to, int inboxMessages, InterpolationType type = InterpolationType.Linear, InterpolationType blendType = InterpolationType.Linear, bool isBlend = false)
+        public void Run(MessageMock from, MessageMock to, int inboxMessages, MessagePipeSettings settings, bool isBlend = false)
         {
+            this.settings = settings;
+
             if (from?.timestamp >= to.timestamp) return;
 
             start = from;
@@ -105,7 +98,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
             this.isBlend = isBlend;
 
-            Enable(inboxMessages, type, blendType);
+            Enable(inboxMessages);
         }
 
         private MessageMock Disable()
@@ -116,15 +109,15 @@ namespace DCL.Multiplayer.Movement.ECS
             return end;
         }
 
-        private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)
+        private Vector3 DoTransition(MessageMock start, MessageMock end, float time, float totalDuration, bool isBlend)
         {
-            return type switch
+            return (isBlend ? settings.BlendType : settings.InterpolationType) switch
                    {
-                       InterpolationType.Linear => Interpolate.Linear,
-                       InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending,
-                       InterpolationType.Hermite => Interpolate.Hermite,
-                       InterpolationType.Bezier => Interpolate.Bezier,
-                       _ => Interpolate.Linear,
+                       InterpolationType.Linear => Interpolate.Linear(start, end, time, totalDuration),
+                       InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending(start, end, time, totalDuration),
+                       InterpolationType.Hermite => Interpolate.Hermite(start, end, time, totalDuration),
+                       InterpolationType.Bezier => Interpolate.Bezier(start, end, time, totalDuration),
+                       _ => Interpolate.Linear(start, end, time, totalDuration),
                    };
         }
     }
