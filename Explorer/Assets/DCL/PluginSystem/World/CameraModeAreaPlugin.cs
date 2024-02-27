@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
@@ -13,10 +14,10 @@ namespace DCL.PluginSystem.World
 {
     public class CameraModeAreaPlugin : IDCLWorldPlugin
     {
-        private readonly EntityProxy cameraEntityProxy;
-        private readonly WorldProxy globalWorldProxy;
+        private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
 
-        public CameraModeAreaPlugin(WorldProxy globalWorldProxy, EntityProxy cameraEntityProxy)
+        public CameraModeAreaPlugin(ObjectProxy<Arch.Core.World> globalWorldProxy, ObjectProxy<Entity> cameraEntityProxy)
         {
             this.globalWorldProxy = globalWorldProxy;
             this.cameraEntityProxy = cameraEntityProxy;

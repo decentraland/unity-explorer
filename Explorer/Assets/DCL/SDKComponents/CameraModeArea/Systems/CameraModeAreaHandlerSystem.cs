@@ -21,17 +21,17 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private static CameraMode cameraModeBeforeLastAreaEnter; // There's only 1 camera at a time
 
         private readonly World globalWorld;
-        private readonly EntityProxy cameraEntityProxy;
+        private readonly ObjectProxy<Entity> cameraEntityProxy;
 
-        public CameraModeAreaHandlerSystem(World world, WorldProxy globalWorldProxy, EntityProxy cameraEntityProxy) : base(world)
+        public CameraModeAreaHandlerSystem(World world, ObjectProxy<World> globalWorldProxy, ObjectProxy<Entity> cameraEntityProxy) : base(world)
         {
-            globalWorld = globalWorldProxy.World;
+            globalWorld = globalWorldProxy.Object;
             this.cameraEntityProxy = cameraEntityProxy;
         }
 
         protected override void Update(float t)
         {
-            if (!cameraEntityProxy.Entity.HasValue) return;
+            if (!cameraEntityProxy.Configured) return;
 
             UpdateCameraModeAreaQuery(World);
             SetupCameraModeAreaQuery(World);
@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Entity!.Value);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         internal void OnExitedCameraModeArea()
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Entity!.Value);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
 
             camera.RemoveCameraInputLock();
 

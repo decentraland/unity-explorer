@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.Components;
+﻿using Arch.Core;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -15,6 +16,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
+using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
@@ -38,9 +40,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        public ObjectProxy<World> GlobalWorldProxy = new ();
+        public ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedInstance<CharacterObject> characterObject;
-        public WorldProxy GlobalWorldProxy = new ();
-        public MainPlayerAvatarBaseProxy MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -50,6 +52,8 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
 
         public CharacterContainer CharacterContainer { get; private set; }
+
+        public QualityContainer QualityContainer { get; private set; }
 
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
@@ -89,6 +93,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
+            QualityContainer.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -151,8 +156,8 @@ namespace Global
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
+            container.QualityContainer = QualityContainer.Create(settingsContainer);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -186,10 +191,11 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
+                new AnimatorPlugin(),
+                new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
-
-                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
 
 #if UNITY_EDITOR

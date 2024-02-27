@@ -23,16 +23,16 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            var globalWorldProxy = new WorldProxy();
-            globalWorldProxy.SetWorld(globalWorld);
+            var globalWorldProxy = new ObjectProxy<World>();
+            globalWorldProxy.SetObject(globalWorld);
 
             cameraEntity = globalWorld.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent { Mode = CameraMode.ThirdPerson }
             );
 
-            var cameraEntityProxy = new EntityProxy();
-            cameraEntityProxy.SetEntity(cameraEntity);
+            var cameraEntityProxy = new ObjectProxy<Entity>();
+            cameraEntityProxy.SetObject(cameraEntity);
 
             system = new CameraModeAreaHandlerSystem(world, globalWorldProxy, cameraEntityProxy);
 

@@ -35,8 +35,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            var globalWorldProxy = new WorldProxy();
-            globalWorldProxy.SetWorld(globalWorld);
+            var globalWorldProxy = new ObjectProxy<Arch.Core.World>();
+            globalWorldProxy.SetObject(globalWorld);
             system = new AvatarModifierAreaHandlerSystem(world, globalWorldProxy);
 
             fakeAvatarEntity = globalWorld.Create();

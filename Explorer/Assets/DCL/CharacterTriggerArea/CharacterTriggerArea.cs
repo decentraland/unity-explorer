@@ -6,20 +6,21 @@ namespace DCL.CharacterTriggerArea
 {
     public class CharacterTriggerArea : MonoBehaviour, IDisposable
     {
-        // TODO: CREATE 1 DICTIONARY OF TRANSFORM, ENUM (ENTERED/STAYED/EXITED) ???
-
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
 
         private readonly HashSet<Transform> currentAvatarsInside = new ();
-        public HashSet<Transform> EnteredThisFrame;
-        public HashSet<Transform> ExitedThisFrame;
+        internal readonly HashSet<Transform> enteredThisFrame = new ();
+        internal readonly HashSet<Transform> exitedThisFrame = new ();
         [field: NonSerialized] public Transform TargetTransform;
+
+        public IReadOnlyCollection<Transform> EnteredThisFrame => enteredThisFrame;
+        public IReadOnlyCollection<Transform> ExitedThisFrame => exitedThisFrame;
 
         public void OnTriggerEnter(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            EnteredThisFrame.Add(other.transform);
+            enteredThisFrame.Add(other.transform);
             currentAvatarsInside.Add(other.transform);
         }
 
@@ -27,7 +28,7 @@ namespace DCL.CharacterTriggerArea
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            ExitedThisFrame.Add(other.transform);
+            exitedThisFrame.Add(other.transform);
             currentAvatarsInside.Remove(other.transform);
         }
 
@@ -35,9 +36,15 @@ namespace DCL.CharacterTriggerArea
         {
             BoxCollider.enabled = false;
 
-            foreach (Transform avatarTransform in currentAvatarsInside) { ExitedThisFrame.Add(avatarTransform); }
+            foreach (Transform avatarTransform in currentAvatarsInside) { exitedThisFrame.Add(avatarTransform); }
 
             currentAvatarsInside.Clear();
+        }
+
+        public void Clear()
+        {
+            enteredThisFrame.Clear();
+            exitedThisFrame.Clear();
         }
     }
 }

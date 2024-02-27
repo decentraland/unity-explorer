@@ -82,10 +82,13 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarShape>.Create(ComponentID.AVATAR_SHAPE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioSource>.Create(ComponentID.AUDIO_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTween>.Create(ComponentID.TWEEN).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTweenState>.Create(ComponentID.TWEEN_STATE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAnimator>.Create(ComponentID.ANIMATOR).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBCameraModeArea>.Create(ComponentID.CAMERA_MODE_AREA).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

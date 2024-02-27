@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
@@ -13,9 +14,9 @@ namespace DCL.PluginSystem.World
 {
     public class AvatarModifierAreaPlugin : IDCLWorldPlugin
     {
-        private readonly WorldProxy globalWorldProxy;
+        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
 
-        public AvatarModifierAreaPlugin(WorldProxy globalWorldProxy)
+        public AvatarModifierAreaPlugin(ObjectProxy<Arch.Core.World> globalWorldProxy)
         {
             this.globalWorldProxy = globalWorldProxy;
         }

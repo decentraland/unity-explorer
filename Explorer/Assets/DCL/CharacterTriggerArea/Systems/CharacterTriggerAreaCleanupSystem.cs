@@ -22,8 +22,7 @@ namespace DCL.CharacterTriggerArea.Systems
         [Query]
         private void ClearDetectedCharactersCollection(ref CharacterTriggerAreaComponent component)
         {
-            component.EnteredThisFrame!.Clear();
-            component.ExitedThisFrame!.Clear();
+            component.MonoBehaviour?.Clear();
         }
     }
 }

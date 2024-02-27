@@ -14,6 +14,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         internal static readonly ListObjectPool<SDKCollider> COLLIDERS_POOL = new (listInstanceDefaultCapacity: 50);
         internal static readonly ListObjectPool<MeshFilter> MESH_FILTERS_POOL = new (listInstanceDefaultCapacity: 50);
         internal static readonly ListObjectPool<Renderer> RENDERERS_POOL = new (listInstanceDefaultCapacity: 50);
+        internal static readonly ListObjectPool<Animation> ANIMATIONS_POOL = new (listInstanceDefaultCapacity: 50);
 
         public readonly GameObject Root;
 
@@ -31,13 +32,18 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public readonly List<Renderer> Renderers;
 
         /// <summary>
+        ///     Animation Components
+        /// </summary>
+        public readonly List<Animation> Animations;
+
+        /// <summary>
         ///     Visible meshes colliders are created on demand and then become a part of cached data.
         ///     They are decoded from <see cref="VisibleColliderMeshes" /> that are prepared beforehand.
         /// </summary>
         public List<SDKCollider> VisibleMeshesColliders;
         private AssetBundleData assetBundleReference;
 
-        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
+        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations)
         {
             this.assetBundleReference = assetBundleReference;
 
@@ -45,6 +51,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             InvisibleColliders = invisibleColliders;
             VisibleColliderMeshes = visibleColliderMeshes;
             Renderers = renderers;
+            Animations = animations;
 
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
@@ -66,6 +73,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         }
 
         public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
-            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get());
+            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get());
     }
 }

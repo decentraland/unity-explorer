@@ -31,7 +31,6 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
-        [SerializeField] private SkyBoxSceneData skyBoxSceneData = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private string realmUrl = "https://peer.decentraland.org";
@@ -127,22 +126,26 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
-                    skyBoxSceneData,
                     settings.StaticLoadPositions,
                     settings.SceneLoadRadius,
+                    settings.Realms,
                     dynamicSettings,
                     web3Authenticator,
                     identityCache,
                     settings.StartPosition,
                     enableLandscape);
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager);
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
+                    identityCache, dynamicWorldContainer.ProfileRepository);
 
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
+                    dynamicWorldContainer!.ProfileRepository);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -153,7 +156,7 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
                 await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
