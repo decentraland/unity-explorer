@@ -1,0 +1,71 @@
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
+using DCL.CharacterTriggerArea.Systems;
+using DCL.Optimization.Pools;
+using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
+using DCL.Utilities;
+using ECS.LifeCycle;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
+namespace DCL.PluginSystem.World
+{
+    public class CharacterTriggerAreaPlugin : IDCLWorldPlugin<CharacterTriggerAreaSettings>
+    {
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly CacheCleaner cacheCleaner;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
+        private readonly ICharacterObject characterObject;
+
+        private IComponentPool<CharacterTriggerArea.CharacterTriggerArea> characterTriggerAreaPoolRegistry;
+
+        public CharacterTriggerAreaPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            componentPoolsRegistry = poolsRegistry;
+            this.cacheCleaner = cacheCleaner;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.characterObject = characterObject;
+        }
+
+        public void Dispose()
+        {
+            characterTriggerAreaPoolRegistry.Dispose();
+        }
+
+        public async UniTask InitializeAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
+        {
+            await CreateCharacterTriggerAreaPoolAsync(settings, ct);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        {
+            var characterTriggerAreaHandlerSystem = CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
+            finalizeWorldSystems.Add(characterTriggerAreaHandlerSystem);
+
+            CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder);
+        }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+
+        private async UniTask CreateCharacterTriggerAreaPoolAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
+        {
+            CharacterTriggerArea.CharacterTriggerArea characterTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterTriggerAreaPrefab, ct: ct)).Value.GetComponent<CharacterTriggerArea.CharacterTriggerArea>();
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease);
+            characterTriggerAreaPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterTriggerArea.CharacterTriggerArea>();
+
+            cacheCleaner.Register(characterTriggerAreaPoolRegistry);
+        }
+
+        private void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
+            area.Dispose();
+    }
+}
