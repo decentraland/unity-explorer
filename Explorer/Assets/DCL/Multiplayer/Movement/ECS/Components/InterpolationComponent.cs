@@ -114,9 +114,10 @@ namespace DCL.Multiplayer.Movement.ECS
             return (isBlend ? settings.BlendType : settings.InterpolationType) switch
                    {
                        InterpolationType.Linear => Interpolate.Linear(start, end, time, totalDuration),
+                       InterpolationType.PositionBlending => Interpolate.ProjectivePositionBlending(start, end, time, totalDuration),
                        InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending(start, end, time, totalDuration),
-                       InterpolationType.Hermite => Interpolate.Hermite(start, end, time, totalDuration),
                        InterpolationType.Bezier => Interpolate.Bezier(start, end, time, totalDuration),
+                       InterpolationType.Hermite => Interpolate.Hermite(start, end, time, totalDuration),
                        _ => Interpolate.Linear(start, end, time, totalDuration),
                    };
         }

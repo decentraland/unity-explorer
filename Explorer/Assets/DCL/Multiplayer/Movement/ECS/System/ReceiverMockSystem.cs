@@ -15,6 +15,7 @@ using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.ParcelsService;
 using ECS.Abstract;
 using System;
+using System.Linq;
 using UnityEngine;
 using IDebugContainerBuilder = DCL.DebugUtilities.IDebugContainerBuilder;
 
@@ -47,11 +48,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private readonly ElementBinding<int> extDampedSteps;
 
         // Interpolation
-        // public InterpolationType InterpolationType;
         private readonly ElementBinding<int> intSpeedUpFactor;
         private readonly ElementBinding<bool> useBlend;
-
-        // public InterpolationType BlendType;
         private readonly ElementBinding<float> blendMaxSpeed;
 
         private ReceiverMockSystem(World world, IDebugContainerBuilder debugBuilder, MessagePipeMock pipe) : base(world)
@@ -77,38 +75,47 @@ namespace DCL.Multiplayer.Movement.ECS.System
             extDampedSteps = new ElementBinding<int>(pipe.Settings.DampedSteps);
 
             // Interpolation
-            // public InterpolationType InterpolationType;
+            ElementBinding<string> intTypesBinding = new (pipe.Settings.InterpolationType.ToString(),
+                evt => pipe.Settings.InterpolationType = (InterpolationType)Enum.Parse(typeof(InterpolationType), evt.newValue));
             intSpeedUpFactor = new ElementBinding<int>((int)pipe.Settings.SpeedUpFactor);
+
             useBlend = new ElementBinding<bool>(pipe.Settings.useBlend);
-            // public InterpolationType BlendType;
+            ElementBinding<string> blendTypesBinding = new (pipe.Settings.BlendType.ToString(),
+                evt => pipe.Settings.BlendType = (InterpolationType)Enum.Parse(typeof(InterpolationType), evt.newValue));
             blendMaxSpeed = new ElementBinding<float>(pipe.Settings.MaxBlendSpeed);
+
 
             debugBuilder.AddWidget("MULTIPLAYER MOVEMENT")
                         .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                        .AddCustomMarker("Controls: ", new ElementBinding<string>("K - toggle network, X - block sending, M - one package lost"))
+                        .AddControl(new DebugHintDef("CTRLs: X - block sending, M - one package lost"), null)
                         .AddSingleButton("Toggle Network", () => pipe.Settings.StartSending = !pipe.Settings.StartSending)
                         .AddCustomMarker("Inbox Messages: ", inboxMessages)
                         .AddCustomMarker("Passed Messages: ", passedMessages)
+
                          // NETWORK
                         .AddFloatField("Package Sent Rate", packageSentRate)
                         .AddFloatField("Package Jitter", packageJitter)
                         .AddFloatField("Latency", latency)
                         .AddFloatField("Latency Jitter", latencyJitter)
+
                          // TELEPORTATION
                         .AddFloatField("Min Position Delta", telMinPositionDelta)
                         .AddFloatField("Min Teleport Distance", telMinTeleportDistance)
+
+                         // INTERPOLATION
+                        .AddControl(new DebugDropdownDef(Interpolate.Types, intTypesBinding, "Int. Type"), null)
+                        .AddControl(new DebugConstLabelDef("Int. SpeedUp Factor"), new DebugIntFieldDef(intSpeedUpFactor))
+                        .AddToggleField("Use Blend", evt => useBlend.Value = !useBlend.Value, useBlend.Value)
+                        .AddControl(new DebugDropdownDef(Interpolate.Types, blendTypesBinding, "Blend Type"), null)
+                        .AddFloatField("Max Blend Speed", blendMaxSpeed)
+
                          // EXTRAPOLATION
                         .AddToggleField("Use Extrapolation", evt => useExtrapolation.Value = !useExtrapolation.Value, useExtrapolation.Value)
-                        .AddFloatField("Min Speed", extMinSpeed)
-                        .AddFloatField("Linear Time", extLinearTime)
-                        // .AddIntField("Damped Steps", extDampedSteps)
-                        // .AddIntField("Speed Up Factor", intSpeedUpFactor)
-                        .AddToggleField("Use Blend", evt => useBlend.Value = !useBlend.Value, useBlend.Value)
-                        .AddFloatField("Max Blend Speed", blendMaxSpeed);
+                        .AddFloatField("Ext. Min Speed", extMinSpeed)
+                        .AddFloatField("Ext. Linear Time", extLinearTime)
+                        .AddControl(new DebugConstLabelDef("Ext. Damping Steps"), new DebugIntFieldDef(extDampedSteps))
                 ;
 
-            // .AddIntFieldWithConfirmation(10, "Instantiate", AddRandomAvatar)
-            // .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
         }
 
         protected override void Update(float t)
@@ -135,6 +142,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             // public InterpolationType InterpolationType;
             pipe.Settings.SpeedUpFactor = intSpeedUpFactor.Value;
             pipe.Settings.useBlend = useBlend.Value;
+
             // public InterpolationType BlendType;
             pipe.Settings.MaxBlendSpeed = blendMaxSpeed.Value;
 

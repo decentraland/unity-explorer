@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -8,10 +11,13 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         Hermite,
         Bezier,
         VelocityBlending,
+        PositionBlending,
     }
 
     public static class Interpolate
     {
+        public static List<string> Types = Enum.GetValues(typeof(InterpolationType)).Cast<InterpolationType>().Select(type => type.ToString()).ToList();
+
         /// <summary>
         ///     Linear Interpolation. Just wrapper around built-in Vector3.Lerp
         /// </summary>
@@ -20,7 +26,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         /// <summary>
         ///     Interpolation based on Projective Velocity Blending.
-        ///     Ensures that the velocity and position of the end point are matched at the end of interpolation.
         ///     See 'Curtiss Murphy and E Lengyel. Believable dead reckoning for networked games. Game engine gems, 2:307{328, 2011.'
         /// </summary>
         /// <param name="start"> point from which interpolation starts </param>
@@ -38,6 +43,28 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             // Calculate the position at time t
             Vector3 projectedLocal = start.position + (lerpedVelocity * t);
+            Vector3 projectedRemote = fakeStartPosition + (end.velocity * t);
+
+            return projectedLocal + ((projectedRemote - projectedLocal) * lerpValue); // interpolate positions
+        }
+
+        /// <summary>
+        ///     Interpolation based on Projective Position Blending.
+        ///     See 'Curtiss Murphy and E Lengyel. Believable dead reckoning for networked games. Game engine gems, 2:307{328, 2011.'
+        /// </summary>
+        /// <param name="start"> point from which interpolation starts </param>
+        /// <param name="end"> point where interpolation should end </param>
+        /// <param name="t"> time passed from the start of the interpolation process</param>
+        /// <param name="totalDuration"> total duration of the interpolation </param>
+        /// <returns></returns>
+        public static Vector3 ProjectivePositionBlending(MessageMock start, MessageMock end, float t, float totalDuration)
+        {
+            Vector3 fakeStartPosition = end.position - (end.velocity * totalDuration);
+
+            float lerpValue = t / totalDuration;
+
+            // Calculate the position at time t
+            Vector3 projectedLocal = start.position + (start.velocity * t);
             Vector3 projectedRemote = fakeStartPosition + (end.velocity * t);
 
             return projectedLocal + ((projectedRemote - projectedLocal) * lerpValue); // interpolate positions

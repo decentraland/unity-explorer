@@ -13,20 +13,20 @@ MonoBehaviour:
   m_Name: MessagePipeSettings
   m_EditorClassIdentifier: 
   InboxCount: 0
-  PassedMessages: 1
+  PassedMessages: 0
   PackageLost: 0
   StartSending: 0
-  PackageSentRate: 0.33
-  PackagesJitter: 4
+  PackageSentRate: 0.1
+  PackagesJitter: 0
   Latency: 0
   LatencyJitter: 0
   MinPositionDelta: 0.01
   MinTeleportDistance: 30
   InterpolationType: 1
-  SpeedUpFactor: 0
+  SpeedUpFactor: 1
   useBlend: 1
   BlendType: 1
-  MaxBlendSpeed: 10
+  MaxBlendSpeed: 15
   useExtrapolation: 1
   MinSpeed: 0.01
   LinearTime: 0.33

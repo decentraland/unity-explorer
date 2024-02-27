@@ -21,8 +21,6 @@ namespace DCL.Multiplayer.Movement.ECS
 
         private readonly CancellationTokenSource cts;
 
-        private MessageMock lastSend;
-        public InterpolationType InterpolationType => Settings.InterpolationType;
         public int Count => IncomingMessages.Count;
 
         public MessagePipeMock(MessagePipeSettings settings, CharacterController playerCharacter, Entity playerEntity, World world)
@@ -98,7 +96,6 @@ namespace DCL.Multiplayer.Movement.ECS
                                              + (Settings.PackageSentRate * Random.Range(0, Settings.PackagesJitter))))
                    .ContinueWith(() =>
                     {
-                        lastSend = message;
                         IncomingMessages.Enqueue(message);
                         Settings.InboxCount = IncomingMessages.Count;
 
