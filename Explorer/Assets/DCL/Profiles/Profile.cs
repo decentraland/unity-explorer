@@ -1,17 +1,57 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace DCL.Profiles
 {
     public class Profile
     {
+        private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
+
+        private string userId;
+        private string name;
+        private bool hasClaimedName;
+
         internal HashSet<string>? blocked;
         internal List<string>? interests;
         internal List<string>? links;
-        public string UserId { get; internal set; }
-        public string Name { get; internal set; }
+
+        public string UserId
+        {
+            get => userId;
+
+            internal set
+            {
+                userId = value;
+                DisplayName = GenerateDisplayName();
+            }
+        }
+
+        public string Name
+        {
+            get => name;
+
+            internal set
+            {
+                name = value;
+                DisplayName = GenerateDisplayName();
+            }
+        }
+
+        public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
-        public bool HasClaimedName { get; internal set; }
+
+        public bool HasClaimedName
+        {
+            get => hasClaimedName;
+
+            internal set
+            {
+                hasClaimedName = value;
+                DisplayName = GenerateDisplayName();
+            }
+        }
+
         public bool HasConnectedWeb3 { get; internal set; }
         public string Description { get; internal set; }
         public int TutorialStep { get; internal set; }
@@ -39,13 +79,29 @@ namespace DCL.Profiles
         public IReadOnlyCollection<string>? Interests => interests;
         public IReadOnlyCollection<string>? Links => links;
 
-        internal Profile() { }
+        public Profile() { }
 
         public Profile(string userId, string name, Avatar avatar)
         {
             UserId = userId;
             Name = name;
             Avatar = avatar;
+        }
+
+        private string GenerateDisplayName()
+        {
+            if (string.IsNullOrEmpty(Name)) return "";
+
+            var result = "";
+            MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
+
+            foreach (Match match in matches)
+                result += match.Value;
+
+            if (HasClaimedName)
+                return result;
+
+            return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
         }
     }
 }

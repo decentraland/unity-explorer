@@ -33,7 +33,7 @@ namespace DCL.Landscape
             emptyParcels = parcelData.GetEmptyParcels();
 
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
-            await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails);
+            await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails, true);
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();
