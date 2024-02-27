@@ -14,7 +14,7 @@ namespace DCL.CharacterTriggerArea
         [field: NonSerialized] public Transform TargetTransform;
 
         public IReadOnlyCollection<Transform> EnteredThisFrame => enteredThisFrame;
-        public IReadOnlyCollection<Transform> ExitedThisFrame => enteredThisFrame;
+        public IReadOnlyCollection<Transform> ExitedThisFrame => exitedThisFrame;
 
         public void Clear()
         {
