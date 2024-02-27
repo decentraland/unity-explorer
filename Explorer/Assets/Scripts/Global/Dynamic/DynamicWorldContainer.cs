@@ -89,26 +89,21 @@ namespace Global.Dynamic
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
-            StaticContainer staticContainer,
-            IPluginSettingsContainer settingsContainer,
-            CancellationToken ct,
-            UIDocument rootUIDocument,
-            IReadOnlyList<int2> staticLoadPositions,
-            int sceneLoadRadius,
-            List<string> realms,
-            DynamicSettings dynamicSettings,
-            IWeb3VerifiedAuthenticator web3Authenticator,
-            IWeb3IdentityCache web3IdentityCache,
-            Vector2Int startParcel,
-            bool enableLandscape)
+            DynamicWorldDependencies dynamicWorldDependencies,
+            DynamicWorldParams dynamicWorldParams,
+            CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
-            (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
+            (_, bool result) = await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
                 return (null, false);
 
             DebugContainerBuilder debugBuilder = container.DebugContainer.Builder;
+            DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
+            StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
+            IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
+
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
@@ -136,16 +131,16 @@ namespace Global.Dynamic
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
-            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer);
+            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
-                container.MvcManager, web3IdentityCache, container.ProfileRepository, startParcel, enableLandscape, landscapePlugin);
+                container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
-                new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
+                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
@@ -170,16 +165,16 @@ namespace Global.Dynamic
                     placesAPIService,
                     parcelServiceContainer.TeleportController,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    web3IdentityCache,
+                    identityCache,
                     wearableCatalog,
                     characterPreviewFactory,
                     container.ProfileRepository,
-                    web3Authenticator,
+                    dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
                     webBrowser),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, web3IdentityCache, characterPreviewFactory),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, identityCache, characterPreviewFactory),
                 new StylizedSkyboxPlugin(staticContainer.AssetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
@@ -195,12 +190,15 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             container.RealmController = new RealmController(
-                web3IdentityCache,
+                identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                sceneLoadRadius, staticLoadPositions, realmData, staticContainer.ScenesCache);
+                dynamicWorldParams.SceneLoadRadius,
+                dynamicWorldParams.StaticLoadPositions,
+                realmData,
+                staticContainer.ScenesCache);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
@@ -215,7 +213,7 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
-            BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder, realms);
+            BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder, dynamicWorldParams.Realms);
 
             return (container, true);
         }
