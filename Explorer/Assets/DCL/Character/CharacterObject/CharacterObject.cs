@@ -11,7 +11,5 @@ namespace DCL.Character
         public Transform CameraFocus { get; private set; }
 
         public Transform Transform => transform;
-
-        public Vector3 Position => transform.position;
     }
 }

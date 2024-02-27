@@ -74,3 +74,4 @@ MonoBehaviour:
           <FloatField>k__BackingField: {fileID: 9197481963319205126, guid: 3f2e0e33e167f85488492c41409dc34a, type: 3}
           <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
           <Vector3Field>k__BackingField: {fileID: 9197481963319205126, guid: 6e52ba5e3264bfd43b23db247aa2457a, type: 3}
+          <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
