@@ -147,10 +147,9 @@
 
         public const string PROFILE = nameof(PROFILE);
 
-        /// <summary>
-        ///     Tweens Related
-        /// </summary>
         public const string TWEEN = nameof(TWEEN);
+
+        public const string ANIMATOR = nameof(ANIMATOR);
 
         /// <summary>
         ///     Wearable related
