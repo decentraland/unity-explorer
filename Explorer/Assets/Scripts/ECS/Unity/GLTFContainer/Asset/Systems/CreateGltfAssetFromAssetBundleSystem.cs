@@ -29,6 +29,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
+
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;
         }
@@ -93,9 +94,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 result.Renderers.AddRange(instanceRenderers.Value);
             }
 
+            //Collect all Animations as they are used in Animation System
+            using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
+            {
+                instance.GetComponentsInChildren(true, animationScope.Value);
+                result.Animations.AddRange(animationScope.Value);
+            }
+
             // Collect colliders and mesh filters
             // Colliders are created/fetched disabled as its layer is controlled by another system
-
             using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
 
             List<MeshFilter> list = meshFilterScope.Value;
