@@ -55,6 +55,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             // One mesh renderer
             Assert.That(asset.Renderers.Count, Is.EqualTo(1));
+
+            // One Animation
+            Assert.That(asset.Animations.Count, Is.EqualTo(1));
         }
 
         [Test]
@@ -79,6 +82,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             // 196 mesh renderers
             Assert.That(asset.Renderers.Count, Is.EqualTo(196));
+
+            // No Animations
+            Assert.That(asset.Animations.Count, Is.EqualTo(0));
         }
 
         [Test]
