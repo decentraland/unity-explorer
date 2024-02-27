@@ -51,9 +51,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
             Time = 0f;
             slowedTime = 0f;
 
-            float timeDiff = startRemote.timestamp - startLocal.timestamp;
-            totalDuration = timeDiff;
-            remoteOldPosition = startRemote.position - (startRemote.velocity * timeDiff);
+            totalDuration = startRemote.timestamp - startLocal.timestamp;
+            remoteOldPosition = startRemote.position - (startRemote.velocity * totalDuration);
 
             slowDownFactor = 1f;
 

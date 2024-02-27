@@ -15,10 +15,14 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         [Space]
         public float Time;
+        public float MaxSpeed;
 
         private MessageMock start;
         private MessageMock end;
         private float totalDuration;
+        private float slowDownFactor;
+
+        private bool isBlend;
 
         private Func<MessageMock, MessageMock, float, float, Vector3> interpolation;
 
@@ -26,7 +30,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         private void Update()
         {
-            Time += UnityEngine.Time.deltaTime;
+            Time += UnityEngine.Time.deltaTime / slowDownFactor;
 
             if (Time < totalDuration)
                 transform.position = interpolation(start, end, Time, totalDuration);
@@ -37,10 +41,24 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         private void OnEnable()
         {
             Time = 0f;
+            slowDownFactor = 1f;
+            totalDuration = end.timestamp - start.timestamp;
 
-            float timeDiff = end.timestamp - start.timestamp;
-            float correctionTime = (speedUpFactor + receiver.IncomingMessages.Count) * UnityEngine.Time.smoothDeltaTime;
-            totalDuration = Mathf.Max(timeDiff - correctionTime, timeDiff / 4f);
+            if (isBlend)
+            {
+                float positionDiff = Vector3.Distance(start.position, end.position);
+                float speed = positionDiff / totalDuration;
+                if( speed > MaxSpeed)
+                {
+                    float desiredDuration = positionDiff / MaxSpeed;
+                    slowDownFactor = desiredDuration / totalDuration;
+                }
+            }
+            else
+            {
+                float correctionTime = (speedUpFactor + receiver.IncomingMessages.Count) * UnityEngine.Time.smoothDeltaTime;
+                totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
+            }
 
             interpolation = GetInterpolationFunc(interpolationType);
         }
@@ -51,10 +69,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
             PointPassed?.Invoke(end);
         }
 
-        public void Run(MessageMock from, MessageMock to)
+        public void Run(MessageMock from, MessageMock to, bool isBlend = false)
         {
             start = from;
             end = to;
+            this.isBlend = isBlend;
 
             if (start.timestamp > end.timestamp) return;
 

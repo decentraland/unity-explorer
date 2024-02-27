@@ -73,13 +73,21 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     MessageMock local = extrapolation.Stop();
                     AddToPassed(local);
 
-                    if (UseBlendInterpolation)
                     {
-                        blend.Run(local, remote);
-                        return;
+                        if (Vector3.Distance(passedMessages[^1].position, remote.position) < interpolation.minPositionDelta
+                            || Vector3.Distance(passedMessages[^1].position, remote.position) > interpolation.teleportDistance)
+                            Teleport(remote);
+                        else
+                        {
+                            if (UseBlendInterpolation)
+                                blend.Run(local, remote);
+                            else
+
+                                interpolation.Run(from: passedMessages[^1], to: remote, true);
+                            return;
+                        }
                     }
 
-                    // - Adjust for far away (Teleport) and slowed down (max speed) interpolations
                     // - Redefine (project) remote point and make such interpolation interaptable
                 }
 
@@ -90,73 +98,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 else
                     interpolation.Run(from: passedMessages[^1], to: remote);
             }
-
-            // {
-            //     // Stop extrapolation when message arrives
-            //     if (isExtrapolating)
-            //     {
-            //         if (endPoint.timestamp > passedMessages[^1].timestamp + extDuration)
-            //         {
-            //             isExtrapolating = false;
-            //
-            //             AddToPassed(new MessageMock
-            //             {
-            //                 timestamp = passedMessages[^1].timestamp + extDuration,
-            //                 position = transform.position,
-            //                 velocity = extVelocity,
-            //             });
-            //
-            //             if (useBlend)
-            //             {
-            //                 blendTargetPoint = endPoint;
-            //                 StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
-            //                 return;
-            //             }
-            //         }
-            //         else if (useBlend && endPoint.timestamp > passedMessages[^1].timestamp)
-            //         {
-            //             isExtrapolating = false;
-            //
-            //             float currentTimestamp = passedMessages[^1].timestamp + extDuration;
-            //
-            //             AddToPassed(new MessageMock
-            //             {
-            //                 timestamp = currentTimestamp,
-            //                 position = transform.position,
-            //                 velocity = extVelocity,
-            //             });
-            //
-            //             float deltaT = currentTimestamp - endPoint.timestamp;
-            //
-            //             blendTargetPoint = new MessageMock
-            //             {
-            //                 timestamp = currentTimestamp + 0.001f,
-            //                 position = endPoint.position + (endPoint.velocity * deltaT),
-            //                 velocity = endPoint.velocity,
-            //             };
-            //
-            //             StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
-            //             return;
-            //         }
-            //     }
-            //
-            //     if (isBlending && endPoint.timestamp > blendTargetPoint.timestamp)
-            //     {
-            //         StopAllCoroutines();
-            //
-            //         AddToPassed(new MessageMock
-            //         {
-            //             timestamp = passedMessages[^1].timestamp + blendDuration,
-            //             position = transform.position,
-            //             velocity = blendVelocity,
-            //         });
-            //
-            //         blendTargetPoint = endPoint;
-            //
-            //         StartCoroutine(Blend(passedMessages[^1], blendTargetPoint));
-            //         return;
-            //     }
-            // }
         }
 
         private void Teleport(MessageMock to)
