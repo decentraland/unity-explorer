@@ -226,6 +226,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 {
                     avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
                     Color baseColour = originalMaterial.GetColor("_BaseColor");
+                    avatarMaterial.SetFloat("_IsBaseMapAlphaAsClippingMask", 1.0f);
                     avatarMaterial.SetFloat("_Tweak_transparency", baseColour.a - 1.0f);
                 }
             }
