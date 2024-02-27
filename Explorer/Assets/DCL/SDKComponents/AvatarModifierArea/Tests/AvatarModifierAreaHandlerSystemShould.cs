@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            var globalWorldProxy = new ObjectProxy<Arch.Core.World>();
+            var globalWorldProxy = new ObjectProxy<World>();
             globalWorldProxy.SetObject(globalWorld);
             system = new AvatarModifierAreaHandlerSystem(world, globalWorldProxy);
 
@@ -198,11 +198,11 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             var excludedIds = new HashSet<string>();
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, excludedIds, true);
+            system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
 
             Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea);
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, excludedIds, false);
+            system.ToggleAvatarHiding(fakeAvatarShapeTransform, false, excludedIds);
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea);
         }
@@ -222,7 +222,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             var excludedIds = new HashSet<string>();
             excludedIds.Add(FAKE_USER_ID);
 
-            system.ToggleAvatarHiding(fakeAvatarShapeTransform, excludedIds, true);
+            system.ToggleAvatarHiding(fakeAvatarShapeTransform, true, excludedIds);
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea);
         }

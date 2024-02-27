@@ -58,9 +58,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         [All(typeof(TransformComponent))]
         private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            foreach (Transform avatarTransform in triggerAreaComponent.EnteredThisFrame) { ToggleAvatarHiding(avatarTransform, modifierAreaComponent.ExcludedIds, true); }
+            foreach (Transform avatarTransform in triggerAreaComponent.EnteredThisFrame) { ToggleAvatarHiding(avatarTransform, true, modifierAreaComponent.ExcludedIds); }
 
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedThisFrame) { ToggleAvatarHiding(avatarTransform, modifierAreaComponent.ExcludedIds, false); }
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedThisFrame) { ToggleAvatarHiding(avatarTransform, false); }
 
             if (pbAvatarModifierArea.IsDirty)
             {
@@ -73,7 +73,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             }
         }
 
-        internal void ToggleAvatarHiding(Transform avatarTransform, HashSet<string> excludedIds, bool shouldHide)
+        internal void ToggleAvatarHiding(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds = null)
         {
             var found = false;
 
@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                     {
                         found = true;
 
-                        if (globalWorld.TryGet(entity, out Profile profile) && excludedIds.Contains(profile.UserId))
+                        if (globalWorld.TryGet(entity, out Profile profile) && excludedIds != null && excludedIds.Contains(profile.UserId))
                             return;
 
                         globalWorld.Get<AvatarShapeComponent>(entity).HiddenByModifierArea = shouldHide;
