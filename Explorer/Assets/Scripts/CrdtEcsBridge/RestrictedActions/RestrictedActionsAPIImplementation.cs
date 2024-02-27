@@ -79,8 +79,8 @@ namespace CrdtEcsBridge.RestrictedActions
             if (playerEntity == null || world == null)
                 return;
 
-            // Move player to new position (through InterpolateCharacterSystem -> MovePlayerQuery)
-            world.Add(playerEntity.Value, new PlayerMoveIntent(newPlayerPosition));
+            // Move player to new position (through InterpolateCharacterSystem -> TeleportPlayerQuery)
+            world.Add(playerEntity.Value, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero));
 
             // Rotate player to look at camera target (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newCameraTarget != null)
