@@ -59,8 +59,11 @@ namespace Global.Dynamic
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
-            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
-            IReadOnlyList<int2> staticLoadPositions, RealmData realmData, IScenesCache scenesCache)
+            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld,
+            int sceneLoadRadius,
+            IReadOnlyList<int2> staticLoadPositions,
+            RealmData realmData,
+            IScenesCache scenesCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -109,8 +112,7 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            Entity realmEntity = world.Create(realmComp,
-                new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
+            Entity realmEntity = world.Create(realmComp, ProcessesScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
@@ -173,6 +175,7 @@ namespace Global.Dynamic
                 World world = globalWorld.EcsWorld;
                 FindLoadedScenes();
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+                world.Query(new QueryDescription().WithAll<ProcessesScenePointers>(), (ref ProcessesScenePointers scenePointers) => scenePointers.Value.Dispose());
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.Dispose();
