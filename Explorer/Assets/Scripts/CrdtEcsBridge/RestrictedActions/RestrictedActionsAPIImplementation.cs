@@ -1,10 +1,6 @@
-﻿using Arch.Core;
-using Cysharp.Threading.Tasks;
-using DCL.CharacterCamera;
-using DCL.CharacterMotion.Components;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
-using JetBrains.Annotations;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
@@ -17,21 +13,18 @@ namespace CrdtEcsBridge.RestrictedActions
     {
         private readonly IMVCManager mvcManager;
         private readonly ISceneStateProvider sceneStateProvider;
-        [CanBeNull] private readonly World world;
-        private readonly Entity? playerEntity;
+        private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
 
         public RestrictedActionsAPIImplementation(
             IMVCManager mvcManager,
             ISceneStateProvider sceneStateProvider,
-            [CanBeNull] World world,
-            Entity? playerEntity,
+            IGlobalWorldActions globalWorldActions,
             ISceneData sceneData)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
-            this.world = world;
-            this.playerEntity = playerEntity;
+            this.globalWorldActions = globalWorldActions;
             this.sceneData = sceneData;
         }
 
@@ -64,37 +57,14 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
             }
 
-            MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget);
-            RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
+            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget);
+            globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
             await mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
-        }
-
-        private void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
-        {
-            if (playerEntity == null || world == null)
-                return;
-
-            // Move player to new position (through InterpolateCharacterSystem -> TeleportPlayerQuery)
-            world.Add(playerEntity.Value, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero));
-
-            // Rotate player to look at camera target (through RotateCharacterSystem -> ForceLookAtQuery)
-            if (newCameraTarget != null)
-                world.Add(playerEntity.Value, new PlayerLookAtIntent(newCameraTarget.Value));
-        }
-
-        private void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)
-        {
-            if (newCameraTarget == null || world == null)
-                return;
-
-            // Rotate camera to look at new target (through ApplyCinemachineCameraInputSystem -> ForceLookAtQuery)
-            var camera = world.CacheCamera();
-            world.Add(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
         private bool IsPositionValid(Vector3 floorPosition)

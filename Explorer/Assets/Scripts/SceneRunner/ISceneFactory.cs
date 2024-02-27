@@ -1,4 +1,4 @@
-using Arch.Core;
+using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
@@ -49,10 +49,9 @@ namespace SceneRunner
         UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct);
 
         /// <summary>
-        ///     Used for passing the player entity from the global world to the scene world
+        /// Used for passing actions from the global world to the scene world
         /// </summary>
-        /// <param name="world">World where the player entity exists</param>
-        /// <param name="entity">Player entity</param>
-        void SetPlayerEntity(World world, Entity entity);
+        /// <param name="actions"></param>
+        void SetGlobalWorldActions(IGlobalWorldActions actions);
     }
 }
