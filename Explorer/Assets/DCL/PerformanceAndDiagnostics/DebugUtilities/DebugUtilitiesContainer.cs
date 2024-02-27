@@ -29,6 +29,7 @@ namespace DCL.DebugUtilities
                         { typeof(DebugSetOnlyLabelDef), new DebugElementBase<DebugSetOnlyLabelElement, DebugSetOnlyLabelDef>.Factory(viewsCatalog.SetOnlyLabel) },
                         { typeof(DebugTextFieldDef), new DebugElementBase<DebugTextFieldElement, DebugTextFieldDef>.Factory(viewsCatalog.TextField) },
                         { typeof(DebugToggleDef), new DebugElementBase<DebugToggleElement, DebugToggleDef>.Factory(viewsCatalog.Toggle) },
+                        { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
                     }),
             };
         }

@@ -54,6 +54,7 @@ namespace DCL.PluginSystem.Global
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeSatelliteSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
+            LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
         }
 
         public void Dispose()
