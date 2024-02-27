@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.World;
+using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -11,16 +12,14 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner;
-using UnityEngine.TestTools;
-using System.Collections;
 using SceneRunner.Scene;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
@@ -86,7 +85,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings, identityCache,
-                    Substitute.For<IEthereumApi>(), ct);
+                    Substitute.For<IEthereumApi>(), Substitute.For<IProfileRepository>(), ct);
 
                 currentScene = await sceneSharedContainer
                                     .SceneFactory
@@ -106,6 +105,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityCache,
             IEthereumApi ethereumApi,
+            IProfileRepository profileRepository,
             CancellationToken ct)
         {
             // First load the common global plugin
@@ -120,7 +120,8 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, Substitute.For<IMVCManager>());
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
+                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository);
 
             return (staticContainer, sceneSharedContainer);
         }
