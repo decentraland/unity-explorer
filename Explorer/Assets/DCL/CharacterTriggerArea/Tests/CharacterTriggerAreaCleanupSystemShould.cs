@@ -19,6 +19,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             var fakeAvatarGO = new GameObject();
 
+            //tests should be refactored with respect to encapsulation of the component
             component.EnteredThisFrame.Add(fakeAvatarGO.transform);
             world.Set(entity, component);
 
