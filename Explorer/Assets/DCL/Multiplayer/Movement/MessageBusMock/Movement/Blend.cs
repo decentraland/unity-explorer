@@ -6,24 +6,22 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
     public class Blend : MonoBehaviour
     {
         public float maxSpeed = 30f;
-        public float maxExtraTime;
         public float minPositionDelta = 0.1f;
 
         [Space]
         public float Time;
-        public Vector3 Velocity;
 
         private MessageMock startLocal;
         private MessageMock startRemote;
 
         private Vector3 remoteOldPosition;
 
-        public float blendExtra;
         private float totalDuration;
         private float slowedTime;
         private float slowDownFactor;
 
         public event Action<MessageMock> PointPassed;
+
 
         private void Update()
         {
@@ -35,51 +33,31 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
                 float lerpValue = slowedTime / totalDuration;
 
                 // Interpolate velocity
-                Velocity = startLocal.velocity + ((startRemote.velocity - startLocal.velocity) * lerpValue);
+                var lerpVelocity = startLocal.velocity + ((startRemote.velocity - startLocal.velocity) * lerpValue);
 
                 // Calculate the position at time t
-                Vector3 projectedLocal = startLocal.position + (Velocity * slowedTime);
+                Vector3 projectedLocal = startLocal.position + (lerpVelocity * slowedTime);
                 Vector3 projectedRemote = remoteOldPosition + (startRemote.velocity * slowedTime);
 
                 // Apply the interpolated position
                 transform.position = projectedLocal + ((projectedRemote - projectedLocal) * lerpValue);
             }
             else
-            {
-                PointPassed?.Invoke(startRemote);
-
-                if (blendExtra > 0f)
-                    PointPassed?.Invoke(new MessageMock
-                    {
-                        timestamp = startRemote.timestamp + blendExtra,
-                        position = transform.position,
-                        velocity = startRemote.velocity,
-                    });
-
                 enabled = false;
-            }
         }
 
         private void OnEnable()
         {
-            float positionDiff = Vector3.Distance(startLocal.position, startRemote.position);
-
-            if (positionDiff < minPositionDelta)
-            {
-                PointPassed?.Invoke(startRemote);
-                enabled = false;
-                return;
-            }
-
             Time = 0f;
             slowedTime = 0f;
 
             float timeDiff = startRemote.timestamp - startLocal.timestamp;
-            // blendExtra = Mathf.Clamp(avarageMessageSentRate - timeDiff, 0, maxExtraTime);
-            totalDuration = timeDiff + blendExtra;
+            totalDuration = timeDiff;
             remoteOldPosition = startRemote.position - (startRemote.velocity * timeDiff);
 
             slowDownFactor = 1f;
+
+            float positionDiff = Vector3.Distance(startLocal.position, startRemote.position);
             float speed = positionDiff / totalDuration;
             if (speed > maxSpeed)
             {
@@ -88,10 +66,18 @@ namespace DCL.Multiplayer.Movement.MessageBusMock.Movement
             }
         }
 
+        private void OnDisable()
+        {
+            transform.position = startRemote.position;
+            PointPassed?.Invoke(startRemote);
+        }
+
         public void Run(MessageMock local, MessageMock remote)
         {
             startLocal = local;
             startRemote = remote;
+
+            if (startLocal.timestamp > startRemote.timestamp) return;
 
             enabled = true;
         }

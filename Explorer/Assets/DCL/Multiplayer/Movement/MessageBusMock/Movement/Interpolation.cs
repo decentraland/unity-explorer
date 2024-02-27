@@ -58,11 +58,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             if (start.timestamp > end.timestamp) return;
 
-            // Can skip
-            if (Vector3.Distance(from.position, to.position) < minPositionDelta && receiver.IncomingMessages.Count > 0)
-                OnDisable();
-            else
-                enabled = true;
+            enabled = true;
         }
 
         private static Func<MessageMock, MessageMock, float, float, Vector3> GetInterpolationFunc(InterpolationType type)

@@ -83,7 +83,9 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                     // - Redefine (project) remote point and make such interpolation interaptable
                 }
 
-                if (passedMessages.Count == 0 || Vector3.Distance(passedMessages[^1].position, remote.position) > interpolation.teleportDistance)
+                if (passedMessages.Count == 0
+                    || Vector3.Distance(passedMessages[^1].position, remote.position) < interpolation.minPositionDelta
+                    || Vector3.Distance(passedMessages[^1].position, remote.position) > interpolation.teleportDistance)
                     Teleport(remote);
                 else
                     interpolation.Run(from: passedMessages[^1], to: remote);
