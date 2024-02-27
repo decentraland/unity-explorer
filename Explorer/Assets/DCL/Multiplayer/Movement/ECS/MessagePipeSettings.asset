@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dcaac58b3d742e6a074b969cb3cab6b, type: 3}
   m_Name: MessagePipeSettings
   m_EditorClassIdentifier: 
-  InboxCount: 3
-  PassedMessages: 19
+  InboxCount: 0
+  PassedMessages: 1
   PackageLost: 0
-  StartSending: 1
+  StartSending: 0
   PackageSentRate: 0.33
-  PackagesJitter: 0
+  PackagesJitter: 4
   Latency: 0
   LatencyJitter: 0
   MinPositionDelta: 0.01

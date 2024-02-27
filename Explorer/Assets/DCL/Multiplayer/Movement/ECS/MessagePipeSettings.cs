@@ -1,7 +1,6 @@
 ﻿using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
 namespace DCL.Multiplayer.Movement.ECS
 {

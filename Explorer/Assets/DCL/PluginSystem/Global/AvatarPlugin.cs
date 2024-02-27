@@ -133,7 +133,7 @@ namespace DCL.PluginSystem.Global
             var messagePipeMock = new MessagePipeMock(settings, staticContainerCharacterContainer.CharacterObject.Controller, arguments.PlayerEntity, builder.World);
 
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            ReceiverMockSystem.InjectToWorld(ref builder, messagePipeMock);
+            ReceiverMockSystem.InjectToWorld(ref builder, debugContainerBuilder, messagePipeMock);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
         }
