@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             foreach (TextureArrayMapping textureArrayMapping in textureArrayContainer.mappings)
             {
                 testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID,
-                    new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_TEXTURE_FORMAT, false, false));
+                    new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false));
             }
 
             testTargetMaterial = new Material(targetShader);
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void SetTexture()
         {
-            TextureArraySlot?[] textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            TextureArraySlot?[] textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TextureArrayConstants.SHADERID_DCL_PBR);
 
             for (var i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void ReleaseAndReuseTexture()
         {
-            TextureArraySlot?[] originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            TextureArraySlot?[] originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TextureArrayConstants.SHADERID_DCL_PBR);
 
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -69,7 +69,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 Assert.AreEqual(textureArrayContainer.mappings[i].Handler.resolutionDictionary[TEST_RESOLUTION].freeSlots.Count, 1);
             }
 
-            TextureArraySlot?[] replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            TextureArraySlot?[] replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TextureArrayConstants.SHADERID_DCL_PBR);
 
             // Check the slots are the same as the original ones
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
