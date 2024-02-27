@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -27,6 +28,7 @@ namespace DCL.Nametags
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NametagsData nametagsData;
         private SingleInstanceEntity playerCamera;
+        private Dictionary<string, NametagView> activeNametags = new ();
 
         public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool, ChatEntryConfigurationSO chatEntryConfiguration, NametagsData nametagsData) : base(world)
         {
@@ -54,6 +56,7 @@ namespace DCL.Nametags
 
             UpdateTagQuery(World, camera);
             AddTagQuery(World, camera);
+            ProcessChatBubbleComponentsQuery(World);
         }
 
         [Query]
@@ -63,6 +66,10 @@ namespace DCL.Nametags
             if (partitionComponent.IsBehind) return;
 
             NametagView nametagView = nametagViewPool.Get();
+            //if(!activeNametags.ContainsKey(avatarShape.ID))
+                activeNametags.Add(avatarShape.ID, nametagView);
+
+            nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
             nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>");
             nametagView.gameObject.name = avatarShape.ID;
@@ -77,9 +84,9 @@ namespace DCL.Nametags
         private void ProcessChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent)
         {
             if (nametagsData.showChatBubbles)
-            {
+                if(activeNametags.TryGetValue(chatBubbleComponent.SenderId, out NametagView nametagView))
+                    nametagView.SetChatMessage(chatBubbleComponent.ChatMessage);
 
-            }
             World.Remove<ChatBubbleComponent>(e);
         }
 
@@ -87,6 +94,7 @@ namespace DCL.Nametags
         [All(typeof(DeleteEntityIntention))]
         private void RemoveTag(NametagView nametagView)
         {
+            activeNametags.Remove(nametagView.Id);
             nametagViewPool.Release(nametagView);
         }
 
@@ -95,6 +103,7 @@ namespace DCL.Nametags
         private void RemoveAllTags(Entity e, NametagView nametagView)
         {
             nametagViewPool.Release(nametagView);
+            activeNametags.Remove(nametagView.Id);
             World.Remove<NametagView>(e);
         }
 
@@ -103,6 +112,7 @@ namespace DCL.Nametags
         {
             if (partitionComponent.IsBehind)
             {
+                activeNametags.Remove(nametagView.Id);
                 nametagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);
                 return;

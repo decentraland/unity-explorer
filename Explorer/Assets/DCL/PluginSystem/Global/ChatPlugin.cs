@@ -31,9 +31,8 @@ namespace DCL.PluginSystem.Global
         {
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            chatController.InjectToWorld(ref builder);
 
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {

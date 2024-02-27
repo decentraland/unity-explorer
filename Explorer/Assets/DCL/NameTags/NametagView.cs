@@ -28,8 +28,11 @@ namespace DCL.Nametags
         [field: SerializeField]
         internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
 
+        public string Id;
+
         [field: SerializeField]
         public float FixedWidth { get; private set; }
+
         private const float MARGIN_OFFSET_WIDTH = 0.5f;
         private const float MARGIN_OFFSET_HEIGHT = 0.7f;
         private const float ANIMATION_DURATION = 0.7f;
@@ -45,8 +48,8 @@ namespace DCL.Nametags
 
         private void Start()
         {
-            SetUsername(StringUtils.GenerateRandomString(Random.Range(3,10)));
-            GenerateRandomMsgsAsync().Forget();
+            //SetUsername(StringUtils.GenerateRandomString(Random.Range(3,10)));
+            //GenerateRandomMsgsAsync().Forget();
         }
 
         public void SetUsername(string username)

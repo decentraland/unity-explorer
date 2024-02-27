@@ -1,3 +1,5 @@
+using Arch.Core;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using MVC;
 using SuperScrollView;
@@ -11,8 +13,9 @@ namespace DCL.Chat
     {
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
+        private World world;
 
-        private List<ChatMessage> chatMessages = new List<ChatMessage>();
+        private List<ChatMessage> chatMessages = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -25,6 +28,11 @@ namespace DCL.Chat
             this.chatMessagesBus = chatMessagesBus;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder)
+        {
+            world = builder.World;
         }
 
         protected override void OnViewInstantiated()
@@ -80,6 +88,7 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
+            world.Create(new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);

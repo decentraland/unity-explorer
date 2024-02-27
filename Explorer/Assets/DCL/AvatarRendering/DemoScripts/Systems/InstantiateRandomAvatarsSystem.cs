@@ -219,8 +219,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 var avatarShape = new PBAvatarShape
                 {
-                    Id = StringUtils.GenerateRandomString(5),
-                    Name = StringUtils.GenerateRandomString(Random.Range(5,12)),
+                    Id = $"User{i}",//StringUtils.GenerateRandomString(5)
+                    Name = $"User{i}",//StringUtils.GenerateRandomString(Random.Range(5,12)),
                     BodyShape = currentRandomizer.BodyShape,
                     Wearables = { wearables },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
