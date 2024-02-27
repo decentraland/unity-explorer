@@ -1,4 +1,5 @@
-﻿using DCL.Utilities;
+﻿using Arch.Core;
+using DCL.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -20,7 +21,7 @@ namespace DCL.CharacterCamera
 
         CanBeDirty<bool> PointerIsLocked { get; }
 
-        EntityProxy CameraEntityProxy { get; }
+        ObjectProxy<Entity> CameraEntityProxy { get; }
 
         CanBeDirty<Vector3> IExposedTransform.Position => WorldPosition;
         CanBeDirty<Quaternion> IExposedTransform.Rotation => WorldRotation;
@@ -32,7 +33,7 @@ namespace DCL.CharacterCamera
             public CanBeDirty<CameraType> CameraType { get; }
             public CanBeDirty<bool> PointerIsLocked { get; }
 
-            public EntityProxy CameraEntityProxy { get; } = new ();
+            public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
 
             public Fake(Vector3 worldPosition, Quaternion worldRotation, CameraType cameraType, bool pointerIsLocked)
             {
@@ -57,7 +58,7 @@ namespace DCL.CharacterCamera
             public CanBeDirty<Quaternion> WorldRotation { get; }
             public CanBeDirty<CameraType> CameraType { get; }
             public CanBeDirty<bool> PointerIsLocked { get; }
-            public EntityProxy CameraEntityProxy { get; } = new ();
+            public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
 
             public Random()
             {

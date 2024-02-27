@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Components;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -23,10 +24,10 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     {
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
         private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarAttachComponent>().WithNone<DeleteEntityIntention, PBAvatarAttach>();
-        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public AvatarAttachHandlerSystem(World world, MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider) : base(world)
+        public AvatarAttachHandlerSystem(World world, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
@@ -89,12 +90,12 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             switch (anchorPointType)
             {
                 case AvatarAnchorPointType.AaptLeftHand:
-                    return mainPlayerAvatarBaseProxy.AvatarBase.LeftHandAnchorPoint;
+                    return mainPlayerAvatarBaseProxy.Object!.LeftHandAnchorPoint;
                 case AvatarAnchorPointType.AaptRightHand:
-                    return mainPlayerAvatarBaseProxy.AvatarBase.RightHandAnchorPoint;
+                    return mainPlayerAvatarBaseProxy.Object!.RightHandAnchorPoint;
                 case AvatarAnchorPointType.AaptNameTag:
                 default: // AvatarAnchorPointType.AaptPosition
-                    return mainPlayerAvatarBaseProxy.AvatarBase.transform;
+                    return mainPlayerAvatarBaseProxy.Object!.transform;
             }
         }
 

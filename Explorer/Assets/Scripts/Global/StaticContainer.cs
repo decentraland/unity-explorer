@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.Components;
+﻿using Arch.Core;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -38,9 +39,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public WorldProxy GlobalWorldProxy = new ();
-        public MainPlayerAvatarBaseProxy MainPlayerAvatarBaseProxy = new ();
         private ProvidedInstance<CharacterObject> characterObject;
+        public ObjectProxy<World> GlobalWorldProxy = new ();
+        public ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;

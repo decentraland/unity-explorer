@@ -17,6 +17,7 @@ using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
+using DCL.Utilities;
 using ECS;
 using System;
 using System.Runtime.CompilerServices;
@@ -40,7 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
-        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
@@ -51,9 +52,9 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<Material> celShadingMaterialPool;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
-        private IComponentPool<Transform> transformPoolRegistry;
-
         private IObjectPool<NametagView> nametagViewPool;
+
+        private IComponentPool<Transform> transformPoolRegistry;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -61,7 +62,7 @@ namespace DCL.PluginSystem.Global
             IPerformanceBudget frameTimeCapBudget,
             IPerformanceBudget memoryBudget,
             IRealmData realmData,
-            MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy,
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration)

@@ -8,6 +8,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.Utilities;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,12 +22,12 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ICharacterObject characterObject;
 
         private IComponentPool<CharacterTriggerArea.CharacterTriggerArea> characterTriggerAreaPoolRegistry;
 
-        public CharacterTriggerAreaPlugin(MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public CharacterTriggerAreaPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;

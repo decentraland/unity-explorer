@@ -4,6 +4,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarAttach.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -13,9 +14,9 @@ namespace DCL.PluginSystem.World
 {
     public class AvatarAttachPlugin : IDCLWorldPlugin
     {
-        private readonly MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
-        public AvatarAttachPlugin(MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy)
+        public AvatarAttachPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
         }

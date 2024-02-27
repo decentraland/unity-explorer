@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -45,8 +46,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             // Setup system
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
-            var mainPlayerAvatarBase = new MainPlayerAvatarBaseProxy();
-            mainPlayerAvatarBase.SetAvatarBase(playerAvatarBase);
+            var mainPlayerAvatarBase = new ObjectProxy<AvatarBase>();
+            mainPlayerAvatarBase.SetObject(playerAvatarBase);
             system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase, sceneStateProvider);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);

@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
                 realmSamplingData
             );
 
-            exposedCameraData.CameraEntityProxy.SetEntity(cameraEntity);
+            exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);

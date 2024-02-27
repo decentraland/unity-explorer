@@ -1,3 +1,4 @@
+using Arch.Core;
 using DCL.CharacterCamera;
 using DCL.Utilities;
 using System;
@@ -15,7 +16,7 @@ namespace DCL.Billboard.Demo.CameraData
         public CanBeDirty<Quaternion> WorldRotation => new (t.rotation);
         public CanBeDirty<CameraType> CameraType { get; }
         public CanBeDirty<bool> PointerIsLocked { get; }
-        public EntityProxy CameraEntityProxy { get; } = new ();
+        public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
 
         public FromTransformExposedCameraData() : this((Camera.main ? Camera.main : throw new NullReferenceException("Camera not found"))!) { }
 

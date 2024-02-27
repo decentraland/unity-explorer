@@ -6,6 +6,7 @@ using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -27,7 +28,7 @@ namespace DCL.CharacterTriggerArea.Tests
         private GameObject fakeMainPlayerGO;
         private GameObject fakeMainPlayerAvatarGO;
         private CharacterTriggerArea characterTriggerArea;
-        private MainPlayerAvatarBaseProxy mainPlayerAvatarBaseProxy;
+        private ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private IComponentPoolsRegistry poolsRegistry;
         private IComponentPool<CharacterTriggerArea> characterTriggerAreaPool;
         private ICharacterObject characterObject;
@@ -50,8 +51,8 @@ namespace DCL.CharacterTriggerArea.Tests
 
             fakeMainPlayerAvatarGO = new GameObject();
 
-            mainPlayerAvatarBaseProxy = new MainPlayerAvatarBaseProxy();
-            mainPlayerAvatarBaseProxy.SetAvatarBase(fakeMainPlayerAvatarGO.AddComponent<AvatarBase>());
+            mainPlayerAvatarBaseProxy = new ObjectProxy<AvatarBase>();
+            mainPlayerAvatarBaseProxy.SetObject(fakeMainPlayerAvatarGO.AddComponent<AvatarBase>());
             characterObject = Substitute.For<ICharacterObject>();
             characterObject.Transform.Returns(fakeMainPlayerGO.transform);
 
@@ -361,7 +362,7 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             // Use fresh non-initialized MainPlayerAvatarBaseProxy
-            mainPlayerAvatarBaseProxy = new MainPlayerAvatarBaseProxy();
+            mainPlayerAvatarBaseProxy = new ObjectProxy<AvatarBase>();
             system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 
             var pbComponent = new PBCameraModeArea();
@@ -380,7 +381,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(0, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
 
-            mainPlayerAvatarBaseProxy.SetAvatarBase(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
+            mainPlayerAvatarBaseProxy.SetObject(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
 
             system.Update(0);
             await WaitForPhysics();
