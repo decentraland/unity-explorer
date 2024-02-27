@@ -2,14 +2,12 @@
 
 namespace DCL.Web3.Accounts
 {
-    public class NethereumAccount : IWeb3Account, IEthKeyOwner
+    public class NethereumAccount : IWeb3Account
     {
         private static readonly EthereumMessageSigner signer = new ();
         internal readonly EthECKey key;
 
         public Web3Address Address { get; }
-
-        public EthECKey Key => key;
 
         public NethereumAccount(EthECKey key)
         {
