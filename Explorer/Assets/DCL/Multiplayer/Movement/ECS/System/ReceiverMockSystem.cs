@@ -52,9 +52,13 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private readonly ElementBinding<bool> useBlend;
         private readonly ElementBinding<float> blendMaxSpeed;
 
+        private readonly ElementBinding<string> status;
+
         private ReceiverMockSystem(World world, IDebugContainerBuilder debugBuilder, MessagePipeMock pipe) : base(world)
         {
             this.pipe = pipe;
+
+            status = new ElementBinding<string>(string.Empty);
 
             inboxMessages = new ElementBinding<string>(this.pipe.Settings.InboxCount.ToString());
             passedMessages = new ElementBinding<string>(this.pipe.Settings.PassedMessages.ToString());
@@ -77,32 +81,37 @@ namespace DCL.Multiplayer.Movement.ECS.System
             // Interpolation
             ElementBinding<string> intTypesBinding = new (pipe.Settings.InterpolationType.ToString(),
                 evt => pipe.Settings.InterpolationType = (InterpolationType)Enum.Parse(typeof(InterpolationType), evt.newValue));
+
             intSpeedUpFactor = new ElementBinding<int>((int)pipe.Settings.SpeedUpFactor);
 
             useBlend = new ElementBinding<bool>(pipe.Settings.useBlend);
+
             ElementBinding<string> blendTypesBinding = new (pipe.Settings.BlendType.ToString(),
                 evt => pipe.Settings.BlendType = (InterpolationType)Enum.Parse(typeof(InterpolationType), evt.newValue));
-            blendMaxSpeed = new ElementBinding<float>(pipe.Settings.MaxBlendSpeed);
 
+            blendMaxSpeed = new ElementBinding<float>(pipe.Settings.MaxBlendSpeed);
 
             debugBuilder.AddWidget("MULTIPLAYER MOVEMENT")
                         .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                        .AddControl(new DebugHintDef("CTRLs: X - block sending, M - one package lost"), null)
+
+                         // NETWORK
+                        .AddControl(new DebugSetOnlyLabelDef(status), null)
+                        .AddControl(new DebugHintDef("X - block sending, M - one package lost"), null)
                         .AddSingleButton("Toggle Network", () => pipe.Settings.StartSending = !pipe.Settings.StartSending)
                         .AddCustomMarker("Inbox Messages: ", inboxMessages)
                         .AddCustomMarker("Passed Messages: ", passedMessages)
-
-                         // NETWORK
                         .AddFloatField("Package Sent Rate", packageSentRate)
                         .AddFloatField("Package Jitter", packageJitter)
                         .AddFloatField("Latency", latency)
                         .AddFloatField("Latency Jitter", latencyJitter)
 
                          // TELEPORTATION
+                        .AddControl(new DebugHintDef("TELEPORTATION"), null)
                         .AddFloatField("Min Position Delta", telMinPositionDelta)
                         .AddFloatField("Min Teleport Distance", telMinTeleportDistance)
 
                          // INTERPOLATION
+                        .AddControl(new DebugHintDef("INTERPOLATION"), null)
                         .AddControl(new DebugDropdownDef(Interpolate.Types, intTypesBinding, "Int. Type"), null)
                         .AddControl(new DebugConstLabelDef("Int. SpeedUp Factor"), new DebugIntFieldDef(intSpeedUpFactor))
                         .AddToggleField("Use Blend", evt => useBlend.Value = !useBlend.Value, useBlend.Value)
@@ -110,16 +119,18 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         .AddFloatField("Max Blend Speed", blendMaxSpeed)
 
                          // EXTRAPOLATION
+                        .AddControl(new DebugHintDef("EXTRAPOLATION"), null)
                         .AddToggleField("Use Extrapolation", evt => useExtrapolation.Value = !useExtrapolation.Value, useExtrapolation.Value)
                         .AddFloatField("Ext. Min Speed", extMinSpeed)
                         .AddFloatField("Ext. Linear Time", extLinearTime)
                         .AddControl(new DebugConstLabelDef("Ext. Damping Steps"), new DebugIntFieldDef(extDampedSteps))
                 ;
-
         }
 
         protected override void Update(float t)
         {
+            status.Value = pipe.Settings.StartSending ? "<color=green>ON</color>" : "<color=red>OFF</color>";
+
             pipe.Settings.InboxCount = pipe.Count;
             inboxMessages.Value = pipe.Count.ToString();
 
@@ -153,6 +164,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
+            status.Value += ext.Enabled ? " | <color=green>EXT</color>" : " | <color=red>EXT</color>";
+            status.Value += @int is { Enabled: true, IsBlend: false }? " | <color=green>INT</color>" : " | <color=red>INT</color>";
+            status.Value += @int is { Enabled: true, IsBlend: true } ? " | <color=green>BLEND</color>" : " | <color=red>BLEND</color>";
+
             pipe.Settings.PassedMessages = replicaMovement.PassedMessages.Count;
             passedMessages.Value = replicaMovement.PassedMessages.Count.ToString();
 

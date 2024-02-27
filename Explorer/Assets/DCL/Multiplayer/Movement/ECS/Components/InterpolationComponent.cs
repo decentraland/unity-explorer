@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Movement.ECS
         private float totalDuration;
         private float slowDownFactor;
 
-        private bool isBlend;
+        public bool IsBlend;
 
         private MessagePipeSettings settings;
 
@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Movement.ECS
             time = 0f;
             totalDuration = 0f;
 
-            isBlend = false;
+            IsBlend = false;
             slowDownFactor = 1f;
         }
 
@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
             if (time >= totalDuration) return Disable();
 
-            Transform.position = DoTransition(start, end, time, totalDuration, isBlend);
+            Transform.position = DoTransition(start, end, time, totalDuration, IsBlend);
             UpdateRotation();
             return null;
         }
@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Movement.ECS
             slowDownFactor = 1f;
             totalDuration = end.timestamp - start.timestamp;
 
-            if (isBlend)
+            if (IsBlend)
             {
                 float positionDiff = Vector3.Distance(start.position, end.position);
                 float speed = positionDiff / totalDuration;
@@ -96,7 +96,7 @@ namespace DCL.Multiplayer.Movement.ECS
             start = from;
             end = to;
 
-            this.isBlend = isBlend;
+            this.IsBlend = isBlend;
 
             Enable(inboxMessages);
         }
