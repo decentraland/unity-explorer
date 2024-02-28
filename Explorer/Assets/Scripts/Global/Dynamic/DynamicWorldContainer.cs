@@ -3,23 +3,19 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
-using DCL.SkyBox;
 using DCL.UserInAppInitializationFlow;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
@@ -30,13 +26,10 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Movement.ECS.System;
 using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Rooms.DataPipes;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -195,7 +188,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, archipelagoIslandRoom, staticContainer.CharacterContainer.CharacterObject),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new IslandRoomMock(), staticContainer.CharacterContainer.CharacterObject),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
