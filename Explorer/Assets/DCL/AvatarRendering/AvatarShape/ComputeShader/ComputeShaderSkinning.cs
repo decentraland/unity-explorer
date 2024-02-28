@@ -203,6 +203,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent)
         {
             Material avatarMaterial = null;
+            int nShaderID = TextureArrayConstants.SHADERID_DCL_TOON;
             if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) ||
                 meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) ||
                 meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
@@ -210,13 +211,27 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 avatarMaterial = new Material(Shader.Find("DCL/DCL_Avatar_Facial_Features"));
                 avatarMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
                 avatarMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
+                nShaderID = TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES;
             }
             else
             {
                 avatarMaterial = celShadingMaterial.Get();
+
+                if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON"))
+                {
+                    avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
+                    avatarMaterial.SetFloat("_IsBaseMapAlphaAsClippingMask", 1.0f);
+                }
+                else if (originalMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"))
+                {
+                    avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
+                    Color baseColour = originalMaterial.GetColor("_BaseColor");
+                    avatarMaterial.SetFloat("_IsBaseMapAlphaAsClippingMask", 1.0f);
+                    avatarMaterial.SetFloat("_Tweak_transparency", baseColour.a - 1.0f);
+                }
             }
 
-            TextureArraySlot?[] slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
+            TextureArraySlot?[] slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial, nShaderID);
 
             foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
@@ -225,7 +240,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             }
 
             // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
-            avatarMaterial.DisableKeyword("_NORMALMAP");
+            //avatarMaterial.DisableKeyword("_NORMALMAP");
 
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
