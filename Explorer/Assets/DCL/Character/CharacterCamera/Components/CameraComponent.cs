@@ -8,13 +8,23 @@ namespace DCL.CharacterCamera
     /// </summary>
     public struct CameraComponent
     {
-        public readonly Camera Camera;
-
         public CameraMode Mode;
+        public readonly Camera Camera;
 
         public CameraComponent(Camera camera) : this()
         {
             Camera = camera;
+            CameraInputLocks = 0;
         }
+
+        public int CameraInputLocks { get; private set; }
+
+        public bool CameraInputChangeEnabled => CameraInputLocks == 0;
+
+        public void AddCameraInputLock() =>
+            CameraInputLocks++;
+
+        public void RemoveCameraInputLock() =>
+            CameraInputLocks = CameraInputLocks - 1 < 0 ? 0 : CameraInputLocks - 1;
     }
 }

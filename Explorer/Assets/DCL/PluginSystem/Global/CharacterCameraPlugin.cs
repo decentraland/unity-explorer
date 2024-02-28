@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using Arch.Core;
+using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -20,9 +21,9 @@ namespace DCL.PluginSystem.Global
     public class CharacterCameraPlugin : IDCLGlobalPlugin<CharacterCameraSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly RealmSamplingData realmSamplingData;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
 
         public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, CameraSamplingData cameraSamplingData, ExposedCameraData exposedCameraData)
@@ -59,7 +60,7 @@ namespace DCL.PluginSystem.Global
             cinemachinePreset.Brain.ControlledObject = cinemachinePreset.Brain.gameObject;
 
             // Create a special camera entity
-            world.Create(
+            Entity cameraEntity = world.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
                 new CursorComponent(),
@@ -70,6 +71,8 @@ namespace DCL.PluginSystem.Global
                 cameraSamplingData,
                 realmSamplingData
             );
+
+            exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
