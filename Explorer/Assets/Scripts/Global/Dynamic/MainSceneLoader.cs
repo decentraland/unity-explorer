@@ -8,6 +8,7 @@ using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
@@ -223,8 +225,11 @@ namespace Global.Dynamic
         public async UniTask ValidateSettingsAsync()
         {
             using var scope = new CheckingScope(ReportData.UNSPECIFIED);
-            await globalPluginSettingsContainer.EnsureValidAsync();
-            await scenePluginSettingsContainer.EnsureValidAsync();
+
+            await UniTask.WhenAll(
+                globalPluginSettingsContainer.EnsureValidAsync(),
+                scenePluginSettingsContainer.EnsureValidAsync()
+            );
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
         }
 
