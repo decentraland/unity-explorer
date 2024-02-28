@@ -163,7 +163,7 @@ jobs:
               ls
               
               # Copy to correct directory
-              Move-Item -path .\lods\*  -Destination Explorer\Assets\StreamingAssets\AssetBundles -Force -Recurse
+              Move-Item -path .\lods\*  -Destination Explorer\Assets\StreamingAssets\AssetBundles
 
               Get-ChildItem -Path 'Explorer\Assets\StreamingAssets\AssetBundles'
 
