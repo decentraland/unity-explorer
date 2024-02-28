@@ -13,9 +13,9 @@ namespace DCL.PluginSystem.World
 {
     public class AvatarShapePlugin : IDCLWorldPlugin
     {
-        private readonly WorldProxy globalWorldProxy;
+        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
 
-        public AvatarShapePlugin(WorldProxy globalWorldProxy)
+        public AvatarShapePlugin(ObjectProxy<Arch.Core.World> globalWorldProxy)
         {
             this.globalWorldProxy = globalWorldProxy;
         }

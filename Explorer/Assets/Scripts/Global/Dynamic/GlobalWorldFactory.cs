@@ -174,7 +174,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            staticContainer.GlobalWorldProxy.SetWorld(world);
+            staticContainer.GlobalWorldProxy.SetObject(world);
 
             return (globalWorld, playerEntity);
             ;
