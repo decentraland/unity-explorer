@@ -8,7 +8,6 @@ using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
@@ -40,9 +39,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        private ProvidedInstance<CharacterObject> characterObject;
         public ObjectProxy<World> GlobalWorldProxy = new ();
         public ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
-        private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -197,6 +196,9 @@ namespace Global
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
+
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

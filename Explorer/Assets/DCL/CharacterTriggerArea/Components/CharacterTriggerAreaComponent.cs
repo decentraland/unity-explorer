@@ -8,7 +8,6 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-
         public Vector3 AreaSize;
         public CharacterTriggerArea MonoBehaviour;
         public bool TargetOnlyMainPlayer;
