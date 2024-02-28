@@ -2,6 +2,10 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.PluginSystem.World.Dependencies;
+using MVC;
+using DCL.Profiles;
+using DCL.Web3.Identities;
+using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime.Factory;
@@ -16,7 +20,10 @@ namespace Global
     {
         public ISceneFactory SceneFactory { get; private set; }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer)
+        public static SceneSharedContainer Create(in StaticContainer staticContainer,
+            IMVCManager mvcManager,
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileRepository profileRepository)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -38,7 +45,10 @@ namespace Global
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
                     sharedDependencies.EntityFactory,
                     staticContainer.EntityCollidersGlobalCache,
-                    staticContainer.EthereumApi
+                    staticContainer.EthereumApi,
+                    mvcManager,
+                    profileRepository,
+                    web3IdentityCache
                 ),
             };
         }

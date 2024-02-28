@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -59,7 +60,7 @@ namespace ECS.SceneLifeCycle.Systems
             emptySceneData = new EmptySceneData(mappings.mappings, parcels);
         }
 
-        public async UniTask<ISceneFacade> FlowAsync(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
+        public async UniTask<ISceneFacade> FlowAsync(World world, GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
         {
             if (emptySceneData == null)
             {
@@ -86,7 +87,7 @@ namespace ECS.SceneLifeCycle.Systems
             EmptySceneMapping choice = emptySceneData!.Mappings[Mathf.Abs(parcel.GetHashCode()) % emptySceneData.Mappings.Count];
 
             var emptyScene = EmptySceneFacade.Create(
-                new EmptySceneFacade.Args(sharedWorld!.FakeEntitiesMap, sharedWorld.EcsWorld, choice, componentPoolsRegistry,
+                new EmptySceneFacade.Args(sharedWorld.FakeEntitiesMap, sharedWorld.EcsWorld, world, choice, componentPoolsRegistry,
                     ParcelMathHelper.GetPositionByParcelPosition(parcel), new SceneShortInfo(parcel, "EMPTY SCENE"), partition, sharedWorld.MutexSync));
 
             return emptyScene;

@@ -195,6 +195,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             meshRenderer.renderingLayerMask = 2;
 
+            meshRenderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 5);
             Object.Destroy(skin);
             return (meshRenderer, filter);
         }

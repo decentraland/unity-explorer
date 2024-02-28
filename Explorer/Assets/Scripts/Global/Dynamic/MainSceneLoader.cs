@@ -1,29 +1,27 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
-using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
+using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace Global.Dynamic
 {
@@ -33,7 +31,6 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
-        [SerializeField] private SkyBoxSceneData skyBoxSceneData = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private string realmUrl = "https://peer.decentraland.org";
@@ -42,11 +39,12 @@ namespace Global.Dynamic
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
+        [SerializeField] private bool enableLandscape;
+
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private IWeb3IdentityCache? identityCache;
 
-        private AsyncLoadProcessReport? loadReport;
         private SceneSharedContainer? sceneSharedContainer;
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
@@ -84,18 +82,20 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            // To avoid configuration issues, force full flow on build
-            showSplash = true;
-            showAuthentication = true;
-            showLoading = true;
+#if !UNITY_EDITOR
+    #if !DEVELOPMENT_BUILD
+        // To avoid configuration issues, force full flow on build
+        showSplash = true;
+        showAuthentication = true;
+        showLoading = true;
+    #endif
+
+    enableLandscape = true;
 #endif
 
             try
             {
                 splashRoot.SetActive(showSplash);
-
-                loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
                 identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
@@ -121,25 +121,37 @@ namespace Global.Dynamic
                     return;
                 }
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
-
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
-                    staticContainer,
-                    scenePluginSettingsContainer,
-                    ct,
-                    uiToolkitRoot,
-                    skyBoxSceneData,
-                    settings.StaticLoadPositions,
-                    settings.SceneLoadRadius,
-                    dynamicSettings,
-                    web3Authenticator,
-                    identityCache);
+                    new DynamicWorldDependencies
+                    {
+                        StaticContainer = staticContainer!,
+                        SettingsContainer = scenePluginSettingsContainer,
+                        RootUIDocument = uiToolkitRoot,
+                        DynamicSettings = dynamicSettings,
+                        Web3Authenticator = web3Authenticator,
+                        Web3IdentityCache = identityCache,
+                    },
+                    new DynamicWorldParams
+                    {
+                        StaticLoadPositions = settings.StaticLoadPositions,
+                        SceneLoadRadius = settings.SceneLoadRadius,
+                        Realms = settings.Realms,
+                        StartParcel = settings.StartPosition,
+                        EnableLandscape = enableLandscape,
+                    }, ct
+                );
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
+                    identityCache, dynamicWorldContainer.ProfileRepository);
 
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
+                    dynamicWorldContainer!.ProfileRepository);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -150,8 +162,8 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
-                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
                 {
@@ -174,13 +186,10 @@ namespace Global.Dynamic
 
                 splashRoot.SetActive(false);
 
-                if (showAuthentication)
-                    await ShowAuthenticationScreenAsync(ct);
+                await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
+                    globalWorld.EcsWorld, playerEntity, ct);
 
-                if (showLoading)
-                    await UniTask.WhenAll(ShowLoadingScreenAsync(ct), LoadCharacterAndWorldAsync(playerEntity, ct));
-                else
-                    await LoadCharacterAndWorldAsync(playerEntity, ct);
+                OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)
             {
@@ -194,65 +203,16 @@ namespace Global.Dynamic
             }
         }
 
+        private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
+        {
+            mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
+        }
+
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
         {
             await UniTask.WaitUntil(() => splashAnimation.frame >= (long)(splashAnimation.frameCount - 1),
                 cancellationToken: ct);
-        }
-
-        private async UniTask LoadCharacterAndWorldAsync(Entity playerEntity, CancellationToken ct)
-        {
-            Profile ownProfile = await GetOwnProfileAsync(ct);
-
-            loadReport!.ProgressCounter.Value = 0.2f;
-
-            // Add the profile into the player entity so it will create the avatar in world
-            globalWorld!.EcsWorld.Add(playerEntity, ownProfile);
-
-            await TeleportToSpawnPointAsync(ct);
-
-            loadReport.ProgressCounter.Value = 1f;
-            loadReport.CompletionSource.TrySetResult();
-        }
-
-        private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
-        {
-            if (identityCache!.Identity == null) return CreateRandomProfile();
-
-            return await dynamicWorldContainer!.ProfileRepository.GetAsync(identityCache!.Identity.Address, 0, ct)
-                   ?? CreateRandomProfile();
-        }
-
-        private Profile CreateRandomProfile() =>
-            new (identityCache!.Identity?.Address ?? "fakeUserId", "Player",
-                new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor()));
-
-        private async UniTask TeleportToSpawnPointAsync(CancellationToken ct)
-        {
-            var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, 0.8f),
-                dynamicWorldContainer!.ParcelServiceContainer.TeleportController.TeleportToSceneSpawnPointAsync(
-                    settings.StartPosition, teleportLoadReport, ct));
-        }
-
-        private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
-        {
-            var timeout = TimeSpan.FromMinutes(2);
-
-            await dynamicWorldContainer!.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
-                                        .AttachExternalCancellation(ct);
-        }
-
-        private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
-        {
-            await dynamicWorldContainer!.MvcManager.ShowAsync(AuthenticationScreenController.IssueCommand())
-                                        .AttachExternalCancellation(ct);
         }
 
         private async UniTask ChangeRealmAsync(CancellationToken ct)

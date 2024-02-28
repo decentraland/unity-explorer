@@ -27,7 +27,7 @@ namespace DCL.UI
             RequestImageAsync(uri, cts.Token).Forget();
         }
 
-        private async UniTaskVoid RequestImageAsync(string uri, CancellationToken ct)
+        public async UniTask RequestImageAsync(string uri, CancellationToken ct)
         {
             view.LoadingObject.SetActive(true);
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), ct)).CreateTexture(TextureWrapMode.Clamp);

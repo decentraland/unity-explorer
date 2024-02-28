@@ -10,16 +10,19 @@ using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Profiles;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
-using Ipfs;
 using Microsoft.ClearScript;
+using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -42,9 +45,12 @@ namespace SceneRunner
         private readonly ISceneEntityFactory entityFactory;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IEthereumApi ethereumApi;
+        private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
+        private readonly IMVCManager mvcManager;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -54,7 +60,10 @@ namespace SceneRunner
             ISDKComponentsRegistry sdkComponentsRegistry,
             ISceneEntityFactory entityFactory,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            IEthereumApi ethereumApi)
+            IEthereumApi ethereumApi,
+            IMVCManager mvcManager,
+            IProfileRepository profileRepository,
+            IWeb3IdentityCache identityCache)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -64,6 +73,9 @@ namespace SceneRunner
             this.entityFactory = entityFactory;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.ethereumApi = ethereumApi;
+            this.mvcManager = mvcManager;
+            this.profileRepository = profileRepository;
+            this.identityCache = identityCache;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -187,9 +199,13 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
+            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
+
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
+            sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 
             return new SceneFacade(
                 sceneRuntime,

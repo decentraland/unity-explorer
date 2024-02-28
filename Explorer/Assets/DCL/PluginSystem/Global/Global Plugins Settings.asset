@@ -16,28 +16,26 @@ MonoBehaviour:
   - rid: 6784895264912310272
   - rid: 6784895265412481026
   - rid: 6784895265412481027
-  - rid: 6784895267130048513
   - rid: 1268264176566403074
   - rid: 5215741520409264128
   - rid: 5215741520409264129
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 8147919132522971138
-  - rid: 56198586647707649
   - rid: 1095376790733193218
   - rid: 8593314843508867075
   - rid: 4107643854440628226
+  - rid: 3022170012058910723
   - rid: 1841402216112979969
   - rid: 4340256219339423747
   - rid: 4340256301410942981
   - rid: 7249412338407702528
+  - rid: 7162477498503790594
+  - rid: 2174542042650378245
+  - rid: 4340256782807990272
   references:
     version: 2
     RefIds:
-    - rid: 56198586647707649
-      type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
-      data:
-        <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -116,6 +114,32 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BackpackSettings>k__BackingField:
+          <CategoryIconsMapping>k__BackingField:
+            m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityInfoPanelBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <RarityColorMappings>k__BackingField:
+            m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <PageButtonView>k__BackingField:
+            m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -134,11 +158,38 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 2174542042650378245
+      type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
+      data:
+        <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
+    - rid: 3022170012058910723
+      type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        realmPartitionSettings:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        landscapeData:
+          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        parsedParcels:
+          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4107643854440628226
       type: {class: LoadingScreenPlugin/LoadingScreenPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <LoadingScreenPrefab>k__BackingField:
           m_AssetGUID: 605506dac7ec04ed09953980478e93d4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <FallbackTipsConfiguration>k__BackingField:
+          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -162,13 +213,26 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        ChatEntryPrefab:
-          m_AssetGUID: 9e9bf5fb9ee9c452f858e423651a52ca
+        <ChatEntryConfiguration>k__BackingField:
+          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <ChatEntryConfiguration>k__BackingField:
-          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
+    - rid: 4340256782807990272
+      type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        StylizedSkyboxPrefab:
+          m_AssetGUID: 5c36aa92efab46341b9b02fd6a38a4e7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        SkyboxMaterial:
+          m_AssetGUID: caf6cf56d95066b45bc1ca92d6516b48
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        SkyboxAnimationCycle:
+          m_AssetGUID: e8f593404f0a19749bc68df2b5064215
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -191,7 +255,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         celShadingMaterial:
-          m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
+          m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        nametagsData:
+          m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -251,8 +320,14 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 6784895267130048513
-      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 7162477498503790594
+      type: {class: ExternalUrlPromptPlugin/ExternalUrlPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ExternalUrlPromptPrefab:
+          m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 7249412338407702528
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:

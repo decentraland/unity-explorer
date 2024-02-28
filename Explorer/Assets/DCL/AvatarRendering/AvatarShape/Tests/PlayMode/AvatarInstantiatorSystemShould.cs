@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -80,7 +81,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPool, computeShaderPool,
                 TextureArrayContainerFactory.Create(celShadingMaterial.shader), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
-                new MainPlayerAvatarBase());
+                new ());
         }
 
         private IWearable GetMockWearable(string materialName, string category)

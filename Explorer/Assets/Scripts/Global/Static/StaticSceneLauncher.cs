@@ -1,9 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
+using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using MVC;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -25,10 +27,12 @@ namespace Global.Static
         [SerializeField] private string authenticationServerUrl;
         [SerializeField] private string authenticationSignatureUrl;
         [SerializeField] private string[] ethWhitelistMethods;
+        [SerializeField] private string ownProfileJson;
 
         private ISceneFacade sceneFacade;
         private StaticContainer staticContainer;
         private IWeb3Authenticator? web3Authenticator;
+        private IWeb3IdentityCache identityCache;
 
         private void Awake()
         {
@@ -45,8 +49,6 @@ namespace Global.Static
         {
             try
             {
-                IWeb3IdentityCache identityCache;
-
                 if (useStoredCredentials
 
                     // avoid storing invalid credentials
@@ -80,8 +82,17 @@ namespace Global.Static
 
                 SceneSharedContainer sceneSharedContainer;
 
+                var memoryProfileRepository = new MemoryProfileRepository(new DefaultProfileCache());
+
+                if (!string.IsNullOrEmpty(ownProfileJson))
+                {
+                    var ownProfile = new Profile();
+                    JsonUtility.FromJson<ProfileJsonDto>(ownProfileJson).CopyTo(ownProfile);
+                    await memoryProfileRepository.SetAsync(ownProfile, ct);
+                }
+
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, dappWeb3Authenticator, ct);
+                    identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
@@ -99,6 +110,8 @@ namespace Global.Static
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
+            IWeb3IdentityCache identityCache,
+            IProfileRepository profileRepository,
             CancellationToken ct)
         {
             // First load the common global plugin
@@ -109,7 +122,9 @@ namespace Global.Static
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
+                new MVCManager(new WindowStackManager(), new CancellationTokenSource(), null),
+                identityCache, profileRepository);
 
             return (staticContainer, sceneSharedContainer);
         }
