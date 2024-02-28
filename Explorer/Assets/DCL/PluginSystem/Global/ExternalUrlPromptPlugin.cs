@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.Global
 
         public class ExternalUrlPromptSettings : IDCLPluginSettings
         {
-            [field: Header(nameof(ExplorePanelPlugin) + "." + nameof(ExternalUrlPromptSettings))]
+            [field: Header(nameof(ExternalUrlPromptPlugin) + "." + nameof(ExternalUrlPromptSettings))]
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject ExternalUrlPromptPrefab;
