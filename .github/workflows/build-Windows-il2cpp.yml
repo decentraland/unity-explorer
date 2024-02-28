@@ -157,17 +157,15 @@ jobs:
               # Download files locally
               Start-BitsTransfer -Source $lodsUrl -Destination $output
 
-              ls
-
               # Extract archive
-              Expand-Archive -Path lods.zip -DestinationPath .
+              Expand-Archive -Path lods.zip -DestinationPath .\lods
 
               ls
               
               # Copy to correct directory
-              Move-Item -path lods  -Destination Explorer\Assets\StreamingAssets\AssetBundles
+              Move-Item -path .\lods\*  -Destination Explorer\Assets\StreamingAssets\AssetBundles -Force -Recurse
 
-              ls
+              Get-ChildItem -Path 'Explorer\Assets\StreamingAssets\AssetBundles'
 
 
       - uses: decentraland/unity-builder@0.8
