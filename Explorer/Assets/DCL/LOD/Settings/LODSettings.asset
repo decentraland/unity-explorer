@@ -18,4 +18,4 @@ MonoBehaviour:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
-  <FaillingCube>k__BackingField: {fileID: 2844700582315782814, guid: b9a364e5539505242b1701c4749bf36f, type: 3}
+  <FaillingCube>k__BackingField: {fileID: 3600501844928612175, guid: c9870b17ce36346458f07a63c096a16a, type: 3}

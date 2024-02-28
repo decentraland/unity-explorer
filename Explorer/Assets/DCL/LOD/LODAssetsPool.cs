@@ -15,14 +15,10 @@ namespace DCL.LOD
     {
         internal readonly Dictionary<LODKey, LODAsset> vacantInstances;
 
-        private readonly Transform parentContainer;
         private readonly SimplePriorityQueue<LODKey, long> unloadQueue = new ();
 
         public LODAssetsPool()
         {
-            parentContainer = new GameObject("POOL_CONTAINER_LodCache").transform;
-            parentContainer.gameObject.SetActive(false);
-
             vacantInstances = new Dictionary<LODKey, LODAsset>();
         }
 
@@ -44,7 +40,7 @@ namespace DCL.LOD
 
             vacantInstances[key] = asset;
             unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
-            asset.DisableAsset(parentContainer);
+            asset.DisableAsset();
         }
 
         public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)

@@ -23,12 +23,6 @@ namespace DCL.LOD.Systems
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
             .WithAll<SceneLODInfoDebug>();
 
-        private ElementBinding<ulong> LOD_0_Amount;
-        private ElementBinding<ulong> LOD_1_Amount;
-        private ElementBinding<ulong> LOD_2_Amount;
-
-        private readonly ElementBinding<ulong> faillingAmount;
-
         private readonly ElementBinding<ulong> [] lodsAmount;
         private readonly Transform missingSceneParent;
 
@@ -39,20 +33,10 @@ namespace DCL.LOD.Systems
             this.lodSettingsAsset = lodSettingsAsset;
             this.missingSceneParent = missingSceneParent;
             lodSettingsAsset.IsColorDebuging = false;
-
-            lodsAmount = new ElementBinding<ulong>[3];
-            for (int i = 0; i < 3; i++)
-                lodsAmount[i] = new ElementBinding<ulong>(0);
-            
-            
             debugBuilder.AddWidget("LOD")
-                .AddSingleButton("LOD debugging", ToggleLODColor)
+                .AddSingleButton("LOD Debugging", ToggleLODColor)
                 .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold", SetLOD1)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold", SetLOD2)
-                .AddMarker("LOD_0 amount:", lodsAmount[0], DebugLongMarkerDef.Unit.NoFormat)
-                .AddMarker("LOD_1 amount:", lodsAmount[1], DebugLongMarkerDef.Unit.NoFormat)
-                .AddMarker("LOD_2 amount:", lodsAmount[2], DebugLongMarkerDef.Unit.NoFormat)
-                .AddMarker("Failling amount:", faillingAmount = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold", SetLOD2);
         }
 
         private void SetLOD1(int value)
@@ -72,8 +56,6 @@ namespace DCL.LOD.Systems
             {
                 lodsAmount[i].Value = 0;
             }
-
-            faillingAmount.Value = 0;
 
             if (!lodSettingsAsset.IsColorDebuging)
                 World.Query(REMOVE_QUERY,
@@ -128,7 +110,7 @@ namespace DCL.LOD.Systems
             var lodAsset = sceneLODInfo.CurrentLOD.Value;
 
             if (!lodAsset.LodKey.Level.Equals(sceneLODInfoDebug.CurrentLODLevel))
-                sceneLODInfoDebug.Update(sceneDefinitionComponent, sceneLODInfo.CurrentLOD.Value, lodSettingsAsset, lodsAmount, faillingAmount);
+                sceneLODInfoDebug.Update(sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, sceneLODInfo.CurrentLOD.Value, lodSettingsAsset);
         }
     }
 

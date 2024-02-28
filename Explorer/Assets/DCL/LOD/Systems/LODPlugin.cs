@@ -70,13 +70,18 @@ namespace DCL.LOD
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
+            var lodContainer = new GameObject("POOL_CONTAINER_LODS");
+            var lodDebugContainer = new GameObject("POOL_CONTAINER_LODS");
+            var roadContainer = new GameObject("POOL_CONTAINER_ROADS");
+            lodDebugContainer.transform.SetParent(lodContainer.transform);
+            
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform);
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
+            LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
 
-            LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, new GameObject("LOD_DEBUG_TOOLS").transform);
-            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, new GameObject("ROADS").transform);
+            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadContainer.transform);
             UnloadRoadSystem.InjectToWorld(ref builder);
         }
 

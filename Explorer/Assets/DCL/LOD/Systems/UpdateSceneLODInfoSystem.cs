@@ -9,6 +9,7 @@ using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -79,13 +80,12 @@ namespace DCL.LOD.Systems
                 if (result.Succeeded)
                 {
                     GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
-                        Quaternion.identity);
+                        Quaternion.identity, lodsTransformParent);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                         instantiatedLOD, result.Asset, lodCache);
-                    sceneLODInfo.CurrentLOD.Value.Root.transform.SetParent(lodsTransformParent);
                 }
                 else
                 {

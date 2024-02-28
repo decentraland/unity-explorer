@@ -26,10 +26,13 @@ namespace DCL.LOD
             Pool = pool;
 
             ProfilingCounters.LODAssetAmount.Value++;
+            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
         public LODAsset(LODKey lodKey)
         {
+            ProfilingCounters.LODAssetAmount.Value++;
+            ProfilingCounters.Failling_LOD_Amount.Value++;
             LodKey = lodKey;
             LoadingFailed = true;
             Root = null;
@@ -52,30 +55,35 @@ namespace DCL.LOD
 
         public void EnableAsset()
         {
-            if (LoadingFailed) return;
+            if (LoadingFailed)
+            {
+                ProfilingCounters.Failling_LOD_Amount.Value++;
+                return;
+            }
 
             ProfilingCounters.LODInstantiatedInCache.Value--;
+            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
             Root.SetActive(true);
-            Root.transform.SetParent(null);
-
         }
 
-        public void DisableAsset(Transform parentContainer)
+        public void DisableAsset()
         {
             if (LoadingFailed) return;
 
             ProfilingCounters.LODInstantiatedInCache.Value++;
+            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value--;
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
             Root.SetActive(false);
-            Root.transform.SetParent(parentContainer);
         }
 
         public void Release()
         {
-            if (!LoadingFailed)
+            if (LoadingFailed)
+                ProfilingCounters.Failling_LOD_Amount.Value--;
+            else
                 Pool.Release(LodKey, this);
         }
     }
