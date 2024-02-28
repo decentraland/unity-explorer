@@ -4,6 +4,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarAttach.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
@@ -13,11 +14,11 @@ namespace DCL.PluginSystem.World
 {
     public class AvatarAttachPlugin : IDCLWorldPlugin
     {
-        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
-        public AvatarAttachPlugin(MainPlayerAvatarBase mainPlayerAvatarBase)
+        public AvatarAttachPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
-            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
@@ -31,7 +32,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
-            var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBase, sharedDependencies.SceneStateProvider);
+            var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
         }
 
