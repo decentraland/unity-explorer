@@ -94,7 +94,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             previous?.Disconnect();
             multiPool.TryRelease(previous);
             roomState.Set(IConnectiveRoom.State.Running);
-            Debug.Log("Successful connection");
         }
     }
 }
