@@ -18,7 +18,6 @@ namespace DCL.PluginSystem
         UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
             var settings = container.GetSettings<T>();
-            settings.EnsureValid();
             return InitializeAsync(settings, ct);
         }
 
