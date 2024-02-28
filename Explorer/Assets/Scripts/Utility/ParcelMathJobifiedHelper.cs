@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,7 +12,7 @@ namespace Utility
     ///     Helper to calculate parcels in a ring around a center parcel
     ///     <para>Uses Unity jobs and Burst to parallelize calculations, thus requires native collections and Mathematics primitives</para>
     /// </summary>
-    public class ParcelMathJobifiedHelper
+    public class ParcelMathJobifiedHelper : IDisposable
     {
         private CalculateRingJob calculateRingJob;
         private JobHandle jobHandle;
@@ -166,6 +167,11 @@ namespace Utility
                     }
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            rings.Dispose();
         }
     }
 }

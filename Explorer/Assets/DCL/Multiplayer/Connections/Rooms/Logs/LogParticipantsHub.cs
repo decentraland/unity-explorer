@@ -1,7 +1,7 @@
+using DCL.Diagnostics;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs
 {
@@ -13,7 +13,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
 
         public event ParticipantDelegate? UpdatesFromParticipant;
 
-        public LogParticipantsHub(IParticipantsHub origin) : this(origin, Debug.Log) { }
+        public LogParticipantsHub(IParticipantsHub origin) : this(
+            origin,
+            ReportHub
+               .WithReport(ReportCategory.ARCHIPELAGO_REQUEST)
+               .Log
+        ) { }
 
         public LogParticipantsHub(IParticipantsHub origin, Action<string> log)
         {

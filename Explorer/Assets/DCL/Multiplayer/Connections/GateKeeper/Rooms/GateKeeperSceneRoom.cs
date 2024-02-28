@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
@@ -55,7 +56,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             if (meta.Equals(previousMetaData) == false)
             {
                 string connectionString = await ConnectionStringAsync(meta, token);
-                Debug.Log($"String is: {connectionString}");
+                ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
                 await connectToRoomAsyncDelegate(connectionString, token);
             }
 

@@ -1,15 +1,8 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/DCL/Multiplayer/Connections/Demo.meta
-guid: dcfc5c474874f4f9587a8c770fbdf7ee
+guid: 0e0287cf4412546d08ddb467074afe18
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
-========
-guid: ac22a06cb5912442f99218b2f2da6592
-NativeFormatImporter:
-  externalObjects: {}
-  mainObjectFileID: 11400000
->>>>>>>> main:Explorer/Assets/DCL/NameTags/NametagsData.asset.meta
   userData: 
   assetBundleName: 
   assetBundleVariant: 
