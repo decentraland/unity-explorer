@@ -13,7 +13,7 @@ namespace DCL.Web3.Authenticators
         {
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
             var signer = NethereumAccount.CreateRandom();
             var ephemeralAccount = NethereumAccount.CreateRandom();
@@ -24,14 +24,9 @@ namespace DCL.Web3.Authenticators
 
             var authChain = AuthChain.Create();
 
-            authChain.Set(AuthLinkType.SIGNER, new AuthLink
-            {
-                type = AuthLinkType.SIGNER,
-                payload = signer.Address,
-                signature = "",
-            });
+            authChain.SetSigner(signer.Address);
 
-            authChain.Set(AuthLinkType.ECDSA_EPHEMERAL, new AuthLink
+            authChain.Set(new AuthLink
             {
                 type = AuthLinkType.ECDSA_EPHEMERAL,
                 payload = ephemeralMessage,
@@ -39,7 +34,9 @@ namespace DCL.Web3.Authenticators
             });
 
             // To keep cohesiveness between the platform, convert the user address to lower case
-            return new DecentralandIdentity(new Web3Address(signer.Address.ToString().ToLower()), ephemeralAccount, expiration, authChain);
+            return new UniTask<IWeb3Identity>(
+                new DecentralandIdentity(new Web3Address(signer.Address.ToString().ToLower()), ephemeralAccount, expiration, authChain)
+            );
         }
 
         public UniTask LogoutAsync(CancellationToken cancellationToken) =>

@@ -17,6 +17,7 @@ using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
+using DCL.Utilities;
 using ECS;
 using System;
 using System.Runtime.CompilerServices;
@@ -40,7 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
-        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
@@ -51,10 +52,10 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<Material> celShadingMaterialPool;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
-        private IComponentPool<Transform> transformPoolRegistry;
-
         private IObjectPool<NametagView> nametagViewPool;
         private ProvidedAsset<NametagsData> nametagsData;
+
+        private IComponentPool<Transform> transformPoolRegistry;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -62,7 +63,7 @@ namespace DCL.PluginSystem.Global
             IPerformanceBudget frameTimeCapBudget,
             IPerformanceBudget memoryBudget,
             IRealmData realmData,
-            MainPlayerAvatarBase mainPlayerAvatarBase,
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration)
@@ -70,7 +71,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
-            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -112,7 +113,7 @@ namespace DCL.PluginSystem.Global
             cacheCleaner.Register(computeShaderPool);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
-                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBase);
+                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
