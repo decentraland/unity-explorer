@@ -35,8 +35,6 @@ namespace DCL.Character.Plugin
 
         private ProvidedInstance<CharacterObject> characterObject;
 
-        public readonly MainPlayerAvatarBase MainPlayerAvatarBase = new ();
-
         public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
         {
             this.assetsProvisioner = assetsProvisioner;

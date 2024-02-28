@@ -54,8 +54,6 @@ namespace DCL.PluginSystem.Global
         private IObjectPool<NametagView> nametagViewPool;
         private ProvidedAsset<NametagsData> nametagsData;
 
-        private IComponentPool<Transform> transformPoolRegistry;
-
         private TextureArrayContainer textureArrayContainer;
 
         private IComponentPool<Transform> transformPoolRegistry;

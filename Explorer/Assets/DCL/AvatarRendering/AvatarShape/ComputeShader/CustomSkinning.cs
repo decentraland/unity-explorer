@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class CustomSkinning
     {
+        private static readonly int baseColor = Shader.PropertyToID("_BaseColor");
+
         public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
             SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer,
