@@ -33,6 +33,7 @@ MonoBehaviour:
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
+  - rid: 6156380652633325570
   references:
     version: 2
     RefIds:
@@ -280,6 +281,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         defaultEmptyWearable:
           m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6156380652633325570
+      type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <spatialStateSettings>k__BackingField:
+          m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
