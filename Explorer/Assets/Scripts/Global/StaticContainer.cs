@@ -8,7 +8,6 @@ using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
@@ -41,8 +40,8 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         private ProvidedInstance<CharacterObject> characterObject;
-        public ObjectProxy<World> GlobalWorldProxy = new ();
-        public ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
+        public readonly ObjectProxy<World> GlobalWorldProxy = new ();
+        public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
