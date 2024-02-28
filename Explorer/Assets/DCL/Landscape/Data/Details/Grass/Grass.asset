@@ -32,8 +32,8 @@ MonoBehaviour:
     positionJitter: 50
     minWidth: 1
     maxWidth: 1
-    minHeight: 0.5
-    maxHeight: 1
+    minHeight: 1
+    maxHeight: 2
     noiseSeed: 40
     noiseSpread: 1
     holeEdgePadding: 75
