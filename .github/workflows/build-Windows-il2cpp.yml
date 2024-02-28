@@ -165,7 +165,10 @@ jobs:
               # Copy to correct directory
               Move-Item -path .\lods\*  -Destination Explorer\Assets\StreamingAssets\AssetBundles
 
-              Get-ChildItem -Path 'Explorer\Assets\StreamingAssets\AssetBundles'
+              # TEMP do this for now
+              Rename-Item -path  Explorer\Assets\StreamingAssets\AssetBundles\LODS-DATABASE-6  -NewName 'lods'
+              
+              Get-ChildItem -Path 'Explorer\Assets\StreamingAssets\AssetBundles' 
 
 
       - uses: decentraland/unity-builder@0.8
