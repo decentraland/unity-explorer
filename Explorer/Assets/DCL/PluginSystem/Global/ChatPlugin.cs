@@ -2,11 +2,8 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
-using DCL.DebugUtilities;
 using MVC;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -18,19 +15,16 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private ChatController chatController;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IChatMessagesBus chatMessagesBus,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
-            this.chatEntryConfiguration = chatEntryConfiguration;
         }
 
         public void Dispose()
@@ -43,12 +37,11 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
-            ChatEntryView chatEntryView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryPrefab, ct: ct)).Value.GetComponent<ChatEntryView>();
+            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
 
             chatController = new ChatController(
                 ChatController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
-                chatEntryView,
                 chatEntryConfiguration,
                 chatMessagesBus);
 
@@ -64,18 +57,12 @@ namespace DCL.PluginSystem.Global
             public ChatViewRef ChatPanelPrefab;
 
             [field: SerializeField]
-            public ChatEntryViewRef ChatEntryPrefab;
+            public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
 
             [Serializable]
             public class ChatViewRef : ComponentReference<ChatView>
             {
                 public ChatViewRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class ChatEntryViewRef : ComponentReference<ChatEntryView>
-            {
-                public ChatEntryViewRef(string guid) : base(guid) { }
             }
         }
     }

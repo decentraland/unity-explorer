@@ -192,23 +192,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9e9bf5fb9ee9c452f858e423651a52ca
-    m_Address: ChatEntry
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6afb31861b85441b6ab2b988819bb96a
     m_Address: ChatEntryConfiguration
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fabfcdf867b484665b44c8a158bd8eb4
-    m_Address: NameTag
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bd2233d5950ee4b4c96fc19f60d8c582
-    m_Address: NametagParent
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -224,6 +209,31 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 86bf0204cf3bb75429342452a2a460af
     m_Address: Assets/DCL/Landscape/Data/ParcelData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
+    m_Address: StylizedSkyboxController
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: caf6cf56d95066b45bc1ca92d6516b48
+    m_Address: GenesisSkyboxController
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e8f593404f0a19749bc68df2b5064215
+    m_Address: StylizedSkyboxAnimation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
+    m_Address: CharacterTriggerArea
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d65049d6f7a244863b39c4dda5ba538e
+    m_Address: Assets/DCL/NameTags/NametagsData.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
