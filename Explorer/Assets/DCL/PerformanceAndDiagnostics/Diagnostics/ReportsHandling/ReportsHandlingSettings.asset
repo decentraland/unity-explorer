@@ -384,6 +384,46 @@ MonoBehaviour:
       Severity: 1
     - Category: RESTRICTED_ACTIONS
       Severity: 1
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 3
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 2
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 0
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 4
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 1
+    - Category: ANIMATOR
+      Severity: 3
+    - Category: ANIMATOR
+      Severity: 2
+    - Category: ANIMATOR
+      Severity: 0
+    - Category: ANIMATOR
+      Severity: 4
+    - Category: ANIMATOR
+      Severity: 1
+    - Category: CAMERA_MODE_AREA
+      Severity: 1
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 1
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 4
+    - Category: CAMERA_MODE_AREA
+      Severity: 4
+    - Category: CAMERA_MODE_AREA
+      Severity: 0
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 0
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 2
+    - Category: CAMERA_MODE_AREA
+      Severity: 2
+    - Category: CAMERA_MODE_AREA
+      Severity: 3
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 3
   sentryMatrix:
     entries:
     - Category: ENGINE
