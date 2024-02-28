@@ -144,7 +144,6 @@ namespace Global.Dynamic
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool)),
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
@@ -193,6 +192,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

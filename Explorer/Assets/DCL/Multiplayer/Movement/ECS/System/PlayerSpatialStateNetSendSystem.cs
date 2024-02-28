@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using UnityEngine;
@@ -10,26 +12,34 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class PlayerSpatialStateNetSendSystem : BaseUnityLoopSystem
     {
-        private readonly CharacterController playerCharacter;
-        private readonly Entity playerEntity;
-
         private readonly IMultiplayerSpatialStateSettings settings;
 
+        private readonly CharacterController playerCharacter;
+        private readonly CharacterAnimationComponent playerAnimationComponent;
+        private readonly StunComponent playerStunComponent;
 
-        public PlayerSpatialStateNetSendSystem(World world, IMultiplayerSpatialStateSettings settings) : base(world)
+        public PlayerSpatialStateNetSendSystem(World world, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter,
+            CharacterAnimationComponent playerAnimationComponent, StunComponent playerStunComponent) : base(world)
         {
             this.settings = settings;
+            this.playerCharacter = playerCharacter;
+            this.playerAnimationComponent = playerAnimationComponent;
+            this.playerStunComponent = playerStunComponent;
         }
-
-        // public PlayerSpatialStateNetSendSystem(World world, CharacterController playerCharacter, Entity playerEntity) : base(world)
-        // {
-        //     this.playerCharacter = playerCharacter;
-        //     this.playerEntity = playerEntity;
-        // }
 
         protected override void Update(float t)
         {
-            Debug.Log($"VVV {settings.Latency}");
+            var message = new MessageMock
+            {
+                timestamp = UnityEngine.Time.unscaledTime,
+                position = playerCharacter.transform.position,
+                velocity = playerCharacter.velocity,
+                animState = playerAnimationComponent.States,
+                isStunned = playerStunComponent.IsStunned,
+            };
+
+            Debug.Log(message.position);
+
         }
     }
 }
