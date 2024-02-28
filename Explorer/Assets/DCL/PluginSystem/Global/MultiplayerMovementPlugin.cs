@@ -2,11 +2,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
-using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Multiplayer.Movement.Settings;
-using LiveKit.Rooms.DataPipes;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -38,12 +36,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var world = builder.World;
-
-            CharacterAnimationComponent playerAnimationComponent = world.Get<CharacterAnimationComponent>(arguments.PlayerEntity);
-            StunComponent playerStunComponent = world.Get<StunComponent>(arguments.PlayerEntity);
-
-            PlayerNetMovementSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller, playerAnimationComponent, playerStunComponent);
+            PlayerNetMovementSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller);
             PlayersReplicasNetMovementSystem.InjectToWorld(ref builder, room, settings.Value);
         }
     }

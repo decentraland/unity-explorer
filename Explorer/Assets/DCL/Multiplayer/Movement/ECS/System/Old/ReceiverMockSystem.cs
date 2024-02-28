@@ -209,7 +209,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     replicaMovement.PassedMessages.Clear();
                     AddToPassed(remote, ref replicaMovement, ref anim, view);
                 }
-                else { @int.Run(replicaMovement.PassedMessages[^1], remote, pipe.Count, pipe.Settings, local != null && pipe.Settings.useBlend); }
+                else
+                    @int.Run(replicaMovement.PassedMessages[^1], remote, pipe.Count, pipe.Settings, local != null && pipe.Settings.useBlend);
             }
         }
 

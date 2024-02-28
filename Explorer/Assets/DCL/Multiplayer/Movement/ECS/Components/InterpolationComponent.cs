@@ -1,4 +1,5 @@
 ﻿using DCL.Multiplayer.Movement.MessageBusMock;
+using DCL.Multiplayer.Movement.Settings;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS
@@ -18,7 +19,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public bool IsBlend;
 
-        private MessagePipeSettings settings;
+        private IMultiplayerSpatialStateSettings settings;
 
         public InterpolationComponent(Transform transform)
         {
@@ -85,7 +86,7 @@ namespace DCL.Multiplayer.Movement.ECS
             Enabled = true;
         }
 
-        public void Run(MessageMock from, MessageMock to, int inboxMessages, MessagePipeSettings settings, bool isBlend = false)
+        public void Run(MessageMock from, MessageMock to, int inboxMessages, IMultiplayerSpatialStateSettings settings, bool isBlend = false)
         {
             this.settings = settings;
 

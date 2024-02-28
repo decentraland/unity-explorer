@@ -1,43 +1,43 @@
 ﻿using DCL.Multiplayer.Movement.MessageBusMock;
+using DCL.Multiplayer.Movement.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.Multiplayer.Movement.ECS
 {
-    [CreateAssetMenu(fileName = "MessagePipeSettings", menuName = "DCL/MessagePipeSettings", order = 1)]
-    public class MessagePipeSettings : ScriptableObject
+    public class MessagePipeSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
-        public int InboxCount;
-        public int PassedMessages;
-        public int PackageLost;
-        public bool StartSending;
+        [field: SerializeField] public int InboxCount { get; set; }
+        [field: SerializeField] public int PassedMessages { get; set; }
+        [field: SerializeField] public int PackageLost { get; set; }
+        [field: SerializeField] public bool StartSending { get; set; }
 
-        [Header("NETWORK")]
-        public float PackageSentRate = 0.33f;
-        public float PackagesJitter;
-        public float Latency = 1f;
-        public float LatencyJitter;
+        [field: Header("NETWORK")]
+        [field: SerializeField] public float PackageSentRate { get; set; } = 0.33f;
+        [field: SerializeField] public float PackagesJitter { get; set; }
+        [field: SerializeField] public float Latency { get; set; } = 1f;
+        [field: SerializeField] public float LatencyJitter { get; set; }
 
-        [Header("TELEPORTATION")]
-        public float MinPositionDelta = 0.1f;
-        public float MinTeleportDistance = 50f;
+        [field: Header("TELEPORTATION")]
+        [field: SerializeField] public float MinPositionDelta { get; set; } = 0.1f;
+        [field: SerializeField] public float MinTeleportDistance { get; set; } = 50f;
 
-        [Header("INTERPOLATION")]
-        public InterpolationType InterpolationType;
-        public float SpeedUpFactor = 1;
-        public bool useBlend = true;
-        public InterpolationType BlendType;
-        public float MaxBlendSpeed = 30;
+        [field: Header("INTERPOLATION")]
+        [field: SerializeField] public InterpolationType InterpolationType { get; set; }
+        [field: SerializeField] public float SpeedUpFactor { get; set; } = 1;
+        [field: SerializeField] public bool useBlend { get; set; } = true;
+        [field: SerializeField] public InterpolationType BlendType { get; set; }
+        [field: SerializeField] public float MaxBlendSpeed { get; set; } = 30;
 
-        [Header("EXTRAPOLATION")]
-        public bool useExtrapolation = true;
-        public float MinSpeed = 0.01f;
-        public float LinearTime = 0.33f;
-        public int DampedSteps = 1;
+        [field: Header("EXTRAPOLATION")]
+        [field: SerializeField] public bool useExtrapolation { get; set; } = true;
+        [field: SerializeField] public float MinSpeed { get; set; } = 0.01f;
+        [field: SerializeField] public float LinearTime { get; set; } = 0.33f;
+        [field: SerializeField] public int DampedSteps { get; set; } = 1;
 
-        [Space]
-        public InputAction startButton;
-        public InputAction packageLostButton;
-        public InputAction packageBlockButton;
+        [field: Space]
+        [field: SerializeField] public InputAction startButton { get; set; }
+        [field: SerializeField] public InputAction packageLostButton { get; set; }
+        [field: SerializeField] public InputAction packageBlockButton { get; set; }
     }
 }

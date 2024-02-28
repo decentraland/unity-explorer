@@ -23,7 +23,7 @@ MonoBehaviour:
   <MinPositionDelta>k__BackingField: 0.1
   <MinTeleportDistance>k__BackingField: 50
   <InterpolationType>k__BackingField: 1
-  <SpeedUpFactor>k__BackingField: 1
+  <SpeedUpFactor>k__BackingField: 0
   <useBlend>k__BackingField: 1
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 30

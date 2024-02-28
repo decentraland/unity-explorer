@@ -1,4 +1,5 @@
 ﻿using DCL.Multiplayer.Movement.MessageBusMock;
+using DCL.Multiplayer.Movement.Settings;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS
@@ -13,7 +14,7 @@ namespace DCL.Multiplayer.Movement.ECS
         public MessageMock Start;
         public float Time;
         private Vector3 velocity;
-        private MessagePipeSettings settings;
+        private IMultiplayerSpatialStateSettings settings;
 
         public ExtrapolationComponent(Transform transform)
         {
@@ -38,7 +39,7 @@ namespace DCL.Multiplayer.Movement.ECS
                 transform.position += velocity * deltaTime;
         }
 
-        public void Run(MessageMock from, MessagePipeSettings settings)
+        public void Run(MessageMock from, IMultiplayerSpatialStateSettings settings)
         {
             this.settings = settings;
             Start = from;
