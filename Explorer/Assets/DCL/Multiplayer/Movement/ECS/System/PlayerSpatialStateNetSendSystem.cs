@@ -2,9 +2,12 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using System;
+using System.Text;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
@@ -12,15 +15,19 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class PlayerSpatialStateNetSendSystem : BaseUnityLoopSystem
     {
+        private readonly IArchipelagoIslandRoom room;
         private readonly IMultiplayerSpatialStateSettings settings;
 
         private readonly CharacterController playerCharacter;
         private readonly CharacterAnimationComponent playerAnimationComponent;
         private readonly StunComponent playerStunComponent;
 
-        public PlayerSpatialStateNetSendSystem(World world, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter,
+        private float lastSentTime;
+
+        public PlayerSpatialStateNetSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter,
             CharacterAnimationComponent playerAnimationComponent, StunComponent playerStunComponent) : base(world)
         {
+            this.room = room;
             this.settings = settings;
             this.playerCharacter = playerCharacter;
             this.playerAnimationComponent = playerAnimationComponent;
@@ -29,17 +36,38 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         protected override void Update(float t)
         {
-            var message = new MessageMock
+            if (!room.IsRunning()) return;
+
+            if (lastSentTime == 0 || UnityEngine.Time.unscaledTime - lastSentTime > settings.PackageSentRate)
             {
-                timestamp = UnityEngine.Time.unscaledTime,
-                position = playerCharacter.transform.position,
-                velocity = playerCharacter.velocity,
-                animState = playerAnimationComponent.States,
-                isStunned = playerStunComponent.IsStunned,
-            };
+                lastSentTime = UnityEngine.Time.unscaledTime;
 
-            Debug.Log(message.position);
+                var message = new MessageMock
+                {
+                    timestamp = lastSentTime,
+                    position = playerCharacter.transform.position,
+                    velocity = playerCharacter.velocity,
+                    animState = playerAnimationComponent.States,
+                    isStunned = playerStunComponent.IsStunned,
+                };
 
+                var byteMessage = new Span<byte>(SerializeMessage(message));
+                var participants = room.Room().Participants.RemoteParticipantSids();
+
+                room.Room().DataPipe.PublishData(byteMessage, "SpatialState", participants);
+            }
+        }
+
+        public byte[] SerializeMessage(MessageMock message)
+        {
+            string? json = JsonUtility.ToJson(message);
+            return Encoding.UTF8.GetBytes(json);;
+        }
+
+        public MessageMock DeserializeMessage(Span<byte> data)
+        {
+            string jsonString = Encoding.UTF8.GetString(data.ToArray());
+            return JsonUtility.FromJson<MessageMock>(jsonString);
         }
     }
 }

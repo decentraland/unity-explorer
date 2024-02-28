@@ -3,8 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Multiplayer.Movement.Settings;
+using LiveKit.Rooms.DataPipes;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -12,13 +14,15 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IArchipelagoIslandRoom room;
         private readonly ICharacterObject characterObject;
 
         private ProvidedAsset<MultiplayerSpatialStateSettings> settings;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IArchipelagoIslandRoom room, ICharacterObject characterObject)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.room = room;
             this.characterObject = characterObject;
         }
 
@@ -39,7 +43,7 @@ namespace DCL.PluginSystem.Global
             CharacterAnimationComponent playerAnimationComponent = world.Get<CharacterAnimationComponent>(arguments.PlayerEntity);
             StunComponent playerStunComponent = world.Get<StunComponent>(arguments.PlayerEntity);
 
-            PlayerSpatialStateNetSendSystem.InjectToWorld(ref builder, settings.Value, characterObject.Controller, playerAnimationComponent, playerStunComponent);
+            PlayerSpatialStateNetSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller, playerAnimationComponent, playerStunComponent);
         }
     }
 }

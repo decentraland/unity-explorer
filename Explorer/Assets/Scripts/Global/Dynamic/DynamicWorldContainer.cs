@@ -33,6 +33,7 @@ using System.Threading;
 using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Rooms.DataPipes;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -141,9 +142,11 @@ namespace Global.Dynamic
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
                 container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
 
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool)),
+                new MultiplayerPlugin(archipelagoIslandRoom),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
@@ -192,7 +195,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, archipelagoIslandRoom, staticContainer.CharacterContainer.CharacterObject),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
