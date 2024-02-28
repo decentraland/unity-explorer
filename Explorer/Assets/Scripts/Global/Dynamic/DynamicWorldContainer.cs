@@ -150,7 +150,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     realmData,
-                    staticContainer.MainPlayerAvatarBase,
+                    staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration),
