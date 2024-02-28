@@ -101,9 +101,10 @@ namespace Global
 
             (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct),
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct),
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct, nameof(ReportHandlingSettings)),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
+                );
         }
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
