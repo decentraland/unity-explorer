@@ -222,5 +222,12 @@ namespace Global.Dynamic
             IRealmController realmController = dynamicWorldContainer!.RealmController;
             await realmController.SetRealmAsync(URLDomain.FromString(realm), ct);
         }
+
+        [ContextMenu(nameof(ValidateSettings))]
+        public void ValidateSettings()
+        {
+            globalPluginSettingsContainer.EnsureValid();
+            scenePluginSettingsContainer.EnsureValid();
+        }
     }
 }

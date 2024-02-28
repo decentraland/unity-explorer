@@ -1,5 +1,8 @@
-﻿using System;
+﻿using DCL.PluginSystem.Validatables;
+using DCL.Utilities.Addressables;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.PluginSystem
@@ -22,6 +25,14 @@ namespace DCL.PluginSystem
                 throw new NullReferenceException("Settings not found for type " + typeof(T).Name);
 
             return typeSettings;
+        }
+
+        public void EnsureValid()
+        {
+            var list = settings.Select(e => e.InvalidValues()).OfType<Exception>().ToList();
+
+            if (list.Any())
+                throw new AggregateException("Some settings are not valid", list);
         }
     }
 }
