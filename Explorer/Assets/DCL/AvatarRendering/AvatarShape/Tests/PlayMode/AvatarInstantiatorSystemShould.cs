@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -79,7 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 randomSkinColor, randomHairColor);
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPool, computeShaderPool,
-                new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4), new MainPlayerAvatarBase());
+                new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4), new ObjectProxy<AvatarBase>());
         }
 
         private IWearable GetMockWearable(string materialName, string category)
