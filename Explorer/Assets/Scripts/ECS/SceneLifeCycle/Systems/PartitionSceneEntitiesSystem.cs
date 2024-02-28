@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
         private bool isRunningJob;
         private bool forceJobRun;
         private int currentPartitionIndex;
-        private readonly NativeArray<int> SqrDistanceBuckets;
+        private NativeArray<int> sqrDistanceBuckets;
 
         internal PartitionSceneEntitiesSystem(World world,
             IComponentPool<PartitionComponent> partitionComponentPool,
@@ -58,14 +58,14 @@ namespace ECS.SceneLifeCycle.Systems
             parcelCorners = new UnsafeList<ParcelCornersData>(90000, Allocator.Persistent);
 
             // TODO: This might change with quality settings, consider updating them
-            SqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
+            sqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
 
             for (var i = 0; i < partitionSettings.SqrDistanceBuckets.Count; i++)
-                SqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
+                sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
 
             partitionJob = new ScenePartitionParallelJob(ref partitions)
             {
-                SqrDistanceBuckets = SqrDistanceBuckets,
+                SqrDistanceBuckets = sqrDistanceBuckets,
             };
         }
 
@@ -79,6 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
                 cornersData.Dispose();
 
             parcelCorners.Dispose();
+            sqrDistanceBuckets.Dispose();
         }
 
         protected override void Update(float t)
