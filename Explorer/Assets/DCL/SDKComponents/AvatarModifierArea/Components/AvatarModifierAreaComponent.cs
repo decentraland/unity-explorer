@@ -17,7 +17,11 @@ namespace DCL.SDKComponents.AvatarModifierArea.Components
         {
             ExcludedIds.Clear();
 
-            foreach (string excludedId in excludedIds) { ExcludedIds.Add(excludedId.ToLower()); }
+            foreach (string excludedId in excludedIds)
+            {
+                // Profile component stores UserId in lowercase...
+                ExcludedIds.Add(excludedId.ToLower());
+            }
         }
     }
 }

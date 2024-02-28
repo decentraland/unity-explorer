@@ -6,7 +6,6 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
 using DCL.Utilities;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using System.Threading;
 
