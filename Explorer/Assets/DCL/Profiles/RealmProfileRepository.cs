@@ -53,8 +53,8 @@ namespace DCL.Profiles
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = new List<ContentDefinition>
                 {
-                    new () { file = "body.png", hash = faceHash },
-                    new () { file = "face256.png", hash = bodyHash },
+                    new () { file = "body.png", hash = bodyHash },
+                    new () { file = "face256.png", hash = faceHash },
                 },
                 pointers = new List<string> { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -69,6 +69,7 @@ namespace DCL.Profiles
             try
             {
                 await ipfs.PublishAsync(entity, ct, files);
+                profileCache.Set(profile.UserId, profile);
             }
             finally
             {

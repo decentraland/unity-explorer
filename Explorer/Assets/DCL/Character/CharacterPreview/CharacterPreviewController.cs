@@ -9,19 +9,17 @@ using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
-using ECS.Unity.Transforms.Components;
 using System;
-using UnityEngine;
 
 namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewController : IDisposable
     {
-        private readonly World globalWorld;
-        private readonly Entity characterPreviewEntity;
-        private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly CharacterPreviewCameraController cameraController;
+        private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
+        private readonly Entity characterPreviewEntity;
+        private readonly World globalWorld;
 
         public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
@@ -37,9 +35,23 @@ namespace DCL.CharacterPreview
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
         }
 
+        public void Dispose()
+        {
+            // World can be already destroyed but for some reason `IsAlive` returns true
+            if (globalWorld.Capacity > 0)
+            {
+                ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
+                if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
+                globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
+            }
+
+            characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
+            cameraController.Dispose();
+        }
+
         public void UpdateAvatar(CharacterPreviewAvatarModel avatarModel)
         {
-            if (globalWorld == null || avatarModel.Wearables == null || avatarModel.Wearables.Count <= 0) return;
+            if (avatarModel.Wearables == null || avatarModel.Wearables.Count <= 0) return;
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
@@ -48,6 +60,7 @@ namespace DCL.CharacterPreview
             avatarShape.BodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
 
             avatarShape.WearablePromise.ForgetLoading(globalWorld);
+
             avatarShape.WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, avatarModel.Wearables, avatarModel.ForceRenderCategories),
@@ -55,35 +68,6 @@ namespace DCL.CharacterPreview
             );
 
             avatarShape.IsDirty = true;
-        }
-
-        public void Hide()
-        {
-            if (globalWorld != null)
-            {
-                ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
-                if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
-            }
-
-            if (characterPreviewAvatarContainer != null) characterPreviewAvatarContainer.gameObject.SetActive(false);
-        }
-
-        public void Show()
-        {
-            if (characterPreviewAvatarContainer != null) { characterPreviewAvatarContainer.gameObject.SetActive(true); }
-        }
-
-        public void Dispose()
-        {
-            globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
-
-            try { characterPreviewContainerPool.Release(characterPreviewAvatarContainer); }
-            catch (Exception e)
-            {
-                throw;
-            }
-
-            cameraController.Dispose();
         }
     }
 }

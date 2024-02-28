@@ -92,7 +92,7 @@ namespace MVC
             await WaitForCloseIntentAsync(ct);
         }
 
-        async UniTask IController.HideViewAsync(CancellationToken ct)
+        public async UniTask HideViewAsync(CancellationToken ct)
         {
             State = ControllerState.ViewHidden;
 

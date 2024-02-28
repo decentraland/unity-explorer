@@ -35,11 +35,6 @@ namespace DCL.Character.Plugin
 
         private ProvidedInstance<CharacterObject> characterObject;
 
-        /// <summary>
-        ///     Character Object exists in a single instance
-        /// </summary>
-        public ICharacterObject CharacterObject => characterObject.Value;
-
         public readonly MainPlayerAvatarBase MainPlayerAvatarBase = new ();
 
         public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
@@ -49,6 +44,11 @@ namespace DCL.Character.Plugin
 
             exposedTransform = new ExposedTransform();
         }
+
+        /// <summary>
+        ///     Character Object exists in a single instance
+        /// </summary>
+        public ICharacterObject CharacterObject => characterObject.Value;
 
         public void Dispose()
         {

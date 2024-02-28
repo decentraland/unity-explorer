@@ -26,8 +26,6 @@ namespace Global.Dynamic
 {
     public class RealmController : IRealmController
     {
-        private static readonly QueryDescription SCENES = new QueryDescription().WithAll<ISceneFacade>();
-
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
@@ -61,8 +59,11 @@ namespace Global.Dynamic
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
-            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
-            IReadOnlyList<int2> staticLoadPositions, RealmData realmData, IScenesCache scenesCache)
+            RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld,
+            int sceneLoadRadius,
+            IReadOnlyList<int2> staticLoadPositions,
+            RealmData realmData,
+            IScenesCache scenesCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -111,8 +112,7 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            Entity realmEntity = world.Create(realmComp,
-                new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
+            Entity realmEntity = world.Create(realmComp, ProcessesScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
@@ -175,6 +175,7 @@ namespace Global.Dynamic
                 World world = globalWorld.EcsWorld;
                 FindLoadedScenes();
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+                world.Query(new QueryDescription().WithAll<ProcessesScenePointers>(), (ref ProcessesScenePointers scenePointers) => scenePointers.Value.Dispose());
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.Dispose();

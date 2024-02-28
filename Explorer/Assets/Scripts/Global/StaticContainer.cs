@@ -15,6 +15,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
+using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
@@ -23,7 +24,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
-using System;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
@@ -39,8 +39,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public WorldProxy GlobalWorld = new ();
-
+        private ProvidedInstance<CharacterObject> characterObject;
+        public readonly ObjectProxy<World> GlobalWorldProxy = new ();
+        public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -50,6 +51,8 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
 
         public CharacterContainer CharacterContainer { get; private set; }
+
+        public QualityContainer QualityContainer { get; private set; }
 
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
@@ -89,6 +92,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
+            QualityContainer.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -151,8 +155,8 @@ namespace Global
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
+            container.QualityContainer = QualityContainer.Create(settingsContainer);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -176,8 +180,8 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(container.GlobalWorld),
-                new AvatarAttachPlugin(container.CharacterContainer.MainPlayerAvatarBase),
+                new AvatarShapePlugin(container.GlobalWorldProxy),
+                new AvatarAttachPlugin(container.MainPlayerAvatarBaseProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
@@ -186,7 +190,12 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
+                new AnimatorPlugin(),
+                new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
+
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
