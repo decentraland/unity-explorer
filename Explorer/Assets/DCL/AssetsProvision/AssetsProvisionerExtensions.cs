@@ -32,7 +32,7 @@ namespace DCL.AssetsProvision
         ) where T: Object
         {
             try { return await assetsProvisioner.ProvideInstanceAsync(componentReference, position, rotation, parent, ct); }
-            catch (Exception e) { throw new Exception($"Cannot provide main asset: {error}", e); }
+            catch (Exception e) { throw new Exception($"Cannot provide instance: {error}", e); }
         }
 
         public static ErrorTraceAssetsProvisioner WithErrorTrace(this IAssetsProvisioner origin) =>
