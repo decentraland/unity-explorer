@@ -1,12 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
-using LiveKit.Proto;
-using LiveKit.Rooms.Participants;
-using System;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
@@ -14,34 +13,25 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class PlayersReplicasNetMovementSystem : BaseUnityLoopSystem
     {
-        private readonly IArchipelagoIslandRoom room;
         private readonly IMultiplayerSpatialStateSettings settings;
-
-        private bool isSbuscribed;
+        private readonly ReplicasMovementInbox inbox;
 
         public PlayersReplicasNetMovementSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
         {
-            this.room = room;
             this.settings = settings;
-        }
+            inbox = new ReplicasMovementInbox(room, settings);
 
-        ~PlayersReplicasNetMovementSystem()
-        {
-            if (isSbuscribed)
-                room.Room().DataPipe.DataReceived -= OnDataReceived;
-        }
-
-        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
-        {
-            Debug.Log("VVV OnDataReceived");
+            inbox.InitializeAsync().Forget();
         }
 
         protected override void Update(float t)
         {
-            if (!isSbuscribed && room.IsRunning())
+            settings.InboxCount = inbox.Count;
+
+            if (inbox.Count > 0)
             {
-                room.Room().DataPipe.DataReceived += OnDataReceived;
-                isSbuscribed = true;
+                MessageMock message = inbox.Dequeue();
+                Debug.Log($"VVV Received {UnityEngine.Time.unscaledTime}");
             }
         }
     }
