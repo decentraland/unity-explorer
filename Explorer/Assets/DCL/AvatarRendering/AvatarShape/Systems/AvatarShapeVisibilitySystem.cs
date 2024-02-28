@@ -26,6 +26,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             UpdatePlayerFirstPersonQuery(World, camera.GetCameraComponent(World));
+            UpdateWearableRendererBoundsQuery(World);
         }
 
         [Query]
@@ -42,6 +43,19 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 case false when !shouldBeHidden:
                     Show(ref avatarShape);
                     break;
+            }
+        }
+
+        [Query]
+        private void UpdateWearableRendererBounds(ref AvatarShapeComponent avatarShape)
+        {
+            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            {
+                foreach (Renderer renderer in wearable.Renderers)
+                {
+                    if (!renderer.enabled) continue;
+                    renderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 5);
+                }
             }
         }
 
