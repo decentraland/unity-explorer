@@ -123,5 +123,57 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(freeCameraData.Camera));
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.Free));
         }
+
+        [Test]
+        public void IgnoreCameraModeInputIfDisabled()
+        {
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            world.Set(entity, new CameraInput { ZoomIn = true });
+
+            // lock camera mode input
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.AddCameraInputLock();
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            // unlock camera mode input
+            component.RemoveCameraInputLock();
+            world.Set(entity, component);
+
+            system.Update(1);
+
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AdaptToCameraModeFromComponent(bool lockInput)
+        {
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+
+            CameraComponent component = world.Get<CameraComponent>(entity);
+            component.Mode = CameraMode.Free;
+
+            if (lockInput)
+            {
+                // Input that would take it to 'First Person'
+                world.Set(entity, new CameraInput { ZoomIn = true });
+                component.AddCameraInputLock();
+            }
+
+            world.Set(entity, component);
+
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
+
+            system.Update(1);
+
+            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(freeCameraData.Camera));
+        }
     }
 }
