@@ -40,5 +40,9 @@ namespace SceneRuntime.Apis.Modules
                 new Vector3(newRelativePositionX, newRelativePositionY, newRelativePositionZ),
                 new Vector3(cameraTargetX, cameraTargetY, cameraTargetZ));
         }
+
+        [UsedImplicitly]
+        public void TeleportTo(int x, int y) =>
+            api.TeleportTo(new Vector2Int(x, y));
     }
 }
