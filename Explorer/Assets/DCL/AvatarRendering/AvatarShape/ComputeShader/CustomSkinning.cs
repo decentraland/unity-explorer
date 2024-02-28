@@ -49,6 +49,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.SkinColor);
             else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME))
                 avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.HairColor);
+
+            avatarMaterial.renderQueue = originalMaterial.renderQueue;
+            avatarMaterial.SetInt("_CullMode", (int)originalMaterial.GetFloat("_Cull"));
         }
     }
 }
