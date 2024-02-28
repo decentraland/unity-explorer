@@ -13,7 +13,7 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    public partial class PlayerSpatialStateNetSendSystem : BaseUnityLoopSystem
+    public partial class PlayerNetMovementSendSystem : BaseUnityLoopSystem
     {
         private readonly IArchipelagoIslandRoom room;
         private readonly IMultiplayerSpatialStateSettings settings;
@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private float lastSentTime;
 
-        public PlayerSpatialStateNetSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter,
+        public PlayerNetMovementSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter,
             CharacterAnimationComponent playerAnimationComponent, StunComponent playerStunComponent) : base(world)
         {
             this.room = room;
@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 var byteMessage = new Span<byte>(SerializeMessage(message));
                 var participants = room.Room().Participants.RemoteParticipantSids();
 
-                room.Room().DataPipe.PublishData(byteMessage, "SpatialState", participants);
+                room.Room().DataPipe.PublishData(byteMessage, "Movement", participants);
             }
         }
 

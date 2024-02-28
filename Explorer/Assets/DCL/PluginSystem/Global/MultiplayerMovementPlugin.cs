@@ -43,7 +43,8 @@ namespace DCL.PluginSystem.Global
             CharacterAnimationComponent playerAnimationComponent = world.Get<CharacterAnimationComponent>(arguments.PlayerEntity);
             StunComponent playerStunComponent = world.Get<StunComponent>(arguments.PlayerEntity);
 
-            PlayerSpatialStateNetSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller, playerAnimationComponent, playerStunComponent);
+            PlayerNetMovementSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller, playerAnimationComponent, playerStunComponent);
+            PlayersReplicasNetMovementSystem.InjectToWorld(ref builder, room, settings.Value);
         }
     }
 }
