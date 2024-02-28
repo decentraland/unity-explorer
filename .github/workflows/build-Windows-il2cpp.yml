@@ -151,12 +151,7 @@ jobs:
       - name: Copy LODs into the build
         run: |
               $lodsUrl = ${ vars.LODS_DOWNLOAD_URL }
-              $output = "lods.zip"
-			  
-                If($lodsUrl -eq $null) {
-                  throw "LODS_DOWNLOAD_URL was not defined please add it as a GitHub variable."
-                }
-			  
+              $output = "lods.zip"  
               Write-Host "Downloading lods from: $lodsUrl"
 
               # Download files locally
