@@ -2,20 +2,16 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
-using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.MessageBusMock;
-using DCL.ParcelsService;
 using ECS.Abstract;
 using System;
-using System.Linq;
 using UnityEngine;
 using IDebugContainerBuilder = DCL.DebugUtilities.IDebugContainerBuilder;
 

@@ -1,6 +1,4 @@
 ﻿using DCL.Multiplayer.Movement.MessageBusMock;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS
