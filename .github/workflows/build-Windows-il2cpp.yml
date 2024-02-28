@@ -150,7 +150,7 @@ jobs:
               
       - name: Copy LODs into the build
         run: |
-              $lodsUrl = ${{ vars.LODS_DOWNLOAD_URL }}
+              $lodsUrl = "${{ vars.LODS_DOWNLOAD_URL }}"
               $output = "lods.zip"  
               Write-Host "Downloading lods from: $lodsUrl"
 
