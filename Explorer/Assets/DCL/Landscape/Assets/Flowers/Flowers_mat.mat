@@ -151,7 +151,7 @@ Material:
     - _SpecularHighlights: 1
     - _SquashAmount: 1
     - _SrcBlend: 1
-    - _TranslucencyDirect: 1
+    - _TranslucencyDirect: 0.283
     - _TranslucencyFalloff: 4
     - _TranslucencyIndirect: 0
     - _TranslucencyOffset: 0
