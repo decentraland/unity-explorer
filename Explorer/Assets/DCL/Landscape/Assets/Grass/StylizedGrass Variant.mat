@@ -16,9 +16,7 @@ Material:
   - _ENVIRONMENTREFLECTIONS_OFF
   - _FADING
   - _SPECULARHIGHLIGHTS_OFF
-  m_InvalidKeywords:
-  - _ALPHATOCOVERAGE_ON
-  - _FADINGON_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -100,8 +98,8 @@ Material:
     - _BillboardShadowFade: 0.5
     - _Blend: 0
     - _BumpScale: 1
-    - _ColorMapHeight: 1
-    - _ColorMapStrength: 0.68
+    - _ColorMapHeight: 0.654
+    - _ColorMapStrength: 1
     - _Cull: 0
     - _Cutoff: 0.5
     - _Darkening: 0.487
@@ -139,7 +137,7 @@ Material:
     - _Translucency: 1
     - _TranslucencyDirect: 0.847
     - _TranslucencyFalloff: 1.2
-    - _TranslucencyIndirect: 0.135
+    - _TranslucencyIndirect: 0
     - _TranslucencyOffset: 1
     - _TwoSided: 0
     - _VertexColorBendingChannel: 0
@@ -165,7 +163,7 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.3679245, g: 0.027366284, b: 0, a: 1}
+    - _BaseColor: {r: 0.9622642, g: 0.39455765, b: 0.34950158, a: 1}
     - _BendTint: {r: 1, g: 0.80655015, b: 0, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
