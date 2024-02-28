@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(
             origin,
-            m => Debug.Log($"{ReportCategory.ARCHIPELAGO_REQUEST}: {m}")
+            m => ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, m)
         ) { }
 
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin, Action<string> log)
