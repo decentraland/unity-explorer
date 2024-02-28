@@ -49,7 +49,8 @@ namespace DCL.PluginSystem.Global
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new ThreadSafeRemoteAnnouncements(roomHub, multiPool),
-                new RemoteProfiles(profileRepository),
+                //TODO remove fake
+                new RemoteProfiles(new IProfileRepository.Fake()),
                 new DebounceProfileBroadcast(
                     new ProfileBroadcast(roomHub, memoryPool, multiPool)
                 ),
