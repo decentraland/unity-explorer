@@ -31,11 +31,11 @@ MonoBehaviour:
     alignToGround: 100
     positionJitter: 50
     minWidth: 1
-    maxWidth: 1.2
-    minHeight: 1
-    maxHeight: 1.5
+    maxWidth: 1
+    minHeight: 0.5
+    maxHeight: 1
     noiseSeed: 40
-    noiseSpread: 172.4
+    noiseSpread: 1
     holeEdgePadding: 75
     detailDensity: 1.5
     affectedByGlobalDensityScale: 1
