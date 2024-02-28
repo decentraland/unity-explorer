@@ -14,9 +14,9 @@ using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -42,11 +42,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IWearableAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
 
-        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, MainPlayerAvatarBase mainPlayerAvatarBase) : base(world)
+            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.memoryBudget = memoryBudget;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
-            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
         }
 
         protected override void Update(float t)
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
             if (World.TryGet(entity, out AvatarBase avatarBase))
-                mainPlayerAvatarBase.SetAvatarBase(avatarBase);
+                mainPlayerAvatarBaseProxy.SetObject(avatarBase);
         }
 
         [Query]
@@ -240,6 +240,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             ref AvatarCustomSkinningComponent skinningComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             AvatarBase avatarBase)
         {
+            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
+                mainPlayerAvatarBaseProxy.ReleaseObject();
+
             CommonAvatarRelease(avatarShapeComponent, skinningComponent);
             avatarTransformMatrixComponent.Dispose();
             avatarPoolRegistry.Release(avatarBase);
