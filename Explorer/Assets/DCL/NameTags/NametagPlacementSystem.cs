@@ -28,6 +28,7 @@ namespace DCL.Nametags
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NametagsData nametagsData;
         private SingleInstanceEntity playerCamera;
+        private float distanceFromCamera;
         private Dictionary<string, NametagView> activeNametags = new ();
 
         public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool, ChatEntryConfigurationSO chatEntryConfiguration, NametagsData nametagsData) : base(world)
@@ -63,12 +64,10 @@ namespace DCL.Nametags
         [None(typeof(NametagView), typeof(PlayerComponent))]
         private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind) return;
+            if (partitionComponent.IsBehind || Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > nametagsData.maxDistance) return;
 
             NametagView nametagView = nametagViewPool.Get();
-            //if(!activeNametags.ContainsKey(avatarShape.ID))
-                activeNametags.Add(avatarShape.ID, nametagView);
-
+            activeNametags.Add(avatarShape.ID, nametagView);
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
             nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>");
@@ -110,7 +109,7 @@ namespace DCL.Nametags
         [Query]
         private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind)
+            if (partitionComponent.IsBehind || Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > nametagsData.maxDistance)
             {
                 activeNametags.Remove(nametagView.Id);
                 nametagViewPool.Release(nametagView);
@@ -119,6 +118,7 @@ namespace DCL.Nametags
             }
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
+            UpdateTagTransparency(nametagView, camera.Camera, characterTransform.Position);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -126,6 +126,13 @@ namespace DCL.Nametags
         {
             view.transform.position = characterPosition + (Vector3.up * 2.2f);
             view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateTagTransparency(NametagView view, Camera camera, Vector3 characterPosition)
+        {
+            distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
+            view.SetTransparency(distanceFromCamera);
         }
     }
 }

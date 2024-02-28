@@ -5,6 +5,7 @@ using Utility;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 using DG.Tweening;
+using System;
 
 namespace DCL.Nametags
 {
@@ -36,7 +37,6 @@ namespace DCL.Nametags
         private const float MARGIN_OFFSET_WIDTH = 0.5f;
         private const float MARGIN_OFFSET_HEIGHT = 0.7f;
         private const float ANIMATION_DURATION = 0.7f;
-        private readonly Color startColor = new (1,1,1,1);
         private readonly Color finishColor = new (1,1,1,0);
         private static readonly Vector2 MESSAGE_CONTENT_ANCHORED_POSITION = new (0,MARGIN_OFFSET_HEIGHT / 3);
 
@@ -46,11 +46,12 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private Vector2 textContentInitialPosition;
 
-        private void Start()
-        {
-            //SetUsername(StringUtils.GenerateRandomString(Random.Range(3,10)));
-            //GenerateRandomMsgsAsync().Forget();
-        }
+        private float previousDistance;
+        private const float DISTANCE_THRESHOLD = 1f;
+
+        private Color textColor = new (1,1,1,1);
+        private Color usernameTextColor = new (1,1,1,1);
+        private Color backgroundColor = new (0.0627f, 0.0588f, 0.0706f, 0.85f);
 
         public void SetUsername(string username)
         {
@@ -60,20 +61,23 @@ namespace DCL.Nametags
             Background.size = new Vector2(Username.preferredWidth + 0.3f, Username.preferredHeight + 0.2f);
         }
 
-        private async UniTaskVoid GenerateRandomMsgsAsync()
+        public void SetTransparency(float distance)
         {
-            do
-            {
-                StartChatBubbleFlowAsync(StringUtils.GenerateRandomString(Random.Range(0,250))).Forget();
-                await UniTask.Delay(Random.Range(5000,10000));
-            }
-            while (true);
+            if(Math.Abs(distance - previousDistance) < DISTANCE_THRESHOLD)
+                return;
+
+            previousDistance = distance;
+            usernameTextColor = Username.color;
+            textColor.a = distance > 7 ? 0.5f : 1;
+            usernameTextColor.a = distance > 7 ? 0.5f : 1;
+            backgroundColor.a = distance > 7 ? 0.5f : 0.85f;
+            BubblePeak.color = backgroundColor;
+            Background.color = backgroundColor;
+            Username.color = usernameTextColor;
         }
 
-        public void SetChatMessage(string chatMessage)
-        {
+        public void SetChatMessage(string chatMessage) =>
             StartChatBubbleFlowAsync(chatMessage).Forget();
-        }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage)
         {
@@ -110,7 +114,7 @@ namespace DCL.Nametags
             usernameFinalPosition.y = MessageContentRectTransform.sizeDelta.y + (MARGIN_OFFSET_HEIGHT / 3);
 
             //Start all animations
-            MessageContent.DOColor(startColor, ANIMATION_DURATION);
+            MessageContent.DOColor(textColor, ANIMATION_DURATION);
             Username.rectTransform.DOAnchorPos(usernameFinalPosition, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
             MessageContent.rectTransform.DOAnchorPos(MESSAGE_CONTENT_ANCHORED_POSITION, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);
             DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, ANIMATION_DURATION).SetEase(backgroundEaseAnimationCurve);

@@ -114,6 +114,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  Id: 
   <FixedWidth>k__BackingField: 2.5
 --- !u!210 &317692783042627670
 SortingGroup:
@@ -641,7 +642,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: fa91891c8f2c04b8a92dca7580141187, type: 3}
-  m_Color: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
+  m_Color: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 0.8509804}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
