@@ -38,9 +38,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public WorldProxy GlobalWorldProxy = new ();
-        public MainPlayerAvatarBase MainPlayerAvatarBase = new ();
         private ProvidedInstance<CharacterObject> characterObject;
+        public ObjectProxy<World> GlobalWorldProxy = new ();
+        public ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -180,7 +180,7 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorldProxy),
-                new AvatarAttachPlugin(container.MainPlayerAvatarBase),
+                new AvatarAttachPlugin(container.MainPlayerAvatarBaseProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
@@ -192,6 +192,9 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
+
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
@@ -207,6 +210,5 @@ namespace Global
 
             return (container, true);
         }
-
     }
 }
