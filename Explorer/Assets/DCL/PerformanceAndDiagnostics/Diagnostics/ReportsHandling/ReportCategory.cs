@@ -51,6 +51,11 @@
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
 
         /// <summary>
+        ///     Archipelago requests
+        /// </summary>
+        public const string ARCHIPELAGO_REQUEST = nameof(ARCHIPELAGO_REQUEST);
+
+        /// <summary>
         ///     Unspecified ECS World Exceptions
         /// </summary>
         public const string ECS = nameof(ECS);
