@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Typing;
 using System;
 using System.Threading;
@@ -12,7 +13,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         private readonly IArchipelagoSignFlow origin;
         private readonly Action<string> log;
 
-        public LogArchipelagoSignFlow(IArchipelagoSignFlow origin) : this(origin, Debug.Log) { }
+        public LogArchipelagoSignFlow(IArchipelagoSignFlow origin) : this(
+            origin,
+            m => ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, m)
+        ) { }
 
         public LogArchipelagoSignFlow(IArchipelagoSignFlow origin, Action<string> log)
         {

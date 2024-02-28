@@ -10,7 +10,7 @@ module.exports.getUserData = async function(message) {
     const wearables = Array(avatar.wearables.Count);
     
     for (let i = 0; i < avatar.wearables.Count; i++) {
-        wearables.push(avatar.wearables[i]);
+        wearables[i] = avatar.wearables[i];
     }
     
     return {

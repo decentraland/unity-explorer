@@ -17,9 +17,18 @@ MonoBehaviour:
   - rid: 1268264040174714880
   - rid: 7387084847885844480
   - rid: 4753057106328551424
+  - rid: 847852733734322176
   references:
     version: 2
     RefIds:
+    - rid: 847852733734322176
+      type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        CharacterTriggerAreaPrefab:
+          m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1268264040174714880
       type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -74,3 +83,4 @@ MonoBehaviour:
           <FloatField>k__BackingField: {fileID: 9197481963319205126, guid: 3f2e0e33e167f85488492c41409dc34a, type: 3}
           <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
           <Vector3Field>k__BackingField: {fileID: 9197481963319205126, guid: 6e52ba5e3264bfd43b23db247aa2457a, type: 3}
+          <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}

@@ -14,6 +14,9 @@ namespace DCL.PluginSystem.Global
         public AssetReferenceGameObject PopupCloserView { get; private set; }
 
         [field: SerializeField]
+        public Light DirectionalLight { get; private set; }
+
+        [field: SerializeField]
         public MapRendererSettings MapRendererSettings { get; private set; }
 
         [field: SerializeField]

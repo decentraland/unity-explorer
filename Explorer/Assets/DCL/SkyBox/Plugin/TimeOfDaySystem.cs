@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Quality;
 using DCL.SkyBox.Rendering;
 using ECS.Abstract;
 using System;
@@ -17,7 +18,7 @@ namespace DCL.SkyBox
     {
         private const string NAME = "Time of Day";
 
-        private readonly TimeOfDayRenderingModel model;
+        private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly Light light;
 
         private readonly ElementBinding<float> sunLatitude;
@@ -36,9 +37,9 @@ namespace DCL.SkyBox
 
         private float accumulatedSeconds;
 
-        internal TimeOfDaySystem(World world, IDebugContainerBuilder debugBuilder, TimeOfDayRenderingModel model, Light light) : base(world)
+        internal TimeOfDaySystem(World world, IDebugContainerBuilder debugBuilder, IRendererFeaturesCache rendererFeaturesCache, Light light) : base(world)
         {
-            this.model = model;
+            this.rendererFeaturesCache = rendererFeaturesCache;
             this.light = light;
 
             currentDate = DateTime.Now;
@@ -54,6 +55,14 @@ namespace DCL.SkyBox
                         .AddControl(new DebugToggleDef(evt => paused = evt.newValue, false), new DebugConstLabelDef("Paused"));
 
             lightJob.Output = new NativeReference<SunPosition.LightJob.Result>(Allocator.Persistent);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            jobHandle.Complete();
+            lightJob.Output.Dispose();
         }
 
         protected override void Update(float t)
@@ -94,7 +103,7 @@ namespace DCL.SkyBox
             // RenderSettings.fogColor = RenderSettings.ambientEquatorColor;
 
             // Update the model
-            model.SetStellarPositions(output.SunPos, output.MoonPos);
+            rendererFeaturesCache.GetRendererFeature<DCL_RenderFeature_ProceduralSkyBox>()?.RenderingModel.SetStellarPositions(output.SunPos, output.MoonPos);
 
             jobHandle = default(JobHandle);
         }

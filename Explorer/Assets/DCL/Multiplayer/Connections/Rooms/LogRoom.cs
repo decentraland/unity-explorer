@@ -11,6 +11,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using Utility.CodeConventions;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -138,6 +139,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackPublished?.Invoke(publication, participant);
         }
 
+        [IgnoreAsyncNaming("Depends on the contract that is without async suffix")]
         public async Task<bool> Connect(string url, string authToken, CancellationToken cancelToken)
         {
             log($"{PREFIX} connect start {url} with token {authToken}");

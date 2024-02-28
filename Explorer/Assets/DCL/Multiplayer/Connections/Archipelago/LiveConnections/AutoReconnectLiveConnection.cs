@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(
             origin,
-            m => Debug.Log($"{ReportCategory.ARCHIPELAGO_REQUEST}: {m}")
+            m => ReportHub.Log(ReportCategory.ARCHIPELAGO_REQUEST, m)
         ) { }
 
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin, Action<string> log)
@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             catch (SocketException e)
             {
                 log($"Connection lost on sending, trying to reconnect... {e}");
-                await EnsureReconnect(token);
+                await EnsureReconnectAsync(token);
                 await SendAsync(data, token);
             }
         }
@@ -56,12 +56,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             catch (ConnectionClosedException)
             {
                 log("Connection error on receiving, ensure to reconnect...");
-                await EnsureReconnect(token);
+                await EnsureReconnectAsync(token);
                 return await ReceiveAsync(token);
             }
         }
 
-        private async UniTask EnsureReconnect(CancellationToken token)
+        private async UniTask EnsureReconnectAsync(CancellationToken token)
         {
             if (origin.IsConnected == false) await origin.ConnectAsync(CachedAdapterUrl(), token);
         }

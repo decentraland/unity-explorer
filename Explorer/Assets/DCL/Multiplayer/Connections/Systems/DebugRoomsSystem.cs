@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
@@ -46,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Systems
         protected override void Update(float t)
         {
             var text = $"{HealthInfo(archipelagoIslandRoom, "Island Room")}";
-            if (text != previous) Debug.Log(text);
+            if (text != previous) ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log(text);
             previous = text;
 
             stateScene.SetAndUpdate(gateKeeperSceneRoom.CurrentState().ToString());
