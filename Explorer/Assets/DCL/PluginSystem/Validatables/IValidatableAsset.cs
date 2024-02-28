@@ -13,7 +13,7 @@ namespace DCL.PluginSystem.Validatables
         /// <summary>
         ///     Due ReportHub.LogWarning might not be initialized yet
         /// </summary>
-        private static readonly Action<string> LOG_WARNING = ReportHub.WithReport(ReportData.UNSPECIFIED).Log;
+        private static readonly Action<string> LOG_WARNING = m => ReportHub.Log(ReportData.UNSPECIFIED, m);
 
         void EnsureValid()
         {
