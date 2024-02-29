@@ -33,6 +33,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {
+            if (loadingIntentionPointer == null)
+            {
+                return wearable;
+            }
+
             wearablesCache.Add(loadingIntentionPointer, wearable);
             if (qualifiedForUnloading)
                 cacheKeysDictionary[loadingIntentionPointer] =
@@ -42,6 +47,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public bool TryGetWearable(string wearableURN, out IWearable wearable)
         {
+            if (wearableURN == null)
+            {
+                wearable = null;
+                return false;
+            }
+
             if (wearablesCache.TryGetValue(wearableURN, out wearable))
             {
                 UpdateListedCachePriority(@for: wearableURN);
