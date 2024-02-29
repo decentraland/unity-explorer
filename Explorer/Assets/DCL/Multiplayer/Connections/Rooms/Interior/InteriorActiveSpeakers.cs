@@ -12,6 +12,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 
         public int Count => assigned.EnsureAssigned().Count;
 
+        public int Count => assigned.EnsureAssigned().Count;
+
         public event Action? Updated;
 
         public void Assign(IActiveSpeakers value, out IActiveSpeakers? previous)
