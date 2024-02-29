@@ -7,13 +7,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Components
     {
         public readonly HashSet<string> ExcludedIds;
 
-        public AvatarModifierAreaComponent(IEnumerable excludedIds)
+        public AvatarModifierAreaComponent(IEnumerable<string> excludedIds)
         {
             ExcludedIds = new HashSet<string>();
             SetExcludedIds(excludedIds);
         }
 
-        public void SetExcludedIds(IEnumerable excludedIds)
+        public void SetExcludedIds(IEnumerable<string> excludedIds)
         {
             ExcludedIds.Clear();
 
