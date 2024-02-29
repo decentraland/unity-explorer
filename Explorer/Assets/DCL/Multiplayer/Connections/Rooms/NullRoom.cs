@@ -13,6 +13,10 @@ namespace DCL.Multiplayer.Connections.Rooms
     {
         public static readonly NullRoom INSTANCE = new ();
 
+        public IActiveSpeakers ActiveSpeakers => NullActiveSpeakers.INSTANCE;
+        public IParticipantsHub Participants => NullParticipantsHub.INSTANCE;
+        public IDataPipe DataPipe => NullDataPipe.INSTANCE;
+
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -33,9 +37,5 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             //ignore
         }
-
-        public IActiveSpeakers ActiveSpeakers => NullActiveSpeakers.INSTANCE;
-        public IParticipantsHub Participants => NullParticipantsHub.INSTANCE;
-        public IDataPipe DataPipe => NullDataPipe.INSTANCE;
     }
 }

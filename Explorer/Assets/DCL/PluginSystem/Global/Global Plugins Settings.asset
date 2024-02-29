@@ -33,6 +33,7 @@ MonoBehaviour:
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
+  - rid: 7162477752737071106
   references:
     version: 2
     RefIds:
@@ -320,6 +321,14 @@ MonoBehaviour:
       data:
         ExternalUrlPromptPrefab:
           m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7162477752737071106
+      type: {class: TeleportPromptPlugin/TeleportPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        TeleportPromptPrefab:
+          m_AssetGUID: 37b740e9dd5ba324c91cd05632ea002c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

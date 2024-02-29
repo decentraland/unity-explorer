@@ -14,15 +14,32 @@ namespace DCL.Multiplayer.Connections.Rooms
 {
     public class InteriorRoom : IRoom, IInterior<IRoom>
     {
-        private IRoom? assigned;
-
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
+        private IRoom? assigned;
+
+        public IActiveSpeakers ActiveSpeakers => activeSpeakers;
+        public IParticipantsHub Participants => participants;
+        public IDataPipe DataPipe => dataPipe;
+
+        public event Room.MetaDelegate? RoomMetadataChanged;
+        public event LocalPublishDelegate? LocalTrackPublished;
+        public event LocalPublishDelegate? LocalTrackUnpublished;
+        public event PublishDelegate? TrackPublished;
+        public event PublishDelegate? TrackUnpublished;
+        public event SubscribeDelegate? TrackSubscribed;
+        public event SubscribeDelegate? TrackUnsubscribed;
+        public event MuteDelegate? TrackMuted;
+        public event MuteDelegate? TrackUnmuted;
+        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
+        public event ConnectionStateChangeDelegate? ConnectionStateChanged;
+        public event ConnectionDelegate? ConnectionUpdated;
 
         public void Assign(IRoom room, out IRoom? previous)
         {
             previous = assigned;
+
             if (previous != null)
             {
                 previous.Disconnect();
@@ -121,27 +138,10 @@ namespace DCL.Multiplayer.Connections.Rooms
             RoomMetadataChanged?.Invoke(metadata);
         }
 
-        public event Room.MetaDelegate? RoomMetadataChanged;
-        public event LocalPublishDelegate? LocalTrackPublished;
-        public event LocalPublishDelegate? LocalTrackUnpublished;
-        public event PublishDelegate? TrackPublished;
-        public event PublishDelegate? TrackUnpublished;
-        public event SubscribeDelegate? TrackSubscribed;
-        public event SubscribeDelegate? TrackUnsubscribed;
-        public event MuteDelegate? TrackMuted;
-        public event MuteDelegate? TrackUnmuted;
-        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
-        public event ConnectionStateChangeDelegate? ConnectionStateChanged;
-        public event ConnectionDelegate? ConnectionUpdated;
-
         public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
             assigned.EnsureAssigned().Connect(url, authToken, cancelToken);
 
         public void Disconnect() =>
             assigned.EnsureAssigned().Disconnect();
-
-        public IActiveSpeakers ActiveSpeakers => activeSpeakers;
-        public IParticipantsHub Participants => participants;
-        public IDataPipe DataPipe => dataPipe;
     }
 }

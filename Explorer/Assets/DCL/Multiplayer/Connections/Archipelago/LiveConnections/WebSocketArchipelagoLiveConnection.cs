@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Typing;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
@@ -11,10 +13,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
     public class WebSocketArchipelagoLiveConnection : IArchipelagoLiveConnection
     {
+        private const int BUFFER_SIZE = 1024 * 1024; //1MB
         private readonly ClientWebSocket webSocket;
         private readonly IMemoryPool memoryPool;
-        private const int BUFFER_SIZE = 1024 * 1024; //1MB
         private readonly Atomic<bool> isSomeoneReceiving = new (false);
+
+        public bool IsConnected => webSocket.State is WebSocketState.Open;
 
         public WebSocketArchipelagoLiveConnection() : this(
             new ClientWebSocket(),
@@ -27,9 +31,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.memoryPool = memoryPool;
         }
 
-        public bool IsConnected =>
-            webSocket.State is WebSocketState.Open;
-
         public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>
             webSocket.ConnectAsync(new Uri(adapterUrl), token)!.AsUniTask(false);
 
@@ -39,16 +40,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         public async UniTask SendAsync(MemoryWrap data, CancellationToken token)
         {
             using (data)
-            {
-                byte[] buffer = data.DangerousBuffer();
-
-                await webSocket.SendAsync(
-                    buffer,
-                    WebSocketMessageType.Binary,
-                    true,
-                    token
-                )!;
-            }
+                await webSocket.SendAsync(data.DangerousArraySegment(), WebSocketMessageType.Binary, true, token)!;
         }
 
         public async UniTask<MemoryWrap> ReceiveAsync(CancellationToken token)
@@ -57,9 +49,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                 isSomeoneReceiving,
                 "Someone is already receiving data, cannot handle 2 data receivers at the same time"
             );
-            using var memory = memoryPool.Memory(BUFFER_SIZE);
+
+            using MemoryWrap memory = memoryPool.Memory(BUFFER_SIZE);
             byte[] buffer = memory.DangerousBuffer();
-            var result = await webSocket.ReceiveAsync(buffer, token)!;
+            WebSocketReceiveResult? result = await webSocket.ReceiveAsync(buffer, token)!;
 
             return result.MessageType switch
                    {
@@ -67,8 +60,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                            $"Expected Binary, Text messages are not supported: {AsText(result, buffer)}"
                        ),
                        WebSocketMessageType.Binary => CopiedMemory(buffer, result.Count),
-                       WebSocketMessageType.Close => throw new Exception("Connection closed"),
-                       _ => throw new ArgumentOutOfRangeException()
+                       WebSocketMessageType.Close => throw new ConnectionClosedException(webSocket),
+                       _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 
@@ -79,13 +72,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                     $"Expected Text, {result.MessageType} messages are not supported to converting to text"
                 );
 
-            return System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+            return Encoding.UTF8.GetString(buffer, 0, result.Count);
         }
 
         private MemoryWrap CopiedMemory(ReadOnlyMemory<byte> buffer, int count)
         {
-            var memory = memoryPool.Memory(count);
-            var slice = buffer.Slice(0, count).Span;
+            MemoryWrap memory = memoryPool.Memory(count);
+            ReadOnlySpan<byte> slice = buffer.Slice(0, count).Span;
             slice.CopyTo(memory.Span());
             return memory;
         }
