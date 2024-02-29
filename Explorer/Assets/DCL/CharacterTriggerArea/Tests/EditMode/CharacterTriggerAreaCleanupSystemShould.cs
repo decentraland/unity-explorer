@@ -21,8 +21,6 @@ namespace DCL.CharacterTriggerArea.Tests
         private IComponentPool<CharacterTriggerArea> poolRegistry;
 
         [SetUp]
-
-        // public async void Setup()
         public void Setup()
         {
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
