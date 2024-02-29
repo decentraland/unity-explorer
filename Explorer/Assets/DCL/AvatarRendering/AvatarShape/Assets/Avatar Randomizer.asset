@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 188344c0509e8a841979fc004c7f983a, type: 3}
+  m_Name: Avatar Randomizer
+  m_EditorClassIdentifier: 
+  <RandomOrder>k__BackingField: 0
+  <Avatars>k__BackingField:
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x25cb28f19368d421857272133aac7933eb9efac4:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xcbd17d94f5be12fff27566c23888d6936b8e70b8:6
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x0c36f67f9d0601c040b0429790688ac231ae9ef0:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xfb8f85195aa9412918366a2d8a6e6ad02f22b9e3:4
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x87daffe709ec2a07707564eba8a145f80ec20ddf:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x8c577ed701041178a710f419df57cce7fea43e3b:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x5a8eb90616eb50dbca5389a4fa03e51d9c2ff546:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x5a8eb90616eb50dbca5389a4fa03e51d9c2ff546:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x40dcc86e8a7ea62a5d844133b90a56c835ddb9e9:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xac3b666704ec025b2e59f22249830a07b6fb9573:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xecfde4709234f5958bb249f459b8ed81546034cb:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x777cdea72334f2c4e5e8a32cc508db20aab9fde1:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xe9a19898cc03f15f3b665a35f2876b6c54918f2e:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xfb1d9d5dbb92f2dccc841bd3085081bb1bbeb04d:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x793b73e9f7c8d3df3fb16f4a23568838baf2eb0a:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x4353e39228813bfcb123f9822928ff4d5ac9288e:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x84a1d84f183fa0fd9b6b9cb1ed0ff1b7f5409ebb:5
+  <RandomizeCollection>k__BackingField:
+  - pointer: base-wearable
+    page_size: 282

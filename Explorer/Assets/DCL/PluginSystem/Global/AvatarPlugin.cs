@@ -22,6 +22,7 @@ using ECS;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using DCL.AvatarRendering;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -57,6 +58,8 @@ namespace DCL.PluginSystem.Global
         private TextureArrayContainer textureArrayContainer;
 
         private IComponentPool<Transform> transformPoolRegistry;
+
+        private AvatarRandomizerAsset avatarRandomizerAsset;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -96,6 +99,8 @@ namespace DCL.PluginSystem.Global
             nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
+
+            avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -123,7 +128,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry, avatarRandomizerAsset);
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
         }
 
@@ -217,7 +222,9 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
 
-
+            [field: SerializeField]
+            public StaticSettings.AvatarRandomizerSettingsRef AvatarRandomizerSettingsRef { get; set; }
+            
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>
             {
