@@ -6,6 +6,5 @@ namespace CrdtEcsBridge.RestrictedActions
     {
         void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget);
         void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition);
-        void SetRealm(string realmUrl);
     }
 }

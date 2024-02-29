@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
-using System;
 using UnityEngine;
 
 namespace CrdtEcsBridge.RestrictedActions
@@ -10,16 +9,13 @@ namespace CrdtEcsBridge.RestrictedActions
     {
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly Action<string> changeRealmCallback;
 
         public GlobalWorldActions(
             World world,
-            Entity playerEntity,
-            Action<string> changeRealmCallback)
+            Entity playerEntity)
         {
             this.world = world;
             this.playerEntity = playerEntity;
-            this.changeRealmCallback = changeRealmCallback;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
@@ -41,8 +37,5 @@ namespace CrdtEcsBridge.RestrictedActions
             var camera = world.CacheCamera();
             world.Add(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
-
-        public void SetRealm(string realmUrl) =>
-            changeRealmCallback?.Invoke(realmUrl);
     }
 }

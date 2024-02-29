@@ -113,9 +113,7 @@ namespace CrdtEcsBridge.RestrictedActions
         private async UniTask ChangeRealmAsync(string message, string realm)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(
-                realm,
-                () => globalWorldActions.SetRealm(realm))));
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(realm)));
         }
 
         public void Dispose() { }

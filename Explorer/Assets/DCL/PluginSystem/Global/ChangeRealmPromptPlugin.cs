@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.ChangeRealmPrompt;
 using DCL.Input;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -14,12 +15,17 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly Action<string> changeRealmCallback;
         private ChangeRealmPromptController changeRealmPromptController;
 
-        public ChangeRealmPromptPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager)
+        public ChangeRealmPromptPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IMVCManager mvcManager,
+            Action<string> changeRealmCallback)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.changeRealmCallback = changeRealmCallback;
         }
 
         public async UniTask InitializeAsync(ChangeRealmPromptSettings promptSettings, CancellationToken ct)
@@ -27,7 +33,8 @@ namespace DCL.PluginSystem.Global
             changeRealmPromptController = new ChangeRealmPromptController(
                 ChangeRealmPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.ChangeRealmPromptPrefab, ct: ct)).Value.GetComponent<ChangeRealmPromptView>(), null),
-                new DCLCursor());
+                new DCLCursor(),
+                changeRealmCallback);
 
             mvcManager.RegisterController(changeRealmPromptController);
         }

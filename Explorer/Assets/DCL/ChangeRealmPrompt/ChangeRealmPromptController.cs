@@ -11,11 +11,16 @@ namespace DCL.ChangeRealmPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
+        private readonly Action<string> changeRealmCallback;
         private Action<ChangeRealmPromptResultType> resultCallback;
 
-        public ChangeRealmPromptController(ViewFactoryMethod viewFactory, ICursor cursor) : base(viewFactory)
+        public ChangeRealmPromptController(
+            ViewFactoryMethod viewFactory,
+            ICursor cursor,
+            Action<string> changeRealmCallback) : base(viewFactory)
         {
             this.cursor = cursor;
+            this.changeRealmCallback = changeRealmCallback;
         }
 
         protected override void OnViewInstantiated()
@@ -33,7 +38,7 @@ namespace DCL.ChangeRealmPrompt
                 if (result != ChangeRealmPromptResultType.Approved)
                     return;
 
-                inputData.ChangeRealmCallback?.Invoke();
+                changeRealmCallback?.Invoke(inputData.Realm);
             });
         }
 

@@ -1,18 +1,14 @@
-﻿using System;
-
-namespace DCL.ChangeRealmPrompt
+﻿namespace DCL.ChangeRealmPrompt
 {
     public partial class ChangeRealmPromptController
     {
         public struct Params
         {
             public string Realm { get; }
-            public Action ChangeRealmCallback { get; }
 
-            public Params(string realm, Action changeRealmCallback)
+            public Params(string realm)
             {
                 Realm = realm;
-                ChangeRealmCallback = changeRealmCallback;
             }
         }
     }
