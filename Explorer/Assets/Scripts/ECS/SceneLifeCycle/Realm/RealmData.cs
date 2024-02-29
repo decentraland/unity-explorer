@@ -1,5 +1,4 @@
 ﻿using DCL.Ipfs;
-using Ipfs;
 using System;
 
 namespace ECS
@@ -11,6 +10,8 @@ namespace ECS
     {
         private IIpfsRealm ipfs;
         private bool scenesAreFixed;
+
+        public string RealmName { get; private set; }
 
         public bool Configured { get; private set; }
 
@@ -39,13 +40,14 @@ namespace ECS
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm);
+            Reconfigure(ipfsRealm, string.Empty);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName)
         {
             Configured = true;
 
+            RealmName = realmName;
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
         }

@@ -69,6 +69,12 @@ namespace DCL.DebugUtilities.UIBindings
             tempValueIsDirty = false;
         }
 
+        public void SetAndUpdate(T value)
+        {
+            Value = value;
+            Update();
+        }
+
         public void Release()
         {
             element.UnregisterValueChangedCallback(OnValueChanged);
