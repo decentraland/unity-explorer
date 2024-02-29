@@ -136,7 +136,6 @@ namespace Global
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
             var addressablesProvisioner = new AddressablesProvisioner()
-                                         .WithValidates()
                                          .WithErrorTrace();
 
             container.AssetsProvisioner = addressablesProvisioner;
