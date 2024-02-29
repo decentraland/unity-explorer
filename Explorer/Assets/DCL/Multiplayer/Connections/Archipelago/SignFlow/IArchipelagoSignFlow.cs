@@ -18,4 +18,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
         UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token);
     }
+
+    public static class ArchipelagoSignFlowExtensions
+    {
+        public static IArchipelagoSignFlow WithLog(this IArchipelagoSignFlow origin) =>
+            new LogArchipelagoSignFlow(origin);
+    }
 }

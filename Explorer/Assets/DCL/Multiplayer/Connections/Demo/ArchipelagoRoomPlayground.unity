@@ -378,3 +378,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aboutUrl: https://realm-provider.decentraland.zone/main/about
+  loonCharacterObject:
+    randomMoves: 0
+    magnitude: 200

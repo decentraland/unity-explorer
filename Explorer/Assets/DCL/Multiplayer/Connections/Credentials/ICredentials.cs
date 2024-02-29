@@ -14,14 +14,14 @@ namespace DCL.Multiplayer.Connections.Credentials
 
         class Const : ICredentials
         {
+            public string Url { get; }
+            public string AuthToken { get; }
+
             public Const(string url, string authToken)
             {
                 Url = url;
                 AuthToken = authToken;
             }
-
-            public string Url { get; }
-            public string AuthToken { get; }
         }
     }
 

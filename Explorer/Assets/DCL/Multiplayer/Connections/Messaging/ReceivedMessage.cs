@@ -14,8 +14,8 @@ namespace DCL.Multiplayer.Connections.Messaging
 
         public ReceivedMessage(T payload, Packet packet, string fromSid, IMultiPool multiPool)
         {
-            this.Payload = payload;
-            this.FromSid = fromSid;
+            Payload = payload;
+            FromSid = fromSid;
             this.multiPool = multiPool;
             this.packet = packet;
         }
