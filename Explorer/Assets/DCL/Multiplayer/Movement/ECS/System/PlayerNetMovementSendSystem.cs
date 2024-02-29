@@ -25,16 +25,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private readonly CharacterController playerCharacter;
 
-        private readonly float maxSentRate = 1.5f;
-
-        // Animations
-        private readonly int moveBlendTiersDiff = 2;
-        private readonly float minSlideBlendDiff = 0.35f;
-
-        // Velocity
-        private readonly float velocityCosAngleChangeThreshold = 0.5f;
-        private readonly float velocityChangeThreshold = 5;
-
         private MessageMock? lastSentMessage;
 
         public PlayerNetMovementSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
@@ -44,8 +34,35 @@ namespace DCL.Multiplayer.Movement.ECS.System
             this.playerCharacter = playerCharacter;
         }
 
+        private int mesPerSec;
+        private float mesPerSecTimer;
+
+        private static string GetColorBasedOnMesPerSec(int amount)
+        {
+            return amount switch
+                   {
+                       > 30 => "red",
+                       > 20 => "orange",
+                       >= 10 => "yellow",
+                       >= 5 => "green",
+                       >= 3 => "lightblue",
+                       >= 2 => "olive",
+                       _ => "grey",
+                   };
+        }
+
         protected override void Update(float t)
         {
+            if (mesPerSecTimer <= 0)
+            {
+                string color = GetColorBasedOnMesPerSec(mesPerSec);
+                Debug.Log($"VVV <color={color}> ------- MES PER SEC: {mesPerSec} ----------</color>");
+                mesPerSec = 0;
+                mesPerSecTimer = 1;
+            }
+            else
+            {    mesPerSecTimer -= t;}
+
             SendPlayerNetMovementQuery(World);
         }
 
@@ -61,40 +78,43 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 return;
             }
 
-            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp < settings.PackageSentRate)
-                return;
-
-            // Max sent rate
-            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp > maxSentRate)
+            //----- MAX TIME CHECK -----
+            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp > settings.MaxSentDelay)
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, "MAX TIME");
                 return;
             }
 
-            // Animation change
-            if (AnimationChanged(ref playerAnimationComponent, ref playerStunComponent, minSlideBlendDiff, out string reason))
+            //----- ANIMATION CHECKS -----
+            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp > settings.MinAnimPackageTime
+                && AnimationChanged(ref playerAnimationComponent, ref playerStunComponent, out string reason))
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, $"<color=olive> ANIM {reason} </color>");
                 return;
             }
+            return;
+
+            //----- VELOCITY AND POSITION CHECKS -----
+            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp < settings.MinPositionPackageTime)
+                return;
+
+            // Projective velocity and position!!!
 
             // Velocity angle change
             // Dot product: -1 = opposite directions, 0 = perpendicular, 1 = same direction
-            if (playerCharacter.velocity != Vector3.zero && lastSentMessage.velocity != Vector3.zero
-                                                         && Vector3.Dot(lastSentMessage.velocity.normalized, playerCharacter.velocity) < velocityCosAngleChangeThreshold)
+            if (lastSentMessage.velocity != Vector3.zero && playerCharacter.velocity != Vector3.zero &&
+                Vector3.Dot(lastSentMessage.velocity.normalized, playerCharacter.velocity.normalized) < settings.VelocityCosAngleChangeThreshold)
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=navy> VEL ANGLE {reason} </color>\"");
                 return;
             }
 
             // Velocity diff magnitude change
-            if (Vector3.SqrMagnitude(lastSentMessage.velocity - playerCharacter.velocity) > velocityChangeThreshold)
+            if (Vector3.SqrMagnitude(lastSentMessage.velocity - playerCharacter.velocity) > settings.VelocityChangeThreshold)
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent,  "$\"<color=maroon> VEL DIFF {reason} </color>\"" );
                 return;
             }
-
-            // Different min package sent rate for animations and velocity/position
 
             // // Position diff magnitude change
             // {}
@@ -112,7 +132,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             Vector3 projectedPosition = lastSentMessage!.position + (lastSentMessage.velocity * (UnityEngine.Time.unscaledTime - lastSentMessage.timestamp));
         }
 
-        private string GetColorBasedOnDeltaTime(float deltaTime)
+        private static string GetColorBasedOnDeltaTime(float deltaTime)
         {
             return deltaTime switch
                    {
@@ -127,6 +147,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private void SentMessage(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, string from)
         {
+            mesPerSec++;
+
             float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
             string color = GetColorBasedOnDeltaTime(deltaTime);
             Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
@@ -146,7 +168,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             room.Room().DataPipe.PublishData(byteMessage, "Movement", participants!);
         }
 
-        private bool AnimationChanged(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, float minSlideBlendDiff, out string reason)
+        private bool AnimationChanged(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, out string reason)
         {
             if (lastSentMessage.isStunned != playerStunComponent.IsStunned)
             {
@@ -185,13 +207,13 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
 
             // Maybe we don't need it because of velocity change?
-            if (GetMovementBlendTier(lastSentMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue) >= moveBlendTiersDiff)
+            if (GetMovementBlendTier(lastSentMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue) >= settings.MoveBlendTiersDiff)
             {
                 reason = $"MOVEMENT {GetMovementBlendTier(lastSentMessage.animState.MovementBlendValue)} vs {GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)}";
                 return true;
             }
 
-            if (Mathf.Abs(lastSentMessage.animState.SlideBlendValue - playerAnimationComponent.States.SlideBlendValue) > minSlideBlendDiff)
+            if (Mathf.Abs(lastSentMessage.animState.SlideBlendValue - playerAnimationComponent.States.SlideBlendValue) > settings.MinSlideBlendDiff)
             {
                 reason = "SLIDE";
                 return true;

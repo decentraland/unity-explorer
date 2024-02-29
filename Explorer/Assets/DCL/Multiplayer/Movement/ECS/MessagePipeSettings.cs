@@ -7,6 +7,14 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public class MessagePipeSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
+        public float MinAnimPackageTime { get; set; }
+        public float MinPositionPackageTime { get; set; }
+        public float MaxSentDelay { get; set; }
+        public int MoveBlendTiersDiff { get; set; }
+        public float MinSlideBlendDiff { get; set; }
+        public float VelocityCosAngleChangeThreshold { get; set; }
+        public float VelocityChangeThreshold { get; set; }
+
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public int PassedMessages { get; set; }
         [field: SerializeField] public int PackageLost { get; set; }

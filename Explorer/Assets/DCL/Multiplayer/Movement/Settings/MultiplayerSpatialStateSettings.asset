@@ -12,10 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36736ce96ff04f67aaec3d8efa0026b3, type: 3}
   m_Name: MultiplayerSpatialStateSettings
   m_EditorClassIdentifier: 
-  <InboxCount>k__BackingField: 0
+  <InboxCount>k__BackingField: 84
   <PassedMessages>k__BackingField: 1
   <PackageLost>k__BackingField: 0
   <StartSending>k__BackingField: 0
+  <MinAnimPackageTime>k__BackingField: 0
+  <MoveBlendTiersDiff>k__BackingField: 1
+  <MinSlideBlendDiff>k__BackingField: 0.35
+  <MinPositionPackageTime>k__BackingField: 0.2
+  <VelocityCosAngleChangeThreshold>k__BackingField: 0.75
+  <VelocityChangeThreshold>k__BackingField: 10
+  <MaxSentDelay>k__BackingField: 1
   <PackageSentRate>k__BackingField: 0
   <PackagesJitter>k__BackingField: 0
   <Latency>k__BackingField: 1

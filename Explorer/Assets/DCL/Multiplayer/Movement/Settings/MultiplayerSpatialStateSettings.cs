@@ -6,6 +6,15 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public interface IMultiplayerSpatialStateSettings
     {
+        float MinAnimPackageTime { get; set; }
+        float MinPositionPackageTime { get; set; }
+        float MaxSentDelay { get; set; }
+        int MoveBlendTiersDiff { get; set; }
+        float MinSlideBlendDiff { get; set; }
+        float VelocityCosAngleChangeThreshold { get; set; }
+        float VelocityChangeThreshold { get; set; }
+
+        /// Old settings
         int InboxCount { get; set; }
         int PassedMessages { get; set; }
         int PackageLost { get; set; }
@@ -33,36 +42,46 @@ namespace DCL.Multiplayer.Movement.Settings
     public class MultiplayerSpatialStateSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
         [field: SerializeField] public int InboxCount { get; set; }
-        [field: SerializeField] public int PassedMessages{ get; set; }
-        [field: SerializeField] public int PackageLost{ get; set; }
-        [field: SerializeField] public bool StartSending{ get; set; }
+        [field: SerializeField] public int PassedMessages { get; set; }
+        [field: SerializeField] public int PackageLost { get; set; }
+        [field: SerializeField] public bool StartSending { get; set; }
 
-        [field:Header("NETWORK")]
+        [field: Header("SENDING ANIM")]
+        [field: SerializeField] public float MinAnimPackageTime { get; set; }
+        [field: SerializeField] public int MoveBlendTiersDiff { get; set; }
+        [field: SerializeField] public float MinSlideBlendDiff { get; set; }
+        [field: Header("SENDING POSITION")]
+        [field: SerializeField] public float MinPositionPackageTime { get; set; }
+        [field: SerializeField] public float VelocityCosAngleChangeThreshold { get; set; }
+        [field: SerializeField] public float VelocityChangeThreshold { get; set; }
+
+        [field: Header("NETWORK")]
+        [field: SerializeField] public float MaxSentDelay { get; set; }
         [field: SerializeField] public float PackageSentRate { get; set; } = 0.33f;
-        [field: SerializeField] public float PackagesJitter{ get; set; }
+        [field: SerializeField] public float PackagesJitter { get; set; }
         [field: SerializeField] public float Latency { get; set; } = 1f;
-        [field: SerializeField] public float LatencyJitter{ get; set; }
+        [field: SerializeField] public float LatencyJitter { get; set; }
 
         [field: Header("TELEPORTATION")]
         [field: SerializeField] public float MinPositionDelta { get; set; } = 0.1f;
         [field: SerializeField] public float MinTeleportDistance { get; set; } = 50f;
 
         [field: Header("INTERPOLATION")]
-        [field: SerializeField] public InterpolationType InterpolationType{ get; set; }
-        [field: SerializeField] public float SpeedUpFactor{ get; set; }= 1;
+        [field: SerializeField] public InterpolationType InterpolationType { get; set; }
+        [field: SerializeField] public float SpeedUpFactor { get; set; } = 1;
         [field: SerializeField] public bool useBlend { get; set; } = true;
-        [field: SerializeField] public InterpolationType BlendType{ get; set; }
+        [field: SerializeField] public InterpolationType BlendType { get; set; }
         [field: SerializeField] public float MaxBlendSpeed { get; set; } = 30;
 
         [field: Header("EXTRAPOLATION")]
         [field: SerializeField] public bool useExtrapolation { get; set; } = true;
-        [field: SerializeField] public float MinSpeed{ get; set; }= 0.01f;
-        [field: SerializeField] public float LinearTime { get; set; }= 0.33f;
-        [field: SerializeField] public int DampedSteps{ get; set; }= 1;
+        [field: SerializeField] public float MinSpeed { get; set; } = 0.01f;
+        [field: SerializeField] public float LinearTime { get; set; } = 0.33f;
+        [field: SerializeField] public int DampedSteps { get; set; } = 1;
 
         [field: Header("CONTROLS")]
-        [field: SerializeField] public InputAction startButton{ get; set; }
-        [field: SerializeField] public InputAction packageLostButton{ get; set; }
-        [field: SerializeField]  public InputAction packageBlockButton{ get; set; }
+        [field: SerializeField] public InputAction startButton { get; set; }
+        [field: SerializeField] public InputAction packageLostButton { get; set; }
+        [field: SerializeField] public InputAction packageBlockButton { get; set; }
     }
 }
