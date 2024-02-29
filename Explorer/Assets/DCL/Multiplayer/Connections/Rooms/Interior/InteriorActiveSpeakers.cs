@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit.Rooms.ActiveSpeakers;
 using System;
 using System.Collections;
@@ -7,20 +8,23 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
     public class InteriorActiveSpeakers : IActiveSpeakers, IInterior<IActiveSpeakers>
     {
-        private IActiveSpeakers? assigned;
+        private IActiveSpeakers assigned = NullActiveSpeakers.INSTANCE;
+
+        public int Count => assigned.EnsureAssigned().Count;
 
         public event Action? Updated;
 
         public void Assign(IActiveSpeakers value, out IActiveSpeakers? previous)
         {
             previous = assigned;
-
-            if (previous != null)
-                previous.Updated -= OnUpdated;
+            previous.Updated -= OnUpdated;
+            previous = null;
 
             assigned = value;
 
             value.Updated += OnUpdated;
+
+            previous = previous is NullActiveSpeakers ? null : previous;
         }
 
         private void OnUpdated()
@@ -33,7 +37,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();
-
-        public int Count => assigned.EnsureAssigned().Count;
     }
 }

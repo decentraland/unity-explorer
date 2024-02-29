@@ -15,6 +15,7 @@ namespace DCL.CharacterTriggerArea
 
         public IReadOnlyCollection<Transform> EnteredThisFrame => enteredThisFrame;
         public IReadOnlyCollection<Transform> ExitedThisFrame => exitedThisFrame;
+        public IReadOnlyCollection<Transform> CurrentAvatarsInside => currentAvatarsInside;
 
         public void OnTriggerEnter(Collider other)
         {
