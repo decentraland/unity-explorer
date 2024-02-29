@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: MultiplayerSpatialStateSettings
   m_EditorClassIdentifier: 
   <InboxCount>k__BackingField: 0
-  <PassedMessages>k__BackingField: 0
+  <PassedMessages>k__BackingField: 1
   <PackageLost>k__BackingField: 0
   <StartSending>k__BackingField: 0
-  <PackageSentRate>k__BackingField: 0.33
+  <PackageSentRate>k__BackingField: 0
   <PackagesJitter>k__BackingField: 0
   <Latency>k__BackingField: 1
   <LatencyJitter>k__BackingField: 0

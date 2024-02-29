@@ -101,8 +101,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             animationComponent.States = message.animState;
 
-            Debug.Log($"VVV isJumping {message.animState.IsJumping}");
-
+            // TODO: Interpolate between blending states!
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
 
