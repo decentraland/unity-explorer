@@ -124,7 +124,7 @@ namespace DCL.Nametags
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTagPosition(NametagView view, Camera camera, Vector3 characterPosition)
         {
-            view.transform.position = characterPosition + (Vector3.up * 2.2f);
+            view.transform.position = characterPosition + (Vector3.up * 2.1f);
             view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
         }
 
@@ -132,7 +132,7 @@ namespace DCL.Nametags
         private void UpdateTagTransparency(NametagView view, Camera camera, Vector3 characterPosition)
         {
             distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
-            view.SetTransparency(distanceFromCamera);
+            view.SetTransparency(distanceFromCamera, nametagsData.maxDistance);
         }
     }
 }

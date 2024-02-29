@@ -29,13 +29,16 @@ namespace DCL.Nametags
         [field: SerializeField]
         internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
 
+        [field: SerializeField]
+        internal AnimationCurve alphaOverDistanceCurve { get; private set; }
+
         public string Id;
 
         [field: SerializeField]
         public float FixedWidth { get; private set; }
 
-        private const float MARGIN_OFFSET_WIDTH = 0.5f;
-        private const float MARGIN_OFFSET_HEIGHT = 0.7f;
+        private const float MARGIN_OFFSET_WIDTH = 0.4f;
+        private const float MARGIN_OFFSET_HEIGHT = 0.6f;
         private const float ANIMATION_DURATION = 0.7f;
         private readonly Color finishColor = new (1,1,1,0);
         private static readonly Vector2 MESSAGE_CONTENT_ANCHORED_POSITION = new (0,MARGIN_OFFSET_HEIGHT / 3);
@@ -47,7 +50,7 @@ namespace DCL.Nametags
         private Vector2 textContentInitialPosition;
 
         private float previousDistance;
-        private const float DISTANCE_THRESHOLD = 1f;
+        private const float DISTANCE_THRESHOLD = 0.1f;
 
         private Color textColor = new (1,1,1,1);
         private Color usernameTextColor = new (1,1,1,1);
@@ -56,21 +59,21 @@ namespace DCL.Nametags
         public void SetUsername(string username)
         {
             Username.text = username;
-            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + 0.2f);
+            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + 0.15f);
             Username.rectTransform.anchoredPosition = Vector2.zero;
-            Background.size = new Vector2(Username.preferredWidth + 0.3f, Username.preferredHeight + 0.2f);
+            Background.size = new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f);
         }
 
-        public void SetTransparency(float distance)
+        public void SetTransparency(float distance, float maxDistance)
         {
             if(Math.Abs(distance - previousDistance) < DISTANCE_THRESHOLD)
                 return;
 
             previousDistance = distance;
             usernameTextColor = Username.color;
-            textColor.a = distance > 7 ? 0.5f : 1;
-            usernameTextColor.a = distance > 7 ? 0.5f : 1;
-            backgroundColor.a = distance > 7 ? 0.5f : 0.85f;
+            textColor.a = distance > 8.5f ? alphaOverDistanceCurve.Evaluate(distance / maxDistance ) : 1;
+            usernameTextColor.a = distance > 8.5f ? alphaOverDistanceCurve.Evaluate(distance / maxDistance) : 1;
+            backgroundColor.a = distance > 8.5f ? alphaOverDistanceCurve.Evaluate(distance / maxDistance) : 1f;
             BubblePeak.color = backgroundColor;
             Background.color = backgroundColor;
             Username.color = usernameTextColor;
@@ -125,8 +128,8 @@ namespace DCL.Nametags
             isBubbleExpanded = false;
             BubblePeak.gameObject.SetActive(false);
 
-            backgroundFinalSize.x = Username.preferredWidth + 0.3f;
-            backgroundFinalSize.y = Username.preferredHeight + 0.2f;
+            backgroundFinalSize.x = Username.preferredWidth + 0.2f;
+            backgroundFinalSize.y = Username.preferredHeight + 0.15f;
 
             Username.rectTransform.DOAnchorPos(Vector2.zero, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
             MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
