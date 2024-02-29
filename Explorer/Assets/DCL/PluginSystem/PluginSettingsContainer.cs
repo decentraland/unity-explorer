@@ -1,5 +1,6 @@
-﻿using DCL.PluginSystem.Validatables;
-using DCL.Utilities.Addressables;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.PluginSystem.Validatables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,9 +28,25 @@ namespace DCL.PluginSystem
             return typeSettings;
         }
 
-        public void EnsureValid()
+        public async UniTask EnsureValidAsync()
         {
-            var list = settings.Select(e => e.InvalidValues()).OfType<Exception>().ToList();
+            var list = new List<Exception>();
+            var checkedCount = 0;
+
+            async UniTask CheckAsync(IValidatableAsset dclPluginSettings)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Start check for {dclPluginSettings.GetType().FullName}");
+                var exception = await dclPluginSettings.InvalidValuesAsync();
+                checkedCount++;
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Finish check {checkedCount}/{settings.Count} {dclPluginSettings.GetType().FullName}");
+
+                if (exception != null)
+                    list.Add(exception);
+            }
+
+            await UniTask.WhenAll(
+                Enumerable.Select(settings, CheckAsync)
+            );
 
             if (list.Any())
                 throw new AggregateException("Some settings are not valid", list);
