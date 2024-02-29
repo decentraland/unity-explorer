@@ -43,7 +43,6 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     w,
                     new NftShapeCache(),
                     new WebRequestController(
-                        new WebRequestsAnalyticsContainer(),
                         new MemoryWeb3IdentityCache()
                     ),
                     new MutexSync(),

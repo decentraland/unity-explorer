@@ -32,7 +32,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
 
-        private AuthenticationScreenCharacterPreviewController characterPreviewController;
+        private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
@@ -62,7 +62,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
-            characterPreviewController.Dispose();
+            characterPreviewController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -166,7 +166,8 @@ namespace DCL.AuthenticationScreenFlow
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
             profileNameLabel!.Value = profile?.Name;
 
-            if (profile != null) { characterPreviewController.Initialize(profile.Avatar); }
+            if (profile != null)
+                characterPreviewController!.Initialize(profile.Avatar);
         }
 
         private void ChangeAccount()
@@ -177,7 +178,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
             }
 
-            characterPreviewController.OnHide();
+            characterPreviewController!.OnHide();
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
@@ -187,7 +188,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             lifeCycleTask!.TrySetResult();
             lifeCycleTask = null;
-            characterPreviewController.OnHide();
+            characterPreviewController!.OnHide();
         }
 
         private void SwitchState(ViewState state)

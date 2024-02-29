@@ -7,11 +7,18 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct WebRequestSignInfo
     {
-        public readonly URLAddress SignUrl;
+        public readonly string StringToSign;
 
-        public WebRequestSignInfo(URLAddress signUrl)
+        public WebRequestSignInfo(URLAddress signUrl) : this(signUrl.ToString())
         {
-            SignUrl = signUrl;
         }
+
+        public WebRequestSignInfo(string stringToSign)
+        {
+            this.StringToSign = stringToSign;
+        }
+
+        public override string ToString() =>
+            $"WebRequestSignInfo: Content to sign {StringToSign}";
     }
 }
