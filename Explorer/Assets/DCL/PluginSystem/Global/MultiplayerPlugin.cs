@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
         {
-#if NO_LIVEKIT_MODE
+#if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom);
 #endif
