@@ -39,9 +39,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        public readonly ObjectProxy<World> GlobalWorldProxy = new ();
+        public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedInstance<CharacterObject> characterObject;
-        public ObjectProxy<World> GlobalWorldProxy = new ();
-        public ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;

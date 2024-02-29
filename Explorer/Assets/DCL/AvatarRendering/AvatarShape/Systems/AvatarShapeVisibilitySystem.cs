@@ -45,14 +45,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, bool shouldBeHidden)
         {
-            switch (avatarShape.IsVisible)
+            if (avatarShape.IsVisible == shouldBeHidden)
             {
-                case true when shouldBeHidden:
+                if (shouldBeHidden)
                     Hide(ref avatarShape);
-                    break;
-                case false when !shouldBeHidden:
+                else
                     Show(ref avatarShape);
-                    break;
             }
         }
 

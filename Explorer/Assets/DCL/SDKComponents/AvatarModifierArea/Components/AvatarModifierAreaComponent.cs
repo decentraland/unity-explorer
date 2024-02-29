@@ -1,4 +1,4 @@
-using Google.Protobuf.Collections;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Components
@@ -7,13 +7,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Components
     {
         public readonly HashSet<string> ExcludedIds;
 
-        public AvatarModifierAreaComponent(RepeatedField<string> excludedIds)
+        public AvatarModifierAreaComponent(IEnumerable excludedIds)
         {
             ExcludedIds = new HashSet<string>();
             SetExcludedIds(excludedIds);
         }
 
-        public void SetExcludedIds(RepeatedField<string> excludedIds)
+        public void SetExcludedIds(IEnumerable excludedIds)
         {
             ExcludedIds.Clear();
 
