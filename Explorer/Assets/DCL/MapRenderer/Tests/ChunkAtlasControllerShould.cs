@@ -4,11 +4,13 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Atlas;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.MapRenderer.Tests
 {
@@ -53,8 +55,8 @@ namespace DCL.MapRenderer.Tests
             builder.Received(iterationsNumber);
         }
 
-        [Test]
-        public async Task CreateChunksInBatches()
+        [UnityTest]
+        public IEnumerator CreateChunksInBatches()
         {
             var invocationFrames = new List<int>();
 
@@ -81,7 +83,7 @@ namespace DCL.MapRenderer.Tests
             for (var i = 0; i < iterationsNumber; i++)
                 expected[i] = frame + i / ParcelChunkAtlasController.CHUNKS_CREATED_PER_BATCH * FRAME_DELAY;
 
-            await atlasController.InitializeAsync(CancellationToken.None);
+            yield return atlasController.InitializeAsync(CancellationToken.None).ToCoroutine();
 
             EditorApplication.update -= CountEditorFrames;
 
