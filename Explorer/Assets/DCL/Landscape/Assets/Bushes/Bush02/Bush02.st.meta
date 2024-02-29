@@ -1,42 +1,42 @@
 fileFormatVersion: 2
-guid: 7a5b23ea474707949ac1958443314f0f
+guid: 7ee2877b90d2bc048b88aacb57ee6dcc
 SpeedTreeImporter:
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Bark_LOD0
-    second: {fileID: 2100000, guid: 34dad2935424df741a1cb7f856144977, type: 2}
+    second: {fileID: 2100000, guid: 51cf67ae6a18c334691797a9278b87be, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Bark_LOD1
-    second: {fileID: 2100000, guid: 34dad2935424df741a1cb7f856144977, type: 2}
+    second: {fileID: 2100000, guid: 51cf67ae6a18c334691797a9278b87be, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Bark_LOD2
-    second: {fileID: 2100000, guid: 34dad2935424df741a1cb7f856144977, type: 2}
+    second: {fileID: 2100000, guid: 51cf67ae6a18c334691797a9278b87be, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Bush01_Billboard_LOD3
-    second: {fileID: 2100000, guid: ab09b1fba160f9f458b95be4ee629481, type: 2}
+      name: Bush02_Billboard_LOD3
+    second: {fileID: 2100000, guid: 2eb16beb1d3710a4e9d245843220db5b, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Bush01_LOD0
-    second: {fileID: 2100000, guid: 5b9bc617fb7ebe14c8048311768f243a, type: 2}
+      name: Bush02_LOD0
+    second: {fileID: 2100000, guid: c1f48de049f5ad144b58b9c8e0a2d88f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Bush01_LOD1
-    second: {fileID: 2100000, guid: 5b9bc617fb7ebe14c8048311768f243a, type: 2}
+      name: Bush02_LOD1
+    second: {fileID: 2100000, guid: c1f48de049f5ad144b58b9c8e0a2d88f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Bush01_LOD2
-    second: {fileID: 2100000, guid: 5b9bc617fb7ebe14c8048311768f243a, type: 2}
+      name: Bush02_LOD2
+    second: {fileID: 2100000, guid: c1f48de049f5ad144b58b9c8e0a2d88f, type: 2}
   serializedVersion: 6
   mainColor: {r: 1, g: 1, b: 1, a: 1}
   hueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}
@@ -44,7 +44,7 @@ SpeedTreeImporter:
   bestWindQuality: 4
   hasBillboard: 1
   lODSettings:
-  - height: 0.14804542
+  - height: 0.14801872
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
@@ -53,7 +53,7 @@ SpeedTreeImporter:
     enableHue: 1
     enableSubsurface: 1
     windQuality: 4
-  - height: 0.050925624
+  - height: 0.04754927
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
@@ -62,7 +62,7 @@ SpeedTreeImporter:
     enableHue: 1
     enableSubsurface: 1
     windQuality: 4
-  - height: 0.022269174
+  - height: 0.022278681
     castShadows: 1
     receiveShadows: 1
     useLightProbes: 1
