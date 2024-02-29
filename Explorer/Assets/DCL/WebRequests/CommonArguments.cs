@@ -1,4 +1,6 @@
 using CommunicationData.URLHelpers;
+using System;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -33,5 +35,16 @@ namespace DCL.WebRequests
 
         public static implicit operator CommonArguments(string url) =>
             new (URLAddress.FromString(url));
+
+        public TimeSpan TotalTimeout() =>
+            Timeout == 0
+                ? TimeSpan.MaxValue
+                : TimeSpan.FromSeconds(Timeout);
+
+        public int TotalAttempts() =>
+            Mathf.Max(1, AttemptsCount);
+
+        public override string ToString() =>
+            $"CommonArguments: {URL} with attempts {AttemptsCount} with timeout {Timeout} with downloadHandler {CustomDownloadHandler}";
     }
 }
