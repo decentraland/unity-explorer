@@ -132,7 +132,7 @@ namespace Global.Dynamic
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new IProfileRepository.Fake();
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache); //new IProfileRepository.Fake();
             //TODO replace fake when the deploy ready
                 //new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
 
