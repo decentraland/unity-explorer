@@ -40,6 +40,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
         {
+#if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
             var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
@@ -57,6 +58,7 @@ namespace DCL.PluginSystem.Global
                     new EntityParticipantTable()
                 )
             );
+#endif
         }
     }
 }
