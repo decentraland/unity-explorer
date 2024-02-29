@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
