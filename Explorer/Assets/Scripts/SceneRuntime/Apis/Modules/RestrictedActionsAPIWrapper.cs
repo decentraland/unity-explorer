@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using System;
+using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -20,5 +21,28 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public bool OpenExternalUrl(string url) =>
             api.OpenExternalUrl(url);
+
+        [UsedImplicitly]
+        public void MovePlayerTo(
+            int newRelativePositionX, int newRelativePositionY, int newRelativePositionZ)
+        {
+            api.MovePlayerTo(
+                new Vector3(newRelativePositionX, newRelativePositionY, newRelativePositionZ),
+                null);
+        }
+
+        [UsedImplicitly]
+        public void MovePlayerTo(
+            int newRelativePositionX, int newRelativePositionY, int newRelativePositionZ,
+            int cameraTargetX, int cameraTargetY, int cameraTargetZ)
+        {
+            api.MovePlayerTo(
+                new Vector3(newRelativePositionX, newRelativePositionY, newRelativePositionZ),
+                new Vector3(cameraTargetX, cameraTargetY, cameraTargetZ));
+        }
+
+        [UsedImplicitly]
+        public void TeleportTo(int x, int y) =>
+            api.TeleportTo(new Vector2Int(x, y));
     }
 }
