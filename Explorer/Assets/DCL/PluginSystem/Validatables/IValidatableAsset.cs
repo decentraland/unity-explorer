@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Addressables;
 using System;
@@ -13,26 +14,35 @@ namespace DCL.PluginSystem.Validatables
         /// <summary>
         ///     Due ReportHub.LogWarning might not be initialized yet
         /// </summary>
-        private static readonly Action<string> LOG_WARNING = ReportHub.WithReport(ReportData.UNSPECIFIED).Log;
+        private static readonly Action<string> LOG_WARNING = m => ReportHub.Log(ReportData.UNSPECIFIED, m);
 
-        void EnsureValid()
+        async UniTask EnsureValidAsync()
         {
             var type = this.GetType();
             LOG_WARNING($"{type.FullName} doesn't support the direct validation, for the performance consider the usage of the direct implementation");
 
-            if (this.InvalidValues() is { } e)
-                throw e;
+            var exception = await this.InvalidValuesAsync();
+
+            if (exception != null)
+                throw exception;
         }
     }
 
     public static class ValidateAssetsExtensions
     {
-        public static AggregateException? InvalidValues(this IValidatableAsset validatableAsset)
+        public static async UniTask<AggregateException?> InvalidValuesAsync(this IValidatableAsset validatableAsset)
         {
-            var invalidList = validatableAsset.ValuesForChecking()
-                                              .Select(e => e.reference.EnsureValidWithException(e.name))
-                                              .OfType<Exception>()
-                                              .ToList();
+            var invalidList = new List<Exception>();
+
+            async UniTask CheckAsync((AssetReference reference, string name) value)
+            {
+                var exception = await value.reference!.EnsureValidWithExceptionAsync(value.name!);
+
+                if (exception != null)
+                    invalidList.Add(exception);
+            }
+
+            await UniTask.WhenAll(validatableAsset.ValuesForChecking().Select(CheckAsync)!);
 
             return invalidList.Any()
                 ? new AggregateException("Some AssetReferences are not valid", invalidList)
@@ -44,14 +54,24 @@ namespace DCL.PluginSystem.Validatables
             const BindingFlags BINDING = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             var type = validatableAsset.GetType();
             var list = new List<(AssetReference reference, string name)>();
+            var handled = new HashSet<AssetReference>();
+
+            void TryAdd(AssetReference reference, string name)
+            {
+                if (handled.Contains(reference))
+                    return;
+
+                handled.Add(reference);
+                list.Add((reference, name));
+            }
 
             foreach (var property in type.GetProperties(BINDING))
                 if (TryImplementsType<AssetReference>(validatableAsset, property, out var value))
-                    list.Add((value!, property.Name));
+                    TryAdd(value!, property.Name);
 
             foreach (var field in type.GetFields(BINDING))
                 if (TryImplementsType<AssetReference>(validatableAsset, field, out var value))
-                    list.Add((value!, field.Name));
+                    TryAdd(value!, field.Name);
 
             return list;
         }
