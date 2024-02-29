@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Connections.Messaging
     public static class ProtobufMessageExtensions
     {
         /// <summary>
-        /// Just to localize strange behaviour with Rider and Protobuf: not finding a suitable method but everything compiles fine
+        ///     Just to localize strange behaviour with Rider and Protobuf: not finding a suitable method but everything compiles fine
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteToSpan(this IMessage message, Span<byte> span)
@@ -20,12 +20,12 @@ namespace DCL.Multiplayer.Connections.Messaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteTo(this IMessage message, MemoryWrap memory)
         {
-            var span = memory.Span();
+            Span<byte> span = memory.Span();
             message.WriteTo(span);
         }
 
         /// <summary>
-        /// Just to localize strange behaviour with Rider and Protobuf: not finding a suitable method but everything compiles fine
+        ///     Just to localize strange behaviour with Rider and Protobuf: not finding a suitable method but everything compiles fine
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ServerPacket AsMessageServerPacket(this MemoryWrap memoryWrap) =>
