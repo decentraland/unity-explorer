@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarAttach.Components;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -23,18 +24,18 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     {
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
         private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarAttachComponent>().WithNone<DeleteEntityIntention, PBAvatarAttach>();
-        private readonly MainPlayerAvatarBase mainPlayerAvatarBase;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public AvatarAttachHandlerSystem(World world, MainPlayerAvatarBase mainPlayerAvatarBase, ISceneStateProvider sceneStateProvider) : base(world)
+        public AvatarAttachHandlerSystem(World world, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider) : base(world)
         {
-            this.mainPlayerAvatarBase = mainPlayerAvatarBase;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerAvatarBase.Configured) return;
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
 
             SetupAvatarAttachQuery(World);
             UpdateAvatarAttachTransformQuery(World);
@@ -89,12 +90,12 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             switch (anchorPointType)
             {
                 case AvatarAnchorPointType.AaptLeftHand:
-                    return mainPlayerAvatarBase.AvatarBase.LeftHandAnchorPoint;
+                    return mainPlayerAvatarBaseProxy.Object!.LeftHandAnchorPoint;
                 case AvatarAnchorPointType.AaptRightHand:
-                    return mainPlayerAvatarBase.AvatarBase.RightHandAnchorPoint;
+                    return mainPlayerAvatarBaseProxy.Object!.RightHandAnchorPoint;
                 case AvatarAnchorPointType.AaptNameTag:
                 default: // AvatarAnchorPointType.AaptPosition
-                    return mainPlayerAvatarBase.AvatarBase.transform;
+                    return mainPlayerAvatarBaseProxy.Object!.transform;
             }
         }
 

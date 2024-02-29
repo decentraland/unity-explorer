@@ -17,8 +17,8 @@ namespace ECS.Unity.AvatarShape.Tests
         public void SetUp()
         {
             globalWorld = World.Create();
-            var globalWorldProxy = new WorldProxy();
-            globalWorldProxy.SetWorld(globalWorld);
+            var globalWorldProxy = new ObjectProxy<World>();
+            globalWorldProxy.SetObject(globalWorld);
             system = new AvatarShapeHandlerSystem(world, globalWorldProxy);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);

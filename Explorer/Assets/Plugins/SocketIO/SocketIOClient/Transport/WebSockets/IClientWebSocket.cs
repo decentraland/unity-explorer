@@ -13,7 +13,7 @@ namespace SocketIOClient.Transport.WebSockets
 
         Task DisconnectAsync(CancellationToken cancellationToken);
 
-        Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
+        Task SendAsync(ReadOnlyMemory<byte> bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
 
         Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken);
 
