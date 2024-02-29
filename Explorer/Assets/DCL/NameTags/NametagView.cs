@@ -37,11 +37,15 @@ namespace DCL.Nametags
         [field: SerializeField]
         public float FixedWidth { get; private set; }
 
-        private const float MARGIN_OFFSET_WIDTH = 0.4f;
-        private const float MARGIN_OFFSET_HEIGHT = 0.6f;
+        private const float NAMETAG_MARGIN_OFFSET_WIDTH = 0.2f;
+        private const float NAMETAG_MARGIN_OFFSET_HEIGHT = 0.15f;
+        private const float BUBBLE_MARGIN_OFFSET_WIDTH = 0.4f;
+        private const float BUBBLE_MARGIN_OFFSET_HEIGHT = 0.6f;
         private const float ANIMATION_DURATION = 0.7f;
+        private const float FULL_OPACITY_MAX_DISTANCE = 8.5f;
+        private const int CHAT_BUBBLE_IDLE_TIME = 6000;
         private readonly Color finishColor = new (1,1,1,0);
-        private static readonly Vector2 MESSAGE_CONTENT_ANCHORED_POSITION = new (0,MARGIN_OFFSET_HEIGHT / 3);
+        private static readonly Vector2 MESSAGE_CONTENT_ANCHORED_POSITION = new (0,BUBBLE_MARGIN_OFFSET_HEIGHT / 3);
 
         private bool isBubbleExpanded;
         private Vector2 usernameFinalPosition;
@@ -59,9 +63,9 @@ namespace DCL.Nametags
         public void SetUsername(string username)
         {
             Username.text = username;
-            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + 0.15f);
+            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + NAMETAG_MARGIN_OFFSET_HEIGHT);
             Username.rectTransform.anchoredPosition = Vector2.zero;
-            Background.size = new Vector2(Username.preferredWidth + 0.2f, Username.preferredHeight + 0.15f);
+            Background.size = new Vector2(Username.preferredWidth + NAMETAG_MARGIN_OFFSET_WIDTH, Username.preferredHeight + NAMETAG_MARGIN_OFFSET_HEIGHT);
         }
 
         public void SetTransparency(float distance, float maxDistance)
@@ -71,9 +75,9 @@ namespace DCL.Nametags
 
             previousDistance = distance;
             usernameTextColor = Username.color;
-            textColor.a = distance > 8.5f ? alphaOverDistanceCurve.Evaluate(distance / maxDistance ) : 1;
-            usernameTextColor.a = distance > 8.5f ? alphaOverDistanceCurve.Evaluate(distance / maxDistance) : 1;
-            backgroundColor.a = distance > 8.5f ? alphaOverDistanceCurve.Evaluate(distance / maxDistance) : 1f;
+            textColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) ) : 1;
+            usernameTextColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) ) : 1;
+            backgroundColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) ) : 1;
             BubblePeak.color = backgroundColor;
             Background.color = backgroundColor;
             Username.color = usernameTextColor;
@@ -87,7 +91,7 @@ namespace DCL.Nametags
             if(!isBubbleExpanded)
                 AnimateIn(chatMessage);
 
-            await UniTask.Delay(4000);
+            await UniTask.Delay(CHAT_BUBBLE_IDLE_TIME);
             AnimateOut();
         }
 
@@ -109,12 +113,12 @@ namespace DCL.Nametags
 
             //Set message content and calculate the preferred size of the background with the addition of a margin
             MessageContent.text = messageContent;
-            preferredSize.x = MessageContentRectTransform.sizeDelta.x + MARGIN_OFFSET_WIDTH;
-            preferredSize.y += MARGIN_OFFSET_HEIGHT;
+            preferredSize.x = MessageContentRectTransform.sizeDelta.x + BUBBLE_MARGIN_OFFSET_WIDTH;
+            preferredSize.y += BUBBLE_MARGIN_OFFSET_HEIGHT;
 
             //set the username final position based on previous calculations
-            usernameFinalPosition.x = (-preferredSize.x / 2) + (Username.preferredWidth / 2) + (MARGIN_OFFSET_WIDTH / 2);
-            usernameFinalPosition.y = MessageContentRectTransform.sizeDelta.y + (MARGIN_OFFSET_HEIGHT / 3);
+            usernameFinalPosition.x = (-preferredSize.x / 2) + (Username.preferredWidth / 2) + (BUBBLE_MARGIN_OFFSET_WIDTH / 2);
+            usernameFinalPosition.y = MessageContentRectTransform.sizeDelta.y + (BUBBLE_MARGIN_OFFSET_HEIGHT / 3);
 
             //Start all animations
             MessageContent.DOColor(textColor, ANIMATION_DURATION);
@@ -128,8 +132,8 @@ namespace DCL.Nametags
             isBubbleExpanded = false;
             BubblePeak.gameObject.SetActive(false);
 
-            backgroundFinalSize.x = Username.preferredWidth + 0.2f;
-            backgroundFinalSize.y = Username.preferredHeight + 0.15f;
+            backgroundFinalSize.x = Username.preferredWidth + NAMETAG_MARGIN_OFFSET_WIDTH;
+            backgroundFinalSize.y = Username.preferredHeight + NAMETAG_MARGIN_OFFSET_HEIGHT;
 
             Username.rectTransform.DOAnchorPos(Vector2.zero, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
             MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, ANIMATION_DURATION / 2).SetEase(Ease.Linear);
