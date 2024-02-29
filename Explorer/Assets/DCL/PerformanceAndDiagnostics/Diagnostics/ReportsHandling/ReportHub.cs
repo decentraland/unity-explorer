@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 namespace DCL.Diagnostics
@@ -64,7 +65,8 @@ namespace DCL.Diagnostics
         [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")]
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
+            //Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
+            Debug.Log($"{reportData.Category} {message}");
         }
 
         /// <summary>
