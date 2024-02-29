@@ -46,8 +46,8 @@ namespace DCL.Multiplayer.Connections.Systems
                         .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
                         .AddCustomMarker("State", stateScene)!
                         .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
-                        .AddCustomMarker("State Island", stateScene)!
-                        .AddCustomMarker("Remote Participants Island", remoteParticipantsScene);
+                        .AddCustomMarker("State Island", islandsStateScene)!
+                        .AddCustomMarker("Remote Participants Island", islandsRemoteParticipantsScene);
         }
 
         protected override void Update(float t)
