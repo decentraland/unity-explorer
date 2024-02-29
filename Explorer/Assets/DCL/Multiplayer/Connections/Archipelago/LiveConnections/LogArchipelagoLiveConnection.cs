@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Typing;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 
