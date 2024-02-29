@@ -104,19 +104,6 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
-      - name: 'Show state of curr directory'
-        run: |
-          Get-ChildItem -Path Explorer/Library
-          
-      # Upload artifact
-      - name: Uploading build report (test)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Build-${{ matrix.targetPlatform }}
-          path: |
-            Explorer/Library/LastBuild.buildreport
-          if-no-files-found: error
-
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
@@ -185,4 +172,13 @@ jobs:
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+          
+      # Upload build report
+      - name: Uploading build report (test)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build Report
+          path: |
+            Explorer/Library/LastBuild.buildreport
           if-no-files-found: error
