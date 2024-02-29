@@ -117,5 +117,30 @@ namespace DCL.Diagnostics
         {
             Instance.LogException(exception, reportData, reportHandler);
         }
+
+        public static ReportedHub WithReport(ReportData reportData) =>
+            new (reportData);
+
+        public readonly struct ReportedHub
+        {
+            private readonly ReportData reportData;
+
+            public ReportedHub(ReportData reportData)
+            {
+                this.reportData = reportData;
+            }
+
+            [HideInCallstack]
+            public void Log(object message, ReportHandler reportToHandlers = ReportHandler.All)
+            {
+                ReportHub.Log(reportData, message, reportToHandlers);
+            }
+
+            [HideInCallstack]
+            public void Log(string message)
+            {
+                ReportHub.Log(reportData, message);
+            }
+        }
     }
 }

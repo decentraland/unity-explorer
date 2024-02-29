@@ -21,9 +21,11 @@ namespace DCL.CharacterCamera.Systems
         protected override void Update(float t)
         {
             ApplyQuery(World, t);
+            ForceLookAtQuery(World);
         }
 
         [Query]
+        [None(typeof(CameraLookAtIntent))]
         private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
@@ -50,6 +52,25 @@ namespace DCL.CharacterCamera.Systems
 
             // Update the brain manually
             cinemachinePreset.Brain.ManualUpdate();
+        }
+
+        [Query]
+        private void ForceLookAt(in Entity entity, ref CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
+        {
+            switch (camera.Mode)
+            {
+                case CameraMode.ThirdPerson:
+                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
+                    break;
+                case CameraMode.FirstPerson:
+                    cinemachinePreset.ForceFirstPersonCameraLookAt(lookAtIntent);
+                    break;
+                case CameraMode.Free:
+                    cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
+                    break;
+            }
+
+            World.Remove<CameraLookAtIntent>(entity);
         }
 
         private static void ApplyFreeCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,

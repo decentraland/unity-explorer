@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Messaging
 
         public MessageWrap(T payload, IDataPipe dataPipe, List<string> recipients, IMultiPool multiPool, IMemoryPool memoryPool)
         {
-            this.Payload = payload;
+            Payload = payload;
             this.dataPipe = dataPipe;
             this.recipients = recipients;
             this.multiPool = multiPool;
@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             if (sent)
                 throw new Exception("Request already sent");
 
-            using var memory = memoryPool.Memory(Payload);
+            using MemoryWrap memory = memoryPool.Memory(Payload);
             Payload.WriteTo(memory);
             dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
             sent = true;
