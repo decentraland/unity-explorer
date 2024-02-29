@@ -10,9 +10,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public bool IsDirty;
         public bool IsVisible;
-
-        public readonly string ID;
-        public readonly string Name;
+        public bool HiddenByModifierArea;
 
         public Color SkinColor;
         public Color HairColor;
@@ -20,7 +18,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Promise WearablePromise;
 
+        public readonly string ID;
+
         public readonly List<CachedWearable> InstantiatedWearables;
+        public readonly string Name;
 
         public AvatarShapeComponent(string name, string id) : this()
         {
@@ -42,6 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             SkinColor = skinColor;
             HairColor = hairColor;
             IsVisible = true;
+            HiddenByModifierArea = false;
         }
     }
 }

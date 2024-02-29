@@ -4,8 +4,10 @@ using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
 using DCL.ECSComponents;
+using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.Utilities;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
@@ -102,6 +104,27 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         }
 
         [Test]
+        public void SetupCameraModeAreaComponentCorrectly()
+        {
+            var component = new PBCameraModeArea
+            {
+                Area = new Vector3
+                {
+                    X = 2.5f,
+                    Y = 3.8f,
+                    Z = 8.5f,
+                },
+                IsDirty = true,
+            };
+
+            world.Add(entity, component);
+
+            system.Update(1);
+
+            Assert.IsTrue(world.Has<CameraModeAreaComponent>(entity));
+        }
+
+        [Test]
         public void UpdateCameraModeOnTriggerAreaEnter()
         {
             system.OnEnteredCameraModeArea(CameraMode.FirstPerson);
@@ -121,43 +144,127 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
             CameraMode originalCameraMode = cameraComponent.Mode;
 
-            // enter trigger area
+            // "Enter" trigger area
             CameraMode firstTriggerAreaMode = CameraMode.FirstPerson;
             system.OnEnteredCameraModeArea(firstTriggerAreaMode);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
-            // exit trigger area
+            // "Exit" trigger area
             system.OnExitedCameraModeArea();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
 
-            // enter trigger area again
+            // "Enter" trigger area again
             system.OnEnteredCameraModeArea(firstTriggerAreaMode);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
-            // enter 2nd trigger are without exiting the previous one
+            // "Enter" 2nd trigger are without exiting the previous one
             CameraMode secondTriggerAreaMode = CameraMode.Free;
             system.OnEnteredCameraModeArea(secondTriggerAreaMode);
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(secondTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
-            // exit 1st trigger area
+            // "Exit" 1st trigger area
             system.OnExitedCameraModeArea();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(secondTriggerAreaMode, cameraComponent.Mode);
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
 
-            // exit last trigger area
+            // "Exit" last trigger area
             system.OnExitedCameraModeArea();
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
+        }
+
+        [Test]
+        public void HandleComponentRemoveCorrectly()
+        {
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
+            CameraMode originalCameraMode = cameraComponent.Mode;
+
+            var component = new PBCameraModeArea
+            {
+                Area = new Vector3
+                {
+                    X = 2.5f,
+                    Y = 3.8f,
+                    Z = 8.5f,
+                },
+                IsDirty = true,
+            };
+
+            world.Add(entity, component);
+
+            system.Update(1);
+
+            Assert.IsTrue(world.Has<CameraModeAreaComponent>(entity));
+
+            // "Enter" trigger area
+            CameraMode firstTriggerAreaMode = CameraMode.FirstPerson;
+            system.OnEnteredCameraModeArea(firstTriggerAreaMode);
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
+            Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
+            Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
+
+            // Remove component
+            world.Remove<PBCameraModeArea>(entity);
+            system.Update(1);
+
+            // Check trigger area effect was reset
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
+            Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
+            Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
+
+            Assert.IsFalse(world.Has<CameraModeAreaComponent>(entity));
+        }
+
+        [Test]
+        public void HandleEntityDestructionCorrectly()
+        {
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
+            CameraMode originalCameraMode = cameraComponent.Mode;
+
+            var component = new PBCameraModeArea
+            {
+                Area = new Vector3
+                {
+                    X = 2.5f,
+                    Y = 3.8f,
+                    Z = 8.5f,
+                },
+                IsDirty = true,
+            };
+
+            world.Add(entity, component);
+
+            system.Update(1);
+
+            Assert.IsTrue(world.Has<CameraModeAreaComponent>(entity));
+
+            // "Enter" trigger area
+            CameraMode firstTriggerAreaMode = CameraMode.FirstPerson;
+            system.OnEnteredCameraModeArea(firstTriggerAreaMode);
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
+            Assert.AreEqual(firstTriggerAreaMode, cameraComponent.Mode);
+            Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
+
+            // Flag entity for destruction
+            world.Add<DeleteEntityIntention>(entity);
+            system.Update(1);
+
+            // Check trigger area effect was reset
+            Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
+            Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
+            Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
+
+            Assert.IsFalse(world.Has<CameraModeAreaComponent>(entity));
         }
     }
 }
