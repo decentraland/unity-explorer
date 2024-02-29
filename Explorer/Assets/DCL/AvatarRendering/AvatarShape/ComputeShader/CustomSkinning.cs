@@ -52,6 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             avatarMaterial.renderQueue = originalMaterial.renderQueue;
             avatarMaterial.SetInt("_CullMode", (int)originalMaterial.GetFloat("_Cull"));
+            avatarMaterial.SetInt("_ZWriteMode", (int)originalMaterial.GetFloat("_ZWrite"));
         }
     }
 }

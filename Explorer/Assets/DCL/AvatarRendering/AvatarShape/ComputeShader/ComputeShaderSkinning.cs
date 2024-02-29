@@ -213,6 +213,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 avatarMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
                 avatarMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
                 nShaderID = TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES;
+
+                if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
+                    avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.SkinColor);
+                if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase))
+                    avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.HairColor);
             }
             else
             {
