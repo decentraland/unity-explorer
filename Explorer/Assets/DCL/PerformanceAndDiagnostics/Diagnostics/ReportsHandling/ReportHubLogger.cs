@@ -65,10 +65,15 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, object message, Object context, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+            try
             {
-                if (EnumUtils.HasFlag(reportToHandlers, type))
-                    handler.Log(logType, reportData, context, message);
+                foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+                    if (EnumUtils.HasFlag(reportToHandlers, type))
+                        handler.Log(logType, reportData, context, message);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning(new Exception($"Some error while logging the message: '{message}'", e));
             }
         }
 
