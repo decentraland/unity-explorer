@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Typing;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
-using System.Text;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -31,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             }
         }
 
-        public LogArchipelagoLiveConnection(IArchipelagoLiveConnection origin) : this(origin, Debug.Log) { }
+        public LogArchipelagoLiveConnection(IArchipelagoLiveConnection origin) : this(origin, ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log) { }
 
         public LogArchipelagoLiveConnection(IArchipelagoLiveConnection origin, Action<string> log)
         {
