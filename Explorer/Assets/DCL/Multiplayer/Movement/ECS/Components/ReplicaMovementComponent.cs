@@ -7,7 +7,7 @@ namespace DCL.Multiplayer.Movement.ECS
     {
         public readonly List<MessageMock> PassedMessages;
 
-        public ReplicaMovementComponent(List<MessageMock> _ = null)
+        public ReplicaMovementComponent(List<MessageMock> list)
         {
             PassedMessages = new List<MessageMock>();
         }

@@ -238,7 +238,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     // new HandsIKComponent(),
                     // new HeadIKComponent(),
 
-                    new ReplicaMovementComponent(),
+                    new ReplicaMovementComponent(null),
                     new InterpolationComponent(transformComp.Transform),
                     new ExtrapolationComponent(transformComp.Transform),
 

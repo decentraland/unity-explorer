@@ -142,8 +142,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             var byteMessage = new Span<byte>(MessageMockSerializer.SerializeMessage(lastSentMessage));
 
-            IReadOnlyCollection<string> participants = room.Room().Participants.RemoteParticipantSids();
-            room.Room().DataPipe.PublishData(byteMessage, "Movement", participants);
+            IReadOnlyCollection<string>? participants = room is IslandRoomMock? null : room.Room().Participants.RemoteParticipantSids();
+            room.Room().DataPipe.PublishData(byteMessage, "Movement", participants!);
         }
 
         private bool AnimationChanged(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, float minSlideBlendDiff, out string reason)
