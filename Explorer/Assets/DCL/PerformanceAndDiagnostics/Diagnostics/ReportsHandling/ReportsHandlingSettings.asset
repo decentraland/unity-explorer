@@ -424,6 +424,26 @@ MonoBehaviour:
       Severity: 3
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 3
+    - Category: LIVEKIT
+      Severity: 3
+    - Category: LIVEKIT
+      Severity: 2
+    - Category: LIVEKIT
+      Severity: 0
+    - Category: LIVEKIT
+      Severity: 4
+    - Category: LIVEKIT
+      Severity: 1
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 3
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 2
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 0
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 4
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE
