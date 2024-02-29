@@ -8,5 +8,6 @@ namespace SceneRuntime.Apis.Modules
         bool OpenExternalUrl(string url);
         void MovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget);
         void TeleportTo(Vector2Int newCoords);
+        bool ChangeRealm(string message, string realm);
     }
 }

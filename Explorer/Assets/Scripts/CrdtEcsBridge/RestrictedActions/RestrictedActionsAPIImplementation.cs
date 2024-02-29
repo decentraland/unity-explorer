@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ChangeRealmPrompt;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.TeleportPrompt;
@@ -6,6 +7,7 @@ using JetBrains.Annotations;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -74,6 +76,18 @@ namespace CrdtEcsBridge.RestrictedActions
             TeleportAsync(coords).Forget();
         }
 
+        public bool ChangeRealm(string message, string realm)
+        {
+            if (!sceneStateProvider.IsCurrent)
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "ChangeRealm: Player is not inside of scene");
+                return false;
+            }
+
+            ChangeRealmAsync(message, realm).Forget();
+            return true;
+        }
+
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
@@ -96,6 +110,12 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             await mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
+        }
+
+        private async UniTask ChangeRealmAsync(string message, string realm)
+        {
+            await UniTask.SwitchToMainThread();
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
         }
 
         public void Dispose() { }
