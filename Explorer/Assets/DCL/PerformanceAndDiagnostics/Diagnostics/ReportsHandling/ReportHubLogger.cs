@@ -11,6 +11,7 @@ namespace DCL.Diagnostics
     /// </summary>
     public class ReportHubLogger : ILogHandler
     {
+        private readonly Action<Exception> emergencyLog = Debug.LogWarning;
         private readonly IReadOnlyList<(ReportHandler type, IReportHandler handler)> reportHandlers;
 
         public ReportHubLogger(IReadOnlyList<(ReportHandler, IReportHandler)> reportHandlers)
@@ -73,7 +74,7 @@ namespace DCL.Diagnostics
             }
             catch (Exception e)
             {
-                Debug.LogWarning(new Exception($"Some error while logging the message: '{message}'", e));
+                emergencyLog(new Exception($"Some error while logging the message: '{message}'", e));
             }
         }
 
