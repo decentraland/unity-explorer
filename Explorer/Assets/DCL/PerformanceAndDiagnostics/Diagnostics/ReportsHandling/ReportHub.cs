@@ -26,7 +26,7 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public static void Log(LogType logType, ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            Instance.Log(logType, reportData, message, null, reportToHandlers);
+            Instance.Log(logType, reportData, message, null!, reportToHandlers);
         }
 
         /// <summary>
