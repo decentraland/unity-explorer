@@ -37,8 +37,5 @@ namespace DCL.AssetsProvision
 
         public static ErrorTraceAssetsProvisioner WithErrorTrace(this IAssetsProvisioner origin) =>
             new (origin);
-
-        public static ValidatesAssetsProvisioner WithValidates(this IAssetsProvisioner origin) =>
-            new (origin);
     }
 }
