@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
+using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -39,6 +40,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         }
 
         [Query]
+        [None(typeof(PlayerComponent))]
         private void UpdateReplicasMovement(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {

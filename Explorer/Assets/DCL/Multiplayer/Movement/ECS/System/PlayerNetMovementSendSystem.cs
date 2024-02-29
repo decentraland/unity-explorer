@@ -10,6 +10,7 @@ using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
@@ -141,8 +142,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             var byteMessage = new Span<byte>(MessageMockSerializer.SerializeMessage(lastSentMessage));
 
-            // IReadOnlyCollection<string> participants = room.Room().Participants.RemoteParticipantSids();
-            room.Room().DataPipe.PublishData(byteMessage, "Movement", null!);
+            IReadOnlyCollection<string> participants = room.Room().Participants.RemoteParticipantSids();
+            room.Room().DataPipe.PublishData(byteMessage, "Movement", participants);
         }
 
         private bool AnimationChanged(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, float minSlideBlendDiff, out string reason)
