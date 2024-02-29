@@ -97,8 +97,6 @@ namespace DCL.Profiles
 
         public void CopyTo(Avatar avatar)
         {
-            const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
-
             List<URN> wearableUrns = wearableUrnPool.Get();
             List<string> forceRenderCategories = forceRenderPool.Get();
 
@@ -113,7 +111,7 @@ namespace DCL.Profiles
                     forceRenderCategories.Add(forceRenderCategory);
 
             foreach (URN wearable in wearableUrns)
-                avatar.sharedWearables.Add(wearable.Shorten(SHARED_WEARABLES_MAX_URN_PARTS));
+                avatar.sharedWearables.Add(wearable.Shorten());
 
             foreach (string forceRenderCategory in forceRenderCategories)
                 avatar.forceRender.Add(forceRenderCategory);

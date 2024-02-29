@@ -29,6 +29,12 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.OnSelectMessageReceived += HandleSelectCommand;
             this.backpackCommandBus.OnFilterCategoryMessageReceived += HandleFilterCategoryCommand;
             this.backpackCommandBus.OnSearchMessageReceived += HandleSearchCommand;
+            this.backpackCommandBus.OnPublishProfileReceived += HandlePublishProfile;
+        }
+
+        private void HandlePublishProfile(BackpackPublishProfileCommand command)
+        {
+            backpackEventBus.SendPublishProfile();
         }
 
         private void HandleSearchCommand(BackpackSearchCommand command)

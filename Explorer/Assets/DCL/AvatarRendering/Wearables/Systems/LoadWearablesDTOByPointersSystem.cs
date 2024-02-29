@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -67,29 +68,52 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             await UniTask.SwitchToMainThread();
 
-            bodyBuilder.Clear();
-            bodyBuilder.Append("{\"pointers\":[");
+            Dictionary<string, string> shortToExtendedUrns = DictionaryPool<string, string>.Get();
 
-            for (int i = startIndex; i < endIndex; ++i)
+            try
             {
-                // String Builder has overloads for int to prevent allocations
-                bodyBuilder.Append('\"');
-                bodyBuilder.Append(wearablesToRequest[i]);
-                bodyBuilder.Append('\"');
+                bodyBuilder.Clear();
+                bodyBuilder.Append("{\"pointers\":[");
 
-                if (i != wearablesToRequest.Count - 1)
-                    bodyBuilder.Append(",");
+                for (int i = startIndex; i < endIndex; ++i)
+                {
+                    // String Builder has overloads for int to prevent allocations
+                    bodyBuilder.Append('\"');
+
+                    URN extendedUrn = wearablesToRequest[i];
+                    URN shortenedUrn = extendedUrn.Shorten();
+                    bodyBuilder.Append(shortenedUrn);
+                    shortToExtendedUrns[shortenedUrn] = extendedUrn;
+
+                    bodyBuilder.Append('\"');
+
+                    if (i != wearablesToRequest.Count - 1)
+                        bodyBuilder.Append(",");
+                }
+
+                bodyBuilder.Append("]}");
+
+                using PoolExtensions.Scope<List<WearableDTO>> dtoPooledList = DTO_POOL.AutoScope();
+                List<WearableDTO> dtoTempBuffer = dtoPooledList.Value;
+
+                await (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
+                   .OverwriteFromJsonAsync(dtoTempBuffer, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+                // List is not concurrent
+                lock (results)
+                {
+                    // Restore original extended urn, otherwise is lost forever
+                    for (var i = 0; i < dtoTempBuffer.Count; i++)
+                    {
+                        WearableDTO dto = dtoTempBuffer[i];
+                        dto.metadata.id = shortToExtendedUrns[dto.metadata.id];
+                        dtoTempBuffer[i] = dto;
+                    }
+
+                    results.AddRange(dtoTempBuffer);
+                }
             }
-
-            bodyBuilder.Append("]}");
-
-            using PoolExtensions.Scope<List<WearableDTO>> dtoPooledList = DTO_POOL.AutoScope();
-
-            await (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
-               .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-
-            // List is not concurrent
-            lock (results) { results.AddRange(dtoPooledList.Value); }
+            finally { DictionaryPool<string, string>.Release(shortToExtendedUrns); }
         }
     }
 }

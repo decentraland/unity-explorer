@@ -59,10 +59,21 @@ namespace DCL.AvatarRendering.Wearables.Systems
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             intention.TotalAmount = lambdaResponse.totalAmount;
+
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
-                WearableDTO wearableDto = lambdaResponse.elements[i].entity;
+                WearableDTO.LambdaResponseElementDto element = lambdaResponse.elements[i];
+                WearableDTO wearableDto = element.entity;
+
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
+
+                // Add the wearable by shortened and extended urn. This helps the process of retrieving either unique or shared wearables
+                if (element.individualData.Length > 0)
+                {
+                    WearableDTO wearableDtoWithExtendedUrn = wearableDto;
+                    wearableDtoWithExtendedUrn.metadata.id = element.individualData[0].id;
+                    wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDtoWithExtendedUrn);
+                }
 
                 WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);

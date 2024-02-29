@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3.Identities;
 using System.Threading;
@@ -16,6 +17,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
@@ -24,12 +26,15 @@ namespace DCL.PluginSystem.Global
         private BackpackBusController? busController;
         internal BackpackController? backpackController { get; private set; }
 
-        public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity, ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog)
+        public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity,
+            ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog,
+            IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
+            this.profileRepository = profileRepository;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -42,7 +47,7 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
-            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
+            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity);
 
             busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
 

@@ -1,25 +1,66 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
-using System;
+using DCL.Profiles;
+using DCL.Web3.Identities;
 using System.Collections.Generic;
+using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.Backpack
 {
     public class BackpackEquipStatusController : IBackpackEquipStatusController
     {
-        private readonly IBackpackEventBus backpackEventBus;
+        private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Dictionary<string, IWearable> equippedWearables = new ();
+        private readonly ProfileBuilder profileBuilder = new ();
 
-        public BackpackEquipStatusController(IBackpackEventBus backpackEventBus)
+        public BackpackEquipStatusController(IBackpackEventBus backpackEventBus,
+            IProfileRepository profileRepository,
+            IWeb3IdentityCache web3IdentityCache)
         {
-            this.backpackEventBus = backpackEventBus;
-
-            this.backpackEventBus.EquipEvent += SetWearableForCategory;
-            this.backpackEventBus.UnEquipEvent += RemoveWearableForCategory;
+            this.profileRepository = profileRepository;
+            this.web3IdentityCache = web3IdentityCache;
+            backpackEventBus.EquipEvent += SetWearableForCategory;
+            backpackEventBus.UnEquipEvent += RemoveWearableForCategory;
+            backpackEventBus.PublishProfileEvent += PublishProfile;
 
             foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
                 equippedWearables.Add(category, null);
+        }
+
+        private void PublishProfile()
+        {
+            async UniTaskVoid PublishProfileAsync(CancellationToken ct)
+            {
+                Profile profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
+
+                HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
+                HashSet<URN> sharedWearables = HashSetPool<URN>.Get();
+
+                foreach ((string category, IWearable w) in equippedWearables)
+                {
+                    if (w == null) continue;
+                    if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
+                    var urn = new URN(w.WearableDTO.Asset.metadata.id);
+                    uniqueWearables.Add(urn);
+                    sharedWearables.Add(urn.Shorten());
+                }
+
+                profile = profileBuilder.From(profile!)
+                                        .WithWearables(uniqueWearables, sharedWearables)
+                                        .Build();
+
+                HashSetPool<URN>.Release(uniqueWearables);
+                HashSetPool<URN>.Release(sharedWearables);
+
+                await profileRepository.SetAsync(profile, ct);
+            }
+
+            PublishProfileAsync(CancellationToken.None).Forget();
         }
 
         public IWearable GetEquippedWearableForCategory(string category) =>
@@ -56,6 +97,7 @@ namespace DCL.Backpack
     public interface IBackpackEquipStatusController
     {
         IWearable GetEquippedWearableForCategory(string category);
+
         bool IsWearableEquipped(IWearable wearable);
     }
 }

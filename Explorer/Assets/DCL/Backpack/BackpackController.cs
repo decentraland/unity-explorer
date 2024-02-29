@@ -122,8 +122,8 @@ namespace DCL.Backpack
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
             backpackCommandBus.SendCommand(new BackpackEquipCommand(avatar.BodyShape.Value));
 
-            foreach (URN avatarSharedWearable in avatar.SharedWearables)
-                backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+            foreach (URN uniqueWearable in avatar.UniqueWearables)
+                backpackCommandBus.SendCommand(new BackpackEquipCommand(uniqueWearable.ToString()));
 
             initialLoadingIsDone = true;
         }
@@ -144,6 +144,8 @@ namespace DCL.Backpack
         {
             if (!initialLoadingIsDone)
                 profileLoadingCts.SafeCancelAndDispose();
+            else
+                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
