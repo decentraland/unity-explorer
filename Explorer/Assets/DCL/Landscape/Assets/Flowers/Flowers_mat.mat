@@ -13,8 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ADVANCED_LIGHTING
-  m_InvalidKeywords:
-  - _ENVIRONMENTREFLECTIONS_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -153,7 +152,7 @@ Material:
     - _SrcBlend: 1
     - _TranslucencyDirect: 0.327
     - _TranslucencyFalloff: 4
-    - _TranslucencyIndirect: 0
+    - _TranslucencyIndirect: 0.053
     - _TranslucencyOffset: 0
     - _UVSec: 0
     - _VertexColorBendingChannel: 0

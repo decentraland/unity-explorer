@@ -8,8 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Rock_02
-  m_Shader: {fileID: -6465566751694194690, guid: d521bfc19653b9c4f9408f8aba861c7d,
-    type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: d521bfc19653b9c4f9408f8aba861c7d, type: 3}
   m_Parent: {fileID: 2100000, guid: 0cd72a267e8634b4d9ecade4d663563e, type: 2}
   m_ModifiedSerializedProperties: 2
   m_ValidKeywords: []
@@ -33,8 +32,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
-    m_Colors: []
+    m_Floats:
+    - _MossMask: 0.734
+    m_Colors:
+    - _Moss: {r: 0.1882353, g: 0.41568628, b: 0.298488, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &2847640721757338224
 MonoBehaviour:
