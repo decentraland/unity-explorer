@@ -3,11 +3,9 @@ using DCL.ChangeRealmPrompt;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.TeleportPrompt;
-using JetBrains.Annotations;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
-using System;
 using UnityEngine;
 using Utility;
 
@@ -115,7 +113,9 @@ namespace CrdtEcsBridge.RestrictedActions
         private async UniTask ChangeRealmAsync(string message, string realm)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(
+                realm,
+                () => globalWorldActions.SetRealm(realm))));
         }
 
         public void Dispose() { }

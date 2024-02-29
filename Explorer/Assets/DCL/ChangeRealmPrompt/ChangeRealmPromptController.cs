@@ -1,5 +1,4 @@
-﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Input;
 using MVC;
 using System;
@@ -12,16 +11,11 @@ namespace DCL.ChangeRealmPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
-        //private readonly IRealmController realmController;
         private Action<ChangeRealmPromptResultType> resultCallback;
 
-        public ChangeRealmPromptController(
-            ViewFactoryMethod viewFactory,
-            ICursor cursor/*,
-            IRealmController realmController*/) : base(viewFactory)
+        public ChangeRealmPromptController(ViewFactoryMethod viewFactory, ICursor cursor) : base(viewFactory)
         {
             this.cursor = cursor;
-            //this.realmController = realmController;
         }
 
         protected override void OnViewInstantiated()
@@ -39,7 +33,7 @@ namespace DCL.ChangeRealmPrompt
                 if (result != ChangeRealmPromptResultType.Approved)
                     return;
 
-                ChangeRealmAsync(inputData.Realm, CancellationToken.None).Forget();
+                inputData.ChangeRealmCallback?.Invoke();
             });
         }
 
@@ -53,11 +47,6 @@ namespace DCL.ChangeRealmPrompt
         {
             resultCallback = result;
             viewInstance.RealmText.text = realm;
-        }
-
-        private async UniTask ChangeRealmAsync(string realmUrl, CancellationToken ct)
-        {
-            //return await realmController.SetRealmAsync(URLDomain.FromString(realmUrl), ct);
         }
 
         private void Dismiss() =>
