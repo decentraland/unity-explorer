@@ -1,4 +1,5 @@
 ﻿using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -20,15 +21,18 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         public IDataPipe DataPipe => this;
 
-        public event ReceivedDataDelegate? DataReceived;
-
-        public IRoom Room() =>
-            this;
-
         public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy)
         {
             DataReceived?.Invoke(data, new Participant(), kind);
         }
+
+        public event ReceivedDataDelegate? DataReceived;
+
+        public IConnectiveRoom.State CurrentState() =>
+            IConnectiveRoom.State.Running;
+
+        public IRoom Room() =>
+            this;
 
 #region Empty Implementations
         public event Room.MetaDelegate? RoomMetadataChanged;

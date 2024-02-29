@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
@@ -51,7 +52,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         [All(typeof(PlayerComponent))]
         private void SendPlayerNetMovement(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent)
         {
-            if (!room.IsRunning()) return;
+            if (room.CurrentState() != IConnectiveRoom.State.Running) return;
 
             if (lastSentMessage == null)
             {

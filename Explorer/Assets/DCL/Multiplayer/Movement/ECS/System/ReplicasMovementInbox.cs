@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using LiveKit.Proto;
@@ -35,7 +36,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         public async UniTask InitializeAsync()
         {
-            await UniTask.WaitUntil(room.IsRunning);
+            await UniTask.WaitUntil( () => room.CurrentState() == IConnectiveRoom.State.Running);
 
             room.Room().DataPipe.DataReceived += OnDataReceived;
             isSubscribed = true;
