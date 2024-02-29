@@ -6,10 +6,8 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using ECS.Abstract;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
@@ -23,6 +21,9 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly ElementBinding<string> stateScene;
         private readonly ElementBinding<string> remoteParticipantsScene;
 
+        private readonly ElementBinding<string> islandsStateScene;
+        private readonly ElementBinding<string> islandsRemoteParticipantsScene;
+
         private string? previous;
 
         public DebugRoomsSystem(
@@ -35,13 +36,18 @@ namespace DCL.Multiplayer.Connections.Systems
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
 
+            islandsStateScene = new ElementBinding<string>(string.Empty);
+            islandsRemoteParticipantsScene = new ElementBinding<string>(string.Empty);
+
             stateScene = new ElementBinding<string>(string.Empty);
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
 
             debugBuilder.AddWidget("Rooms")!
                         .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
                         .AddCustomMarker("State", stateScene)!
-                        .AddCustomMarker("Remote Participants", remoteParticipantsScene);
+                        .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
+                        .AddCustomMarker("State Island", stateScene)!
+                        .AddCustomMarker("Remote Participants Island", remoteParticipantsScene);
         }
 
         protected override void Update(float t)
@@ -55,6 +61,15 @@ namespace DCL.Multiplayer.Connections.Systems
             remoteParticipantsScene.SetAndUpdate(
                 (gateKeeperSceneRoom.CurrentState() is IConnectiveRoom.State.Running
                     ? gateKeeperSceneRoom.Room().Participants.RemoteParticipantSids().Count
+                    : 0
+                ).ToString()
+            );
+
+            islandsStateScene.SetAndUpdate(archipelagoIslandRoom.CurrentState().ToString());
+
+            islandsRemoteParticipantsScene.SetAndUpdate(
+                (archipelagoIslandRoom.CurrentState() is IConnectiveRoom.State.Running
+                    ? archipelagoIslandRoom.Room().Participants.RemoteParticipantSids().Count
                     : 0
                 ).ToString()
             );
