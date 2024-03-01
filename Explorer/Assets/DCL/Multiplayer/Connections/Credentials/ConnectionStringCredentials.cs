@@ -1,5 +1,6 @@
 using DCL.Utilities.Extensions;
 using System;
+using System.Collections.Specialized;
 using System.Web;
 
 namespace DCL.Multiplayer.Connections.Credentials
@@ -23,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Credentials
             get
             {
                 var uri = new Uri(connectionString);
-                var query = HttpUtility.ParseQueryString(uri.Query);
+                NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
                 return query["access_token"].EnsureNotNull("Access token not found");
             }
         }

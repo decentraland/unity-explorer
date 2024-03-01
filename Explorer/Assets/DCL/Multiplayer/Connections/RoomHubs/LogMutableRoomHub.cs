@@ -28,13 +28,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public void AssignIslandRoom(IRoom playRoom)
         {
-            log($"assigning island room");
+            log("assigning island room");
             origin.AssignIslandRoom(playRoom);
         }
 
         public void AssignSceneRoom(IRoom playRoom)
         {
-            log($"assigning scene room");
+            log("assigning scene room");
             origin.AssignSceneRoom(playRoom);
         }
     }

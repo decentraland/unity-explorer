@@ -9,6 +9,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
     {
         private IActiveSpeakers? assigned;
 
+        public int Count => assigned.EnsureAssigned().Count;
+
         public event Action? Updated;
 
         public void Assign(IActiveSpeakers value, out IActiveSpeakers? previous)
@@ -33,7 +35,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();
-
-        public int Count => assigned.EnsureAssigned().Count;
     }
 }
