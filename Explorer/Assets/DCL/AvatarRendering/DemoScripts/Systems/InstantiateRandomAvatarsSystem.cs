@@ -221,8 +221,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 var avatarShape = new PBAvatarShape
                 {
-                    Id = $"User{avatarIndex}",//StringUtils.GenerateRandomString(5)
-                    Name = $"User{avatarIndex}",//StringUtils.GenerateRandomString(Random.Range(5,12)),
+                    Id = $"User{avatarIndex}",
+                    Name = $"User{avatarIndex}",
                     BodyShape = currentRandomizer.BodyShape,
                     Wearables = { wearables },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
