@@ -42,6 +42,9 @@ namespace DCL.Chat
 
         private void OnSubmit(string _)
         {
+            if (string.IsNullOrWhiteSpace(currentMessage))
+                return;
+
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
         }
@@ -83,7 +86,7 @@ namespace DCL.Chat
         {
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
-            const int MINIMAL_LENGHT = 3;
+            const int MINIMAL_LENGHT = 2;
 
             if (inputText.Length > MINIMAL_LENGHT)
                 currentMessage = inputText;
@@ -94,7 +97,7 @@ namespace DCL.Chat
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
-            viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count-1, 0);
+            viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count - 1, 0);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
