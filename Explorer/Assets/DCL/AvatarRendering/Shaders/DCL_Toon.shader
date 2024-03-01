@@ -30,6 +30,10 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
         
+        [HideInInspector] _MainTexArr ("Main Texture Array", 2DArray) = "white" {}
+        [HideInInspector] _NormalMapArr ("Normal Texture Array", 2DArray) = "bump" {}
+        [HideInInspector] _Emissive_TexArr ("Emissive Texture Array", 2DArray) = "black" {}
+        
         [HideInInspector] _simpleUI ("SimpleUI", Int ) = 0
         [HideInInspector][Enum(OFF, 0, ON, 1)] _isUnityToonshader("Material is touched by Unity Toon Shader", Int) = 1
         [HideInInspector] _utsVersionX("VersionX", Float) = 0
