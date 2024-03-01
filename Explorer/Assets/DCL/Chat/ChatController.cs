@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -34,8 +35,15 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
+            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
+        }
+
+        private void OnSubmit(string text)
+        {
+            chatMessagesBus.Send(text);
+            viewInstance.InputField.text = string.Empty;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
