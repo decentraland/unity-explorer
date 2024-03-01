@@ -100,7 +100,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             if (timeFromLastSent < settings.MinPositionPackageTime)
                 return;
 
-            var extrapolatedVelocity = ExtrapolationComponent.DampVelocity()
+            // var extrapolatedVelocity = ExtrapolationComponent.DampVelocity()
 
             // Projective velocity and position!!!
 
@@ -155,7 +155,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
             string color = GetColorBasedOnDeltaTime(deltaTime);
-            Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
+            // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
 
             lastSentMessage = new MessageMock
             {
