@@ -15,8 +15,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
-using DCL.SkyBox;
-using DCL.TeleportPrompt;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -144,6 +142,17 @@ namespace Global.Dynamic
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, multiPool);
 
+            container.RealmController = new RealmController(
+                identityCache,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                parcelServiceContainer.TeleportController,
+                parcelServiceContainer.RetrieveSceneFromFixedRealm,
+                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
+                dynamicWorldParams.SceneLoadRadius,
+                dynamicWorldParams.StaticLoadPositions,
+                realmData,
+                staticContainer.ScenesCache);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, debugBuilder),
@@ -192,23 +201,16 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService),
+                new ChangeRealmPromptPlugin(
+                    staticContainer.AssetsProvisioner,
+                    container.MvcManager,
+                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
-
-            container.RealmController = new RealmController(
-                identityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
-                parcelServiceContainer.TeleportController,
-                parcelServiceContainer.RetrieveSceneFromFixedRealm,
-                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                dynamicWorldParams.SceneLoadRadius,
-                dynamicWorldParams.StaticLoadPositions,
-                realmData,
-                staticContainer.ScenesCache);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

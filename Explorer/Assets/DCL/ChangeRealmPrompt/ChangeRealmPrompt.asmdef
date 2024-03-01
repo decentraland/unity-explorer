@@ -1,0 +1,22 @@
+{
+    "name": "ChangeRealmPrompt",
+    "rootNamespace": "",
+    "references": [
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:e49b0e838d4f4d6194cd8f9ed5309820"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
