@@ -43,7 +43,7 @@ namespace DCL.Chat
 
         private void OnSubmit(string text)
         {
-            chatMessagesBus.Send(text);
+            chatMessagesBus.Send(viewInstance.InputField.text);
             viewInstance.InputField.text = string.Empty;
         }
 
