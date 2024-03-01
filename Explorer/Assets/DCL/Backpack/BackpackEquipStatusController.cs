@@ -8,6 +8,7 @@ using DCL.Web3.Identities;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Backpack
 {
@@ -17,6 +18,8 @@ namespace DCL.Backpack
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Dictionary<string, IWearable> equippedWearables = new ();
         private readonly ProfileBuilder profileBuilder = new ();
+
+        private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(IBackpackEventBus backpackEventBus,
             IProfileRepository profileRepository,
@@ -36,7 +39,7 @@ namespace DCL.Backpack
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
-                Profile profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
+                Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
 
                 HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
                 HashSet<URN> sharedWearables = HashSetPool<URN>.Get();
@@ -60,7 +63,8 @@ namespace DCL.Backpack
                 await profileRepository.SetAsync(profile, ct);
             }
 
-            PublishProfileAsync(CancellationToken.None).Forget();
+            publishProfileCts = publishProfileCts.SafeRestart();
+            PublishProfileAsync(publishProfileCts.Token).Forget();
         }
 
         public IWearable GetEquippedWearableForCategory(string category) =>
