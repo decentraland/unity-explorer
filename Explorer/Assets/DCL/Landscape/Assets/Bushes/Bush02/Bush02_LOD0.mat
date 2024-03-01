@@ -76,7 +76,7 @@ Material:
     - _HueVariationKwToggle: 1
     - _Metallic: 0
     - _NormalMapKwToggle: 0
-    - _OldHueVarBehavior: 0
+    - _OldHueVarBehavior: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _SubsurfaceIndirect: 0.1
