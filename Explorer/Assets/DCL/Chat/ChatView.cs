@@ -22,9 +22,6 @@ namespace DCL.Chat
         public ToggleView ChatBubblesToggle { get; private set; }
 
         [field: SerializeField]
-        public Transform MessagesContainer { get; private set; }
-
-        [field: SerializeField]
         public TMP_InputField InputField { get; private set; }
 
         [field: SerializeField]
