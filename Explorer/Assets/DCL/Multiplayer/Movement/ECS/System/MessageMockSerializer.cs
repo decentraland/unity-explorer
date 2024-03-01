@@ -13,10 +13,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
             return Encoding.UTF8.GetBytes(json);
         }
 
-        public static MessageMock DeserializeMessage(ReadOnlySpan<byte> data)
+        public static MessageMock? DeserializeMessage(ReadOnlySpan<byte> data)
         {
-            string jsonString = Encoding.UTF8.GetString(data.ToArray());
-            return JsonUtility.FromJson<MessageMock>(jsonString);
+            try
+            {
+                string jsonString = Encoding.UTF8.GetString(data.ToArray());
+                return JsonUtility.FromJson<MessageMock>(jsonString);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }
