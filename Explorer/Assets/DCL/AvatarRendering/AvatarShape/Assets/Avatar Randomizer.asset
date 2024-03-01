@@ -15,6 +15,8 @@ MonoBehaviour:
   <RandomOrder>k__BackingField: 0
   <Avatars>k__BackingField:
   - pointers:
+    - urn:decentraland:matic:collections-v2:0xac3b666704ec025b2e59f22249830a07b6fb9573:0
+  - pointers:
     - urn:decentraland:matic:collections-v2:0x25cb28f19368d421857272133aac7933eb9efac4:0
   - pointers:
     - urn:decentraland:matic:collections-v2:0xcbd17d94f5be12fff27566c23888d6936b8e70b8:6
@@ -32,8 +34,6 @@ MonoBehaviour:
     - urn:decentraland:matic:collections-v2:0x5a8eb90616eb50dbca5389a4fa03e51d9c2ff546:0
   - pointers:
     - urn:decentraland:matic:collections-v2:0x40dcc86e8a7ea62a5d844133b90a56c835ddb9e9:0
-  - pointers:
-    - urn:decentraland:matic:collections-v2:0xac3b666704ec025b2e59f22249830a07b6fb9573:0
   - pointers:
     - urn:decentraland:matic:collections-v2:0xecfde4709234f5958bb249f459b8ed81546034cb:0
   - pointers:

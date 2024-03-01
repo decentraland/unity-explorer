@@ -18,6 +18,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
+using Castle.Components.DictionaryAdapter;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -131,6 +132,19 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
         }
 
+        public Texture Resize(Texture source, int newWidth, int newHeight)
+        {
+            RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight);
+            RenderTexture.active = rt;
+            Graphics.Blit(source, rt);
+            Texture2D nTex = new Texture2D(newWidth, newHeight, TextureFormat.BC7, false);
+            nTex.ReadPixels(new Rect(0, 0, newWidth, newHeight), 0,0);
+            nTex.Apply();
+            RenderTexture.active = null;
+            RenderTexture.ReleaseTemporary(rt);
+            return nTex;
+        }
+        
         private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, in StreamableResult wearablesResult, AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
@@ -142,20 +156,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             List<IWearable> visibleWearables = wearablesResult.Asset.Wearables;
 
+            Dictionary<string, Texture> facialFeatureTexture = new Dictionary<string, Texture>();
+
             for (var i = 0; i < visibleWearables.Count; i++)
             {
                 IWearable resultWearable = visibleWearables[i];
+                WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
                 if (resultWearable.isFacialFeature())
                 {
-                    //TODO: Facial Features. They are textures that should be applied on the body shape, not gameobjects to instantiate.
-                    //We need the asset bundle to have access to the texture
+                    facialFeatureTexture.Add(resultWearable.GetCategory(), Resize(originalAsset.GetMainAsset<Texture>(), 256,256));
                 }
                 else
                 {
-                    WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
-
-                    if (originalAsset.GameObject == null)
+                    if (originalAsset.GetMainAsset<GameObject>() == null)
                     {
                         ReportHub.LogError(GetReportCategory(),
                             $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
@@ -171,15 +185,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     usedCategories.Add(resultWearable.GetCategory());
 
                     if (resultWearable.IsBodyShape())
+                    {
                         bodyShape = instantiatedWearable;
+                    }
                 }
             }
-
+            
             AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
+                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, avatarShapeComponent,  facialFeatureTexture);
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
