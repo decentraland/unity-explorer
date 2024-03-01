@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
         private IObjectPool<NametagView> nametagViewPool;
-        private ProvidedAsset<NametagsData> nametagsData;
+        private NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry;
 
@@ -66,7 +66,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            NametagsData nametagsData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -75,6 +76,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.nametagsData = nametagsData;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
@@ -93,7 +95,6 @@ namespace DCL.PluginSystem.Global
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
-            nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
         }
@@ -104,7 +105,7 @@ namespace DCL.PluginSystem.Global
             Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
-            new NametagsDebugController(debugContainerBuilder, nametagsData.Value);
+            new NametagsDebugController(debugContainerBuilder, nametagsData);
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
@@ -124,7 +125,7 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)

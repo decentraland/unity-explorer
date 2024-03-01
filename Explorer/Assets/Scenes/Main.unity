@@ -19,7 +19,7 @@ RenderSettings:
   m_FogMode: 0
   m_FogDensity: 0
   m_LinearFogStart: 0
-  m_LinearFogEnd: 0
+  m_LinearFogEnd: 0.01
   m_AmbientSkyColor: {r: 0.4125427, g: 0.49693304, b: 0.65837497, a: 1}
   m_AmbientEquatorColor: {r: 0.4910209, g: 0.7379107, b: 0.637597, a: 1}
   m_AmbientGroundColor: {r: 0.41788515, g: 0.7454045, b: 0.35640025, a: 1}
@@ -382,6 +382,11 @@ MonoBehaviour:
         m_EditorAssetChanged: 0
     <ChatEntryConfiguration>k__BackingField:
       m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <NametagsData>k__BackingField:
+      m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

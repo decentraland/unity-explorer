@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
@@ -16,6 +17,9 @@ namespace DCL.Chat
         private const float BACKGROUND_FADE_TIME = 0.2f;
         private const float CHAT_ENTRIES_FADE_TIME = 3f;
         private const int CHAT_ENTRIES_WAIT_BEFORE_FADE_MS = 10000;
+
+        [field: SerializeField]
+        public ToggleView ChatBubblesToggle { get; private set; }
 
         [field: SerializeField]
         public Transform MessagesContainer { get; private set; }

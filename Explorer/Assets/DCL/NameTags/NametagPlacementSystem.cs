@@ -6,17 +6,14 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Chat;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.UIElements;
 
 namespace DCL.Nametags
 {

@@ -2106,6 +2106,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
+  <ChatBubblesToggle>k__BackingField: {fileID: 4830781885806626314}
   <MessagesContainer>k__BackingField: {fileID: 0}
   <InputField>k__BackingField: {fileID: 5622104160664987093}
   <CharacterCounter>k__BackingField: {fileID: 5274648269416443391}
@@ -2513,3 +2514,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
   m_PrefabInstance: {fileID: 5658065957138897067}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4830781885806626314 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 977034302134673057, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 5658065957138897067}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 822ef88491b0c4b3982153e7574be1fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Nametags;
 using MVC;
 using System;
 using System.Threading;
@@ -15,16 +16,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly NametagsData nametagsData;
         private ChatController chatController;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IChatMessagesBus chatMessagesBus)
+            IChatMessagesBus chatMessagesBus,
+            NametagsData nametagsData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
+            this.nametagsData = nametagsData;
         }
 
         public void Dispose()
@@ -42,7 +46,8 @@ namespace DCL.PluginSystem.Global
                 ChatController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
                 chatEntryConfiguration,
-                chatMessagesBus);
+                chatMessagesBus,
+                nametagsData);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();

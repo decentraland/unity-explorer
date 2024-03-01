@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Nametags;
 using MVC;
 using SuperScrollView;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace DCL.Chat
     {
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly NametagsData nametagsData;
         private World world;
 
         private List<ChatMessage> chatMessages = new ();
@@ -22,10 +24,12 @@ namespace DCL.Chat
         public ChatController(
             ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            IChatMessagesBus chatMessagesBus) : base(viewFactory)
+            IChatMessagesBus chatMessagesBus,
+            NametagsData nametagsData) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
+            this.nametagsData = nametagsData;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
@@ -44,7 +48,17 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-            //viewInstance.ToggleChatBubblesBubbles.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
+            viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
+            viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
+            OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
+
+        }
+
+        private void OnToggleChatBubblesValueChanged(bool isToggled)
+        {
+            viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
+            viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
+            nametagsData.showChatBubbles = isToggled;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
