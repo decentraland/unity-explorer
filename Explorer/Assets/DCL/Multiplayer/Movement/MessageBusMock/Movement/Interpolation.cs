@@ -70,10 +70,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
         public void Run(MessageMock from, MessageMock to, bool isBlend = false)
         {
-            if (start.timestamp > end.timestamp) return;
+            if (from.timestamp > to.timestamp) return;
 
             start = from;
             end = to;
+
             this.isBlend = isBlend;
 
             enabled = true;

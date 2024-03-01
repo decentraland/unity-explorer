@@ -81,6 +81,30 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         /// <returns></returns>
         public static Vector3 Hermite(MessageMock start, MessageMock end, float t, float totalDuration)
         {
+            var deltaY = end.position.y - start.position.y;
+            var deltaTime = end.timestamp - start.timestamp;
+            float desiredChangeRateY = deltaY / deltaTime;
+
+            if (deltaY > 0) // Ensure monotonic increase
+            {
+                start.velocity.y = Mathf.Max(start.velocity.y, 0);
+                end.velocity.y = Mathf.Max(end.velocity.y, 0);
+
+                // Further adjust to not exceed the overall change rate
+                start.velocity.y = Mathf.Min(start.velocity.y, desiredChangeRateY);
+                end.velocity.y = Mathf.Min(end.velocity.y, desiredChangeRateY);
+            }
+            else if (deltaY < 0) // Ensure monotonic decrease
+            {
+                start.velocity.y = Mathf.Min(start.velocity.y, 0);
+                end.velocity.y = Mathf.Min(end.velocity.y, 0);
+
+                // Further adjust to not exceed the overall change rate (in magnitude)
+                start.velocity.y = Mathf.Max(start.velocity.y, desiredChangeRateY);
+                end.velocity.y = Mathf.Max(end.velocity.y, desiredChangeRateY);
+            }
+
+            // Interpolating
             float lerpValue = t / totalDuration;
 
             float t2 = lerpValue * lerpValue;
