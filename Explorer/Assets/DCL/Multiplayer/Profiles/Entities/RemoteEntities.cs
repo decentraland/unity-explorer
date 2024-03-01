@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
+using ECS.Prioritization.Components;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.Entities
@@ -25,7 +26,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (entityParticipantTable.Has(profile.WalletId))
                 return;
 
-            Entity entity = world.Create(profile.Profile);
+            Entity entity = world.Create(profile.Profile, new PartitionComponent());
             entityParticipantTable.Register(profile.WalletId, entity);
         }
     }
