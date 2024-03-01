@@ -47,6 +47,6 @@ namespace SceneRuntime.Apis.Modules
 
         [UsedImplicitly]
         public bool ChangeRealm(string message, string realm) =>
-            api.ChangeRealm(message, realm);
+            api.ChangeRealm(realm);
     }
 }
