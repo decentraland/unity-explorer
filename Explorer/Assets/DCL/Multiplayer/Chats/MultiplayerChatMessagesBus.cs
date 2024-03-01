@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
@@ -15,6 +16,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
+using System.Threading;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Chats
@@ -24,15 +26,17 @@ namespace DCL.Multiplayer.Chats
         private readonly IRoomHub roomHub;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
+        private readonly IProfileRepository profileRepository;
         private readonly MessageParser<Packet> packetParser;
 
         private const string TOPIC = "chat";
 
-        public MultiplayerChatMessagesBus(IRoomHub roomHub, IMemoryPool memoryPool, IMultiPool multiPool)
+        public MultiplayerChatMessagesBus(IRoomHub roomHub, IMemoryPool memoryPool, IMultiPool multiPool, IProfileRepository profileRepository)
         {
             this.roomHub = roomHub;
             this.memoryPool = memoryPool;
             this.multiPool = multiPool;
+            this.profileRepository = profileRepository;
             packetParser = new MessageParser<Packet>(multiPool.Get<Packet>);
 
             this.roomHub.IslandRoom().DataPipe.DataReceived += DataPipeOnDataReceived;
@@ -108,11 +112,13 @@ namespace DCL.Multiplayer.Chats
             {
                 await using var _ = await ExecuteOnMainThreadScope.NewScopeAsync();
 
+                var profile = await profileRepository.GetAsync(participant.Identity, 0, CancellationToken.None);
+
                 if (packet.value.Chat != null)
                     OnMessageAdded?.Invoke(
                         new ChatMessage(
                             packet.value.Chat.Message!,
-                            participant.Name,
+                            profile?.DisplayName ?? participant.Name,
                             participant.Identity,
                             false
                         )

@@ -1,7 +1,10 @@
+using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
+using System.Threading;
 
 namespace DCL.Multiplayer.Chats
 {
@@ -9,13 +12,15 @@ namespace DCL.Multiplayer.Chats
     {
         private readonly IChatMessagesBus origin;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileRepository profileRepository;
 
         public event Action<ChatMessage>? OnMessageAdded;
 
-        public SelfResendChatMessageBus(IChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache)
+        public SelfResendChatMessageBus(IChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository)
         {
             this.origin = origin;
             this.web3IdentityCache = web3IdentityCache;
+            this.profileRepository = profileRepository;
             this.origin.OnMessageAdded += OriginOnOnMessageAdded;
         }
 
@@ -32,6 +37,11 @@ namespace DCL.Multiplayer.Chats
         public void Send(string message)
         {
             origin.Send(message);
+            SendSelfAsync(message).Forget();
+        }
+
+        private async UniTaskVoid SendSelfAsync(string message)
+        {
             var identity = web3IdentityCache.Identity;
 
             if (identity == null)
@@ -40,10 +50,12 @@ namespace DCL.Multiplayer.Chats
                 return;
             }
 
+            var profile = await profileRepository.GetAsync(identity.Address, 0, CancellationToken.None);
+
             OnMessageAdded?.Invoke(
                 new ChatMessage(
                     message,
-                    identity.Address,
+                    profile?.DisplayName ?? string.Empty,
                     identity.Address,
                     true
                 )
