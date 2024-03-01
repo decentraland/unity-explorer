@@ -58,7 +58,7 @@ namespace DCL.Nametags
 
         private Color textColor = new (1,1,1,1);
         private Color usernameTextColor = new (1,1,1,1);
-        private Color backgroundColor = new (0.0627f, 0.0588f, 0.0706f, 0.85f);
+        private Color backgroundColor = new (1, 1, 1, 1);
 
         public void SetUsername(string username)
         {

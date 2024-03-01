@@ -57,6 +57,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private AvatarRandomizer[] randomizers;
         private bool randomizerInitialized;
         private SingleInstanceEntity settings;
+        private int avatarIndex = 0;
 
         internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery, IComponentPool<Transform> componentPools) : base(world)
         {
@@ -198,6 +199,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             for (var i = 0; i < randomAvatarsToInstantiate; i++)
             {
                 AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+                avatarIndex++;
                 var wearables = new List<string>();
 
                 foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
@@ -208,7 +210,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new CharacterTransform(transformPool.Get());
 
                 transformComp.Transform.position = StartPosition(spawnArea, startXPosition, startZPosition);
-                transformComp.Transform.name = $"RANDOM_AVATAR_{i}";
+                transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
 
                 CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;
@@ -219,8 +221,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 var avatarShape = new PBAvatarShape
                 {
-                    Id = $"User{i}",//StringUtils.GenerateRandomString(5)
-                    Name = $"User{i}",//StringUtils.GenerateRandomString(Random.Range(5,12)),
+                    Id = $"User{avatarIndex}",//StringUtils.GenerateRandomString(5)
+                    Name = $"User{avatarIndex}",//StringUtils.GenerateRandomString(Random.Range(5,12)),
                     BodyShape = currentRandomizer.BodyShape,
                     Wearables = { wearables },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
