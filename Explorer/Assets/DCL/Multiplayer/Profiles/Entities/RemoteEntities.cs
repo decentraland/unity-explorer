@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (entityParticipantTable.Has(profile.WalletId))
                 return;
 
-            Entity entity = world.Create(profile.Profile, new PartitionComponent());
+            Entity entity = world.Create(profile.Profile, PartitionComponent.TOP_PRIORITY);
             entityParticipantTable.Register(profile.WalletId, entity);
         }
     }
