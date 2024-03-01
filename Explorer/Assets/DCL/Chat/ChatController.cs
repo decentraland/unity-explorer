@@ -36,6 +36,7 @@ namespace DCL.Chat
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.InputField.onSubmit.AddListener(OnSubmit);
+            viewInstance.InputField.onEndEdit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
         }
