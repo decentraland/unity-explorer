@@ -48,6 +48,12 @@ MonoBehaviour:
     - urn:decentraland:matic:collections-v2:0x4353e39228813bfcb123f9822928ff4d5ac9288e:0
   - pointers:
     - urn:decentraland:matic:collections-v2:0x84a1d84f183fa0fd9b6b9cb1ed0ff1b7f5409ebb:5
+  - pointers:
+    - urn:decentraland:ethereum:collections-v1:halloween_2020:hwn_2020_dracula_mouth
+  - pointers:
+    - urn:decentraland:ethereum:collections-v1:dappcraft_moonminer:moonminer_neurahairs_hair
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x9ef30e8babfd367e2f31f3374ffe35ff4862e914:2
   <RandomizeCollection>k__BackingField:
   - pointer: base-wearable
     page_size: 282
