@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             Entity entity = world.Create(
                 profile.Profile,
                 PartitionComponent.TOP_PRIORITY,
-                new CharacterTransform(new GameObject("REMOTE_ENTITY").transform),
+                new CharacterTransform(new GameObject("REMOTE_ENTITY").transform), //TODO pooling
                 new CharacterAnimationComponent()
             );
             entityParticipantTable.Register(profile.WalletId, entity);
