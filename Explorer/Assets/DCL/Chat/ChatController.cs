@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,6 +13,7 @@ namespace DCL.Chat
         private readonly IChatMessagesBus chatMessagesBus;
 
         private readonly List<ChatMessage> chatMessages = new ();
+        private string currentMessage = string.Empty;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -35,16 +35,15 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
-            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
             viewInstance.InputField.onEndEdit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
         }
 
-        private void OnSubmit(string text)
+        private void OnSubmit(string _)
         {
-            chatMessagesBus.Send(viewInstance.InputField.text);
-            viewInstance.InputField.text = string.Empty;
+            chatMessagesBus.Send(currentMessage);
+            currentMessage = string.Empty;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
@@ -84,6 +83,10 @@ namespace DCL.Chat
         {
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
+            const int MINIMAL_LENGHT = 3;
+
+            if (inputText.Length > MINIMAL_LENGHT)
+                currentMessage = inputText;
         }
 
         private void CreateChatEntry(ChatMessage chatMessage)
