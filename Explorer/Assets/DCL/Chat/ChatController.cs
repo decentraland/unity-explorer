@@ -12,7 +12,7 @@ namespace DCL.Chat
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
 
-        private List<ChatMessage> chatMessages = new List<ChatMessage>();
+        private readonly List<ChatMessage> chatMessages = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
