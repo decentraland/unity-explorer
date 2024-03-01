@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Movement.ECS
         public void Update(float deltaTime)
         {
             Time += deltaTime;
-            velocity = DampVelocity();
+            velocity = DampVelocity(Time, Start, settings);
 
             if (velocity.sqrMagnitude > settings.MinSpeed)
                 transform.position += velocity * deltaTime;
@@ -63,12 +63,14 @@ namespace DCL.Multiplayer.Movement.ECS
             };
         }
 
-        private Vector3 DampVelocity()
+        public static Vector3 DampVelocity(float time, MessageMock start, IMultiplayerSpatialStateSettings settings)
         {
-            if (Time > settings.LinearTime && Time < totalMoveDuration)
-                return Vector3.Lerp(Start.velocity, Vector3.zero, Time / totalMoveDuration);
+            float totalMoveDuration = settings.LinearTime + (settings.LinearTime * settings.DampedSteps);
 
-            return Time >= totalMoveDuration ? Vector3.zero : velocity;
+            if (time > settings.LinearTime && time < totalMoveDuration)
+                return Vector3.Lerp(start.velocity, Vector3.zero, time / totalMoveDuration);
+
+            return time >= totalMoveDuration ? Vector3.zero : start.velocity;
         }
     }
 }

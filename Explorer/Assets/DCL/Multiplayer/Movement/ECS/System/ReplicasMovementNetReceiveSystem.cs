@@ -19,12 +19,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(InstantiateRandomAvatarsSystem))]
     // [LogCategory(ReportCategory.AVATAR)]
-    public partial class PlayersReplicasNetMovementSystem : BaseUnityLoopSystem
+    public partial class ReplicasMovementNetReceiveSystem : BaseUnityLoopSystem
     {
         private readonly IMultiplayerSpatialStateSettings settings;
         private readonly ReplicasMovementInbox inbox;
 
-        public PlayersReplicasNetMovementSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
+        public ReplicasMovementNetReceiveSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
         {
             this.settings = settings;
             inbox = new ReplicasMovementInbox(room, settings);

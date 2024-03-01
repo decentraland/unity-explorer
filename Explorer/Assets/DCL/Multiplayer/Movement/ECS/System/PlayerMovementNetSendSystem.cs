@@ -16,9 +16,8 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-
     // [LogCategory(ReportCategory.AVATAR)]
-    public partial class PlayerNetMovementSendSystem : BaseUnityLoopSystem
+    public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
         private readonly IArchipelagoIslandRoom room;
         private readonly IMultiplayerSpatialStateSettings settings;
@@ -27,7 +26,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private MessageMock? lastSentMessage;
 
-        public PlayerNetMovementSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
+        public PlayerMovementNetSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
         {
             this.room = room;
             this.settings = settings;
@@ -78,25 +77,30 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 return;
             }
 
+            if (mesPerSec >= 10) return;
+
+            var timeFromLastSent = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
+
             //----- MAX TIME CHECK -----
-            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp > settings.MaxSentDelay)
+            if (timeFromLastSent > settings.MaxSentDelay)
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, "MAX TIME");
                 return;
             }
 
             //----- ANIMATION CHECKS -----
-            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp > settings.MinAnimPackageTime
+            if (timeFromLastSent > settings.MinAnimPackageTime
                 && AnimationChanged(ref playerAnimationComponent, ref playerStunComponent, out string reason))
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, $"<color=olive> ANIM {reason} </color>");
                 return;
             }
-            return;
 
             //----- VELOCITY AND POSITION CHECKS -----
-            if (UnityEngine.Time.unscaledTime - lastSentMessage?.timestamp < settings.MinPositionPackageTime)
+            if (timeFromLastSent < settings.MinPositionPackageTime)
                 return;
+
+            var extrapolatedVelocity = ExtrapolationComponent.DampVelocity()
 
             // Projective velocity and position!!!
 
