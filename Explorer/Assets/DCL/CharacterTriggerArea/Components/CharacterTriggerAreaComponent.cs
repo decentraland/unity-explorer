@@ -2,20 +2,19 @@ using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.CharacterTriggerArea.Components
 {
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
+        private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
         public Vector3 AreaSize;
         public CharacterTriggerArea MonoBehaviour;
         public bool TargetOnlyMainPlayer;
 
-        private static readonly IReadOnlyCollection<Transform> empty = Array.Empty<Transform>();
-
-        public IReadOnlyCollection<Transform> EnteredThisFrame => MonoBehaviour?.EnteredThisFrame ?? empty;
-        public IReadOnlyCollection<Transform> ExitedThisFrame => MonoBehaviour?.ExitedThisFrame ?? empty;
+        public IReadOnlyCollection<Transform> EnteredThisFrame => MonoBehaviour?.EnteredThisFrame ?? EMPTY_COLLECTION;
+        public IReadOnlyCollection<Transform> ExitedThisFrame => MonoBehaviour?.ExitedThisFrame ?? EMPTY_COLLECTION;
+        public IReadOnlyCollection<Transform> CurrentAvatarsInside => MonoBehaviour?.CurrentAvatarsInside ?? EMPTY_COLLECTION;
 
         public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false)
         {

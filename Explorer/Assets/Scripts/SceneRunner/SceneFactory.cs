@@ -22,6 +22,7 @@ using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
+using Global.Dynamic;
 using Microsoft.ClearScript;
 using MVC;
 using SceneRunner.ECSWorld;
@@ -52,6 +53,7 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
+        private IGlobalWorldActions globalWorldActions;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -127,6 +129,11 @@ namespace SceneRunner
         public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
             CreateSceneAsync(sceneData, partitionProvider, ct);
 
+        public void SetGlobalWorldActions(IGlobalWorldActions actions)
+        {
+            this.globalWorldActions = actions;
+        }
+
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
@@ -201,7 +208,7 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
-            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider);

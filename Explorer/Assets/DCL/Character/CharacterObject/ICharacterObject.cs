@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using UnityEngine;
 
 namespace DCL.Character
@@ -14,6 +15,14 @@ namespace DCL.Character
 
         class Fake : ICharacterObject
         {
+            public Fake(Vector3 position) : this(null!, null!, null!, position)
+            {
+                ReportHub.LogWarning(
+                    ReportCategory.UNSPECIFIED,
+                    "Using Fake ICharacterObject, use only the position property for this case"
+                );
+            }
+
             public Fake(CharacterController controller, Transform cameraFocus, Transform transform, Vector3 position)
             {
                 Controller = controller;
