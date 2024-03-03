@@ -18,6 +18,7 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
@@ -142,6 +143,7 @@ namespace SceneRunner
             var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
             var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
+            var worldTimeProvider = new WorldTimeProvider();
 
             /* Pass dependencies here if they are needed by the systems */
             var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
@@ -202,7 +204,7 @@ namespace SceneRunner
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
-            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
+            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);

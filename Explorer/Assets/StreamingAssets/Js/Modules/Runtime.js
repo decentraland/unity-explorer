@@ -4,8 +4,8 @@ module.exports.getRealm = async function(message) {
 }
 
 module.exports.getWorldTime = async function(message) {
-    console.log('JSMODULE: getWorldTime')
-    return {};
+    const { time } = await UnityRuntime.GetWorldTime()
+    return { time };
 }
 
 module.exports.readFile = async function(message) {

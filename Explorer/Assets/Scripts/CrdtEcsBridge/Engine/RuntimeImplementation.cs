@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Time;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -23,11 +24,13 @@ namespace CrdtEcsBridge.Engine
     {
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
+        private readonly IWorldTimeProvider timeProvider;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
+            this.timeProvider = timeProvider;
         }
 
         public void Dispose() { }
@@ -61,6 +64,16 @@ namespace CrdtEcsBridge.Engine
             {
                 content = content,
                 hash = hash,
+            };
+        }
+
+        public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
+        {
+            float seconds = await timeProvider.GetWorldTimeAsync(ct);
+
+            return new IRuntime.GetWorldTimeResponse
+            {
+                seconds = seconds,
             };
         }
     }

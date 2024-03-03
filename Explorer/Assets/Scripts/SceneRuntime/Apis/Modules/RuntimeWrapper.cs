@@ -43,5 +43,17 @@ namespace SceneRuntime.Apis.Modules
                 return null;
             }
         }
+
+        [UsedImplicitly]
+        public object GetWorldTime()
+        {
+            try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            catch (Exception e)
+            {
+                // Report an uncategorized exception
+                exceptionsHandler.OnEngineException(e);
+                return null;
+            }
+        }
     }
 }
