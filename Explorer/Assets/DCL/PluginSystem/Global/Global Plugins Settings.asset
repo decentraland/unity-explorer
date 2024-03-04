@@ -257,7 +257,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         celShadingMaterial:
-          m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -269,6 +269,11 @@ MonoBehaviour:
         defaultMaterialCapacity: 100
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <AvatarRandomizerSettingsRef>k__BackingField:
+          m_AssetGUID: e18034962a56eac40ab5df62e159c314
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
