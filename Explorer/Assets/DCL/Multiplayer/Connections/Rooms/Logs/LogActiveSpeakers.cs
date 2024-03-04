@@ -1,8 +1,8 @@
+using DCL.Diagnostics;
 using LiveKit.Rooms.ActiveSpeakers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs
 {
@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
 
         public event Action? Updated;
 
-        public LogActiveSpeakers(IActiveSpeakers origin) : this(origin, Debug.Log) { }
+        public LogActiveSpeakers(IActiveSpeakers origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
 
         public LogActiveSpeakers(IActiveSpeakers origin, Action<string> log)
         {

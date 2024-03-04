@@ -31,6 +31,9 @@ using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
+using System.Buffers;
+using Unity.Mathematics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -127,12 +130,14 @@ namespace Global.Dynamic
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
-                profileCache);
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache); //new IProfileRepository.Fake();
+            //TODO replace fake when the deploy ready
+                //new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
 
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
+            var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
                 container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
@@ -155,7 +160,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, debugBuilder),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),

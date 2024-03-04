@@ -11,6 +11,7 @@ namespace DCL.Diagnostics
     /// </summary>
     public class ReportHubLogger : ILogHandler
     {
+        private readonly Action<Exception> emergencyLog = Debug.LogWarning;
         private readonly IReadOnlyList<(ReportHandler type, IReportHandler handler)> reportHandlers;
 
         public ReportHubLogger(IReadOnlyList<(ReportHandler, IReportHandler)> reportHandlers)
@@ -65,10 +66,15 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, object message, Object context, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+            try
             {
-                if (EnumUtils.HasFlag(reportToHandlers, type))
-                    handler.Log(logType, reportData, context, message);
+                foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+                    if (EnumUtils.HasFlag(reportToHandlers, type))
+                        handler.Log(logType, reportData, context, message);
+            }
+            catch (Exception e)
+            {
+                emergencyLog(new Exception($"Some error while logging the message: '{message}'", e));
             }
         }
 

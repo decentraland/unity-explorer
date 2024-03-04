@@ -11,12 +11,11 @@ namespace DCL.Profiles
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public GetProfileIntention(string profileId, int version,
-            CommonLoadingArguments commonArguments)
+        public GetProfileIntention(string profileId, int version)
         {
             ProfileId = profileId;
             Version = version;
-            CommonArguments = commonArguments;
+            CommonArguments = new CommonLoadingArguments(FakeUrl(profileId, version));
         }
 
         public bool Equals(GetProfileIntention other) =>
@@ -30,5 +29,8 @@ namespace DCL.Profiles
 
         public override string ToString() =>
             $"Get Profile: {ProfileId} - {Version}";
+
+        public static string FakeUrl(string profileId, int version) =>
+            $"FAKE_URL_{profileId}_{version}";
     }
 }
