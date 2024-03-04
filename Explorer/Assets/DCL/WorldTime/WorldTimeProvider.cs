@@ -16,22 +16,18 @@ namespace DCL.Time
         private const int TIME_BETWEEN_UPDATES = 5000;
         private const float GAME_HOURS_PER_CYCLE = 24;
         private const float REAL_MINUTES_PER_CYCLE = 120;
+        private const float STARTING_CYCLE_HOUR = 0.01f;
 
         private DateTime cachedServerTime;
         private DateTime cachedSystemTime;
         private float cachedTimeInSeconds;
         private bool isPaused;
 
-        public void SetPausedState(bool isPaused)
-        {
-            this.isPaused = isPaused;
-        }
-
         public async UniTask<float> GetWorldTimeAsync(CancellationToken ct)
         {
             if (isPaused) return cachedTimeInSeconds;
 
-            DateTime currentSystemTime = DateTime.Now;
+            DateTime currentSystemTime = DateTime.Now.ToUniversalTime();
             TimeSpan timeDifference = currentSystemTime - cachedServerTime;
             DateTime currentTime;
 
@@ -62,7 +58,7 @@ namespace DCL.Time
             double cyclesPassed = totalMinutes / REAL_MINUTES_PER_CYCLE;
             float currentCyclePercentage = (float)cyclesPassed - (int)cyclesPassed;
             float cycleHour = currentCyclePercentage * GAME_HOURS_PER_CYCLE;
-            return cycleHour > 0? cycleHour : 0.01f;
+            return cycleHour > 0? cycleHour : STARTING_CYCLE_HOUR;
         }
 
         private async UniTask<StreamableLoadingResult<string>> GetTimeFromServer(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
