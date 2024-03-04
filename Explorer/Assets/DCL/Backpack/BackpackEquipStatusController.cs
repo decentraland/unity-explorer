@@ -16,7 +16,7 @@ namespace DCL.Backpack
     {
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly Dictionary<string, IWearable> equippedWearables = new ();
+        private readonly Dictionary<string, IWearable?> equippedWearables = new ();
         private readonly ProfileBuilder profileBuilder = new ();
 
         private CancellationTokenSource? publishProfileCts;
@@ -42,23 +42,20 @@ namespace DCL.Backpack
                 Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
 
                 HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
-                HashSet<URN> sharedWearables = HashSetPool<URN>.Get();
 
-                foreach ((string category, IWearable w) in equippedWearables)
+                foreach ((string category, IWearable? w) in equippedWearables)
                 {
                     if (w == null) continue;
                     if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
                     var urn = new URN(w.WearableDTO.Asset.metadata.id);
                     uniqueWearables.Add(urn);
-                    sharedWearables.Add(urn.Shorten());
                 }
 
                 profile = profileBuilder.From(profile!)
-                                        .WithWearables(uniqueWearables, sharedWearables)
+                                        .WithWearables(uniqueWearables)
                                         .Build();
 
                 HashSetPool<URN>.Release(uniqueWearables);
-                HashSetPool<URN>.Release(sharedWearables);
 
                 await profileRepository.SetAsync(profile, ct);
             }
@@ -67,7 +64,7 @@ namespace DCL.Backpack
             PublishProfileAsync(publishProfileCts.Token).Forget();
         }
 
-        public IWearable GetEquippedWearableForCategory(string category) =>
+        public IWearable? GetEquippedWearableForCategory(string category) =>
             equippedWearables[category];
 
         public bool IsWearableEquipped(IWearable wearable) =>
@@ -82,7 +79,7 @@ namespace DCL.Backpack
 
             foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
             {
-                IWearable wearable = equippedWearables[category];
+                IWearable? wearable = equippedWearables[category];
 
                 if (wearable == null)
                     continue;
@@ -100,7 +97,7 @@ namespace DCL.Backpack
 
     public interface IBackpackEquipStatusController
     {
-        IWearable GetEquippedWearableForCategory(string category);
+        IWearable? GetEquippedWearableForCategory(string category);
 
         bool IsWearableEquipped(IWearable wearable);
     }

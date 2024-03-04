@@ -122,7 +122,7 @@ namespace DCL.Backpack
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
             backpackCommandBus.SendCommand(new BackpackEquipCommand(avatar.BodyShape.Value));
 
-            foreach (URN uniqueWearable in avatar.UniqueWearables)
+            foreach (URN uniqueWearable in avatar.Wearables)
                 backpackCommandBus.SendCommand(new BackpackEquipCommand(uniqueWearable.ToString()));
 
             initialLoadingIsDone = true;

@@ -13,7 +13,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Initialize(Avatar avatar)
         {
-            previewAvatarModel.Wearables = new List<URN>(avatar.SharedWearables);
+            previewAvatarModel.Wearables = new List<URN>(avatar.Wearables);
             base.Initialize(avatar);
         }
     }

@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private Promise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
             Promise.Create(World,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.SharedWearables, profile.Avatar.ForceRender),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
     }
 }

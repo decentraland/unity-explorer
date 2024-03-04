@@ -9,8 +9,7 @@ namespace DCL.Profiles
 {
     public class ProfileBuilder
     {
-        private IEnumerable<URN>? uniqueWearables;
-        private IEnumerable<URN>? sharedWearables;
+        private IEnumerable<URN>? wearables;
         private BodyShape bodyShape = BodyShape.MALE;
         private Color eyesColor;
         private Color hairColor;
@@ -45,7 +44,7 @@ namespace DCL.Profiles
 
         public ProfileBuilder From(Profile profile)
         {
-            uniqueWearables = profile.Avatar.uniqueWearables;
+            wearables = profile.Avatar.wearables;
             bodyShape = profile.Avatar.BodyShape;
             eyesColor = profile.Avatar.EyesColor;
             skinColor = profile.Avatar.SkinColor;
@@ -81,11 +80,9 @@ namespace DCL.Profiles
             return this;
         }
 
-        public ProfileBuilder WithWearables(IEnumerable<URN> uniqueWearables, IEnumerable<URN> sharedWearables)
+        public ProfileBuilder WithWearables(IEnumerable<URN> wearables)
         {
-            this.uniqueWearables = uniqueWearables;
-            this.sharedWearables = sharedWearables;
-
+            this.wearables = wearables;
             return this;
         }
 
@@ -120,13 +117,9 @@ namespace DCL.Profiles
             var avatar = new Avatar();
             profile.Avatar = avatar;
 
-            if (uniqueWearables != null)
-                foreach (URN urn in uniqueWearables)
-                    avatar.uniqueWearables.Add(urn);
-
-            if (sharedWearables != null)
-                foreach (URN urn in sharedWearables)
-                    avatar.sharedWearables.Add(urn);
+            if (wearables != null)
+                foreach (URN urn in wearables)
+                    avatar.wearables.Add(urn);
 
             avatar.BodyShape = bodyShape;
 
