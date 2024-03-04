@@ -76,25 +76,12 @@ namespace CrdtEcsBridge.Engine
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
         {
-            try
-            {
-                float seconds = await timeProvider.GetWorldTimeAsync(ct);
+            float seconds = await timeProvider.GetWorldTimeAsync(ct);
 
-                return new IRuntime.GetWorldTimeResponse
-                {
-                    seconds = seconds,
-                };
-            }
-            catch (Exception e)
+            return new IRuntime.GetWorldTimeResponse
             {
-                // Report an exception
-                exceptionsHandler.OnEngineException(e);
-                return new IRuntime.GetWorldTimeResponse
-                {
-                    seconds = DEFAULT_GET_WORLD_TIME,
-                };
-
-            }
+                seconds = seconds,
+            };
         }
     }
 }
