@@ -88,6 +88,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
 
+                if (loadingIntentionPointer == null)
+                {
+                    ReportHub.LogError(
+                        GetReportCategory(),
+                        $"ResolveWearableByPointerSystem: Null pointer found in the list of pointers: index {index}"
+                    );
+                    continue;
+                }
+
                 if (!wearableCatalog.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
                 {
                     wearableCatalog.AddEmptyWearable(loadingIntentionPointer);
