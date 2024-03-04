@@ -8,8 +8,6 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new();
-
         IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics();
 
         IReadOnlyList<IRequestMetric> GetMetric(Type requestType);
@@ -17,5 +15,12 @@ namespace DCL.WebRequests.Analytics
         internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
         internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest;
+
+        public static readonly IWebRequestsAnalyticsContainer DEFAULT = new WebRequestsAnalyticsContainer();
+    }
+
+    public interface IMutableWebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
+    {
+        WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new();
     }
 }

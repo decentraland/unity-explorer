@@ -33,6 +33,8 @@ MonoBehaviour:
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
+  - rid: 7162477752737071106
+  - rid: 7162477796324278274
   references:
     version: 2
     RefIds:
@@ -255,7 +257,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         celShadingMaterial:
-          m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
+          m_AssetGUID: 19373184c73f36042a55739551bb8298
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -267,11 +269,6 @@ MonoBehaviour:
         defaultMaterialCapacity: 100
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <AvatarRandomizerSettingsRef>k__BackingField:
-          m_AssetGUID: e18034962a56eac40ab5df62e159c314
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -330,6 +327,22 @@ MonoBehaviour:
       data:
         ExternalUrlPromptPrefab:
           m_AssetGUID: 809b68e5ce75da1429e55ffcc44fa23b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7162477752737071106
+      type: {class: TeleportPromptPlugin/TeleportPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        TeleportPromptPrefab:
+          m_AssetGUID: 37b740e9dd5ba324c91cd05632ea002c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7162477796324278274
+      type: {class: ChangeRealmPromptPlugin/ChangeRealmPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ChangeRealmPromptPrefab:
+          m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

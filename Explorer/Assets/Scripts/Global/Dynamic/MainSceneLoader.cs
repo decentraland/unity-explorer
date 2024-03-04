@@ -7,9 +7,6 @@ using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
-using DCL.SceneLoadingScreens;
-using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -19,7 +16,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
 
@@ -221,6 +217,34 @@ namespace Global.Dynamic
 
             IRealmController realmController = dynamicWorldContainer!.RealmController;
             await realmController.SetRealmAsync(URLDomain.FromString(realm), ct);
+        }
+
+        [ContextMenu(nameof(ValidateSettingsAsync))]
+        public async UniTask ValidateSettingsAsync()
+        {
+            using var scope = new CheckingScope(ReportData.UNSPECIFIED);
+
+            await UniTask.WhenAll(
+                globalPluginSettingsContainer.EnsureValidAsync(),
+                scenePluginSettingsContainer.EnsureValidAsync()
+            );
+            ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
+        }
+
+        private readonly struct CheckingScope : IDisposable
+        {
+            private readonly ReportData data;
+
+            public CheckingScope(ReportData data)
+            {
+                this.data = data;
+                ReportHub.Log(data, "Start checking");
+            }
+
+            public void Dispose()
+            {
+                ReportHub.Log(data, "Finish checking");
+            }
         }
     }
 }
