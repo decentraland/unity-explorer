@@ -9,6 +9,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
     {
         Linear,
         Hermite,
+        MonotoneYHermite,
+        FullMonotonicHermite,
         Bezier,
         VelocityBlending,
         PositionBlending,
@@ -16,7 +18,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
     public static class Interpolate
     {
-        public static List<string> Types = Enum.GetValues(typeof(InterpolationType)).Cast<InterpolationType>().Select(type => type.ToString()).ToList();
+        public static readonly List<string> TYPES = Enum.GetValues(typeof(InterpolationType)).Cast<InterpolationType>().Select(type => type.ToString()).ToList();
 
         /// <summary>
         ///     Linear Interpolation. Just wrapper around built-in Vector3.Lerp
@@ -81,29 +83,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         /// <returns></returns>
         public static Vector3 Hermite(MessageMock start, MessageMock end, float t, float totalDuration)
         {
-            var deltaY = end.position.y - start.position.y;
-            var deltaTime = end.timestamp - start.timestamp;
-            float desiredChangeRateY = deltaY / deltaTime;
-
-            if (deltaY > 0) // Ensure monotonic increase
-            {
-                start.velocity.y = Mathf.Max(start.velocity.y, 0);
-                end.velocity.y = Mathf.Max(end.velocity.y, 0);
-
-                // Further adjust to not exceed the overall change rate
-                start.velocity.y = Mathf.Min(start.velocity.y, desiredChangeRateY);
-                end.velocity.y = Mathf.Min(end.velocity.y, desiredChangeRateY);
-            }
-            else if (deltaY < 0) // Ensure monotonic decrease
-            {
-                start.velocity.y = Mathf.Min(start.velocity.y, 0);
-                end.velocity.y = Mathf.Min(end.velocity.y, 0);
-
-                // Further adjust to not exceed the overall change rate (in magnitude)
-                start.velocity.y = Mathf.Max(start.velocity.y, desiredChangeRateY);
-                end.velocity.y = Mathf.Max(end.velocity.y, desiredChangeRateY);
-            }
-
             // Interpolating
             float lerpValue = t / totalDuration;
 
@@ -118,6 +97,67 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
             // note: (start.velocity * timeDif) and (end.velocity * timeDif) can be cached
             return (h1 * start.position) + (h2 * end.position) + (start.velocity * (h3 * totalDuration)) + (end.velocity * (h4 * totalDuration));
+        }
+
+        /// <summary>
+        ///     Monotone on Y Cubic Hermite spline interpolation.
+        ///     Always pass through the start and end points and match their velocities
+        /// </summary>
+        /// <param name="start"> point from which interpolation starts </param>
+        /// <param name="end"> point where interpolation should end </param>
+        /// <param name="t">time passed from the start of the interpolation process</param>
+        /// <param name="totalDuration"> total duration of the interpolation </param>
+        /// <returns></returns>
+        public static Vector3 MonotoneYHermite(MessageMock start, MessageMock end, float t, float totalDuration)
+        {
+            (start.velocity.y, end.velocity.y) = Monotonize(start.position.y, end.position.y, start.velocity.y, end.velocity.y, end.timestamp - start.timestamp);
+            return Hermite(start, end, t, totalDuration);
+        }
+
+        /// <summary>
+        ///     Full Monotonic Cubic Hermite spline interpolation.
+        ///     Always pass through the start and end points and match their velocities
+        /// </summary>
+        /// <param name="start"> point from which interpolation starts </param>
+        /// <param name="end"> point where interpolation should end </param>
+        /// <param name="t">time passed from the start of the interpolation process</param>
+        /// <param name="totalDuration"> total duration of the interpolation </param>
+        /// <returns></returns>
+        public static Vector3 FullMonotonicHermite(MessageMock start, MessageMock end, float t, float totalDuration)
+        {
+            float timeDiff = end.timestamp - start.timestamp;
+
+            (start.velocity.x, end.velocity.x) = Monotonize(start.position.x, end.position.x, start.velocity.x, end.velocity.x, timeDiff);
+            (start.velocity.y, end.velocity.y) = Monotonize(start.position.y, end.position.y, start.velocity.y, end.velocity.y, timeDiff);
+            (start.velocity.z, end.velocity.z) = Monotonize(start.position.z, end.position.z, start.velocity.z, end.velocity.z, timeDiff);
+
+            return Hermite(start, end, t, totalDuration);
+        }
+
+        private static (float, float) Monotonize(float start, float end, float velocityStart, float velocityEnd, float deltaTime)
+        {
+            float desiredChangeRate = (end - start) / deltaTime;
+
+            if (end > start) // Ensure monotonic increase
+            {
+                velocityStart = Mathf.Max(velocityStart, 0);
+                velocityEnd = Mathf.Max(velocityEnd, 0);
+
+                // Further adjust to not exceed the overall change rate
+                velocityStart = Mathf.Min(velocityStart, desiredChangeRate);
+                velocityEnd = Mathf.Min(velocityEnd, desiredChangeRate);
+            }
+            else if (end < start) // Ensure monotonic decrease
+            {
+                velocityStart = Mathf.Min(velocityStart, 0);
+                velocityEnd = Mathf.Min(velocityEnd, 0);
+
+                // Further adjust to not exceed the overall change rate (in magnitude)
+                velocityStart = Mathf.Max(velocityStart, desiredChangeRate);
+                velocityEnd = Mathf.Max(velocityEnd, desiredChangeRate);
+            }
+
+            return (velocityStart, velocityEnd);
         }
 
         /// <summary>

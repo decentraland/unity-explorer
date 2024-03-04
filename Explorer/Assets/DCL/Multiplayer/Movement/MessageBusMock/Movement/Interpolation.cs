@@ -92,6 +92,8 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                    {
                        InterpolationType.Linear => Interpolate.Linear,
                        InterpolationType.Hermite => Interpolate.Hermite,
+                       InterpolationType.MonotoneYHermite => Interpolate.MonotoneYHermite,
+                       InterpolationType.FullMonotonicHermite => Interpolate.FullMonotonicHermite,
                        InterpolationType.Bezier => Interpolate.Bezier,
                        InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending,
                        _ => Interpolate.Linear,

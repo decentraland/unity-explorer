@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.MessageBusMock
 {
@@ -28,10 +29,10 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         {
             if (local == null) return;
 
-            t += UnityEngine.Time.deltaTime;
+            t += Time.deltaTime;
 
             if (t > messageBus.PackageSentRate)
-                transform.position += local.velocity * UnityEngine.Time.deltaTime;
+                transform.position += local.velocity * Time.deltaTime;
             else
             {
                 transform.position = extrapolationType switch
@@ -39,6 +40,11 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                                          InterpolationType.VelocityBlending => ProjectiveVelocityBlending(local, remote, t, messageBus.PackageSentRate),
                                          InterpolationType.Hermite => Interpolate.Hermite(local, projectedRemote, t, messageBus.PackageSentRate),
                                          InterpolationType.Bezier => Interpolate.Bezier(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.Linear => Interpolate.Linear(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.MonotoneYHermite => Interpolate.MonotoneYHermite(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.FullMonotonicHermite => Interpolate.FullMonotonicHermite(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         InterpolationType.PositionBlending => Interpolate.ProjectivePositionBlending(local, projectedRemote, t, messageBus.PackageSentRate),
+                                         _ => throw new ArgumentOutOfRangeException()
                                      };
             }
         }

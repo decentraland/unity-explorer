@@ -108,10 +108,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                          // INTERPOLATION
                         .AddControl(new DebugHintDef("INTERPOLATION"), null)
-                        .AddControl(new DebugDropdownDef(Interpolate.Types, intTypesBinding, "Int. Type"), null)
+                        .AddControl(new DebugDropdownDef(Interpolate.TYPES, intTypesBinding, "Int. Type"), null)
                         .AddControl(new DebugConstLabelDef("Int. SpeedUp Factor"), new DebugIntFieldDef(intSpeedUpFactor))
                         .AddToggleField("Use Blend", evt => useBlend.Value = !useBlend.Value, useBlend.Value)
-                        .AddControl(new DebugDropdownDef(Interpolate.Types, blendTypesBinding, "Blend Type"), null)
+                        .AddControl(new DebugDropdownDef(Interpolate.TYPES, blendTypesBinding, "Blend Type"), null)
                         .AddFloatField("Max Blend Speed", blendMaxSpeed)
 
                          // EXTRAPOLATION

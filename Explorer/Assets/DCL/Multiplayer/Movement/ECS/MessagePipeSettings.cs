@@ -14,6 +14,15 @@ namespace DCL.Multiplayer.Movement.ECS
         public float MinSlideBlendDiff { get; set; }
         public float VelocityCosAngleChangeThreshold { get; set; }
         public float VelocityChangeThreshold { get; set; }
+        public float PositionChangeThreshold { get; set; }
+        public float ProjVelocityChangeThreshold { get; set; }
+        public float ProjPositionChangeThreshold { get; set; }
+        public float WalkSqrSpeed { get; set; }
+        public float WalkSentRate { get; set; }
+        public float RunSqrSpeed { get; set; }
+        public float RunSentRate { get; set; }
+        public float SprintSqrSpeed { get; set; }
+        public float SprintSentRate { get; set; }
 
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public int PassedMessages { get; set; }

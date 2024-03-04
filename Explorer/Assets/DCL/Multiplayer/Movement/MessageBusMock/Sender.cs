@@ -73,7 +73,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
                 else if (!Input.GetKey(KeyCode.Space))
                 {
                     var position = characterController.transform.position;
-                    position.z -= 10f;
+                    // position.z -= 10f;
                     messageBus.Send(Time.unscaledTime, position, characterController.velocity, CalculateAverageAcceleration());
                     PutMark();
                 }

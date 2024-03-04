@@ -117,6 +117,8 @@ namespace DCL.Multiplayer.Movement.ECS
                        InterpolationType.VelocityBlending => Interpolate.ProjectiveVelocityBlending(start, end, time, totalDuration),
                        InterpolationType.Bezier => Interpolate.Bezier(start, end, time, totalDuration),
                        InterpolationType.Hermite => Interpolate.Hermite(start, end, time, totalDuration),
+                       InterpolationType.MonotoneYHermite => Interpolate.MonotoneYHermite(start, end, time, totalDuration),
+                       InterpolationType.FullMonotonicHermite => Interpolate.FullMonotonicHermite(start, end, time, totalDuration),
                        _ => Interpolate.Linear(start, end, time, totalDuration),
                    };
         }

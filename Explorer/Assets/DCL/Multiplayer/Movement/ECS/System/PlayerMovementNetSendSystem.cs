@@ -16,6 +16,7 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
@@ -26,15 +27,15 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private MessageMock? lastSentMessage;
 
+        private int mesPerSec;
+        private float mesPerSecTimer;
+
         public PlayerMovementNetSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
         {
             this.room = room;
             this.settings = settings;
             this.playerCharacter = playerCharacter;
         }
-
-        private int mesPerSec;
-        private float mesPerSecTimer;
 
         private static string GetColorBasedOnMesPerSec(int amount)
         {
@@ -59,8 +60,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 mesPerSec = 0;
                 mesPerSecTimer = 1;
             }
-            else
-            {    mesPerSecTimer -= t;}
+            else { mesPerSecTimer -= t; }
 
             SendPlayerNetMovementQuery(World);
         }
@@ -69,6 +69,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         [All(typeof(PlayerComponent))]
         private void SendPlayerNetMovement(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent)
         {
+            // Debug.Log($"VVV vel = {playerCharacter.velocity.sqrMagnitude}");
             if (room.CurrentState() != IConnectiveRoom.State.Running) return;
 
             if (lastSentMessage == null)
@@ -77,19 +78,20 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 return;
             }
 
+            float timeDiff = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
+
+            if (timeDiff >= 1f) mesPerSec = 0;
             if (mesPerSec >= 10) return;
 
-            var timeFromLastSent = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
-
             //----- MAX TIME CHECK -----
-            if (timeFromLastSent > settings.MaxSentDelay)
+            if (timeDiff > settings.MaxSentDelay)
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, "MAX TIME");
                 return;
             }
 
             //----- ANIMATION CHECKS -----
-            if (timeFromLastSent > settings.MinAnimPackageTime
+            if (timeDiff > settings.MinAnimPackageTime
                 && AnimationChanged(ref playerAnimationComponent, ref playerStunComponent, out string reason))
             {
                 SentMessage(ref playerAnimationComponent, ref playerStunComponent, $"<color=olive> ANIM {reason} </color>");
@@ -97,43 +99,64 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
 
             //----- VELOCITY AND POSITION CHECKS -----
-            if (timeFromLastSent < settings.MinPositionPackageTime)
+            if (timeDiff < settings.MinPositionPackageTime)
                 return;
 
-            // var extrapolatedVelocity = ExtrapolationComponent.DampVelocity()
+            Vector3 extrapolatedVelocity = ExtrapolationComponent.DampVelocity(timeDiff, lastSentMessage, settings);
+            Vector3 projectedPosition = lastSentMessage!.position + (extrapolatedVelocity * timeDiff);
 
-            // Projective velocity and position!!!
-
-            // Velocity angle change
-            // Dot product: -1 = opposite directions, 0 = perpendicular, 1 = same direction
-            if (lastSentMessage.velocity != Vector3.zero && playerCharacter.velocity != Vector3.zero &&
-                Vector3.Dot(lastSentMessage.velocity.normalized, playerCharacter.velocity.normalized) < settings.VelocityCosAngleChangeThreshold)
+            // Proj Velocity diff magnitude change
+            if (Vector3.SqrMagnitude(lastSentMessage.velocity - extrapolatedVelocity) > settings.ProjVelocityChangeThreshold)
             {
-                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=navy> VEL ANGLE {reason} </color>\"");
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=navy> PROJ VEL DIFF </color>\"");
+                return;
+            }
+
+            // Proj Position diff magnitude change
+            if (Vector3.SqrMagnitude(lastSentMessage.position - projectedPosition) > settings.ProjPositionChangeThreshold)
+            {
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=navy> PROJ POS DIFF </color>\"");
                 return;
             }
 
             // Velocity diff magnitude change
             if (Vector3.SqrMagnitude(lastSentMessage.velocity - playerCharacter.velocity) > settings.VelocityChangeThreshold)
             {
-                SentMessage(ref playerAnimationComponent, ref playerStunComponent,  "$\"<color=maroon> VEL DIFF {reason} </color>\"" );
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=maroon> VEL DIFF </color>\"");
                 return;
             }
 
-            // // Position diff magnitude change
-            // {}
+            // Position diff magnitude change
+            if (Vector3.SqrMagnitude(lastSentMessage.position - playerCharacter.transform.position) > settings.PositionChangeThreshold)
+            {
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=maroon> POS DIFF </color>\"");
+                return;
+            }
 
-            // { // Alvaro approach - velocity Tiers
-            //     // If velocity is high  - send (Alvaro approach)
-            //     // Ranged
-            //     if (playerCharacter.velocity.sqrMagnitude)
-            //     {
-            //
-            //     }
-            // }
+            // Velocity angle change (Dot product): -1 = opposite directions, 0 = perpendicular, 1 = same direction
+            if (lastSentMessage.velocity != Vector3.zero && playerCharacter.velocity != Vector3.zero &&
+                Vector3.Dot(lastSentMessage.velocity.normalized, playerCharacter.velocity.normalized) < settings.VelocityCosAngleChangeThreshold)
+            {
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=maroon> VEL ANGLE </color>\"");
+                return;
+            }
 
-            // Projective approach
-            Vector3 projectedPosition = lastSentMessage!.position + (lastSentMessage.velocity * (UnityEngine.Time.unscaledTime - lastSentMessage.timestamp));
+            // Velocity tiers - 0 = idle, 1 = walk, 2 = run, 3 = sprint
+            if (playerCharacter.velocity.sqrMagnitude > settings.SprintSqrSpeed && timeDiff > settings.SprintSentRate)
+            {
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=maroon> VEL TIERS SPRINT </color>\"");
+                return;
+            }
+            if (playerCharacter.velocity.sqrMagnitude > settings.RunSqrSpeed && timeDiff > settings.RunSentRate)
+            {
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=maroon> VEL TIERS RUN </color>\"");
+                return;
+            }
+            if (playerCharacter.velocity.sqrMagnitude > settings.WalkSqrSpeed && timeDiff > settings.WalkSentRate)
+            {
+                SentMessage(ref playerAnimationComponent, ref playerStunComponent, "$\"<color=maroon> VEL TIERS WALK </color>\"");
+                return;
+            }
         }
 
         private static string GetColorBasedOnDeltaTime(float deltaTime)
@@ -155,7 +178,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
             string color = GetColorBasedOnDeltaTime(deltaTime);
-            // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
+            Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
 
             lastSentMessage = new MessageMock
             {
@@ -168,7 +191,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             var byteMessage = new Span<byte>(MessageMockSerializer.SerializeMessage(lastSentMessage));
 
-            IReadOnlyCollection<string>? participants = room is IslandRoomMock? null : room.Room().Participants.RemoteParticipantSids();
+            IReadOnlyCollection<string>? participants = room is IslandRoomMock ? null : room.Room().Participants.RemoteParticipantSids();
             room.Room().DataPipe.PublishData(byteMessage, "Movement", participants!);
         }
 

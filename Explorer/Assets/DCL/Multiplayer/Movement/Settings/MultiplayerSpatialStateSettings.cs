@@ -13,13 +13,28 @@ namespace DCL.Multiplayer.Movement.Settings
         float MinSlideBlendDiff { get; set; }
         float VelocityCosAngleChangeThreshold { get; set; }
         float VelocityChangeThreshold { get; set; }
+        float PositionChangeThreshold { get; set; }
+
+        float ProjVelocityChangeThreshold { get; set; }
+        float ProjPositionChangeThreshold { get; set; }
+
+        float WalkSqrSpeed { get; set; }
+
+        float WalkSentRate { get; set; }
+
+        float RunSqrSpeed { get; set; }
+
+        float RunSentRate { get; set; }
+
+        float SprintSqrSpeed { get; set; }
+
+        float SprintSentRate { get; set; }
 
         /// Old settings
         int InboxCount { get; set; }
         int PassedMessages { get; set; }
         int PackageLost { get; set; }
         bool StartSending { get; set; }
-        float PackageSentRate { get; set; }
         float PackagesJitter { get; set; }
         float Latency { get; set; }
         float LatencyJitter { get; set; }
@@ -41,6 +56,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
     public class MultiplayerSpatialStateSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
+
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public int PassedMessages { get; set; }
         [field: SerializeField] public int PackageLost { get; set; }
@@ -54,10 +70,22 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public float MinPositionPackageTime { get; set; }
         [field: SerializeField] public float VelocityCosAngleChangeThreshold { get; set; }
         [field: SerializeField] public float VelocityChangeThreshold { get; set; }
+        [field: SerializeField] public float PositionChangeThreshold { get; set; }
+        [field: Header("SENDING PROJECTIVE")]
 
+        [field: SerializeField] public float ProjVelocityChangeThreshold { get; set; }
+        [field: SerializeField] public float ProjPositionChangeThreshold { get; set; }
+
+        [field: Header("SENDING VELOCITY TIERS")]
+
+        [field: SerializeField] public float WalkSqrSpeed { get; set; }
+        [field: SerializeField] public float WalkSentRate { get; set; }
+        [field: SerializeField] public float RunSqrSpeed { get; set; }
+        [field: SerializeField] public float RunSentRate { get; set; }
+        [field: SerializeField] public float SprintSqrSpeed { get; set; }
+        [field: SerializeField] public float SprintSentRate { get; set; }
         [field: Header("NETWORK")]
         [field: SerializeField] public float MaxSentDelay { get; set; }
-        [field: SerializeField] public float PackageSentRate { get; set; } = 0.33f;
         [field: SerializeField] public float PackagesJitter { get; set; }
         [field: SerializeField] public float Latency { get; set; } = 1f;
         [field: SerializeField] public float LatencyJitter { get; set; }
