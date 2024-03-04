@@ -33,6 +33,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                     {
                         results[i] = mapping.Handler.SetTexture(targetMaterial, tex);
                     }
+                    else if (mapping.OriginalTextureID == TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID)
+                    {
+                        Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/DefaultWhite_BC7");
+                        if (tex_temp)
+                            results[i] = mapping.Handler.SetTexture(targetMaterial, tex_temp);
+                    }
                     else if (mapping.OriginalTextureID == TextureArrayConstants.BUMP_MAP_ORIGINAL_TEXTURE_ID)
                     {
                         Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/FlatNormal_BC5");
