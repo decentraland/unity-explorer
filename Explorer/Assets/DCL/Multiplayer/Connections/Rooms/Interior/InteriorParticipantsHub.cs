@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
 
@@ -5,19 +6,19 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
     public class InteriorParticipantsHub : IParticipantsHub, IInterior<IParticipantsHub>
     {
-        private IParticipantsHub? assigned;
+        private IParticipantsHub assigned = NullParticipantsHub.INSTANCE;
 
         public event ParticipantDelegate? UpdatesFromParticipant;
 
         public void Assign(IParticipantsHub value, out IParticipantsHub? previous)
         {
             previous = assigned;
-
-            if (previous != null)
-                previous.UpdatesFromParticipant -= OnUpdatesFromParticipant;
+            previous.UpdatesFromParticipant -= OnUpdatesFromParticipant;
 
             assigned = value;
             value.UpdatesFromParticipant += OnUpdatesFromParticipant;
+
+            previous = previous is NullParticipantsHub ? null : previous;
         }
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update) =>
