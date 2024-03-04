@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Logs;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -42,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public LogRoom() : this(new Room()) { }
 
-        public LogRoom(IRoom origin) : this(origin, Debug.Log) { }
+        public LogRoom(IRoom origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
 
         public LogRoom(IRoom origin, Action<string> log)
         {

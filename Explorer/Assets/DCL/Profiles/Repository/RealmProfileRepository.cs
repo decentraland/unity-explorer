@@ -120,7 +120,11 @@ namespace DCL.Profiles
 
                 throw;
             }
-            finally { urlBuilder.Clear(); }
+            finally
+            {
+                urlBuilder.Clear();
+                //TODO here is no reason to clean it double time, it's cleaned every time in prerequest on 90's line
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private readonly IMetaDataSource origin;
         private readonly Action<string> log;
 
-        public LogMetaDataSource(IMetaDataSource origin) : this(origin, Debug.Log) { }
+        public LogMetaDataSource(IMetaDataSource origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
 
         public LogMetaDataSource(IMetaDataSource origin, Action<string> log)
         {

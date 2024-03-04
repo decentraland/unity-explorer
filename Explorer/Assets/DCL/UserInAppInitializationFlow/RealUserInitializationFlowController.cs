@@ -10,7 +10,6 @@ using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common.Components;
 using MVC;
 using System;
 using System.Threading;
@@ -105,10 +104,7 @@ namespace DCL.UserInAppInitializationFlow
             const int VERSION = 0;
 
             // Add the profile into the player entity so it will create the avatar in world
-            var promise = LoadAvatarPromise.Create(world,
-                new GetProfileIntention(profile.UserId, VERSION,
-                    new CommonLoadingArguments($"profiles/{profile.UserId}?version={VERSION}")),
-                PartitionComponent.TOP_PRIORITY);
+            var promise = LoadAvatarPromise.Create(world, new GetProfileIntention(profile.UserId, VERSION), PartitionComponent.TOP_PRIORITY);
 
             ref LoadAvatarPromise previousPromise = ref world.TryGetRef<LoadAvatarPromise>(playerEntity, out bool found);
 

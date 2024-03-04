@@ -58,13 +58,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IConnectiveRoom.State CurrentState() =>
             roomState.Value();
 
-        public IRoom Room()
-        {
-            if (CurrentState() is not IConnectiveRoom.State.Running)
-                throw new Exception("Is not running");
-
-            return room;
-        }
+        public IRoom Room() =>
+            room;
 
         private CancellationToken CancellationToken()
         {
