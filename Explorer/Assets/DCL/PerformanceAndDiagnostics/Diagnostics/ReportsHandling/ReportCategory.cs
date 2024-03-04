@@ -51,6 +51,11 @@
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
 
         /// <summary>
+        ///     Archipelago requests
+        /// </summary>
+        public const string ARCHIPELAGO_REQUEST = nameof(ARCHIPELAGO_REQUEST);
+
+        /// <summary>
         ///     Unspecified ECS World Exceptions
         /// </summary>
         public const string ECS = nameof(ECS);
@@ -176,18 +181,26 @@
         public const string RESTRICTED_ACTIONS = nameof(RESTRICTED_ACTIONS);
 
         /// <summary>
-        ///     CameraModeArea SDK component
-        /// </summary>
-        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
-
-        /// <summary>
         ///     Avatars Trigger Area for SDK components (e.g. CameraModeArea, AvatarModifierArea)
         /// </summary>
         public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
 
         /// <summary>
+        ///     CameraModeArea SDK component
+        /// </summary>
+        public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
+
+        /// <summary>
+        ///     AvatarModifierArea SDK component
+        /// </summary>
+        public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
+
+
+        public const string LIVEKIT = nameof(LIVEKIT);
     }
 }
