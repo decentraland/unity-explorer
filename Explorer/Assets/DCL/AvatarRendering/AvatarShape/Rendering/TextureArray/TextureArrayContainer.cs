@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                     }
                     else if (mapping.OriginalTextureID == TextureArrayConstants.EMISSION_MAP_ORIGINAL_TEXTURE_ID)
                     {
-                        Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/DefaultBlack");
+                        Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/DefaultBlack_BC7");
                         if (tex_temp)
                             results[i] = mapping.Handler.SetTexture(targetMaterial, tex_temp);
                     }
