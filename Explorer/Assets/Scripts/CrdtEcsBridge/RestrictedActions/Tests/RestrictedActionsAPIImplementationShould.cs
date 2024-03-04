@@ -1,4 +1,5 @@
-﻿using DCL.ExternalUrlPrompt;
+﻿using DCL.ChangeRealmPrompt;
+using DCL.ExternalUrlPrompt;
 using DCL.TeleportPrompt;
 using MVC;
 using NSubstitute;
@@ -85,6 +86,19 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             mvcManager.Received(1).ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(testCoords)));
+        }
+
+        [Test]
+        public void ChangeRealm()
+        {
+            // Arrange
+            const string TEST_REALM = "TestRealm";
+
+            // Act
+            restrictedActionsAPIImplementation.ChangeRealm(TEST_REALM);
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(TEST_REALM)));
         }
     }
 }
