@@ -99,16 +99,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 await (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
                    .OverwriteFromJsonAsync(dtoTempBuffer, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
+                
                 // List is not concurrent
                 lock (results)
                 {
                     // Restore original extended urn, otherwise is lost forever
-                    for (var i = 0; i < dtoTempBuffer.Count; i++)
+                    /*for (var i = 0; i < dtoTempBuffer.Count; i++)
                     {
                         WearableDTO dto = dtoTempBuffer[i];
                         dto.metadata.id = shortToExtendedUrns[dto.metadata.id];
                         dtoTempBuffer[i] = dto;
-                    }
+                    }*/
 
                     results.AddRange(dtoTempBuffer);
                 }
