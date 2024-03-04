@@ -217,6 +217,15 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterController.slopeLimit = 50f;
                 characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
 
+                var trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
+                trail.time = 1.0f; // The time in seconds that the trail will fade out over
+                trail.startWidth = 0.07f; // The starting width of the trail
+                trail.endWidth = 0.07f; // The end
+                trail.material = new Material(Shader.Find("Unlit/Color"))
+                {
+                    color = Color.yellow,
+                };
+
                 var avatarShape = new PBAvatarShape
                 {
                     Id = StringUtils.GenerateRandomString(5),
