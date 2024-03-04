@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36736ce96ff04f67aaec3d8efa0026b3, type: 3}
   m_Name: MultiplayerSpatialStateSettings
   m_EditorClassIdentifier: 
-  <InboxCount>k__BackingField: 20
+  <InboxCount>k__BackingField: 205
   <PassedMessages>k__BackingField: 1
   <PackageLost>k__BackingField: 0
   <StartSending>k__BackingField: 0
   <SendRules>k__BackingField:
   - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
-  - {fileID: 11400000, guid: 29e7490057c54624a99cad6ee9741a31, type: 2}
+  - {fileID: 11400000, guid: 539a2b84a5c93034eacc9fc22151acfb, type: 2}
   <MinAnimPackageTime>k__BackingField: 0
   <MoveBlendTiersDiff>k__BackingField: 2
   <MinSlideBlendDiff>k__BackingField: 0.35
@@ -36,15 +36,15 @@ MonoBehaviour:
   <SprintSentRate>k__BackingField: 0.33
   <MaxSentDelay>k__BackingField: 1.5
   <PackagesJitter>k__BackingField: 0
-  <Latency>k__BackingField: 1
-  <LatencyJitter>k__BackingField: 0.3
+  <Latency>k__BackingField: 0
+  <LatencyJitter>k__BackingField: 0
   <MinPositionDelta>k__BackingField: 0.1
   <MinTeleportDistance>k__BackingField: 50
   <InterpolationType>k__BackingField: 1
   <SpeedUpFactor>k__BackingField: 0
   <useBlend>k__BackingField: 1
   <BlendType>k__BackingField: 1
-  <MaxBlendSpeed>k__BackingField: 30
+  <MaxBlendSpeed>k__BackingField: 50
   <useExtrapolation>k__BackingField: 1
   <MinSpeed>k__BackingField: 0.01
   <LinearTime>k__BackingField: 0.33

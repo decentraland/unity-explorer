@@ -9,10 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3373311af55e4b97a5bd5d2da3c4c10a, type: 3}
-  m_Name: ProjectivePositionDiffExceedRule
-  m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:ProjectivePositionDiffExceedRule
+  m_Script: {fileID: 11500000, guid: 6970ff8c15554dc4a5a479a138e6fb5b, type: 3}
+  m_Name: MaxWaitingTimeExceedRule
+  m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:MaxWaitingTimeExceedRule
   color: {r: 1, g: 1, b: 1, a: 1}
   IsEnabled: 1
   MinTimeDelta: 0
-  PositionChangeThreshold: 0
+  MaxSentDelay: 2

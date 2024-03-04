@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: InputJumpPressedChangedRule
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:InputJumpPressedChangedRule
   color: {r: 0.5226415, g: 0.5624213, b: 1, a: 1}
-  IsEnabled: 1
+  IsEnabled: 0
   MinTimeDelta: 0

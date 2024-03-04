@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement.Settings
         public override string Message => $"$\"<color={color}> PROJ POSITION DIFF </color>\"";
 
         [Space]
-        public float PositionChangeThreshold;
+        public float PositionChangeSqrThreshold;
 
         public override bool IsSendConditionMet(float t, MessageMock lastMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController playerCharacter,
@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Movement.Settings
         {
             Vector3 extrapolatedVelocity = ExtrapolationComponent.DampVelocity(t, lastMessage, settings);
             Vector3 projectedPosition = lastMessage!.position + (extrapolatedVelocity * t);
-            return Vector3.SqrMagnitude(lastMessage.velocity - projectedPosition) > PositionChangeThreshold;
+            return Vector3.SqrMagnitude(lastMessage.position - projectedPosition) > PositionChangeSqrThreshold;
         }
     }
 }
