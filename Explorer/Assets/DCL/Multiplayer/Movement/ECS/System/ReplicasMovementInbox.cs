@@ -56,7 +56,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (room is IslandRoomMock)
             {
-                var sentRate = lastMessage == null ? settings.MaxSentDelay : message.timestamp - lastMessage.timestamp;
+                var sentRate = lastMessage == null ? 1f : message.timestamp - lastMessage.timestamp;
                 lastMessage = message;
 
                 UniTask.Delay(

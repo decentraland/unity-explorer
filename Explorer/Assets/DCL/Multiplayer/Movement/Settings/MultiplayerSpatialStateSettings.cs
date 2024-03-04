@@ -1,4 +1,6 @@
-﻿using DCL.Multiplayer.Movement.MessageBusMock;
+﻿using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.MessageBusMock;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,6 +8,8 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public interface IMultiplayerSpatialStateSettings
     {
+        List<SendRuleBase> SendRules { get; set; }
+
         float MinAnimPackageTime { get; set; }
         float MinPositionPackageTime { get; set; }
         float MaxSentDelay { get; set; }
@@ -52,15 +56,19 @@ namespace DCL.Multiplayer.Movement.Settings
         InputAction startButton { get; set; }
         InputAction packageLostButton { get; set; }
         InputAction packageBlockButton { get; set; }
+        MovementKind LastMove { get; set; }
+        bool LastJump { get; set; }
     }
 
     public class MultiplayerSpatialStateSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
-
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public int PassedMessages { get; set; }
         [field: SerializeField] public int PackageLost { get; set; }
         [field: SerializeField] public bool StartSending { get; set; }
+
+        [field: Header("SENDING RULES")]
+        [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }
 
         [field: Header("SENDING ANIM")]
         [field: SerializeField] public float MinAnimPackageTime { get; set; }
@@ -107,9 +115,13 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public float LinearTime { get; set; } = 0.33f;
         [field: SerializeField] public int DampedSteps { get; set; } = 1;
 
+
+
         [field: Header("CONTROLS")]
         [field: SerializeField] public InputAction startButton { get; set; }
         [field: SerializeField] public InputAction packageLostButton { get; set; }
         [field: SerializeField] public InputAction packageBlockButton { get; set; }
+        public MovementKind LastMove { get; set; }
+        public bool LastJump { get; set; }
     }
 }

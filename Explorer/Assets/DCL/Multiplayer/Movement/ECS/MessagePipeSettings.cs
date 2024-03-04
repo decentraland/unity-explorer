@@ -1,5 +1,7 @@
-﻿using DCL.Multiplayer.Movement.MessageBusMock;
+﻿using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,6 +9,7 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public class MessagePipeSettings : ScriptableObject, IMultiplayerSpatialStateSettings
     {
+        public List<SendRuleBase> SendRules { get; set; }
         public float MinAnimPackageTime { get; set; }
         public float MinPositionPackageTime { get; set; }
         public float MaxSentDelay { get; set; }
@@ -56,5 +59,7 @@ namespace DCL.Multiplayer.Movement.ECS
         [field: SerializeField] public InputAction startButton { get; set; }
         [field: SerializeField] public InputAction packageLostButton { get; set; }
         [field: SerializeField] public InputAction packageBlockButton { get; set; }
+        public MovementKind LastMove { get; set; }
+        public bool LastJump { get; set; }
     }
 }
