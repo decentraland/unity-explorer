@@ -1,5 +1,7 @@
-﻿using DCL.Ipfs;
-using Ipfs;
+﻿#nullable enable
+
+using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 
 namespace ECS
 {
@@ -16,8 +18,36 @@ namespace ECS
         bool ScenesAreFixed { get; }
 
         /// <summary>
+        ///     Name of the realm
+        /// </summary>
+        string RealmName { get; }
+
+        /// <summary>
         ///     Whether the data was set at least once
         /// </summary>
         bool Configured { get; }
+
+        class Fake : IRealmData
+        {
+            public Fake(string realmName = "baldr") : this(
+                new LocalIpfsRealm(new URLDomain()),
+                true,
+                realmName,
+                true
+            ) { }
+
+            public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured)
+            {
+                Ipfs = ipfs;
+                ScenesAreFixed = scenesAreFixed;
+                RealmName = realmName;
+                Configured = configured;
+            }
+
+            public IIpfsRealm Ipfs { get; }
+            public bool ScenesAreFixed { get; }
+            public string RealmName { get; }
+            public bool Configured { get; }
+        }
     }
 }
