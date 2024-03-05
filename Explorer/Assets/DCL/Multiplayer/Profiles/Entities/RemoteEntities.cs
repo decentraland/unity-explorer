@@ -3,6 +3,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
+using ECS.Prioritization.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
