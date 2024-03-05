@@ -71,7 +71,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                 if (ext.Enabled)
                 {
-                    if (remote.timestamp < ext.Start.timestamp + ext.Time)
+                    if (remote.timestamp < ext.Start.timestamp + ext.Time || remote.timestamp < ext.Start.timestamp + ext.TotalMoveDuration)
                         return;
 
                     local = ext.Stop();

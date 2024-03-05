@@ -7,7 +7,7 @@ namespace DCL.Multiplayer.Movement.ECS
     public struct ExtrapolationComponent
     {
         private readonly Transform transform;
-        private float totalMoveDuration;
+        public float TotalMoveDuration;
 
         public bool Enabled;
 
@@ -23,7 +23,7 @@ namespace DCL.Multiplayer.Movement.ECS
             Start = null;
 
             Time = 0f;
-            totalMoveDuration = 0f;
+            TotalMoveDuration = 0f;
             velocity = Vector3.zero;
             Enabled = false;
 
@@ -46,7 +46,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
             Time = 0f;
             velocity = from.velocity;
-            totalMoveDuration = this.settings.LinearTime + (this.settings.LinearTime * this.settings.DampedSteps);
+            TotalMoveDuration = this.settings.LinearTime + (this.settings.LinearTime * this.settings.DampedSteps);
 
             Enabled = true;
         }
