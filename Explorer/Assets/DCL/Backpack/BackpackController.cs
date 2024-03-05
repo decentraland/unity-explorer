@@ -1,16 +1,12 @@
 using Arch.Core;
-using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.Web3.Identities;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
@@ -122,8 +118,8 @@ namespace DCL.Backpack
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
             backpackCommandBus.SendCommand(new BackpackEquipCommand(avatar.BodyShape.Value));
 
-            foreach (URN uniqueWearable in avatar.Wearables)
-                backpackCommandBus.SendCommand(new BackpackEquipCommand(uniqueWearable.ToString()));
+            foreach (URN w in avatar.Wearables)
+                backpackCommandBus.SendCommand(new BackpackEquipCommand(w.Shorten()));
 
             initialLoadingIsDone = true;
         }

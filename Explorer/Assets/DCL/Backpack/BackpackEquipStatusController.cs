@@ -6,6 +6,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -16,6 +17,7 @@ namespace DCL.Backpack
     {
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWearableCatalog wearableCatalog;
         private readonly Dictionary<string, IWearable?> equippedWearables = new ();
         private readonly ProfileBuilder profileBuilder = new ();
 
@@ -23,10 +25,12 @@ namespace DCL.Backpack
 
         public BackpackEquipStatusController(IBackpackEventBus backpackEventBus,
             IProfileRepository profileRepository,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IWearableCatalog wearableCatalog)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
+            this.wearableCatalog = wearableCatalog;
             backpackEventBus.EquipEvent += SetWearableForCategory;
             backpackEventBus.UnEquipEvent += RemoveWearableForCategory;
             backpackEventBus.PublishProfileEvent += PublishProfile;
@@ -43,13 +47,7 @@ namespace DCL.Backpack
 
                 HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
 
-                foreach ((string category, IWearable? w) in equippedWearables)
-                {
-                    if (w == null) continue;
-                    if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
-                    var urn = new URN(w.WearableDTO.Asset.metadata.id);
-                    uniqueWearables.Add(urn);
-                }
+                ConvertEquippedWearablesIntoUniqueUrns(profile!, uniqueWearables);
 
                 profile = profileBuilder.From(profile!)
                                         .WithWearables(uniqueWearables)
@@ -93,6 +91,31 @@ namespace DCL.Backpack
 
         private void SetWearableForCategory(IWearable wearable) =>
             equippedWearables[wearable.GetCategory()] = wearable;
+
+        private void ConvertEquippedWearablesIntoUniqueUrns(Profile profile, HashSet<URN> uniqueWearables)
+        {
+            foreach ((string category, IWearable? w) in equippedWearables)
+            {
+                if (w == null) continue;
+                if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
+
+                URN uniqueUrn = w.GetUrn();
+
+                if (!uniqueUrn.IsExtended())
+                {
+                    if (wearableCatalog.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                        uniqueUrn = registry.First().Value.Urn;
+                    else
+                    {
+                        foreach (URN profileWearable in profile.Avatar.Wearables)
+                            if (profileWearable.Shorten() == uniqueUrn)
+                                uniqueUrn = profileWearable;
+                    }
+                }
+
+                uniqueWearables.Add(uniqueUrn);
+            }
+        }
     }
 
     public interface IBackpackEquipStatusController

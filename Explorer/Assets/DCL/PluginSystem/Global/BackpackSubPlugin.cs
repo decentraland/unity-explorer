@@ -47,7 +47,9 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
-            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity);
+
+            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity,
+                wearableCatalog);
 
             busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
 
