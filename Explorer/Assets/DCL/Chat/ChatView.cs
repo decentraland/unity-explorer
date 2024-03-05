@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Emoji;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -21,6 +23,9 @@ namespace DCL.Chat
         public Transform MessagesContainer { get; private set; }
 
         [field: SerializeField]
+        public EmojiPanelView EmojiPanel { get; private set; }
+
+        [field: SerializeField]
         public TMP_InputField InputField { get; private set; }
 
         [field: SerializeField]
@@ -34,6 +39,9 @@ namespace DCL.Chat
 
         [field: SerializeField]
         public LoopListView2 LoopList { get; private set; }
+
+        [field: SerializeField]
+        public Button EmojiPanelButton { get; private set; }
 
         [field: SerializeField]
         public Button CloseChatButton { get; private set; }

@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Emoji;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -11,6 +13,7 @@ namespace DCL.Chat
     {
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
+        private EmojiPanelController emojiPanelController;
 
         private List<ChatMessage> chatMessages = new List<ChatMessage>();
 
@@ -36,7 +39,18 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel);
+            emojiPanelController.OnEmojiSelected += AddEmojiToInput;
+            viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
         }
+
+        private void AddEmojiToInput(string emoji)
+        {
+            viewInstance.InputField.text += emoji;
+        }
+
+        private void ToggleEmojiPanel() =>
+            viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
         {
