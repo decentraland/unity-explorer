@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     .Forget();}
             else
             {
-                if (participant.Identity != "0xcdc4a418e58df3c4c0ed3e51d87912b27219b5b1" && participant.Identity != "0x05de05303eab867d51854e8b4fe03f7acb0624d9") return;
+                if (participant.Identity != "0x07b9D44eE599a14dEeA165e2Fbf45699c9DF7b51" && participant.Identity != "0xcdc4a418e58df3c4c0ed3e51d87912b27219b5b1" && participant.Identity != "0x05de05303eab867d51854e8b4fe03f7acb0624d9") return;
 
                 if (message == null)
                     return;
