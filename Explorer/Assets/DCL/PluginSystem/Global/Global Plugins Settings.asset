@@ -34,6 +34,7 @@ MonoBehaviour:
   - rid: 2174542042650378245
   - rid: 4340256782807990272
   - rid: 7162477752737071106
+  - rid: 7162477796324278274
   references:
     version: 2
     RefIds:
@@ -334,6 +335,14 @@ MonoBehaviour:
       data:
         TeleportPromptPrefab:
           m_AssetGUID: 37b740e9dd5ba324c91cd05632ea002c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7162477796324278274
+      type: {class: ChangeRealmPromptPlugin/ChangeRealmPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ChangeRealmPromptPrefab:
+          m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

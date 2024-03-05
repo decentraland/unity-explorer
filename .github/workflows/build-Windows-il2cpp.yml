@@ -150,7 +150,7 @@ jobs:
               ls
 
 
-      - uses: decentraland/unity-builder@0.8
+      - uses: decentraland/unity-builder@0.9
         id: build
         timeout-minutes: 120
         with:

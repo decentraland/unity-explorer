@@ -44,5 +44,9 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public void TeleportTo(int x, int y) =>
             api.TeleportTo(new Vector2Int(x, y));
+
+        [UsedImplicitly]
+        public bool ChangeRealm(string message, string realm) =>
+            api.ChangeRealm(realm);
     }
 }
