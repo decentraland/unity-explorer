@@ -211,7 +211,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new IslandRoomMock(), staticContainer.CharacterContainer.CharacterObject),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, archipelagoIslandRoom, staticContainer.CharacterContainer.CharacterObject),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

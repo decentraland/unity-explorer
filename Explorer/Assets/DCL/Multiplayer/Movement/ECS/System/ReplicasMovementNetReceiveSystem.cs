@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -17,7 +16,7 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(InstantiateRandomAvatarsSystem))]
+    // [UpdateAfter(typeof(InstantiateRandomAvatarsSystem))]
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class ReplicasMovementNetReceiveSystem : BaseUnityLoopSystem
     {
@@ -36,19 +35,19 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             settings.InboxCount = inbox.Count;
 
-            UpdateReplicasMovementQuery(World);
+            UpdateReplicasMovementQuery(World,t);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateReplicasMovement(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
+        private void UpdateReplicasMovement([Data] float t, ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             settings.PassedMessages = replicaMovement.PassedMessages.Count;
 
             if (@int.Enabled)
             {
-                MessageMock? passed = @int.Update(UnityEngine.Time.deltaTime);
+                MessageMock? passed = @int.Update(t);
 
                 if (passed != null)
                     AddToPassed(passed, ref replicaMovement, ref anim, view);
@@ -56,12 +55,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 return;
             }
 
-            if (inbox.Count == 0 && replicaMovement.PassedMessages.Count > 1 && settings.useExtrapolation)
+            if (settings.useExtrapolation && inbox.Count == 0 && replicaMovement.PassedMessages.Count > 1)
             {
                 if (!ext.Enabled)
                     ext.Run(replicaMovement.PassedMessages[^1], settings);
 
-                ext.Update(UnityEngine.Time.deltaTime);
+                ext.Update(t);
                 return;
             }
 
@@ -81,11 +80,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                 if (replicaMovement.PassedMessages.Count == 0
                     || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) < settings.MinPositionDelta
-                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance)
+                    // || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
+                    )
                 {
                     // Teleport
                     @int.Transform.position = remote.position;
-                    replicaMovement.PassedMessages.Clear();
+                    // replicaMovement.PassedMessages.Clear();
                     AddToPassed(remote, ref replicaMovement, ref anim, view);
                 }
                 else

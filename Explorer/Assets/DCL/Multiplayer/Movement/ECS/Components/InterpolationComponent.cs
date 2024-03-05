@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Movement.ECS
             time += deltaTime / slowDownFactor;
 
             if (time > totalDuration)
-                Disable();
+                return Disable();
 
             Transform.position = DoTransition(start, end, time, totalDuration, IsBlend);
             UpdateRotation();
@@ -67,22 +67,22 @@ namespace DCL.Multiplayer.Movement.ECS
             slowDownFactor = 1f;
             totalDuration = end.timestamp - start.timestamp;
 
-            if (IsBlend)
-            {
-                float positionDiff = Vector3.Distance(start.position, end.position);
-                float speed = positionDiff / totalDuration;
-
-                if (speed > settings.MaxBlendSpeed)
-                {
-                    float desiredDuration = positionDiff / settings.MaxBlendSpeed;
-                    slowDownFactor = desiredDuration / totalDuration;
-                }
-            }
-            else
-            {
-                float correctionTime = (settings.SpeedUpFactor + inboxMessages) * Time.smoothDeltaTime;
-                totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
-            }
+            // if (IsBlend)
+            // {
+            //     float positionDiff = Vector3.Distance(start.position, end.position);
+            //     float speed = positionDiff / totalDuration;
+            //
+            //     if (speed > settings.MaxBlendSpeed)
+            //     {
+            //         float desiredDuration = positionDiff / settings.MaxBlendSpeed;
+            //         slowDownFactor = desiredDuration / totalDuration;
+            //     }
+            // }
+            // else
+            // {
+            //     float correctionTime = (settings.SpeedUpFactor + inboxMessages) * Time.smoothDeltaTime;
+            //     totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
+            // }
 
             Enabled = true;
         }
@@ -93,14 +93,12 @@ namespace DCL.Multiplayer.Movement.ECS
 
             if (from?.timestamp >= to.timestamp) return;
 
-            if(from != null)
-                from.position = Transform.position;
-
             start = from;
             end = to;
 
             IsBlend = isBlend;
 
+            if(start != null) start.position = Transform.position;
             Enable(inboxMessages);
         }
 
