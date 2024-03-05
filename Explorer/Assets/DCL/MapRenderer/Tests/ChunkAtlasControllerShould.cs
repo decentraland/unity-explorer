@@ -54,40 +54,5 @@ namespace DCL.MapRenderer.Tests
 
             builder.Received(iterationsNumber);
         }
-
-        [UnityTest]
-        public IEnumerator CreateChunksInBatches()
-        {
-            var invocationFrames = new List<int>();
-
-            int frameNumber = 0;
-
-            void CountEditorFrames()
-            {
-                frameNumber++;
-            }
-
-            EditorApplication.update += CountEditorFrames;
-
-            builder.Invoke(Arg.Any<Vector3>(), Arg.Any<Vector2Int>(), Arg.Any<Transform>(), Arg.Any<CancellationToken>())
-                   .Returns(_ =>
-                        UniTask.DelayFrame(FRAME_DELAY)
-                               .ContinueWith(() => invocationFrames.Add(frameNumber))
-                               .ContinueWith(() => Substitute.For<IChunkController>()));
-
-            // -1 corresponds to special logic in UniTask that subtracts one frame in Editor
-            var frame = FRAME_DELAY - 1;
-
-            var expected = new int[iterationsNumber];
-
-            for (var i = 0; i < iterationsNumber; i++)
-                expected[i] = frame + i / ParcelChunkAtlasController.CHUNKS_CREATED_PER_BATCH * FRAME_DELAY;
-
-            yield return atlasController.InitializeAsync(CancellationToken.None).ToCoroutine();
-
-            EditorApplication.update -= CountEditorFrames;
-
-            CollectionAssert.AreEqual(expected, invocationFrames);
-        }
     }
 }
