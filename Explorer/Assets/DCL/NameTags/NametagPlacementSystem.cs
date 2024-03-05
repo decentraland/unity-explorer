@@ -26,15 +26,22 @@ namespace DCL.Nametags
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NametagsData nametagsData;
+        private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
         private SingleInstanceEntity playerCamera;
         private float distanceFromCamera;
         private Dictionary<string, NametagView> activeNametags = new ();
 
-        public NametagPlacementSystem(World world, IObjectPool<NametagView> nametagViewPool, ChatEntryConfigurationSO chatEntryConfiguration, NametagsData nametagsData) : base(world)
+        public NametagPlacementSystem(
+            World world,
+            IObjectPool<NametagView> nametagViewPool,
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            NametagsData nametagsData,
+            ChatBubbleConfigurationSO chatBubbleConfigurationSo) : base(world)
         {
             this.nametagViewPool = nametagViewPool;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.nametagsData = nametagsData;
+            this.chatBubbleConfigurationSo = chatBubbleConfigurationSo;
         }
 
         public override void Initialize()
@@ -69,6 +76,7 @@ namespace DCL.Nametags
             activeNametags.Add(avatarShape.ID, nametagView);
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
+            nametagView.InjectConfiguration(chatBubbleConfigurationSo);
             nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>");
             nametagView.gameObject.name = avatarShape.ID;
 

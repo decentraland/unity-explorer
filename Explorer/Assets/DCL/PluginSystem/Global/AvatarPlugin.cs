@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
+        private ChatBubbleConfigurationSO chatBubbleConfiguration;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -93,6 +94,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
+            chatBubbleConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatBubbleConfiguration, ct)).Value;
+
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
@@ -127,7 +130,7 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -201,8 +204,10 @@ namespace DCL.PluginSystem.Global
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
-            public AssetReferenceComputeShader computeShader;
+            public AssetReferenceT<ChatBubbleConfigurationSO> ChatBubbleConfiguration { get; private set; }
 
+            [field: SerializeField]
+            public AssetReferenceComputeShader computeShader;
 
             public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 
