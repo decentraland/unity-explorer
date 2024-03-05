@@ -157,30 +157,30 @@ namespace DCL.Multiplayer.Movement.ECS.System
         }
 
         [Query]
-        private void UpdateInterpolation(ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
+        private void UpdateInterpolation(ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             status.Value += ext.Enabled ? " | <color=green>EXT</color>" : " | <color=red>EXT</color>";
             status.Value += @int is { Enabled: true, IsBlend: false }? " | <color=green>INT</color>" : " | <color=red>INT</color>";
             status.Value += @int is { Enabled: true, IsBlend: true } ? " | <color=green>BLEND</color>" : " | <color=red>BLEND</color>";
 
-            pipe.Settings.PassedMessages = replicaMovement.PassedMessages.Count;
-            passedMessages.Value = replicaMovement.PassedMessages.Count.ToString();
+            pipe.Settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
+            passedMessages.Value = remotePlayerMovement.PassedMessages.Count.ToString();
 
             if (@int.Enabled)
             {
                 MessageMock? passed = @int.Update(UnityEngine.Time.deltaTime);
 
                 if (passed != null)
-                    AddToPassed(passed, ref replicaMovement, ref anim, view);
+                    AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
 
                 return;
             }
 
-            if (pipe.Count == 0 && replicaMovement.PassedMessages.Count > 1 && pipe.Settings.useExtrapolation)
+            if (pipe.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1 && pipe.Settings.useExtrapolation)
             {
                 if (!ext.Enabled)
-                    ext.Run(replicaMovement.PassedMessages[^1], pipe.Settings);
+                    ext.Run(remotePlayerMovement.PassedMessages[^1], pipe.Settings);
 
                 ext.Update(UnityEngine.Time.deltaTime);
                 return;
@@ -197,26 +197,26 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         return;
 
                     local = ext.Stop();
-                    AddToPassed(local, ref replicaMovement, ref anim, view);
+                    AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
 
-                if (replicaMovement.PassedMessages.Count == 0
-                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) < pipe.Settings.MinPositionDelta
-                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > pipe.Settings.MinTeleportDistance)
+                if (remotePlayerMovement.PassedMessages.Count == 0
+                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) < pipe.Settings.MinPositionDelta
+                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > pipe.Settings.MinTeleportDistance)
                 {
                     // Teleport
                     @int.Transform.position = remote.position;
-                    replicaMovement.PassedMessages.Clear();
-                    AddToPassed(remote, ref replicaMovement, ref anim, view);
+                    remotePlayerMovement.PassedMessages.Clear();
+                    AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
                 else
-                    @int.Run(replicaMovement.PassedMessages[^1], remote, pipe.Count, pipe.Settings, local != null && pipe.Settings.useBlend);
+                    @int.Run(remotePlayerMovement.PassedMessages[^1], remote, pipe.Count, pipe.Settings, local != null && pipe.Settings.useBlend);
             }
         }
 
-        private static void AddToPassed(MessageMock passed, ref ReplicaMovementComponent replicaMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
+        private static void AddToPassed(MessageMock passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
         {
-            replicaMovement.PassedMessages.Add(passed);
+            remotePlayerMovement.PassedMessages.Add(passed);
             UpdateAnimations(passed, ref anim, view);
         }
 

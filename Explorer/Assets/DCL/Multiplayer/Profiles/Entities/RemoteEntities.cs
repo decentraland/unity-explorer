@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 PartitionComponent.TOP_PRIORITY,
                 transformComp,
                 new CharacterAnimationComponent(),
-                new ReplicaMovementComponent(null),
+                new RemotePlayerMovementComponent(profile.WalletId),
                 new InterpolationComponent(transformComp.Transform),
                 new ExtrapolationComponent(transformComp.Transform)
             );

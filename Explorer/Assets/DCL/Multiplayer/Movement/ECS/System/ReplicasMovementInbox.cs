@@ -11,26 +11,26 @@ using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
-    public class ReplicasMovementInbox
+    public class RemotePlayersMovementInbox
     {
         private readonly Queue<MessageMock> incomingMessages = new ();
         private readonly IArchipelagoIslandRoom room;
         private readonly IMultiplayerSpatialStateSettings settings;
         private readonly bool useMock;
 
+        public readonly Dictionary<string, Queue<MessageMock>> InboxByParticipantMap = new ();
+
         private bool isSubscribed;
 
         private MessageMock lastMessage;
 
-        public int Count => incomingMessages.Count;
-
-        public ReplicasMovementInbox(IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings)
+        public RemotePlayersMovementInbox(IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings)
         {
             this.room = room;
             this.settings = settings;
         }
 
-        ~ReplicasMovementInbox()
+        ~RemotePlayersMovementInbox()
         {
             if (isSubscribed)
                 room.Room().DataPipe.DataReceived -= OnDataReceived;
@@ -42,12 +42,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             room.Room().DataPipe.DataReceived += OnDataReceived;
             isSubscribed = true;
-        }
-
-        public MessageMock Dequeue()
-        {
-            MessageMock message = incomingMessages.Dequeue();
-            return message;
         }
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
@@ -63,7 +57,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
                             TimeSpan.FromSeconds(settings.Latency
                                                  + (settings.Latency * Random.Range(0, settings.LatencyJitter))
                                                  + (sentRate * Random.Range(0, settings.PackagesJitter))))
-                       .ContinueWith(() => { incomingMessages.Enqueue(message); })
+                       .ContinueWith(() =>
+                        {
+                            Inbox(message, @for: RemotePlayerMovementComponent.SELF_ID);
+                        })
                        .Forget();
             }
             else
@@ -71,10 +68,20 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 if (message == null)
                     return;
 
-                if (participant.Identity == "0x07b9D44eE599a14dEeA165e2Fbf45699c9DF7b51".ToLowerInvariant() ||
-                    (participant.Identity  == "0xcdc4a418e58df3c4c0ed3e51d87912b27219b5b1" ||
-                     participant.Identity  == "0x05de05303eab867d51854e8b4fe03f7acb0624d9"))
-                    incomingMessages.Enqueue(message);
+                Inbox(message, @for: participant.Identity);
+            }
+        }
+
+        private void Inbox(MessageMock message, string @for)
+        {
+            if (InboxByParticipantMap.TryGetValue(@for, out var queue))
+                queue.Enqueue(message);
+            else
+            {
+                var newQueue = new Queue<MessageMock>();
+                newQueue.Enqueue(message);
+
+                InboxByParticipantMap.Add(@for, newQueue);
             }
         }
     }

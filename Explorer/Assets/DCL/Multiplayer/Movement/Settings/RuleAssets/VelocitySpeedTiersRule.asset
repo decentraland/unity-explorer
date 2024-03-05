@@ -16,8 +16,8 @@ MonoBehaviour:
   IsEnabled: 1
   MinTimeDelta: 0.1
   SprintSentRate: 0.1
-  RunSentRate: 0.1
-  WalkSentRate: 0.1
+  RunSentRate: 0.33
+  WalkSentRate: 0.5
   SprintSqrSpeed: 90
   RunSqrSpeed: 50
   WalkSqrSpeed: 0

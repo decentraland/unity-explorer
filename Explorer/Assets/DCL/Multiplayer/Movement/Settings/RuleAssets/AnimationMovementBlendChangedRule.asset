@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AnimationMovementBlendChangedRule
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:AnimationMovementBlendChangedRule
   color: {r: 1, g: 1, b: 1, a: 1}
-  IsEnabled: 0
+  IsEnabled: 1
   MinTimeDelta: 0
   MoveBlendTiersDiff: 1
   MinSlideBlendDiff: 1

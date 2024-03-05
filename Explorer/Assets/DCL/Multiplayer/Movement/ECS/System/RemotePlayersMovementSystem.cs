@@ -20,19 +20,19 @@ namespace DCL.Multiplayer.Movement.ECS.System
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
         private readonly IMultiplayerSpatialStateSettings settings;
-        private readonly ReplicasMovementInbox inbox;
+        private readonly RemotePlayersMovementInbox messagePipe;
 
         public RemotePlayersMovementSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
         {
             this.settings = settings;
-            inbox = new ReplicasMovementInbox(room, settings);
+            messagePipe = new RemotePlayersMovementInbox(room, settings);
 
-            inbox.InitializeAsync().Forget();
+            messagePipe.InitializeAsync().Forget();
         }
 
         protected override void Update(float t)
         {
-            settings.InboxCount = inbox.Count;
+            // settings.InboxCount = inbox.Count;
 
             UpdateRemotePlayersMovementQuery(World,t);
         }
@@ -47,10 +47,13 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float t, ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
+        private void UpdateRemotePlayersMovement([Data] float t, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
-            settings.PassedMessages = replicaMovement.PassedMessages.Count;
+            settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
+
+            if(!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out var playerInbox))
+                return;
 
             if (@int.Enabled)
             {
@@ -58,23 +61,23 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 InterpolateAnimations(ref anim, @int.Start, @int.End, t);
 
                 if (passed != null)
-                    AddToPassed(passed, ref replicaMovement, ref anim, view);
+                    AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
 
                 return;
             }
 
-            if (settings.useExtrapolation && inbox.Count == 0 && replicaMovement.PassedMessages.Count > 1)
+            if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
             {
                 if (!ext.Enabled)
-                    ext.Run(replicaMovement.PassedMessages[^1], settings);
+                    ext.Run(remotePlayerMovement.PassedMessages[^1], settings);
 
                 ext.Update(t);
                 return;
             }
 
-            if (inbox.Count > 0)
+            if (playerInbox.Count > 0)
             {
-                MessageMock remote = inbox.Dequeue();
+                MessageMock remote = playerInbox.Dequeue();
                 MessageMock local = null;
 
                 if (ext.Enabled)
@@ -83,27 +86,27 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         return;
 
                     local = ext.Stop();
-                    AddToPassed(local, ref replicaMovement, ref anim, view);
+                    AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
 
-                if (replicaMovement.PassedMessages.Count == 0
-                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) < settings.MinPositionDelta
-                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
+                if (remotePlayerMovement.PassedMessages.Count == 0
+                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) < settings.MinPositionDelta
+                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
                     )
                 {
                     // Teleport
                     @int.Transform.position = remote.position;
                     // replicaMovement.PassedMessages.Clear();
-                    AddToPassed(remote, ref replicaMovement, ref anim, view);
+                    AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
                 else
-                    @int.Run(replicaMovement.PassedMessages[^1], remote, inbox.Count, settings, local != null && settings.useBlend);
+                    @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
             }
         }
 
-        private static void AddToPassed(MessageMock passed, ref ReplicaMovementComponent replicaMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
+        private static void AddToPassed(MessageMock passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
         {
-            replicaMovement.PassedMessages.Add(passed);
+            remotePlayerMovement.PassedMessages.Add(passed);
             UpdateAnimations(passed, ref anim, view);
         }
 
