@@ -11,8 +11,8 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public bool IsBlend;
 
-        private MessageMock start;
-        private MessageMock end;
+        public MessageMock Start;
+        public MessageMock End;
 
         private float time;
         private float totalDuration;
@@ -27,8 +27,8 @@ namespace DCL.Multiplayer.Movement.ECS
 
             Enabled = false;
 
-            start = null;
-            end = null;
+            Start = null;
+            End = null;
             time = 0f;
             totalDuration = 0f;
 
@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Movement.ECS
             if (time > totalDuration)
                 return Disable();
 
-            Transform.position = DoTransition(start, end, time, totalDuration, IsBlend);
+            Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
             UpdateRotation();
 
             return null;
@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
         private void UpdateRotation()
         {
-            Vector3 flattenedDiff = end.position - Transform.position;
+            Vector3 flattenedDiff = End.position - Transform.position;
             flattenedDiff.y = 0;
 
             if (flattenedDiff != Vector3.zero)
@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             time = 0f;
             slowDownFactor = 1f;
-            totalDuration = end.timestamp - start.timestamp;
+            totalDuration = End.timestamp - Start.timestamp;
 
             // if (IsBlend)
             // {
@@ -93,22 +93,22 @@ namespace DCL.Multiplayer.Movement.ECS
 
             if (from?.timestamp >= to.timestamp) return;
 
-            start = from;
-            end = to;
+            Start = from;
+            End = to;
 
             IsBlend = isBlend;
 
-            if(start != null) start.position = Transform.position;
+            if(Start != null) Start.position = Transform.position;
             Enable(inboxMessages);
         }
 
         private MessageMock Disable()
         {
             // Transform.position = end.position;
-            end.position = Transform.position;
+            End.position = Transform.position;
             Enabled = false;
 
-            return end;
+            return End;
         }
 
         private Vector3 DoTransition(MessageMock start, MessageMock end, float time, float totalDuration, bool isBlend)

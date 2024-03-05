@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller);
-            ReplicasMovementNetReceiveSystem.InjectToWorld(ref builder, room, settings.Value);
+            RemotePlayersMovementSystem.InjectToWorld(ref builder, room, settings.Value);
         }
     }
 }

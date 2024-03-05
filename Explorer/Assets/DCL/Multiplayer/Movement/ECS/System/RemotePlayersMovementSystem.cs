@@ -16,14 +16,13 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    // [UpdateAfter(typeof(InstantiateRandomAvatarsSystem))]
     // [LogCategory(ReportCategory.AVATAR)]
-    public partial class ReplicasMovementNetReceiveSystem : BaseUnityLoopSystem
+    public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
         private readonly IMultiplayerSpatialStateSettings settings;
         private readonly ReplicasMovementInbox inbox;
 
-        public ReplicasMovementNetReceiveSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
+        public RemotePlayersMovementSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
         {
             this.settings = settings;
             inbox = new ReplicasMovementInbox(room, settings);
@@ -35,12 +34,20 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             settings.InboxCount = inbox.Count;
 
-            UpdateReplicasMovementQuery(World,t);
+            UpdateRemotePlayersMovementQuery(World,t);
+        }
+
+        private void InterpolateAnimations(ref CharacterAnimationComponent anim, MessageMock start, MessageMock end, float t)
+        {
+            float timeDiff = end.timestamp - start.timestamp;
+
+            anim.States.MovementBlendValue = Mathf.Lerp(start.animState.MovementBlendValue, end.animState.MovementBlendValue, t/timeDiff);
+            anim.States.SlideBlendValue = Mathf.Lerp(start.animState.SlideBlendValue, end.animState.SlideBlendValue, t/timeDiff);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateReplicasMovement([Data] float t, ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
+        private void UpdateRemotePlayersMovement([Data] float t, ref ReplicaMovementComponent replicaMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext,
             ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             settings.PassedMessages = replicaMovement.PassedMessages.Count;
@@ -48,6 +55,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             if (@int.Enabled)
             {
                 MessageMock? passed = @int.Update(t);
+                InterpolateAnimations(ref anim, @int.Start, @int.End, t);
 
                 if (passed != null)
                     AddToPassed(passed, ref replicaMovement, ref anim, view);
@@ -103,7 +111,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             animationComponent.States = message.animState;
 
-            // TODO: Interpolate between blending states!
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
 
