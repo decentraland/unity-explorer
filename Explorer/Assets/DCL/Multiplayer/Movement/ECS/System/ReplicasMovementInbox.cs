@@ -20,6 +20,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private bool isSubscribed;
 
+        private MessageMock lastMessage;
+
         public int Count => incomingMessages.Count;
 
         public ReplicasMovementInbox(IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings)
@@ -36,7 +38,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         public async UniTask InitializeAsync()
         {
-            await UniTask.WaitUntil( () => room.CurrentState() == IConnectiveRoom.State.Running);
+            await UniTask.WaitUntil(() => room.CurrentState() == IConnectiveRoom.State.Running);
 
             room.Room().DataPipe.DataReceived += OnDataReceived;
             isSubscribed = true;
@@ -48,33 +50,32 @@ namespace DCL.Multiplayer.Movement.ECS.System
             return message;
         }
 
-        private MessageMock lastMessage;
-
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
             MessageMock? message = MessageMockSerializer.DeserializeMessage(data);
 
             if (room is IslandRoomMock)
             {
-                var sentRate = lastMessage == null ? 1f : message.timestamp - lastMessage.timestamp;
+                float sentRate = lastMessage == null ? 1f : message.timestamp - lastMessage.timestamp;
                 lastMessage = message;
 
                 UniTask.Delay(
-                         TimeSpan.FromSeconds(settings.Latency
-                                              + (settings.Latency * Random.Range(0, settings.LatencyJitter))
-                                              + (sentRate * Random.Range(0, settings.PackagesJitter))))
-                    .ContinueWith(() => { incomingMessages.Enqueue(message); })
-                    .Forget();}
+                            TimeSpan.FromSeconds(settings.Latency
+                                                 + (settings.Latency * Random.Range(0, settings.LatencyJitter))
+                                                 + (sentRate * Random.Range(0, settings.PackagesJitter))))
+                       .ContinueWith(() => { incomingMessages.Enqueue(message); })
+                       .Forget();
+            }
             else
             {
-                if (participant.Identity != "0x07b9D44eE599a14dEeA165e2Fbf45699c9DF7b51" && participant.Identity != "0xcdc4a418e58df3c4c0ed3e51d87912b27219b5b1" && participant.Identity != "0x05de05303eab867d51854e8b4fe03f7acb0624d9") return;
-
                 if (message == null)
                     return;
 
-                incomingMessages.Enqueue(message);
+                if (participant.Identity == "0x07b9D44eE599a14dEeA165e2Fbf45699c9DF7b51".ToLowerInvariant() ||
+                    (participant.Identity  == "0xcdc4a418e58df3c4c0ed3e51d87912b27219b5b1" ||
+                     participant.Identity  == "0x05de05303eab867d51854e8b4fe03f7acb0624d9"))
+                    incomingMessages.Enqueue(message);
             }
-
         }
     }
 }

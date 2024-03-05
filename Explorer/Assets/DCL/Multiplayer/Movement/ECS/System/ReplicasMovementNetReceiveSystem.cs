@@ -80,7 +80,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                 if (replicaMovement.PassedMessages.Count == 0
                     || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) < settings.MinPositionDelta
-                    // || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
+                    || Vector3.Distance(replicaMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
                     )
                 {
                     // Teleport
