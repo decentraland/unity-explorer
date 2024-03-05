@@ -53,6 +53,7 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private Vector2 textContentInitialPosition;
 
+        private float alpha;
         private float previousDistance;
         private const float DISTANCE_THRESHOLD = 0.1f;
 
@@ -67,7 +68,7 @@ namespace DCL.Nametags
             Username.rectTransform.anchoredPosition = Vector2.zero;
             Background.size = new Vector2(Username.preferredWidth + NAMETAG_MARGIN_OFFSET_WIDTH, Username.preferredHeight + NAMETAG_MARGIN_OFFSET_HEIGHT);
         }
-
+        
         public void SetTransparency(float distance, float maxDistance)
         {
             if(Math.Abs(distance - previousDistance) < DISTANCE_THRESHOLD)
@@ -75,9 +76,10 @@ namespace DCL.Nametags
 
             previousDistance = distance;
             usernameTextColor = Username.color;
-            textColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) ) : 1;
-            usernameTextColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) ) : 1;
-            backgroundColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) ) : 1;
+            alpha = alphaOverDistanceCurve.Evaluate((distance - FULL_OPACITY_MAX_DISTANCE) / (maxDistance - FULL_OPACITY_MAX_DISTANCE) );
+            textColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alpha : 1;
+            usernameTextColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alpha : 1;
+            backgroundColor.a = distance > FULL_OPACITY_MAX_DISTANCE ? alpha : 1;
             BubblePeak.color = backgroundColor;
             Background.color = backgroundColor;
             Username.color = usernameTextColor;
@@ -95,6 +97,7 @@ namespace DCL.Nametags
             AnimateOut();
         }
 
+        //TODO: jobify this to improve the performance
         private void AnimateIn(string messageContent)
         {
             MessageContent.gameObject.SetActive(true);

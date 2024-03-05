@@ -21,6 +21,8 @@ namespace DCL.Nametags
     [LogCategory(ReportCategory.AVATAR)]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
+        private const float NAMETAG_HEIGHT_MULTIPLIER = 2.1f;
+
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NametagsData nametagsData;
@@ -61,7 +63,7 @@ namespace DCL.Nametags
         [None(typeof(NametagView), typeof(PlayerComponent))]
         private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind || Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > nametagsData.maxDistance) return;
+            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform)) return;
 
             NametagView nametagView = nametagViewPool.Get();
             activeNametags.Add(avatarShape.ID, nametagView);
@@ -106,7 +108,7 @@ namespace DCL.Nametags
         [Query]
         private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind || Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > nametagsData.maxDistance)
+            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform))
             {
                 activeNametags.Remove(nametagView.Id);
                 nametagViewPool.Release(nametagView);
@@ -121,7 +123,7 @@ namespace DCL.Nametags
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTagPosition(NametagView view, Camera camera, Vector3 characterPosition)
         {
-            view.transform.position = characterPosition + (Vector3.up * 2.1f);
+            view.transform.position = characterPosition + (Vector3.up * NAMETAG_HEIGHT_MULTIPLIER);
             view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
         }
 
@@ -131,5 +133,8 @@ namespace DCL.Nametags
             distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
             view.SetTransparency(distanceFromCamera, nametagsData.maxDistance);
         }
+
+        private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform) =>
+            Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > nametagsData.maxDistance;
     }
 }
