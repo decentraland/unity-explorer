@@ -34,7 +34,7 @@ namespace DCL.Time
             if (timeDifference.TotalMilliseconds > TIME_BETWEEN_UPDATES)
             {
                 var intent = new SubIntention(new CommonLoadingArguments(TIME_SERVER_URL));
-                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServer, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
                 cachedServerTime = ObtainDateTimeFromServerTime(serverDate);
                 currentTime = cachedServerTime;
                 cachedSystemTime = DateTime.Now;
@@ -61,7 +61,7 @@ namespace DCL.Time
             return cycleHour > 0? cycleHour : STARTING_CYCLE_HOUR;
         }
 
-        private async UniTask<StreamableLoadingResult<string>> GetTimeFromServer(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<string>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
         {
             using UnityWebRequest wr = await UnityWebRequest.Get(TIME_SERVER_URL).SendWebRequest().WithCancellation(ct);
             return new StreamableLoadingResult<string>(wr.GetResponseHeader("date"));
