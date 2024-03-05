@@ -27,7 +27,7 @@ namespace DCL.Time
         {
             if (isPaused) return cachedTimeInSeconds;
 
-            DateTime currentSystemTime = DateTime.Now.ToUniversalTime();
+            DateTime currentSystemTime = DateTime.UtcNow;
             TimeSpan timeDifference = currentSystemTime - cachedServerTime;
             DateTime currentTime;
 
