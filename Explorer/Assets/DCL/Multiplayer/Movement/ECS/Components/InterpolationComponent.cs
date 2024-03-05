@@ -6,9 +6,10 @@ namespace DCL.Multiplayer.Movement.ECS
 {
     public struct InterpolationComponent
     {
+        public readonly Transform Transform;
         public bool Enabled;
 
-        public readonly Transform Transform;
+        public bool IsBlend;
 
         private MessageMock start;
         private MessageMock end;
@@ -16,8 +17,6 @@ namespace DCL.Multiplayer.Movement.ECS
         private float time;
         private float totalDuration;
         private float slowDownFactor;
-
-        public bool IsBlend;
 
         private IMultiplayerSpatialStateSettings settings;
 
@@ -41,10 +40,12 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             time += deltaTime / slowDownFactor;
 
-            if (time >= totalDuration) return Disable();
+            if (time > totalDuration)
+                Disable();
 
             Transform.position = DoTransition(start, end, time, totalDuration, IsBlend);
             UpdateRotation();
+
             return null;
         }
 
@@ -92,17 +93,21 @@ namespace DCL.Multiplayer.Movement.ECS
 
             if (from?.timestamp >= to.timestamp) return;
 
+            if(from != null)
+                from.position = Transform.position;
+
             start = from;
             end = to;
 
-            this.IsBlend = isBlend;
+            IsBlend = isBlend;
 
             Enable(inboxMessages);
         }
 
         private MessageMock Disable()
         {
-            Transform.position = end.position;
+            // Transform.position = end.position;
+            end.position = Transform.position;
             Enabled = false;
 
             return end;

@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: ClientSideMovementTest:DCL.Multiplayer.Movement.Settings:AnimationStatesChangedRule
   color: {r: 1, g: 1, b: 1, a: 1}
   IsEnabled: 0
-  MinTimeDelta: 0
+  MinTimeDelta: 0.1
   Stun: 1
-  Jump: 0
+  Jump: 1
   Ground: 1
   Fall: 1
   LongFall: 1

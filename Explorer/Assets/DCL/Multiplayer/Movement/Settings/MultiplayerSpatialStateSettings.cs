@@ -10,31 +10,6 @@ namespace DCL.Multiplayer.Movement.Settings
     {
         List<SendRuleBase> SendRules { get; set; }
 
-        float MinAnimPackageTime { get; set; }
-        float MinPositionPackageTime { get; set; }
-        float MaxSentDelay { get; set; }
-        int MoveBlendTiersDiff { get; set; }
-        float MinSlideBlendDiff { get; set; }
-        float VelocityCosAngleChangeThreshold { get; set; }
-        float VelocityChangeThreshold { get; set; }
-        float PositionChangeThreshold { get; set; }
-
-        float ProjVelocityChangeThreshold { get; set; }
-        float ProjPositionChangeThreshold { get; set; }
-
-        float WalkSqrSpeed { get; set; }
-
-        float WalkSentRate { get; set; }
-
-        float RunSqrSpeed { get; set; }
-
-        float RunSentRate { get; set; }
-
-        float SprintSqrSpeed { get; set; }
-
-        float SprintSentRate { get; set; }
-
-        /// Old settings
         int InboxCount { get; set; }
         int PassedMessages { get; set; }
         int PackageLost { get; set; }
@@ -70,30 +45,7 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: Header("SENDING RULES")]
         [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }
 
-        [field: Header("SENDING ANIM")]
-        [field: SerializeField] public float MinAnimPackageTime { get; set; }
-        [field: SerializeField] public int MoveBlendTiersDiff { get; set; }
-        [field: SerializeField] public float MinSlideBlendDiff { get; set; }
-        [field: Header("SENDING POSITION")]
-        [field: SerializeField] public float MinPositionPackageTime { get; set; }
-        [field: SerializeField] public float VelocityCosAngleChangeThreshold { get; set; }
-        [field: SerializeField] public float VelocityChangeThreshold { get; set; }
-        [field: SerializeField] public float PositionChangeThreshold { get; set; }
-        [field: Header("SENDING PROJECTIVE")]
-
-        [field: SerializeField] public float ProjVelocityChangeThreshold { get; set; }
-        [field: SerializeField] public float ProjPositionChangeThreshold { get; set; }
-
-        [field: Header("SENDING VELOCITY TIERS")]
-
-        [field: SerializeField] public float WalkSqrSpeed { get; set; }
-        [field: SerializeField] public float WalkSentRate { get; set; }
-        [field: SerializeField] public float RunSqrSpeed { get; set; }
-        [field: SerializeField] public float RunSentRate { get; set; }
-        [field: SerializeField] public float SprintSqrSpeed { get; set; }
-        [field: SerializeField] public float SprintSentRate { get; set; }
         [field: Header("NETWORK")]
-        [field: SerializeField] public float MaxSentDelay { get; set; }
         [field: SerializeField] public float PackagesJitter { get; set; }
         [field: SerializeField] public float Latency { get; set; } = 1f;
         [field: SerializeField] public float LatencyJitter { get; set; }
@@ -114,8 +66,6 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public float MinSpeed { get; set; } = 0.01f;
         [field: SerializeField] public float LinearTime { get; set; } = 0.33f;
         [field: SerializeField] public int DampedSteps { get; set; } = 1;
-
-
 
         [field: Header("CONTROLS")]
         [field: SerializeField] public InputAction startButton { get; set; }
