@@ -159,6 +159,8 @@ namespace DCL.Landscape
                 await GenerateChunksAsync(terrainDataDictionary, processReport, cancellationToken);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
+                AddColorMapRenderer(rootGo);
+
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
 
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {t / 1000f:F2} seconds"));
@@ -431,16 +433,20 @@ namespace DCL.Landscape
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
 
-            //AddColormapRenderer(terrainObject); Disabled for now
-
             terrains.Add(terrain);
         }
 
-        private static void AddColormapRenderer(GameObject terrainObject)
+        private void AddColorMapRenderer(GameObject parent)
         {
-            GrassColorMapRenderer colorMapRenderer = terrainObject.AddComponent<GrassColorMapRenderer>();
-            colorMapRenderer.terrainObjects.Add(terrainObject);
+            GrassColorMapRenderer colorMapRenderer = parent.AddComponent<GrassColorMapRenderer>();
+            GrassColorMap grassColorMap = ScriptableObject.CreateInstance<GrassColorMap>();
+            colorMapRenderer.colorMap = grassColorMap;
+            colorMapRenderer.terrainObjects.AddRange(terrains.Select(t => t.gameObject));
             colorMapRenderer.RecalculateBounds();
+            Vector3 center = grassColorMap.bounds.center;
+            center.y = 0;
+            grassColorMap.bounds.center = center;
+            colorMapRenderer.resolution = 2048;
             colorMapRenderer.Render();
         }
 
