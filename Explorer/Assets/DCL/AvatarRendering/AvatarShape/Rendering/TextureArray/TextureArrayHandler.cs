@@ -26,8 +26,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
             //We initialize some default values
             resolutionDictionary.Add(_nResolution, new TextureArrayResolution(_nResolution, minArraySize, initialCapacityForEachResolution, textureFormat));
-            //resolutionDictionary.Add(512, new TextureArrayResolution(256, minArraySize, initialCapacityForEachResolution, textureFormat));
-            //resolutionDictionary.Add(256, new TextureArrayResolution(512, minArraySize, initialCapacityForEachResolution, textureFormat));
         }
 
         public TextureArraySlot SetTexture(Material material, Texture2D texture)
@@ -35,12 +33,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             //We only support square textures
             int resolution = texture.width;
 
-            //TODO: Resolution are not fixed for face features
             //if (!resolutionDictionary.ContainsKey(resolution))
             //     resolutionDictionary.Add(resolution, new TextureArrayResolution(resolution, minArraySize, initialCapacityForEachResolution, textureFormat));
 
             TextureArraySlot slot = resolutionDictionary[resolution].GetNextFreeSlot();
-            Debug.Log(slot.TextureArray.format);
             int mipLevel = 0;
             //for (int mipLevel = 0; mipLevel < texture.mipmapCount; ++mipLevel)
             {

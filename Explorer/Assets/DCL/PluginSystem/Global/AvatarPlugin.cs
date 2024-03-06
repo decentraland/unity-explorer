@@ -20,9 +20,11 @@ using DCL.ResourcesUnloading;
 using DCL.Utilities;
 using ECS;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
+using DCL.AvatarRendering.AvatarShape;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -49,13 +51,11 @@ namespace DCL.PluginSystem.Global
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
-        private IExtendedObjectPool<Material> celShadingMaterialPool;
+        private AvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
         private IObjectPool<NametagView> nametagViewPool;
         private ProvidedAsset<NametagsData> nametagsData;
-
-        private TextureArrayContainer textureArrayContainer;
 
         private IComponentPool<Transform> transformPoolRegistry;
 
@@ -99,7 +99,6 @@ namespace DCL.PluginSystem.Global
             nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
-
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
         }
 
@@ -114,11 +113,12 @@ namespace DCL.PluginSystem.Global
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
             cacheCleaner.Register(avatarPoolRegistry);
-            cacheCleaner.Register(celShadingMaterialPool);
             cacheCleaner.Register(computeShaderPool);
+            foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
+                cacheCleaner.Register(extendedObjectPool.Pool);
 
-            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, celShadingMaterialPool,
-                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy);
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
+                computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
@@ -135,7 +135,6 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
-
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
         }
@@ -156,30 +155,10 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
-            Material? activatedMaterial = TextureArrayContainerFactory.ActivateMaterial(providedMaterial.Value);
+            ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
+            ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.faceFeatureMaterial, ct: ct);
 
-            textureArrayContainer = TextureArrayContainerFactory.GetCached(activatedMaterial.shader);
-
-            celShadingMaterialPool = new ExtendedObjectPool<Material>(
-                () =>
-                {
-                    var mat = new Material(activatedMaterial);
-                    return mat;
-                },
-                actionOnRelease: mat =>
-                {
-                    // reset material so it does not contain any old properties
-                    mat.CopyPropertiesFromMaterial(activatedMaterial);
-                },
-                actionOnDestroy: UnityObjectUtils.SafeDestroy,
-                defaultCapacity: settings.defaultMaterialCapacity);
-
-            for (var i = 0; i < settings.defaultMaterialCapacity; i++)
-            {
-                Material prewarmedMaterial = celShadingMaterialPool.Get();
-                celShadingMaterialPool.Release(prewarmedMaterial);
-            }
+            avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>(){toonMaterial.Value, faceFeatureMaterial.Value}, settings.defaultMaterialCapacity);
         }
 
         private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -212,6 +191,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceMaterial celShadingMaterial;
+            
+            [field: SerializeField]
+            public AssetReferenceMaterial faceFeatureMaterial;
 
             [field: SerializeField]
             public NametagsDataRef nametagsData;

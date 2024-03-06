@@ -4,6 +4,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public static class TextureArrayConstants
     {
+        public const string TOON_SHADER = "DCL/DCL_Toon";
+        public const string FACIAL_SHADER = "DCL/DCL_Avatar_Facial_Features";
+        
         public const string TOON_KEYWORD = "_DCL_TEXTURE_ARRAYS";
 
         /// <summary>

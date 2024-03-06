@@ -5,6 +5,7 @@ using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using ECS.Unity.Textures.Components;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -16,8 +17,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
+        public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
+            UnityEngine.ComputeShader skinningShader, AvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             Dictionary<string, Texture> facialFeatureTexture)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
@@ -27,7 +28,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             (int vertCount, int boneCount) = SetupCounters(meshesData);
 
             AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
-            List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, textureArrayContainer, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
+            List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
 
             ListPool<MeshData>.Release(meshesData);
 
@@ -128,8 +129,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (vertCount, skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT);
         }
 
-        private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects, TextureArrayContainer textureArrayContainer,
-            IObjectPool<Material> avatarMaterial, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facilFeatureTexture)
+        private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects,
+            AvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facilFeatureTexture)
         {
             var auxVertCounter = 0;
 
@@ -139,7 +140,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 MeshData meshData = gameObjects[i];
                 int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
-                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, textureArrayContainer, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
+                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
                 auxVertCounter += currentVertexCount;
             }
 
@@ -199,39 +200,56 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (meshRenderer, filter);
         }
 
-        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount,
-            TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatures)
+        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, AvatarMaterialPoolHandler poolHandler, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatures)
         {
             TextureArraySlot?[] slots = new TextureArraySlot?[0];
             Material avatarMaterial = null;
-            int nShaderID = TextureArrayConstants.SHADERID_DCL_TOON;
             if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) ||
                 meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) ||
                 meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
             {
-                avatarMaterial = new Material(Shader.Find("DCL/DCL_Avatar_Facial_Features"));
-                avatarMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-                avatarMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-                nShaderID = TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES;
-
+                if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYES, out var eyesTexture))
+                {
+                    int resolution = eyesTexture.width;
+                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
+                    avatarMaterial = poolMaterialSetup.Pool.Get();
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)eyesTexture, avatarMaterial);
+                }
+                else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYEBROWS, out var eyeBrowsTexture))
+                {
+                    int resolution = eyeBrowsTexture.width;
+                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
+                    avatarMaterial = poolMaterialSetup.Pool.Get();
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)eyeBrowsTexture, avatarMaterial);
+                }
+                else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase)  && facialFeatures.TryGetValue(WearablesConstants.Categories.MOUTH, out var mouthTexture))
+                {
+                    int resolution = mouthTexture.width;
+                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
+                    avatarMaterial = poolMaterialSetup.Pool.Get();
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)mouthTexture, avatarMaterial);
+                }
+                else
+                {
+                    var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID) as Texture2D;
+                    int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
+                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
+                    avatarMaterial = poolMaterialSetup.Pool.Get();
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
+                }
+                
                 if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
                     avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.SkinColor);
                 if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase))
                     avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.HairColor);
-
-                
-                if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYES, out var eyesTexture))
-                    slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)eyesTexture, avatarMaterial, nShaderID);
-                else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYEBROWS, out var eyeBrowsTexture))
-                    slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)eyeBrowsTexture, avatarMaterial, nShaderID);
-                else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase)  && facialFeatures.TryGetValue(WearablesConstants.Categories.MOUTH, out var mouthTexture))
-                    slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)mouthTexture, avatarMaterial, nShaderID);
-                else
-                    slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial, nShaderID);
             }
             else
             {
-                avatarMaterial = celShadingMaterial.Get();
+                var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID) as Texture2D;
+                int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
+                
+                PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.TOON_SHADER}_{resolution}");
+                avatarMaterial = poolMaterialSetup.Pool.Get();
 
                 if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON"))
                 {
@@ -246,7 +264,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     avatarMaterial.SetFloat("_Tweak_transparency", baseColour.a - 1.0f);
                 }
                 
-                slots = textureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial, nShaderID);
+                slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
             }
 
 
@@ -273,7 +291,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             skinningComponent.computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
 
             for (var i = 0; i < skinningComponent.materials.Count; i++)
-                skinningComponent.materials[i].celShadingMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
+                skinningComponent.materials[i].usedMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
         }
     }
 }

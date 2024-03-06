@@ -14,13 +14,13 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         private static readonly int baseColor = Shader.PropertyToID("_BaseColor");
 
-        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
+        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
+            UnityEngine.ComputeShader skinningShader, AvatarMaterialPoolHandler avatarMaterial,
             AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatureTexture);
 
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
 
-        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial,
+        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, AvatarMaterialPoolHandler celShadingMaterial,
             AvatarShapeComponent shapeComponent, Dictionary<string, Texture> facialFeatureTexture);
 
         public abstract void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent);

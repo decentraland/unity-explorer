@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-        private readonly IObjectPool<Material> avatarMaterialPool;
+        private readonly AvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
@@ -46,18 +46,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
+            IComponentPool<AvatarBase> avatarPoolRegistry, AvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, 
+            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
 
-            textureArrays = textureArrayContainer;
             this.wearableAssetsCache = wearableAssetsCache;
             this.skinningStrategy = skinningStrategy;
             this.vertOutBuffer = vertOutBuffer;
             this.memoryBudget = memoryBudget;
-            this.avatarMaterialPool = avatarMaterialPool;
+            this.avatarMaterialPoolHandler = avatarMaterialPoolHandler;
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
         }
@@ -131,20 +130,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
         }
-
-        public Texture Resize(Texture source, int newWidth, int newHeight)
-        {
-            RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight);
-            RenderTexture.active = rt;
-            Graphics.Blit(source, rt);
-            Texture2D nTex = new Texture2D(newWidth, newHeight, TextureFormat.BC7, false);
-            nTex.ReadPixels(new Rect(0, 0, newWidth, newHeight), 0,0);
-            nTex.Apply();
-            RenderTexture.active = null;
-            RenderTexture.ReleaseTemporary(rt);
-            return nTex;
-        }
-        
+      
         private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, in StreamableResult wearablesResult, AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
@@ -165,7 +151,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 if (resultWearable.isFacialFeature())
                 {
-                    facialFeatureTexture.Add(resultWearable.GetCategory(), Resize(originalAsset.GetMainAsset<Texture>(), 256,256));
+                    facialFeatureTexture.Add(resultWearable.GetCategory(), originalAsset.GetMainAsset<Texture>());
                 }
                 else
                 {
@@ -195,7 +181,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, avatarShapeComponent,  facialFeatureTexture);
+                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent,  facialFeatureTexture);
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
@@ -231,7 +217,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void CommonAvatarRelease(in AvatarShapeComponent avatarShapeComponent, AvatarCustomSkinningComponent skinningComponent)
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
-            skinningComponent.Dispose(avatarMaterialPool, computeShaderSkinningPool);
+            skinningComponent.Dispose(avatarMaterialPoolHandler, computeShaderSkinningPool);
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);

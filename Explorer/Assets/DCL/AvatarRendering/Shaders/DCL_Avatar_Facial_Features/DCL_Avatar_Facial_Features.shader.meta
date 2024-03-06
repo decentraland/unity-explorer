@@ -12,6 +12,7 @@ ShaderImporter:
   - unity_Lightmaps: {instanceID: 0}
   - unity_LightmapsInd: {instanceID: 0}
   - unity_ShadowMasks: {instanceID: 0}
+  - _MainTexArr: {instanceID: 0}
   nonModifiableTextures: []
   userData: 
   assetBundleName: 
