@@ -43,5 +43,18 @@ namespace SceneRuntime.Apis.Modules
                 return null;
             }
         }
+
+        [UsedImplicitly]
+        public object GetRealm()
+        {
+            try { return api.GetRealmAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            catch (Exception e)
+            {
+                // Report an uncategorized exception
+                exceptionsHandler.OnEngineException(e);
+                return null;
+            }
+        }
+
     }
 }

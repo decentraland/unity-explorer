@@ -63,5 +63,16 @@ namespace CrdtEcsBridge.Engine
                 hash = hash,
             };
         }
+
+        public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            return new IRuntime.GetRealmResponse
+            {
+                RealmInfo = new IRuntime.RealmInfo()
+            };
+        }
+
     }
 }
