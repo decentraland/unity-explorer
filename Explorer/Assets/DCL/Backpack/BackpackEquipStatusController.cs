@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
@@ -5,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Web3.Identities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -18,19 +20,24 @@ namespace DCL.Backpack
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly Func<(World, Entity)> ecsContextProvider;
         private readonly Dictionary<string, IWearable?> equippedWearables = new ();
         private readonly ProfileBuilder profileBuilder = new ();
 
+        private World? world;
+        private Entity? playerEntity;
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(IBackpackEventBus backpackEventBus,
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
-            IWearableCatalog wearableCatalog)
+            IWearableCatalog wearableCatalog,
+            Func<(World, Entity)> ecsContextProvider)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
             this.wearableCatalog = wearableCatalog;
+            this.ecsContextProvider = ecsContextProvider;
             backpackEventBus.EquipEvent += SetWearableForCategory;
             backpackEventBus.UnEquipEvent += RemoveWearableForCategory;
             backpackEventBus.PublishProfileEvent += PublishProfile;
@@ -56,6 +63,9 @@ namespace DCL.Backpack
                 HashSetPool<URN>.Release(uniqueWearables);
 
                 await profileRepository.SetAsync(profile, ct);
+
+                // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
+                UpdateAvatarInWorld(profile);
             }
 
             publishProfileCts = publishProfileCts.SafeRestart();
@@ -115,6 +125,25 @@ namespace DCL.Backpack
 
                 uniqueWearables.Add(uniqueUrn);
             }
+        }
+
+        private void UpdateAvatarInWorld(Profile profile)
+        {
+            if (world == null || !playerEntity.HasValue)
+            {
+                (World? w, Entity e) = ecsContextProvider.Invoke();
+                world = w;
+                playerEntity = e;
+            }
+
+            profile.IsDirty = true;
+
+            bool found = world.Has<Profile>(playerEntity.Value);
+
+            if (found)
+                world.Set(playerEntity.Value, profile);
+            else
+                world.Add(playerEntity.Value, profile);
         }
     }
 
