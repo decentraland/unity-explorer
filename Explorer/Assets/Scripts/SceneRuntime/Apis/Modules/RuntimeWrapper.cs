@@ -4,6 +4,7 @@ using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -56,5 +57,13 @@ namespace SceneRuntime.Apis.Modules
             }
         }
 
+        public object GetWorldTime()
+        {
+            try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.FromException(e).ToPromise();
+            }
+        }
     }
 }

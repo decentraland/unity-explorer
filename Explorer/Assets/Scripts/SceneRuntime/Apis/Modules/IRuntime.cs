@@ -13,6 +13,13 @@ namespace SceneRuntime.Apis.Modules
     {
         public UniTask<ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct);
 
+        public UniTask<GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct);
+
+        public struct GetWorldTimeResponse
+        {
+            public float seconds;
+        }
+
         public struct ReadFileResponse
         {
             public ITypedArray<byte> content;
