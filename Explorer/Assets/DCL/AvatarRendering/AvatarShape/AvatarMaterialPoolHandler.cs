@@ -31,7 +31,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 {
                     Material? activatedMaterial = ActivateMaterial(material);
                     TextureArrayContainer textureArrayContainer = TextureArrayContainerFactory.Create(activatedMaterial.shader, resolution);
-
+                    TextureArrayContainerFactory.ARRAY_TYPES_COUNT = Mathf.Max(TextureArrayContainerFactory.ARRAY_TYPES_COUNT, textureArrayContainer.count);
+                    
                     //Create the pool
                     IExtendedObjectPool<Material> pool = new ExtendedObjectPool<Material>(
                         () =>
@@ -94,7 +95,6 @@ namespace DCL.AvatarRendering.AvatarShape
             int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
             
             materialDictionary[$"{usedMaterial.shader.name}_{resolution}"].Pool.Release(usedMaterial);
-
         }
     }
 }

@@ -51,17 +51,12 @@ namespace DCL.PluginSystem.Global
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
-        private AvatarMaterialPoolHandler avatarMaterialPoolHandler;
-        private IExtendedObjectPool<ComputeShader> computeShaderPool;
         // late init
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
-        private IExtendedObjectPool<Material> celShadingMaterialPool = null!;
+        private AvatarMaterialPoolHandler avatarMaterialPoolHandler  = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
         private ProvidedAsset<NametagsData> nametagsData;
-
-        private IComponentPool<Transform> transformPoolRegistry;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
 
@@ -166,8 +161,8 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
-            ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.faceFeatureMaterial, ct: ct);
+            ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
+            ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
 
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>(){toonMaterial.Value, faceFeatureMaterial.Value}, settings.defaultMaterialCapacity);
         }
@@ -202,10 +197,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             private AssetReferenceMaterial? celShadingMaterial;
-            public AssetReferenceMaterial celShadingMaterial;
             
             [field: SerializeField]
-            public AssetReferenceMaterial faceFeatureMaterial;
+            private AssetReferenceMaterial? faceFeatureMaterial;
 
             [field: SerializeField]
             public NametagsDataRef? nametagsData;
@@ -225,9 +219,11 @@ namespace DCL.PluginSystem.Global
 
             public AssetReferenceGameObject NametagParent => nametagParent.EnsureNotNull();
 
-            public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
-
             public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
+            
+            public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
+            
+            public AssetReferenceMaterial FaceFeatureMaterial => faceFeatureMaterial.EnsureNotNull();
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

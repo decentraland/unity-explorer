@@ -6,37 +6,32 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public class TextureArrayHandler
     {
-        internal readonly Dictionary<int, TextureArrayResolution> resolutionDictionary;
+        internal readonly TextureArraySlotHandler slotHandler;
         private readonly int initialCapacityForEachResolution;
         private readonly int minArraySize;
         private readonly int arrayID;
         private readonly int textureID;
-        private readonly TextureFormat textureFormat;
-        private readonly int nResolution;
+        private TextureArraySlot defaultSlot;
 
-        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int _nResolution, TextureFormat _textureFormat, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int _nResolution, TextureFormat _textureFormat, Texture2D defaultTexture, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
         {
-            resolutionDictionary = new Dictionary<int, TextureArrayResolution>();
+            slotHandler = new TextureArraySlotHandler(_nResolution, minArraySize, initialCapacityForEachResolution, _textureFormat);
             this.minArraySize = minArraySize;
             this.arrayID = arrayID;
             this.textureID = textureID;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
-            this.textureFormat = _textureFormat;
-            this.nResolution = _nResolution;
+            InitalizeDefaultTexture(defaultTexture);
+        }
 
-            //We initialize some default values
-            resolutionDictionary.Add(_nResolution, new TextureArrayResolution(_nResolution, minArraySize, initialCapacityForEachResolution, textureFormat));
+        private void InitalizeDefaultTexture(Texture2D defaultTexture)
+        {
+            defaultSlot = slotHandler.GetNextFreeSlot();
+            Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
         }
 
         public TextureArraySlot SetTexture(Material material, Texture2D texture)
         {
-            //We only support square textures
-            int resolution = texture.width;
-
-            //if (!resolutionDictionary.ContainsKey(resolution))
-            //     resolutionDictionary.Add(resolution, new TextureArrayResolution(resolution, minArraySize, initialCapacityForEachResolution, textureFormat));
-
-            TextureArraySlot slot = resolutionDictionary[resolution].GetNextFreeSlot();
+            TextureArraySlot slot = slotHandler.GetNextFreeSlot();
             int mipLevel = 0;
             //for (int mipLevel = 0; mipLevel < texture.mipmapCount; ++mipLevel)
             {
@@ -45,6 +40,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             material.SetInteger(arrayID, slot.UsedSlotIndex);
             material.SetTexture(textureID, slot.TextureArray);
             return slot;
+        }
+        
+        public void SetDefaultTexture(Material material)
+        {
+            material.SetInteger(arrayID, defaultSlot.UsedSlotIndex);
+            material.SetTexture(textureID, defaultSlot.TextureArray);
         }
     }
 }

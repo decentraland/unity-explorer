@@ -3,17 +3,17 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
-    public class TextureArrayResolution
+    public class TextureArraySlotHandler
     {
         internal readonly List<Texture2DArray> arrays;
-
+        internal readonly TextureArraySlot defaultSlot;
         internal readonly Stack<TextureArraySlot> freeSlots;
         private readonly int minArraySize;
         private readonly int resolution;
         private int nextFreeIndex;
         private TextureFormat textureFormat;
 
-        public TextureArrayResolution(int resolution, int minArraySize, int initialCapacity, TextureFormat _textureFormat)
+        public TextureArraySlotHandler(int resolution, int minArraySize, int initialCapacity, TextureFormat _textureFormat)
         {
             this.minArraySize = minArraySize;
             this.resolution = resolution;
@@ -22,7 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             //Initial capacity for (100 * minArraySize) textures
             arrays = new List<Texture2DArray>(initialCapacity);
             arrays.Add(CreateTexture2DArray());
-            nextFreeIndex = 0;
             freeSlots = new Stack<TextureArraySlot>();
         }
 
@@ -53,5 +52,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         {
             freeSlots.Push(textureArraySlot);
         }
+        
     }
 }

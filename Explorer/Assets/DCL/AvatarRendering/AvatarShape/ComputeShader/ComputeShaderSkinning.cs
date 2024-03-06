@@ -213,21 +213,21 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     int resolution = eyesTexture.width;
                     PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
                     avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)eyesTexture, avatarMaterial);
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID, (Texture2D)eyesTexture, avatarMaterial);
                 }
                 else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYEBROWS, out var eyeBrowsTexture))
                 {
                     int resolution = eyeBrowsTexture.width;
                     PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
                     avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)eyeBrowsTexture, avatarMaterial);
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID, (Texture2D)eyeBrowsTexture, avatarMaterial);
                 }
                 else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase)  && facialFeatures.TryGetValue(WearablesConstants.Categories.MOUTH, out var mouthTexture))
                 {
                     int resolution = mouthTexture.width;
                     PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
                     avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, (Texture2D)mouthTexture, avatarMaterial);
+                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID, (Texture2D)mouthTexture, avatarMaterial);
                 }
                 else
                 {
