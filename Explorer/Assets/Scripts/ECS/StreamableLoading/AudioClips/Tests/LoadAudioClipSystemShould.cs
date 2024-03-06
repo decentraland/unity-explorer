@@ -34,10 +34,10 @@ namespace ECS.StreamableLoading.AudioClips.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAudioClipSystem CreateSystem() =>
-            new (world, cache, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityCache>()), new MutexSync());
+            new (world, cache, TestSuite.TestWebRequestController.INSTANCE, new MutexSync());
 
         public static LoadAudioClipSystem CreateSystem(World world) =>
-            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityCache>()), new MutexSync());
+            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), TestSuite.TestWebRequestController.INSTANCE, new MutexSync());
 
         protected override void AssertSuccess(AudioClip asset)
         {

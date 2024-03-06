@@ -454,12 +454,14 @@ VertexOutput vert (VertexInput v)
     
     #ifdef _DCL_COMPUTE_SKINNING
         o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz);
+        float4 skinnedTangent = _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].tangent;
+        o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
+        o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * skinnedTangent.w);
     #else
         o.normalDir = UnityObjectToWorldNormal(v.normal);
+        o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
+        o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
     #endif
-    
-    o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
-    o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
     
     //v.2.0.7 Detection of the inside the mirror (right or left-handed) o.mirrorFlag = -1 then "inside the mirror".
 
@@ -467,7 +469,7 @@ VertexOutput vert (VertexInput v)
     o.mirrorFlag = dot(crossFwd, UNITY_MATRIX_V[2].xyz) < 0 ? 1 : -1;
 
     #ifdef _DCL_COMPUTE_SKINNING
-        o.posWorld = mul(unity_ObjectToWorld, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position);
+        o.posWorld = mul(unity_ObjectToWorld, float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position, 1.0f));
         o.pos = UnityObjectToClipPos( _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position );
         float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
     #else

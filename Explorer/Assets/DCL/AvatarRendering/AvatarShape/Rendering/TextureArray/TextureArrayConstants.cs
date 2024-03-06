@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         ///     This format is applicable to both Regular and Normal textures
         /// </summary>
         public const TextureFormat DEFAULT_BASEMAP_TEXTURE_FORMAT = TextureFormat.BC7;
-        public const TextureFormat DEFAULT_NORMALMAP_TEXTURE_FORMAT = TextureFormat.DXT5;
+        public const TextureFormat DEFAULT_NORMALMAP_TEXTURE_FORMAT = TextureFormat.BC5;
         public const TextureFormat DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT = TextureFormat.BC7;
 
         // Some textures are less probably contained in the original material

@@ -1,10 +1,28 @@
 module.exports.movePlayerTo = async function(message) {
-    console.log('JSMODULE: movePlayerTo')
+    if (message.cameraTarget != undefined) {
+        UnityRestrictedActionsApi.MovePlayerTo(
+            message.newRelativePosition.x,
+            message.newRelativePosition.y,
+            message.newRelativePosition.z,
+            message.cameraTarget.x,
+            message.cameraTarget.y,
+            message.cameraTarget.z)
+    } else {
+        UnityRestrictedActionsApi.MovePlayerTo(
+            message.newRelativePosition.x,
+            message.newRelativePosition.y,
+            message.newRelativePosition.z)
+    }
+    
     return {};
 }
 
 module.exports.teleportTo = async function(message) {
-    console.log('JSMODULE: teleportTo')
+    UnityRestrictedActionsApi.TeleportTo(
+        message.worldCoordinates.x,
+        message.worldCoordinates.y
+    )
+    
     return {};
 }
 
@@ -14,8 +32,10 @@ module.exports.triggerEmote = async function(message) {
 }
 
 module.exports.changeRealm = async function(message) {
-    console.log('JSMODULE: changeRealm')
-    return {};
+    const isSuccess = UnityRestrictedActionsApi.ChangeRealm(message.message, message.realm)
+    return {
+        success: isSuccess
+    };
 }
 
 module.exports.openExternalUrl = async function(message) {
