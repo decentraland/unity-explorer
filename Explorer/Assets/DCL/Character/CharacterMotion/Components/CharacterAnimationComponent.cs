@@ -15,6 +15,9 @@ namespace DCL.CharacterMotion.Components
             public bool IsLongJump;
             public bool IsLongFall;
             public bool IsFalling;
+            public bool IsEmote;
+            public bool EmoteLoop;
+            public AnimationClip EmoteClip;
         }
 
         public AnimationStates States;

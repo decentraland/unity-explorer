@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -57,6 +58,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
 
+        private AnimatorOverrideController overrideController;
+
+        public void Awake()
+        {
+            overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
+        }
+
         public void SetAnimatorFloat(int hash, float value)
         {
             avatarAnimator.SetFloat(hash, value);
@@ -71,6 +79,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             avatarAnimator.SetBool(hash, value);
         }
+
+        public void ReplaceEmoteAnimation(AnimationClip animationClip)
+        {
+            overrideController["Emote"] = animationClip;
+            avatarAnimator.runtimeAnimatorController = overrideController;
+        }
     }
 
     public interface IAvatarView
@@ -80,5 +94,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void SetAnimatorTrigger(int hash);
 
         void SetAnimatorBool(int hash, bool value);
+
+        void ReplaceEmoteAnimation(AnimationClip animationClip);
     }
 }
