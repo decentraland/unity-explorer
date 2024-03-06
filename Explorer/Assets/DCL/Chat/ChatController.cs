@@ -1,5 +1,8 @@
+using Arch.Core;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Emoji;
+using DCL.Nametags;
 using MVC;
 using SuperScrollView;
 using System;
@@ -14,20 +17,29 @@ namespace DCL.Chat
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private EmojiPanelController emojiPanelController;
+        private readonly NametagsData nametagsData;
+        private World world;
 
-        private List<ChatMessage> chatMessages = new List<ChatMessage>();
+        private List<ChatMessage> chatMessages = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            IChatMessagesBus chatMessagesBus) : base(viewFactory)
+            IChatMessagesBus chatMessagesBus,
+            NametagsData nametagsData) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
+            this.nametagsData = nametagsData;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder)
+        {
+            world = builder.World;
         }
 
         protected override void OnViewInstantiated()
@@ -39,9 +51,22 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
+
             emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
             viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
+
+            viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
+            viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
+            OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
+
+        }
+
+        private void OnToggleChatBubblesValueChanged(bool isToggled)
+        {
+            viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
+            viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
+            nametagsData.showChatBubbles = isToggled;
         }
 
         private void AddEmojiToInput(string emoji)
@@ -93,6 +118,7 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
+            world.Create(new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);

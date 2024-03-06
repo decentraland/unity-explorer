@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Emoji;
+using DCL.UI;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
@@ -20,7 +21,7 @@ namespace DCL.Chat
         private const int CHAT_ENTRIES_WAIT_BEFORE_FADE_MS = 10000;
 
         [field: SerializeField]
-        public Transform MessagesContainer { get; private set; }
+        public ToggleView ChatBubblesToggle { get; private set; }
 
         [field: SerializeField]
         public EmojiPanelView EmojiPanel { get; private set; }

@@ -51,8 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             const int VERSION = 0;
 
             var promise = Promise.Create(World,
-                new GetProfileIntention(profileId, VERSION,
-                    new CommonLoadingArguments($"profiles/{profileId}?version={VERSION}")),
+                new GetProfileIntention(profileId, VERSION),
                 PartitionComponent.TOP_PRIORITY);
 
             World.Add(ownPlayerEntity, promise);
