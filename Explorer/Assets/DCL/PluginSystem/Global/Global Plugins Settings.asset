@@ -259,6 +259,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        faceFeatureMaterial:
+          m_AssetGUID: 00657accebbe6c348b5208e385e5ec73
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         nametagsData:
           m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
           m_SubObjectName: 
