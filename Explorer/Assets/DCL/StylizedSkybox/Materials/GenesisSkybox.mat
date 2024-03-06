@@ -196,19 +196,19 @@ Material:
     m_Colors:
     - LightDirection: {r: 10, g: 15, b: 120, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CloudsColor: {r: 0.84412587, g: 0.60866684, b: 0.352449, a: 1}
+    - _CloudsColor: {r: 0.23985319, g: 0.086329624, b: 0.4716981, a: 1}
     - _Clouds_Color: {r: 0.9811321, g: 0.9811321, b: 0.9811321, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HorizonColor: {r: 0.8479646, g: 0.65537584, b: 0.43333316, a: 1}
+    - _HorizonColor: {r: 0.09045941, g: 0.02432894, b: 0.2528302, a: 1}
     - _Horizon_Line_Color: {r: 0.56981134, g: 0.8824903, b: 1, a: 0}
     - _LightDirection: {r: 0, g: -0.39794862, b: 0.9174077, a: 0}
-    - _NadirColor: {r: 0.82487404, g: 0.58948994, b: 0.30738232, a: 1}
-    - _RimColor: {r: 0.7480061, g: 0.60674125, b: 0.038497306, a: 1}
+    - _NadirColor: {r: 0, g: 0, b: 0, a: 1}
+    - _RimColor: {r: 0.011961541, g: 0.04163278, b: 0.1509434, a: 1}
     - _Rim_Color: {r: 0.9622642, g: 0.9540234, b: 0.539231, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SunColor: {r: 0.00060059346, g: 0.00051811757, b: 0.0005972489, a: 1}
-    - _ZenitColor: {r: 0.8435939, g: 0.77790403, b: 0.57324046, a: 1}
+    - _SunColor: {r: 0.5149178, g: 0.38642952, b: 1, a: 1}
+    - _ZenitColor: {r: 0.028447745, g: 0.010501949, b: 0.09433961, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &3268039623660159980
 MonoBehaviour:
