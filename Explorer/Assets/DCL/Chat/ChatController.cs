@@ -18,6 +18,7 @@ namespace DCL.Chat
         private readonly IChatMessagesBus chatMessagesBus;
         private EmojiPanelController emojiPanelController;
         private readonly NametagsData nametagsData;
+        private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private World world;
 
         private List<ChatMessage> chatMessages = new ();
@@ -28,11 +29,13 @@ namespace DCL.Chat
             ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
-            NametagsData nametagsData) : base(viewFactory)
+            NametagsData nametagsData,
+            EmojiPanelConfigurationSO emojiPanelConfiguration) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
             this.nametagsData = nametagsData;
+            this.emojiPanelConfiguration = emojiPanelConfiguration;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
@@ -52,7 +55,7 @@ namespace DCL.Chat
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
 
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
             viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
 

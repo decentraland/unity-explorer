@@ -220,6 +220,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <EmojiPanelConfiguration>k__BackingField:
+          m_AssetGUID: 51646f2adc3264ba7bf9b4f90febbd22
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4340256782807990272
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

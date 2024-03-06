@@ -1,5 +1,7 @@
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Emoji
 {
@@ -9,7 +11,10 @@ namespace DCL.Emoji
         public TMP_Text SectionTitle { get; private set; }
 
         [field: SerializeField]
-        public Transform EmojiContainer { get; private set; }
+        public RectTransform SectionRectTransform { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform EmojiContainer { get; private set; }
 
         public void Configure(string sectionTitle)
         {

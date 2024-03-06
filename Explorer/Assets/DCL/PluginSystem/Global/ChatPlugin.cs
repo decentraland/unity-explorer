@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Emoji;
 using DCL.Nametags;
 using MVC;
 using System;
@@ -41,13 +42,15 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
+            EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
 
             chatController = new ChatController(
                 ChatController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>(), null),
                 chatEntryConfiguration,
                 chatMessagesBus,
-                nametagsData);
+                nametagsData,
+                emojiPanelConfig);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
@@ -62,6 +65,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<EmojiPanelConfigurationSO> EmojiPanelConfiguration { get; private set; }
 
             [Serializable]
             public class ChatViewRef : ComponentReference<ChatView>
