@@ -16,11 +16,13 @@ namespace DCL.Chat
 
         private void CreateTestChatEntry()
         {
+            string sender = "User" + Random.Range(0, 10);
+
             OnMessageAdded?.Invoke(
                 new ChatMessage(
                     StringUtils.GenerateRandomString(Random.Range(1,250)),
-                    "User" + Random.Range(0, 3),
-                    Random.Range(0, 2) == 0 ? "" : "#asd38",
+                    sender,
+                    Random.Range(0, 2) == 0 ? "" : sender,
                     Random.Range(0, 10) <= 2));
         }
 
