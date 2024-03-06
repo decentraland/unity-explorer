@@ -212,6 +212,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
+    m_Address: Nametag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
     m_Address: StylizedSkyboxController
     m_ReadOnly: 0
@@ -233,7 +238,12 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d65049d6f7a244863b39c4dda5ba538e
-    m_Address: Assets/DCL/NameTags/NametagsData.asset
+    m_Address: NametagsData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b028edf69a2c54c9194c4ce6524befff
+    m_Address: ChatBubbleConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
