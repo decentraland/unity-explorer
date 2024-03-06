@@ -48,5 +48,13 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public bool ChangeRealm(string message, string realm) =>
             api.ChangeRealm(realm);
+
+        [UsedImplicitly]
+        public void TriggerEmote(string predefinedEmote) =>
+            api.TriggerEmote(predefinedEmote);
+
+        [UsedImplicitly]
+        public bool TriggerSceneEmote(string src, bool loop) =>
+            api.TriggerSceneEmote(src, loop);
     }
 }

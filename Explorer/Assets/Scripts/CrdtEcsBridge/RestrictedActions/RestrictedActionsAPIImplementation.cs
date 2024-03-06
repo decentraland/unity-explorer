@@ -86,6 +86,30 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
+        public void TriggerEmote(string predefinedEmote)
+        {
+            if (!sceneStateProvider.IsCurrent)
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TriggerEmote: Player is not inside of scene");
+                return;
+            }
+
+            // TODO: Implement emote triggering (blocked until emotes are implemented)...
+        }
+
+        public bool TriggerSceneEmote(string src, bool loop)
+        {
+            if (!sceneStateProvider.IsCurrent)
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TriggerSceneEmote: Player is not inside of scene");
+                return false;
+            }
+
+            // TODO: Implement scene emote triggering (blocked until emotes are implemented)...
+
+            return true;
+        }
+
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
