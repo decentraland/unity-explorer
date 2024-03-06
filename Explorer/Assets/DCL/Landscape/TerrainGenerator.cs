@@ -430,6 +430,7 @@ namespace DCL.Landscape
             terrain.enableHeightmapRayTracing = false;
             terrain.drawHeightmap = showTerrainByDefault;
             terrain.drawTreesAndFoliage = showTerrainByDefault;
+
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
             terrainObject.transform.SetParent(rootGo.transform, false);
 
@@ -438,7 +439,8 @@ namespace DCL.Landscape
 
         private void AddColorMapRenderer(GameObject parent)
         {
-            GrassColorMapRenderer colorMapRenderer = parent.AddComponent<GrassColorMapRenderer>();
+            GameObject rendererInstance = Object.Instantiate(terrainGenData.grassRenderer, parent.transform);
+            GrassColorMapRenderer colorMapRenderer = rendererInstance.GetComponent<GrassColorMapRenderer>();
             GrassColorMap grassColorMap = ScriptableObject.CreateInstance<GrassColorMap>();
             colorMapRenderer.colorMap = grassColorMap;
             colorMapRenderer.terrainObjects.AddRange(terrains.Select(t => t.gameObject));
