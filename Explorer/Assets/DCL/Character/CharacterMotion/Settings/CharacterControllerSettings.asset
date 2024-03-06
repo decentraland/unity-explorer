@@ -135,6 +135,9 @@ MonoBehaviour:
   <IKPositionSpeed>k__BackingField: 10
   <FeetIKVerticalAngleLimits>k__BackingField: {x: -30, y: 50}
   <FeetIKTwistAngleLimits>k__BackingField: {x: -30, y: 15}
+  <FeetHeightCorrection>k__BackingField: 0.08
+  <FeetHeightDisableIkDistance>k__BackingField: 0.1
+  <HipsHeightCorrection>k__BackingField: 0.05
   <HandsIKWallHitDistance>k__BackingField: 0.5
   <HandsIKWeightSpeed>k__BackingField: 5
   <HandsIKElbowOffset>k__BackingField: {x: 25.6, y: 38.8, z: -53.5}
