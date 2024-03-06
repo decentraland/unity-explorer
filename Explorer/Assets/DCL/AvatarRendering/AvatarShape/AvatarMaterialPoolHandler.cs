@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
+using NUnit.Framework.Constraints;
 using UnityEngine;
 using Utility;
 
@@ -16,21 +17,22 @@ namespace DCL.AvatarRendering.AvatarShape
     
     public class AvatarMaterialPoolHandler
     {
-        private Dictionary<string, PoolMaterialSetup> materialDictionary;
+        private readonly Dictionary<int, PoolMaterialSetup> materialDictionary;
 
-        public AvatarMaterialPoolHandler(List<Material> materials, int defaultMaterialCapacity)
+        public AvatarMaterialPoolHandler(List<Material> materials, int defaultMaterialCapacity, Dictionary<string, Texture> defaultTextures)
         {
-            materialDictionary = new Dictionary<string, PoolMaterialSetup>();
+            materialDictionary = new Dictionary<int, PoolMaterialSetup>();
             List<int> resolutionToCreate = new List<int>()
             {
                 256, 512
             };
+            
             foreach (var material in materials)
             {
                 foreach (int resolution in resolutionToCreate)
                 {
                     Material? activatedMaterial = ActivateMaterial(material);
-                    TextureArrayContainer textureArrayContainer = TextureArrayContainerFactory.Create(activatedMaterial.shader, resolution);
+                    var textureArrayContainer = TextureArrayContainerFactory.Create(activatedMaterial.shader, resolution, defaultTextures);
                     TextureArrayContainerFactory.ARRAY_TYPES_COUNT = Mathf.Max(TextureArrayContainerFactory.ARRAY_TYPES_COUNT, textureArrayContainer.count);
                     
                     //Create the pool
@@ -60,17 +62,28 @@ namespace DCL.AvatarRendering.AvatarShape
                         Pool = pool, TextureArrayContainer = textureArrayContainer
                     };
 
-                    materialDictionary.Add($"{activatedMaterial.shader.name}_{resolution}", materialSetup);
+                    int materialID = activatedMaterial.shader.name switch
+                    {
+                        TextureArrayConstants.TOON_SHADER => TextureArrayConstants.SHADERID_DCL_TOON,
+                        TextureArrayConstants.FACIAL_SHADER => TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES,
+                        _ => 0
+                    };
+
+                    materialDictionary.Add(materialID * resolution, materialSetup);
                 }
             }
         }
 
-        public Dictionary<string, PoolMaterialSetup>.ValueCollection GetAllMaterialsPools() =>
-            materialDictionary.Values;
-        
-        public PoolMaterialSetup GetMaterialPool(string shaderName) =>
-            materialDictionary[shaderName];
-        
+        public Dictionary<int, PoolMaterialSetup>.ValueCollection GetAllMaterialsPools()
+        {
+            return materialDictionary.Values;
+        }
+
+        public PoolMaterialSetup GetMaterialPool(int shaderName)
+        {
+            return materialDictionary[shaderName];
+        }
+
         private Material ActivateMaterial(Material material)
         {
             var activatedMaterial = new Material(material);
@@ -89,12 +102,9 @@ namespace DCL.AvatarRendering.AvatarShape
             }
         }
 
-        public void Release(Material usedMaterial)
+        public void Release(Material usedMaterial, int materialIndexInPool)
         {
-            var tex = usedMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID) as Texture2D;
-            int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
-            
-            materialDictionary[$"{usedMaterial.shader.name}_{resolution}"].Pool.Release(usedMaterial);
+            materialDictionary[materialIndexInPool].Pool.Release(usedMaterial);
         }
     }
 }

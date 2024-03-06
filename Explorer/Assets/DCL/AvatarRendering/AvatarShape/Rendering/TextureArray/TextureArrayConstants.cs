@@ -32,25 +32,25 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const int SHADERID_DCL_TOON = 2;
         public const int SHADERID_DCL_FACIAL_FEATURES = 3;
 
-        public static readonly int MAINTEX_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_BaseMap");
-        public static readonly int MAINTEX_ARR_SHADER_ID = Shader.PropertyToID("_MainTexArr_ID");
-        public static readonly int MAINTEX_ARR_TEX_SHADER_ID = Shader.PropertyToID("_MainTexArr");
+        public static readonly int MAINTEX_ORIGINAL_TEXTURE = Shader.PropertyToID("_BaseMap");
+        public static readonly int MAINTEX_ARR_SHADER_INDEX = Shader.PropertyToID("_MainTexArr_ID");
+        public static readonly int MAINTEX_ARR_TEX_SHADER = Shader.PropertyToID("_MainTexArr");
 
-        public static readonly int BASE_MAP_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_BaseMap");
-        public static readonly int BASE_MAP_ARR_SHADER_ID = Shader.PropertyToID("_BaseMapArr_ID");
-        public static readonly int BASE_MAP_ARR_TEX_SHADER_ID = Shader.PropertyToID("_BaseMapArr");
+        public static readonly int BASE_MAP_ORIGINAL_TEXTURE = Shader.PropertyToID("_BaseMap");
+        public static readonly int BASE_MAP_ARR_SHADER_INDEX = Shader.PropertyToID("_BaseMapArr_ID");
+        public static readonly int BASE_MAP_ARR_TEX_SHADER = Shader.PropertyToID("_BaseMapArr");
 
         public static readonly int NORMAL_MAP_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_NormalMap");
-        public static readonly int NORMAL_MAP_ARR_SHADER_ID = Shader.PropertyToID("_NormalMapArr_ID");
-        public static readonly int NORMAL_MAP_ARR_TEX_SHADER_ID = Shader.PropertyToID("_NormalMapArr");
+        public static readonly int NORMAL_MAP_ARR_SHADER_INDEX = Shader.PropertyToID("_NormalMapArr_ID");
+        public static readonly int NORMAL_MAP_ARR_TEX_SHADER = Shader.PropertyToID("_NormalMapArr");
 
         public static readonly int BUMP_MAP_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_BumpMap");
         public static readonly int BUMP_MAP_ARR_SHADER_ID = Shader.PropertyToID("_BumpMapArr_ID");
         public static readonly int BUMP_MAP_ARR_TEX_SHADER_ID = Shader.PropertyToID("_BumpMapArr");
 
         public static readonly int EMISSIVE_TEX_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_Emissive_Tex");
-        public static readonly int EMISSIVE_TEX_ARR_SHADER_ID = Shader.PropertyToID("_Emissive_TexArr_ID");
-        public static readonly int EMISSIVE_TEX_ARR_TEX_SHADER_ID = Shader.PropertyToID("_Emissive_TexArr");
+        public static readonly int EMISSIVE_TEX_ARR_SHADER_INDEX = Shader.PropertyToID("_Emissive_TexArr_ID");
+        public static readonly int EMISSIVE_TEX_ARR_TEX_SHADER = Shader.PropertyToID("_Emissive_TexArr");
 
         public static readonly int EMISSION_MAP_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_EmissionMap");
         public static readonly int EMISSION_MAP_ARR_SHADER_ID = Shader.PropertyToID("_EmissionMapArr_ID");

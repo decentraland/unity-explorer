@@ -65,6 +65,8 @@ namespace DCL.PluginSystem.Global
 
         private AvatarRandomizerAsset avatarRandomizerAsset;
 
+        private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -74,7 +76,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration, DefaultFaceFeaturesHandler defaultFaceFeaturesHandler)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -83,6 +85,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
 
@@ -122,7 +125,7 @@ namespace DCL.PluginSystem.Global
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
-                computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy);
+                computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
@@ -164,7 +167,19 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
             ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
 
-            avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>(){toonMaterial.Value, faceFeatureMaterial.Value}, settings.defaultMaterialCapacity);
+
+            var defaultTextures = new Dictionary<string, Texture>();
+            defaultTextures.Add("Main_256", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMain256, ct: ct)).Value);
+            defaultTextures.Add("Main_512", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMain512, ct: ct)).Value);
+            defaultTextures.Add("Normal_256", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal256, ct: ct)).Value);
+            defaultTextures.Add("Normal_512", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal512, ct: ct)).Value);
+            defaultTextures.Add("Emmisive_256", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive256, ct: ct)).Value);
+            defaultTextures.Add("Emmisive_512", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive512, ct: ct)).Value);
+
+            avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
+            {
+                toonMaterial.Value, faceFeatureMaterial.Value
+            }, settings.defaultMaterialCapacity, defaultTextures);
         }
 
         private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -200,6 +215,24 @@ namespace DCL.PluginSystem.Global
             
             [field: SerializeField]
             private AssetReferenceMaterial? faceFeatureMaterial;
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultMain256 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultMain512 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultNormal256 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultNormal512 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultEmmisive256 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultEmmisive512 { get; set; }
 
             [field: SerializeField]
             public NametagsDataRef? nametagsData;

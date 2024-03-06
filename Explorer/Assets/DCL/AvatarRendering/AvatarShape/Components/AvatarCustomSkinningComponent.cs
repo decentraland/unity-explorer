@@ -39,10 +39,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             /// </summary>
             internal readonly Material usedMaterial;
 
-            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material usedMaterial)
+            internal readonly int MaterialIndexInPool;
+
+            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material usedMaterial, int materialIndexInPool)
             {
                 this.usedTextureArraySlots = usedTextureArraySlots;
                 this.usedMaterial = usedMaterial;
+                MaterialIndexInPool = materialIndexInPool;
             }
         }
 
@@ -77,7 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 for (var j = 0; j < material.usedTextureArraySlots.Length; j++)
                     material.usedTextureArraySlots[j]?.FreeSlot();
 
-                objectPool.Release(material.usedMaterial);
+                objectPool.Release(material.usedMaterial, material.MaterialIndexInPool);
                 TextureArrayContainerFactory.SLOTS_POOL.Release(material.usedTextureArraySlots);
             }
 

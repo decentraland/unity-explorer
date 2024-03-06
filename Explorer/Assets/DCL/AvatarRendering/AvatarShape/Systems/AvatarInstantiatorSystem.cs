@@ -45,9 +45,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
+        private readonly Dictionary<string, Texture> facialFeaturesDefaultTexture;
+
+        private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IComponentPool<AvatarBase> avatarPoolRegistry, AvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, 
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
+            IComponentPool<AvatarBase> avatarPoolRegistry, AvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, DefaultFaceFeaturesHandler defaultFaceFeaturesHandler) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -59,6 +62,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.avatarMaterialPoolHandler = avatarMaterialPoolHandler;
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
         }
 
         protected override void Update(float t)
@@ -142,7 +146,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             List<IWearable> visibleWearables = wearablesResult.Asset.Wearables;
 
-            Dictionary<string, Texture> facialFeatureTexture = new Dictionary<string, Texture>();
+            var facialFeatureTexture = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(avatarShapeComponent.BodyShape);
 
             for (var i = 0; i < visibleWearables.Count; i++)
             {
@@ -151,7 +155,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 if (resultWearable.isFacialFeature())
                 {
-                    facialFeatureTexture.Add(resultWearable.GetCategory(), originalAsset.GetMainAsset<Texture>());
+                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset.GetMainAsset<Texture>();
                 }
                 else
                 {

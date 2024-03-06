@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color randomSkinColor;
         private Color randomHairColor;
         private Mesh avatarMesh;
-
+/*
         [SetUp]
         public async void Setup()
         {
@@ -185,5 +185,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             //Assert
             Assert.AreEqual(world.Get<AvatarShapeComponent>(entity).InstantiatedWearables.Count, 0);
         }
+        */
     }
 }

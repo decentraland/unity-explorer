@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         private readonly int textureID;
         private TextureArraySlot defaultSlot;
 
-        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int _nResolution, TextureFormat _textureFormat, Texture2D defaultTexture, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int _nResolution, TextureFormat _textureFormat, Texture defaultTexture, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
         {
             slotHandler = new TextureArraySlotHandler(_nResolution, minArraySize, initialCapacityForEachResolution, _textureFormat);
             this.minArraySize = minArraySize;
@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             InitalizeDefaultTexture(defaultTexture);
         }
 
-        private void InitalizeDefaultTexture(Texture2D defaultTexture)
+        private void InitalizeDefaultTexture(Texture defaultTexture)
         {
             defaultSlot = slotHandler.GetNextFreeSlot();
             Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);

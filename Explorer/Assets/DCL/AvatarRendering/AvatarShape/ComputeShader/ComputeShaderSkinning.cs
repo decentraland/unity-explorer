@@ -200,55 +200,43 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (meshRenderer, filter);
         }
 
+        private (Material, TextureArraySlot?[], int) DoFacialFeature(AvatarMaterialPoolHandler poolHandler, Texture replacementTexture, Renderer meshRenderer, AvatarShapeComponent avatarShapeComponent)
+        {
+            int resolution = replacementTexture.width;
+            int materialIndexInPool = TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES * resolution;
+            var poolMaterialSetup = poolHandler.GetMaterialPool(materialIndexInPool);
+            var avatarMaterial = poolMaterialSetup.Pool.Get();
+            var slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE, (Texture2D)replacementTexture, avatarMaterial);
+            return (avatarMaterial, slots, materialIndexInPool);
+        }
+
         private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, AvatarMaterialPoolHandler poolHandler, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatures)
         {
-            TextureArraySlot?[] slots = new TextureArraySlot?[0];
+            var slots = Array.Empty<TextureArraySlot?>();
             Material avatarMaterial = null;
-            if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) ||
-                meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) ||
-                meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
+            int materialIndexInPool = -1;
+
+            if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase))
             {
-                if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYES, out var eyesTexture))
-                {
-                    int resolution = eyesTexture.width;
-                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
-                    avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID, (Texture2D)eyesTexture, avatarMaterial);
-                }
-                else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase) && facialFeatures.TryGetValue(WearablesConstants.Categories.EYEBROWS, out var eyeBrowsTexture))
-                {
-                    int resolution = eyeBrowsTexture.width;
-                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
-                    avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID, (Texture2D)eyeBrowsTexture, avatarMaterial);
-                }
-                else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase)  && facialFeatures.TryGetValue(WearablesConstants.Categories.MOUTH, out var mouthTexture))
-                {
-                    int resolution = mouthTexture.width;
-                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
-                    avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID, (Texture2D)mouthTexture, avatarMaterial);
-                }
-                else
-                {
-                    var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID) as Texture2D;
-                    int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
-                    PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.FACIAL_SHADER}_{resolution}");
-                    avatarMaterial = poolMaterialSetup.Pool.Get();
-                    slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
-                }
-                
-                if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
-                    avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.SkinColor);
-                if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase))
-                    avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.HairColor);
+                (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.EYES], meshRenderer, avatarShapeComponent);
+            }
+            else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase))
+            {
+                (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.EYEBROWS], meshRenderer, avatarShapeComponent);
+                avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.HairColor);
+            }
+            else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
+            {
+                (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.MOUTH], meshRenderer, avatarShapeComponent);
+                avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.SkinColor);
             }
             else
             {
-                var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID) as Texture2D;
+                var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE) as Texture2D;
                 int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
-                
-                PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool($"{TextureArrayConstants.TOON_SHADER}_{resolution}");
+
+                materialIndexInPool = TextureArrayConstants.SHADERID_DCL_TOON * resolution;
+                var poolMaterialSetup = poolHandler.GetMaterialPool(materialIndexInPool);
                 avatarMaterial = poolMaterialSetup.Pool.Get();
 
                 if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON"))
@@ -267,7 +255,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
             }
 
-
             foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
                 if (originalMaterial.IsKeywordEnabled(keyword))
@@ -281,7 +268,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
 
-            return new AvatarCustomSkinningComponent.MaterialSetup(slots, avatarMaterial);
+            return new AvatarCustomSkinningComponent.MaterialSetup(slots, avatarMaterial, materialIndexInPool);
         }
 
         public override void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent)
