@@ -79,7 +79,8 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            DefaultFaceFeaturesHandler defaultFaceFeaturesHandler)
+            DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
+            NametagsData nametagsData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -89,8 +90,8 @@ namespace DCL.PluginSystem.Global
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
-            this.nametagsData = nametagsData;
             this.memoryBudget = memoryBudget;
+            this.nametagsData = nametagsData;
             componentPoolsRegistry = poolsRegistry;
 
             cacheCleaner.Register(wearableAssetsCache);
@@ -246,10 +247,6 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 
             public AssetReferenceGameObject NametagView => nametagView.EnsureNotNull();
-
-            public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
-
-            public AssetReferenceGameObject NametagParent => nametagParent.EnsureNotNull();
 
             public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
             
