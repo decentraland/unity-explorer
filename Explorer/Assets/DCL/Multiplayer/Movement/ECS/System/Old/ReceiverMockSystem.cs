@@ -161,7 +161,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (@int.Enabled)
             {
-                MessageMock? passed = @int.Update(UnityEngine.Time.deltaTime);
+                (MessageMock? passed, float rest) = @int.Update(UnityEngine.Time.deltaTime);
 
                 if (passed != null)
                     AddToPassed(passed, ref remotePlayerMovement, ref anim, view);

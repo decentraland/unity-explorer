@@ -11,13 +11,11 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
-    [UpdateInGroup(typeof(PhysicsSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
@@ -59,11 +57,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (@int.Enabled)
             {
-                MessageMock? passed = @int.Update(t);
-                // InterpolateAnimations(ref anim, @int.Start, @int.End, t);
-                if (passed != null) AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
+                Debug.Log($"VVV RUN {UnityEngine.Time.unscaledTime}");
 
-                return;
+                (MessageMock? passed, float rest) = @int.Update(t);
+                t = rest;
+                // InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                if (passed == null) return;
+
+                AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
+
+                if (t == 0)
+                    return;
             }
 
             // if (playerInbox.Count < 2)  return;
@@ -87,17 +91,20 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         return;
 
                     local = ext.Stop();
+
+                    if (remote.timestamp < local.timestamp)
+                        local.timestamp = remote.timestamp - t;
+
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
 
                 if (remotePlayerMovement.PassedMessages.Count == 0
                     || Vector3.SqrMagnitude(remotePlayerMovement.PassedMessages[^1].position - remote.position) < settings.MinPositionDelta
-                    // || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
+                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
                     )
                 {
                     // Teleport
-
-                    for (var i = 0; i < settings.SamePositionTeleportFilterCount; i++)
+                    for (var i = 0; i < settings.SamePositionTeleportFilterCount && i < playerInbox.Count; i++)
                     {
                         var next = playerInbox.Peek();
 
@@ -115,11 +122,16 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
                 else
+                {
                     @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
+
+                    (MessageMock? passed, float _) = @int.Update(t);
+                    // InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                    if (passed != null)
+                        AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
+                }
             }
         }
-
-
 
         private static void AddToPassed(MessageMock passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
         {

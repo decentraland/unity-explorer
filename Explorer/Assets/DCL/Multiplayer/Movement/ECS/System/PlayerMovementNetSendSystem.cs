@@ -16,7 +16,6 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
@@ -35,20 +34,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
             this.room = room;
             this.settings = settings;
             this.playerCharacter = playerCharacter;
-        }
-
-        private static string GetColorBasedOnMesPerSec(int amount)
-        {
-            return amount switch
-                   {
-                       > 30 => "red",
-                       > 20 => "orange",
-                       >= 10 => "yellow",
-                       >= 5 => "green",
-                       >= 3 => "lightblue",
-                       >= 2 => "olive",
-                       _ => "grey",
-                   };
         }
 
         protected override void Update(float t)
@@ -96,19 +81,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 }
         }
 
-        private static string GetColorBasedOnDeltaTime(float deltaTime)
-        {
-            return deltaTime switch
-                   {
-                       > 1.49f => "grey",
-                       > 0.99f => "lightblue",
-                       > 0.49f => "green",
-                       > 0.31f => "yellow",
-                       > 0.19f => "orange",
-                       _ => "red",
-                   };
-        }
-
         private void SentMessage(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump, string from)
         {
             MessagesSentInSec++;
@@ -133,6 +105,33 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             IReadOnlyCollection<string>? participants = room is IslandRoomMock ? null : room.Room().Participants.RemoteParticipantSids();
             room.Room().DataPipe.PublishData(byteMessage, "Movement", participants!);
+        }
+
+        private static string GetColorBasedOnDeltaTime(float deltaTime)
+        {
+            return deltaTime switch
+                   {
+                       > 1.49f => "grey",
+                       > 0.99f => "lightblue",
+                       > 0.49f => "green",
+                       > 0.31f => "yellow",
+                       > 0.19f => "orange",
+                       _ => "red",
+                   };
+        }
+
+        private static string GetColorBasedOnMesPerSec(int amount)
+        {
+            return amount switch
+                   {
+                       > 30 => "red",
+                       > 20 => "orange",
+                       >= 10 => "yellow",
+                       >= 5 => "green",
+                       >= 3 => "lightblue",
+                       >= 2 => "olive",
+                       _ => "grey",
+                   };
         }
     }
 }

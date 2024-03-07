@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <TimeScale>k__BackingField: 1
   <SamePositionTeleportFilterCount>k__BackingField: 100
-  <InboxCount>k__BackingField: 7
-  <PassedMessages>k__BackingField: 58
+  <InboxCount>k__BackingField: 0
+  <PassedMessages>k__BackingField: 1
   <PackageLost>k__BackingField: 0
   <StartSending>k__BackingField: 0
   <SendRules>k__BackingField:
@@ -25,14 +25,14 @@ MonoBehaviour:
   <LatencyJitter>k__BackingField: 0
   <MinPositionDelta>k__BackingField: 0.001
   <MinTeleportDistance>k__BackingField: 50
-  <InterpolationType>k__BackingField: 1
+  <InterpolationType>k__BackingField: 2
   <SpeedUpFactor>k__BackingField: 0
   <useBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 10
   <useExtrapolation>k__BackingField: 0
   <MinSpeed>k__BackingField: 0.01
-  <LinearTime>k__BackingField: 0.1
+  <LinearTime>k__BackingField: 0.33
   <DampedSteps>k__BackingField: 2
   <startButton>k__BackingField:
     m_Name: start Button

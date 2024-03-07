@@ -36,24 +36,22 @@ namespace DCL.Multiplayer.Movement.ECS
             slowDownFactor = 1f;
         }
 
-        public MessageMock Update(float deltaTime)
+        public (MessageMock message, float restTimeDelta) Update(float deltaTime)
         {
+            var remainedDeltaTime = 0f;
+
             time += deltaTime / slowDownFactor;
 
-            if (time < totalDuration)
+            if (time >= totalDuration)
             {
-                Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
-                UpdateRotation();
-
-                return null;
+                remainedDeltaTime = (time - totalDuration)*slowDownFactor;
+                time = totalDuration;
             }
 
-            time = totalDuration;
             Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
             UpdateRotation();
 
-            Debug.Log($"VVV {time} --- {totalDuration} --- {time/totalDuration}");
-            return Disable();
+            return time == totalDuration ? (Disable(), remainedDeltaTime) : (null, 0);
         }
 
         private void UpdateRotation()
@@ -74,6 +72,8 @@ namespace DCL.Multiplayer.Movement.ECS
             slowDownFactor = 1f;
             totalDuration = End.timestamp - Start.timestamp;
 
+            Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
+
             if (IsBlend)
             {
                 float positionDiff = Vector3.Distance(Start.position, End.position);
@@ -85,11 +85,11 @@ namespace DCL.Multiplayer.Movement.ECS
                     slowDownFactor = desiredDuration / totalDuration;
                 }
             }
-            // else
-            // {
-            //     float correctionTime = (settings.SpeedUpFactor + inboxMessages) * Time.smoothDeltaTime;
-            //     totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
-            // }
+            else
+            {
+                float correctionTime = (settings.SpeedUpFactor + inboxMessages) * Time.smoothDeltaTime;
+                totalDuration = Mathf.Max(totalDuration - correctionTime, totalDuration / 4f);
+            }
 
             Enabled = true;
         }
@@ -105,16 +105,12 @@ namespace DCL.Multiplayer.Movement.ECS
 
             IsBlend = isBlend;
 
-            // if(Start != null) Start.position = Transform.position;
-
             Enable(inboxMessages);
         }
 
         private MessageMock Disable()
         {
-            Transform.position = End.position;
             Enabled = false;
-
             return End;
         }
 
