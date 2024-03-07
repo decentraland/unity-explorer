@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-namespace DCL.CharacterMotion.Settings
+namespace DCL.AvatarRendering.Emotes
 {
     [Serializable]
     public struct EmbedEmote
@@ -14,6 +13,7 @@ namespace DCL.CharacterMotion.Settings
         public string name;
         public AnimationClip avatarClip;
         public AnimationClip propClip;
+        public GameObject propModel;
         public AudioClip audioClip;
         public Sprite thumbnail;
     }
