@@ -159,6 +159,8 @@ namespace DCL.Landscape
                 await GenerateChunksAsync(terrainDataDictionary, processReport, cancellationToken);
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
 
+                // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
+                await UniTask.Yield();
                 AddColorMapRenderer(rootGo);
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
@@ -428,7 +430,7 @@ namespace DCL.Landscape
             terrain.materialTemplate = material;
             terrain.detailObjectDistance = 200;
             terrain.enableHeightmapRayTracing = false;
-            terrain.drawHeightmap = showTerrainByDefault;
+            terrain.drawHeightmap = true; // forced to true for the color map renderer
             terrain.drawTreesAndFoliage = showTerrainByDefault;
 
             terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
