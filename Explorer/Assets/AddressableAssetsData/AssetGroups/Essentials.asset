@@ -27,26 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 35aa85d68d15435418848a03a2db81ec
-    m_Address: Inter-Regular SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
-    m_Address: Inter-SemiBold SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8f586378b4e144a9851e7b34d9b748ee
-    m_Address: LiberationSans SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2e498d1c8094910479dc3e1b768306a4
-    m_Address: LiberationSans SDF - Fallback.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8cf73ccd47a385498b71ec58534d03c
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/ComputeShaderSkinning.compute
     m_ReadOnly: 0
@@ -244,6 +224,26 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b028edf69a2c54c9194c4ce6524befff
     m_Address: ChatBubbleConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 35aa85d68d15435418848a03a2db81ec
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-SemiBold SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 729a904161871414d913b07a246ed27d
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF - Fallback.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99df5d970efa24583937b65c21ff559b
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

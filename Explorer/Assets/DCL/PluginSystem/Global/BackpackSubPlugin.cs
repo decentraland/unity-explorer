@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -5,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3.Identities;
 using System.Threading;
@@ -16,20 +18,27 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
 
         private BackpackBusController? busController;
+        private Arch.Core.World? world;
+        private Entity? playerEntity;
+
         internal BackpackController? backpackController { get; private set; }
 
-        public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity, ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog)
+        public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity,
+            ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog,
+            IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
+            this.profileRepository = profileRepository;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -42,7 +51,7 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
-            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
+            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity, wearableCatalog, ProvideEcsContext);
 
             busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
 
@@ -63,14 +72,17 @@ namespace DCL.PluginSystem.Global
 
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> world, in GlobalPluginArguments args) =>
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments args) =>
             {
+                world = builder.World;
+                playerEntity = args.PlayerEntity;
+
                 var gridController = new BackpackGridController(avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                    backpackEquipStatusController, sortController, pageButtonView, gridPool, world.World);
+                    backpackEquipStatusController, sortController, pageButtonView, gridPool, builder.World);
 
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
-                    characterPreviewFactory, gridController, infoPanelController, world.World, args.PlayerEntity);
+                    characterPreviewFactory, gridController, infoPanelController, builder.World, args.PlayerEntity);
             };
         }
 
@@ -79,5 +91,8 @@ namespace DCL.PluginSystem.Global
             busController?.Dispose();
             backpackController?.Dispose();
         }
+
+        private (Arch.Core.World, Entity) ProvideEcsContext() =>
+            (world!, playerEntity!.Value);
     }
 }

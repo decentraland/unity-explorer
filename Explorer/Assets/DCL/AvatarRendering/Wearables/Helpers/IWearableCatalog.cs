@@ -1,5 +1,7 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -29,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <param name="wearableURN">The wearable URN identifier.</param>
         /// <param name="wearable">The wearable instance if found.</param>
         /// <returns>Returns true if the wearable exists; otherwise, false.</returns>
-        bool TryGetWearable(string wearableURN, out IWearable wearable);
+        bool TryGetWearable(URN wearableURN, out IWearable wearable);
 
         /// <summary>
         ///     Retrieves default wearable from the catalog.
@@ -45,5 +47,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// </summary>
         /// <param name="frameTimeBudget">The frame time budget provider.</param>
         void Unload(IPerformanceBudget frameTimeBudget);
+
+        void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry);
+
+        bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry);
     }
 }
