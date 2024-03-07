@@ -54,7 +54,6 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<Material> celShadingMaterialPool = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
-        private IObjectPool<NametagView> nametagViewPool;
         private NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
