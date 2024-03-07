@@ -59,7 +59,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
         [All(typeof(PlayerComponent))]
         private void SendPlayerNetMovement(ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
         {
-            UnityEngine.Time.timeScale = settings.TimeScale;
+            // UnityEngine.Time.timeScale = settings.TimeScale;
+            if(move.Kind == MovementKind.Run) return;
 
             // Debug.Log($"VVV vel = {playerCharacter.velocity.sqrMagnitude}");
             if (lastSentMessage == null)

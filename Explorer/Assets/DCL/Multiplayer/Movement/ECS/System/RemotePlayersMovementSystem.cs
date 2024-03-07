@@ -11,6 +11,7 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using PlasticPipe.PlasticProtocol.Client;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
@@ -74,6 +75,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     ext.Run(remotePlayerMovement.PassedMessages[^1], settings);
 
                 ext.Update(t);
+
+                anim.States.MovementBlendValue = ext.Start.animState.MovementBlendValue;
+                anim.States.SlideBlendValue = ext.Start.animState.SlideBlendValue;
+
                 return;
             }
 
@@ -82,21 +87,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 MessageMock remote = playerInbox.Dequeue();
                 MessageMock local = null;
 
-                if (ext.Enabled)
+                if (ext.Enabled &&(remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration || remote.timestamp > ext.Start.timestamp + ext.Time))
                 {
-                    if (remote.timestamp < ext.Start.timestamp + ext.Time || remote.timestamp < ext.Start.timestamp + ext.TotalMoveDuration)
-                        return;
-
                     local = ext.Stop();
+                    local.timestamp = ext.Start.timestamp + ext.TotalMoveDuration;
 
-                    if (remote.timestamp < local.timestamp)
-                    {
-                        var dist = Vector3.Distance(remote.position, local.position);
-                        var time = dist / 5f;
+                    local.timestamp = remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration
+                        ? ext.Start.timestamp + ext.TotalMoveDuration
+                        : ext.Start.timestamp + ext.Time;
 
-                        local.timestamp = remote.timestamp - time;
-                    }
-
+                    // var mediumVelocity = (local.velocity + remote.velocity) / 2;
+                    // local.timestamp = remote.timestamp - (Vector3.Distance(remote.position, local.position) / mediumVelocity.magnitude);
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
 
@@ -120,9 +121,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     }
 
                     @int.Transform.position = remote.position;
-                    remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start
+                    if (remotePlayerMovement.PassedMessages[^1].velocity.sqrMagnitude < settings.MinPositionDelta)
+                        remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start (only for zero velocity)
+
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
+
                 else
                 {
                     // Should be in loop until (t <= 0)

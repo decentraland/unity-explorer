@@ -57,9 +57,9 @@ namespace DCL.Multiplayer.Movement.ECS
 
             return new MessageMock
             {
-                timestamp = Start.timestamp + Time,
+                timestamp = Start.timestamp,
                 position = transform.position,
-                velocity = velocity,
+                velocity = Start.velocity,
             };
         }
 
