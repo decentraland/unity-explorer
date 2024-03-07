@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             debugBuilder.AddWidget("Avatar Debug")
                         .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
-                        .AddIntFieldWithConfirmation(10, "Instantiate", AddRandomAvatar)
+                .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
                         .AddSingleButton("Destroy Random Amount of Avatars", DestroyRandomAmountOfAvatars)
