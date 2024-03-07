@@ -90,7 +90,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     local = ext.Stop();
 
                     if (remote.timestamp < local.timestamp)
-                        local.timestamp = remote.timestamp - t;
+                    {
+                        var dist = Vector3.Distance(remote.position, local.position);
+                        var time = dist / 5f;
+
+                        local.timestamp = remote.timestamp - time;
+                    }
 
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
@@ -120,8 +125,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 }
                 else
                 {
+                    // Should be in loop until (t <= 0)
                     @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
-
                     (MessageMock? passed, float _) = @int.Update(t);
                     InterpolateAnimations(ref anim, @int.Start, @int.End, t);
                     if (passed != null)

@@ -30,10 +30,10 @@ MonoBehaviour:
   <useBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 10
-  <useExtrapolation>k__BackingField: 0
+  <useExtrapolation>k__BackingField: 1
   <MinSpeed>k__BackingField: 0.01
-  <LinearTime>k__BackingField: 0.33
-  <DampedSteps>k__BackingField: 2
+  <LinearTime>k__BackingField: 0.2
+  <DampedSteps>k__BackingField: 1
   <startButton>k__BackingField:
     m_Name: start Button
     m_Type: 0
