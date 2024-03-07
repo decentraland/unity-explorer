@@ -27,26 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 35aa85d68d15435418848a03a2db81ec
-    m_Address: Inter-Regular SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
-    m_Address: Inter-SemiBold SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8f586378b4e144a9851e7b34d9b748ee
-    m_Address: LiberationSans SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2e498d1c8094910479dc3e1b768306a4
-    m_Address: LiberationSans SDF - Fallback.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8cf73ccd47a385498b71ec58534d03c
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/ComputeShaderSkinning.compute
     m_ReadOnly: 0
@@ -212,6 +192,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
+    m_Address: Nametag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
     m_Address: StylizedSkyboxController
     m_ReadOnly: 0
@@ -233,17 +218,32 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d65049d6f7a244863b39c4dda5ba538e
-    m_Address: Assets/DCL/NameTags/NametagsData.asset
+    m_Address: NametagsData
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4ae49825f39c564478515b4c2ae201af
-    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Toon.mat
+  - m_GUID: b028edf69a2c54c9194c4ce6524befff
+    m_Address: ChatBubbleConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 00657accebbe6c348b5208e385e5ec73
-    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
+  - m_GUID: 35aa85d68d15435418848a03a2db81ec
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-SemiBold SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 729a904161871414d913b07a246ed27d
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF - Fallback.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99df5d970efa24583937b65c21ff559b
+    m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

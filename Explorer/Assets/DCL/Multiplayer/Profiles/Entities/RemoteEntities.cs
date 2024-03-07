@@ -1,7 +1,11 @@
 using Arch.Core;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
+using ECS.Prioritization.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Profiles.Entities
 {
@@ -25,7 +29,12 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (entityParticipantTable.Has(profile.WalletId))
                 return;
 
-            Entity entity = world.Create(profile.Profile);
+            Entity entity = world.Create(
+                profile.Profile,
+                PartitionComponent.TOP_PRIORITY,
+                new CharacterTransform(new GameObject("REMOTE_ENTITY").transform), //TODO pooling
+                new CharacterAnimationComponent()
+            );
             entityParticipantTable.Register(profile.WalletId, entity);
         }
     }

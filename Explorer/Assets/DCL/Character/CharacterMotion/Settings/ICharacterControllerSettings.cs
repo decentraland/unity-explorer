@@ -42,6 +42,9 @@ namespace DCL.CharacterMotion.Settings
         float FOVChangeSpeed { get; set; }
         float FeetIKHipsPullMaxDistance { get; set; }
         float FeetIKSphereSize { get; set; }
+        float FeetHeightCorrection { get; set; }
+        float FeetHeightDisableIkDistance { get; set; }
+        float HipsHeightCorrection { get; set; }
         float IKWeightSpeed { get; set; }
         float IKPositionSpeed { get; set; }
         Vector2 FeetIKVerticalAngleLimits { get; set; }

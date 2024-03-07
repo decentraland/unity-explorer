@@ -95,8 +95,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 partition);
 
         private Promise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
+
+            // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
+            // there is not need to convert
             Promise.Create(World,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.SharedWearables, profile.Avatar.ForceRender),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
     }
 }
