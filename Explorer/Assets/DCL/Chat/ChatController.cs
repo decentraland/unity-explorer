@@ -17,6 +17,7 @@ namespace DCL.Chat
         private readonly NametagsData nametagsData;
         private World world;
 
+        private string currentMessage = string.Empty;
         private List<ChatMessage> chatMessages = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -46,6 +47,7 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
+            viewInstance.InputField.onEndEdit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
@@ -59,6 +61,15 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
             viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
             nametagsData.showChatBubbles = isToggled;
+        }
+
+        private void OnSubmit(string _)
+        {
+            if (string.IsNullOrWhiteSpace(currentMessage))
+                return;
+
+            chatMessagesBus.Send(currentMessage);
+            currentMessage = string.Empty;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
@@ -98,6 +109,10 @@ namespace DCL.Chat
         {
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
+            const int MINIMAL_LENGHT = 2;
+
+            if (inputText.Length > MINIMAL_LENGHT)
+                currentMessage = inputText;
         }
 
         private void CreateChatEntry(ChatMessage chatMessage)
@@ -106,7 +121,7 @@ namespace DCL.Chat
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
-            viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count-1, 0);
+            viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count - 1, 0);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new ();
+        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
@@ -20,8 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 : AddWearable(wearableDto.metadata.id, new Wearable
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
-                    IsLoading = false
-
+                    IsLoading = false,
                 }, qualifiedForUnloading);
         }
 
@@ -29,7 +30,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
         }
-
 
         internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return wearable;
         }
 
-        public bool TryGetWearable(string wearableURN, out IWearable wearable)
+        public bool TryGetWearable(URN wearableURN, out IWearable wearable)
         {
             if (wearablesCache.TryGetValue(wearableURN, out wearable))
             {
@@ -83,6 +83,24 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         cacheKeysDictionary.Remove(node.Value.key);
                         listedCacheKeys.Remove(node);
                     }
+        }
+
+        public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
+        {
+            if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
+            {
+                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
+                ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
+            }
+
+            ownedWearableRegistry[entry.Urn] = entry;
+        }
+
+        public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
+        {
+            bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
+            registry = r;
+            return result;
         }
 
         private static bool TryUnloadAllWearableAssets(IWearable wearable)
