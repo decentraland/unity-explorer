@@ -14,7 +14,7 @@ namespace Utility.Multithreading
 
         public static async UniTask<ExecuteOnMainThreadScope> NewScopeAsync()
         {
-            await UniTask.SwitchToThreadPool();
+            await UniTask.SwitchToMainThread();
             return new ExecuteOnMainThreadScope(false);
         }
 

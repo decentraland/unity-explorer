@@ -67,6 +67,10 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float IKPositionSpeed { get; set; } = 1f;
         [field: SerializeField] public Vector2 FeetIKVerticalAngleLimits { get; set; } = new (-50, 20);
         [field: SerializeField] public Vector2 FeetIKTwistAngleLimits { get; set; } = new (-30, 15);
+
+        [field: SerializeField] public float FeetHeightCorrection { get; set; } = 0.08f;
+        [field: SerializeField] public float FeetHeightDisableIkDistance { get; set; } = 0.1f;
+        [field: SerializeField] public float HipsHeightCorrection { get; set; } = 0.05f;
         [field: SerializeField] [field: Header("Hands IK")] public float HandsIKWallHitDistance { get; set; } = 0.5f;
         [field: SerializeField] public float HandsIKWeightSpeed { get; set; } = 0.5f;
         [field: SerializeField] public Vector3 HandsIKElbowOffset { get; set; } = Vector3.zero;
