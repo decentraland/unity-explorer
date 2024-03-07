@@ -17,7 +17,7 @@ namespace DCL.Landscape.Jobs
     public struct GenerateTreeInstancesJob : IJobParallelFor
     {
         private NativeParallelHashMap<int2, TreeInstance>.ParallelWriter treeInstances;
-        private Random random;
+        private NativeArray<Random> randoms;
 
         [ReadOnly] private NativeArray<float>.ReadOnly treeNoise;
         [ReadOnly] private ObjectRandomization treeRandomization;
@@ -45,7 +45,7 @@ namespace DCL.Landscape.Jobs
             int offsetZ,
             int chunkSize,
             int chunkDensity,
-            ref Random random)
+            NativeArray<Random> randoms)
         {
             this.treeNoise = treeNoise;
             this.treeInstances = treeInstances;
@@ -57,7 +57,7 @@ namespace DCL.Landscape.Jobs
             this.offsetZ = offsetZ;
             this.chunkSize = chunkSize;
             this.chunkDensity = chunkDensity;
-            this.random = random;
+            this.randoms = randoms;
 
             UP = new int2(0, 1);
             RIGHT = new int2(1, 0);
@@ -71,6 +71,7 @@ namespace DCL.Landscape.Jobs
             int y = index % chunkDensity;
 
             float value = treeNoise[index];
+            var random = randoms[index];
 
             float3 randomness = treeRandomization.GetRandomizedPositionOffset(ref random) / chunkDensity;
             float3 positionWithinTheChunk = new float3((float)x / chunkDensity, 0, (float)y / chunkDensity) + randomness;

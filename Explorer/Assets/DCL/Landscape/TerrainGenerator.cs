@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -27,6 +28,9 @@ namespace DCL.Landscape
 {
     public class TerrainGenerator : ITerrainGenerator, IDisposable
     {
+        // increment this number if we want to force the users to generate a new terrain cache
+        private const int CACHE_VERSION = 1;
+
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.6f;
         private const float PROGRESS_COUNTER_DIG_HOLES = 0.75f;
@@ -60,6 +64,7 @@ namespace DCL.Landscape
         private Transform ocean;
         private bool isTerrainGenerated;
         private bool showTerrainByDefault;
+        private uint worldSeed;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -70,7 +75,7 @@ namespace DCL.Landscape
             noiseGenCache = new NoiseGeneratorCache();
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize);
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION);
             terrains = new List<Terrain>();
         }
 
@@ -96,6 +101,7 @@ namespace DCL.Landscape
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
+            this.worldSeed = worldSeed;
             this.hideDetails = hideDetails;
             this.hideTrees = hideTrees;
             this.showTerrainByDefault = showTerrainByDefault;
@@ -163,6 +169,9 @@ namespace DCL.Landscape
                 await UniTask.Yield();
                 AddColorMapRenderer(rootGo);
 
+                // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+                await BugWorkaroundAsync();
+
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
 
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {t / 1000f:F2} seconds"));
@@ -181,6 +190,17 @@ namespace DCL.Landscape
 
                 isTerrainGenerated = true;
             }
+        }
+
+        private async Task BugWorkaroundAsync()
+        {
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = false;
+
+            await UniTask.Yield();
+
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = true;
         }
 
         private void SpawnMiscAsync()
@@ -717,6 +737,7 @@ namespace DCL.Landscape
                 var treeInstances = new NativeParallelHashMap<int2, TreeInstance>(chunkSize * chunkSize, Allocator.Persistent);
                 var treeInvalidationMap = new NativeParallelHashMap<int2, bool>(chunkSize * chunkSize, Allocator.Persistent);
                 var treeRadiusMap = new NativeHashMap<int, float>(terrainGenData.treeAssets.Length, Allocator.Persistent);
+                var treeParallelRandoms = new NativeArray<Random>(chunkSize * chunkSize, Allocator.Persistent);
 
                 try
                 {
@@ -734,8 +755,10 @@ namespace DCL.Landscape
                         var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
                         JobHandle generatorHandle = generator.Schedule(noiseDataPointer, instancingHandle);
 
-                        NativeArray<float> resultReference = generator.GetResult(noiseDataPointer);
+                        var randomizer = new SetupRandomForParallelJobs(treeParallelRandoms, (int)worldSeed);
+                        JobHandle randomizerHandle = randomizer.Schedule(generatorHandle);
 
+                        NativeArray<float> resultReference = generator.GetResult(noiseDataPointer);
                         var treeInstancesJob = new GenerateTreeInstancesJob(
                             resultReference.AsReadOnly(),
                             treeInstances.AsParallelWriter(),
@@ -747,9 +770,9 @@ namespace DCL.Landscape
                             offsetZ,
                             chunkSize,
                             chunkSize,
-                            ref random);
+                            treeParallelRandoms);
 
-                        instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, generatorHandle);
+                        instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, randomizerHandle);
                     }
 
                     await instancingHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
@@ -786,6 +809,7 @@ namespace DCL.Landscape
                     treeInstances.Dispose();
                     treeInvalidationMap.Dispose();
                     treeRadiusMap.Dispose();
+                    treeParallelRandoms.Dispose();
                 }
             }
         }
