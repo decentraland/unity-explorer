@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-        private readonly IObjectPool<Material> avatarMaterialPool;
+        private readonly IAvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
@@ -44,21 +44,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
 
+        private readonly Dictionary<string, Texture> facialFeaturesDefaultTexture;
+
+        private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy) : base(world)
+            IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
 
-            textureArrays = textureArrayContainer;
             this.wearableAssetsCache = wearableAssetsCache;
             this.skinningStrategy = skinningStrategy;
             this.vertOutBuffer = vertOutBuffer;
             this.memoryBudget = memoryBudget;
-            this.avatarMaterialPool = avatarMaterialPool;
+            this.avatarMaterialPoolHandler = avatarMaterialPoolHandler;
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
         }
 
         protected override void Update(float t)
@@ -130,7 +133,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
         }
-
+      
         private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, in StreamableResult wearablesResult, AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
@@ -142,20 +145,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             List<IWearable> visibleWearables = wearablesResult.Asset.Wearables;
 
+            var facialFeatureTexture = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(avatarShapeComponent.BodyShape);
+
             for (var i = 0; i < visibleWearables.Count; i++)
             {
                 IWearable resultWearable = visibleWearables[i];
+                WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
                 if (resultWearable.isFacialFeature())
                 {
-                    //TODO: Facial Features. They are textures that should be applied on the body shape, not gameobjects to instantiate.
-                    //We need the asset bundle to have access to the texture
+                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset.GetMainAsset<Texture>();
                 }
                 else
                 {
-                    WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
-
-                    if (originalAsset.GameObject == null)
+                    if (originalAsset.GetMainAsset<GameObject>() == null)
                     {
                         ReportHub.LogError(GetReportCategory(),
                             $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
@@ -171,15 +174,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     usedCategories.Add(resultWearable.GetCategory());
 
                     if (resultWearable.IsBodyShape())
+                    {
                         bodyShape = instantiatedWearable;
+                    }
                 }
             }
-
+            
             AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
+                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent,  facialFeatureTexture);
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
@@ -215,7 +220,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void CommonAvatarRelease(in AvatarShapeComponent avatarShapeComponent, AvatarCustomSkinningComponent skinningComponent)
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
-            skinningComponent.Dispose(avatarMaterialPool, computeShaderSkinningPool);
+            skinningComponent.Dispose(avatarMaterialPoolHandler, computeShaderSkinningPool);
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);

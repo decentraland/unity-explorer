@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -37,12 +38,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             /// <summary>
             ///     Cel Shading Material is created based on the original material
             /// </summary>
-            internal readonly Material celShadingMaterial;
+            internal readonly Material usedMaterial;
 
-            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material celShadingMaterial)
+            internal readonly int MaterialIndexInPool;
+
+            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material usedMaterial, int materialIndexInPool)
             {
                 this.usedTextureArraySlots = usedTextureArraySlots;
-                this.celShadingMaterial = celShadingMaterial;
+                this.usedMaterial = usedMaterial;
+                MaterialIndexInPool = materialIndexInPool;
             }
         }
 
@@ -68,7 +72,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
         }
 
-        public void Dispose(IObjectPool<Material> objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
+        public void Dispose(IAvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
             for (var i = 0; i < materials.Count; i++)
             {
@@ -77,7 +81,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 for (var j = 0; j < material.usedTextureArraySlots.Length; j++)
                     material.usedTextureArraySlots[j]?.FreeSlot();
 
-                objectPool.Release(material.celShadingMaterial);
+                objectPool.Release(material.usedMaterial, material.MaterialIndexInPool);
                 TextureArrayContainerFactory.SLOTS_POOL.Release(material.usedTextureArraySlots);
             }
 

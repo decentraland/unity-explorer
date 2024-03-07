@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Net.Mime;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using NUnit.Framework;
 using UnityEngine;
@@ -6,6 +8,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public abstract class TextureArrayShouldBase
     {
+        
         private const int TEST_RESOLUTION = 256;
 
         private TextureArrayContainer textureArrayContainer;
@@ -19,23 +22,58 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public void SetUp()
         {
             var targetShader = Shader.Find(targetShaderName);
-            textureArrayContainer = TextureArrayContainerFactory.Create(targetShader);
-
+            Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
+            TextureArrayContainerFactory.ARRAY_TYPES_COUNT = 3;
+            var defaultTextures = new Dictionary<string, Texture>
+            {
+                {
+                    $"Main_{TEST_RESOLUTION}", texture
+                },
+                {
+                    $"Normal_{TEST_RESOLUTION}", texture
+                },
+                {
+                    $"Emmisive_{TEST_RESOLUTION}", texture
+                }
+            };
+            textureArrayContainer = TextureArrayContainerFactory.Create(targetShader, TEST_RESOLUTION, defaultTextures);
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
 
             foreach (TextureArrayMapping textureArrayMapping in textureArrayContainer.mappings)
             {
                 testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID,
-                    new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false));
+                    texture);
             }
 
             testTargetMaterial = new Material(targetShader);
         }
 
         [Test]
+        public void SetDefaultTexture()
+        {
+            //We recreate the material with no texture so the default one is applied
+            testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
+            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+
+            for (int i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
+            {
+                var slot = textureArraySlots[i];
+
+                //We dont want to have a reference for the slot since we dont want to release it after
+                Assert.That(slot, Is.Null);
+            }
+
+            foreach (var textureArrayMapping in textureArrayContainer.mappings)
+            {
+                Assert.AreEqual(textureArrayMapping.Handler.defaultSlot.UsedSlotIndex, testTargetMaterial.GetInteger(textureArrayMapping.Handler.arrayID));
+                Assert.AreEqual(textureArrayMapping.Handler.defaultSlot.TextureArray, testTargetMaterial.GetTexture(textureArrayMapping.Handler.textureID));
+            }
+        }
+
+        [Test]
         public void SetTexture()
         {
-            TextureArraySlot?[] textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TextureArrayConstants.SHADERID_DCL_PBR);
+            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             for (var i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -45,18 +83,15 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
                 TextureArraySlot slotVal = slot.Value;
 
-                Assert.AreEqual(slotVal.TextureArrayResolution, textureArrayContainer.mappings[i].Handler.resolutionDictionary[TEST_RESOLUTION]);
-                Assert.AreEqual(slotVal.UsedSlotIndex, 0);
-
-                Assert.AreEqual(slotVal.TextureArray,
-                    textureArrayContainer.mappings[i].Handler.resolutionDictionary[TEST_RESOLUTION].arrays[0]);
+                Assert.AreEqual(slotVal.UsedSlotIndex, 1);
+                Assert.AreEqual(slotVal.TextureArray, textureArrayContainer.mappings[i].Handler.slotHandler.arrays[0]);
             }
         }
 
         [Test]
         public void ReleaseAndReuseTexture()
         {
-            TextureArraySlot?[] originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TextureArrayConstants.SHADERID_DCL_PBR);
+            var originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -66,14 +101,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
                 slot.Value.FreeSlot();
 
-                Assert.AreEqual(textureArrayContainer.mappings[i].Handler.resolutionDictionary[TEST_RESOLUTION].freeSlots.Count, 1);
+                Assert.AreEqual(textureArrayContainer.mappings[i].Handler.slotHandler.freeSlots.Count, 1);
             }
 
-            TextureArraySlot?[] replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TextureArrayConstants.SHADERID_DCL_PBR);
+            var replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             // Check the slots are the same as the original ones
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
                 Assert.AreEqual(originalSlots[i], replacedSlots[i]);
         }
+         
     }
+   
 }
