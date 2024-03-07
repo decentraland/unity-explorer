@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public class DefaultFaceFeaturesHandler
+    public class DefaultFaceFeaturesHandler : IDefaultFaceFeaturesHandler
     {
-        private readonly WearableCatalog wearableCatalog;
+        private readonly IWearableCatalog wearableCatalog;
         private readonly Dictionary<string, Texture>[] defaultFacialFeaturesDictionary = new Dictionary<string, Texture>[2];
 
         private readonly Texture[] defaultEyes;
@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private readonly bool isInitialized = false;
 
-        public DefaultFaceFeaturesHandler(WearableCatalog wearableCatalog)
+        public DefaultFaceFeaturesHandler(IWearableCatalog wearableCatalog)
         {
             this.wearableCatalog = wearableCatalog;
             defaultFacialFeaturesDictionary = new Dictionary<string, Texture>[2];
@@ -57,4 +57,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
     }
+
+
 }

@@ -1,25 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
-using NUnit.Framework.Constraints;
 using UnityEngine;
 using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
-
-    public struct PoolMaterialSetup
-    {
-        public IExtendedObjectPool<Material> Pool;
-        public TextureArrayContainer TextureArrayContainer;
-    }
-    
-    public class AvatarMaterialPoolHandler
+    public class AvatarMaterialPoolHandler : IAvatarMaterialPoolHandler
     {
         private readonly Dictionary<int, PoolMaterialSetup> materialDictionary;
 
-        public AvatarMaterialPoolHandler(List<Material> materials, int defaultMaterialCapacity, Dictionary<string, Texture> defaultTextures)
+        public AvatarMaterialPoolHandler(List<Material> materials, int defaultMaterialCapacity, Dictionary<string, Texture> defaultTextures) 
         {
             materialDictionary = new Dictionary<int, PoolMaterialSetup>();
             List<int> resolutionToCreate = new List<int>()
@@ -51,11 +44,11 @@ namespace DCL.AvatarRendering.AvatarShape
                         defaultCapacity: defaultMaterialCapacity);
 
                     //Prewarm the pool
+                    var prewarmedMaterials = new Material[defaultMaterialCapacity];
                     for (var i = 0; i < defaultMaterialCapacity; i++)
-                    {
-                        Material prewarmedMaterial = pool.Get();
-                        pool.Release(prewarmedMaterial);
-                    }
+                        prewarmedMaterials[i] = pool.Get();
+                    for (int i = 0; i < defaultMaterialCapacity; i++)
+                        pool.Release(prewarmedMaterials[i]);
 
                     PoolMaterialSetup materialSetup = new PoolMaterialSetup()
                     {
@@ -102,9 +95,9 @@ namespace DCL.AvatarRendering.AvatarShape
             }
         }
 
-        public void Release(Material usedMaterial, int materialIndexInPool)
+        public void Release(Material usedMaterial, int poolIndex)
         {
-            materialDictionary[materialIndexInPool].Pool.Release(usedMaterial);
+            materialDictionary[poolIndex].Pool.Release(usedMaterial);
         }
     }
 }

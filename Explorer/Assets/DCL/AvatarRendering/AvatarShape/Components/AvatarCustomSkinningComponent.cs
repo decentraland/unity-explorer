@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -71,7 +72,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
         }
 
-        public void Dispose(AvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
+        public void Dispose(IAvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
             for (var i = 0; i < materials.Count; i++)
             {

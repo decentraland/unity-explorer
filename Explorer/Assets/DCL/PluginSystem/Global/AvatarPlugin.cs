@@ -26,6 +26,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -53,7 +54,7 @@ namespace DCL.PluginSystem.Global
 
         // late init
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
-        private AvatarMaterialPoolHandler avatarMaterialPoolHandler  = null!;
+        private IAvatarMaterialPoolHandler avatarMaterialPoolHandler  = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
         private ProvidedAsset<NametagsData> nametagsData;

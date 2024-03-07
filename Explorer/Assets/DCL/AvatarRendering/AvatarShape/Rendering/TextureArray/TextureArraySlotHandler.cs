@@ -6,7 +6,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     public class TextureArraySlotHandler
     {
         internal readonly List<Texture2DArray> arrays;
-        internal readonly TextureArraySlot defaultSlot;
         internal readonly Stack<TextureArraySlot> freeSlots;
         private readonly int minArraySize;
         private readonly int resolution;

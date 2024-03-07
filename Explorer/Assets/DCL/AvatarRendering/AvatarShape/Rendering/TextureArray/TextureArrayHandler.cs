@@ -7,20 +7,23 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     public class TextureArrayHandler
     {
         internal readonly TextureArraySlotHandler slotHandler;
-        private readonly int initialCapacityForEachResolution;
-        private readonly int minArraySize;
-        private readonly int arrayID;
-        private readonly int textureID;
-        private TextureArraySlot defaultSlot;
+        internal readonly int arrayID;
+        internal readonly int textureID;
+        internal TextureArraySlot defaultSlot;
 
-        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int _nResolution, TextureFormat _textureFormat, Texture defaultTexture, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int nResolution, TextureFormat textureFormat, Texture defaultTexture, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
         {
-            slotHandler = new TextureArraySlotHandler(_nResolution, minArraySize, initialCapacityForEachResolution, _textureFormat);
-            this.minArraySize = minArraySize;
+            slotHandler = new TextureArraySlotHandler(nResolution, minArraySize, initialCapacityForEachResolution, textureFormat);
             this.arrayID = arrayID;
             this.textureID = textureID;
-            this.initialCapacityForEachResolution = initialCapacityForEachResolution;
             InitalizeDefaultTexture(defaultTexture);
+        }
+
+        public TextureArrayHandler(int minArraySize, int arrayID, int textureID, int nResolution, TextureFormat textureFormat, int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+        {
+            slotHandler = new TextureArraySlotHandler(nResolution, minArraySize, initialCapacityForEachResolution, textureFormat);
+            this.arrayID = arrayID;
+            this.textureID = textureID;
         }
 
         private void InitalizeDefaultTexture(Texture defaultTexture)

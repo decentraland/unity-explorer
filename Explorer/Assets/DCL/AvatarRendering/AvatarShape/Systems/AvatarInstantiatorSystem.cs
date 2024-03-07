@@ -18,7 +18,6 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
-using Castle.Components.DictionaryAdapter;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -32,7 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-        private readonly AvatarMaterialPoolHandler avatarMaterialPoolHandler;
+        private readonly IAvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
@@ -47,10 +46,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly Dictionary<string, Texture> facialFeaturesDefaultTexture;
 
-        private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
+        private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IComponentPool<AvatarBase> avatarPoolRegistry, AvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, DefaultFaceFeaturesHandler defaultFaceFeaturesHandler) : base(world)
+            IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;

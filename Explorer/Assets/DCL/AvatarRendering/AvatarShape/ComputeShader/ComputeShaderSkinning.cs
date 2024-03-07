@@ -5,6 +5,7 @@ using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using ECS.Unity.Textures.Components;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -18,7 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public class ComputeShaderSkinning : CustomSkinning
     {
         public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
-            UnityEngine.ComputeShader skinningShader, AvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
+            UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             Dictionary<string, Texture> facialFeatureTexture)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
@@ -130,7 +131,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects,
-            AvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facilFeatureTexture)
+            IAvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facilFeatureTexture)
         {
             var auxVertCounter = 0;
 
@@ -200,7 +201,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (meshRenderer, filter);
         }
 
-        private (Material, TextureArraySlot?[], int) DoFacialFeature(AvatarMaterialPoolHandler poolHandler, Texture replacementTexture, Renderer meshRenderer, AvatarShapeComponent avatarShapeComponent)
+        private (Material, TextureArraySlot?[], int) DoFacialFeature(IAvatarMaterialPoolHandler poolHandler, Texture replacementTexture, Renderer meshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             int resolution = replacementTexture.width;
             int materialIndexInPool = TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES * resolution;
@@ -210,7 +211,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (avatarMaterial, slots, materialIndexInPool);
         }
 
-        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, AvatarMaterialPoolHandler poolHandler, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatures)
+        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatures)
         {
             var slots = Array.Empty<TextureArraySlot?>();
             Material avatarMaterial = null;
@@ -254,15 +255,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 
                 slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
             }
-
-            foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
-            {
-                if (originalMaterial.IsKeywordEnabled(keyword))
-                    avatarMaterial.EnableKeyword(keyword);
-            }
-
-            // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
-            //avatarMaterial.DisableKeyword("_NORMALMAP");
 
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
