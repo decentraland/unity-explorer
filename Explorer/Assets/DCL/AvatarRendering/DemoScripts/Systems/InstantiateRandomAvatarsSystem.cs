@@ -56,6 +56,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private AvatarRandomizer[] randomizers;
         private SingleInstanceEntity settings;
+        private int avatarIndex = 0;
 
         private bool requestDone;
         private AvatarRandomizerAsset avatarRandomizerAsset;
@@ -137,7 +138,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             }
 
             List<ParamPromise>  collectionPromises = new List<ParamPromise>();
-            
+
             foreach (CollectionDescription s in avatarRandomizerAsset.RandomizeCollection)
             {
                 collectionPromises.Add(ParamPromise.Create(World,
@@ -147,7 +148,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     }, "DummyUser", new List<IWearable>(), 0),
                     PartitionComponent.TOP_PRIORITY));
             }
-            
+
             var randomAvatarRequest = new RandomAvatarRequest
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
@@ -209,17 +210,18 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 var wearables = new List<string>();
                 foreach (string avatarWearable in avatarRandomizerAsset.Avatars[i].pointers)
                     wearables.Add(avatarWearable);
-                
+
                 CreateAvatar(characterControllerSettings, startXPosition, startZPosition, wearables, currentRandomizer.BodyShape, i, randomAvatarsToInstantiate);
             }
 
             for (var i = avatarRandomizerAsset.Avatars.Count; i < randomAvatarsToInstantiate; i++)
             {
                 AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+                avatarIndex++;
                 var wearables = new List<string>();
                 foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
                     wearables.Add(randomAvatarWearable);
-                
+
                 CreateAvatar(characterControllerSettings, startXPosition, startZPosition, wearables, currentRandomizer.BodyShape, i, randomAvatarsToInstantiate);
             }
         }
@@ -290,7 +292,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 ? hitInfo.point
                 : new Vector3(pos.x, 0.0f, pos.z);
         }
-        
-       
+
+
     }
 }

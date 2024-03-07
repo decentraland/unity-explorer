@@ -247,33 +247,23 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         nametagView:
-          m_AssetGUID: fabfcdf867b484665b44c8a158bd8eb4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        nametagParent:
-          m_AssetGUID: bd2233d5950ee4b4c96fc19f60d8c582
+          m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         celShadingMaterial:
-          m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        nametagsData:
-          m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
+          m_AssetGUID: 19373184c73f36042a55739551bb8298
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         defaultMaterialCapacity: 100
-        computeShader:
-          m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
+        <ChatBubbleConfiguration>k__BackingField:
+          m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <AvatarRandomizerSettingsRef>k__BackingField:
-          m_AssetGUID: e18034962a56eac40ab5df62e159c314
+        computeShader:
+          m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
