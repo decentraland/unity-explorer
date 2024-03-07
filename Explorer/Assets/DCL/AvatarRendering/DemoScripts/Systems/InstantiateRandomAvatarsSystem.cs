@@ -166,8 +166,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         [Query]
         private void FinalizeRandomAvatarInstantiation(
             in Entity entity,
-            [Arch.System.Data] in CameraComponent cameraComponent,
-            [Arch.System.Data] in ICharacterControllerSettings characterControllerSettings,
+            [Data] in CameraComponent cameraComponent,
+            [Data] in ICharacterControllerSettings characterControllerSettings,
             ref RandomAvatarRequest randomAvatarRequest)
         {
             foreach (var assetPromise in randomAvatarRequest.CollectionPromise)
@@ -186,6 +186,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     ReportHub.LogError(GetReportCategory(), $"Collection {assetPromise.LoadingIntention.Params[0].Item2} couldn't be loaded!");
             }
             GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
+            requestDone = true;
             World.Destroy(entity);
         }
 

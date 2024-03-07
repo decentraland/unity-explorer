@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using NUnit.Framework;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests

@@ -16,45 +16,35 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         /// <summary>
         ///     Sets textures from every mapping
         /// </summary>
-        public TextureArraySlot?[] SetTexturesFromOriginalMaterial(Material originalMaterial, Material targetMaterial, int _nShaderID)
+        public TextureArraySlot?[] SetTexturesFromOriginalMaterial(Material originalMaterial, Material targetMaterial)
         {
             TextureArraySlot?[] results = TextureArrayContainerFactory.SLOTS_POOL.Get();
 
             for (var i = 0; i < mappings.Count; i++)
             {
                 TextureArrayMapping mapping = mappings[i];
-
-                if (mapping.nShaderID == _nShaderID)
-                {
-                    // Check if the texture is present in the original material
-                    var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
-
-                    if (tex)
-                    {
-                        results[i] = mapping.Handler.SetTexture(targetMaterial, tex);
-                    }
-                    else if (mapping.OriginalTextureID == TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE_ID)
-                    {
-                        Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/DefaultWhite_BC7");
-                        if (tex_temp)
-                            results[i] = mapping.Handler.SetTexture(targetMaterial, tex_temp);
-                    }
-                    else if (mapping.OriginalTextureID == TextureArrayConstants.BUMP_MAP_ORIGINAL_TEXTURE_ID)
-                    {
-                        Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/FlatNormal_BC5");
-                        if (tex_temp)
-                            results[i] = mapping.Handler.SetTexture(targetMaterial, tex_temp);
-                    }
-                    else if (mapping.OriginalTextureID == TextureArrayConstants.EMISSION_MAP_ORIGINAL_TEXTURE_ID)
-                    {
-                        Texture2D tex_temp = Resources.Load<Texture2D>("TempTextures/DefaultBlack_BC7");
-                        if (tex_temp)
-                            results[i] = mapping.Handler.SetTexture(targetMaterial, tex_temp);
-                    }
-                }
+                // Check if the texture is present in the original material
+                var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
+                if (tex)
+                    results[i] = mapping.Handler.SetTexture(targetMaterial, tex);
+                else
+                   mapping.Handler.SetDefaultTexture(targetMaterial);
             }
 
             return results;
+        }
+
+        public TextureArraySlot?[] SetTexturesFromOriginalMaterial(int mappingID, Texture2D texture, Material targetMaterial)
+        {
+            TextureArraySlot?[] results = TextureArrayContainerFactory.SLOTS_POOL.Get();
+            for (var i = 0; i < mappings.Count; i++)
+            {
+                TextureArrayMapping mapping = mappings[i];
+                if(mapping.OriginalTextureID == mappingID)
+                    results[i] = mapping.Handler.SetTexture(targetMaterial, texture);
+            }
+            return results;
+
         }
     }
 }

@@ -75,7 +75,7 @@ namespace DCL.LOD.Systems
 
                 if (result.Succeeded)
                 {
-                    GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
+                    GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
