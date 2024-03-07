@@ -20,11 +20,15 @@ namespace DCL.Landscape
 
         private NativeParallelHashSet<int2> ownedParcels;
         private NativeArray<int2> emptyParcels;
+        private TerrainGenerator gen;
 
         private void Start()
         {
             GenerateAsync().Forget();
         }
+
+        public TerrainGenerator GetGenerator() =>
+            gen;
 
         [ContextMenu("Generate")]
         public async UniTask GenerateAsync()
@@ -32,7 +36,7 @@ namespace DCL.Landscape
             ownedParcels = parcelData.GetOwnedParcels();
             emptyParcels = parcelData.GetEmptyParcels();
 
-            var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
+            gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
             await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails, true);
 
             emptyParcels.Dispose();
