@@ -32,6 +32,9 @@ module.exports.triggerEmote = async function(message) {
 }
 
 module.exports.changeRealm = async function(message) {
+    if (message.message == undefined) {
+        message.message = ''
+    }
     const isSuccess = UnityRestrictedActionsApi.ChangeRealm(message.message, message.realm)
     return {
         success: isSuccess

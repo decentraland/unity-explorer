@@ -74,7 +74,7 @@ namespace CrdtEcsBridge.RestrictedActions
             TeleportAsync(coords).Forget();
         }
 
-        public bool ChangeRealm(string realm)
+        public bool ChangeRealm(string message, string realm)
         {
             if (!sceneStateProvider.IsCurrent)
             {
@@ -82,7 +82,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return false;
             }
 
-            ChangeRealmAsync(realm).Forget();
+            ChangeRealmAsync(message, realm).Forget();
             return true;
         }
 
@@ -134,10 +134,10 @@ namespace CrdtEcsBridge.RestrictedActions
             await mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
         }
 
-        private async UniTask ChangeRealmAsync(string realm)
+        private async UniTask ChangeRealmAsync(string message, string realm)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(realm)));
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
         }
 
         public void Dispose() { }
