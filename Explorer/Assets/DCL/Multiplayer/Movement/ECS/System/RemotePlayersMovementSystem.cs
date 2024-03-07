@@ -57,17 +57,14 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (@int.Enabled)
             {
-                Debug.Log($"VVV RUN {UnityEngine.Time.unscaledTime}");
-
                 (MessageMock? passed, float rest) = @int.Update(t);
                 t = rest;
-                // InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                InterpolateAnimations(ref anim, @int.Start, @int.End, t);
                 if (passed == null) return;
 
                 AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
 
-                if (t == 0)
-                    return;
+                if (t == 0) return;
             }
 
             // if (playerInbox.Count < 2)  return;
@@ -126,7 +123,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
 
                     (MessageMock? passed, float _) = @int.Update(t);
-                    // InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                    InterpolateAnimations(ref anim, @int.Start, @int.End, t);
                     if (passed != null)
                         AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
                 }
@@ -136,7 +133,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private static void AddToPassed(MessageMock passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             remotePlayerMovement.PassedMessages.Add(passed);
-            // UpdateAnimations(passed, ref anim, view);
+            UpdateAnimations(passed, ref anim, view);
         }
 
         private static void UpdateAnimations(MessageMock message, ref CharacterAnimationComponent animationComponent, IAvatarView view)
