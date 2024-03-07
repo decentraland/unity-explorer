@@ -15,11 +15,11 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 0
-  m_FogColor: {r: 0.6745098, g: 0.7960785, b: 0.9176471, a: 1}
-  m_FogMode: 3
-  m_FogDensity: 0.001
+  m_FogColor: {r: 0, g: 0, b: 0, a: 0}
+  m_FogMode: 0
+  m_FogDensity: 0
   m_LinearFogStart: 0
-  m_LinearFogEnd: 300
+  m_LinearFogEnd: 0
   m_AmbientSkyColor: {r: 0.41429335, g: 0.49538925, b: 0.6603774, a: 1}
   m_AmbientEquatorColor: {r: 0.48940903, g: 0.735849, b: 0.6355583, a: 1}
   m_AmbientGroundColor: {r: 0.4197065, g: 0.745283, b: 0.35506406, a: 1}
@@ -270,13 +270,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ebb9ffde2df4ff4936c991393d7bcb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clearCache: 0
+  clearCache: 1
   worldSeed: 111
   digHoles: 1
   centerTerrain: 1
   hideTrees: 0
   hideDetails: 0
-  genData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
+  genData: {fileID: 11400000, guid: 9b0a048c7455730458966d5e5bc725c4, type: 2}
   parcelData: {fileID: 11400000, guid: 86bf0204cf3bb75429342452a2a460af, type: 2}
 --- !u!4 &1359845491
 Transform:
