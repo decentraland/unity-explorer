@@ -59,11 +59,11 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<Material> celShadingMaterialPool = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
-        private ProvidedAsset<NametagsData> nametagsData;
+        private IObjectPool<NametagView> nametagViewPool;
+        private NametagsData nametagsData;
 
         private IComponentPool<Transform> transformPoolRegistry = null!;
-
-        private IObjectPool<NametagView> nametagViewPool = null!;
+        private ChatBubbleConfigurationSO chatBubbleConfiguration;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -75,7 +75,8 @@ namespace DCL.PluginSystem.Global
             CharacterContainer staticContainerCharacterContainer,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            NametagsData nametagsData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -85,6 +86,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.nametagsData = nametagsData;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
@@ -99,11 +101,12 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
+            chatBubbleConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatBubbleConfiguration, ct)).Value;
+
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
-            nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
         }
@@ -114,7 +117,7 @@ namespace DCL.PluginSystem.Global
             Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
-            new NametagsDebugController(debugContainerBuilder, nametagsData.Value);
+            new NametagsDebugController(debugContainerBuilder, nametagsData);
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
@@ -133,7 +136,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
 
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -146,16 +149,12 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.EnsureGetComponent<NametagView>();
-
-            GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagParent, ct: ct)).Value;
-
-            GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity)!;
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
 
             nametagViewPool = new ObjectPool<NametagView>(
-                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
-                actionOnGet: nametagView => nametagView.gameObject.SetActive(true),
-                actionOnRelease: nametagView => nametagView.gameObject.SetActive(false),
+                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, null),
+                actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
+                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 
@@ -204,38 +203,25 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             private AssetReferenceGameObject? nametagView;
 
-            [field: Space]
-            [field: SerializeField]
-            private AssetReferenceGameObject? nametagParent;
-
             [field: SerializeField]
             private AssetReferenceMaterial? celShadingMaterial;
-
-            [field: SerializeField]
-            public NametagsDataRef? nametagsData;
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
-            public AssetReferenceComputeShader computeShader;
+            public AssetReferenceT<ChatBubbleConfigurationSO> ChatBubbleConfiguration { get; private set; }
 
+            [field: SerializeField]
+            public AssetReferenceComputeShader computeShader;
 
             public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 
             public AssetReferenceGameObject NametagView => nametagView.EnsureNotNull();
 
-            public AssetReferenceGameObject NametagParent => nametagParent.EnsureNotNull();
-
             public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
 
             public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
-
-            [Serializable]
-            public class NametagsDataRef : AssetReferenceT<NametagsData>
-            {
-                public NametagsDataRef(string guid) : base(guid) { }
-            }
         }
     }
 }

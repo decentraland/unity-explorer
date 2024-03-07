@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e4ba96b9bfe4667be8201e46957e9e1, type: 3}
   m_Name: NametagsData
   m_EditorClassIdentifier: 
-  showNameTags: 0
+  showNameTags: 1
+  showChatBubbles: 1
+  maxDistance: 25

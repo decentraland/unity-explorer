@@ -97,30 +97,24 @@ namespace DCL.Profiles
 
         public void CopyTo(Avatar avatar)
         {
-            const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
-
             List<URN> wearableUrns = wearableUrnPool.Get();
             List<string> forceRenderCategories = forceRenderPool.Get();
 
             foreach (string w in wearables)
                 wearableUrns.Add(w);
 
-            avatar.sharedWearables.Clear();
             avatar.forceRender.Clear();
 
             if (forceRender != null)
                 foreach (string forceRenderCategory in forceRender)
                     forceRenderCategories.Add(forceRenderCategory);
 
-            foreach (URN wearable in wearableUrns)
-                avatar.sharedWearables.Add(wearable.Shorten(SHARED_WEARABLES_MAX_URN_PARTS));
-
             foreach (string forceRenderCategory in forceRenderCategories)
                 avatar.forceRender.Add(forceRenderCategory);
 
             // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
-            avatar.uniqueWearables.Clear();
-            avatar.uniqueWearables.UnionWith(wearableUrns!);
+            avatar.wearables.Clear();
+            avatar.wearables.UnionWith(wearableUrns!);
 
             avatar.BodyShape = BodyShape.FromStringSafe(bodyShape);
             emotes.AlignWithDictionary(avatar.emotes, static dto => dto.urn, static dto => dto.ToEmote());
@@ -140,7 +134,7 @@ namespace DCL.Profiles
             wearables ??= new List<string>();
             wearables.Clear();
 
-            foreach (string w in avatar.uniqueWearables)
+            foreach (string w in avatar.wearables)
                 wearables.Add(w);
 
             bodyShape = BodyShape.FromStringSafe(avatar.BodyShape);
