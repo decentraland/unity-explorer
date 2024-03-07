@@ -170,7 +170,7 @@ namespace DCL.Landscape
                 AddColorMapRenderer(rootGo);
 
                 // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-                await BugWorkaround();
+                await BugWorkaroundAsync();
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
 
@@ -192,7 +192,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async Task BugWorkaround()
+        private async Task BugWorkaroundAsync()
         {
             foreach (Terrain terrain in terrains)
                 terrain.enabled = false;
