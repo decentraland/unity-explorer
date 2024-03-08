@@ -15,9 +15,9 @@ Material:
   - _EMISSIVE_SIMPLE
   - _IS_ANGELRING_OFF
   - _IS_CLIPPING_TRANSMODE
-  m_InvalidKeywords:
   - _IS_OUTLINE_CLIPPING_YES
   - _OUTLINE_NML
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -486,7 +486,7 @@ Material:
     - _Is_LightColor_Base: 1
     - _Is_LightColor_HighColor: 1
     - _Is_LightColor_MatCap: 1
-    - _Is_LightColor_Outline: 1
+    - _Is_LightColor_Outline: 0
     - _Is_LightColor_RimLight: 1
     - _Is_NormalMapForMatCap: 0
     - _Is_NormalMapToBase: 0
@@ -518,7 +518,7 @@ Material:
     - _Offset_Z: 0
     - _OutlineOverridden: 0
     - _OutlineVisible: 1
-    - _Outline_Width: 0
+    - _Outline_Width: 2
     - _PPDLodThreshold: 5
     - _PPDMaxSamples: 15
     - _PPDMinSamples: 5

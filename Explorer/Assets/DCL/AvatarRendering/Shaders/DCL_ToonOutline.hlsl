@@ -1,7 +1,21 @@
 uniform float4 _LightColor0; // this is not set in c# code ?
 
+#ifdef _DCL_COMPUTE_SKINNING
+// Skinning structure
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+    float4 tangent;
+};
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+#endif
+
 struct VertexInput
 {
+    #if _DCL_COMPUTE_SKINNING
+        uint index : SV_VertexID;
+    #endif
     float4 vertex : POSITION;
     float3 normal : NORMAL;
     float4 tangent : TANGENT;
@@ -31,14 +45,23 @@ VertexOutput vert (VertexInput v)
     o.uv0 = v.texcoord0;
     float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
     float2 Set_UV0 = o.uv0;
-    float4 _Outline_Sampler_var = tex2Dlod(_Outline_Sampler,float4(TRANSFORM_TEX(Set_UV0, _Outline_Sampler),0.0,0));
+    float4 _Outline_Sampler_var = float4(1,1,1,1);//tex2Dlod(_Outline_Sampler,float4(TRANSFORM_TEX(Set_UV0, _Outline_Sampler),0.0,0));
     //v.2.0.4.3 baked Normal Texture for Outline
+
+    #ifdef _DCL_COMPUTE_SKINNING
+    o.normalDir = UnityObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz);
+    float4 skinnedTangent = _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].tangent;
+    o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( skinnedTangent.xyz, 0.0 ) ).xyz );
+    o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * skinnedTangent.w);
+    #else
     o.normalDir = UnityObjectToWorldNormal(v.normal);
     o.tangentDir = normalize( mul( unity_ObjectToWorld, float4( v.tangent.xyz, 0.0 ) ).xyz );
     o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
+    #endif
+    
     float3x3 tangentTransform = float3x3( o.tangentDir, o.bitangentDir, o.normalDir);
     //UnpackNormal() can't be used, and so as follows. Do not specify a bump for the texture to be used.
-    float4 _BakedNormal_var = (tex2Dlod(_BakedNormal,float4(TRANSFORM_TEX(Set_UV0, _BakedNormal),0.0,0)) * 2 - 1);
+    float4 _BakedNormal_var = (float4(1,1,1,1) * 2 - 1);//(tex2Dlod(_BakedNormal,float4(TRANSFORM_TEX(Set_UV0, _BakedNormal),0.0,0)) * 2 - 1);
     float3 _BakedNormalDir = normalize(mul(_BakedNormal_var.rgb, tangentTransform));
     //end
     float Set_Outline_Width = (_Outline_Width*0.001*smoothstep( _Farthest_Distance, _Nearest_Distance, distance(objPos.rgb,_WorldSpaceCameraPos) )*_Outline_Sampler_var.rgb).r;
@@ -58,7 +81,11 @@ VertexOutput vert (VertexInput v)
     //v2.0.4
     #ifdef _OUTLINE_NML
         //v.2.0.4.3 baked Normal Texture for Outline
-        o.pos = UnityObjectToClipPos(lerp(float4(v.vertex.xyz + v.normal*Set_Outline_Width,1), float4(v.vertex.xyz + _BakedNormalDir*Set_Outline_Width,1),_Is_BakedNormal));
+        #ifdef _DCL_COMPUTE_SKINNING
+            o.pos = UnityObjectToClipPos(lerp(float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz + _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz * Set_Outline_Width,1), float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz + _BakedNormalDir*Set_Outline_Width,1),_Is_BakedNormal));
+        #else
+            o.pos = UnityObjectToClipPos(lerp(float4(v.vertex.xyz + v.normal*Set_Outline_Width,1), float4(v.vertex.xyz + _BakedNormalDir*Set_Outline_Width,1),_Is_BakedNormal));
+        #endif
     #elif _OUTLINE_POS
         Set_Outline_Width = Set_Outline_Width*2;
         float signVar = dot(normalize(v.vertex.xyz),normalize(v.normal))<0 ? -1 : 1;
@@ -88,17 +115,22 @@ float4 frag(VertexOutput i) : SV_Target
     lightColor = lightColorIntensity<1 ? lightColor : lightColor/lightColorIntensity;
     lightColor = lerp(half3(1.0,1.0,1.0), lightColor, _Is_LightColor_Outline);
     float2 Set_UV0 = i.uv0;
-    float4 _MainTex_var = SAMPLE_TEXTURE2D(_MainTex,sampler_MainTex, TRANSFORM_TEX(Set_UV0, _MainTex));
+    int nMainTexArrID = _MainTexArr_ID;
+    float2 uv_maintex = TRANSFORM_TEX(Set_UV0, _MainTex);
+    float4 _MainTex_var = SAMPLE_MAINTEX(uv_maintex,nMainTexArrID);
+    //float4 _MainTex_var = SAMPLE_TEXTURE2D(_MainTex,sampler_MainTex, TRANSFORM_TEX(Set_UV0, _MainTex));
     float3 Set_BaseColor = _BaseColor.rgb*_MainTex_var.rgb;
     float3 _Is_BlendBaseColor_var = lerp( _Outline_Color.rgb*lightColor, (_Outline_Color.rgb*Set_BaseColor*Set_BaseColor*lightColor), _Is_BlendBaseColor );
     //
-    float3 _OutlineTex_var = tex2D(_OutlineTex,TRANSFORM_TEX(Set_UV0, _OutlineTex)).rgb;
+    float3 _OutlineTex_var = float3(1.0, 1.0, 1.0);//tex2D(_OutlineTex,TRANSFORM_TEX(Set_UV0, _OutlineTex)).rgb;
     //v.2.0.7.5
+
+    //return float4(1.0, 0.0, 0.0 ,1.0);
     #ifdef _IS_OUTLINE_CLIPPING_NO
         float3 Set_Outline_Color = lerp(_Is_BlendBaseColor_var, _OutlineTex_var.rgb*_Outline_Color.rgb*lightColor, _Is_OutlineTex );
         return float4(Set_Outline_Color,1.0);
     #elif _IS_OUTLINE_CLIPPING_YES
-        float4 _ClippingMask_var = SAMPLE_TEXTURE2D(_ClippingMask, sampler_MainTex, TRANSFORM_TEX(Set_UV0, _ClippingMask));
+        float4 _ClippingMask_var = float4(1.0, 1.0, 1.0, 1.0);//SAMPLE_TEXTURE2D(_ClippingMask, sampler_MainTex, TRANSFORM_TEX(Set_UV0, _ClippingMask));
         float Set_MainTexAlpha = _MainTex_var.a;
         float _IsBaseMapAlphaAsClippingMask_var = lerp( _ClippingMask_var.r, Set_MainTexAlpha, _IsBaseMapAlphaAsClippingMask );
         float _Inverse_Clipping_var = lerp( _IsBaseMapAlphaAsClippingMask_var, (1.0 - _IsBaseMapAlphaAsClippingMask_var), _Inverse_Clipping );
@@ -108,5 +140,3 @@ float4 frag(VertexOutput i) : SV_Target
         return Set_Outline_Color;
     #endif
 }
-// End of File
-
