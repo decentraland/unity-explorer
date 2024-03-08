@@ -21,10 +21,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private readonly IMultiplayerSpatialStateSettings settings;
         private readonly RemotePlayersMovementInbox messagePipe;
 
-        public RemotePlayersMovementSystem(World world, IRoomHub room, IMultiplayerSpatialStateSettings settings) : base(world)
+        public RemotePlayersMovementSystem(World world, IRoomHub roomHub, IMultiplayerSpatialStateSettings settings) : base(world)
         {
             this.settings = settings;
-            messagePipe = new RemotePlayersMovementInbox(room, settings);
+            messagePipe = new RemotePlayersMovementInbox(roomHub, settings);
         }
 
         protected override void Update(float t)

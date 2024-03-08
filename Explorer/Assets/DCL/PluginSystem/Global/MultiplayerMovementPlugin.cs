@@ -12,15 +12,15 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IRoomHub room;
+        private readonly IRoomHub roomHub;
         private readonly ICharacterObject characterObject;
 
         private ProvidedAsset<MultiplayerSpatialStateSettings> settings;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IRoomHub room, ICharacterObject characterObject)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IRoomHub roomHub, ICharacterObject characterObject)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.room = room;
+            this.roomHub = roomHub;
             this.characterObject = characterObject;
         }
 
@@ -36,8 +36,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, room, settings.Value, characterObject.Controller);
-            RemotePlayersMovementSystem.InjectToWorld(ref builder, room, settings.Value);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, roomHub, settings.Value, characterObject.Controller);
+            RemotePlayersMovementSystem.InjectToWorld(ref builder, roomHub, settings.Value);
         }
     }
 }

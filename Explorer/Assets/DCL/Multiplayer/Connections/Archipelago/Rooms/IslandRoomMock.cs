@@ -1,5 +1,4 @@
-﻿using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.Rooms.Connective;
+﻿using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -11,7 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DCL.Multiplayer.Movement.ECS.System
+namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public class IslandRoomMock : IArchipelagoIslandRoom, IRoom, IDataPipe
     {
