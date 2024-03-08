@@ -2,6 +2,7 @@
 
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using Google.Protobuf.WellKnownTypes;
 
 namespace ECS
 {
@@ -31,7 +32,7 @@ namespace ECS
 
         class Fake : IRealmData
         {
-            public Fake(int networkId, string commsAdapter, string realmName = "baldr") : this(
+            public Fake(int networkId =1 , string commsAdapter = "", string realmName = "baldr") : this(
                 new LocalIpfsRealm(new URLDomain()),
                 true,
                 realmName,

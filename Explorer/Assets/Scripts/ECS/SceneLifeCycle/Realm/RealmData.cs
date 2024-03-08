@@ -53,10 +53,10 @@ namespace ECS
             Configured = true;
 
             RealmName = realmName;
-            NetworkId = networkId;
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
+            NetworkId = networkId;
         }
 
         /// <summary>
