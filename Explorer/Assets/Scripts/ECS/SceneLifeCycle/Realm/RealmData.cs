@@ -8,10 +8,13 @@ namespace ECS
     /// </summary>
     public class RealmData : IRealmData
     {
+        private const int DEFAULT_NETWORK_ID = 1;
+
         private IIpfsRealm ipfs;
         private bool scenesAreFixed;
 
         public string RealmName { get; private set; }
+        public int NetworkId{ get; private set; }
 
         public bool Configured { get; private set; }
 
@@ -40,14 +43,15 @@ namespace ECS
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId)
         {
             Configured = true;
 
             RealmName = realmName;
+            NetworkId = networkId;
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
         }

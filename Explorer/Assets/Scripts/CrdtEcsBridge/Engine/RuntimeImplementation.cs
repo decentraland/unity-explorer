@@ -1,8 +1,10 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Time;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -24,19 +26,19 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
-        private const float DEFAULT_GET_WORLD_TIME = 0.01f;
-
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
         private readonly IWorldTimeProvider timeProvider;
         private readonly ISceneExceptionsHandler exceptionsHandler;
+        private readonly World world;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, ISceneExceptionsHandler exceptionsHandler)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, ISceneExceptionsHandler exceptionsHandler, World world)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
             this.timeProvider = timeProvider;
             this.exceptionsHandler = exceptionsHandler;
+            this.world = world;
         }
 
         public void Dispose()
@@ -74,19 +76,30 @@ namespace CrdtEcsBridge.Engine
             };
         }
 
+        private static readonly QueryDescription GET_REALM_COMPONENT = new QueryDescription().WithAll<RealmComponent>();
+
         public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
+            IRuntime.RealmInfo realmInfo = new IRuntime.RealmInfo();
+
+            world.Query(in GET_REALM_COMPONENT, (ref RealmComponent b) =>
+            {
+                realmInfo.RealmName = b.RealmData.RealmName;
+                realmInfo.NetworkID = b.RealmData.NetworkId;
+            });
+
             return new IRuntime.GetRealmResponse
             {
-                RealmInfo = new IRuntime.RealmInfo()
+                RealmInfo = realmInfo
             };
         }
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
         {
             float seconds = await timeProvider.GetWorldTimeAsync(ct);
+
 
             return new IRuntime.GetWorldTimeResponse
             {

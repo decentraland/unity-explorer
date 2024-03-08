@@ -21,6 +21,7 @@ namespace ECS
         ///     Name of the realm
         /// </summary>
         string RealmName { get; }
+        int NetworkId { get;}
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -47,6 +48,7 @@ namespace ECS
             public IIpfsRealm Ipfs { get; }
             public bool ScenesAreFixed { get; }
             public string RealmName { get; }
+            public int NetworkId { get; }
             public bool Configured { get; }
         }
     }

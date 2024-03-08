@@ -8,5 +8,6 @@ namespace DCL.Ipfs
     {
         public List<string> scenesUrn;
         public string realmName;
+        public int networkId;
     }
 }

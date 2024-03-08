@@ -211,7 +211,7 @@ namespace SceneRunner
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
-            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, exceptionsHandler);
+            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, exceptionsHandler, ecsWorldFacade.EcsWorld);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
