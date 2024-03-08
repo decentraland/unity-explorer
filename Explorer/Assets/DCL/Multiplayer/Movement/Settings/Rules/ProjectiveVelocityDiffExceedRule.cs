@@ -13,12 +13,12 @@ namespace DCL.Multiplayer.Movement.Settings
         [Space]
         public float VelocityChangeThreshold;
 
-        public override bool IsSendConditionMet(float t, MessageMock lastMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
+        public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController playerCharacter,
             IMultiplayerSpatialStateSettings settings)
         {
-            Vector3 extrapolatedVelocity = ExtrapolationComponent.DampVelocity(t, lastMessage, settings);
-            return Vector3.SqrMagnitude(lastMessage.velocity - extrapolatedVelocity) > VelocityChangeThreshold;
+            Vector3 extrapolatedVelocity = ExtrapolationComponent.DampVelocity(t, lastFullMovementMessage, settings);
+            return Vector3.SqrMagnitude(lastFullMovementMessage.velocity - extrapolatedVelocity) > VelocityChangeThreshold;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.ECS;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 
@@ -15,18 +16,18 @@ namespace DCL.Multiplayer.Movement.Settings
 
         private string reason = string.Empty;
 
-        public override bool IsSendConditionMet(float t, MessageMock lastMessage, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent move,
+        public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController ___,
             IMultiplayerSpatialStateSettings ____)
         {
             // Maybe we don't need it because of velocity change?
-            if (Mathf.Abs(GetMovementBlendTier(lastMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)) >= MoveBlendTiersDiff)
+            if (Mathf.Abs(GetMovementBlendTier(lastFullMovementMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)) >= MoveBlendTiersDiff)
             {
-                reason = $"MOVEMENT {GetMovementBlendTier(lastMessage.animState.MovementBlendValue)} vs {GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)}";
+                reason = $"MOVEMENT {GetMovementBlendTier(lastFullMovementMessage.animState.MovementBlendValue)} vs {GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)}";
                 return true;
             }
 
-            if (Mathf.Abs(lastMessage.animState.SlideBlendValue - playerAnimationComponent.States.SlideBlendValue) > MinSlideBlendDiff)
+            if (Mathf.Abs(lastFullMovementMessage.animState.SlideBlendValue - playerAnimationComponent.States.SlideBlendValue) > MinSlideBlendDiff)
             {
                 reason = "SLIDE";
                 return true;

@@ -7,18 +7,18 @@ namespace DCL.Multiplayer.Movement.ECS.System
 {
     public static class MessageMockSerializer
     {
-        public static byte[] SerializeMessage(MessageMock message)
+        public static byte[] SerializeMessage(FullMovementMessage fullMovementMessage)
         {
-            string? json = JsonUtility.ToJson(message);
+            string? json = JsonUtility.ToJson(fullMovementMessage);
             return Encoding.UTF8.GetBytes(json);
         }
 
-        public static MessageMock? DeserializeMessage(ReadOnlySpan<byte> data)
+        public static FullMovementMessage? DeserializeMessage(ReadOnlySpan<byte> data)
         {
             try
             {
                 string jsonString = Encoding.UTF8.GetString(data.ToArray());
-                return JsonUtility.FromJson<MessageMock>(jsonString);
+                return JsonUtility.FromJson<FullMovementMessage>(jsonString);
             }
             catch (Exception)
             {

@@ -1,5 +1,4 @@
-﻿using DCL.Multiplayer.Movement.MessageBusMock;
-using DCL.Multiplayer.Movement.Settings;
+﻿using DCL.Multiplayer.Movement.Settings;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS
@@ -11,7 +10,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public bool Enabled;
 
-        public MessageMock Start;
+        public FullMovementMessage Start;
         public float Time;
         private Vector3 velocity;
         private IMultiplayerSpatialStateSettings settings;
@@ -39,7 +38,7 @@ namespace DCL.Multiplayer.Movement.ECS
                 transform.position += velocity * deltaTime;
         }
 
-        public void Run(MessageMock from, IMultiplayerSpatialStateSettings settings)
+        public void Run(FullMovementMessage from, IMultiplayerSpatialStateSettings settings)
         {
             this.settings = settings;
             Start = from;
@@ -51,11 +50,11 @@ namespace DCL.Multiplayer.Movement.ECS
             Enabled = true;
         }
 
-        public MessageMock Stop()
+        public FullMovementMessage Stop()
         {
             Enabled = false;
 
-            return new MessageMock
+            return new FullMovementMessage
             {
                 timestamp = Start.timestamp,
                 position = transform.position,
@@ -65,7 +64,7 @@ namespace DCL.Multiplayer.Movement.ECS
             };
         }
 
-        public static Vector3 DampVelocity(float time, MessageMock start, IMultiplayerSpatialStateSettings settings)
+        public static Vector3 DampVelocity(float time, FullMovementMessage start, IMultiplayerSpatialStateSettings settings)
         {
             float totalMoveDuration = settings.LinearTime + (settings.LinearTime * settings.DampedSteps);
 

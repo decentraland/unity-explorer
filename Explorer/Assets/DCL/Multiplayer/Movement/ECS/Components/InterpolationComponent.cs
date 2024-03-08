@@ -11,8 +11,8 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public bool IsBlend;
 
-        public MessageMock Start;
-        public MessageMock End;
+        public FullMovementMessage Start;
+        public FullMovementMessage End;
 
         private float time;
         private float totalDuration;
@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Movement.ECS
             slowDownFactor = 1f;
         }
 
-        public (MessageMock message, float restTimeDelta) Update(float deltaTime)
+        public (FullMovementMessage message, float restTimeDelta) Update(float deltaTime)
         {
             var remainedDeltaTime = 0f;
 
@@ -94,7 +94,7 @@ namespace DCL.Multiplayer.Movement.ECS
             Enabled = true;
         }
 
-        public void Run(MessageMock from, MessageMock to, int inboxMessages, IMultiplayerSpatialStateSettings settings, bool isBlend = false)
+        public void Run(FullMovementMessage from, FullMovementMessage to, int inboxMessages, IMultiplayerSpatialStateSettings settings, bool isBlend = false)
         {
             this.settings = settings;
 
@@ -108,13 +108,13 @@ namespace DCL.Multiplayer.Movement.ECS
             Enable(inboxMessages);
         }
 
-        private MessageMock Disable()
+        private FullMovementMessage Disable()
         {
             Enabled = false;
             return End;
         }
 
-        private Vector3 DoTransition(MessageMock start, MessageMock end, float time, float totalDuration, bool isBlend)
+        private Vector3 DoTransition(FullMovementMessage start, FullMovementMessage end, float time, float totalDuration, bool isBlend)
         {
             return (isBlend ? settings.BlendType : settings.InterpolationType) switch
                    {

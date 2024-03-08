@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private readonly CharacterController playerCharacter;
 
-        private MessageMock? lastSentMessage;
+        private FullMovementMessage? lastSentMessage;
 
         private int MessagesSentInSec;
         private float mesPerSecTimer;
@@ -96,7 +96,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
 
-            lastSentMessage = new MessageMock
+            lastSentMessage = new FullMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerCharacter.transform.position,

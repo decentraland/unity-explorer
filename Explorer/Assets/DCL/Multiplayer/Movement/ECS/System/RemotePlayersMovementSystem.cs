@@ -32,17 +32,9 @@ namespace DCL.Multiplayer.Movement.ECS.System
             UpdateRemotePlayersMovementQuery(World,t);
         }
 
-        private void InterpolateAnimations(ref CharacterAnimationComponent anim, MessageMock start, MessageMock end, float t)
-        {
-            float timeDiff = end.timestamp - start.timestamp;
-
-            anim.States.MovementBlendValue = Mathf.Lerp(start.animState.MovementBlendValue, end.animState.MovementBlendValue, t/timeDiff);
-            anim.States.SlideBlendValue = Mathf.Lerp(start.animState.SlideBlendValue, end.animState.SlideBlendValue, t/timeDiff);
-        }
-
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float t, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, in IAvatarView view)
+        private void UpdateRemotePlayersMovement([Data] float t, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, in IAvatarView view)
         {
             if(!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out var playerInbox))
                 return;
@@ -50,11 +42,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
             settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
             settings.InboxCount = playerInbox.Count;
 
-            CharacterAnimationComponent anim = new CharacterAnimationComponent();
-
             if (@int.Enabled)
             {
-                (MessageMock? passed, float rest) = @int.Update(t);
+                (FullMovementMessage? passed, float rest) = @int.Update(t);
+
                 t = rest;
                 InterpolateAnimations(ref anim, @int.Start, @int.End, t);
                 if (passed == null) return;
@@ -78,8 +69,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (playerInbox.Count > 0)
             {
-                MessageMock remote = playerInbox.Dequeue();
-                MessageMock local = null;
+                FullMovementMessage remote = playerInbox.Dequeue();
+                FullMovementMessage local = null;
 
                 if (ext.Enabled &&(remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration || remote.timestamp > ext.Start.timestamp + ext.Time))
                 {
@@ -90,8 +81,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
                         ? ext.Start.timestamp + ext.TotalMoveDuration
                         : ext.Start.timestamp + ext.Time;
 
-                    // var mediumVelocity = (local.velocity + remote.velocity) / 2;
-                    // local.timestamp = remote.timestamp - (Vector3.Distance(remote.position, local.position) / mediumVelocity.magnitude);
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
 
@@ -124,7 +113,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 {
                     // Should be in loop until (t <= 0)
                     @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
-                    (MessageMock? passed, float _) = @int.Update(t);
+                    (FullMovementMessage? passed, float _) = @int.Update(t);
                     InterpolateAnimations(ref anim, @int.Start, @int.End, t);
                     if (passed != null)
                         AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
@@ -132,15 +121,23 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
         }
 
-        private static void AddToPassed(MessageMock passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
+        private static void AddToPassed(FullMovementMessage passed, ref RemotePlayerMovementComponent remotePlayerMovement, ref CharacterAnimationComponent anim, in IAvatarView view)
         {
             remotePlayerMovement.PassedMessages.Add(passed);
             UpdateAnimations(passed, ref anim, view);
         }
 
-        private static void UpdateAnimations(MessageMock message, ref CharacterAnimationComponent animationComponent, IAvatarView view)
+        private static void InterpolateAnimations(ref CharacterAnimationComponent anim, FullMovementMessage start, FullMovementMessage end, float t)
         {
-            animationComponent.States = message.animState;
+            float timeDiff = end.timestamp - start.timestamp;
+
+            anim.States.MovementBlendValue = Mathf.Lerp(start.animState.MovementBlendValue, end.animState.MovementBlendValue, t/timeDiff);
+            anim.States.SlideBlendValue = Mathf.Lerp(start.animState.SlideBlendValue, end.animState.SlideBlendValue, t/timeDiff);
+        }
+
+        private static void UpdateAnimations(FullMovementMessage fullMovementMessage, ref CharacterAnimationComponent animationComponent, IAvatarView view)
+        {
+            animationComponent.States = fullMovementMessage.animState;
 
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
@@ -148,7 +145,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             if (view.GetAnimatorBool(AnimationHashes.JUMPING))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
-            view.SetAnimatorBool(AnimationHashes.STUNNED, message.isStunned);
+            view.SetAnimatorBool(AnimationHashes.STUNNED, fullMovementMessage.isStunned);
             view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
             view.SetAnimatorBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
             view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);

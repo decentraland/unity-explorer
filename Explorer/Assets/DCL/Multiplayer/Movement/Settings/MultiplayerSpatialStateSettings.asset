@@ -15,22 +15,22 @@ MonoBehaviour:
   <TimeScale>k__BackingField: 1
   <SamePositionTeleportFilterCount>k__BackingField: 100
   <InboxCount>k__BackingField: 0
-  <PassedMessages>k__BackingField: 239
+  <PassedMessages>k__BackingField: 29
   <PackageLost>k__BackingField: 0
   <StartSending>k__BackingField: 0
   <SendRules>k__BackingField:
   - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
   <PackagesJitter>k__BackingField: 0
-  <Latency>k__BackingField: 0.11
+  <Latency>k__BackingField: 0.05
   <LatencyJitter>k__BackingField: 10
   <MinPositionDelta>k__BackingField: 0.001
   <MinTeleportDistance>k__BackingField: 100
   <InterpolationType>k__BackingField: 1
   <SpeedUpFactor>k__BackingField: 0
-  <useBlend>k__BackingField: 1
+  <useBlend>k__BackingField: 0
   <BlendType>k__BackingField: 1
-  <MaxBlendSpeed>k__BackingField: 10
-  <useExtrapolation>k__BackingField: 1
+  <MaxBlendSpeed>k__BackingField: 5
+  <useExtrapolation>k__BackingField: 0
   <MinSpeed>k__BackingField: 0.01
   <LinearTime>k__BackingField: 0.33
   <DampedSteps>k__BackingField: 1

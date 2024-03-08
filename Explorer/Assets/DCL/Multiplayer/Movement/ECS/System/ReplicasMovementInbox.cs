@@ -13,13 +13,13 @@ namespace DCL.Multiplayer.Movement.ECS.System
 {
     public class RemotePlayersMovementInbox
     {
-        public readonly Dictionary<string, Queue<MessageMock>> InboxByParticipantMap = new ();
-        private readonly Queue<MessageMock> incomingMessages = new ();
+        public readonly Dictionary<string, Queue<FullMovementMessage>> InboxByParticipantMap = new ();
+        private readonly Queue<FullMovementMessage> incomingMessages = new ();
 
         private readonly IRoomHub roomHub;
         private readonly IMultiplayerSpatialStateSettings settings;
 
-        private MessageMock? lastMessage;
+        private FullMovementMessage? lastMessage;
 
         public RemotePlayersMovementInbox(IRoomHub roomHub, IMultiplayerSpatialStateSettings settings)
         {
@@ -46,7 +46,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private void InboxDeserializedMessageMock(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            MessageMock? message = MessageMockSerializer.DeserializeMessage(data);
+            FullMovementMessage? message = MessageMockSerializer.DeserializeMessage(data);
 
             if (message == null) return;
 
@@ -63,20 +63,20 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private void InboxDeserializedMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            MessageMock? message = MessageMockSerializer.DeserializeMessage(data);
+            FullMovementMessage? message = MessageMockSerializer.DeserializeMessage(data);
 
             if (message != null)
                 Inbox(message, @for: participant.Identity);
         }
 
-        private void Inbox(MessageMock message, string @for)
+        private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
-            if (InboxByParticipantMap.TryGetValue(@for, out Queue<MessageMock>? queue))
-                queue.Enqueue(message);
+            if (InboxByParticipantMap.TryGetValue(@for, out Queue<FullMovementMessage>? queue))
+                queue.Enqueue(fullMovementMessage);
             else
             {
-                var newQueue = new Queue<MessageMock>();
-                newQueue.Enqueue(message);
+                var newQueue = new Queue<FullMovementMessage>();
+                newQueue.Enqueue(fullMovementMessage);
 
                 InboxByParticipantMap.Add(@for, newQueue);
             }
