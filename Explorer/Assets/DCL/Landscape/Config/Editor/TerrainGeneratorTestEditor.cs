@@ -7,13 +7,24 @@ namespace DCL.Landscape.Config.Editor
     [CustomEditor(typeof(TerrainGeneratorTest))]
     public class TerrainGeneratorTestEditor : UnityEditor.Editor
     {
+        private TerrainGeneratorTest generatorTest;
+
         public override void OnInspectorGUI()
         {
+            var shouldDisable = false;
+            if (generatorTest != null)
+            {
+                var generator = generatorTest.GetGenerator();
+                shouldDisable = generator != null && !generator.IsTerrainGenerated();
+            }
+
+            GUI.enabled = !shouldDisable;
             if (GUILayout.Button("Generate"))
             {
-                TerrainGeneratorTest generator = (TerrainGeneratorTest)target;
-                generator.GenerateAsync().Forget();
+                this.generatorTest = (TerrainGeneratorTest)target;
+                this.generatorTest.GenerateAsync().Forget();
             }
+            GUI.enabled = true;
 
             base.OnInspectorGUI();
         }
