@@ -56,7 +56,7 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
-            viewInstance.InputField.onEndEdit.AddListener(OnSubmit);
+            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
 
@@ -84,7 +84,7 @@ namespace DCL.Chat
 
         private void ToggleEmojiPanel() =>
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
-            
+
         private void OnSubmit(string _)
         {
             if (string.IsNullOrWhiteSpace(currentMessage))
@@ -92,6 +92,7 @@ namespace DCL.Chat
 
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
+            viewInstance.InputField.text = currentMessage;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
