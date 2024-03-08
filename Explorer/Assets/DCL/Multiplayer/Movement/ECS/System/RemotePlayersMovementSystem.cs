@@ -71,9 +71,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     ext.Run(remotePlayerMovement.PassedMessages[^1], settings);
 
                 ext.Update(t);
-
-                anim.States.MovementBlendValue = ext.Start.animState.MovementBlendValue;
-                anim.States.SlideBlendValue = ext.Start.animState.SlideBlendValue;
+                InterpolateAnimations(ref anim, ext.Start, ext.Start, t);
 
                 return;
             }
@@ -122,7 +120,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
-
                 else
                 {
                     // Should be in loop until (t <= 0)

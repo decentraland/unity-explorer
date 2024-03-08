@@ -60,6 +60,8 @@ namespace DCL.Multiplayer.Movement.ECS
                 timestamp = Start.timestamp,
                 position = transform.position,
                 velocity = Start.velocity,
+                animState = Start.animState,
+                isStunned = Start.isStunned,
             };
         }
 

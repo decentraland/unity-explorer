@@ -228,7 +228,10 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner,  new RoomHub(new IslandRoomMock(), new IslandRoomMock()), staticContainer.CharacterContainer.CharacterObject),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner,
+                    new RoomHub(new IslandRoomMock(), new IslandRoomMock())
+                  // roomHub
+                  , staticContainer.CharacterContainer.CharacterObject),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
