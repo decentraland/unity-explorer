@@ -2,7 +2,8 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
@@ -16,7 +17,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Color HairColor;
         public BodyShape BodyShape;
 
-        public Promise WearablePromise;
+        public WearablePromise WearablePromise;
+        public EmotePromise EmotePromise;
 
         public readonly string ID;
 
@@ -31,14 +33,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             InstantiatedWearables = new List<CachedWearable>();
         }
 
-        public AvatarShapeComponent(string name, string id, BodyShape bodyShape, Promise wearablePromise, Color skinColor,
-            Color hairColor)
+        public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise, Color skinColor,
+            Color hairColor, EmotePromise emotePromise)
         {
             ID = id;
             Name = name;
             BodyShape = bodyShape;
             IsDirty = true;
             WearablePromise = wearablePromise;
+            EmotePromise = emotePromise;
             InstantiatedWearables = new List<CachedWearable>();
             SkinColor = skinColor;
             HairColor = hairColor;

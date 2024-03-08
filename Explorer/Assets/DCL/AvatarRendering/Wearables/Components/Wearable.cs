@@ -15,15 +15,17 @@ namespace DCL.AvatarRendering.Wearables.Components
     {
         private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         private const string DEFAULT_RARITY = "base";
+
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
-
         public StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
         public bool IsLoading { get; set; } = true;
+        public bool IsLoadSuccess => WearableDTO.Succeeded;
 
         public URLPath GetThumbnail()
         {
+            WearableDTO.Asset.Sanitize();
             string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
 
             if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)
@@ -78,9 +80,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetDescription() =>
             WearableDTO.Asset.metadata.description;
 
-        public string GetCreator() =>
-            "";
-
         public string GetRarity() =>
             WearableDTO.Asset.metadata.rarity ?? DEFAULT_RARITY;
 
@@ -119,10 +118,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             hideListResult.Remove(data.category);
         }
 
-        public WearableDTO.WearableMetadataDto.DataDto GetData() =>
-            WearableDTO.Asset.metadata.data;
-
-        public bool isFacialFeature() =>
+        public bool IsFacialFeature() =>
             WearablesConstants.FACIAL_FEATURES.Contains(GetCategory());
 
         public bool IsCompatibleWithBodyShape(string bodyShape)

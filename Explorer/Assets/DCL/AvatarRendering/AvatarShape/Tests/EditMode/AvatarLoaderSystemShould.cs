@@ -1,12 +1,16 @@
-﻿using DCL.AvatarRendering.AvatarShape.Components;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
+using DCL.Ipfs;
 using Decentraland.Common;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.ColorComponent;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using Entity = Arch.Core.Entity;
@@ -42,7 +46,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 HairColor = FAKE_HAIR_COLOR,
             };
 
-            system = new AvatarLoaderSystem(world);
+            IRealmData realmData = Substitute.For<IRealmData>();
+            IIpfsRealm ipfsRealm = Substitute.For<IIpfsRealm>();
+            ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
+            realmData.Ipfs.Returns(ipfsRealm);
+            system = new AvatarLoaderSystem(world, realmData);
             FAKE_POINTERS = new List<string>();
             FAKE_POINTERS.Add(BODY_SHAPE_MALE);
             FAKE_POINTERS.AddRange(FAKE_WEARABLES);

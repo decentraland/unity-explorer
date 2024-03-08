@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static void CreateWearableThumbnailPromise(IRealmData realmData, IWearable wearable, World world, IPartitionComponent partitionComponent)
+        public static void CreateWearableThumbnailPromise(IRealmData realmData, IAvatarNftAccessory wearable, World world, IPartitionComponent partitionComponent)
         {
             URLPath thumbnailPath = wearable.GetThumbnail();
 

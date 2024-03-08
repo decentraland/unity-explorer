@@ -70,6 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             wearable.WearableAssetResults.Returns(assetBundleData);
             wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
+            wearable.GetHash().Returns((string)urn);
             return wearable;
         }
 

@@ -146,7 +146,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                if (resultWearable.isFacialFeature())
+                if (resultWearable.IsFacialFeature())
                 {
                     //TODO: Facial Features. They are textures that should be applied on the body shape, not gameobjects to instantiate.
                     //We need the asset bundle to have access to the texture
