@@ -51,9 +51,7 @@ namespace SceneRuntime.Apis.Modules
             try { return api.GetRealmAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e)
             {
-                // Report an uncategorized exception
-                exceptionsHandler.OnEngineException(e);
-                return null;
+                return Task.FromException(e).ToPromise();
             }
         }
 

@@ -112,7 +112,8 @@ namespace Global.Dynamic
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
-                result.configurations.networkId
+                result.configurations.networkId,
+                result.comms.adapter
             );
 
             // Add the realm component

@@ -22,6 +22,7 @@ namespace ECS
         /// </summary>
         string RealmName { get; }
         int NetworkId { get;}
+        string CommsAdapter { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -30,25 +31,28 @@ namespace ECS
 
         class Fake : IRealmData
         {
-            public Fake(string realmName = "baldr") : this(
+            public Fake(int networkId, string commsAdapter, string realmName = "baldr") : this(
                 new LocalIpfsRealm(new URLDomain()),
                 true,
                 realmName,
-                true
-            ) { }
+                true, networkId, commsAdapter) { }
 
-            public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured)
+            public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured, int networkId,
+                string commsAdapter)
             {
                 Ipfs = ipfs;
                 ScenesAreFixed = scenesAreFixed;
                 RealmName = realmName;
                 Configured = configured;
+                NetworkId = networkId;
+                CommsAdapter = commsAdapter;
             }
 
             public IIpfsRealm Ipfs { get; }
             public bool ScenesAreFixed { get; }
             public string RealmName { get; }
             public int NetworkId { get; }
+            public string CommsAdapter { get; }
             public bool Configured { get; }
         }
     }

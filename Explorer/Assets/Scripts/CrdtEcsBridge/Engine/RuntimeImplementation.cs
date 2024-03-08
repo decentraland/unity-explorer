@@ -77,6 +77,7 @@ namespace CrdtEcsBridge.Engine
         }
 
         private static readonly QueryDescription GET_REALM_COMPONENT = new QueryDescription().WithAll<RealmComponent>();
+        private const bool IS_PREVIEW_DEFAULT_VALUE = false;
 
         public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
         {
@@ -88,6 +89,9 @@ namespace CrdtEcsBridge.Engine
             {
                 realmInfo.RealmName = b.RealmData.RealmName;
                 realmInfo.NetworkID = b.RealmData.NetworkId;
+                realmInfo.IsPreview = IS_PREVIEW_DEFAULT_VALUE;
+                realmInfo.CommsAdapter = b.RealmData.CommsAdapter;
+                realmInfo.BaseURL = b.Ipfs.CatalystBaseUrl.Value;
             });
 
             return new IRuntime.GetRealmResponse
