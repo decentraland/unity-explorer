@@ -137,8 +137,8 @@ namespace DCL.Multiplayer.Connections.Rooms
             RoomMetadataChanged?.Invoke(metadata);
         }
 
-        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
-            assigned.EnsureAssigned().Connect(url, authToken, cancelToken);
+        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            assigned.EnsureAssigned().Connect(url, authToken, cancelToken, autoSubscribe);
 
         public void Disconnect() =>
             assigned.EnsureAssigned().Disconnect();

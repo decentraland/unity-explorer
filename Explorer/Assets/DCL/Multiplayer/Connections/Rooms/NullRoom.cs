@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event ConnectionDelegate? ConnectionUpdated;
         public event Room.MetaDelegate? RoomMetadataChanged;
 
-        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
+        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
             Task.FromResult(true);
 
         public void Disconnect()
