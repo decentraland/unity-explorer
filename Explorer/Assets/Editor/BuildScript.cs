@@ -17,10 +17,15 @@ namespace Editor
                 Console.WriteLine("Invoked " + fullMethodName + " (BuildScript.cs)");
             }
 
-            var buildPlayerOptions = new BuildPlayerOptions
-                {
-                    options = BuildOptions.DetailedBuildReport,
-                };
+            BuildPlayerOptions buildPlayerOptions = BuildPlayerWindow.DefaultBuildMethods.GetBuildPlayerOptions(new BuildPlayerOptions());
+            buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
+
+            if (Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD") == "true")
+            {
+                buildPlayerOptions.options |= BuildOptions.AllowDebugging;
+                buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
+                buildPlayerOptions.options |= BuildOptions.Development;
+            }
 
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
             ReportSummary(buildSummary);
