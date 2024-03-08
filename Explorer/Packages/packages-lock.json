@@ -54,7 +54,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "bf3e7a69a493c919d943a558da48846a1e95754f"
+      "hash": "985eb1e68882f64de5a0de333015b930c6f3ebb4"
     },
     "com.decentraland.unity-shared-dependencies": {
       "version": "https://github.com/decentraland/unity-shared-dependencies.git",
@@ -381,7 +381,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "3.0.6",
+      "version": "3.2.0-pre.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {

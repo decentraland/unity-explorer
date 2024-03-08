@@ -111,8 +111,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 partition);
 
         private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
+            // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
+            // there is not need to convert
             WearablePromise.Create(World,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.SharedWearables, profile.Avatar.ForceRender),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
 
         private EmotePromise CreateEmotePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
@@ -126,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // TODO: delete tmp list
             var tmp = new List<string>();
 
-            foreach (URN urn in profile.Avatar.UniqueWearables)
+            foreach (URN urn in profile.Avatar.Wearables)
                 tmp.Add(urn);
 
             // TODO: should we avoid setting the url from this system?

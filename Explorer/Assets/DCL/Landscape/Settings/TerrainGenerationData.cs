@@ -39,5 +39,8 @@ namespace DCL.Landscape.Settings
 
         [Header("Wind")]
         public GameObject wind;
+
+        [Header("GrassRenderer")]
+        public GameObject grassRenderer;
     }
 }

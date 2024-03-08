@@ -6,6 +6,6 @@ namespace DCL.Chat
     {
         public event Action<ChatMessage> OnMessageAdded;
 
-        public void AddMessage();
+        public void Send(string message);
     }
 }
