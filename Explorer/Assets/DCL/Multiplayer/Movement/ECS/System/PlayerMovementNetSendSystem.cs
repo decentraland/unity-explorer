@@ -4,13 +4,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
@@ -19,7 +17,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
-        private readonly IArchipelagoIslandRoom room;
+        private readonly IRoomHub room;
         private readonly IMultiplayerSpatialStateSettings settings;
 
         private readonly CharacterController playerCharacter;
@@ -29,7 +27,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private int MessagesSentInSec;
         private float mesPerSecTimer;
 
-        public PlayerMovementNetSendSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
+        public PlayerMovementNetSendSystem(World world, IRoomHub room, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
         {
             this.room = room;
             this.settings = settings;
@@ -40,8 +38,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             UpdateMessagePerSecondCounter(t);
 
-            if (room.CurrentState() == IConnectiveRoom.State.Running)
-                SendPlayerNetMovementQuery(World);
+            SendPlayerNetMovementQuery(World);
         }
 
         private void UpdateMessagePerSecondCounter(float t)
@@ -104,8 +101,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             var byteMessage = new Span<byte>(MessageMockSerializer.SerializeMessage(lastSentMessage));
 
-            IReadOnlyCollection<string>? participants = room is IslandRoomMock ? null : room.Room().Participants.RemoteParticipantSids();
-            room.Room().DataPipe.PublishData(byteMessage, "Movement", participants!);
+            // if (room is IslandRoomMock)
+            //    room.Room().DataPipe.PublishData(byteMessage, "Movement", null!);
+            room.IslandRoom().DataPipe.PublishData(byteMessage, "Movement", room.IslandRoom().Participants.RemoteParticipantSids());
+            room.SceneRoom().DataPipe.PublishData(byteMessage, "Movement", room.IslandRoom().Participants.RemoteParticipantSids());
         }
 
         private static string GetColorBasedOnDeltaTime(float deltaTime)

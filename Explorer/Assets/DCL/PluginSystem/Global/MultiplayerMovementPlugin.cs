@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Multiplayer.Movement.Settings;
 using System.Threading;
@@ -12,12 +12,12 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IArchipelagoIslandRoom room;
+        private readonly IRoomHub room;
         private readonly ICharacterObject characterObject;
 
         private ProvidedAsset<MultiplayerSpatialStateSettings> settings;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IArchipelagoIslandRoom room, ICharacterObject characterObject)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IRoomHub room, ICharacterObject characterObject)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.room = room;

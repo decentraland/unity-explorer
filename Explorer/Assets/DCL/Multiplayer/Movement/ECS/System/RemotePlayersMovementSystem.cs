@@ -2,16 +2,14 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
-using PlasticPipe.PlasticProtocol.Client;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
@@ -23,12 +21,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private readonly IMultiplayerSpatialStateSettings settings;
         private readonly RemotePlayersMovementInbox messagePipe;
 
-        public RemotePlayersMovementSystem(World world, IArchipelagoIslandRoom room, IMultiplayerSpatialStateSettings settings) : base(world)
+        public RemotePlayersMovementSystem(World world, IRoomHub room, IMultiplayerSpatialStateSettings settings) : base(world)
         {
             this.settings = settings;
             messagePipe = new RemotePlayersMovementInbox(room, settings);
-
-            messagePipe.InitializeAsync().Forget();
         }
 
         protected override void Update(float t)
