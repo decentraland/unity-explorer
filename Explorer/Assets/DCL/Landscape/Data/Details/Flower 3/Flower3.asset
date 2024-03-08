@@ -30,12 +30,12 @@ MonoBehaviour:
   TerrainDetailSettings:
     alignToGround: 100
     positionJitter: 50
-    minWidth: 1
-    maxWidth: 2
-    minHeight: 1
-    maxHeight: 2
+    minWidth: 2
+    maxWidth: 3
+    minHeight: 2
+    maxHeight: 3
     noiseSeed: 1
     noiseSpread: 12.15
     holeEdgePadding: 0
-    detailDensity: 0.05
+    detailDensity: 0.1
     affectedByGlobalDensityScale: 1
