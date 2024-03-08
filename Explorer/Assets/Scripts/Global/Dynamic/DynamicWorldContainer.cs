@@ -229,8 +229,8 @@ namespace Global.Dynamic
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner,
-                    new RoomHub(new IslandRoomMock(), new IslandRoomMock())
-                  // roomHub
+                    // new RoomHub(new IslandRoomMock(), new IslandRoomMock())
+                  roomHub
                   , staticContainer.CharacterContainer.CharacterObject),
             };
 

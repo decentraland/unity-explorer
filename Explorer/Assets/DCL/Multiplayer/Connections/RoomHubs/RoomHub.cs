@@ -23,10 +23,4 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IRoom SceneRoom() =>
             gateKeeperSceneRoom.Room();
     }
-
-    public class FakeRoomHub : IRoomHub
-    {
-        public IRoom IslandRoom() => new IslandRoomMock();
-        public IRoom SceneRoom() => throw new NotImplementedException();
-    }
 }

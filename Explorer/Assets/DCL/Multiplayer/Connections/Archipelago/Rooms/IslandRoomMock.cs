@@ -58,6 +58,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
             Task.FromResult(true);
 
+        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            Task.FromResult(true);
+
         public void Disconnect() { }
 #endregion
     }
