@@ -50,7 +50,8 @@ namespace DCL.PluginSystem.Global
                 chatEntryConfiguration,
                 chatMessagesBus,
                 nametagsData,
-                emojiPanelConfig);
+                emojiPanelConfig,
+                settings.EmojiMappingJson);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
@@ -68,6 +69,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<EmojiPanelConfigurationSO> EmojiPanelConfiguration { get; private set; }
+
+            [field: SerializeField]
+            public TextAsset EmojiMappingJson { get; private set; }
 
             [Serializable]
             public class ChatViewRef : ComponentReference<ChatView>

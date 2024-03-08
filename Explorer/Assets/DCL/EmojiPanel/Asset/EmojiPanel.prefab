@@ -608,8 +608,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3325050782001683806}
   m_HandleRect: {fileID: 8287295318826585892}
   m_Direction: 2
-  m_Value: 0.9999985
-  m_Size: 0.60540724
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -736,9 +736,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: SearchBar
       objectReference: {fileID: 0}
+    - target: {fileID: 6621184117612612319, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 6847896572102695487, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
       propertyPath: m_text
       value: Search emoji
+      objectReference: {fileID: 0}
+    - target: {fileID: 6847896572102695487, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.data[0]
+      value: 1801810542
       objectReference: {fileID: 0}
     - target: {fileID: 8158256326675281976, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
       propertyPath: m_Pivot.x
@@ -898,6 +906,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiSection
       objectReference: {fileID: 0}
+    - target: {fileID: 6321872837514800943, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7252656843969487993, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -980,6 +992,26 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7252656843969487993, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7504859644804217996, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7504859644804217996, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7504859644804217996, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7504859644804217996, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7504859644804217996, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

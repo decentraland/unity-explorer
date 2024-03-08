@@ -1,7 +1,11 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
@@ -13,11 +17,22 @@ namespace DCL.Emoji
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
+        private readonly Dictionary<string, string> emojiNameMapping = new ();
+        private readonly Dictionary<string, string> emojiValueMapping = new ();
 
-        public EmojiPanelController(EmojiPanelView view, EmojiPanelConfigurationSO emojiPanelConfiguration)
+        public EmojiPanelController(
+            EmojiPanelView view,
+            EmojiPanelConfigurationSO emojiPanelConfiguration,
+            TextAsset emojiMappingJson)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
+
+            foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
+            {
+                emojiNameMapping.Add(emojiData.Key, emojiData.Value.ToUpper());
+                emojiValueMapping.Add(emojiData.Value.ToUpper(), emojiData.Key);
+            }
 
             view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
@@ -62,6 +77,10 @@ namespace DCL.Emoji
                 EmojiButton emojiButton = Object.Instantiate(view.emojiButtonRef, sectionView.EmojiContainer);
                 emojiButton.EmojiImage.text = emojiChar;
                 emojiButton.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(emojiChar));
+
+                Debug.Log("emoji char: " + emojiChar);
+                if(emojiValueMapping.TryGetValue(emojiCode.ToString("X"), out string emojiValue))
+                    emojiButton.TooltipText.text = emojiValue;
             }
         }
     }

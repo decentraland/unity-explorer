@@ -225,6 +225,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <EmojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
     - rid: 4340256782807990272
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
