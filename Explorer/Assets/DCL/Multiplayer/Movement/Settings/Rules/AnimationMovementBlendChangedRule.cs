@@ -1,11 +1,9 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    [CreateAssetMenu(fileName = "AnimationMovementBlendChangedRule", menuName = "DCL/Comms/AnimationMovementBlendChangedRule")]
     public class AnimationMovementBlendChangedRuleBase : SendRuleBase
     {
         public override string Message => $"<color={color}> ANIM {reason} </color>";
@@ -18,7 +16,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController ___,
-            IMultiplayerSpatialStateSettings ____)
+            IMultiplayerMovementSettings ____)
         {
             // Maybe we don't need it because of velocity change?
             if (Mathf.Abs(GetMovementBlendTier(lastFullMovementMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)) >= MoveBlendTiersDiff)

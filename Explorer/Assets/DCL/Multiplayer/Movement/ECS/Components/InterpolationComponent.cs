@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Movement.ECS
         private float totalDuration;
         private float slowDownFactor;
 
-        private IMultiplayerSpatialStateSettings settings;
+        private IMultiplayerMovementSettings settings;
 
         public InterpolationComponent(Transform transform)
         {
@@ -94,7 +94,7 @@ namespace DCL.Multiplayer.Movement.ECS
             Enabled = true;
         }
 
-        public void Run(FullMovementMessage from, FullMovementMessage to, int inboxMessages, IMultiplayerSpatialStateSettings settings, bool isBlend = false)
+        public void Run(FullMovementMessage from, FullMovementMessage to, int inboxMessages, IMultiplayerMovementSettings settings, bool isBlend = false)
         {
             this.settings = settings;
 

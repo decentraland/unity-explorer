@@ -1,12 +1,10 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings.Rules
 {
-    [CreateAssetMenu(fileName = "AllRule", menuName = "DCL/Comms/AllRule")]
     public class AllRule : SendRuleBase
     {
         public List<SendRuleBase> rules;
@@ -14,7 +12,7 @@ namespace DCL.Multiplayer.Movement.Settings.Rules
         public override string Message => $"$\"<color={color}> VELOCITY ANGLE AND DIFF </color>\"";
 
         public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent move,
-            ref JumpInputComponent jump, CharacterController playerCharacter, IMultiplayerSpatialStateSettings settings)
+            ref JumpInputComponent jump, CharacterController playerCharacter, IMultiplayerMovementSettings settings)
         {
             var result = false;
 

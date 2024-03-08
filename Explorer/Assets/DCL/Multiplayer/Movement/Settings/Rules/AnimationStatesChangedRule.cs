@@ -1,11 +1,9 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    [CreateAssetMenu(fileName = "AnimationStatesChangedRule", menuName = "DCL/Comms/AnimationStatesChangedRule")]
     public class AnimationStatesChangedRuleBase : SendRuleBase
     {
         [Space]
@@ -21,7 +19,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController ___,
-            IMultiplayerSpatialStateSettings ____)
+            IMultiplayerMovementSettings ____)
         {
             (bool stateMismatch, string reason)[] checks =
             {

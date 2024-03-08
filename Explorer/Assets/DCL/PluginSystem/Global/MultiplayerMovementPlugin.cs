@@ -15,7 +15,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly ICharacterObject characterObject;
 
-        private ProvidedAsset<MultiplayerSpatialStateSettings> settings;
+        private ProvidedAsset<MultiplayerMovementSettings> settings;
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IRoomHub roomHub, ICharacterObject characterObject)
         {

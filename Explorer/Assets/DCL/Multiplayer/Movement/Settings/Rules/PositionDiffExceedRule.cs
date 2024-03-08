@@ -1,11 +1,9 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    [CreateAssetMenu(fileName = "PositionDiffExceedRule", menuName = "DCL/Comms/PositionDiffExceedRule")]
     public class PositionDiffExceedRuleBase : SendRuleBase
     {
         public override string Message => $"$\"<color={color}> POSITION DIFF </color>\"";
@@ -15,7 +13,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController playerCharacter,
-            IMultiplayerSpatialStateSettings ____) =>
+            IMultiplayerMovementSettings ____) =>
             Vector3.SqrMagnitude(lastFullMovementMessage.position - playerCharacter.transform.position) > PositionChangeThreshold;
     }
 }

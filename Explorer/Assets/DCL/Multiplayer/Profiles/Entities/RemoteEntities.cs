@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new CharacterAnimationComponent(),
                 new RemotePlayerMovementComponent(profile.WalletId),
                 new InterpolationComponent(transformComp.Transform),
-                new ExtrapolationComponent(transformComp.Transform)
+                new ExtrapolationComponent()
             );
             entityParticipantTable.Register(profile.WalletId, entity);
         }

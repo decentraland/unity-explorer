@@ -4,9 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using System;
@@ -21,7 +19,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
         private readonly IRoomHub roomHub;
-        private readonly IMultiplayerSpatialStateSettings settings;
+        private readonly IMultiplayerMovementSettings settings;
 
         private readonly CharacterController playerCharacter;
 
@@ -30,7 +28,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private int MessagesSentInSec;
         private float mesPerSecTimer;
 
-        public PlayerMovementNetSendSystem(World world, IRoomHub roomHub, IMultiplayerSpatialStateSettings settings, CharacterController playerCharacter) : base(world)
+        public PlayerMovementNetSendSystem(World world, IRoomHub roomHub, IMultiplayerMovementSettings settings, CharacterController playerCharacter) : base(world)
         {
             this.roomHub = roomHub;
             this.settings = settings;

@@ -1,11 +1,9 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    [CreateAssetMenu(fileName = "ProjectivePositionDiffExceedRule", menuName = "DCL/Comms/ProjectivePositionDiffExceedRule")]
     public class ProjectivePositionDiffExceedRuleBase : SendRuleBase
     {
         public override string Message => $"$\"<color={color}> PROJ POSITION DIFF </color>\"";
@@ -15,9 +13,9 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
             ref JumpInputComponent jump, CharacterController playerCharacter,
-            IMultiplayerSpatialStateSettings settings)
+            IMultiplayerMovementSettings settings)
         {
-            Vector3 extrapolatedVelocity = ExtrapolationComponent.DampVelocity(t, lastFullMovementMessage, settings);
+            Vector3 extrapolatedVelocity = Extrapolation.DampVelocity(t, lastFullMovementMessage.velocity, settings.ExtrapolationSettings);
             Vector3 projectedPosition = lastFullMovementMessage!.position + (extrapolatedVelocity * t);
             return Vector3.SqrMagnitude(lastFullMovementMessage.position - projectedPosition) > PositionChangeSqrThreshold;
         }

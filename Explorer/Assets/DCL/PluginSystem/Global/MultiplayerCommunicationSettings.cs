@@ -13,7 +13,7 @@ namespace DCL.PluginSystem.Global
         internal MultiplayerCommunicationSettingsRef spatialStateSettings { get; private set; }
 
         [Serializable]
-        public class MultiplayerCommunicationSettingsRef : AssetReferenceT<MultiplayerSpatialStateSettings>
+        public class MultiplayerCommunicationSettingsRef : AssetReferenceT<MultiplayerMovementSettings>
         {
             public MultiplayerCommunicationSettingsRef(string guid) : base(guid) { }
         }

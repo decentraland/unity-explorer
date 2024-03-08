@@ -17,11 +17,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private readonly Queue<FullMovementMessage> incomingMessages = new ();
 
         private readonly IRoomHub roomHub;
-        private readonly IMultiplayerSpatialStateSettings settings;
+        private readonly IMultiplayerMovementSettings settings;
 
         private FullMovementMessage? lastMessage;
 
-        public RemotePlayersMovementInbox(IRoomHub roomHub, IMultiplayerSpatialStateSettings settings)
+        public RemotePlayersMovementInbox(IRoomHub roomHub, IMultiplayerMovementSettings settings)
         {
             this.roomHub = roomHub;
             this.settings = settings;

@@ -1,6 +1,5 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
@@ -17,6 +16,6 @@ namespace DCL.Multiplayer.Movement.Settings
             ref CharacterAnimationComponent playerAnimationComponent,
             ref StunComponent playerStunComponent,
             ref MovementInputComponent move, ref JumpInputComponent jump,
-            CharacterController playerCharacter, IMultiplayerSpatialStateSettings settings);
+            CharacterController playerCharacter, IMultiplayerMovementSettings settings);
     }
 }

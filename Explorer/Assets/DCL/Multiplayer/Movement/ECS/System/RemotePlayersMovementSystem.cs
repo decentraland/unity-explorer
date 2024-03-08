@@ -7,21 +7,22 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+
     // [LogCategory(ReportCategory.AVATAR)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
-        private readonly IMultiplayerSpatialStateSettings settings;
+        private readonly IMultiplayerMovementSettings settings;
         private readonly RemotePlayersMovementInbox messagePipe;
 
-        public RemotePlayersMovementSystem(World world, IRoomHub roomHub, IMultiplayerSpatialStateSettings settings) : base(world)
+        public RemotePlayersMovementSystem(World world, IRoomHub roomHub, IMultiplayerMovementSettings settings) : base(world)
         {
             this.settings = settings;
             messagePipe = new RemotePlayersMovementInbox(roomHub, settings);
@@ -29,14 +30,15 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         protected override void Update(float t)
         {
-            UpdateRemotePlayersMovementQuery(World,t);
+            UpdateRemotePlayersMovementQuery(World, t);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float t, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent @int, ref ExtrapolationComponent ext, in IAvatarView view)
+        private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement,
+            ref InterpolationComponent @int, ref ExtrapolationComponent ext, in IAvatarView view)
         {
-            if(!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out var playerInbox))
+            if (!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out Queue<FullMovementMessage>? playerInbox))
                 return;
 
             settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
@@ -44,25 +46,25 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (@int.Enabled)
             {
-                (FullMovementMessage? passed, float rest) = @int.Update(t);
+                (FullMovementMessage? passed, float rest) = @int.Update(deltaTime);
 
-                t = rest;
-                InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                deltaTime = rest;
+                InterpolateAnimations(ref anim, @int.Start, @int.End, deltaTime);
                 if (passed == null) return;
 
                 AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
 
-                if (t == 0) return;
+                if (deltaTime == 0) return;
             }
 
             // if (playerInbox.Count < 2)  return;
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
             {
                 if (!ext.Enabled)
-                    ext.Run(remotePlayerMovement.PassedMessages[^1], settings);
+                    ext.Restart(remotePlayerMovement.PassedMessages[^1], settings.ExtrapolationSettings);
 
-                ext.Update(t);
-                InterpolateAnimations(ref anim, ext.Start, ext.Start, t);
+                Extrapolation.Execute(ref transComp, ref ext, deltaTime, settings.ExtrapolationSettings);
+                InterpolateAnimations(ref anim, ext.Start, ext.Start, deltaTime);
 
                 return;
             }
@@ -72,14 +74,22 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 FullMovementMessage remote = playerInbox.Dequeue();
                 FullMovementMessage local = null;
 
-                if (ext.Enabled &&(remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration || remote.timestamp > ext.Start.timestamp + ext.Time))
+                if (ext.Enabled && (remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration || remote.timestamp > ext.Start.timestamp + ext.Time))
                 {
-                    local = ext.Stop();
-                    local.timestamp = ext.Start.timestamp + ext.TotalMoveDuration;
+                    ext.Stop();
 
-                    local.timestamp = remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration
-                        ? ext.Start.timestamp + ext.TotalMoveDuration
-                        : ext.Start.timestamp + ext.Time;
+                    local = new FullMovementMessage
+                    {
+                        timestamp = remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration
+                            ? ext.Start.timestamp + ext.TotalMoveDuration
+                            : ext.Start.timestamp + ext.Time,
+
+                        position = transComp.Transform.position,
+                        velocity = ext.Start.velocity,
+
+                        animState = ext.Start.animState,
+                        isStunned = ext.Start.isStunned,
+                    };
 
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
@@ -87,12 +97,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 if (remotePlayerMovement.PassedMessages.Count == 0
                     || Vector3.SqrMagnitude(remotePlayerMovement.PassedMessages[^1].position - remote.position) < settings.MinPositionDelta
                     || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
-                    )
+                   )
                 {
                     // Teleport
                     for (var i = 0; i < settings.SamePositionTeleportFilterCount && i < playerInbox.Count; i++)
                     {
-                        var next = playerInbox.Peek();
+                        FullMovementMessage? next = playerInbox.Peek();
 
                         if (Vector3.SqrMagnitude(next.position - remote.position) < settings.MinPositionDelta)
                         {
@@ -104,17 +114,18 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     }
 
                     @int.Transform.position = remote.position;
-                    if (remotePlayerMovement.PassedMessages[^1].velocity.sqrMagnitude < settings.MinPositionDelta)
-                        remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start (only for zero velocity)
 
+                    if(playerInbox.Count == 0)
+                        remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start (only for zero velocity)
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
                 else
                 {
                     // Should be in loop until (t <= 0)
                     @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
-                    (FullMovementMessage? passed, float _) = @int.Update(t);
-                    InterpolateAnimations(ref anim, @int.Start, @int.End, t);
+                    (FullMovementMessage? passed, float _) = @int.Update(deltaTime);
+                    InterpolateAnimations(ref anim, @int.Start, @int.End, deltaTime);
+
                     if (passed != null)
                         AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
                 }
@@ -131,8 +142,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             float timeDiff = end.timestamp - start.timestamp;
 
-            anim.States.MovementBlendValue = Mathf.Lerp(start.animState.MovementBlendValue, end.animState.MovementBlendValue, t/timeDiff);
-            anim.States.SlideBlendValue = Mathf.Lerp(start.animState.SlideBlendValue, end.animState.SlideBlendValue, t/timeDiff);
+            anim.States.MovementBlendValue = Mathf.Lerp(start.animState.MovementBlendValue, end.animState.MovementBlendValue, t / timeDiff);
+            anim.States.SlideBlendValue = Mathf.Lerp(start.animState.SlideBlendValue, end.animState.SlideBlendValue, t / timeDiff);
         }
 
         private static void UpdateAnimations(FullMovementMessage fullMovementMessage, ref CharacterAnimationComponent animationComponent, IAvatarView view)
