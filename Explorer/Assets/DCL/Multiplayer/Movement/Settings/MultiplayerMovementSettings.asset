@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36736ce96ff04f67aaec3d8efa0026b3, type: 3}
   m_Name: MultiplayerMovementSettings
   m_EditorClassIdentifier: 
-  <TimeScale>k__BackingField: 1
   <SamePositionTeleportFilterCount>k__BackingField: 100
   <InboxCount>k__BackingField: 0
   <PassedMessages>k__BackingField: 1
@@ -31,55 +30,4 @@ MonoBehaviour:
   <BlendType>k__BackingField: 1
   <MaxBlendSpeed>k__BackingField: 5
   <useExtrapolation>k__BackingField: 1
-  extrapolationSettings: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}
-  <startButton>k__BackingField:
-    m_Name: start Button
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 81607e9c-9fe2-4365-a123-b476daabf9fd
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 1d48030e-db5d-4423-b4e9-8279a8569fc8
-      m_Path: <Keyboard>/k
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: start Button
-      m_Flags: 0
-    m_Flags: 0
-  <packageLostButton>k__BackingField:
-    m_Name: package Lost Button
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 301ef9d3-ec88-44d3-97bf-823617da22bd
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 2990ebc8-1a40-47bc-8838-256dcec6f8c4
-      m_Path: <Keyboard>/m
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: package Lost Button
-      m_Flags: 0
-    m_Flags: 0
-  <packageBlockButton>k__BackingField:
-    m_Name: package Block Button
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 8f2c1980-b73c-49ca-8aca-db51b66ca88d
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: c6763a19-ebe6-421f-b5e8-167c88c7750a
-      m_Path: <Keyboard>/x
-      m_Interactions: Press(behavior=2)
-      m_Processors: 
-      m_Groups: 
-      m_Action: package Block Button
-      m_Flags: 0
-    m_Flags: 0
+  <ExtrapolationSettings>k__BackingField: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}

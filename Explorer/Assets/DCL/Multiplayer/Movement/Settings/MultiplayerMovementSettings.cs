@@ -7,6 +7,9 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public class MultiplayerMovementSettings : ScriptableObject, IMultiplayerMovementSettings
     {
+        public MovementKind LastMove { get; set; }
+        public bool LastJump { get; set; }
+
         [field: SerializeField] public int SamePositionTeleportFilterCount { get; set; }
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public int PassedMessages { get; set; }
@@ -34,11 +37,6 @@ namespace DCL.Multiplayer.Movement.Settings
 
         [field: Header("EXTRAPOLATION")]
         [field: SerializeField] public bool useExtrapolation { get; set; } = true;
-
-        [SerializeField] private RemotePlayerExtrapolationSettings extrapolationSettings;
-        public RemotePlayerExtrapolationSettings ExtrapolationSettings => extrapolationSettings;
-
-        public MovementKind LastMove { get; set; }
-        public bool LastJump { get; set; }
+        [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; }
     }
 }

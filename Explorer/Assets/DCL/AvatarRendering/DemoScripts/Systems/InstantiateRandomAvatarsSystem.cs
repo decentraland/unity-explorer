@@ -252,7 +252,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                     new RemotePlayerMovementComponent(string.Empty),
                     new InterpolationComponent(transformComp.Transform),
-                    new ExtrapolationComponent(transformComp.Transform),
+                    new ExtrapolationComponent(),
 
                     // new JumpInputComponent(),
                     // new MovementInputComponent(),

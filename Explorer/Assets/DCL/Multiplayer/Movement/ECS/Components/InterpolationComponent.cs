@@ -42,21 +42,50 @@ namespace DCL.Multiplayer.Movement.ECS
 
             time += deltaTime / slowDownFactor;
 
+            UpdateRotation();
+
             if (time >= totalDuration)
             {
                 remainedDeltaTime = (time - totalDuration)*slowDownFactor;
                 time = totalDuration;
+                UpdateEndRotation();
             }
 
             Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
-            UpdateRotation();
 
             return time == totalDuration ? (Disable(), remainedDeltaTime) : (null, 0);
         }
 
+        private void UpdateEndRotation()
+        {
+            // future position
+            Vector3 flattenedDiff = End.velocity;
+            flattenedDiff.y = 0;
+
+            if (flattenedDiff != Vector3.zero)
+            {
+                var lookRotation = Quaternion.LookRotation(flattenedDiff, Vector3.up);
+                Transform.rotation = lookRotation;
+            }
+        }
+
+        private void UpdateStartRotation()
+        {
+            // future position
+            Vector3 flattenedDiff = Start.velocity;
+            flattenedDiff.y = 0;
+
+            if (flattenedDiff != Vector3.zero)
+            {
+                var lookRotation = Quaternion.LookRotation(flattenedDiff, Vector3.up);
+                Transform.rotation = lookRotation;
+            }
+        }
+
         private void UpdateRotation()
         {
-            Vector3 flattenedDiff = End.position - Transform.position;
+            // future position
+            Vector3 flattenedDiff = DoTransition(Start, End, time + 0.1f, totalDuration, IsBlend) - Transform.position;
             flattenedDiff.y = 0;
 
             if (flattenedDiff != Vector3.zero)
@@ -73,6 +102,7 @@ namespace DCL.Multiplayer.Movement.ECS
             totalDuration = End.timestamp - Start.timestamp;
 
             Transform.position = DoTransition(Start, End, time, totalDuration, IsBlend);
+            UpdateStartRotation();
 
             if (IsBlend)
             {

@@ -19,8 +19,6 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
 
     public static class Interpolate
     {
-        public static readonly List<string> TYPES = Enum.GetValues(typeof(InterpolationType)).Cast<InterpolationType>().Select(type => type.ToString()).ToList();
-
         /// <summary>
         ///     Linear Interpolation. Just wrapper around built-in Vector3.Lerp
         /// </summary>
