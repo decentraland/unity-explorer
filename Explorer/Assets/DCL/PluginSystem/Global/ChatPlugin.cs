@@ -43,6 +43,8 @@ namespace DCL.PluginSystem.Global
         {
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
             EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
+            EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
+            EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
 
             chatController = new ChatController(
                 ChatController.CreateLazily(
@@ -51,7 +53,9 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 nametagsData,
                 emojiPanelConfig,
-                settings.EmojiMappingJson);
+                settings.EmojiMappingJson,
+                emojiSectionPrefab,
+                emojiButtonPrefab);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
@@ -65,6 +69,15 @@ namespace DCL.PluginSystem.Global
             public ChatViewRef ChatPanelPrefab;
 
             [field: SerializeField]
+            public EmojiButtonRef EmojiButtonPrefab;
+
+            [field: SerializeField]
+            public EmojiSectionRef EmojiSectionPrefab;
+
+            [field: SerializeField]
+            public EmojiSuggestionRef EmojiSuggestionPrefab;
+
+            [field: SerializeField]
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
 
             [field: SerializeField]
@@ -72,6 +85,36 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public TextAsset EmojiMappingJson { get; private set; }
+
+            [Serializable]
+            public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
+            {
+                public EmojiSuggestionPanelRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class EmojiSuggestionRef : ComponentReference<EmojiSuggestionView>
+            {
+                public EmojiSuggestionRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class EmojiSectionRef : ComponentReference<EmojiSectionView>
+            {
+                public EmojiSectionRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class EmojiButtonRef : ComponentReference<EmojiButton>
+            {
+                public EmojiButtonRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class EmojiPanelRef : ComponentReference<EmojiPanelView>
+            {
+                public EmojiPanelRef(string guid) : base(guid) { }
+            }
 
             [Serializable]
             public class ChatViewRef : ComponentReference<ChatView>

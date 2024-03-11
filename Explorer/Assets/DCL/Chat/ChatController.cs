@@ -7,8 +7,10 @@ using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -20,6 +22,8 @@ namespace DCL.Chat
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
+        private readonly EmojiSectionView emojiSectionViewPrefab;
+        private readonly EmojiButton emojiButtonPrefab;
         private World world;
 
         private string currentMessage = string.Empty;
@@ -33,13 +37,17 @@ namespace DCL.Chat
             IChatMessagesBus chatMessagesBus,
             NametagsData nametagsData,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
-            TextAsset emojiMappingJson) : base(viewFactory)
+            TextAsset emojiMappingJson,
+            EmojiSectionView emojiSectionViewPrefab,
+            EmojiButton emojiButtonPrefab) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
             this.nametagsData = nametagsData;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiMappingJson = emojiMappingJson;
+            this.emojiSectionViewPrefab = emojiSectionViewPrefab;
+            this.emojiButtonPrefab = emojiButtonPrefab;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
@@ -60,14 +68,13 @@ namespace DCL.Chat
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
 
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
             viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
-
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -128,14 +135,40 @@ namespace DCL.Chat
             viewInstance.StopChatEntriesFadeout();
         }
 
+        private const string PATTERN = @":\w*$";
+        private readonly Regex regex = new (PATTERN);
+
         private void OnInputChanged(string inputText)
         {
+            HandleEmojiSearch(inputText);
+
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
             const int MINIMAL_LENGHT = 2;
 
             if (inputText.Length > MINIMAL_LENGHT)
                 currentMessage = inputText;
+        }
+
+        private void HandleEmojiSearch(string inputText)
+        {
+            Match match = regex.Match(inputText);
+            if (match.Success)
+            {
+                if(match.Value.Length < 1)
+                    return;
+
+                //IEnumerable<string> keysWithPrefix = DictionaryUtils.GetKeysWithPrefix(emojiPanelController.emojiNameMapping, match.Value);
+
+                //foreach (string s in keysWithPrefix)
+                {
+                    //Debug.Log("Match: " + s);
+                }
+            }
+            else
+            {
+
+            }
         }
 
         private void CreateChatEntry(ChatMessage chatMessage)

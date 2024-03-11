@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Chat
+  m_EditorClassIdentifier: 
+  m_GroupName: Chat
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 8b013415c163949639034d60860ef87f
+  m_SerializeEntries:
+  - m_GUID: 5bc332aa8fd2147cab980e20e64bec03
+    m_Address: EmojiSuggestion
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7355ae17e96e64b9592813524510dc45
+    m_Address: EmojiKeywords
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22
+    m_Address: EmojiPanelConfig
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3b1d401bc50845629a6b982f9793f16
+    m_Address: Chat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4552d3a2432742f58c63ba71bdfb50e
+    m_Address: EmojiSection
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 20fcd3bb3495c4af78b93a75fc26fccf
+    m_Address: EmojiSuggestionBox
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 543dff6efe38c4acb9118c149e6c6eca
+    m_Address: EmojiPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d0a647adf3334ee1a142e7bf69f128d
+    m_Address: EmojiButton
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 8ed14e2c22e4348f1a2d62ecf737458e, type: 2}
+    - {fileID: 11400000, guid: 6de175de71ea64f97b07456d463e89de, type: 2}

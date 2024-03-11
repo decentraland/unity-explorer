@@ -1,11 +1,8 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
@@ -15,22 +12,28 @@ namespace DCL.Emoji
         public event Action<string> OnEmojiSelected;
         private readonly EmojiPanelView view;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
+        private readonly EmojiButton emojiButtonPrefab;
+        private readonly EmojiSectionView emojiSectionPrefab;
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
-        private readonly Dictionary<string, string> emojiNameMapping = new ();
+        public readonly Dictionary<string, EmojiData> emojiNameMapping = new ();
         private readonly Dictionary<string, string> emojiValueMapping = new ();
 
         public EmojiPanelController(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
-            TextAsset emojiMappingJson)
+            TextAsset emojiMappingJson,
+            EmojiSectionView emojiSectionPrefab,
+            EmojiButton emojiButtonPrefab)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
+            this.emojiSectionPrefab = emojiSectionPrefab;
+            this.emojiButtonPrefab = emojiButtonPrefab;
 
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
-                emojiNameMapping.Add(emojiData.Key, emojiData.Value.ToUpper());
+                emojiNameMapping.Add(emojiData.Key, new EmojiData(emojiData.Key, emojiData.Value.ToUpper()));
                 emojiValueMapping.Add(emojiData.Value.ToUpper(), emojiData.Key);
             }
 
@@ -48,7 +51,7 @@ namespace DCL.Emoji
         {
             foreach (EmojiSection emojiSection in emojiPanelConfiguration.EmojiSections)
             {
-                EmojiSectionView sectionView = Object.Instantiate(view.emojiSectionView, view.emojiContainer).GetComponent<EmojiSectionView>();
+                EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.emojiContainer).GetComponent<EmojiSectionView>();
                 sectionView.SectionTitle.text = emojiSection.title;
                 GenerateEmojis(emojiSection.startHex, emojiSection.endHex, sectionView);
                 emojiSectionViews.Add(sectionView);
@@ -74,11 +77,10 @@ namespace DCL.Emoji
             {
                 int emojiCode = startDec + i;
                 string emojiChar = char.ConvertFromUtf32(emojiCode);
-                EmojiButton emojiButton = Object.Instantiate(view.emojiButtonRef, sectionView.EmojiContainer);
+                EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
                 emojiButton.EmojiImage.text = emojiChar;
                 emojiButton.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(emojiChar));
 
-                Debug.Log("emoji char: " + emojiChar);
                 if(emojiValueMapping.TryGetValue(emojiCode.ToString("X"), out string emojiValue))
                     emojiButton.TooltipText.text = emojiValue;
             }

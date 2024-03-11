@@ -9,9 +9,8 @@ namespace DCL.Emoji
 {
     public class EmojiPanelView : MonoBehaviour
     {
-        [SerializeField] public EmojiButton emojiButtonRef;
-        [SerializeField] public GameObject emojiSectionView;
         [SerializeField] public Transform emojiContainer;
+
         public event Action OnEmojiFirstOpen;
 
         private void Start()

@@ -19,8 +19,11 @@ namespace DCL.Emoji
         [field: SerializeField]
         public Button Button { get; private set; }
 
-        public void OnPointerEnter(PointerEventData eventData) =>
-            Tooltip.SetActive(true);
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if(!string.IsNullOrEmpty(TooltipText.text))
+                Tooltip.SetActive(true);
+        }
 
         public void OnPointerExit(PointerEventData eventData) =>
             Tooltip.SetActive(false);
