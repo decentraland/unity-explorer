@@ -74,7 +74,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 deltaTime = unusedTime;
             }
 
-            if (playerInbox.Count == 0 && settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+            // Filter old messages that arrived too late
+            while (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp > playerInbox.First.timestamp)
+                playerInbox.Dequeue();
+
+            if (playerInbox.Count == 0 && settings.useExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
                 if (!extComp.Enabled)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
@@ -86,63 +90,58 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 return;
             }
 
-            // Filter old messages that arrived too late
-            for (var i = 0; playerInbox.Count > 0 && i < settings.SkipOldMessagesBatch; i++)
-                if (remotePlayerMovement.PastMessage.timestamp > playerInbox.First.timestamp)
-                    playerInbox.Dequeue();
-                else
-                    break;
-
             if (playerInbox.Count > 0)
             {
-                FullMovementMessage remote = playerInbox.First;
+                FullMovementMessage remote = playerInbox.Dequeue();
                 var useBLend = false;
 
-                if (extComp.Enabled &&
-                    (remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration // Player is already staying still
-                     || remote.timestamp > extComp.Start.timestamp + extComp.Time)) // Extrapolation can be in motion
+                if (extComp.Enabled)
                 {
-                    useBLend = true;
-                    extComp.Stop();
+                    while (playerInbox.Count > 0 && remote.timestamp < extComp.Start.timestamp + extComp.TotalMoveDuration && // Player is already staying still
+                           remote.timestamp < extComp.Start.timestamp + extComp.Time) // Extrapolation can be in motion)
+                        remote = playerInbox.Dequeue();
 
-                    var local = new FullMovementMessage
+                    if (remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration // Player is already staying still
+                        || remote.timestamp > extComp.Start.timestamp + extComp.Time) // Extrapolation can be in motion)
                     {
-                        timestamp = remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration
-                            ? extComp.Start.timestamp + extComp.TotalMoveDuration
-                            : extComp.Start.timestamp + extComp.Time,
+                        useBLend = true;
+                        extComp.Stop();
 
-                        position = transComp.Transform.position,
-                        velocity = extComp.Start.velocity,
+                        var local = new FullMovementMessage
+                        {
+                            timestamp = remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration
+                                ? extComp.Start.timestamp + extComp.TotalMoveDuration
+                                : extComp.Start.timestamp + extComp.Time,
 
-                        animState = extComp.Start.animState,
-                        isStunned = extComp.Start.isStunned,
-                    };
+                            position = transComp.Transform.position,
+                            velocity = extComp.Start.velocity,
 
-                    remotePlayerMovement.AddPassed(local);
-                    UpdateAnimations(local, ref anim, view);
+                            animState = extComp.Start.animState,
+                            isStunned = extComp.Start.isStunned,
+                        };
+
+                        remotePlayerMovement.AddPassed(local);
+                        UpdateAnimations(local, ref anim, view);
+                    }
+                    else return;
                 }
 
-                // Teleport
-                if (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance ||
-                    (settings.InterpolationSettings.UseSpeedUp && Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta))
-                {
-                    remote = playerInbox.Dequeue();
-
-                    if (settings.InterpolationSettings.UseSpeedUp)
-                        for (var i = 0; playerInbox.Count > 0 && i < settings.SkipSamePositionBatch; i++)
-                            if (Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
-                                remote = playerInbox.Dequeue();
-                            else
-                                break;
-
-                    transComp.Transform.position = remote.position;
-                    remotePlayerMovement.AddPassed(remote, wasTeleported: true);
-                    UpdateAnimations(remote, ref anim, view);
-                }
-
-                if (playerInbox.Count > 0)
-                {
-                    remote = playerInbox.Dequeue();
+                // // Teleport
+                // if (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance ||
+                //     (settings.InterpolationSettings.UseSpeedUp && Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta))
+                // {
+                //     if (settings.InterpolationSettings.UseSpeedUp)
+                //         while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
+                //             remote = playerInbox.Dequeue();
+                //
+                //     transComp.Transform.position = remote.position;
+                //     remotePlayerMovement.AddPassed(remote, wasTeleported: true);
+                //     UpdateAnimations(remote, ref anim, view);
+                // }
+                //
+                // if (playerInbox.Count > 0)
+                // {
+                    // remote = playerInbox.Dequeue();
 
                     RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
@@ -166,7 +165,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     UpdateAnimations(intComp.End, ref anim, view);
 
                     // TODO: Restart in loop until (unusedTime <= 0) ?
-                }
+                // }
             }
         }
 
