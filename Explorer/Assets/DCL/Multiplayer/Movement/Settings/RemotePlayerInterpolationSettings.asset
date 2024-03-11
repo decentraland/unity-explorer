@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <InterpolationType>k__BackingField: 1
   <SpeedUpFactor>k__BackingField: 0
-  <UseBlend>k__BackingField: 0
-  <BlendType>k__BackingField: 1
-  <MaxBlendSpeed>k__BackingField: 5
+  <UseBlend>k__BackingField: 1
+  <BlendType>k__BackingField: 6
+  <MaxBlendSpeed>k__BackingField: 10

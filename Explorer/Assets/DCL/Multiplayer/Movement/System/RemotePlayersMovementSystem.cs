@@ -47,12 +47,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)
             {
-                FullMovementMessage remote = playerInbox.Dequeue();
+                FullMovementMessage firstRemote = playerInbox.Dequeue();
 
-                transComp.Transform.position = remote.position;
-                UpdateAnimations(remote, ref anim, view);
+                transComp.Transform.position = firstRemote.position;
+                UpdateAnimations(firstRemote, ref anim, view);
 
-                remotePlayerMovement.AddPassed(remote, wasTeleported: true);
+                remotePlayerMovement.AddPassed(firstRemote, wasTeleported: true);
                 remotePlayerMovement.Initialized = true;
 
                 return;
@@ -84,6 +84,9 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                 return;
             }
+
+            while (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp > playerInbox.First.timestamp)
+                playerInbox.Dequeue();
 
             if (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp < playerInbox.First.timestamp)
             {

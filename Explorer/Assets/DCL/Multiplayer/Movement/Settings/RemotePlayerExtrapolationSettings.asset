@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <MinSpeed>k__BackingField: 0.01
   <LinearTime>k__BackingField: 0.33
-  <DampedSteps>k__BackingField: 1
+  <DampedSteps>k__BackingField: 2
