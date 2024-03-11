@@ -74,30 +74,38 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 deltaTime = unusedTime;
             }
 
-            if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+            if (playerInbox.Count == 0 && settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
                 if (!extComp.Enabled)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
                 Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
+
                 // TODO: properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
 
                 return;
             }
 
-            while (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp > playerInbox.First.timestamp)
-                playerInbox.Dequeue();
+            // Filter old messages that arrived too late
+            for (var i = 0; playerInbox.Count > 0 && i < settings.SkipOldMessagesBatch; i++)
+                if (remotePlayerMovement.PastMessage.timestamp > playerInbox.First.timestamp)
+                    playerInbox.Dequeue();
+                else
+                    break;
 
-            if (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp < playerInbox.First.timestamp)
+            if (playerInbox.Count > 0)
             {
-                FullMovementMessage remote = playerInbox.Dequeue();
-                FullMovementMessage local = null;
+                FullMovementMessage remote = playerInbox.First;
+                var useBLend = false;
 
-                if (extComp.Enabled && (remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration || remote.timestamp > extComp.Start.timestamp + extComp.Time))
+                if (extComp.Enabled &&
+                    (remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration // Player is already staying still
+                     || remote.timestamp > extComp.Start.timestamp + extComp.Time)) // Extrapolation can be in motion
                 {
+                    useBLend = true;
                     extComp.Stop();
 
-                    local = new FullMovementMessage
+                    var local = new FullMovementMessage
                     {
                         timestamp = remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration
                             ? extComp.Start.timestamp + extComp.TotalMoveDuration
@@ -114,32 +122,39 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     UpdateAnimations(local, ref anim, view);
                 }
 
-                if (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta
-                    || Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance)
+                // Teleport
+                if (settings.InterpolationSettings.UseSpeedUp &&
+                    (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta
+                     || Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance))
                 {
-                    // Teleport
-                    for (var i = 0; i < settings.SamePositionTeleportFilterCount && i < playerInbox.Count; i++)
-                    {
+                    remote = playerInbox.Dequeue();
+
+                    for (var i = 0; playerInbox.Count > 0 && i < settings.SkipSamePositionBatch; i++)
                         if (Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                             remote = playerInbox.Dequeue();
                         else
                             break;
-                    }
 
                     transComp.Transform.position = remote.position;
                     remotePlayerMovement.AddPassed(remote, wasTeleported: true);
                     UpdateAnimations(remote, ref anim, view);
                 }
-                else
+
+                if (playerInbox.Count > 0)
                 {
+                    remote = playerInbox.Dequeue();
+
                     RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
                     // Should be we loop until (unusedTime <= 0) ?
                     intComp.Restart(remotePlayerMovement.PastMessage, remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);
-                    BlendAndCatchUpTimeCorrection(ref intComp,  intSettings.UseBlend && local != null, playerInbox.Count);
+
+                    if (intSettings.UseBlend && useBLend)
+                        SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
+                    else if (intSettings.UseSpeedUp)
+                        SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
                     transComp.Transform.position = intComp.Start.position;
-                    Interpolation.LookAt(ref transComp, intComp.Start.velocity);
 
                     float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp);
                     InterpolateAnimations(deltaTime, ref anim, intComp.Start, intComp.End);
@@ -154,26 +169,22 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
         }
 
-        private void BlendAndCatchUpTimeCorrection(ref InterpolationComponent intComp, bool isBlend, int inboxMessages)
+        private static void SlowDownBlend(ref InterpolationComponent intComp, float maxBlendSpeed)
         {
-            var intSettings = settings.InterpolationSettings;
+            float positionDiff = Vector3.Distance(intComp.Start.position, intComp.End.position);
+            float speed = positionDiff / intComp.TotalDuration;
 
-            if (isBlend)
+            if (speed > maxBlendSpeed)
             {
-                float positionDiff = Vector3.Distance(intComp.Start.position, intComp.End.position);
-                float speed = positionDiff / intComp.TotalDuration;
+                float desiredDuration = positionDiff / maxBlendSpeed;
+                intComp.SlowDownFactor = desiredDuration / intComp.TotalDuration;
+            }
+        }
 
-                if (speed > intSettings.MaxBlendSpeed)
-                {
-                    float desiredDuration = positionDiff / intSettings.MaxBlendSpeed;
-                    intComp.SlowDownFactor = desiredDuration / intComp.TotalDuration;
-                }
-            }
-            else
-            {
-                float correctionTime = (intSettings.SpeedUpFactor + inboxMessages) * UnityEngine.Time.smoothDeltaTime;
-                intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / 4f);
-            }
+        private void SpeedUpForCatchingUp(ref InterpolationComponent intComp, int inboxMessages)
+        {
+            float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
+            intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
         }
 
         private static void InterpolateAnimations(float t, ref CharacterAnimationComponent anim, FullMovementMessage start, FullMovementMessage end)

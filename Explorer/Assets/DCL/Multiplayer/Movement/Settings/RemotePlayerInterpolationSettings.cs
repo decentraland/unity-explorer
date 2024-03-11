@@ -5,7 +5,8 @@ namespace DCL.Multiplayer.Movement.Settings
     public class RemotePlayerInterpolationSettings : ScriptableObject
     {
         [field: SerializeField] public InterpolationType InterpolationType { get; set; }
-        [field: SerializeField] public float SpeedUpFactor { get; set; } = 0;
+        [field: SerializeField] public bool UseSpeedUp { get; set; }
+        [field: SerializeField] public float MaxSpeedUpTimeDivider { get; set; } = 0;
 
         [field: Space]
         [field: SerializeField] public bool UseBlend { get; set; } = true;

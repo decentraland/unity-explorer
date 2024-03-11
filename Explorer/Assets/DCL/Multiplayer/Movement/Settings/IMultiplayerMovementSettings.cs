@@ -8,10 +8,7 @@ namespace DCL.Multiplayer.Movement.Settings
         List<SendRuleBase> SendRules { get; set; }
 
         int InboxCount { get; set; }
-        int PassedMessages { get; set; }
-        int PackageLost { get; set; }
-        bool StartSending { get; set; }
-        float PackagesJitter { get; set; }
+
         float Latency { get; set; }
         float LatencyJitter { get; set; }
         float MinPositionDelta { get; set; }
@@ -25,6 +22,7 @@ namespace DCL.Multiplayer.Movement.Settings
         MovementKind LastMove { get; set; }
         bool LastJump { get; set; }
 
-        int SamePositionTeleportFilterCount { get; set; }
+        int SkipOldMessagesBatch { get; set; }
+        int SkipSamePositionBatch { get; set; }
     }
 }

@@ -1,7 +1,4 @@
-﻿using JetBrains.Annotations;
-using UnityEngine;
-
-namespace DCL.Multiplayer.Movement
+﻿namespace DCL.Multiplayer.Movement
 {
     public struct RemotePlayerMovementComponent
     {
@@ -25,7 +22,6 @@ namespace DCL.Multiplayer.Movement
 
         public void AddPassed(FullMovementMessage message, bool wasTeleported = false)
         {
-            Debug.Log($"VVV {message.timestamp}");
             PastMessage = message;
             WasTeleported = wasTeleported;
         }

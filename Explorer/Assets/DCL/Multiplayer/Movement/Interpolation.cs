@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Movement
             return remainedDeltaTime;
         }
 
-        public static void LookAt(ref CharacterTransform transComp, Vector3 direction)
+        private static void LookAt(ref CharacterTransform transComp, Vector3 direction)
         {
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
