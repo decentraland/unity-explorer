@@ -17,7 +17,7 @@ namespace Editor
                 Console.WriteLine("Invoked " + fullMethodName + " (BuildScript.cs)");
             }
 
-            BuildPlayerOptions buildPlayerOptions = BuildPlayerWindow.DefaultBuildMethods.GetBuildPlayerOptions(new BuildPlayerOptions());
+            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
             buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
 
             if (Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD") == "true")
