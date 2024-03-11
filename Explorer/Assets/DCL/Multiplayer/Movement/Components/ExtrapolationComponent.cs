@@ -17,6 +17,7 @@ namespace DCL.Multiplayer.Movement.ECS
         {
             Start = from;
             Velocity = from.velocity;
+
             Time = 0f;
             TotalMoveDuration = settings.LinearTime + (settings.LinearTime * settings.DampedSteps);
 

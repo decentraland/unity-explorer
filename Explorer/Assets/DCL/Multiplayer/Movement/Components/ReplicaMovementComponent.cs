@@ -1,5 +1,4 @@
-﻿using Castle.Core.Internal;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement.ECS
 {
@@ -12,7 +11,7 @@ namespace DCL.Multiplayer.Movement.ECS
 
         public RemotePlayerMovementComponent(string playerWalletId)
         {
-            PlayerWalletId = playerWalletId.IsNullOrEmpty()?  SELF_ID: playerWalletId;
+            PlayerWalletId = playerWalletId;
             PassedMessages = new List<FullMovementMessage>();
         }
     }

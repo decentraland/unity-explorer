@@ -1,6 +1,7 @@
 ﻿using DCL.Character.Components;
 using DCL.Multiplayer.Movement.MessageBusMock;
 using DCL.Multiplayer.Movement.Settings;
+using Google.Api;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.ECS
@@ -19,22 +20,23 @@ namespace DCL.Multiplayer.Movement.ECS
                 remainedDeltaTime = (comp.Time - comp.TotalDuration) * comp.SlowDownFactor;
 
                 comp.Time = comp.TotalDuration;
+                transComp.Transform.position = comp.End.position;
                 lookDirection = comp.End.velocity;
             }
             else
             {
-                // look into future step
-                lookDirection = DoTransition(comp.Start, comp.End, comp.Time + 0.1f, comp.TotalDuration, comp.IsBlend, settings) - transComp.Transform.position;
+                var splineType = comp.IsBlend ? settings.BlendType : settings.InterpolationType;
+
+                transComp.Transform.position = DoTransition(comp.Start, comp.End, comp.Time, comp.TotalDuration, splineType);
+                lookDirection = DoTransition(comp.Start, comp.End, comp.Time + 0.1f, comp.TotalDuration, splineType) - transComp.Transform.position; // look into future step
             }
 
-            LookAt(ref transComp, ref lookDirection);
-            transComp.Transform.position = DoTransition(comp.Start, comp.End, comp.Time, comp.TotalDuration, comp.IsBlend, settings);
+            LookAt(ref transComp, lookDirection);
 
-            return comp.Time == comp.TotalDuration ? remainedDeltaTime : 0;
+            return comp.Time < comp.TotalDuration ? 0f : remainedDeltaTime;
         }
 
-
-        private static void LookAt(ref CharacterTransform transComp, ref Vector3 direction)
+        public static void LookAt(ref CharacterTransform transComp, Vector3 direction)
         {
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
@@ -46,10 +48,9 @@ namespace DCL.Multiplayer.Movement.ECS
             }
         }
 
-        private static Vector3 DoTransition(FullMovementMessage start, FullMovementMessage end, float time, float totalDuration, bool isBlend,
-            RemotePlayerInterpolationSettings settings)
+        private static Vector3 DoTransition(FullMovementMessage start, FullMovementMessage end, float time, float totalDuration, InterpolationType blendType)
         {
-            return (isBlend ? settings.BlendType : settings.InterpolationType) switch
+            return blendType switch
                    {
                        InterpolationType.Linear => InterpolationSpline.Linear(start, end, time, totalDuration),
                        InterpolationType.PositionBlending => InterpolationSpline.ProjectivePositionBlending(start, end, time, totalDuration),

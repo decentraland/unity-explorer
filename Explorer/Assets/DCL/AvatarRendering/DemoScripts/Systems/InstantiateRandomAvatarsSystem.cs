@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private AvatarRandomizer[] randomizers;
         private bool randomizerInitialized;
         private SingleInstanceEntity settings;
-        private int avatarIndex = 0;
+        private int avatarIndex;
 
         internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery, IComponentPool<Transform> componentPools) : base(world)
         {
@@ -219,10 +219,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterController.slopeLimit = 50f;
                 characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
 
-                var trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
+                TrailRenderer trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
                 trail.time = 1.0f; // The time in seconds that the trail will fade out over
                 trail.startWidth = 0.07f; // The starting width of the trail
                 trail.endWidth = 0.07f; // The end
+
                 trail.material = new Material(Shader.Find("Unlit/Color"))
                 {
                     color = Color.yellow,
@@ -240,6 +241,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 World.Create(avatarShape,
                     transformComp,
+
                     // characterController,
                     new CharacterAnimationComponent(),
 
@@ -249,9 +251,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     // new FeetIKComponent(),
                     // new HandsIKComponent(),
                     // new HeadIKComponent(),
-
-                    new RemotePlayerMovementComponent(string.Empty),
-                    new InterpolationComponent(transformComp.Transform),
+                    new RemotePlayerMovementComponent(RemotePlayerMovementComponent.SELF_ID),
+                    new InterpolationComponent(),
                     new ExtrapolationComponent(),
 
                     // new JumpInputComponent(),

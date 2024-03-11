@@ -28,13 +28,6 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public float MinPositionDelta { get; set; } = 0.1f;
         [field: SerializeField] public float MinTeleportDistance { get; set; } = 50f;
 
-        [field: Header("INTERPOLATION")]
-        [field: SerializeField] public InterpolationType InterpolationType { get; set; }
-        [field: SerializeField] public float SpeedUpFactor { get; set; } = 1;
-        [field: SerializeField] public bool useBlend { get; set; } = true;
-        [field: SerializeField] public InterpolationType BlendType { get; set; }
-        [field: SerializeField] public float MaxBlendSpeed { get; set; } = 30;
-
         [field: SerializeField] public RemotePlayerInterpolationSettings InterpolationSettings { get; set; }
 
         [field: Header("EXTRAPOLATION")]

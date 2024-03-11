@@ -45,11 +45,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
             settings.InboxCount = playerInbox.Count;
 
             // First message
-            if (playerInbox.Count > 0 && remotePlayerMovement.PassedMessages.Count == 0)
+            if (remotePlayerMovement.PassedMessages.Count == 0 && playerInbox.Count > 0)
             {
                 FullMovementMessage remote = playerInbox.Dequeue();
 
-                intComp.Transform.position = remote.position;
+                transComp.Transform.position = remote.position;
                 AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
 
                 return;
@@ -60,17 +60,14 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
                 InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
 
+                if (intComp.Time < intComp.TotalDuration)
+                    return;
+
+                // Stop interpolation
+                intComp.Enabled = false;
+                AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
+
                 deltaTime = unusedTime;
-
-                // ReSharper disable once CompareOfFloatsByEqualityOperator - we set it exactly equal on end
-                if (intComp.Time == intComp.TotalDuration)
-                {
-                    intComp.Enabled = false;
-                    AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
-                }
-
-                // we continue logic if we have some unusedTime to consume
-                if (deltaTime <= 0) return;
             }
 
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
@@ -126,31 +123,32 @@ namespace DCL.Multiplayer.Movement.ECS.System
                             break;
                     }
 
-                    intComp.Transform.position = remote.position;
+                    transComp.Transform.position = remote.position;
 
-                    if(playerInbox.Count == 0)
+                    if (playerInbox.Count == 0)
                         remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start (only for zero velocity)
 
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
-                else
+                else if (remotePlayerMovement.PassedMessages[^1]?.timestamp < remote.timestamp)
                 {
-                    // Should be in loop until (t <= 0)
-                    intComp.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
+                    RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
-                    FullMovementMessage passed = null;
+                    // Should be in loop until (unusedTime <= 0)
+                    intComp.Restart(remotePlayerMovement.PassedMessages[^1], remote, intSettings.MaxBlendSpeed, intSettings.SpeedUpFactor, playerInbox.Count, intSettings.UseBlend && local != null);
+
+                    transComp.Transform.position = intComp.Start.position;
+                    Interpolation.LookAt(ref transComp, intComp.Start.velocity);
 
                     float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
+                    InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
+
+                    // ReSharper disable once CompareOfFloatsByEqualityOperator - we set it exactly equal on the end
                     if (intComp.Time == intComp.TotalDuration)
                     {
                         intComp.Enabled = false;
-                        passed = intComp.End;
+                        AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
                     }
-
-                    InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
-
-                    if (passed != null)
-                        AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
                 }
             }
         }

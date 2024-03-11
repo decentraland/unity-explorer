@@ -17,11 +17,7 @@ namespace DCL.Multiplayer.Movement.Settings
         float LatencyJitter { get; set; }
         float MinPositionDelta { get; set; }
         float MinTeleportDistance { get; set; }
-        InterpolationType InterpolationType { get; set; }
-        float SpeedUpFactor { get; set; }
-        bool useBlend { get; set; }
-        InterpolationType BlendType { get; set; }
-        float MaxBlendSpeed { get; set; }
+
         RemotePlayerInterpolationSettings InterpolationSettings { get; }
 
         bool useExtrapolation { get; }
