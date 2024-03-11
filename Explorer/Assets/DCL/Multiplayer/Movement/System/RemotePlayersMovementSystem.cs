@@ -60,8 +60,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (intComp.Enabled)
             {
-                float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp);
-                InterpolateAnimations(deltaTime, ref anim, intComp.Start, intComp.End);
+                float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
+                InterpolateAnimations(deltaTime, ref anim, ref intComp);
 
                 if (intComp.Time < intComp.TotalDuration)
                     return;
@@ -123,17 +123,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 }
 
                 // Teleport
-                if (settings.InterpolationSettings.UseSpeedUp &&
-                    (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta
-                     || Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance))
+                if (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance ||
+                    (settings.InterpolationSettings.UseSpeedUp && Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta))
                 {
                     remote = playerInbox.Dequeue();
 
-                    for (var i = 0; playerInbox.Count > 0 && i < settings.SkipSamePositionBatch; i++)
-                        if (Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
-                            remote = playerInbox.Dequeue();
-                        else
-                            break;
+                    if (settings.InterpolationSettings.UseSpeedUp)
+                        for (var i = 0; playerInbox.Count > 0 && i < settings.SkipSamePositionBatch; i++)
+                            if (Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
+                                remote = playerInbox.Dequeue();
+                            else
+                                break;
 
                     transComp.Transform.position = remote.position;
                     remotePlayerMovement.AddPassed(remote, wasTeleported: true);
@@ -146,7 +146,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                     RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
-                    // Should be we loop until (unusedTime <= 0) ?
                     intComp.Restart(remotePlayerMovement.PastMessage, remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);
 
                     if (intSettings.UseBlend && useBLend)
@@ -156,8 +155,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                     transComp.Transform.position = intComp.Start.position;
 
-                    float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp);
-                    InterpolateAnimations(deltaTime, ref anim, intComp.Start, intComp.End);
+                    float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, intSettings.LookAtTimeDelta);
+                    InterpolateAnimations(deltaTime, ref anim, ref intComp);
 
                     if (intComp.Time < intComp.TotalDuration)
                         return;
@@ -165,6 +164,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     intComp.Stop();
                     remotePlayerMovement.AddPassed(intComp.End);
                     UpdateAnimations(intComp.End, ref anim, view);
+
+                    // TODO: Restart in loop until (unusedTime <= 0) ?
                 }
             }
         }
@@ -187,12 +188,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
             intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
         }
 
-        private static void InterpolateAnimations(float t, ref CharacterAnimationComponent anim, FullMovementMessage start, FullMovementMessage end)
+        private static void InterpolateAnimations(float t, ref CharacterAnimationComponent anim, ref InterpolationComponent intComp)
         {
-            float timeDiff = end.timestamp - start.timestamp;
-
-            anim.States.MovementBlendValue = Mathf.Lerp(start.animState.MovementBlendValue, end.animState.MovementBlendValue, t / timeDiff);
-            anim.States.SlideBlendValue = Mathf.Lerp(start.animState.SlideBlendValue, end.animState.SlideBlendValue, t / timeDiff);
+            anim.States.MovementBlendValue = Mathf.Lerp(intComp.Start.animState.MovementBlendValue, intComp.End.animState.MovementBlendValue, t / intComp.TotalDuration);
+            anim.States.SlideBlendValue = Mathf.Lerp(intComp.Start.animState.SlideBlendValue, intComp.End.animState.SlideBlendValue, t / intComp.TotalDuration);
         }
 
         private static void UpdateAnimations(FullMovementMessage fullMovementMessage, ref CharacterAnimationComponent animationComponent, IAvatarView view)

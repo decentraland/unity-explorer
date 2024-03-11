@@ -5,9 +5,7 @@ namespace DCL.Multiplayer.Movement
 {
     public static class Interpolation
     {
-        private const float LOOK_AT_TIME_DELTA = 0.1f;
-
-        public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp)
+        public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp, float lookAtTimeDelta)
         {
             var remainedDeltaTime = 0f;
             Vector3 lookDirection;
@@ -17,7 +15,7 @@ namespace DCL.Multiplayer.Movement
             if (intComp.Time < intComp.TotalDuration)
             {
                 transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
-                lookDirection = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + LOOK_AT_TIME_DELTA, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType) - transComp.Transform.position; // look into future step
+                lookDirection = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType) - transComp.Transform.position; // look into future step
             }
             else
             {
@@ -33,7 +31,7 @@ namespace DCL.Multiplayer.Movement
             return remainedDeltaTime;
         }
 
-        private static void LookAt(ref CharacterTransform transComp, Vector3 direction)
+        public static void LookAt(ref CharacterTransform transComp, Vector3 direction)
         {
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
