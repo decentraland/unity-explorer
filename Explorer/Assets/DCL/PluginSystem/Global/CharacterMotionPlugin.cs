@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Emotes;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
@@ -15,14 +16,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IEmoteRepository emoteRepository;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
-        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject, IDebugContainerBuilder debugContainerBuilder)
+        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
+            ICharacterObject characterObject,
+            IDebugContainerBuilder debugContainerBuilder,
+            IEmoteRepository emoteRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.emoteRepository = emoteRepository;
         }
 
         public void Dispose()
@@ -61,6 +67,7 @@ namespace DCL.PluginSystem.Global
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteRepository, debugContainerBuilder);
         }
     }
 }

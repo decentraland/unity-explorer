@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -59,10 +61,17 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
 
         private AnimatorOverrideController overrideController;
+        private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
 
         public void Awake()
         {
             overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
+            animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+            overrideController.GetOverrides(animationOverrides);
+
+            // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
+            animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
+            overrideController.ApplyOverrides(animationOverrides);
         }
 
         public void SetAnimatorFloat(int hash, float value)

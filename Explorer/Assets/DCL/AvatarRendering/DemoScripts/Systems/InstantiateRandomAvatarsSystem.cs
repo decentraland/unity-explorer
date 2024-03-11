@@ -241,6 +241,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new HeadIKComponent(),
                     new JumpInputComponent(),
                     new MovementInputComponent(),
+                    new EmoteInputComponent(-1),
                     characterControllerSettings
                 );
             }
