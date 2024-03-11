@@ -141,10 +141,10 @@ namespace DCL.Multiplayer.Connections.Rooms
         }
 
         [IgnoreAsyncNaming("Depends on the contract that is without async suffix")]
-        public async Task<bool> Connect(string url, string authToken, CancellationToken cancelToken)
+        public async Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
             log($"{PREFIX} connect start {url} with token {authToken}");
-            bool result = await origin.Connect(url, authToken, cancelToken);
+            bool result = await origin.Connect(url, authToken, cancelToken, autoSubscribe);
             log($"{PREFIX} connect start {url} with token {authToken} with result {result}");
             return result;
         }

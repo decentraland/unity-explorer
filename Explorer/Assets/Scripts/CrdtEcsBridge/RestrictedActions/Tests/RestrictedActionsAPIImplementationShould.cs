@@ -92,13 +92,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void ChangeRealm()
         {
             // Arrange
+            const string TEST_MESSAGE = "TestMessage";
             const string TEST_REALM = "TestRealm";
 
             // Act
-            restrictedActionsAPIImplementation.ChangeRealm(TEST_REALM);
+            restrictedActionsAPIImplementation.ChangeRealm(TEST_MESSAGE, TEST_REALM);
 
             // Assert
-            mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(TEST_REALM)));
+            mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(TEST_MESSAGE, TEST_REALM)));
         }
     }
 }
