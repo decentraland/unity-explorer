@@ -4,7 +4,6 @@ using DCL.UI;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -25,6 +24,9 @@ namespace DCL.Chat
 
         [field: SerializeField]
         public EmojiPanelView EmojiPanel { get; private set; }
+
+        [field: SerializeField]
+        public EmojiSuggestionPanelView EmojiSuggestionPanel { get; private set; }
 
         [field: SerializeField]
         public TMP_InputField InputField { get; private set; }

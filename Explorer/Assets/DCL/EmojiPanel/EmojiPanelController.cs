@@ -33,7 +33,7 @@ namespace DCL.Emoji
 
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
-                emojiNameMapping.Add(emojiData.Key, new EmojiData(emojiData.Key, emojiData.Value.ToUpper()));
+                emojiNameMapping.Add(emojiData.Key, new EmojiData(emojiData.Value.ToUpper(), emojiData.Key));
                 emojiValueMapping.Add(emojiData.Value.ToUpper(), emojiData.Key);
             }
 

@@ -101,7 +101,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.5803922}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
     m_HighlightedColor: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0}
     m_SelectedColor: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
@@ -136,6 +136,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e5fd56c6d144ba816525dff214ee9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Emoji>k__BackingField: {fileID: 6988455596225033446}
+  <EmojiName>k__BackingField: {fileID: 3101371696451196082}
 --- !u!1 &5505983360071128957
 GameObject:
   m_ObjectHideFlags: 0

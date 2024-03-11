@@ -45,6 +45,7 @@ namespace DCL.PluginSystem.Global
             EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
             EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
             EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
+            EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
 
             chatController = new ChatController(
                 ChatController.CreateLazily(
@@ -55,7 +56,8 @@ namespace DCL.PluginSystem.Global
                 emojiPanelConfig,
                 settings.EmojiMappingJson,
                 emojiSectionPrefab,
-                emojiButtonPrefab);
+                emojiButtonPrefab,
+                emojiSuggestionPrefab);
 
             mvcManager.RegisterController(chatController);
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();

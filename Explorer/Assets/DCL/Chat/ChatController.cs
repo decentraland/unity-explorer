@@ -5,7 +5,6 @@ using DCL.Emoji;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -16,14 +15,19 @@ namespace DCL.Chat
 {
     public partial class ChatController : ControllerBase<ChatView>
     {
+        private const string EMOJI_SUGGESTION_PATTERN = @":\w*$";
+
+        private readonly Regex emojiPatternRegex = new (EMOJI_SUGGESTION_PATTERN);
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private EmojiPanelController emojiPanelController;
+        private EmojiSuggestionPanel emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
         private readonly EmojiSectionView emojiSectionViewPrefab;
         private readonly EmojiButton emojiButtonPrefab;
+        private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private World world;
 
         private string currentMessage = string.Empty;
@@ -39,7 +43,8 @@ namespace DCL.Chat
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionViewPrefab,
-            EmojiButton emojiButtonPrefab) : base(viewFactory)
+            EmojiButton emojiButtonPrefab,
+            EmojiSuggestionView emojiSuggestionViewPrefab) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -48,11 +53,12 @@ namespace DCL.Chat
             this.emojiMappingJson = emojiMappingJson;
             this.emojiSectionViewPrefab = emojiSectionViewPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
+            this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder)
         {
             world = builder.World;
         }
@@ -70,6 +76,9 @@ namespace DCL.Chat
 
             emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
+
+            emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab);
+
             viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
@@ -135,9 +144,6 @@ namespace DCL.Chat
             viewInstance.StopChatEntriesFadeout();
         }
 
-        private const string PATTERN = @":\w*$";
-        private readonly Regex regex = new (PATTERN);
-
         private void OnInputChanged(string inputText)
         {
             HandleEmojiSearch(inputText);
@@ -152,22 +158,21 @@ namespace DCL.Chat
 
         private void HandleEmojiSearch(string inputText)
         {
-            Match match = regex.Match(inputText);
+            Match match = emojiPatternRegex.Match(inputText);
             if (match.Success)
             {
-                if(match.Value.Length < 1)
-                    return;
-
-                //IEnumerable<string> keysWithPrefix = DictionaryUtils.GetKeysWithPrefix(emojiPanelController.emojiNameMapping, match.Value);
-
-                //foreach (string s in keysWithPrefix)
+                if (match.Value.Length < 1)
                 {
-                    //Debug.Log("Match: " + s);
+                    emojiSuggestionPanelController.SetPanelVisibility(false);
+                    return;
                 }
+
+                emojiSuggestionPanelController.SetPanelVisibility(true);
+                emojiSuggestionPanelController.SetValues(DictionaryUtils.GetKeysWithPrefix(emojiPanelController.emojiNameMapping, match.Value));
             }
             else
             {
-
+                emojiSuggestionPanelController.SetPanelVisibility(false);
             }
         }
 
