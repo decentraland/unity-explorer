@@ -35,6 +35,8 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public InterpolationType BlendType { get; set; }
         [field: SerializeField] public float MaxBlendSpeed { get; set; } = 30;
 
+        [field: SerializeField] public RemotePlayerInterpolationSettings InterpolationSettings { get; set; }
+
         [field: Header("EXTRAPOLATION")]
         [field: SerializeField] public bool useExtrapolation { get; set; } = true;
         [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; }

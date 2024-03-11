@@ -22,6 +22,7 @@ namespace DCL.Multiplayer.Movement.Settings
         bool useBlend { get; set; }
         InterpolationType BlendType { get; set; }
         float MaxBlendSpeed { get; set; }
+        RemotePlayerInterpolationSettings InterpolationSettings { get; }
 
         bool useExtrapolation { get; }
         RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }

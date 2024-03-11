@@ -35,8 +35,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent @int, ref ExtrapolationComponent ext, in IAvatarView view)
+        private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, in IAvatarView view)
         {
             if (!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out Queue<FullMovementMessage>? playerInbox))
                 return;
@@ -49,18 +49,26 @@ namespace DCL.Multiplayer.Movement.ECS.System
             {
                 FullMovementMessage remote = playerInbox.Dequeue();
 
-                @int.Transform.position = remote.position;
+                intComp.Transform.position = remote.position;
                 AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
 
                 return;
             }
 
-            if (@int.Enabled)
+            if (intComp.Enabled)
             {
-                (FullMovementMessage? passed, float rest) = @int.Update(deltaTime);
+                FullMovementMessage passed = null;
 
-                deltaTime = rest;
-                InterpolateAnimations(ref anim, @int.Start, @int.End, deltaTime);
+                float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
+                if (intComp.Time == intComp.TotalDuration)
+                {
+                    intComp.Enabled = false;
+                    passed = intComp.End;
+                }
+
+                // ---
+                deltaTime = unusedTime;
+                InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
                 if (passed == null) return;
 
                 AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
@@ -71,11 +79,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
             // if (playerInbox.Count < 2)  return;
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
             {
-                if (!ext.Enabled)
-                    ext.Restart(remotePlayerMovement.PassedMessages[^1], settings.ExtrapolationSettings);
+                if (!extComp.Enabled)
+                    extComp.Restart(remotePlayerMovement.PassedMessages[^1], settings.ExtrapolationSettings);
 
-                Extrapolation.Execute(ref transComp, ref ext, deltaTime, settings.ExtrapolationSettings);
-                InterpolateAnimations(ref anim, ext.Start, ext.Start, deltaTime);
+                Extrapolation.Execute(ref transComp, ref extComp, deltaTime, settings.ExtrapolationSettings);
+                InterpolateAnimations(ref anim, extComp.Start, extComp.Start, deltaTime);
 
                 return;
             }
@@ -85,21 +93,21 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 FullMovementMessage remote = playerInbox.Dequeue();
                 FullMovementMessage local = null;
 
-                if (ext.Enabled && (remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration || remote.timestamp > ext.Start.timestamp + ext.Time))
+                if (extComp.Enabled && (remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration || remote.timestamp > extComp.Start.timestamp + extComp.Time))
                 {
-                    ext.Stop();
+                    extComp.Stop();
 
                     local = new FullMovementMessage
                     {
-                        timestamp = remote.timestamp > ext.Start.timestamp + ext.TotalMoveDuration
-                            ? ext.Start.timestamp + ext.TotalMoveDuration
-                            : ext.Start.timestamp + ext.Time,
+                        timestamp = remote.timestamp > extComp.Start.timestamp + extComp.TotalMoveDuration
+                            ? extComp.Start.timestamp + extComp.TotalMoveDuration
+                            : extComp.Start.timestamp + extComp.Time,
 
                         position = transComp.Transform.position,
-                        velocity = ext.Start.velocity,
+                        velocity = extComp.Start.velocity,
 
-                        animState = ext.Start.animState,
-                        isStunned = ext.Start.isStunned,
+                        animState = extComp.Start.animState,
+                        isStunned = extComp.Start.isStunned,
                     };
 
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
@@ -122,7 +130,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                             break;
                     }
 
-                    @int.Transform.position = remote.position;
+                    intComp.Transform.position = remote.position;
 
                     if(playerInbox.Count == 0)
                         remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start (only for zero velocity)
@@ -132,9 +140,18 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 else
                 {
                     // Should be in loop until (t <= 0)
-                    @int.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
-                    (FullMovementMessage? passed, float _) = @int.Update(deltaTime);
-                    InterpolateAnimations(ref anim, @int.Start, @int.End, deltaTime);
+                    intComp.Run(remotePlayerMovement.PassedMessages[^1], remote, playerInbox.Count, settings, local != null && settings.useBlend);
+
+                    FullMovementMessage passed = null;
+
+                    float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
+                    if (intComp.Time == intComp.TotalDuration)
+                    {
+                        intComp.Enabled = false;
+                        passed = intComp.End;
+                    }
+
+                    InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
 
                     if (passed != null)
                         AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
