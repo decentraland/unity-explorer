@@ -14,6 +14,7 @@ CBUFFER_START(UnityPerMaterial)
     int _lastWearableVertCount;
     int _lastAvatarVertCount;
     int _MainTexArr_ID;
+    int _MaskTexArr_ID;
 CBUFFER_END
 
 #ifdef UNITY_DOTS_INSTANCING_ENABLED
@@ -26,6 +27,7 @@ CBUFFER_END
         UNITY_DOTS_INSTANCED_PROP(int, _lastWearableVertCount)
         UNITY_DOTS_INSTANCED_PROP(int, _lastAvatarVertCount)
         UNITY_DOTS_INSTANCED_PROP(int, _MainTexArr_ID)
+        UNITY_DOTS_INSTANCED_PROP(int, _MaskTexArr_ID)
     UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
     #define _BaseColor              UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4 , _BaseColor)
@@ -36,6 +38,7 @@ CBUFFER_END
     #define _lastWearableVertCount  UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastWearableVertCount)
     #define _lastAvatarVertCount    UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _lastAvatarVertCount)
     #define _MainTexArr_ID          UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MainTexArr_ID)
+    #define _MaskTexArr_ID          UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(int, _MaskTexArr_ID)
 #endif
 
 #ifdef _DCL_TEXTURE_ARRAYS
@@ -47,9 +50,13 @@ CBUFFER_END
 
     DCL_DECLARE_TEX2DARRAY(_MainTexArr);
     #define SAMPLE_MAINTEX(uv,texArrayID)                   DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_MainTexArr, float3(uv, texArrayID))
+    DCL_DECLARE_TEX2DARRAY(_MaskTexArr);
+    #define SAMPLE_MASKTEX(uv,texArrayID)                   DCL_SAMPLE_TEX2DARRAY_DEFAULT_SAMPLER(_MaskTexArr, float3(uv, texArrayID))
 #else
     TEXTURE2D(_MainTex);                                    SAMPLER(sampler_MainTex);
     #define SAMPLE_MAINTEX(uv,texArrayID)                   SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv)
+    TEXTURE2D(_MaskTex);                                    SAMPLER(sampler_MaskTex);
+    #define SAMPLE_MASKTEX(uv,texArrayID)                   SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, uv)
 #endif
 
 TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
@@ -77,9 +84,12 @@ half4 SampleAlbedoAlpha(float2 uv)
     return _MainTex_var;
 }
 
-half4 SampleMaskMap(float2 uv, TEXTURE2D_PARAM(maskMap, sampler_maskMap))
+half4 SampleMaskMap(float2 uv)
 {
-    return half4(SAMPLE_TEXTURE2D(maskMap, sampler_maskMap, uv));
+    int nMaskTexArrID = _MaskTexArr_ID;
+    half4 maskColour = half4(SAMPLE_MASKTEX(uv, nMaskTexArrID));
+    half4 invertedColour = half4(half3(1.0, 1.0, 1.0) - maskColour.rgb, maskColour.a);
+    return invertedColour;
 }
 
 inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
@@ -91,8 +101,8 @@ inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurface
     outSurfaceData.alpha = albedoAlpha.a * _BaseColor.a;
     outSurfaceData.alpha = AlphaDiscard(outSurfaceData.alpha, _Cutoff);
 
-    //half4 maskColour = SampleMaskMap(uv, TEXTURE2D_ARGS(_MaskTexture, sampler_MaskTexture));
-    outSurfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
+    half4 maskColour = SampleMaskMap(uv);
+    outSurfaceData.albedo = albedoAlpha.rgb * (maskColour.rgb * _BaseColor.rgb);
     outSurfaceData.albedo = AlphaModulate(outSurfaceData.albedo, outSurfaceData.alpha);
 
     half4 specularSmoothness = SampleSpecularSmoothness(uv, outSurfaceData.alpha, _SpecColor, TEXTURE2D_ARGS(_SpecGlossMap, sampler_SpecGlossMap));
