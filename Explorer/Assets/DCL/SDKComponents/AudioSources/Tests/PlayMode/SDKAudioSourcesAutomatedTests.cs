@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using Global;
@@ -121,7 +122,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository);
+                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, Substitute.For<IRealmData>());
 
             return (staticContainer, sceneSharedContainer);
         }
