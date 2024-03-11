@@ -93,9 +93,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             else
                 wearablesResult = avatarShapeComponent.WearablePromise.Result!.Value;
 
-            // TODO: consume emote promise
-            // if (!avatarShapeComponent.EmotePromise.TryConsume(World, out EmotesLoadResult emotesResult)) return;
-            var emotesResult = new EmotesLoadResult();
+            // EmotesLoadResult emotesResult;
+            //
+            // if (!avatarShapeComponent.EmotePromise.IsConsumed)
+            // {
+            //     if (!avatarShapeComponent.EmotePromise.TryConsume(World, out emotesResult))
+            //         return;
+            // }
+            // else
+            //     emotesResult = avatarShapeComponent.EmotePromise.Result!.Value;
+
+            // TODO: get emotes from promise
+            EmotesLoadResult emotesResult = new ();
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";

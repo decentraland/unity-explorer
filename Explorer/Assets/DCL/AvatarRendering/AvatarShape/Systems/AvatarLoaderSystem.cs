@@ -128,7 +128,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition)
         {
-            var intention = new GetEmotesByPointersIntention(profile.Avatar.Wearables);
+            var urns = new List<URN>();
+
+            foreach (string emote in profile.Avatar.Emotes.Keys)
+                urns.Add(emote);
+
+            var intention = new GetEmotesByPointersIntention(urns);
             return EmotePromise.Create(World, intention, partition);
         }
     }
