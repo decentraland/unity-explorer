@@ -37,6 +37,10 @@ namespace SceneRunner.Scene
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;
+
+
+            //this.sceneContent.
+            //JsonUtility.ToJson(sceneDefinition.metadata)
         }
 
         public bool HasRequiredPermission(string permission)
