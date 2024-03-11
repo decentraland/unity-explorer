@@ -1,9 +1,9 @@
+using DCL.Diagnostics;
 using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs
 {
@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
 
         public event ReceivedDataDelegate? DataReceived;
 
-        public LogDataPipe(IDataPipe origin) : this(origin, Debug.Log) { }
+        public LogDataPipe(IDataPipe origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
 
         public LogDataPipe(IDataPipe origin, Action<string> log)
         {

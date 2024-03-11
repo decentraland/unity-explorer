@@ -9,14 +9,13 @@ using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
+using DCL.Multiplayer.Chats;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
-using DCL.SkyBox;
-using DCL.TeleportPrompt;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -31,8 +30,13 @@ using System.Threading;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Nametags;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
+using System.Buffers;
+using Unity.Mathematics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -123,18 +127,18 @@ namespace Global.Dynamic
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
-            var chatMessagesBus = new ChatMessagesBus(debugBuilder);
             var webBrowser = new UnityAppWebBrowser();
             ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            NametagsData? nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
-                profileCache);
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
 
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
+            var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
                 container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
@@ -144,9 +148,31 @@ namespace Global.Dynamic
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, multiPool);
 
+            container.RealmController = new RealmController(
+                identityCache,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                parcelServiceContainer.TeleportController,
+                parcelServiceContainer.RetrieveSceneFromFixedRealm,
+                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
+                dynamicWorldParams.SceneLoadRadius,
+                dynamicWorldParams.StaticLoadPositions,
+                realmData,
+                staticContainer.ScenesCache);
+
+            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+
+            var chatMessagesBus = new DebugPanelChatMessageBus(
+                new SelfResendChatMessageBus(
+                    new MultiplayerChatMessagesBus(roomHub, memoryPool, multiPool, container.ProfileRepository),
+                    identityCache,
+                    container.ProfileRepository
+                ),
+                debugBuilder
+            );
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, debugBuilder),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
@@ -162,11 +188,12 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    chatEntryConfiguration),
+                    chatEntryConfiguration,
+                    nametagsData),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus, nametagsData),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -192,23 +219,16 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService),
+                new ChangeRealmPromptPlugin(
+                    staticContainer.AssetsProvisioner,
+                    container.MvcManager,
+                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
-
-            container.RealmController = new RealmController(
-                identityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
-                parcelServiceContainer.TeleportController,
-                parcelServiceContainer.RetrieveSceneFromFixedRealm,
-                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                dynamicWorldParams.SceneLoadRadius,
-                dynamicWorldParams.StaticLoadPositions,
-                realmData,
-                staticContainer.ScenesCache);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

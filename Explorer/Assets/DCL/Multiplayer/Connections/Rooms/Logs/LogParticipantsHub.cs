@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         public LogParticipantsHub(IParticipantsHub origin) : this(
             origin,
             ReportHub
-               .WithReport(ReportCategory.ARCHIPELAGO_REQUEST)
+               .WithReport(ReportCategory.LIVEKIT)
                .Log
         ) { }
 

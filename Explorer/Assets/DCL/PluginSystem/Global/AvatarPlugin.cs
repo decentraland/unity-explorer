@@ -18,6 +18,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using ECS;
 using System;
 using System.Runtime.CompilerServices;
@@ -48,14 +49,16 @@ namespace DCL.PluginSystem.Global
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
-        private IExtendedObjectPool<Material> celShadingMaterialPool;
-        private IExtendedObjectPool<ComputeShader> computeShaderPool;
+        // late init
+        private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
+        private IExtendedObjectPool<Material> celShadingMaterialPool = null!;
+        private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
 
         private IObjectPool<NametagView> nametagViewPool;
-        private ProvidedAsset<NametagsData> nametagsData;
+        private NametagsData nametagsData;
 
-        private IComponentPool<Transform> transformPoolRegistry;
+        private IComponentPool<Transform> transformPoolRegistry = null!;
+        private ChatBubbleConfigurationSO chatBubbleConfiguration;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -66,7 +69,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            NametagsData nametagsData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -75,6 +79,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.nametagsData = nametagsData;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
@@ -89,13 +94,14 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
+            chatBubbleConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatBubbleConfiguration, ct)).Value;
+
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
-            nametagsData = await assetsProvisioner.ProvideMainAssetAsync(settings.nametagsData, ct);
 
-            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
+            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -104,7 +110,7 @@ namespace DCL.PluginSystem.Global
             Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
-            new NametagsDebugController(debugContainerBuilder, nametagsData.Value);
+            new NametagsDebugController(debugContainerBuilder, nametagsData);
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
@@ -124,34 +130,31 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData.Value);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
         }
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
 
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
         private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagView, ct: ct)).Value.GetComponent<NametagView>();
-            GameObject nametagPrefabParent = (await assetsProvisioner.ProvideMainAssetAsync(settings.nametagParent, ct: ct)).Value;
-
-            GameObject nametagParent = Object.Instantiate(nametagPrefabParent, Vector3.zero, Quaternion.identity);
+            NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
 
             nametagViewPool = new ObjectPool<NametagView>(
-                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, nametagParent.transform),
-                actionOnGet: nametagView => nametagView.gameObject.SetActive(true),
-                actionOnRelease: nametagView => nametagView.gameObject.SetActive(false),
+                () => Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, null),
+                actionOnGet: (nametagView) => nametagView.gameObject.SetActive(true),
+                actionOnRelease: (nametagView) => nametagView.gameObject.SetActive(false),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy);
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
+            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
 
             celShadingMaterialPool = new ExtendedObjectPool<Material>(
                 () => new Material(providedMaterial.Value),
@@ -165,19 +168,19 @@ namespace DCL.PluginSystem.Global
 
             for (var i = 0; i < settings.defaultMaterialCapacity; i++)
             {
-                Material prewarmedMaterial = celShadingMaterialPool.Get();
+                Material prewarmedMaterial = celShadingMaterialPool.Get()!;
                 celShadingMaterialPool.Release(prewarmedMaterial);
             }
         }
 
         private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
+            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.ComputeShader, ct: ct);
             computeShaderPool = new ExtendedObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
             {
-                ComputeShader prewarmedShader = computeShaderPool.Get();
+                ComputeShader prewarmedShader = computeShaderPool.Get()!;
                 computeShaderPool.Release(prewarmedShader);
             }
         }
@@ -188,34 +191,31 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(AvatarPlugin) + "." + nameof(AvatarShapeSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject avatarBase;
+            private AssetReferenceGameObject? avatarBase;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject nametagView;
-
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject nametagParent;
+            private AssetReferenceGameObject? nametagView;
 
             [field: SerializeField]
-            public AssetReferenceMaterial celShadingMaterial;
-
-            [field: SerializeField]
-            public NametagsDataRef nametagsData;
+            private AssetReferenceMaterial? celShadingMaterial;
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
+            public AssetReferenceT<ChatBubbleConfigurationSO> ChatBubbleConfiguration { get; private set; }
+
+            [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
 
+            public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 
-            [Serializable]
-            public class NametagsDataRef : AssetReferenceT<NametagsData>
-            {
-                public NametagsDataRef(string guid) : base(guid) { }
-            }
+            public AssetReferenceGameObject NametagView => nametagView.EnsureNotNull();
+
+            public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
+
+            public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
         }
     }
 }

@@ -1,0 +1,21 @@
+{
+    "name": "DCL.WorldTime",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:9e314663ce958b746873cb22d57ede55",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

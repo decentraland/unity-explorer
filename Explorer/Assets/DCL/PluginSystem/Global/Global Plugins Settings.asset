@@ -34,6 +34,7 @@ MonoBehaviour:
   - rid: 2174542042650378245
   - rid: 4340256782807990272
   - rid: 7162477752737071106
+  - rid: 7162477796324278274
   references:
     version: 2
     RefIds:
@@ -246,12 +247,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         nametagView:
-          m_AssetGUID: fabfcdf867b484665b44c8a158bd8eb4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        nametagParent:
-          m_AssetGUID: bd2233d5950ee4b4c96fc19f60d8c582
+          m_AssetGUID: 1d026bc5d9fd448798b32a455c0f3978
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -260,12 +256,12 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        nametagsData:
-          m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
+        defaultMaterialCapacity: 100
+        <ChatBubbleConfiguration>k__BackingField:
+          m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        defaultMaterialCapacity: 100
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
           m_SubObjectName: 
@@ -334,6 +330,14 @@ MonoBehaviour:
       data:
         TeleportPromptPrefab:
           m_AssetGUID: 37b740e9dd5ba324c91cd05632ea002c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7162477796324278274
+      type: {class: ChangeRealmPromptPlugin/ChangeRealmPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ChangeRealmPromptPrefab:
+          m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

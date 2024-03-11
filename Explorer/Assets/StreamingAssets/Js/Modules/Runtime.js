@@ -4,8 +4,13 @@ module.exports.getRealm = async function(message) {
 }
 
 module.exports.getWorldTime = async function(message) {
-    console.log('JSMODULE: getWorldTime')
-    return {};
+    const { time } = await UnityRuntime.GetWorldTime()
+    if (time === undefined) {
+        console.log('JSMODULE: An error ocurred when getting World Time')
+        return {};
+    } else {
+        return { time };
+    }
 }
 
 module.exports.readFile = async function(message) {

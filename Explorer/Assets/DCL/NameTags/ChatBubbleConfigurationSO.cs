@@ -1,0 +1,16 @@
+using UnityEngine;
+
+namespace DCL.Nametags
+{
+    [CreateAssetMenu(fileName = "ChatBubbleConfiguration", menuName = "SO/ChatBubbleConfiguration")]
+    public class ChatBubbleConfigurationSO : ScriptableObject
+    {
+        public float nametagMarginOffsetWidth;
+        public float nametagMarginOffsetHeight;
+        public float bubbleMarginOffsetWidth;
+        public float bubbleMarginOffsetHeight;
+        public float animationDuration;
+        public float fullOpacityMaxDistance;
+        public int bubbleIdleTime;
+    }
+}

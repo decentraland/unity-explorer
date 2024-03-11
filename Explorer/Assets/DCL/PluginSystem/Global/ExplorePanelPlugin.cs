@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.webBrowser = webBrowser;
 
-            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog);
+            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository);
         }
 
         public override void Dispose()

@@ -5,6 +5,8 @@ namespace CommunicationData.URLHelpers
 {
     public readonly struct URN
     {
+        public const int SHORTEN_URN_PARTS = 6;
+
         private readonly string urn;
 
         public URN(string urn)
@@ -91,17 +93,28 @@ namespace CommunicationData.URLHelpers
         public override int GetHashCode() =>
             urn != null ? urn.GetHashCode() : 0;
 
-        public string Shorten(int parts)
+        public URN Shorten()
         {
             int index = -1;
 
-            for (var i = 0; i < parts; i++)
+            for (var i = 0; i < SHORTEN_URN_PARTS; i++)
             {
                 index = urn.IndexOf(':', index + 1);
                 if (index == -1) break;
             }
 
             return index != -1 ? urn[..index] : urn;
+        }
+
+        public bool IsExtended()
+        {
+            var count = 0;
+
+            foreach (char c in urn)
+                if (c == ':')
+                    count++;
+
+            return count >= SHORTEN_URN_PARTS;
         }
 
         public static implicit operator URN(int urn) =>

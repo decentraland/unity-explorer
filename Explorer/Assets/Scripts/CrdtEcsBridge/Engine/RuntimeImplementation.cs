@@ -2,13 +2,16 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Time;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
+using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -21,16 +24,23 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
+        private const float DEFAULT_GET_WORLD_TIME = 0.01f;
+
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
+        private readonly IWorldTimeProvider timeProvider;
+        private readonly ISceneExceptionsHandler exceptionsHandler;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, ISceneExceptionsHandler exceptionsHandler)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
+            this.timeProvider = timeProvider;
+            this.exceptionsHandler = exceptionsHandler;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        { }
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
@@ -61,6 +71,16 @@ namespace CrdtEcsBridge.Engine
             {
                 content = content,
                 hash = hash,
+            };
+        }
+
+        public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
+        {
+            float seconds = await timeProvider.GetWorldTimeAsync(ct);
+
+            return new IRuntime.GetWorldTimeResponse
+            {
+                seconds = seconds,
             };
         }
     }

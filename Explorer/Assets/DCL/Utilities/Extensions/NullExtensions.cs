@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace DCL.Utilities.Extensions
 {
@@ -11,5 +12,10 @@ namespace DCL.Utilities.Extensions
 
             return value;
         }
+
+        public static T EnsureGetComponent<T>(this GameObject? value) =>
+            value.EnsureNotNull("GameObject is null")
+                 .GetComponent<T>()
+                 .EnsureNotNull($"{typeof(T).Name} component not found on the gameobject {value.name}");
     }
 }
