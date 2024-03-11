@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Movement.MessageBusMock
         PositionBlending,
     }
 
-    public static class Interpolate
+    public static class InterpolationSpline
     {
         /// <summary>
         ///     Linear Interpolation. Just wrapper around built-in Vector3.Lerp

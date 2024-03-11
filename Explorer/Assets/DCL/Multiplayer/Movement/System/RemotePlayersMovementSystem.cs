@@ -44,6 +44,17 @@ namespace DCL.Multiplayer.Movement.ECS.System
             settings.PassedMessages = remotePlayerMovement.PassedMessages.Count;
             settings.InboxCount = playerInbox.Count;
 
+            // First message
+            if (playerInbox.Count > 0 && remotePlayerMovement.PassedMessages.Count == 0)
+            {
+                FullMovementMessage remote = playerInbox.Dequeue();
+
+                @int.Transform.position = remote.position;
+                AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
+
+                return;
+            }
+
             if (@int.Enabled)
             {
                 (FullMovementMessage? passed, float rest) = @int.Update(deltaTime);
@@ -94,10 +105,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     AddToPassed(local, ref remotePlayerMovement, ref anim, view);
                 }
 
-                if (remotePlayerMovement.PassedMessages.Count == 0
-                    || Vector3.SqrMagnitude(remotePlayerMovement.PassedMessages[^1].position - remote.position) < settings.MinPositionDelta
-                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance
-                   )
+                if (Vector3.SqrMagnitude(remotePlayerMovement.PassedMessages[^1].position - remote.position) < settings.MinPositionDelta
+                    || Vector3.Distance(remotePlayerMovement.PassedMessages[^1].position, remote.position) > settings.MinTeleportDistance)
                 {
                     // Teleport
                     for (var i = 0; i < settings.SamePositionTeleportFilterCount && i < playerInbox.Count; i++)
@@ -117,6 +126,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                     if(playerInbox.Count == 0)
                         remotePlayerMovement.PassedMessages.Clear(); // reset to 1 message, so Extrapolation do not start (only for zero velocity)
+
                     AddToPassed(remote, ref remotePlayerMovement, ref anim, view);
                 }
                 else

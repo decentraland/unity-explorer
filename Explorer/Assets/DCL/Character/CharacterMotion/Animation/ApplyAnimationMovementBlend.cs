@@ -12,7 +12,6 @@ namespace DCL.CharacterMotion.Animation
         // The animation state is completely decoupled from the actual velocity, it feels much nicer and has no weird fluctuations
         // state idle ----- walk ----- jog ----- run
         // blend  0  -----   1  -----  2  -----  3
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(
             float dt,

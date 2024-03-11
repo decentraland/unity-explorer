@@ -38,7 +38,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
         protected override void Update(float t)
         {
             UpdateMessagePerSecondCounter(t);
-
             SendPlayerNetMovementQuery(World);
         }
 
