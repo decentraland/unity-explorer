@@ -475,7 +475,7 @@ Material:
     - _Is_BakedNormal: 0
     - _Is_BlendAddToHiColor: 1
     - _Is_BlendAddToMatCap: 1
-    - _Is_BlendBaseColor: 0
+    - _Is_BlendBaseColor: 1
     - _Is_ColorShift: 0
     - _Is_Filter_HiCutPointLightColor: 1
     - _Is_Filter_LightColor: 1
@@ -518,7 +518,7 @@ Material:
     - _Offset_Z: 0
     - _OutlineOverridden: 0
     - _OutlineVisible: 1
-    - _Outline_Width: 7
+    - _Outline_Width: 2
     - _PPDLodThreshold: 5
     - _PPDMaxSamples: 15
     - _PPDMinSamples: 5
@@ -653,7 +653,7 @@ Material:
     - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
     - _MaterialPropertyBlock_Colour: {r: 0, g: 0, b: 1, a: 1}
     - _OutlineMaskColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Outline_Color: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+    - _Outline_Color: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightMaskColor: {r: 1, g: 0, b: 1, a: 1}
     - _SecondShadeMaskColor: {r: 0, g: 0, b: 1, a: 1}

@@ -15,15 +15,26 @@ MonoBehaviour:
   <RandomOrder>k__BackingField: 0
   <Avatars>k__BackingField:
   - pointers:
-    - urn:decentraland:matic:collections-v2:0xac3b666704ec025b2e59f22249830a07b6fb9573:0
+    - urn:decentraland:matic:collections-v2:0x956b8d57066fc3d2562de22efd63624a1ba56e35:11
+    - urn:decentraland:matic:collections-v2:0xded1e53d7a43ac1844b66c0ca0f02627eb42e16d:11
+    - urn:decentraland:matic:collections-v2:0xca520eea5aadff51b48d9e9b3038001a751139ca:0
+    - urn:decentraland:matic:collections-v2:0xd50191baed16bc532feb9d499fdaa805fe01d3ff:8
   - pointers:
-    - urn:decentraland:matic:collections-v2:0x25cb28f19368d421857272133aac7933eb9efac4:0
+    - urn:decentraland:matic:collections-v2:0xf8a87150ca602dbeb2e748ad7c9c790d55d10528:0
+    - urn:decentraland:matic:collections-v2:0xf8a87150ca602dbeb2e748ad7c9c790d55d10528:1
+    - urn:decentraland:matic:collections-v2:0xf8a87150ca602dbeb2e748ad7c9c790d55d10528:2
   - pointers:
-    - urn:decentraland:matic:collections-v2:0xcbd17d94f5be12fff27566c23888d6936b8e70b8:6
+    - urn:decentraland:matic:collections-v2:0x722dbe4677dd3069c1277946aab57b2e8553bd0f:0
+    - urn:decentraland:matic:collections-v2:0x722dbe4677dd3069c1277946aab57b2e8553bd0f:3
+    - urn:decentraland:matic:collections-v2:0x0be429aa3c8fa39a82a005f97c7913ee669c7675:0
+    - urn:decentraland:matic:collections-v2:0x838ec0cbf71fbacbd047f717c89a8c96526a4680:0
+    - urn:decentraland:matic:collections-v2:0x722dbe4677dd3069c1277946aab57b2e8553bd0f:1
+    - urn:decentraland:matic:collections-v2:/0xd50191baed16bc532feb9d499fdaa805fe01d3ff:7
+    - urn:decentraland:matic:collections-v2:0xded1e53d7a43ac1844b66c0ca0f02627eb42e16d:4
   - pointers:
-    - urn:decentraland:matic:collections-v2:0x0c36f67f9d0601c040b0429790688ac231ae9ef0:1
+    - urn:decentraland:matic:collections-v2:0x777cdea72334f2c4e5e8a32cc508db20aab9fde1:0
   - pointers:
-    - urn:decentraland:matic:collections-v2:0xfb8f85195aa9412918366a2d8a6e6ad02f22b9e3:4
+    - urn:decentraland:matic:collections-v2:0xe9a19898cc03f15f3b665a35f2876b6c54918f2e:1
   - pointers:
     - urn:decentraland:matic:collections-v2:0x87daffe709ec2a07707564eba8a145f80ec20ddf:0
   - pointers:
