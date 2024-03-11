@@ -9,6 +9,7 @@ using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
+using DCL.Multiplayer.Chats;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -29,6 +30,7 @@ using System.Threading;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Nametags;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
@@ -124,16 +126,13 @@ namespace Global.Dynamic
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
-            var chatMessagesBus = new ChatMessagesBus(debugBuilder);
             var webBrowser = new UnityAppWebBrowser();
             ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
             NametagsData? nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache); //new IProfileRepository.Fake();
-            //TODO replace fake when the deploy ready
-                //new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
 
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
@@ -158,6 +157,17 @@ namespace Global.Dynamic
                 dynamicWorldParams.StaticLoadPositions,
                 realmData,
                 staticContainer.ScenesCache);
+
+            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+
+            var chatMessagesBus = new DebugPanelChatMessageBus(
+                new SelfResendChatMessageBus(
+                    new MultiplayerChatMessagesBus(roomHub, memoryPool, multiPool, container.ProfileRepository),
+                    identityCache,
+                    container.ProfileRepository
+                ),
+                debugBuilder
+            );
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

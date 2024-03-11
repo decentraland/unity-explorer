@@ -27,15 +27,10 @@ namespace DCL.Chat
         }
 
         //Add message will be called from the message handling system of the livekit integration
-        public void AddMessage()
-        {
-            OnMessageAdded?.Invoke(ProcessChatMessage());
-        }
 
-        //This function will get the message from the livekit integration and convert it to a ChatMessage
-        private ChatMessage ProcessChatMessage()
+        public void Send(string message)
         {
-            return new ChatMessage();
+            OnMessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true));
         }
     }
 }

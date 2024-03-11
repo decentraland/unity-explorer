@@ -47,3 +47,4 @@ MonoBehaviour:
   cliffCorner: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
   ocean: {fileID: 5279076375242104403, guid: 55904b3465b0bbb4c9f09ea3c835df3c, type: 3}
   wind: {fileID: 4984400270765111023, guid: 4ced4aac10a193c41ba708f28429b518, type: 3}
+  grassRenderer: {fileID: 6741635715941149560, guid: 8ae2a797632ad94409ca29f2f2b754ba, type: 3}
