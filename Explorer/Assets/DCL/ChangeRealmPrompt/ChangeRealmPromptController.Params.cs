@@ -4,10 +4,12 @@
     {
         public struct Params
         {
+            public string Message { get; }
             public string Realm { get; }
 
-            public Params(string realm)
+            public Params(string message, string realm)
             {
+                Message = message;
                 Realm = realm;
             }
         }

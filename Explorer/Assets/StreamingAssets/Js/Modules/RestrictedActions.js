@@ -27,11 +27,14 @@ module.exports.teleportTo = async function(message) {
 }
 
 module.exports.triggerEmote = async function(message) {
-    console.log('JSMODULE: triggerEmote')
+    UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote)
     return {};
 }
 
 module.exports.changeRealm = async function(message) {
+    if (message.message == undefined) {
+        message.message = ''
+    }
     const isSuccess = UnityRestrictedActionsApi.ChangeRealm(message.message, message.realm)
     return {
         success: isSuccess
@@ -56,6 +59,11 @@ module.exports.setCommunicationsAdapter = async function(message) {
 }
 
 module.exports.triggerSceneEmote = async function(message) {
-    console.log('JSMODULE: triggerSceneEmote')
-    return {};
+    if (message.loop == undefined) {
+        message.loop = false
+    }
+    const isSuccess = UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop)
+    return {
+        success: isSuccess
+    };
 }

@@ -33,7 +33,7 @@ namespace DCL.ChangeRealmPrompt
         protected override void OnViewShow()
         {
             cursor.Unlock();
-            RequestChangeRealm(inputData.Realm, result =>
+            RequestChangeRealm(inputData.Message, inputData.Realm, result =>
             {
                 if (result != ChangeRealmPromptResultType.Approved)
                     return;
@@ -42,16 +42,28 @@ namespace DCL.ChangeRealmPrompt
             });
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(inputData.Message))
+                return UniTask.CompletedTask;
+
+            return UniTask.WhenAny(
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
                 viewInstance.ContinueButton.OnClickAsync(ct));
+        }
 
-        private void RequestChangeRealm(string realm, Action<ChangeRealmPromptResultType> result)
+        private void RequestChangeRealm(string message, string realm, Action<ChangeRealmPromptResultType> result)
         {
             resultCallback = result;
-            viewInstance.RealmText.text = realm;
+
+            if (string.IsNullOrEmpty(message))
+                resultCallback?.Invoke(ChangeRealmPromptResultType.Approved);
+            else
+            {
+                viewInstance.MessageText.text = message;
+                viewInstance.RealmText.text = realm;
+            }
         }
 
         private void Dismiss() =>
