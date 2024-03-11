@@ -16,6 +16,9 @@ namespace DCL.ChangeRealmPrompt
         public Button CancelButton { get; private set; }
 
         [field: SerializeField]
+        public TMPro.TextMeshProUGUI MessageText { get; private set; }
+
+        [field: SerializeField]
         public TMPro.TextMeshProUGUI RealmText { get; private set; }
     }
 }
