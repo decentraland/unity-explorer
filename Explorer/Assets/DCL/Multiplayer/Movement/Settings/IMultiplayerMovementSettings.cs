@@ -1,5 +1,4 @@
 ﻿using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Movement.MessageBusMock;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement.Settings

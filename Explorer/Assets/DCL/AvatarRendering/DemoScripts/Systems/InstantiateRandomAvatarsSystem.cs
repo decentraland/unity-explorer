@@ -19,6 +19,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Movement.Components;
 using DCL.Multiplayer.Movement.ECS;
 using DCL.Optimization.Pools;
 using ECS;

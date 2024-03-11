@@ -1,7 +1,7 @@
-﻿using DCL.Multiplayer.Movement.Settings;
+﻿using DCL.Multiplayer.Movement.ECS;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.ECS
+namespace DCL.Multiplayer.Movement.Components
 {
     public struct ExtrapolationComponent
     {
@@ -11,15 +11,15 @@ namespace DCL.Multiplayer.Movement.ECS
         public float Time;
         public float TotalMoveDuration;
 
-        public bool Enabled;
+        public bool Enabled { get; private set; }
 
-        public void Restart(FullMovementMessage from, RemotePlayerExtrapolationSettings settings)
+        public void Restart(FullMovementMessage from, float moveDuration)
         {
             Start = from;
             Velocity = from.velocity;
 
             Time = 0f;
-            TotalMoveDuration = settings.LinearTime + (settings.LinearTime * settings.DampedSteps);
+            TotalMoveDuration = moveDuration;
 
             Enabled = true;
         }

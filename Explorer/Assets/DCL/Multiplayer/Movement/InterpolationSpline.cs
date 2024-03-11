@@ -1,10 +1,7 @@
 ﻿using DCL.Multiplayer.Movement.ECS;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.MessageBusMock
+namespace DCL.Multiplayer.Movement
 {
     public enum InterpolationType
     {

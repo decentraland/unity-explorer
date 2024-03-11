@@ -1,5 +1,4 @@
-﻿using DCL.Multiplayer.Movement.MessageBusMock;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {

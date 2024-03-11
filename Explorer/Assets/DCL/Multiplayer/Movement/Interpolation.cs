@@ -1,39 +1,38 @@
 ﻿using DCL.Character.Components;
-using DCL.Multiplayer.Movement.MessageBusMock;
-using DCL.Multiplayer.Movement.Settings;
-using Google.Api;
+using DCL.Multiplayer.Movement.Components;
+using DCL.Multiplayer.Movement.ECS;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.ECS
+namespace DCL.Multiplayer.Movement
 {
     public static class Interpolation
     {
-        public static float Execute(ref CharacterTransform transComp, ref InterpolationComponent comp, float deltaTime, RemotePlayerInterpolationSettings settings)
+        private const float LOOK_AT_TIME_DELTA = 0.1f;
+
+        public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp)
         {
             var remainedDeltaTime = 0f;
             Vector3 lookDirection;
 
-            comp.Time += deltaTime / comp.SlowDownFactor;
+            intComp.Time += deltaTime / intComp.SlowDownFactor;
 
-            if (comp.Time >= comp.TotalDuration)
+            if (intComp.Time < intComp.TotalDuration)
             {
-                remainedDeltaTime = (comp.Time - comp.TotalDuration) * comp.SlowDownFactor;
-
-                comp.Time = comp.TotalDuration;
-                transComp.Transform.position = comp.End.position;
-                lookDirection = comp.End.velocity;
+                transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
+                lookDirection = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + LOOK_AT_TIME_DELTA, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType) - transComp.Transform.position; // look into future step
             }
             else
             {
-                var splineType = comp.IsBlend ? settings.BlendType : settings.InterpolationType;
+                remainedDeltaTime = (intComp.Time - intComp.TotalDuration) * intComp.SlowDownFactor;
 
-                transComp.Transform.position = DoTransition(comp.Start, comp.End, comp.Time, comp.TotalDuration, splineType);
-                lookDirection = DoTransition(comp.Start, comp.End, comp.Time + 0.1f, comp.TotalDuration, splineType) - transComp.Transform.position; // look into future step
+                intComp.Time = intComp.TotalDuration;
+                transComp.Transform.position = intComp.End.position;
+                lookDirection = intComp.End.velocity;
             }
 
             LookAt(ref transComp, lookDirection);
 
-            return comp.Time < comp.TotalDuration ? 0f : remainedDeltaTime;
+            return remainedDeltaTime;
         }
 
         public static void LookAt(ref CharacterTransform transComp, Vector3 direction)

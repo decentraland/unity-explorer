@@ -1,15 +1,9 @@
-﻿using DCL.Multiplayer.Movement.MessageBusMock;
-using DCL.Multiplayer.Movement.Settings;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using DCL.Multiplayer.Movement.ECS;
 
-namespace DCL.Multiplayer.Movement.ECS
+namespace DCL.Multiplayer.Movement.Components
 {
     public struct InterpolationComponent
     {
-        public bool Enabled;
-        public bool IsBlend;
-
         public FullMovementMessage Start;
         public FullMovementMessage End;
 
@@ -17,9 +11,12 @@ namespace DCL.Multiplayer.Movement.ECS
         public float TotalDuration;
         public float SlowDownFactor;
 
-        public void Restart(FullMovementMessage from, FullMovementMessage to, float maxBlendSpeed, float speedUpFactor, int inboxMessages, bool isBlend = false)
+        public InterpolationType SplineType;
+        public bool Enabled { get; private set; }
+
+        public void Restart(FullMovementMessage from, FullMovementMessage to, InterpolationType interpolationType)
         {
-            IsBlend = isBlend;
+            SplineType = interpolationType;
 
             Start = from;
             End = to;
@@ -28,24 +25,12 @@ namespace DCL.Multiplayer.Movement.ECS
             SlowDownFactor = 1f;
             TotalDuration = End.timestamp - Start.timestamp;
 
-            if (IsBlend)
-            {
-                float positionDiff = Vector3.Distance(Start.position, End.position);
-                float speed = positionDiff / TotalDuration;
-
-                if (speed > maxBlendSpeed)
-                {
-                    float desiredDuration = positionDiff / maxBlendSpeed;
-                    SlowDownFactor = desiredDuration / TotalDuration;
-                }
-            }
-            else
-            {
-                float correctionTime = (speedUpFactor + inboxMessages) * UnityEngine.Time.smoothDeltaTime;
-                TotalDuration = Mathf.Max(TotalDuration - correctionTime, TotalDuration / 4f);
-            }
-
             Enabled = true;
+        }
+
+        public void Stop()
+        {
+            Enabled = false;
         }
     }
 }

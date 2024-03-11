@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement.Components;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using System.Collections.Generic;
@@ -57,14 +58,14 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (intComp.Enabled)
             {
-                float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
-                InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
+                float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp);
+                InterpolateAnimations(deltaTime, ref anim, intComp.Start, intComp.End);
 
                 if (intComp.Time < intComp.TotalDuration)
                     return;
 
                 // Stop interpolation
-                intComp.Enabled = false;
+                intComp.Stop();
                 AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
 
                 deltaTime = unusedTime;
@@ -73,10 +74,11 @@ namespace DCL.Multiplayer.Movement.ECS.System
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
             {
                 if (!extComp.Enabled)
-                    extComp.Restart(remotePlayerMovement.PassedMessages[^1], settings.ExtrapolationSettings);
+                    extComp.Restart(remotePlayerMovement.PassedMessages[^1],
+                        settings.ExtrapolationSettings.LinearTime + (settings.ExtrapolationSettings.LinearTime * settings.ExtrapolationSettings.DampedSteps));
 
-                Extrapolation.Execute(ref transComp, ref extComp, deltaTime, settings.ExtrapolationSettings);
-                InterpolateAnimations(ref anim, extComp.Start, extComp.Start, deltaTime);
+                Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
+                InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
 
                 return;
             }
@@ -134,22 +136,44 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 {
                     RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
-                    // Should be in loop until (unusedTime <= 0)
-                    intComp.Restart(remotePlayerMovement.PassedMessages[^1], remote, intSettings.MaxBlendSpeed, intSettings.SpeedUpFactor, playerInbox.Count, intSettings.UseBlend && local != null);
+                    // Should be we loop until (unusedTime <= 0) ?
+                    intComp.Restart(remotePlayerMovement.PassedMessages[^1], remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);
+                    BlendAndCatchUpTimeCorrection(ref intComp,  intSettings.UseBlend && local != null, playerInbox.Count);
 
                     transComp.Transform.position = intComp.Start.position;
                     Interpolation.LookAt(ref transComp, intComp.Start.velocity);
 
-                    float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
-                    InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
+                    float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp);
+                    InterpolateAnimations(deltaTime, ref anim, intComp.Start, intComp.End);
 
-                    // ReSharper disable once CompareOfFloatsByEqualityOperator - we set it exactly equal on the end
-                    if (intComp.Time == intComp.TotalDuration)
-                    {
-                        intComp.Enabled = false;
-                        AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
-                    }
+                    if (intComp.Time < intComp.TotalDuration)
+                        return;
+
+                    intComp.Stop();
+                    AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
                 }
+            }
+        }
+
+        private void BlendAndCatchUpTimeCorrection(ref InterpolationComponent intComp, bool isBlend, int inboxMessages)
+        {
+            var intSettings = settings.InterpolationSettings;
+
+            if (isBlend)
+            {
+                float positionDiff = Vector3.Distance(intComp.Start.position, intComp.End.position);
+                float speed = positionDiff / intComp.TotalDuration;
+
+                if (speed > intSettings.MaxBlendSpeed)
+                {
+                    float desiredDuration = positionDiff / intSettings.MaxBlendSpeed;
+                    intComp.SlowDownFactor = desiredDuration / intComp.TotalDuration;
+                }
+            }
+            else
+            {
+                float correctionTime = (intSettings.SpeedUpFactor + inboxMessages) * UnityEngine.Time.smoothDeltaTime;
+                intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / 4f);
             }
         }
 
@@ -159,7 +183,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             UpdateAnimations(passed, ref anim, view);
         }
 
-        private static void InterpolateAnimations(ref CharacterAnimationComponent anim, FullMovementMessage start, FullMovementMessage end, float t)
+        private static void InterpolateAnimations(float t, ref CharacterAnimationComponent anim, FullMovementMessage start, FullMovementMessage end)
         {
             float timeDiff = end.timestamp - start.timestamp;
 
