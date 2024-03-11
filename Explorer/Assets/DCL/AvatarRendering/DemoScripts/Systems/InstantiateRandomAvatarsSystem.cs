@@ -19,8 +19,8 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Components;
-using DCL.Multiplayer.Movement.ECS;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Abstract;
@@ -30,7 +30,6 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -252,7 +251,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     // new FeetIKComponent(),
                     // new HandsIKComponent(),
                     // new HeadIKComponent(),
-                    new RemotePlayerMovementComponent(RemotePlayerMovementComponent.SELF_ID),
+                    new RemotePlayerMovementComponent(RemotePlayerMovementComponent.TEST_ID),
                     new InterpolationComponent(),
                     new ExtrapolationComponent(),
 

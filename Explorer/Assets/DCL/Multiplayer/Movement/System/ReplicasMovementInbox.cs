@@ -56,7 +56,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                                                + (settings.Latency * Random.Range(0, settings.LatencyJitter))
                                                + (sentRate * Random.Range(0, settings.PackagesJitter))))
                    .ContinueWith(() =>
-                        Inbox(message, @for: RemotePlayerMovementComponent.SELF_ID))
+                        Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID))
                    .Forget();
         }
 

@@ -1,18 +1,31 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Multiplayer.Movement.ECS;
+using JetBrains.Annotations;
 
-namespace DCL.Multiplayer.Movement.ECS
+namespace DCL.Multiplayer.Movement
 {
     public struct RemotePlayerMovementComponent
     {
-        public const string SELF_ID = "SelfReplica";
+        public const string TEST_ID = "SelfReplica";
 
-        public readonly List<FullMovementMessage> PassedMessages;
         public readonly string PlayerWalletId;
+        [CanBeNull] public FullMovementMessage PastMessage;
+
+        public bool Initialized;
+        public bool WasTeleported;
 
         public RemotePlayerMovementComponent(string playerWalletId)
         {
             PlayerWalletId = playerWalletId;
-            PassedMessages = new List<FullMovementMessage>();
+
+            PastMessage = null;
+            Initialized = false;
+            WasTeleported = false;
+        }
+
+        public void AddPassed(FullMovementMessage message, bool wasTeleported = false)
+        {
+            PastMessage = message;
+            WasTeleported = wasTeleported;
         }
     }
 }

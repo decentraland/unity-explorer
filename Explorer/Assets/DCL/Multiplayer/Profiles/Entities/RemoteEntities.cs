@@ -1,8 +1,8 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Components;
-using DCL.Multiplayer.Movement.ECS;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Prioritization.Components;
