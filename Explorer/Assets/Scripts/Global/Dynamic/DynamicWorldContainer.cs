@@ -34,7 +34,6 @@ using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;
-using Unity.Mathematics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 

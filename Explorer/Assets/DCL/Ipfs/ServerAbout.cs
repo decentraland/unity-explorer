@@ -8,6 +8,6 @@ namespace DCL.Ipfs
         public ServerConfiguration configurations;
         public ContentEndpoint content;
         public ContentEndpoint lambdas;
-        public CommsInfo comms;
+        public CommsInfo? comms;
     }
 }

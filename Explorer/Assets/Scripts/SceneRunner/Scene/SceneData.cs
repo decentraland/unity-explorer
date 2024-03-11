@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using Ipfs;
 using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;

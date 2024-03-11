@@ -13,7 +13,6 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
-using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -26,23 +25,22 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
+        private const bool IS_PREVIEW_DEFAULT_VALUE = false;
+
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
         private readonly IWorldTimeProvider timeProvider;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
-        private readonly World world;
+        private readonly IRealmData realmData;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, ISceneExceptionsHandler exceptionsHandler, World world)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, IRealmData realmData)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
             this.timeProvider = timeProvider;
-            this.exceptionsHandler = exceptionsHandler;
-            this.world = world;
+            this.realmData = realmData;
         }
 
-        public void Dispose()
-        { }
+        public void Dispose() { }
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
@@ -76,34 +74,30 @@ namespace CrdtEcsBridge.Engine
             };
         }
 
-        private static readonly QueryDescription GET_REALM_COMPONENT = new QueryDescription().WithAll<RealmComponent>();
-        private const bool IS_PREVIEW_DEFAULT_VALUE = false;
-
         public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
-            IRuntime.RealmInfo realmInfo = new IRuntime.RealmInfo();
+            var realmInfo = new IRuntime.RealmInfo();
 
-            world.Query(in GET_REALM_COMPONENT, (ref RealmComponent b) =>
+            if (realmData != null)
             {
-                realmInfo.RealmName = b.RealmData.RealmName;
-                realmInfo.NetworkID = b.RealmData.NetworkId;
+                realmInfo.RealmName = realmData.RealmName;
+                realmInfo.NetworkID = realmData.NetworkId;
                 realmInfo.IsPreview = IS_PREVIEW_DEFAULT_VALUE;
-                realmInfo.CommsAdapter = b.RealmData.CommsAdapter;
-                realmInfo.BaseURL = b.Ipfs.CatalystBaseUrl.Value;
-            });
+                realmInfo.CommsAdapter = realmData.CommsAdapter;
+                realmInfo.BaseURL = realmData.Ipfs.CatalystBaseUrl.Value;
+            }
 
             return new IRuntime.GetRealmResponse
             {
-                RealmInfo = realmInfo
+                RealmInfo = realmInfo,
             };
         }
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
         {
             float seconds = await timeProvider.GetWorldTimeAsync(ct);
-
 
             return new IRuntime.GetWorldTimeResponse
             {

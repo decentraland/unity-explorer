@@ -2,7 +2,6 @@
 
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using Google.Protobuf.WellKnownTypes;
 
 namespace ECS
 {
@@ -22,7 +21,7 @@ namespace ECS
         ///     Name of the realm
         /// </summary>
         string RealmName { get; }
-        int NetworkId { get;}
+        int NetworkId { get; }
         string CommsAdapter { get; }
 
         /// <summary>
@@ -32,7 +31,14 @@ namespace ECS
 
         class Fake : IRealmData
         {
-            public Fake(int networkId =1 , string commsAdapter = "", string realmName = "baldr") : this(
+            public IIpfsRealm Ipfs { get; }
+            public bool ScenesAreFixed { get; }
+            public string RealmName { get; }
+            public int NetworkId { get; }
+            public string CommsAdapter { get; }
+            public bool Configured { get; }
+
+            public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr") : this(
                 new LocalIpfsRealm(new URLDomain()),
                 true,
                 realmName,
@@ -48,13 +54,6 @@ namespace ECS
                 NetworkId = networkId;
                 CommsAdapter = commsAdapter;
             }
-
-            public IIpfsRealm Ipfs { get; }
-            public bool ScenesAreFixed { get; }
-            public string RealmName { get; }
-            public int NetworkId { get; }
-            public string CommsAdapter { get; }
-            public bool Configured { get; }
         }
     }
 }
