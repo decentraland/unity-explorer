@@ -5,6 +5,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
     Properties
     {
         [HideInInspector] [PerRendererData] _MainTexArr_ID ("MainTex Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _MaskTexArr_ID ("MaskTex Array ID", Integer) = -1
         
         [MainTexture] _BaseMap("Base Map (RGB) Smoothness / Alpha (A)", 2D) = "white" {}
         [MainColor]   _BaseColor("Base Color", Color) = (1, 1, 1, 1)
@@ -43,6 +44,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
 
         // ObsoleteProperties
         [HideInInspector] _MainTex("BaseMap", 2D) = "white" {}
+        [HideInInspector] _MaskTex("BaseMap", 2D) = "black" {}
         [HideInInspector] _Color("Base Color", Color) = (1, 1, 1, 1)
         [HideInInspector] _Shininess("Smoothness", Float) = 0.0
         [HideInInspector] _GlossinessSource("GlossinessSource", Float) = 0.0
@@ -53,6 +55,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
         [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
         
         [HideInInspector] _MainTexArr ("Main Texture Array", 2DArray) = "white" {}
+        [HideInInspector] _MaskTexArr ("Mask Texture Array", 2DArray) = "black" {}
         
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
@@ -92,6 +95,7 @@ Shader "DCL/DCL_Avatar_Facial_Features"
             // Shader Stages
             #pragma vertex LitPassVertexSimple
             #pragma fragment LitPassFragmentSimple
+            #pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Material Keywords

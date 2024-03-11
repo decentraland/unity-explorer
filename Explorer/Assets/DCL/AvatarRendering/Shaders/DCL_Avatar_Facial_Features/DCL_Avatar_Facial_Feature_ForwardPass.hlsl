@@ -182,6 +182,74 @@ Varyings LitPassVertexSimple(Attributes input)
     return output;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// Phong lighting...
+////////////////////////////////////////////////////////////////////////////////
+half4 UniversalFragmentBlinnPhong_FacialFeatures(InputData inputData, SurfaceData surfaceData)
+{
+    #if defined(DEBUG_DISPLAY)
+    half4 debugColor;
+
+    if (CanDebugOverrideOutputColor(inputData, surfaceData, debugColor))
+    {
+        return debugColor;
+    }
+    #endif
+
+    uint meshRenderingLayers = GetMeshRenderingLayer();
+    half4 shadowMask = CalculateShadowMask(inputData);
+    AmbientOcclusionFactor aoFactor = CreateAmbientOcclusionFactor(inputData, surfaceData);
+    Light mainLight = GetMainLight(inputData, shadowMask, aoFactor);
+
+    MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI, aoFactor);
+
+    inputData.bakedGI *= surfaceData.albedo;
+
+    LightingData lightingData = CreateLightingData(inputData, surfaceData);
+    return CalculateFinalColor(lightingData, surfaceData.alpha);
+#ifdef _LIGHT_LAYERS
+    if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
+#endif
+    {
+        lightingData.mainLightColor += CalculateBlinnPhong(mainLight, inputData, surfaceData);
+    }
+
+    #if defined(_ADDITIONAL_LIGHTS)
+    uint pixelLightCount = GetAdditionalLightsCount();
+
+    #if USE_FORWARD_PLUS
+    for (uint lightIndex = 0; lightIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); lightIndex++)
+    {
+        FORWARD_PLUS_SUBTRACTIVE_LIGHT_CHECK
+
+        Light light = GetAdditionalLight(lightIndex, inputData, shadowMask, aoFactor);
+#ifdef _LIGHT_LAYERS
+        if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
+#endif
+        {
+            lightingData.additionalLightsColor += CalculateBlinnPhong(light, inputData, surfaceData);
+        }
+    }
+    #endif
+
+    LIGHT_LOOP_BEGIN(pixelLightCount)
+        Light light = GetAdditionalLight(lightIndex, inputData, shadowMask, aoFactor);
+#ifdef _LIGHT_LAYERS
+        if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
+#endif
+        {
+            lightingData.additionalLightsColor += CalculateBlinnPhong(light, inputData, surfaceData);
+        }
+    LIGHT_LOOP_END
+    #endif
+
+    #if defined(_ADDITIONAL_LIGHTS_VERTEX)
+    lightingData.vertexLightingColor += inputData.vertexLighting * surfaceData.albedo;
+    #endif
+
+    return CalculateFinalColor(lightingData, surfaceData.alpha);
+}
+
 // Used for StandardSimpleLighting shader
 void LitPassFragmentSimple(
     Varyings input
@@ -209,7 +277,7 @@ void LitPassFragmentSimple(
     ApplyDecalToSurfaceData(input.positionCS, surfaceData, inputData);
 #endif
 
-    half4 color = UniversalFragmentBlinnPhong(inputData, surfaceData);
+    half4 color = UniversalFragmentBlinnPhong_FacialFeatures(inputData, surfaceData);
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = OutputAlpha(color.a, IsSurfaceTypeTransparent(_Surface));
 
