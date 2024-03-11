@@ -1,5 +1,7 @@
 ﻿using JetBrains.Annotations;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 
@@ -7,9 +9,14 @@ namespace Editor
 {
     public static class BuildScript
     {
+        private static readonly string[] Secrets =
+            {};
+
         [UsedImplicitly]
         public static void Build()
         {
+            Dictionary<string, string> options = GetValidatedOptions();
+
             var currentMethod = System.Reflection.MethodBase.GetCurrentMethod();
             if (currentMethod != null)
             {
@@ -17,9 +24,21 @@ namespace Editor
                 Console.WriteLine("Invoked " + fullMethodName + " (BuildScript.cs)");
             }
 
-            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
-            buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
+            if (!options.TryGetValue("standaloneBuildSubtarget", out var subtargetValue) || !Enum.TryParse(subtargetValue, out StandaloneBuildSubtarget buildSubtargetValue)) {
+                buildSubtargetValue = default;
+            }
+            var buildSubtarget = (int) buildSubtargetValue;
 
+            string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(s => s.path).ToArray();
+            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions()
+            {
+                scenes = scenes,
+                locationPathName = options["customBuildPath"],
+                subtarget = buildSubtarget,
+            };
+            
+
+            buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
             if (Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD") == "true")
             {
                 buildPlayerOptions.options |= BuildOptions.AllowDebugging;
@@ -30,6 +49,82 @@ namespace Editor
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
             ReportSummary(buildSummary);
             ExitWithResult(buildSummary.result);
+        }
+
+        private static Dictionary<string, string> GetValidatedOptions()
+        {
+            ParseCommandLineArguments(out Dictionary<string, string> validatedOptions);
+
+            if (!validatedOptions.TryGetValue("projectPath", out string _))
+            {
+                Console.WriteLine("Missing argument -projectPath");
+                EditorApplication.Exit(110);
+            }
+
+            if (!validatedOptions.TryGetValue("buildTarget", out string buildTarget))
+            {
+                Console.WriteLine("Missing argument -buildTarget");
+                EditorApplication.Exit(120);
+            }
+
+            if (!Enum.IsDefined(typeof(BuildTarget), buildTarget ?? string.Empty))
+            {
+                Console.WriteLine($"{buildTarget} is not a defined {nameof(BuildTarget)}");
+                EditorApplication.Exit(121);
+            }
+
+            if (!validatedOptions.TryGetValue("customBuildPath", out string _))
+            {
+                Console.WriteLine("Missing argument -customBuildPath");
+                EditorApplication.Exit(130);
+            }
+
+            const string defaultCustomBuildName = "TestBuild";
+            if (!validatedOptions.TryGetValue("customBuildName", out string customBuildName))
+            {
+                Console.WriteLine($"Missing argument -customBuildName, defaulting to {defaultCustomBuildName}.");
+                validatedOptions.Add("customBuildName", defaultCustomBuildName);
+            }
+            else if (customBuildName == "")
+            {
+                Console.WriteLine($"Invalid argument -customBuildName, defaulting to {defaultCustomBuildName}.");
+                validatedOptions.Add("customBuildName", defaultCustomBuildName);
+            }
+
+            return validatedOptions;
+        }
+
+        private static void ParseCommandLineArguments(out Dictionary<string, string> providedArguments)
+        {
+            providedArguments = new Dictionary<string, string>();
+            string[] args = Environment.GetCommandLineArgs();
+
+            Console.WriteLine(
+                $"{Environment.NewLine}" +
+                $"###########################{Environment.NewLine}" +
+                $"#    Parsing settings     #{Environment.NewLine}" +
+                $"###########################{Environment.NewLine}" +
+                $"{Environment.NewLine}"
+            );
+
+            // Extract flags with optional values
+            for (int current = 0, next = 1; current < args.Length; current++, next++)
+            {
+                // Parse flag
+                bool isFlag = args[current].StartsWith("-");
+                if (!isFlag) continue;
+                string flag = args[current].TrimStart('-');
+
+                // Parse optional value
+                bool flagHasValue = next < args.Length && !args[next].StartsWith("-");
+                string value = flagHasValue ? args[next].TrimStart('-') : "";
+                bool secret = Secrets.Contains(flag);
+                string displayValue = secret ? "*HIDDEN*" : "\"" + value + "\"";
+
+                // Assign
+                Console.WriteLine($"Found flag \"{flag}\" with value {displayValue}.");
+                providedArguments.Add(flag, value);
+            }
         }
 
         private static void ReportSummary(BuildSummary summary)
