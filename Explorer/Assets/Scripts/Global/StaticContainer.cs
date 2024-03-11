@@ -28,8 +28,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEditor;
-using UnityEditor.Build.Content;
 using UnityEngine;
 
 namespace Global
