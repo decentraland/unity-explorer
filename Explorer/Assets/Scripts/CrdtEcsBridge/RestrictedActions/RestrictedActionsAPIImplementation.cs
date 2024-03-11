@@ -2,6 +2,7 @@
 using DCL.ChangeRealmPrompt;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
+using DCL.NftPrompt;
 using DCL.TeleportPrompt;
 using MVC;
 using SceneRunner.Scene;
@@ -110,6 +111,18 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
+        public bool OpenNftDialog(string urn)
+        {
+            if (!sceneStateProvider.IsCurrent)
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "OpenNftDialog: Player is not inside of scene");
+                return false;
+            }
+
+            OpenNftDialogAsync(urn).Forget();
+            return true;
+        }
+
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
@@ -138,6 +151,12 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+        }
+
+        private async UniTask OpenNftDialogAsync(string urn)
+        {
+            await UniTask.SwitchToMainThread();
+            await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(urn)));
         }
 
         public void Dispose() { }
