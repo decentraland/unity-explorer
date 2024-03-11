@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
-                new NoCache<EmotesDTOList, GetEmotesByPointersIntention>(false, false),
+                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 new MutexSync(),
                 emoteCache, realmData);
         }

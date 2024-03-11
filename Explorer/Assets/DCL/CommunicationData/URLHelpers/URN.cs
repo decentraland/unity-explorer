@@ -19,6 +19,9 @@ namespace CommunicationData.URLHelpers
             this.urn = urn.ToString();
         }
 
+        public bool IsNullOrEmpty() =>
+            string.IsNullOrEmpty(urn);
+
         public bool Equals(int other) => Equals(other.ToString());
 
         public bool Equals(URN other) =>

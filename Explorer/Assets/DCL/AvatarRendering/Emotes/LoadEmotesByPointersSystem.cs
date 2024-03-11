@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -16,23 +17,28 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility.Multithreading;
+using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
-    public partial class LoadEmotesByPointersSystem : LoadSystemBase<EmotesDTOList, GetEmotesByPointersIntention>
+    public partial class LoadEmotesByPointersSystem : LoadSystemBase<EmotesDTOList, GetEmotesByPointersFromRealmIntention>
     {
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
         // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
         private const int MAX_WEARABLES_PER_REQUEST = 200;
 
-        private static readonly ThreadSafeListPool<EmoteJsonDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
+        private static readonly ThreadSafeListPool<EmoteDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
 
         private readonly StringBuilder bodyBuilder = new ();
 
@@ -42,7 +48,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
-            IStreamableCache<EmotesDTOList, GetEmotesByPointersIntention> cache,
+            IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             MutexSync mutexSync,
             IEmoteCache emoteCache,
             IRealmData realmData)
@@ -60,9 +66,11 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeWearableDTOQuery(World);
         }
 
-        protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(GetEmotesByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
+            GetEmotesByPointersFromRealmIntention intention, IAcquiredBudget acquiredBudget,
+            IPartitionComponent partition, CancellationToken ct)
         {
-            var finalTargetList = new List<EmoteJsonDTO>();
+            var finalTargetList = new List<EmoteDTO>();
 
             int numberOfPartialRequests = (intention.Pointers.Count + MAX_WEARABLES_PER_REQUEST - 1) / MAX_WEARABLES_PER_REQUEST;
 
@@ -82,7 +90,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         private async UniTask DoPartialRequestAsync(URLAddress url,
-            IReadOnlyList<string> wearablesToRequest, int startIndex, int endIndex, List<EmoteJsonDTO> results, CancellationToken ct)
+            IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex, List<EmoteDTO> results, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
@@ -102,7 +110,7 @@ namespace DCL.AvatarRendering.Emotes
 
             bodyBuilder.Append("]}");
 
-            using PoolExtensions.Scope<List<EmoteJsonDTO>> dtoPooledList = DTO_POOL.AutoScope();
+            using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
             await (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
                .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
@@ -111,8 +119,66 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
+        private void GetEmotesFromRealm(in Entity entity,
+            ref GetEmotesByPointersIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            if (intention.CancellationTokenSource.IsCancellationRequested)
+            {
+                if (!World.Has<StreamableResult>(entity))
+                    World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
+
+                return;
+            }
+
+            List<URN> missingPointers = ListPool<URN>.Get();
+            List<IEmote> resolvedEmotes = ListPool<IEmote>.Get();
+
+            var successfulResults = 0;
+            var successfulDtos = 0;
+
+            foreach (URN loadingIntentionPointer in intention.Pointers)
+            {
+                if (loadingIntentionPointer.IsNullOrEmpty())
+                {
+                    ReportHub.LogError(
+                        GetReportCategory(),
+                        "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
+                    );
+
+                    continue;
+                }
+
+                URN shortenedPointer = loadingIntentionPointer;
+                shortenedPointer = shortenedPointer.Shorten();
+
+                if (!emoteCache.TryGetEmote(shortenedPointer, out IEmote emote))
+                {
+                    // wearableCatalog.AddEmptyWearable(shortenedPointer);
+                    missingPointers.Add(shortenedPointer);
+                    continue;
+                }
+
+                if (emote.Model.Succeeded)
+                {
+                    successfulDtos++;
+                    resolvedEmotes.Add(emote);
+                }
+            }
+
+            if (missingPointers.Count > 0)
+            {
+                var promise = EmotesFromRealmPromise.Create(World, new GetEmotesByPointersFromRealmIntention(missingPointers,
+                        new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)),
+                    partitionComponent);
+
+                World.Create(promise, partitionComponent);
+            }
+        }
+
+        [Query]
         private void FinalizeWearableDTO(in Entity entity,
-            ref AssetPromise<EmotesDTOList, GetEmotesByPointersIntention> promise,
+            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise,
             ref IPartitionComponent partitionComponent)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
@@ -132,11 +198,10 @@ namespace DCL.AvatarRendering.Emotes
                 }
                 else
                 {
-                    foreach (EmoteJsonDTO assetEntity in promiseResult.Asset.Value)
+                    foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        emoteCache.TryGetEmote(assetEntity.metadata.id, out IEmote component);
-
-                        component.WearableDTO = new StreamableLoadingResult<EmoteJsonDTO>(assetEntity);
+                        IEmote component = emoteCache.GetOrAddEmoteByDTO(assetEntity);
+                        component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
 
                         WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);

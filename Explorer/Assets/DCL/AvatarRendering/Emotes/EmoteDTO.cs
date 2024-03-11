@@ -3,7 +3,7 @@ using System;
 namespace DCL.AvatarRendering.Emotes
 {
     [Serializable]
-    public struct EmoteJsonDTO
+    public struct EmoteDTO
     {
         //hash
         public string id;
@@ -63,6 +63,19 @@ namespace DCL.AvatarRendering.Emotes
                 public string[] hides;
                 public string[] removesDefaultHiding;
                 public bool loop;
+            }
+        }
+
+        public void Sanitize()
+        {
+            metadata.data.hides = Array.Empty<string>();
+            metadata.data.replaces = Array.Empty<string>();
+            metadata.data.removesDefaultHiding = Array.Empty<string>();
+
+            for (var i = 0; i < metadata.data.representations.Length; i++)
+            {
+                metadata.data.representations[i].overrideHides = Array.Empty<string>();
+                metadata.data.representations[i].overrideReplaces = Array.Empty<string>();
             }
         }
     }

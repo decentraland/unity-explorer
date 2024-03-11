@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
@@ -73,8 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                     { "skin", "hair" }, Array.Empty<string>()),
                 partitionComponent);
 
-            // TODO: create a valid promise
-            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(null, new CommonLoadingArguments("")), partitionComponent);
+            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new URN[] { "clap" }), partitionComponent);
 
             world.Add(wearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {

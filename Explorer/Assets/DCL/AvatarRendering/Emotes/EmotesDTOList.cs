@@ -4,9 +4,9 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct EmotesDTOList
     {
-        public readonly IReadOnlyList<EmoteJsonDTO> Value;
+        public readonly IReadOnlyList<EmoteDTO> Value;
 
-        public EmotesDTOList(IReadOnlyList<EmoteJsonDTO> value)
+        public EmotesDTOList(IReadOnlyList<EmoteDTO> value)
         {
             Value = value;
         }

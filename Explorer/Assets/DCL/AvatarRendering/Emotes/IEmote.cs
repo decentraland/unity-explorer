@@ -5,6 +5,6 @@ namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmote : IAvatarNftAccessory
     {
-        StreamableLoadingResult<EmoteJsonDTO> WearableDTO { get; set; }
+        StreamableLoadingResult<EmoteDTO> Model { get; set; }
     }
 }

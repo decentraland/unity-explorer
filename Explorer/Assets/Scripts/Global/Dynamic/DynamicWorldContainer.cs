@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
@@ -10,6 +11,11 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
 using DCL.Multiplayer.Chats;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Nametags;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -17,26 +23,20 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;
+using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.GateKeeper.Meta;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Nametags;
-using DCL.Utilities.Extensions;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using System.Buffers;
-using Unity.Mathematics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -170,6 +170,9 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
+            var emotesCache = new MemoryEmotesCache();
+            staticContainer.CacheCleaner.Register(emotesCache);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder),
@@ -178,6 +181,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
+                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,

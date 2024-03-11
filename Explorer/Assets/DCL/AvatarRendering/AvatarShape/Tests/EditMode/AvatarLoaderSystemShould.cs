@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IIpfsRealm ipfsRealm = Substitute.For<IIpfsRealm>();
             ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
             realmData.Ipfs.Returns(ipfsRealm);
-            system = new AvatarLoaderSystem(world, realmData);
+            system = new AvatarLoaderSystem(world);
             FAKE_POINTERS = new List<string>();
             FAKE_POINTERS.Add(BODY_SHAPE_MALE);
             FAKE_POINTERS.AddRange(FAKE_WEARABLES);

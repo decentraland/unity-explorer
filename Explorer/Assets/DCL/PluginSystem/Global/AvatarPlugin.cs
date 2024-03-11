@@ -112,7 +112,7 @@ namespace DCL.PluginSystem.Global
             var skinningStrategy = new ComputeShaderSkinning();
             new NametagsDebugController(debugContainerBuilder, nametagsData);
 
-            AvatarLoaderSystem.InjectToWorld(ref builder, realmData);
+            AvatarLoaderSystem.InjectToWorld(ref builder);
 
             cacheCleaner.Register(avatarPoolRegistry);
             cacheCleaner.Register(celShadingMaterialPool);

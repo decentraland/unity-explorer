@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -31,15 +31,14 @@ namespace DCL.AvatarRendering.Emotes
 
         public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, CancellationToken ct)
         {
-            List<string> pointers = ListPool<string>.Get();
+            List<URN> pointers = ListPool<URN>.Get();
 
             try
             {
-                foreach (URN urn in emoteIds)
-                    pointers.Add(urn);
+                pointers.AddRange(emoteIds);
 
-                var intention = new GetEmotesByPointersIntention(pointers, new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint));
-
+                var intention = new GetEmotesByPointersFromRealmIntention(pointers,
+                    new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint));
                 var promise = Promise.Create(world, intention, new PartitionComponent());
                 promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
@@ -51,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 return promise.Result.Value.Asset.Emotes;
             }
-            finally { ListPool<string>.Release(pointers); }
+            finally { ListPool<URN>.Release(pointers); }
         }
     }
 }

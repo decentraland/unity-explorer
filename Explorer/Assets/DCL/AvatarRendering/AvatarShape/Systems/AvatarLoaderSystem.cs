@@ -9,14 +9,11 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Profiles;
-using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.ColorComponent;
 using System;
 using System.Collections.Generic;
-using Entity = Arch.Core.Entity;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -31,11 +28,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly IRealmData realmData;
-
-        internal AvatarLoaderSystem(World world, IRealmData realmData) : base(world)
+        internal AvatarLoaderSystem(World world) : base(world)
         {
-            this.realmData = realmData;
         }
 
         protected override void Update(float t)
@@ -77,10 +71,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
+            if (!avatarShapeComponent.EmotePromise.IsConsumed)
+                avatarShapeComponent.EmotePromise.ForgetLoading(World);
+
             WearablePromise newPromise = CreateWearablePromise(pbAvatarShape, partition);
             avatarShapeComponent.WearablePromise = newPromise;
             avatarShapeComponent.EmotePromise = CreateEmotePromise(pbAvatarShape, partition);
-
             avatarShapeComponent.BodyShape = pbAvatarShape;
             avatarShapeComponent.IsDirty = true;
             pbAvatarShape.IsDirty = false;
@@ -96,10 +92,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
+            if (!avatarShapeComponent.EmotePromise.IsConsumed)
+                avatarShapeComponent.EmotePromise.ForgetLoading(World);
+
             WearablePromise newPromise = CreateWearablePromise(profile, partition);
             avatarShapeComponent.WearablePromise = newPromise;
             avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
-
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
             avatarShapeComponent.IsDirty = true;
             profile.IsDirty = false;
@@ -119,20 +117,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private EmotePromise CreateEmotePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
         {
-            var intention = new GetEmotesByPointersIntention(pbAvatarShape.Wearables, new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint));
+            var urns = new List<URN>();
+
+            foreach (string s in pbAvatarShape.Wearables)
+                urns.Add(s);
+
+            var intention = new GetEmotesByPointersIntention(urns);
             return EmotePromise.Create(World, intention, partition);
         }
 
         private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition)
         {
-            // TODO: delete tmp list
-            var tmp = new List<string>();
-
-            foreach (URN urn in profile.Avatar.Wearables)
-                tmp.Add(urn);
-
-            // TODO: should we avoid setting the url from this system?
-            var intention = new GetEmotesByPointersIntention(tmp, new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint));
+            var intention = new GetEmotesByPointersIntention(profile.Avatar.Wearables);
             return EmotePromise.Create(World, intention, partition);
         }
     }

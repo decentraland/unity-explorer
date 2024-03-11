@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -5,17 +6,16 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetEmotesByPointersIntention : IEquatable<GetEmotesByPointersIntention>, ILoadingIntention
+    public readonly struct GetEmotesByPointersIntention : IAssetIntention, IEquatable<GetEmotesByPointersIntention>
     {
-        public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
-        public CommonLoadingArguments CommonArguments { get; set; }
+        public CancellationTokenSource CancellationTokenSource { get; }
 
-        public readonly IReadOnlyList<string> Pointers;
+        public IReadOnlyCollection<URN> Pointers { get; }
 
-        public GetEmotesByPointersIntention(IReadOnlyList<string> pointers, CommonLoadingArguments commonArguments)
+        public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers) : this()
         {
             Pointers = pointers;
-            CommonArguments = commonArguments;
+            CancellationTokenSource = new CancellationTokenSource();
         }
 
         public bool Equals(GetEmotesByPointersIntention other) =>
@@ -25,6 +25,6 @@ namespace DCL.AvatarRendering.Emotes
             obj is GetEmotesByPointersIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Pointers);
+            Pointers != null ? Pointers.GetHashCode() : 0;
     }
 }
