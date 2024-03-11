@@ -121,7 +121,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository);
+                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, null);
 
             return (staticContainer, sceneSharedContainer);
         }

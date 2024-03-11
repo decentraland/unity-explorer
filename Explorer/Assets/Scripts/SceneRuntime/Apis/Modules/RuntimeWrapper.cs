@@ -55,6 +55,8 @@ namespace SceneRuntime.Apis.Modules
             }
         }
 
+
+        [UsedImplicitly]
         public object GetWorldTime()
         {
             try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
@@ -63,5 +65,16 @@ namespace SceneRuntime.Apis.Modules
                 return Task.FromException(e).ToPromise();
             }
         }
+
+        [UsedImplicitly]
+        public object GetSceneInformation()
+        {
+            try { return api.GetSceneInformationAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.FromException(e).ToPromise();
+            }
+        }
+
     }
 }

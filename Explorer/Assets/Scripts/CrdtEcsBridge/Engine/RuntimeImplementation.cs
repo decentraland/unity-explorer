@@ -1,4 +1,3 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -9,8 +8,8 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using SceneRunner.Scene;
-using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
 using System.Threading;
@@ -104,5 +103,14 @@ namespace CrdtEcsBridge.Engine
                 seconds = seconds,
             };
         }
+
+        public async UniTask<IRuntime.CurrentSceneEntityResponse> GetSceneInformationAsync(CancellationToken ct) =>
+            new IRuntime.CurrentSceneEntityResponse()
+            {
+                BaseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
+                ContentMapping = sceneData.SceneEntityDefinition.content,
+                Urn = sceneData.SceneEntityDefinition.id,
+                MetadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
+            };
     }
 }

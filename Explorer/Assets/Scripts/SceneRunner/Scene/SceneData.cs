@@ -14,6 +14,9 @@ namespace SceneRunner.Scene
         private readonly ISceneContent sceneContent;
         private readonly SceneEntityDefinition sceneDefinition;
 
+        public ISceneContent SceneContent => sceneContent;
+        public SceneEntityDefinition SceneEntityDefinition => sceneDefinition;
+
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
@@ -36,10 +39,6 @@ namespace SceneRunner.Scene
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;
-
-
-            //this.sceneContent.
-            //JsonUtility.ToJson(sceneDefinition.metadata)
         }
 
         public bool HasRequiredPermission(string permission)
