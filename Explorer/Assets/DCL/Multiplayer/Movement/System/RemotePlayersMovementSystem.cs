@@ -57,26 +57,22 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             if (intComp.Enabled)
             {
-                FullMovementMessage passed = null;
-
                 float unusedTime = Interpolation.Execute(ref transComp, ref intComp, deltaTime, settings.InterpolationSettings);
+                InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
+
+                deltaTime = unusedTime;
+
+                // ReSharper disable once CompareOfFloatsByEqualityOperator - we set it exactly equal on end
                 if (intComp.Time == intComp.TotalDuration)
                 {
                     intComp.Enabled = false;
-                    passed = intComp.End;
+                    AddToPassed(intComp.End, ref remotePlayerMovement, ref anim, view);
                 }
 
-                // ---
-                deltaTime = unusedTime;
-                InterpolateAnimations(ref anim, intComp.Start, intComp.End, deltaTime);
-                if (passed == null) return;
-
-                AddToPassed(passed, ref remotePlayerMovement, ref anim, view);
-
-                if (deltaTime == 0) return;
+                // we continue logic if we have some unusedTime to consume
+                if (deltaTime <= 0) return;
             }
 
-            // if (playerInbox.Count < 2)  return;
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement.PassedMessages.Count > 1)
             {
                 if (!extComp.Enabled)
