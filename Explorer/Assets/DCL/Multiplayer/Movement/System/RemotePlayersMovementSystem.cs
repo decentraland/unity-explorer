@@ -7,11 +7,11 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.Components;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
-using System.Collections.Generic;
 using UnityEngine;
+using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.ECS.System
 {
@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, in IAvatarView view)
         {
-            if (!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out Queue<FullMovementMessage>? playerInbox))
+            if (!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<FullMovementMessage>? playerInbox))
                 return;
 
             settings.InboxCount = playerInbox.Count;
@@ -77,16 +77,15 @@ namespace DCL.Multiplayer.Movement.ECS.System
             if (settings.useExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
                 if (!extComp.Enabled)
-                    extComp.Restart(from: remotePlayerMovement.PastMessage,
-                        settings.ExtrapolationSettings.LinearTime + (settings.ExtrapolationSettings.LinearTime * settings.ExtrapolationSettings.DampedSteps));
+                    extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
                 Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
-                InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
+                // TODO: properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
 
                 return;
             }
 
-            if (playerInbox.Count > 0)
+            if (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp < playerInbox.First.timestamp)
             {
                 FullMovementMessage remote = playerInbox.Dequeue();
                 FullMovementMessage local = null;
@@ -118,7 +117,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     // Teleport
                     for (var i = 0; i < settings.SamePositionTeleportFilterCount && i < playerInbox.Count; i++)
                     {
-                        if (Vector3.SqrMagnitude(playerInbox.Peek().position - remote.position) < settings.MinPositionDelta)
+                        if (Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                             remote = playerInbox.Dequeue();
                         else
                             break;
@@ -128,7 +127,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     remotePlayerMovement.AddPassed(remote, wasTeleported: true);
                     UpdateAnimations(remote, ref anim, view);
                 }
-                else if (remotePlayerMovement.PastMessage?.timestamp < remote.timestamp)
+                else
                 {
                     RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 

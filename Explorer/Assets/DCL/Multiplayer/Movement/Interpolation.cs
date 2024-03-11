@@ -1,6 +1,4 @@
 ﻿using DCL.Character.Components;
-using DCL.Multiplayer.Movement.Components;
-using DCL.Multiplayer.Movement.ECS;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement

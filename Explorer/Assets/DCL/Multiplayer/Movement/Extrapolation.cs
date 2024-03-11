@@ -1,10 +1,9 @@
 ﻿using DCL.Character.Components;
-using DCL.Multiplayer.Movement.Components;
 using DCL.Multiplayer.Movement.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.ECS
+namespace DCL.Multiplayer.Movement
 {
     public static class Extrapolation
     {

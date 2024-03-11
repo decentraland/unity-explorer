@@ -1,5 +1,4 @@
 ﻿using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Movement.ECS;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings.Rules

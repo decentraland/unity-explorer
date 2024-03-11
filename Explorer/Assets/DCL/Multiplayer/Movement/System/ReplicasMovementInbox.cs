@@ -6,26 +6,25 @@ using LiveKit.Proto;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
+using Utility.PriorityQueue;
 using Random = UnityEngine.Random;
 
-namespace DCL.Multiplayer.Movement.ECS.System
+namespace DCL.Multiplayer.Movement.System
 {
     public class RemotePlayersMovementInbox
     {
-        public readonly Dictionary<string, Queue<FullMovementMessage>> InboxByParticipantMap = new ();
-        private readonly Queue<FullMovementMessage> incomingMessages = new ();
+        public readonly Dictionary<string, SimplePriorityQueue<FullMovementMessage>> InboxByParticipantMap = new ();
 
         private readonly IRoomHub roomHub;
         private readonly IMultiplayerMovementSettings settings;
-
-        private FullMovementMessage? lastMessage;
 
         public RemotePlayersMovementInbox(IRoomHub roomHub, IMultiplayerMovementSettings settings)
         {
             this.roomHub = roomHub;
             this.settings = settings;
 
-            if (roomHub.IslandRoom() is IslandRoomMock) { roomHub.IslandRoom().DataPipe.DataReceived += InboxDeserializedMessageMock; }
+            if (roomHub.IslandRoom() is IslandRoomMock)
+                roomHub.IslandRoom().DataPipe.DataReceived += InboxSelfMessageWithDelay;
             else
             {
                 roomHub.SceneRoom().DataPipe.DataReceived += InboxDeserializedMessage;
@@ -35,7 +34,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         ~RemotePlayersMovementInbox()
         {
-            if (roomHub.IslandRoom() is IslandRoomMock) { roomHub.IslandRoom().DataPipe.DataReceived -= InboxDeserializedMessageMock; }
+            if (roomHub.IslandRoom() is IslandRoomMock)
+                roomHub.IslandRoom().DataPipe.DataReceived -= InboxSelfMessageWithDelay;
             else
             {
                 roomHub.SceneRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
@@ -43,26 +43,19 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
         }
 
-        private void InboxDeserializedMessageMock(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        private void InboxSelfMessageWithDelay(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            FullMovementMessage? message = MessageMockSerializer.DeserializeMessage(data);
+            FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
 
-            if (message == null) return;
-
-            float sentRate = lastMessage == null ? 1f : message.timestamp - lastMessage.timestamp;
-            lastMessage = message;
-
-            UniTask.Delay(TimeSpan.FromSeconds(settings.Latency
-                                               + (settings.Latency * Random.Range(0, settings.LatencyJitter))
-                                               + (sentRate * Random.Range(0, settings.PackagesJitter))))
-                   .ContinueWith(() =>
-                        Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID))
-                   .Forget();
+            if (message != null)
+                UniTask.Delay(TimeSpan.FromSeconds(settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))))
+                       .ContinueWith(() => Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID))
+                       .Forget();
         }
 
         private void InboxDeserializedMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            FullMovementMessage? message = MessageMockSerializer.DeserializeMessage(data);
+            FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
 
             if (message != null)
                 Inbox(message, @for: participant.Identity);
@@ -70,12 +63,12 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
-            if (InboxByParticipantMap.TryGetValue(@for, out Queue<FullMovementMessage>? queue))
-                queue.Enqueue(fullMovementMessage);
+            if (InboxByParticipantMap.TryGetValue(@for, out SimplePriorityQueue<FullMovementMessage>? queue) && !queue.Contains(fullMovementMessage))
+                queue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
             else
             {
-                var newQueue = new Queue<FullMovementMessage>();
-                newQueue.Enqueue(fullMovementMessage);
+                var newQueue = new SimplePriorityQueue<FullMovementMessage>(); // TODO: pooling
+                newQueue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
 
                 InboxByParticipantMap.Add(@for, newQueue);
             }

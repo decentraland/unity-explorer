@@ -2,9 +2,9 @@
 using System.Text;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.ECS.System
+namespace DCL.Multiplayer.Movement
 {
-    public static class MessageMockSerializer
+    public static class FullMovementMessageSerializer
     {
         public static byte[] SerializeMessage(FullMovementMessage fullMovementMessage)
         {

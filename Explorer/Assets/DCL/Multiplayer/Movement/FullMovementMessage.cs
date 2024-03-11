@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.ECS
+namespace DCL.Multiplayer.Movement
 {
     [Serializable]
     public class FullMovementMessage
@@ -10,7 +10,6 @@ namespace DCL.Multiplayer.Movement.ECS
         public float timestamp;
         public Vector3 position;
         public Vector3 velocity;
-        public Vector3 acceleration;
 
         public CharacterAnimationComponent.AnimationStates animState;
         public bool isStunned;

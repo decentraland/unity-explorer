@@ -1,6 +1,4 @@
-﻿using DCL.Multiplayer.Movement.ECS;
-
-namespace DCL.Multiplayer.Movement.Components
+﻿namespace DCL.Multiplayer.Movement
 {
     public struct InterpolationComponent
     {

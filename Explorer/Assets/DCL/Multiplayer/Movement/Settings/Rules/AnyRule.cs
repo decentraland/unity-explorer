@@ -1,5 +1,4 @@
 ﻿using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Movement.ECS;
 using System.Collections.Generic;
 using UnityEngine;
 

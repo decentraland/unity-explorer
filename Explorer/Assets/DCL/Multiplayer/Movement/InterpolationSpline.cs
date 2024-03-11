@@ -1,5 +1,4 @@
-﻿using DCL.Multiplayer.Movement.ECS;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {

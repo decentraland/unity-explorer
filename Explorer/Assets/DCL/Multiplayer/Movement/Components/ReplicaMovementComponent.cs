@@ -1,5 +1,5 @@
-﻿using DCL.Multiplayer.Movement.ECS;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -8,7 +8,8 @@ namespace DCL.Multiplayer.Movement
         public const string TEST_ID = "SelfReplica";
 
         public readonly string PlayerWalletId;
-        [CanBeNull] public FullMovementMessage PastMessage;
+
+        public FullMovementMessage PastMessage;
 
         public bool Initialized;
         public bool WasTeleported;
@@ -17,13 +18,14 @@ namespace DCL.Multiplayer.Movement
         {
             PlayerWalletId = playerWalletId;
 
-            PastMessage = null;
+            PastMessage = new FullMovementMessage();
             Initialized = false;
             WasTeleported = false;
         }
 
         public void AddPassed(FullMovementMessage message, bool wasTeleported = false)
         {
+            Debug.Log($"VVV {message.timestamp}");
             PastMessage = message;
             WasTeleported = wasTeleported;
         }

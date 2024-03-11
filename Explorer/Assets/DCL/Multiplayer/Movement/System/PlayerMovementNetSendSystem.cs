@@ -102,7 +102,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                 isStunned = playerStunComponent.IsStunned,
             };
 
-            var byteMessage = new Span<byte>(MessageMockSerializer.SerializeMessage(lastSentMessage));
+            var byteMessage = new Span<byte>(FullMovementMessageSerializer.SerializeMessage(lastSentMessage));
 
             IReadOnlyCollection<string>? islandParticipants = roomHub.IslandRoom()?.Participants == null ? null : roomHub.IslandRoom()?.Participants.RemoteParticipantSids();
             roomHub.IslandRoom()?.DataPipe.PublishData(byteMessage, "Movement", islandParticipants);
