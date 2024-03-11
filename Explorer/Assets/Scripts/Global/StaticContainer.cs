@@ -28,6 +28,8 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEditor;
+using UnityEditor.Build.Content;
 using UnityEngine;
 
 namespace Global
@@ -101,7 +103,11 @@ namespace Global
 
             (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct, nameof(ReportHandlingSettings)),
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsProduction, ct, nameof(ReportHandlingSettings)),
+#else
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsDevelopment, ct, nameof(ReportHandlingSettings)),
+#endif
                     AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
                 );
