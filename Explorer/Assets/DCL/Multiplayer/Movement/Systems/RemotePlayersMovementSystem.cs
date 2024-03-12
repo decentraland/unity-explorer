@@ -63,7 +63,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (intComp.Enabled)
             {
                 deltaTime = Interpolate(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, in view);
-                if (deltaTime < 0) return;
+                if (deltaTime <= 0) return;
             }
 
             // Filter old messages that arrived too late
@@ -76,9 +76,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!extComp.Enabled)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
+                // TODO (Vit): properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
                 Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
 
-                // TODO (Vit): properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
                 return;
             }
 
@@ -90,47 +90,18 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 if (extComp.Enabled)
                 {
-                    float extStopMovementTimestamp = extComp.Start.timestamp + extComp.TotalMoveDuration; // Player is staying still after that time
-                    float extrapolatedTimestamp = extComp.Start.timestamp + extComp.Time; // Total extrapolated timestamp. Can be in move or in stop state (if Time>TotalMoveDuration)
-
-                    float minExtTimestamp = Mathf.Min(extStopMovementTimestamp, extrapolatedTimestamp);
-
-                    // Filter all messages that are behind in time (otherwise we will run back)
-                    while (playerInbox.Count > 0 && remote.timestamp < minExtTimestamp)
-                        remote = playerInbox.Dequeue();
-
-                    if (remote.timestamp < minExtTimestamp)
-                        return;
-
-                    // Stop extrapolating and proceed to blending
-                    {
+                    // if we success with stop of extrapolation, then we can start to blend
+                    if (StopExtrapolationIfCan(ref remote, ref transComp, ref anim, ref remotePlayerMovement, ref extComp, view, playerInbox))
                         isBlend = true;
-                        extComp.Stop();
-
-                        var local = new FullMovementMessage
-                        {
-                            timestamp = minExtTimestamp, // we need to take the timestamp that < remote.timestamp
-
-                            position = transComp.Transform.position,
-                            velocity = extComp.Start.velocity,
-
-                            animState = extComp.Start.animState,
-                            isStunned = extComp.Start.isStunned,
-                        };
-
-                        remotePlayerMovement.AddPassed(local);
-                        UpdateAnimations(local, ref anim, view);
-                    }
+                    else return;
                 }
 
-                // Teleportation
                 if (CanTeleport(remotePlayerMovement, remote))
                 {
                     isBlend = false;
                     TeleportFiltered(ref remote, ref transComp, ref anim, ref remotePlayerMovement, view, playerInbox);
 
-                    if (playerInbox.Count == 0)
-                        return;
+                    if (playerInbox.Count == 0) return;
 
                     remote = playerInbox.Dequeue();
                 }
@@ -139,7 +110,44 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void TeleportFiltered(ref FullMovementMessage remote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, IAvatarView view, SimplePriorityQueue<FullMovementMessage> playerInbox)
+        private static bool StopExtrapolationIfCan(ref FullMovementMessage remote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, IAvatarView view, SimplePriorityQueue<FullMovementMessage> playerInbox)
+        {
+            float extStopMovementTimestamp = extComp.Start.timestamp + extComp.TotalMoveDuration; // Player is staying still after that time
+            float extrapolatedTimestamp = extComp.Start.timestamp + extComp.Time; // Total extrapolated timestamp. Can be in move or in stop state (if Time>TotalMoveDuration)
+            float minExtTimestamp = Mathf.Min(extStopMovementTimestamp, extrapolatedTimestamp);
+
+            // Filter all messages that are behind in time (otherwise we will run back)
+            while (playerInbox.Count > 0 && remote.timestamp < minExtTimestamp)
+                remote = playerInbox.Dequeue();
+
+            if (remote.timestamp < minExtTimestamp)
+                return false;
+
+            // Stop extrapolating and proceed to blending
+            {
+                extComp.Stop();
+
+                var local = new FullMovementMessage
+                {
+                    timestamp = minExtTimestamp, // we need to take the timestamp that < remote.timestamp
+
+                    position = transComp.Transform.position,
+                    velocity = extComp.Start.velocity,
+
+                    animState = extComp.Start.animState,
+                    isStunned = extComp.Start.isStunned,
+                };
+
+                remotePlayerMovement.AddPassed(local);
+                UpdateAnimations(local, ref anim, view);
+            }
+
+            return true;
+        }
+
+        private void TeleportFiltered(ref FullMovementMessage remote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, IAvatarView view,
+            SimplePriorityQueue<FullMovementMessage> playerInbox)
         {
             if (settings.InterpolationSettings.UseSpeedUp)
                 while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
