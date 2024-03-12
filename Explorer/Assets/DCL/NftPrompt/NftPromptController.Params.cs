@@ -4,11 +4,13 @@
     {
         public struct Params
         {
-            public string Urn { get; }
+            public string ContractAddress { get; }
+            public string TokenId { get; }
 
-            public Params(string urn)
+            public Params(string contractAddress, string tokenId)
             {
-                Urn = urn;
+                ContractAddress = contractAddress;
+                TokenId = tokenId;
             }
         }
     }

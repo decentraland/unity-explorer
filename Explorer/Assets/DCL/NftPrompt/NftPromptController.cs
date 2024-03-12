@@ -34,7 +34,7 @@ namespace DCL.NftPrompt
         protected override void OnViewShow()
         {
             cursor.Unlock();
-            RequestNft(inputData.Urn, result =>
+            RequestNft(inputData.ContractAddress, inputData.TokenId, result =>
             {
                 if (result != NftPromptResultType.ViewOnOpenSea)
                     return;
@@ -49,18 +49,14 @@ namespace DCL.NftPrompt
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct));
 
-        private void RequestNft(string urn, Action<NftPromptResultType> result)
+        private void RequestNft(string contractAddress, string tokenId, Action<NftPromptResultType> result)
         {
             resultCallback = result;
 
             // TODO: Implement the NFT request
 
             // TODO: Fill the UI with the NFT data
-            //viewInstance.NftImage = ...;
-            //viewInstance.OwnerText.text = ...;
-            //viewInstance.LastSoldForText.text = ...;
-            //viewInstance.PriceText.text = ...;
-            //viewInstance.DescriptionText.text = ...;
+            
         }
 
         private void Dismiss() =>

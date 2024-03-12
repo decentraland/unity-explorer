@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
+using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
@@ -119,8 +120,15 @@ namespace CrdtEcsBridge.RestrictedActions
                 return false;
             }
 
-            OpenNftDialogAsync(urn).Forget();
+            if (!NftUtils.TryParseUrn(urn, out string contractAddress, out string tokenId))
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, $"OpenNftDialog: Urn '{urn}' is not valid");
+                return false;
+            }
+
+            OpenNftDialogAsync(contractAddress, tokenId).Forget();
             return true;
+
         }
 
         private async UniTask OpenUrlAsync(string url)
@@ -153,10 +161,10 @@ namespace CrdtEcsBridge.RestrictedActions
             await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
         }
 
-        private async UniTask OpenNftDialogAsync(string urn)
+        private async UniTask OpenNftDialogAsync(string contractAddress, string tokenId)
         {
             await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(urn)));
+            await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(contractAddress, tokenId)));
         }
 
         public void Dispose() { }
