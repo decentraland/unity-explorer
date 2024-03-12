@@ -107,10 +107,10 @@ namespace CrdtEcsBridge.Engine
         public async UniTask<IRuntime.CurrentSceneEntityResponse> GetSceneInformationAsync(CancellationToken ct) =>
             new IRuntime.CurrentSceneEntityResponse()
             {
-                BaseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
-                ContentMapping = sceneData.SceneEntityDefinition.content,
-                Urn = sceneData.SceneEntityDefinition.id,
-                MetadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
+                baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
+                contentMapping = sceneData.SceneEntityDefinition.content,
+                urn = sceneData.SceneEntityDefinition.id,
+                metadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
             };
     }
 }
