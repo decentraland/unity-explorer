@@ -7,17 +7,16 @@ using DCL.CharacterMotion.Emotes;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Systems;
-using Decentraland.Kernel.Apis;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 namespace DCL.CharacterMotion.Systems
 {
-    [LogCategory(ReportCategory.MOTION)]
+    [LogCategory(ReportCategory.EMOTE)]
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateEmoteInputSystem : UpdateInputSystem<EmoteInputComponent, PlayerComponent>
     {
-        private Dictionary<string, int> actionNameById = new ();
+        private readonly Dictionary<string, int> actionNameById = new ();
         private DCLInput.EmotesActions emotesActions;
         private readonly IEmoteRepository emoteRepository;
         private readonly string reportCategory;
@@ -57,15 +56,12 @@ namespace DCL.CharacterMotion.Systems
         private void OnSlotPerformed(InputAction.CallbackContext obj)
         {
             var emoteIndex = actionNameById[obj.action.name];
-
-            ReportHub.Log(reportCategory, $"Triggered emote slot: {emoteIndex}");
-
             triggeredEmote = emoteIndex;
         }
 
         protected override void Update(float t)
         {
-            if (triggeredEmote > 0)
+            if (triggeredEmote >= 0)
             {
                 // TODO: here we have to convert the emote wheel id to an emote id, for now we are going to load one from the embedded list
                 TriggerEmoteQuery(World, emoteRepository.GetHotkeyEmote(triggeredEmote));

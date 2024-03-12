@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -62,6 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         private AnimatorOverrideController overrideController;
         private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
+        private AnimationClip lastEmote;
 
         public void Awake()
         {
@@ -84,6 +84,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetTrigger(hash);
         }
 
+        public bool GetAnimatorBool(int hash) =>
+            avatarAnimator.GetBool(hash);
+
         public void SetAnimatorBool(int hash, bool value)
         {
             avatarAnimator.SetBool(hash, value);
@@ -91,8 +94,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void ReplaceEmoteAnimation(AnimationClip animationClip)
         {
+            if (lastEmote == animationClip) return;
+
             overrideController["Emote"] = animationClip;
             avatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastEmote = animationClip;
         }
     }
 
@@ -105,5 +112,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void SetAnimatorBool(int hash, bool value);
 
         void ReplaceEmoteAnimation(AnimationClip animationClip);
+
+        bool GetAnimatorBool(int hash);
     }
 }

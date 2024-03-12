@@ -36,6 +36,13 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
+
+            // If the avatar is already doing an emote and we re-trigger it, we want to restart the animation to enable emote spamming
+            if (animationComponent.States.WasEmoteJustTriggered && view.GetAnimatorBool(AnimationHashes.EMOTE))
+                view.SetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
+
+            animationComponent.States.WasEmoteJustTriggered = false;
+
             view.SetAnimatorBool(AnimationHashes.EMOTE, animationComponent.States.IsEmote);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, animationComponent.States.EmoteLoop);
 

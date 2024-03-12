@@ -31,9 +31,9 @@ namespace DCL.CharacterMotion.Emotes
             using var embedEmotes = emotes.Values.GetEnumerator();
             for (var i = 0; i < 8; i++)
             {
+                embedEmotes.MoveNext();
                 var embedEmote = embedEmotes.Current;
                 hotkeyEmotes.Add(i, embedEmote.id);
-                embedEmotes.MoveNext();
             }
         }
 

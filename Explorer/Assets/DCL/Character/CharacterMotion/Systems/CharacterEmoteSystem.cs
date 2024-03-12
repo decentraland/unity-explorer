@@ -38,9 +38,10 @@ namespace DCL.CharacterMotion.Systems
 
             var emoteData = emoteRepository.Get(emoteId);
 
+            animationComponent.States.WasEmoteJustTriggered = true;
             animationComponent.States.IsEmote = true;
             animationComponent.States.EmoteClip = emoteData.avatarClip;
-            animationComponent.States.EmoteLoop = true;
+            animationComponent.States.EmoteLoop = emoteData.avatarClip.isLooping;
 
             World.Remove<CharacterEmoteIntent>(entity);
         }
