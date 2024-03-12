@@ -136,6 +136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e5fd56c6d144ba816525dff214ee9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <EmojiButton>k__BackingField: {fileID: 5531687304809608250}
   <Emoji>k__BackingField: {fileID: 6988455596225033446}
   <EmojiName>k__BackingField: {fileID: 3101371696451196082}
 --- !u!1 &5505983360071128957

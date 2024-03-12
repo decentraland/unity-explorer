@@ -5,6 +5,7 @@ using DCL.Emoji;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace DCL.Chat
 {
     public partial class ChatController : ControllerBase<ChatView>
     {
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w*$";
+        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
 
         private readonly Regex emojiPatternRegex = new (EMOJI_SUGGESTION_PATTERN);
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -32,6 +33,7 @@ namespace DCL.Chat
 
         private string currentMessage = string.Empty;
         private List<ChatMessage> chatMessages = new ();
+        private CancellationTokenSource cts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -78,12 +80,20 @@ namespace DCL.Chat
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
 
             emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab);
+            emojiSuggestionPanelController.OnEmojiSelected += AddEmojiFromSuggestion;
 
             viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
+        }
+
+        private void AddEmojiFromSuggestion(EmojiData emojiData)
+        {
+            viewInstance.InputField.text = viewInstance.InputField.text.Replace(emojiPatternRegex.Match(viewInstance.InputField.text).Value, emojiData.EmojiCode);
+            viewInstance.InputField.ActivateInputField();
+            viewInstance.InputField.caretPosition = viewInstance.InputField.text.Length;
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -95,11 +105,19 @@ namespace DCL.Chat
 
         private void AddEmojiToInput(string emoji)
         {
-            viewInstance.InputField.text += emoji;
+            int caretPosition = viewInstance.InputField.caretPosition;
+            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, emoji);
+            viewInstance.InputField.ActivateInputField();
+            viewInstance.InputField.caretPosition = viewInstance.InputField.text.Length;
         }
 
-        private void ToggleEmojiPanel() =>
+        private void ToggleEmojiPanel()
+        {
+            int caretPosition = viewInstance.InputField.caretPosition;
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
+            viewInstance.InputField.ActivateInputField();
+            viewInstance.InputField.caretPosition = caretPosition;
+        }
 
         private void OnSubmit(string _)
         {
@@ -108,7 +126,8 @@ namespace DCL.Chat
 
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
-            viewInstance.InputField.text = currentMessage;
+            viewInstance.InputField.text = string.Empty;
+            emojiPanelController.SetPanelVisibility(false);
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
@@ -161,19 +180,29 @@ namespace DCL.Chat
             Match match = emojiPatternRegex.Match(inputText);
             if (match.Success)
             {
-                if (match.Value.Length < 1)
+                if (match.Value.Length < 2)
                 {
                     emojiSuggestionPanelController.SetPanelVisibility(false);
                     return;
                 }
+                cts.SafeCancelAndDispose();
+                cts = new CancellationTokenSource();
 
-                emojiSuggestionPanelController.SetPanelVisibility(true);
-                emojiSuggestionPanelController.SetValues(DictionaryUtils.GetKeysWithPrefix(emojiPanelController.emojiNameMapping, match.Value));
+                SearchAndSetEmojiSuggestions(match.Value, cts.Token).Forget();
             }
             else
             {
                 emojiSuggestionPanelController.SetPanelVisibility(false);
             }
+        }
+
+        private async UniTaskVoid SearchAndSetEmojiSuggestions(string value, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            IEnumerable<EmojiData> keysWithPrefixAsync = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.emojiNameMapping, value, ct);
+
+            emojiSuggestionPanelController.SetValues(keysWithPrefixAsync);
+            emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 
         private void CreateChatEntry(ChatMessage chatMessage)

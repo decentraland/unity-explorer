@@ -33,13 +33,16 @@ namespace DCL.Emoji
 
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
-                emojiNameMapping.Add(emojiData.Key, new EmojiData(emojiData.Value.ToUpper(), emojiData.Key));
+                emojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
                 emojiValueMapping.Add(emojiData.Value.ToUpper(), emojiData.Key);
             }
 
             view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
         }
+
+        public void SetPanelVisibility(bool isVisible) =>
+            view.gameObject.SetActive(isVisible);
 
         private void ConfigureEmojiSectionSizes()
         {
@@ -81,8 +84,10 @@ namespace DCL.Emoji
                 emojiButton.EmojiImage.text = emojiChar;
                 emojiButton.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(emojiChar));
 
-                if(emojiValueMapping.TryGetValue(emojiCode.ToString("X"), out string emojiValue))
+                if (emojiValueMapping.TryGetValue(emojiCode.ToString("X"), out string emojiValue))
                     emojiButton.TooltipText.text = emojiValue;
+                else
+                    emojiButton.TooltipText.text = string.Empty;
             }
         }
     }
