@@ -30,16 +30,16 @@ namespace SceneRuntime.Apis.Modules
 
         public struct GetRealmResponse
         {
-            public RealmInfo RealmInfo;
+            public RealmInfo realmInfo;
         }
 
         public struct RealmInfo
         {
-            public string BaseURL;
-            public string RealmName;
-            public int NetworkID;
-            public string CommsAdapter;
-            public bool IsPreview;
+            public string baseURL;
+            public string realmName;
+            public int networkId;
+            public string commsAdapter;
+            public bool isPreview;
 
         }
 
