@@ -34,6 +34,15 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
+        private static void HandleFirstMessage(FullMovementMessage firstRemote,ref CharacterTransform transComp, ref CharacterAnimationComponent anim,ref RemotePlayerMovementComponent remotePlayerMovement, in IAvatarView view)
+        {
+            transComp.Transform.position = firstRemote.position;
+            UpdateAnimations(firstRemote, ref anim, view);
+
+            remotePlayerMovement.AddPassed(firstRemote, wasTeleported: true);
+            remotePlayerMovement.Initialized = true;
+        }
+
         [Query]
         [None(typeof(PlayerComponent))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
@@ -47,32 +56,14 @@ namespace DCL.Multiplayer.Movement.Systems
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)
             {
-                FullMovementMessage firstRemote = playerInbox.Dequeue();
-
-                transComp.Transform.position = firstRemote.position;
-                UpdateAnimations(firstRemote, ref anim, view);
-
-                remotePlayerMovement.AddPassed(firstRemote, wasTeleported: true);
-                remotePlayerMovement.Initialized = true;
-
-                if (playerInbox.Count == 0)
-                    return;
+                HandleFirstMessage(playerInbox.Dequeue(), ref transComp, ref anim, ref remotePlayerMovement, in view);
+                if (playerInbox.Count == 0) return;
             }
 
             if (intComp.Enabled)
             {
-                float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
-                InterpolateAnimations(deltaTime, ref anim, ref intComp);
-
-                if (intComp.Time < intComp.TotalDuration)
-                    return;
-
-                // Stop interpolation
-                intComp.Stop();
-                remotePlayerMovement.AddPassed(intComp.End);
-                UpdateAnimations(intComp.End, ref anim, view);
-
-                deltaTime = unusedTime;
+                deltaTime = Interpolate(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, in view);
+                if (deltaTime < 0) return;
             }
 
             // Filter old messages that arrived too late
@@ -86,7 +77,6 @@ namespace DCL.Multiplayer.Movement.Systems
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
                 Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
-
                 // TODO (Vit): properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
                 return;
             }
@@ -165,17 +155,24 @@ namespace DCL.Multiplayer.Movement.Systems
                     transComp.Transform.position = intComp.Start.position;
 
                     // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
-                    float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, intSettings.LookAtTimeDelta);
-                    InterpolateAnimations(deltaTime, ref anim, ref intComp);
-
-                    if (intComp.Time < intComp.TotalDuration)
-                        return;
-
-                    intComp.Stop();
-                    remotePlayerMovement.AddPassed(intComp.End);
-                    UpdateAnimations(intComp.End, ref anim, view);
+                    float unusedTime = Interpolate(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, in view);
                 }
             }
+        }
+
+        private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, in IAvatarView view)
+        {
+            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
+            InterpolateAnimations(deltaTime, ref anim, ref intComp);
+
+            if (intComp.Time < intComp.TotalDuration)
+                return -1;
+
+            intComp.Stop();
+            remotePlayerMovement.AddPassed(intComp.End);
+            UpdateAnimations(intComp.End, ref anim, view);
+
+            return unusedTime;
         }
 
         private static void SlowDownBlend(ref InterpolationComponent intComp, float maxBlendSpeed)
