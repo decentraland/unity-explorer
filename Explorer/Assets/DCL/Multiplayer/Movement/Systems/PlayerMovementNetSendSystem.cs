@@ -63,22 +63,22 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (lastSentMessage == null)
             {
-                SentMessage(ref animation, ref stun, ref move, ref jump, "FIRST");
+                SendMessage(ref animation, ref stun, ref move, ref jump, "FIRST");
                 return;
             }
 
-            float timeDiff = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
+            float timeDiff = UnityEngine.Time.unscaledTime - lastSentMessage!.Value.timestamp;
 
             foreach (SendRuleBase sendRule in settings.SendRules)
                 if (timeDiff > sendRule.MinTimeDelta
-                    && sendRule.IsSendConditionMet(timeDiff, lastSentMessage, ref animation, ref stun, ref move, ref jump, playerCharacter, settings))
+                    && sendRule.IsSendConditionMet(timeDiff, lastSentMessage!.Value, ref animation, ref stun, ref move, ref jump, playerCharacter, settings))
                 {
-                    SentMessage(ref animation, ref stun, ref move, ref jump, sendRule.Message);
+                    SendMessage(ref animation, ref stun, ref move, ref jump, sendRule.Message);
                     return;
                 }
         }
 
-        private void SentMessage(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump, string from)
+        private void SendMessage(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump, string from)
         {
             messagesSentInSec++;
 
@@ -95,7 +95,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = playerStunComponent.IsStunned,
             };
 
-            var byteMessage = new Span<byte>(FullMovementMessageSerializer.SerializeMessage(lastSentMessage));
+            var byteMessage = new Span<byte>(FullMovementMessageSerializer.SerializeMessage(lastSentMessage.Value));
 
             IReadOnlyCollection<string>? islandParticipants = roomHub.IslandRoom()?.Participants == null ? null : roomHub.IslandRoom()?.Participants.RemoteParticipantSids();
             roomHub.IslandRoom()?.DataPipe.PublishData(byteMessage, "Movement", islandParticipants);

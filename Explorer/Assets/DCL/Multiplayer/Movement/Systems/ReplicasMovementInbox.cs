@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Movement.System
 
             if (message != null)
                 UniTask.Delay(TimeSpan.FromSeconds(settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))))
-                       .ContinueWith(() => Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID))
+                       .ContinueWith(() => Inbox(message.Value, @for: RemotePlayerMovementComponent.TEST_ID))
                        .Forget();
         }
 
@@ -64,10 +64,7 @@ namespace DCL.Multiplayer.Movement.System
             FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
 
             if (message != null)
-            {
-                // TODO (Vit): filter out Island messages if Participant is presented in the Room
-                Inbox(message, @for: participant.Identity);
-            }
+                Inbox(message.Value, @for: participant.Identity); // TODO (Vit): filter out Island messages if Participant is presented in the Room
         }
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
