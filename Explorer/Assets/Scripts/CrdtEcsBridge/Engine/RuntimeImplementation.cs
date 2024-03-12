@@ -81,16 +81,16 @@ namespace CrdtEcsBridge.Engine
 
             if (realmData != null)
             {
-                realmInfo.RealmName = realmData.RealmName;
-                realmInfo.NetworkID = realmData.NetworkId;
-                realmInfo.IsPreview = IS_PREVIEW_DEFAULT_VALUE;
-                realmInfo.CommsAdapter = realmData.CommsAdapter;
-                realmInfo.BaseURL = realmData.Ipfs.CatalystBaseUrl.Value;
+                realmInfo.realmName = realmData.RealmName;
+                realmInfo.networkId = realmData.NetworkId;
+                realmInfo.isPreview = IS_PREVIEW_DEFAULT_VALUE;
+                realmInfo.commsAdapter = realmData.CommsAdapter;
+                realmInfo.baseURL = realmData.Ipfs.CatalystBaseUrl.Value;
             }
 
             return new IRuntime.GetRealmResponse
             {
-                RealmInfo = realmInfo,
+                realmInfo = realmInfo,
             };
         }
 
