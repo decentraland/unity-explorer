@@ -17,7 +17,12 @@ namespace DCL.Landscape.Config
         /// </summary>
         [Header("Settings when used as tree")]
         public ObjectRandomization randomization;
+
+        [Tooltip("This radius is being used for this asset to not overlap with the same asset type")]
         public float radius;
+
+        [Tooltip("This radius is being used for this asset to not overlap with other asset types, you might want to set this value a bit lower than radius for nicer results, since your trees might get no stones below it")]
+        public float secondaryRadius;
 
         [Header("Settings when used as detail")]
         public TerrainDetailSettings TerrainDetailSettings;
