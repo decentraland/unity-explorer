@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3ff10e948fb4f30bdef47ce49f4ebcb, type: 3}
   m_Name: RemotePlayerInterpolationSettings
   m_EditorClassIdentifier: 
-  <InterpolationType>k__BackingField: 0
+  <InterpolationType>k__BackingField: 1
   <LookAtTimeDelta>k__BackingField: 0.005
   <UseSpeedUp>k__BackingField: 1
-  <MaxSpeedUpTimeDivider>k__BackingField: 2
+  <MaxSpeedUpTimeDivider>k__BackingField: 1.5
   <UseBlend>k__BackingField: 1
   <BlendType>k__BackingField: 1
-  <MaxBlendSpeed>k__BackingField: 15
+  <MaxBlendSpeed>k__BackingField: 5
