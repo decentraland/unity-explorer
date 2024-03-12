@@ -2,7 +2,6 @@
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace DCL.CharacterMotion.Animation
 {
@@ -38,16 +37,18 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
 
             // If the avatar is already doing an emote and we re-trigger it, we want to restart the animation to enable emote spamming
-            if (animationComponent.States.WasEmoteJustTriggered && view.GetAnimatorBool(AnimationHashes.EMOTE))
-                view.SetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
+            if (animationComponent.States.WasEmoteJustTriggered)
+            {
+                if (view.IsAnimatorInTag("Emote"))
+                    view.SetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
+                else
+                    view.SetAnimatorTrigger(AnimationHashes.EMOTE);
+
+                view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, animationComponent.States.EmoteLoop);
+                view.ReplaceEmoteAnimation(animationComponent.States.EmoteClip);
+            }
 
             animationComponent.States.WasEmoteJustTriggered = false;
-
-            view.SetAnimatorBool(AnimationHashes.EMOTE, animationComponent.States.IsEmote);
-            view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, animationComponent.States.EmoteLoop);
-
-            if (animationComponent.States.IsEmote)
-                view.ReplaceEmoteAnimation(animationComponent.States.EmoteClip);
         }
     }
 }

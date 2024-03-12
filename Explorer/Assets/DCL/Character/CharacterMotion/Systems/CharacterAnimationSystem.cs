@@ -37,9 +37,6 @@ namespace DCL.CharacterMotion.Systems
             // Update slide blend value, ranges from 0 to 1
             ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view, in settings);
 
-            // Update emote status
-            ApplyEmoteCancel.Execute(ref animationComponent, in rigidTransform);
-
             // Apply other states
             ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
         }

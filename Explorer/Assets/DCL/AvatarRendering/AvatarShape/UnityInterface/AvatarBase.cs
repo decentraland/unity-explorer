@@ -65,6 +65,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void Awake()
         {
+            avatarAnimator.fireEvents = false;
+
             overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -83,6 +85,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             avatarAnimator.SetTrigger(hash);
         }
+
+        public bool IsAnimatorInTag(string tag) =>
+            avatarAnimator.GetCurrentAnimatorStateInfo(0).IsTag(tag);
 
         public bool GetAnimatorBool(int hash) =>
             avatarAnimator.GetBool(hash);
@@ -114,5 +119,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void ReplaceEmoteAnimation(AnimationClip animationClip);
 
         bool GetAnimatorBool(int hash);
+
+        bool IsAnimatorInTag(string tag);
     }
 }

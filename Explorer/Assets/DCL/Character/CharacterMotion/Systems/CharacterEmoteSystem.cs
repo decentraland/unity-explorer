@@ -2,12 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Emotes;
 using DCL.DebugUtilities;
 using ECS.Abstract;
-using System;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -39,7 +37,6 @@ namespace DCL.CharacterMotion.Systems
             var emoteData = emoteRepository.Get(emoteId);
 
             animationComponent.States.WasEmoteJustTriggered = true;
-            animationComponent.States.IsEmote = true;
             animationComponent.States.EmoteClip = emoteData.avatarClip;
             animationComponent.States.EmoteLoop = emoteData.avatarClip.isLooping;
 
