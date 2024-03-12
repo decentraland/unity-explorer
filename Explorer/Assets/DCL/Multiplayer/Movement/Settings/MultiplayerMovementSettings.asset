@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36736ce96ff04f67aaec3d8efa0026b3, type: 3}
   m_Name: MultiplayerMovementSettings
   m_EditorClassIdentifier: 
-  <InboxCount>k__BackingField: 5
+  <InboxCount>k__BackingField: 2
   <SendRules>k__BackingField:
   - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
   <Latency>k__BackingField: 0.1
   <LatencyJitter>k__BackingField: 10
-  <MinPositionDelta>k__BackingField: 0.01
+  <MinPositionDelta>k__BackingField: 0.001
   <MinTeleportDistance>k__BackingField: 100
   <SkipSamePositionBatch>k__BackingField: 10
   <SkipOldMessagesBatch>k__BackingField: 10
