@@ -124,18 +124,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 }
 
                 // Teleportation
-                if (Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance ||
-                    (settings.InterpolationSettings.UseSpeedUp && Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta))
+                if (CanTeleport(remotePlayerMovement, remote))
                 {
                     isBlend = false;
-
-                    if (settings.InterpolationSettings.UseSpeedUp)
-                        while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
-                            remote = playerInbox.Dequeue();
-
-                    transComp.Transform.position = remote.position;
-                    remotePlayerMovement.AddPassed(remote, wasTeleported: true);
-                    UpdateAnimations(remote, ref anim, view);
+                    TeleportFiltered(ref remote, ref transComp, ref anim, ref remotePlayerMovement, view, playerInbox);
 
                     if (playerInbox.Count == 0)
                         return;
@@ -146,6 +138,21 @@ namespace DCL.Multiplayer.Movement.Systems
                 StartInterpolation(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, view, remote, isBlend);
             }
         }
+
+        private void TeleportFiltered(ref FullMovementMessage remote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, IAvatarView view, SimplePriorityQueue<FullMovementMessage> playerInbox)
+        {
+            if (settings.InterpolationSettings.UseSpeedUp)
+                while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
+                    remote = playerInbox.Dequeue();
+
+            transComp.Transform.position = remote.position;
+            remotePlayerMovement.AddPassed(remote, wasTeleported: true);
+            UpdateAnimations(remote, ref anim, view);
+        }
+
+        private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in FullMovementMessage remote) =>
+            Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance ||
+            (settings.InterpolationSettings.UseSpeedUp && Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta);
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
             IAvatarView view, FullMovementMessage remote, bool isBlend)
