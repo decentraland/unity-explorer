@@ -96,7 +96,7 @@ namespace DCL.Multiplayer.Movement
 
         /// <summary>
         ///     Monotone on Y Cubic Hermite spline interpolation.
-        ///     Always pass through the start and end points and match their velocities
+        ///     Always pass through the start and end points, but adjust their velocities to ensure monotonicity on Y-axis
         /// </summary>
         /// <param name="start"> point from which interpolation starts </param>
         /// <param name="end"> point where interpolation should end </param>
@@ -111,7 +111,7 @@ namespace DCL.Multiplayer.Movement
 
         /// <summary>
         ///     Full Monotonic Cubic Hermite spline interpolation.
-        ///     Always pass through the start and end points and match their velocities
+        ///     Always pass through the start and end points, but adjust their velocities to ensure monotonicity on all axes
         /// </summary>
         /// <param name="start"> point from which interpolation starts </param>
         /// <param name="end"> point where interpolation should end </param>
@@ -157,7 +157,7 @@ namespace DCL.Multiplayer.Movement
 
         /// <summary>
         ///     Cubic Bézier spline interpolation.
-        ///     Always pass through the start and end points and match their velocities
+        ///     Always pass through the start and end points, use velocities to define ancors
         /// </summary>
         /// <param name="start"> point from which interpolation starts </param>
         /// <param name="end"> point where interpolation should end </param>

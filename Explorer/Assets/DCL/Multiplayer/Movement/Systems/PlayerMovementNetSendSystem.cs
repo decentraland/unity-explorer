@@ -72,8 +72,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             // if (MessagesSentInSec >= 10) return;
 
             foreach (SendRuleBase sendRule in settings.SendRules)
-                if (sendRule.IsEnabled
-                    && timeDiff > sendRule.MinTimeDelta
+                if (timeDiff > sendRule.MinTimeDelta
                     && sendRule.IsSendConditionMet(timeDiff, lastSentMessage, ref animation, ref stun, ref move, ref jump, playerCharacter, settings))
                 {
                     SentMessage(ref animation, ref stun, ref move, ref jump, sendRule.Message);

@@ -14,8 +14,6 @@ using DCL.Character.Plugin;
 using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
-using DCL.Multiplayer.Movement.ECS;
-using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -26,7 +24,6 @@ using ECS;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -135,6 +132,7 @@ namespace DCL.PluginSystem.Global
 
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
 
+            // Debug systems
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
         }

@@ -6,7 +6,6 @@ namespace DCL.Multiplayer.Movement.Settings
     public abstract class SendRuleBase : ScriptableObject
     {
         public Color color = Color.white;
-        public bool IsEnabled  = true;
         public float MinTimeDelta = 0;
         public virtual string Message { get; set; }
 
