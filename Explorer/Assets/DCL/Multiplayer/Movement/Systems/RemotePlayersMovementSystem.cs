@@ -82,32 +82,34 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
             }
 
-            // Process new messages
             if (playerInbox.Count > 0)
+                HandleNewMessage(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, ref extComp, view, playerInbox);
+        }
+
+        private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, IAvatarView view, SimplePriorityQueue<FullMovementMessage> playerInbox)
+        {
+            FullMovementMessage remote = playerInbox.Dequeue();
+            var isBlend = false;
+
+            if (extComp.Enabled)
             {
-                FullMovementMessage remote = playerInbox.Dequeue();
-                var isBlend = false;
-
-                if (extComp.Enabled)
-                {
-                    // if we success with stop of extrapolation, then we can start to blend
-                    if (StopExtrapolationIfCan(ref remote, ref transComp, ref anim, ref remotePlayerMovement, ref extComp, view, playerInbox))
-                        isBlend = true;
-                    else return;
-                }
-
-                if (CanTeleport(remotePlayerMovement, remote))
-                {
-                    isBlend = false;
-                    TeleportFiltered(ref remote, ref transComp, ref anim, ref remotePlayerMovement, view, playerInbox);
-
-                    if (playerInbox.Count == 0) return;
-
-                    remote = playerInbox.Dequeue();
-                }
-
-                StartInterpolation(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, view, remote, isBlend);
+                // if we success with stop of extrapolation, then we can start to blend
+                if (StopExtrapolationIfCan(ref remote, ref transComp, ref anim, ref remotePlayerMovement, ref extComp, view, playerInbox))
+                    isBlend = true;
+                else return;
             }
+
+            if (CanTeleport(remotePlayerMovement, remote))
+            {
+                isBlend = false;
+                TeleportFiltered(ref remote, ref transComp, ref anim, ref remotePlayerMovement, view, playerInbox);
+
+                if (playerInbox.Count == 0) return;
+
+                remote = playerInbox.Dequeue();
+            }
+
+            StartInterpolation(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, view, remote, isBlend);
         }
 
         private static bool StopExtrapolationIfCan(ref FullMovementMessage remote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
@@ -149,6 +151,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void TeleportFiltered(ref FullMovementMessage remote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, IAvatarView view,
             SimplePriorityQueue<FullMovementMessage> playerInbox)
         {
+            // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
                 while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
