@@ -22,5 +22,5 @@ MonoBehaviour:
   <SkipSamePositionBatch>k__BackingField: 10
   <SkipOldMessagesBatch>k__BackingField: 10
   <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
-  <useExtrapolation>k__BackingField: 1
+  <UseExtrapolation>k__BackingField: 1
   <ExtrapolationSettings>k__BackingField: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}

@@ -84,12 +84,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
         {
             MessagesSentInSec++;
 
-            settings.LastMove = movement.Kind;
-            settings.LastJump = jump.IsPressed;
-
             float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
             string color = GetColorBasedOnDeltaTime(deltaTime);
-
             // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
 
             lastSentMessage = new FullMovementMessage

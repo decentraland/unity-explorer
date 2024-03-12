@@ -9,20 +9,24 @@ namespace DCL.Multiplayer.Movement.Settings
 
         int InboxCount { get; set; }
 
+        // TEST NETWORK
         float Latency { get; set; }
         float LatencyJitter { get; set; }
+
+        // TELEPORTATION
         float MinPositionDelta { get; set; }
         float MinTeleportDistance { get; set; }
 
-        RemotePlayerInterpolationSettings InterpolationSettings { get; }
-
-        bool useExtrapolation { get; }
-        RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }
-
-        MovementKind LastMove { get; set; }
-        bool LastJump { get; set; }
-
         int SkipOldMessagesBatch { get; set; }
         int SkipSamePositionBatch { get; set; }
+
+        // INTERPOLATION
+        RemotePlayerInterpolationSettings InterpolationSettings { get; }
+
+        // EXTRAPOLATION
+        bool UseExtrapolation { get; }
+        RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }
+
+
     }
 }

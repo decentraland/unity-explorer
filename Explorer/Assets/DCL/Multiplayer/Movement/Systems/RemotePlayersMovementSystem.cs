@@ -78,7 +78,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
             while (playerInbox.Count > 0 && remotePlayerMovement.PastMessage.timestamp > playerInbox.First.timestamp)
                 playerInbox.Dequeue();
 
-            if (playerInbox.Count == 0 && settings.useExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+            if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
                 if (!extComp.Enabled)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);

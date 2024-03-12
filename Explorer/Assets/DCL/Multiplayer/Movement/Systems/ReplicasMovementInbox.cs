@@ -27,8 +27,8 @@ namespace DCL.Multiplayer.Movement.System
                 roomHub.IslandRoom().DataPipe.DataReceived += InboxSelfMessageWithDelay;
             else
             {
-                roomHub.SceneRoom().DataPipe.DataReceived += InboxDeserializedMessage;
                 roomHub.IslandRoom().DataPipe.DataReceived += InboxDeserializedMessage;
+                roomHub.SceneRoom().DataPipe.DataReceived += InboxDeserializedMessage;
             }
         }
 
@@ -38,8 +38,8 @@ namespace DCL.Multiplayer.Movement.System
                 roomHub.IslandRoom().DataPipe.DataReceived -= InboxSelfMessageWithDelay;
             else
             {
-                roomHub.SceneRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
                 roomHub.IslandRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
+                roomHub.SceneRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
             }
         }
 
@@ -58,7 +58,10 @@ namespace DCL.Multiplayer.Movement.System
             FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
 
             if (message != null)
+            {
+                // TODO (Vit): filter out Island messages if Participant is presented in the Room
                 Inbox(message, @for: participant.Identity);
+            }
         }
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
@@ -67,7 +70,7 @@ namespace DCL.Multiplayer.Movement.System
                 queue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
             else
             {
-                var newQueue = new SimplePriorityQueue<FullMovementMessage>(); // TODO: pooling
+                var newQueue = new SimplePriorityQueue<FullMovementMessage>(); // TODO (Vit): pooling
                 newQueue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
 
                 InboxByParticipantMap.Add(@for, newQueue);
