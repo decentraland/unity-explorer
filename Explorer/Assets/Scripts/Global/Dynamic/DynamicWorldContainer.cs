@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -37,7 +36,6 @@ using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;
-using Unity.Mathematics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -187,7 +185,6 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     realmData,
                     staticContainer.MainPlayerAvatarBaseProxy,
-                    staticContainer.CharacterContainer,
                     debugBuilder,
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration,
@@ -229,8 +226,7 @@ namespace Global.Dynamic
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner,
-                    // new RoomHub(new IslandRoomMock(), new IslandRoomMock())
-                  roomHub
+                  roomHub // new RoomHub(new IslandRoomMock(), new IslandRoomMock())
                   , staticContainer.CharacterContainer.CharacterObject),
             };
 

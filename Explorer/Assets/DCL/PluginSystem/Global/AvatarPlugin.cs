@@ -44,7 +44,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private readonly CharacterContainer staticContainerCharacterContainer;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
@@ -69,7 +68,6 @@ namespace DCL.PluginSystem.Global
             IPerformanceBudget memoryBudget,
             IRealmData realmData,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            CharacterContainer staticContainerCharacterContainer,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration,
@@ -79,7 +77,6 @@ namespace DCL.PluginSystem.Global
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
-           this.staticContainerCharacterContainer = staticContainerCharacterContainer;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
