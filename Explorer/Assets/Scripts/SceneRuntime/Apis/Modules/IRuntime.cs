@@ -34,6 +34,8 @@ namespace SceneRuntime.Apis.Modules
             public string hash;
         }
 
+        public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
+
         public struct GetRealmResponse
         {
             public RealmInfo realmInfo;
@@ -71,5 +73,6 @@ namespace SceneRuntime.Apis.Modules
             /// </summary>
             public string baseUrl;
         }
+
     }
 }
