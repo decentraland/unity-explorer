@@ -10,7 +10,6 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
-using DCL.Character.Plugin;
 using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;

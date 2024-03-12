@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
@@ -11,13 +12,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.ECS.System
+namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-
-    // [LogCategory(ReportCategory.AVATAR)]
+    [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
+        private const int MAX_MESSAGES_PER_SEC = 10; // 10 Hz == 10 [msg/sec]
+
         private readonly IRoomHub roomHub;
         private readonly IMultiplayerMovementSettings settings;
 
@@ -25,8 +27,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private FullMovementMessage? lastSentMessage;
 
-        private int MessagesSentInSec;
-        private float mesPerSecTimer;
+        private int messagesSentInSec;
+        private float mesPerSecResetCooldown;
 
         public PlayerMovementNetSendSystem(World world, IRoomHub roomHub, IMultiplayerMovementSettings settings, CharacterController playerCharacter) : base(world)
         {
@@ -43,13 +45,13 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private void UpdateMessagePerSecondCounter(float t)
         {
-            if (mesPerSecTimer > 0) { mesPerSecTimer -= t; }
+            if (mesPerSecResetCooldown > 0)
+                mesPerSecResetCooldown -= t;
             else
             {
-                mesPerSecTimer = 1;
-
                 // Debug.Log($"VVV ------- MES PER SEC: <color={GetColorBasedOnMesPerSec(MessagesSentInSec)}> {MessagesSentInSec} </color> ----------");
-                MessagesSentInSec = 0;
+                mesPerSecResetCooldown = 1; // 1 [sec]
+                messagesSentInSec = 0;
             }
         }
 
@@ -57,10 +59,8 @@ namespace DCL.Multiplayer.Movement.ECS.System
         [All(typeof(PlayerComponent))]
         private void SendPlayerNetMovement(ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
         {
-            // UnityEngine.Time.timeScale = settings.TimeScale;
-            if (move.Kind == MovementKind.Run) return;
+            if (messagesSentInSec >= MAX_MESSAGES_PER_SEC) return;
 
-            // Debug.Log($"VVV vel = {playerCharacter.velocity.sqrMagnitude}");
             if (lastSentMessage == null)
             {
                 SentMessage(ref animation, ref stun, ref move, ref jump, "FIRST");
@@ -68,8 +68,6 @@ namespace DCL.Multiplayer.Movement.ECS.System
             }
 
             float timeDiff = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
-
-            // if (MessagesSentInSec >= 10) return;
 
             foreach (SendRuleBase sendRule in settings.SendRules)
                 if (timeDiff > sendRule.MinTimeDelta
@@ -82,10 +80,10 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
         private void SentMessage(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump, string from)
         {
-            MessagesSentInSec++;
+            messagesSentInSec++;
 
-            float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
-            string color = GetColorBasedOnDeltaTime(deltaTime);
+            // float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
+            // string color = GetColorBasedOnDeltaTime(deltaTime);
             // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
 
             lastSentMessage = new FullMovementMessage
@@ -101,6 +99,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
             IReadOnlyCollection<string>? islandParticipants = roomHub.IslandRoom()?.Participants == null ? null : roomHub.IslandRoom()?.Participants.RemoteParticipantSids();
             roomHub.IslandRoom()?.DataPipe.PublishData(byteMessage, "Movement", islandParticipants);
+
             IReadOnlyCollection<string>? roomParticipants = roomHub.SceneRoom()?.Participants == null ? null : roomHub.SceneRoom()?.Participants.RemoteParticipantSids();
             roomHub.SceneRoom()?.DataPipe.PublishData(byteMessage, "Movement", roomParticipants);
         }

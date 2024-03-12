@@ -1,5 +1,4 @@
-﻿using DCL.CharacterMotion.Components;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings

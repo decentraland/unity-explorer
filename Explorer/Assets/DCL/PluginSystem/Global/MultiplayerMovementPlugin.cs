@@ -3,9 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.ECS.System;
 using DCL.Multiplayer.Movement.Settings;
 using System.Threading;
+using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
+using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.Systems.RemotePlayersMovementSystem;
 
 namespace DCL.PluginSystem.Global
 {

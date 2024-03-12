@@ -1,5 +1,4 @@
-﻿using DCL.CharacterMotion.Components;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
@@ -26,7 +25,5 @@ namespace DCL.Multiplayer.Movement.Settings
         // EXTRAPOLATION
         bool UseExtrapolation { get; }
         RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }
-
-
     }
 }

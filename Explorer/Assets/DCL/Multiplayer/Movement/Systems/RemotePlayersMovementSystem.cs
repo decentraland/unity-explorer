@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.System;
@@ -13,11 +14,10 @@ using ECS.Abstract;
 using UnityEngine;
 using Utility.PriorityQueue;
 
-namespace DCL.Multiplayer.Movement.ECS.System
+namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-
-    // [LogCategory(ReportCategory.AVATAR)]
+    [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
         private readonly IMultiplayerMovementSettings settings;
@@ -85,7 +85,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
 
                 Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
 
-                // TODO: properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
+                // TODO (Vit): properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
 
                 return;
             }
@@ -164,7 +164,7 @@ namespace DCL.Multiplayer.Movement.ECS.System
                     remotePlayerMovement.AddPassed(intComp.End);
                     UpdateAnimations(intComp.End, ref anim, view);
 
-                    // TODO: Restart in loop until (unusedTime <= 0) ?
+                    // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
                 // }
             }
         }

@@ -24,7 +24,10 @@ namespace DCL.Multiplayer.Movement.System
             this.settings = settings;
 
             if (roomHub.IslandRoom() is IslandRoomMock)
+            {
                 roomHub.IslandRoom().DataPipe.DataReceived += InboxSelfMessageWithDelay;
+                // roomHub.SceneRoom().DataPipe.DataReceived += InboxSelfMessageWithDelay;
+            }
             else
             {
                 roomHub.IslandRoom().DataPipe.DataReceived += InboxDeserializedMessage;
@@ -35,7 +38,10 @@ namespace DCL.Multiplayer.Movement.System
         ~RemotePlayersMovementInbox()
         {
             if (roomHub.IslandRoom() is IslandRoomMock)
+            {
                 roomHub.IslandRoom().DataPipe.DataReceived -= InboxSelfMessageWithDelay;
+                // roomHub.SceneRoom().DataPipe.DataReceived -= InboxSelfMessageWithDelay;
+            }
             else
             {
                 roomHub.IslandRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
