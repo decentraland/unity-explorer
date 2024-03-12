@@ -108,15 +108,12 @@ namespace DCL.Chat
             int caretPosition = viewInstance.InputField.caretPosition;
             viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, emoji);
             viewInstance.InputField.ActivateInputField();
-            viewInstance.InputField.caretPosition = viewInstance.InputField.text.Length;
         }
 
         private void ToggleEmojiPanel()
         {
-            int caretPosition = viewInstance.InputField.caretPosition;
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
             viewInstance.InputField.ActivateInputField();
-            viewInstance.InputField.caretPosition = caretPosition;
         }
 
         private void OnSubmit(string _)
