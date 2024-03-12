@@ -12,6 +12,8 @@ namespace DCL.Web3.Chains
 
         private readonly Dictionary<AuthLinkType, AuthLink> chain = new ();
 
+        private bool disposed;
+
         public static AuthChain Create() =>
             POOL.Get()!;
 
@@ -24,8 +26,12 @@ namespace DCL.Web3.Chains
 
         public void Dispose()
         {
+            if (disposed)
+                return;
+
             chain.Clear();
             POOL.Release(this);
+            disposed = true;
         }
 
         public bool TryGet(AuthLinkType type, out AuthLink link) =>
