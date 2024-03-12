@@ -1,6 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using Decentraland.Kernel.Apis;
+using ECS;
 using System.Threading;
 using UnityEngine;
 
@@ -16,6 +18,8 @@ namespace Global.Dynamic
         UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
+
+        IRealmData GetRealm();
 
         /// <summary>
         ///     Gracefully unload the current realm

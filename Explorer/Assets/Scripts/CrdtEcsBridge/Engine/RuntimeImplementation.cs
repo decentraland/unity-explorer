@@ -1,8 +1,10 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Time;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -11,7 +13,6 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
-using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -24,23 +25,22 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
-        private const float DEFAULT_GET_WORLD_TIME = 0.01f;
+        private const bool IS_PREVIEW_DEFAULT_VALUE = false;
 
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
         private readonly IWorldTimeProvider timeProvider;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
+        private readonly IRealmData realmData;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, ISceneExceptionsHandler exceptionsHandler)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IWorldTimeProvider timeProvider, IRealmData realmData)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
             this.timeProvider = timeProvider;
-            this.exceptionsHandler = exceptionsHandler;
+            this.realmData = realmData;
         }
 
-        public void Dispose()
-        { }
+        public void Dispose() { }
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
@@ -71,6 +71,27 @@ namespace CrdtEcsBridge.Engine
             {
                 content = content,
                 hash = hash,
+            };
+        }
+
+        public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            var realmInfo = new IRuntime.RealmInfo();
+
+            if (realmData != null)
+            {
+                realmInfo.realmName = realmData.RealmName;
+                realmInfo.networkId = realmData.NetworkId;
+                realmInfo.isPreview = IS_PREVIEW_DEFAULT_VALUE;
+                realmInfo.commsAdapter = realmData.CommsAdapter;
+                realmInfo.baseURL = realmData.Ipfs.CatalystBaseUrl.Value;
+            }
+
+            return new IRuntime.GetRealmResponse
+            {
+                realmInfo = realmInfo,
             };
         }
 
