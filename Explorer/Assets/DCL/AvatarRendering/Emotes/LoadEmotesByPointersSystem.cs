@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -63,6 +62,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             base.Update(t);
 
+            GetEmotesFromRealmQuery(World);
             FinalizeWearableDTOQuery(World);
         }
 
@@ -139,6 +139,9 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
+                if (intention.ProcessedPointers.Contains(loadingIntentionPointer)) continue;
+                intention.ProcessedPointers.Add(loadingIntentionPointer);
+
                 if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
@@ -173,7 +176,22 @@ namespace DCL.AvatarRendering.Emotes
                     partitionComponent);
 
                 World.Create(promise, partitionComponent);
+
+                ListPool<URN>.Release(missingPointers);
+                ListPool<IEmote>.Release(resolvedEmotes);
+
+                return;
             }
+
+            if (successfulDtos == intention.Pointers.Count) { }
+
+            if (successfulResults == intention.Pointers.Count)
+            {
+                // World.Add(entity, new StreamableResult(new EmotesResolution(hideWearablesResolution.VisibleWearables, hideWearablesResolution.HiddenCategories)));
+            }
+
+            ListPool<URN>.Release(missingPointers);
+            ListPool<IEmote>.Release(resolvedEmotes);
         }
 
         [Query]

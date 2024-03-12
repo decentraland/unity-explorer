@@ -11,11 +11,13 @@ namespace DCL.AvatarRendering.Emotes
         public CancellationTokenSource CancellationTokenSource { get; }
 
         public IReadOnlyCollection<URN> Pointers { get; }
+        public HashSet<URN> ProcessedPointers { get; }
 
         public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers) : this()
         {
             Pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
+            ProcessedPointers = new HashSet<URN>();
         }
 
         public bool Equals(GetEmotesByPointersIntention other) =>
