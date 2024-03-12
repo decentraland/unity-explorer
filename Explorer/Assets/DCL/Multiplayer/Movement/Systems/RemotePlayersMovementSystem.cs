@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private static void HandleFirstMessage(FullMovementMessage firstRemote,ref CharacterTransform transComp, ref CharacterAnimationComponent anim,ref RemotePlayerMovementComponent remotePlayerMovement, in IAvatarView view)
+        private static void HandleFirstMessage(FullMovementMessage firstRemote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, in IAvatarView view)
         {
             transComp.Transform.position = firstRemote.position;
             UpdateAnimations(firstRemote, ref anim, view);
@@ -77,6 +77,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
                 Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
+
                 // TODO (Vit): properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
                 return;
             }
@@ -142,25 +143,29 @@ namespace DCL.Multiplayer.Movement.Systems
                     remote = playerInbox.Dequeue();
                 }
 
-                // Interpolation or blend start
-                {
-                    RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
-                    intComp.Restart(remotePlayerMovement.PastMessage, remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);
-
-                    if (intSettings.UseBlend && isBlend)
-                        SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
-                    else if (intSettings.UseSpeedUp)
-                        SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
-
-                    transComp.Transform.position = intComp.Start.position;
-
-                    // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
-                    float unusedTime = Interpolate(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, in view);
-                }
+                StartInterpolation(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, view, remote, isBlend);
             }
         }
 
-        private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, in IAvatarView view)
+        private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
+            IAvatarView view, FullMovementMessage remote, bool isBlend)
+        {
+            RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
+            intComp.Restart(remotePlayerMovement.PastMessage, remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);
+
+            if (intSettings.UseBlend && isBlend)
+                SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
+            else if (intSettings.UseSpeedUp)
+                SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
+
+            transComp.Transform.position = intComp.Start.position;
+
+            // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
+            float unusedTime = Interpolate(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, in view);
+        }
+
+        private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
+            in IAvatarView view)
         {
             float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
             InterpolateAnimations(deltaTime, ref anim, ref intComp);
