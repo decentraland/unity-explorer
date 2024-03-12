@@ -36,15 +36,24 @@ MonoBehaviour:
   - pointers:
     - urn:decentraland:matic:collections-v2:0xe9a19898cc03f15f3b665a35f2876b6c54918f2e:1
   - pointers:
-    - urn:decentraland:matic:collections-v2:0x87daffe709ec2a07707564eba8a145f80ec20ddf:0
+    - urn:decentraland:matic:collections-v2:0xded1e53d7a43ac1844b66c0ca0f02627eb42e16d:10
+    - urn:decentraland:matic:collections-v2:0xb04cec2681910ad8ce3e093a7084ecde0fda56b3:1
+    - urn:decentraland:matic:collections-v2:0x8c577ed701041178a710f419df57cce7fea43e3b:1
+    - urn:decentraland:matic:collections-v2:0xb187264af67cf6d147521626203dedcfd901ceb3:2
+    - urn:decentraland:matic:collections-v2:0xad8bf81b98747c3547510b96af759ee647f9717f:0
+    - urn:decentraland:matic:collections-v2:0xc65c3e0dd85d993678e02a1407be7d804fae4667:2
+    - urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet
   - pointers:
-    - urn:decentraland:matic:collections-v2:0x8c577ed701041178a710f419df57cce7fea43e3b:0
+    - urn:decentraland:matic:collections-v2:0x0607fc0400090ab141604b04cee95f2985f1f07a:0
   - pointers:
-    - urn:decentraland:matic:collections-v2:0x5a8eb90616eb50dbca5389a4fa03e51d9c2ff546:0
+    - urn:decentraland:matic:collections-v2:0x3530abc9dcd2e6ffc4a04fc27878330ba1ad19cb:0
   - pointers:
-    - urn:decentraland:matic:collections-v2:0x40dcc86e8a7ea62a5d844133b90a56c835ddb9e9:0
+    - urn:decentraland:matic:collections-v2:0xf907f7abe1af828ac16fd5525df019c6e44cf977:0
   - pointers:
-    - urn:decentraland:matic:collections-v2:0xecfde4709234f5958bb249f459b8ed81546034cb:0
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:3
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:0
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:1
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:2
   - pointers:
     - urn:decentraland:matic:collections-v2:0x777cdea72334f2c4e5e8a32cc508db20aab9fde1:1
   - pointers:
