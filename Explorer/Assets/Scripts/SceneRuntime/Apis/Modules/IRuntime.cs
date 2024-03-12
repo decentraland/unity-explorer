@@ -51,13 +51,24 @@ namespace SceneRuntime.Apis.Modules
 
         public struct CurrentSceneEntityResponse
         {
-            // this is either the entityId or the full URN of the scene that is running
+            /// <summary>
+            /// The URN of the scene running, which can be either the entityId or the full URN.
+            /// </summary>
             public string urn;
-            // contents of the deployed entities
+
+            /// <summary>
+            /// A list containing the contents of the deployed entities.
+            /// </summary>
             public List<ContentDefinition> contentMapping;
-            // JSON serialization of the entity.metadata field
+
+            /// <summary>
+            /// JSON serialization of the entity.metadata field.
+            /// </summary>
             public string metadataJson;
-            // baseUrl used to resolve all content files
+
+            /// <summary>
+            /// The base URL used to resolve all content files.
+            /// </summary>
             public string baseUrl;
         }
     }
