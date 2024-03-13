@@ -1,6 +1,12 @@
 module.exports.getRealm = async function(message) {
-    console.log('JSMODULE: getRealm')
-    return {};
+
+    const { baseURL, realmName, networkId, commsAdapter, isPreview } = await UnityRuntime.GetRealm()    
+
+    if (commsAdapter === undefined) {
+        commsAdapter = "";
+    } 
+
+    return { baseURL, realmName, networkId, commsAdapter, isPreview };
 }
 
 module.exports.getWorldTime = async function(message) {
