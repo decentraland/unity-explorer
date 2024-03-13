@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 976580770}
-  m_IndirectSpecularColor: {r: 0.007707074, g: 0.0016868516, b: 0.036436923, a: 1}
+  m_IndirectSpecularColor: {r: 0.02948869, g: 0.007901343, b: 0.061463073, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -209,15 +209,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
   m_isCullingEnabled: 0
@@ -738,15 +740,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
   m_isCullingEnabled: 0
@@ -1189,7 +1193,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1794225238}
   m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 30, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 25.999998, y: 24.999996, z: 0}
 --- !u!114 &976580772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1415,15 +1419,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
   m_isCullingEnabled: 0
@@ -1792,15 +1798,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
   m_isCullingEnabled: 0
@@ -2270,21 +2278,33 @@ PrefabInstance:
     m_TransformParent: {fileID: 1794225238}
     m_Modifications:
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
+      propertyPath: Speed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: textUI
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: editMode
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
+      propertyPath: NaturalTime
+      value: 19127.578
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: LightAnimation
       value: 
-      objectReference: {fileID: 7400000, guid: e8f593404f0a19749bc68df2b5064215, type: 2}
+      objectReference: {fileID: 7400000, guid: 3b17a8a5ab9ee104899eb22c70935c38, type: 2}
+    - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
+      propertyPath: NormalizedTime
+      value: 0.221384
+      objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalLight
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 976580770}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: FogColorRamp.ctime2
       value: 32960
@@ -2495,11 +2515,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.ctime2
-      value: 49151
+      value: 33731
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.ctime3
-      value: 65535
+      value: 49151
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.ctime4
@@ -2527,27 +2547,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key2.b
-      value: 0.84339625
+      value: 1.3879476
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key2.g
-      value: 0.84575117
+      value: 1.8579681
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key2.r
-      value: 1
+      value: 2.4949498
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key3.b
-      value: 1
+      value: 0.84339625
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key3.g
-      value: 0.38642952
+      value: 0.84575117
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key3.r
-      value: 0.5149178
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key4.b
@@ -2603,7 +2623,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.m_NumColorKeys
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4596599585732954912, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: m_RootOrder
