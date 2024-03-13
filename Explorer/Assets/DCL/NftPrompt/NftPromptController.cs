@@ -22,6 +22,7 @@ namespace DCL.NftPrompt
         private readonly INftInfoAPIService nftInfoAPIService;
         private Action<NftPromptResultType> resultCallback;
 
+        private NftInfo? lastNftInfo;
         private string marketUrl;
         private CancellationTokenSource cts;
 
@@ -66,6 +67,12 @@ namespace DCL.NftPrompt
         private void RequestNft(string contractAddress, string tokenId, Action<NftPromptResultType> result)
         {
             resultCallback = result;
+
+            if (lastNftInfo != null && lastNftInfo.Value.Equals(contractAddress, tokenId))
+            {
+                SetNftInfo(lastNftInfo.Value);
+                return;
+            }
 
             cts = cts.SafeRestart();
             FetchNftInfoAsync(contractAddress, tokenId, cts.Token).Forget();
@@ -126,6 +133,7 @@ namespace DCL.NftPrompt
         private void SetNftInfo(NftInfo info)
         {
             ShowMainLoading(false);
+            ShowMainErrorFeedback(false);
             viewInstance.NftContent.SetActive(true);
             viewInstance.TextNftName.text = info.name;
             viewInstance.TextOwner.text = FormatOwnerAddress(info.owners[0].address, ADDRESS_MAX_CHARS);
@@ -142,6 +150,8 @@ namespace DCL.NftPrompt
                 marketUrl = info.marketLink;
             else if (!string.IsNullOrEmpty(info.assetLink))
                 marketUrl = info.assetLink;
+
+            lastNftInfo = info;
         }
 
         private string FormatOwnerAddress(string address, int maxCharacters)
