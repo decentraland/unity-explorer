@@ -1,5 +1,7 @@
 ﻿using JetBrains.Annotations;
 using NBitcoin;
+using NUnit;
+using Sentry.Unity.Editor.ConfigurationWindow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,6 +82,18 @@ namespace Editor
             }
             buildSubtarget = (int) buildSubtargetValue;
 #endif
+
+            if (options.TryGetValue("profile", out string _))
+            {
+                Environment.SetEnvironmentVariable("ENABLE_PROFILING", "1");
+                Environment.SetEnvironmentVariable("DEVELOPMENT_BUILD", "1");
+            }
+
+            if (options.TryGetValue("deepProfile", out string _))
+            {
+                Environment.SetEnvironmentVariable("ENABLE_DEEP_PROFILING", "1");
+                Environment.SetEnvironmentVariable("DEVELOPMENT_BUILD", "1");
+            }
 
             // Custom build
             Build(buildTarget, buildSubtarget, options);
@@ -176,15 +190,15 @@ namespace Editor
 
             buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
 
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD"))
-                || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_PROFILING")))
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD"))
+                || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_PROFILING")))
             {
                 buildPlayerOptions.options |= BuildOptions.AllowDebugging;
                 buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
                 buildPlayerOptions.options |= BuildOptions.Development;
             }
 
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_DEEP_PROFILING")))
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_DEEP_PROFILING")))
             {
                 buildPlayerOptions.options |= BuildOptions.EnableDeepProfilingSupport;
             }

@@ -141,19 +141,19 @@ jobs:
           $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
           
           if ($profileEnabled -eq 'true') {
-            $env:ENABLE_PROFILING = 'true'
+            $profilingParam = '-profile'
           } else {
-            $env:ENABLE_PROFILING = 'false'
+            $profilingParam = ''
           }
-          
+
           if ($deepProfileEnabled -eq 'true') {
-            $env:ENABLE_DEEP_PROFILING = 'true'
+            $deepProfilingParam = '-deepProfile'
           } else {
-            $env:ENABLE_DEEP_PROFILING = 'false'
+            $deepProfilingParam = ''
           }
-          
-          Write-Output "ENABLE_PROFILING: $($env:ENABLE_PROFILING)"
-          Write-Output "ENABLE_DEEP_PROFILING: $($env:ENABLE_DEEP_PROFILING)"
+
+          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
+          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
           
       - name: Clone Packages To Use Locally
         run: |
