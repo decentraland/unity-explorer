@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using System.Threading;
 
@@ -21,7 +22,7 @@ namespace DCL.NftInfoAPIService
         {
             var url = $"{BASE_URL}/api/v2/chain/{CHAIN}/contract/{contractAddress}/nfts/{tokenId}";
 
-            OpenSeaNftResponse nftResponse = await (await webRequestController.GetAsync(url, ct))
+            OpenSeaNftResponse nftResponse = await (await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.NFT_INFO_WEB_REQUEST))
                .CreateFromJson<OpenSeaNftResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             return ResponseToNftInfo(nftResponse.nft);

@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Diagnostics;
 using DCL.Input;
 using DCL.NftInfoAPIService;
 using MVC;
@@ -89,7 +88,6 @@ namespace DCL.NftPrompt
             }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.NFT_INFO_WEB_REQUEST, e.Message);
                 ShowMainErrorFeedback(true);
             }
         }
