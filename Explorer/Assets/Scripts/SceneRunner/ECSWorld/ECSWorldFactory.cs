@@ -4,7 +4,6 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
 using DCL.CharacterCamera;
-using DCL.CharacterCamera.Systems;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
