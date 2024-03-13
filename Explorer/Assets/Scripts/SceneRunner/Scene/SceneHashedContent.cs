@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace SceneRunner.Scene
 {
-    public class SceneHashedContent : ISceneContent
+    public class SceneHashedContent : ISceneContFent
     {
         private readonly URLDomain contentBaseUrl;
         private readonly Dictionary<string, string> fileToHash;

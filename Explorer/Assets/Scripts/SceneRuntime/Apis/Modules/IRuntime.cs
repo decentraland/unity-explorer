@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using Microsoft.ClearScript.JavaScript;
-using Nethereum.Web3;
-using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -34,8 +32,6 @@ namespace SceneRuntime.Apis.Modules
             public string hash;
         }
 
-        public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
-
         public struct GetRealmResponse
         {
             public RealmInfo realmInfo;
@@ -48,31 +44,29 @@ namespace SceneRuntime.Apis.Modules
             public int networkId;
             public string commsAdapter;
             public bool isPreview;
-
         }
 
         public struct CurrentSceneEntityResponse
         {
             /// <summary>
-            /// The URN of the scene running, which can be either the entityId or the full URN.
+            ///     The URN of the scene running, which can be either the entityId or the full URN.
             /// </summary>
             public string urn;
 
             /// <summary>
-            /// A list containing the contents of the deployed entities.
+            ///     A list containing the contents of the deployed entities.
             /// </summary>
             public List<ContentDefinition> contentMapping;
 
             /// <summary>
-            /// JSON serialization of the entity.metadata field.
+            ///     JSON serialization of the entity.metadata field.
             /// </summary>
             public string metadataJson;
 
             /// <summary>
-            /// The base URL used to resolve all content files.
+            ///     The base URL used to resolve all content files.
             /// </summary>
             public string baseUrl;
         }
-
     }
 }

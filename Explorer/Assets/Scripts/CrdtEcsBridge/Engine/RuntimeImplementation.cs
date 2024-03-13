@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
+using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -106,7 +107,7 @@ namespace CrdtEcsBridge.Engine
         }
 
         public async UniTask<IRuntime.CurrentSceneEntityResponse> GetSceneInformationAsync(CancellationToken ct) =>
-            new IRuntime.CurrentSceneEntityResponse()
+            new ()
             {
                 baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
                 contentMapping = sceneData.SceneEntityDefinition.content,
