@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Input;
+using DCL.NftInfoAPIService;
 using DCL.NftPrompt;
 using MVC;
 using System.Threading;
@@ -16,16 +17,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
+        private readonly INftInfoAPIService nftInfoAPIService;
         private NftPromptController nftPromptController;
 
         public NftPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             IWebBrowser webBrowser,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            INftInfoAPIService nftInfoAPIService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
+            this.nftInfoAPIService = nftInfoAPIService;
         }
 
         public async UniTask InitializeAsync(NftPromptSettings promptSettings, CancellationToken ct)
@@ -34,7 +38,8 @@ namespace DCL.PluginSystem.Global
                 NftPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.NftPromptPrefab, ct: ct)).Value.GetComponent<NftPromptView>(), null),
                 webBrowser,
-                new DCLCursor());
+                new DCLCursor(),
+                nftInfoAPIService);
 
             mvcManager.RegisterController(nftPromptController);
         }

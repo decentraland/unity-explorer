@@ -1,4 +1,5 @@
 ﻿using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,13 +7,21 @@ namespace DCL.NftPrompt
 {
     public class NftPromptView : ViewBase, IView
     {
-        [field: SerializeField]
-        public Button CloseButton { get; private set; }
-
-        [field: SerializeField]
-        public Button ViewOnOpenSeaButton { get; private set; }
-
-        [field: SerializeField]
-        public Button CancelButton { get; private set; }
+        [field: SerializeField] public GameObject NftContent { get; private set; }
+        [field: SerializeField] public GameObject MainErrorFeedbackContent { get; private set; }
+        [field: SerializeField] public GameObject ImageErrorFeedbackContent { get; private set; }
+        [field: SerializeField] public RawImage ImageNft { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextNftName { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextOwner { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextLastSaleNeverSold { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextPriceNotForSale { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextDescription { get; private set; }
+        [field: SerializeField] public GameObject ContainerDescription { get; private set; }
+        [field: SerializeField] public GameObject SpinnerGeneral { get; private set; }
+        [field: SerializeField] public GameObject SpinnerNftImage { get; private set; }
+        [field: SerializeField] public Button ButtonClose { get; private set; }
+        [field: SerializeField] public Button ButtonCancel { get; private set; }
+        [field: SerializeField] public Button ButtonOpenMarket { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextOpenMarketButton { get; private set; }
     }
 }

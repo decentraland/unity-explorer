@@ -76,6 +76,11 @@
         public const string NFT_SHAPE_WEB_REQUEST = nameof(NFT_SHAPE_WEB_REQUEST);
 
         /// <summary>
+        ///     Nft info related web request
+        /// </summary>
+        public const string NFT_INFO_WEB_REQUEST = nameof(NFT_INFO_WEB_REQUEST);
+
+        /// <summary>
         ///     Audio clip related web request
         /// </summary>
         public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);

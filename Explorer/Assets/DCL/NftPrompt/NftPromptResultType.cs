@@ -3,6 +3,6 @@
     public enum NftPromptResultType
     {
         Canceled,
-        ViewOnOpenSea,
+        ViewOnMarket,
     }
 }
