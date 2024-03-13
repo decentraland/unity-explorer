@@ -46,27 +46,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SecondsInDay: 86400
   PlayOnStart: 1
-  Speed: 60
-  NaturalTime: 0
-  NormalizedTime: 0
+  Speed: 120
+  NaturalTime: 43007
+  NormalizedTime: 0.4977662
   skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
   RefreshTime: 0
   DirectionalLight: {fileID: 0}
-  LightAnimation: {fileID: 7400000, guid: e8f593404f0a19749bc68df2b5064215, type: 2}
+  LightAnimation: {fileID: 7400000, guid: 3b17a8a5ab9ee104899eb22c70935c38, type: 2}
   DirectionalColorRamp:
     serializedVersion: 2
-    key0: {r: 0.5149178, g: 0.38642952, b: 1, a: 1}
-    key1: {r: 1.4980394, g: 1.0132561, b: 0.54268587, a: 1}
-    key2: {r: 1, g: 0.84575117, b: 0.84339625, a: 1}
-    key3: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
+    key0: {r: 0.5137255, g: 0.3882353, b: 1, a: 1}
+    key1: {r: 1.0000001, g: 0.87396705, b: 0.7500001, a: 1}
+    key2: {r: 1.2474749, g: 0.92898405, b: 0.6939738, a: 1}
+    key3: {r: 1, g: 0.84575117, b: 0.84339625, a: 0}
     key4: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
     key5: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
     key6: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
     key7: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
-    ctime0: 0
+    ctime0: 193
     ctime1: 18119
-    ctime2: 49151
-    ctime3: 65535
+    ctime2: 33731
+    ctime3: 49151
     ctime4: 65535
     ctime5: 65535
     ctime6: 65535
@@ -81,7 +81,7 @@ MonoBehaviour:
     atime7: 0
     m_Mode: 0
     m_ColorSpace: 0
-    m_NumColorKeys: 4
+    m_NumColorKeys: 5
     m_NumAlphaKeys: 2
   SkyZenitColorRamp:
     serializedVersion: 2
@@ -241,7 +241,7 @@ MonoBehaviour:
     key2: {r: 0.8679245, g: 0.65874356, b: 0.4462442, a: 0}
     key3: {r: 0.7317719, g: 0.6489298, b: 0.78699994, a: 0}
     key4: {r: 0.6841665, g: 0.5171769, b: 0.735849, a: 0}
-    key5: {r: 0.38803846, g: 0.4003983, b: 0.754717, a: 0}
+    key5: {r: 0.37254903, g: 0.38431373, b: 0.7647059, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 0
@@ -266,7 +266,7 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   GroundEquatorRamp:
     serializedVersion: 2
-    key0: {r: 0.5254475, g: 0.45874867, b: 0.5754717, a: 1}
+    key0: {r: 0.18039216, g: 0.050980393, b: 0.43529412, a: 1}
     key1: {r: 0.49056602, g: 0.3679245, b: 0.43800533, a: 1}
     key2: {r: 0.6320754, g: 0.42668915, b: 0.23553754, a: 0}
     key3: {r: 0.49056602, g: 0.3355511, b: 0.33090067, a: 0}
@@ -356,4 +356,4 @@ MonoBehaviour:
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
   textUI: {fileID: 0}
-  editMode: 0
+  editMode: 1
