@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace Editor
         private static readonly string[] Secrets =
             {"androidKeystorePass", "androidKeyaliasName", "androidKeyaliasPass"};
 
+        [UsedImplicitly]
         public static void Build()
         {
             // Gather values from args
@@ -80,7 +82,7 @@ namespace Editor
 #endif
 
             // Custom build
-            Build(buildTarget, buildSubtarget, options["customBuildPath"]);
+            Build(buildTarget, buildSubtarget, options);
         }
 
         private static Dictionary<string, string> GetValidatedOptions()
@@ -159,20 +161,33 @@ namespace Editor
             }
         }
 
-        private static void Build(BuildTarget buildTarget, int buildSubtarget, string filePath)
+        private static void Build(BuildTarget buildTarget, int buildSubtarget, Dictionary<string, string> options)
         {
             string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(s => s.path).ToArray();
             var buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = scenes,
                 target = buildTarget,
-//                targetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget),
-                locationPathName = filePath,
-//                options = UnityEditor.BuildOptions.Development
+                locationPathName = options["customBuildPath"],
 #if UNITY_2021_2_OR_NEWER
                 subtarget = buildSubtarget
 #endif
             };
+
+            buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
+
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD"))
+                || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_PROFILING")))
+            {
+                buildPlayerOptions.options |= BuildOptions.AllowDebugging;
+                buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
+                buildPlayerOptions.options |= BuildOptions.Development;
+            }
+
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_DEEP_PROFILING")))
+            {
+                buildPlayerOptions.options |= BuildOptions.EnableDeepProfilingSupport;
+            }
 
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
             ReportSummary(buildSummary);
