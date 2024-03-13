@@ -71,7 +71,7 @@ namespace DCL.LOD
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             var lodContainer = new GameObject("POOL_CONTAINER_LODS");
-            var lodDebugContainer = new GameObject("POOL_CONTAINER_LODS");
+            var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             var roadContainer = new GameObject("POOL_CONTAINER_ROADS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
             

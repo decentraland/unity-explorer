@@ -1,4 +1,5 @@
 ﻿using System;
+using Utility;
 
 namespace DCL.LOD
 {
@@ -30,6 +31,6 @@ namespace DCL.LOD
             HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash), Level);
 
         public override string ToString() =>
-            $"{Hash}_{Level}";
+            $"{Hash}_{Level}{PlatformUtils.GetPlatform()}";
     }
 }
