@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine.Animations.Rigging;
-using UnityEditor.SceneManagement;
 using ScriptableWizard = UnityEditor.ScriptableWizard;
 
 public class BoneHider : ScriptableWizard
