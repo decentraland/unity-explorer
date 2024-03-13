@@ -47,8 +47,6 @@ MonoBehaviour:
     ranges:
     - key: 1F3D4
       value: 1F3F0
-    - key: 1F5FA
-      value: 1F6A2
     - key: 1F6E3
       value: 1F6FC
     - key: 1F68A
@@ -60,7 +58,7 @@ MonoBehaviour:
     - key: 1F6A4
       value: 1F6AA
     - key: 1F9E0
-      value: 1F9FF
+      value: 1F9E2
   - title: Symbols and Signs
     ranges:
     - key: 1F1E6
