@@ -139,15 +139,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             List<ParamPromise>  collectionPromises = new List<ParamPromise>();
 
-            foreach (CollectionDescription s in avatarRandomizerAsset.RandomizeCollection)
-            {
-                collectionPromises.Add(ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[]
-                    {
-                        ("collectionType", s.pointer), ("pageSize", s.page_size),
-                    }, "DummyUser", new List<IWearable>(), 0),
-                    PartitionComponent.TOP_PRIORITY));
-            }
+            collectionPromises.Add(ParamPromise.Create(World,
+                new GetWearableByParamIntention(new[]
+                {
+                    ("collectionType", "base-wearable"), ("pageSize", "282")
+                }, "DummyUser", new List<IWearable>(), 0),
+                PartitionComponent.TOP_PRIORITY));
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
@@ -242,7 +239,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             }
             else
             {
-                transformComp.Transform.position = new Vector3(startXPosition + (avatarIndex), 5, startZPosition);
+                transformComp.Transform.position = new Vector3(startXPosition + avatarIndex * 2, 3, startZPosition);
             }
 
             transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";

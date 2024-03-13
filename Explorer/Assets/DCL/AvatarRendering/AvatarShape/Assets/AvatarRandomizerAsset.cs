@@ -10,20 +10,12 @@ namespace DCL.AvatarRendering
     {
         [field: SerializeField] public bool RandomOrder { get; set; }
         [field: SerializeField] public List<RandomizedAvatar> Avatars { get; set; }
-        [field: SerializeField] public List<CollectionDescription> RandomizeCollection { get; set; }
     }
 
     [Serializable]
     public class RandomizedAvatar
     {
         public List<string> pointers;
-    }
-    
-    [Serializable]
-    public class CollectionDescription
-    {
-        public string pointer;
-        public string page_size;
     }
 }
 
