@@ -93,13 +93,13 @@ namespace DCL.AvatarRendering.Emotes
                 };
 
                 model.metadata.thumbnail = "thumbnail";
-                model.metadata.data = new EmoteDTO.Metadata.Data();
-                model.metadata.data.hides = Array.Empty<string>();
-                model.metadata.data.replaces = Array.Empty<string>();
-                model.metadata.data.removesDefaultHiding = Array.Empty<string>();
-                model.metadata.data.tags = Array.Empty<string>();
-                model.metadata.data.loop = embeddedEmote.loop;
-                model.metadata.data.representations = Array.Empty<EmoteDTO.Metadata.Representation>();
+                model.metadata.emoteDataADR74 = new EmoteDTO.Metadata.Data();
+                model.metadata.emoteDataADR74.hides = Array.Empty<string>();
+                model.metadata.emoteDataADR74.replaces = Array.Empty<string>();
+                model.metadata.emoteDataADR74.removesDefaultHiding = Array.Empty<string>();
+                model.metadata.emoteDataADR74.tags = Array.Empty<string>();
+                model.metadata.emoteDataADR74.loop = embeddedEmote.loop;
+                model.metadata.emoteDataADR74.representations = Array.Empty<EmoteDTO.Metadata.Representation>();
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
                 emote.IsLoading = false;

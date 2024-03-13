@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Serialization;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.Emotes
         [Serializable]
         public struct Metadata
         {
-            public Data data;
+            public Data emoteDataADR74;
 
             //urn
             public string id;
@@ -68,14 +69,14 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Sanitize()
         {
-            metadata.data.hides = Array.Empty<string>();
-            metadata.data.replaces = Array.Empty<string>();
-            metadata.data.removesDefaultHiding = Array.Empty<string>();
+            metadata.emoteDataADR74.hides = Array.Empty<string>();
+            metadata.emoteDataADR74.replaces = Array.Empty<string>();
+            metadata.emoteDataADR74.removesDefaultHiding = Array.Empty<string>();
 
-            for (var i = 0; i < metadata.data.representations.Length; i++)
+            for (var i = 0; i < metadata.emoteDataADR74.representations.Length; i++)
             {
-                metadata.data.representations[i].overrideHides = Array.Empty<string>();
-                metadata.data.representations[i].overrideReplaces = Array.Empty<string>();
+                metadata.emoteDataADR74.representations[i].overrideHides = Array.Empty<string>();
+                metadata.emoteDataADR74.representations[i].overrideReplaces = Array.Empty<string>();
             }
         }
     }

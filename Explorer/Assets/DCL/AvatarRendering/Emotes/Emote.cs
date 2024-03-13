@@ -46,9 +46,9 @@ namespace DCL.AvatarRendering.Emotes
 
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
-            for (var i = 0; i < Model.Asset.metadata.data.representations.Length; i++)
+            for (var i = 0; i < Model.Asset.metadata.emoteDataADR74.representations.Length; i++)
             {
-                EmoteDTO.Metadata.Representation representation = Model.Asset.metadata.data.representations[i];
+                EmoteDTO.Metadata.Representation representation = Model.Asset.metadata.emoteDataADR74.representations[i];
 
                 if (representation.bodyShapes.Contains(bodyShape))
                 {
@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Emotes
             Model.Asset.metadata.name;
 
         public string GetCategory() =>
-            Model.Asset.metadata.data.category;
+            Model.Asset.metadata.emoteDataADR74.category;
 
         public string GetDescription() =>
             Model.Asset.metadata.description;
@@ -79,12 +79,12 @@ namespace DCL.AvatarRendering.Emotes
             Model.Asset.metadata.rarity ?? DEFAULT_RARITY;
 
         public bool IsUnisex() =>
-            Model.Asset.metadata.data.representations.Length > 1;
+            Model.Asset.metadata.emoteDataADR74.representations.Length > 1;
 
         public void GetHidingList(string bodyShapeType, HashSet<string> hideListResult)
         {
             EmoteDTO.Metadata.Representation? representation = GetRepresentation(bodyShapeType);
-            EmoteDTO.Metadata.Data data = Model.Asset.metadata.data;
+            EmoteDTO.Metadata.Data data = Model.Asset.metadata.emoteDataADR74;
 
             if (representation.HasValue)
             {
@@ -121,7 +121,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
-            foreach (EmoteDTO.Metadata.Representation dataRepresentation in Model.Asset.metadata.data.representations)
+            foreach (EmoteDTO.Metadata.Representation dataRepresentation in Model.Asset.metadata.emoteDataADR74.representations)
             {
                 if (dataRepresentation.bodyShapes.Contains(bodyShape))
                     return true;
@@ -141,14 +141,14 @@ namespace DCL.AvatarRendering.Emotes
             EmoteDTO.Metadata.Representation? representation = GetRepresentation(bodyShapeType);
 
             if (representation?.overrideReplaces == null || representation?.overrideReplaces.Length == 0)
-                return Model.Asset.metadata.data.replaces;
+                return Model.Asset.metadata.emoteDataADR74.replaces;
 
             return representation?.overrideReplaces;
         }
 
         private EmoteDTO.Metadata.Representation? GetRepresentation(string bodyShapeType)
         {
-            foreach (EmoteDTO.Metadata.Representation representation in Model.Asset.metadata.data.representations)
+            foreach (EmoteDTO.Metadata.Representation representation in Model.Asset.metadata.emoteDataADR74.representations)
                 if (representation.bodyShapes.Contains(bodyShapeType))
                     return representation;
 

@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -74,6 +75,8 @@ namespace DCL.AvatarRendering.Emotes
 
             GetEmotesFromRealmQuery(World);
             FinalizeEmoteDTOQuery(World);
+            FinalizeAssetBundleManifestLoadingQuery(World);
+            FinalizeAssetBundleLoadingQuery(World);
         }
 
         protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
@@ -145,7 +148,6 @@ namespace DCL.AvatarRendering.Emotes
             List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
 
             var successfulResults = 0;
-            var successfulDtos = 0;
             var processedDtos = 0;
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
@@ -181,10 +183,7 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 if (emote.Model.Succeeded)
-                {
-                    successfulDtos++;
                     resolvedEmotesTmp.Add(emote);
-                }
 
                 processedDtos++;
             }
@@ -205,7 +204,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (processedDtos == intention.Pointers.Count)
             {
-                foreach (IEmote? emote in resolvedEmotesTmp)
+                foreach (IEmote emote in resolvedEmotesTmp)
                 {
                     if (emote.IsLoading) continue;
                     if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
@@ -269,6 +268,48 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+        [Query]
+        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise,
+            ref IEmote emote)
+        {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            {
+                if (result.Succeeded)
+                    emote.ManifestResult = result;
+
+                emote.IsLoading = false;
+                World.Destroy(entity);
+            }
+        }
+
+        [Query]
+        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise,
+            ref IEmote emote, ref BodyShape bodyShape)
+        {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            {
+                if (result.Succeeded)
+                    SetWearableResult(emote, result, in bodyShape);
+
+                emote.IsLoading = false;
+                World.Destroy(entity);
+            }
+        }
+
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Manifest is required for Web loading only
@@ -302,6 +343,19 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             return false;
+        }
+
+        private static void SetWearableResult(IEmote emote, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
+        {
+            StreamableLoadingResult<WearableAsset> wearableResult = result.ToWearableAsset();
+
+            if (emote.IsUnisex())
+            {
+                emote.WearableAssetResults[BodyShape.MALE] = wearableResult;
+                emote.WearableAssetResults[BodyShape.FEMALE] = wearableResult;
+            }
+            else
+                emote.WearableAssetResults[bodyShape] = wearableResult;
         }
     }
 }
