@@ -46,9 +46,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SecondsInDay: 86400
   PlayOnStart: 1
-  Speed: 60
-  NaturalTime: 9628.886
-  NormalizedTime: 0.111445434
+  Speed: 120
+  NaturalTime: 43007
+  NormalizedTime: 0.4977662
   skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
   RefreshTime: 0
   DirectionalLight: {fileID: 0}
@@ -56,8 +56,8 @@ MonoBehaviour:
   DirectionalColorRamp:
     serializedVersion: 2
     key0: {r: 0.5137255, g: 0.3882353, b: 1, a: 1}
-    key1: {r: 1.4980394, g: 1.0132561, b: 0.54268587, a: 1}
-    key2: {r: 2.4949498, g: 1.8579681, b: 1.3879476, a: 1}
+    key1: {r: 1.0000001, g: 0.87396705, b: 0.7500001, a: 1}
+    key2: {r: 1.2474749, g: 0.92898405, b: 0.6939738, a: 1}
     key3: {r: 1, g: 0.84575117, b: 0.84339625, a: 0}
     key4: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
     key5: {r: 0.5149178, g: 0.38642952, b: 1, a: 0}
