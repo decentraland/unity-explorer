@@ -9,6 +9,7 @@ namespace ECS
     public readonly struct RealmComponent
     {
         public IIpfsRealm Ipfs => realmData.Ipfs;
+        public IRealmData RealmData => realmData;
 
         /// <summary>
         ///     Indicates that the realm contains a fixed number of scenes
