@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             public EmbeddedEmotesReference EmbeddedEmotes { get; set; } = null!;
 
             [Serializable]
-            public class EmbeddedEmotesReference : AssetReferenceT<EmbedEmotesData>
+            public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>
             {
                 public EmbeddedEmotesReference(string guid) : base(guid) { }
             }

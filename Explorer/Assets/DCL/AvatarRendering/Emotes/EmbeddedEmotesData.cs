@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ using UnityEditor;
 namespace DCL.AvatarRendering.Emotes
 {
     [Serializable]
-    public struct EmbedEmote
+    public struct EmbeddedEmote
     {
         public string id;
         public string name;
@@ -21,13 +22,15 @@ namespace DCL.AvatarRendering.Emotes
         public GameObject propModel;
         public AudioClip audioClip;
         public Sprite thumbnail;
-        public bool loop;
+        public GameObject glbMale;
+        public GameObject glbFemale;
+        public EmoteDTO.Metadata.Data entity;
     }
 
     [CreateAssetMenu(menuName = "DCL/Emotes/EmbedEmotes")]
-    public class EmbedEmotesData : ScriptableObject
+    public class EmbeddedEmotesData : ScriptableObject
     {
-        public EmbedEmote[] emotes;
+        public EmbeddedEmote[] emotes;
 
         private List<IEmote>? generatedEmotes;
 
@@ -37,7 +40,7 @@ namespace DCL.AvatarRendering.Emotes
 
             generatedEmotes = new List<IEmote>();
 
-            foreach (EmbedEmote embeddedEmote in emotes)
+            foreach (EmbeddedEmote embeddedEmote in emotes)
             {
                 var emote = new Emote();
                 var model = new EmoteDTO();
@@ -93,24 +96,23 @@ namespace DCL.AvatarRendering.Emotes
                 };
 
                 model.metadata.thumbnail = "thumbnail";
-                model.metadata.emoteDataADR74 = new EmoteDTO.Metadata.Data();
-                model.metadata.emoteDataADR74.hides = Array.Empty<string>();
-                model.metadata.emoteDataADR74.replaces = Array.Empty<string>();
-                model.metadata.emoteDataADR74.removesDefaultHiding = Array.Empty<string>();
-                model.metadata.emoteDataADR74.tags = Array.Empty<string>();
-                model.metadata.emoteDataADR74.loop = embeddedEmote.loop;
-                model.metadata.emoteDataADR74.representations = Array.Empty<EmoteDTO.Metadata.Representation>();
+                model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
                 emote.IsLoading = false;
                 emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
 
-                // TODO: initialize valid assets
-                emote.WearableAssetResults[BodyShape.MALE] = new StreamableLoadingResult<WearableAsset>(new Exception("Missing asset resolving"));
-                emote.WearableAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<WearableAsset>(new Exception("Missing asset resolving"));
+                // TODO: solve rendererInfos (?)
+                if (embeddedEmote.glbMale != null)
+                    emote.WearableAssetResults[BodyShape.MALE] = new StreamableLoadingResult<WearableAsset>(
+                        new WearableAsset(embeddedEmote.glbMale, new List<WearableAsset.RendererInfo>(), null));
+
+                if (embeddedEmote.glbFemale != null)
+                    emote.WearableAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<WearableAsset>(
+                        new WearableAsset(embeddedEmote.glbFemale, new List<WearableAsset.RendererInfo>(), null));
 
                 // TODO: initialize manifest (?)
-                emote.ManifestResult = null;
+                emote.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception($"No existing asset bundle manifest for embedded emote {embeddedEmote.id}"));
 
                 generatedEmotes.Add(emote);
             }
@@ -123,7 +125,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (emotes.Length == 0)
             {
-                var emotes = new List<EmbedEmote>();
+                var emotes = new List<EmbeddedEmote>();
 
                 string[] clipGUIDs = AssetDatabase.FindAssets("t:AnimationClip", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbedEmotes/Animations/" });
                 string[] thumbGUIDs = AssetDatabase.FindAssets("t:Sprite", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbedEmotes/Thumbnails" });
@@ -147,7 +149,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 foreach (AnimationClip clip in clips)
                 {
-                    emotes.Add(new EmbedEmote
+                    emotes.Add(new EmbeddedEmote
                     {
                         avatarClip = clip,
                         id = clip.name,

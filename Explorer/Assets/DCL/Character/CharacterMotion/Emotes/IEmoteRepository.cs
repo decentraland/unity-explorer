@@ -15,13 +15,13 @@ namespace DCL.CharacterMotion.Emotes
     // PLACEHOLDER CLASS
     public class EmoteRepository : IEmoteRepository
     {
-        private EmbedEmotesData embedEmotesData;
+        private EmbeddedEmotesData embedEmotesData;
         private Dictionary<string, EmoteData> emotes = new ();
 
         // todo: we want this here?
         private Dictionary<int, string> hotkeyEmotes = new ();
 
-        public EmoteRepository(EmbedEmotesData embedEmotesData)
+        public EmoteRepository(EmbeddedEmotesData embedEmotesData)
         {
             this.embedEmotesData = embedEmotesData;
 

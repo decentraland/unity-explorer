@@ -147,8 +147,7 @@ namespace DCL.AvatarRendering.Emotes
             List<URN> missingPointersTmp = ListPool<URN>.Get();
             List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
 
-            var successfulResults = 0;
-            var processedDtos = 0;
+            var requestedEmotes = 0;
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
@@ -159,7 +158,7 @@ namespace DCL.AvatarRendering.Emotes
                         "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
                     );
 
-                    processedDtos++;
+                    requestedEmotes++;
 
                     continue;
                 }
@@ -172,7 +171,7 @@ namespace DCL.AvatarRendering.Emotes
                     // Many embedded emotes do not have a valid 'urn:...', like 'confettipopper'
                     // In case there is no available embedded emote, mark it as processed anyway so the intention is resolved
                     if (!shortenedPointer.IsValid())
-                        processedDtos++;
+                        requestedEmotes++;
                     else if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
                     {
                         missingPointersTmp.Add(shortenedPointer);
@@ -185,7 +184,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (emote.Model.Succeeded)
                     resolvedEmotesTmp.Add(emote);
 
-                processedDtos++;
+                requestedEmotes++;
             }
 
             if (missingPointersTmp.Count > 0)
@@ -202,17 +201,23 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (processedDtos == intention.Pointers.Count)
+            var emotesWithResponse = 0;
+
+            if (requestedEmotes == intention.Pointers.Count)
             {
                 foreach (IEmote emote in resolvedEmotesTmp)
                 {
                     if (emote.IsLoading) continue;
                     if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
 
+                    if (emote.WearableAssetResults[intention.BodyShape] != null)
+
+                        // TODO: it may occur that the requested emote does not support the body shape
+                        // If that is the case, the promise will never be resolved
+                        emotesWithResponse++;
+
                     if (emote.WearableAssetResults[intention.BodyShape] is { Succeeded: true })
                     {
-                        successfulResults++;
-
                         // Reference must be added only once when the wearable is resolved
                         if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
                         {
@@ -225,7 +230,7 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            if (successfulResults == intention.Pointers.Count)
+            if (emotesWithResponse == intention.Pointers.Count)
                 World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList())));
 
             ListPool<URN>.Release(missingPointersTmp);
@@ -303,7 +308,17 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
-                    SetWearableResult(emote, result, in bodyShape);
+                {
+                    StreamableLoadingResult<WearableAsset> asset = result.ToWearableAsset();
+
+                    if (emote.IsUnisex())
+                    {
+                        emote.WearableAssetResults[BodyShape.MALE] = asset;
+                        emote.WearableAssetResults[BodyShape.FEMALE] = asset;
+                    }
+                    else
+                        emote.WearableAssetResults[bodyShape] = asset;
+                }
 
                 emote.IsLoading = false;
                 World.Destroy(entity);
@@ -343,19 +358,6 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             return false;
-        }
-
-        private static void SetWearableResult(IEmote emote, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
-        {
-            StreamableLoadingResult<WearableAsset> wearableResult = result.ToWearableAsset();
-
-            if (emote.IsUnisex())
-            {
-                emote.WearableAssetResults[BodyShape.MALE] = wearableResult;
-                emote.WearableAssetResults[BodyShape.FEMALE] = wearableResult;
-            }
-            else
-                emote.WearableAssetResults[bodyShape] = wearableResult;
         }
     }
 }

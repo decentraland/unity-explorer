@@ -188,7 +188,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 }
                 else
                 {
-                    WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
+                    WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape)!;
 
                     if (originalAsset.GameObject == null)
                     {

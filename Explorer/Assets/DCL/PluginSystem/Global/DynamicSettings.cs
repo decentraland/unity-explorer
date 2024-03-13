@@ -31,6 +31,6 @@ namespace DCL.PluginSystem.Global
         public AssetReferenceT<NametagsData> NametagsData { get; private set; }
 
         [field: SerializeField]
-        public AssetReferenceT<EmbedEmotesData> EmbeddedEmotes { get; private set; }
+        public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; private set; }
     }
 }
