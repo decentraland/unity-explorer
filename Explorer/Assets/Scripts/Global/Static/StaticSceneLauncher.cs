@@ -124,7 +124,7 @@ namespace Global.Static
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
                 new MVCManager(new WindowStackManager(), new CancellationTokenSource(), null),
-                identityCache, profileRepository);
+                identityCache, profileRepository, null);
 
             return (staticContainer, sceneSharedContainer);
         }
