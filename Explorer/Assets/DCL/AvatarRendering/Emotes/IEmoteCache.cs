@@ -7,6 +7,8 @@ namespace DCL.AvatarRendering.Emotes
     {
         bool TryGetEmote(URN urn, out IEmote emote);
 
+        void Set(URN urn, IEmote emote);
+
         IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true);
 
         void Unload(IPerformanceBudget frameTimeBudget);

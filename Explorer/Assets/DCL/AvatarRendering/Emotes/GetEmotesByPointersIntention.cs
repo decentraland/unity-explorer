@@ -1,4 +1,6 @@
+using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -12,12 +14,20 @@ namespace DCL.AvatarRendering.Emotes
 
         public IReadOnlyCollection<URN> Pointers { get; }
         public HashSet<URN> ProcessedPointers { get; }
+        public HashSet<URN> SuccessfulPointers { get; }
+        public AssetSource PermittedSources { get; }
+        public BodyShape BodyShape { get; }
 
-        public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers) : this()
+        public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            AssetSource permittedSources = AssetSource.ALL) : this()
         {
             Pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
             ProcessedPointers = new HashSet<URN>();
+            SuccessfulPointers = new HashSet<URN>();
+            PermittedSources = permittedSources;
+            BodyShape = bodyShape;
         }
 
         public bool Equals(GetEmotesByPointersIntention other) =>

@@ -270,9 +270,9 @@ namespace DCL.Backpack
             ct.ThrowIfCancellationRequested();
 
             do { await UniTask.Delay(250, cancellationToken: ct); }
-            while (itemWearable.WearableThumbnail == null);
+            while (itemWearable.ThumbnailAssetResult == null);
 
-            itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            itemView.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
         }
 

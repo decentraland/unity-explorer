@@ -77,9 +77,9 @@ namespace DCL.Backpack
             {
                 await UniTask.Delay(MINIMUM_WAIT_TIME, cancellationToken: ct);
             }
-            while (itemWearable.WearableThumbnail == null);
+            while (itemWearable.ThumbnailAssetResult == null);
 
-            view.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            view.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
             view.LoadingSpinner.SetActive(false);
             view.WearableThumbnail.gameObject.SetActive(true);
         }

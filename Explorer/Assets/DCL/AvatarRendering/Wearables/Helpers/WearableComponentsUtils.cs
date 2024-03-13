@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
-                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
                 return;
             }
 

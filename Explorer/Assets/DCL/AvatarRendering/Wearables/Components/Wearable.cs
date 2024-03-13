@@ -19,13 +19,11 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
-        public StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
+        public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
         public bool IsLoading { get; set; } = true;
-        public bool IsLoadSuccess => WearableDTO.Succeeded;
 
         public URLPath GetThumbnail()
         {
-            WearableDTO.Asset.Sanitize();
             string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
 
             if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)

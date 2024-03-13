@@ -150,9 +150,9 @@ namespace DCL.Backpack
             {
                 await UniTask.Delay(MIN_WAIT_TIME, cancellationToken: ct);
             }
-            while (equippedWearable.WearableThumbnail == null);
+            while (equippedWearable.ThumbnailAssetResult == null);
 
-            avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = equippedWearable.WearableThumbnail.Value.Asset;
+            avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = equippedWearable.ThumbnailAssetResult.Value.Asset;
             avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.gameObject.SetActive(true);
             avatarSlotView.LoadingView.FinishLoadingAnimation(avatarSlotView.NftContainer);
         }

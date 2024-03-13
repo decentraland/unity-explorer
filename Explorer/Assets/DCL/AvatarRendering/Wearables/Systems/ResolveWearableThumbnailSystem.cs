@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2D> result))
             {
-                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(
+                wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
                     result.Succeeded
                         ? Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height),
                             VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)

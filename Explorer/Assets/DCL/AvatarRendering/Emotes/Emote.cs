@@ -16,14 +16,13 @@ namespace DCL.AvatarRendering.Emotes
 
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
-        public StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
+        public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
         public bool IsLoading { get; set; } = true;
         public bool IsLoadSuccess => Model.Succeeded;
 
         public URLPath GetThumbnail()
         {
-            Model.Asset.Sanitize();
             string thumbnailHash = Model.Asset.metadata.thumbnail;
 
             if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)

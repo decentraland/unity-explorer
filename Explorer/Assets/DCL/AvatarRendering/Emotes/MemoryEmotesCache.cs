@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -19,6 +20,9 @@ namespace DCL.AvatarRendering.Emotes
             UpdateListedCachePriority(@for: urn);
             return true;
         }
+
+        public void Set(URN urn, IEmote emote) =>
+            emotes[urn] = emote;
 
         public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
             TryGetEmote(emoteDto.metadata.id, out IEmote existingEmote)

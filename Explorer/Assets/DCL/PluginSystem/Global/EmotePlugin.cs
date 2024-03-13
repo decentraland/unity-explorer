@@ -1,10 +1,13 @@
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -33,10 +36,17 @@ namespace DCL.PluginSystem.Global
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 new MutexSync(),
-                emoteCache, realmData);
+                emoteCache, realmData,
+                URLSubdirectory.FromString("/Emotes/"));
         }
 
-        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct) { }
+        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
+        {
+            IEnumerable<IEmote> embeddedEmotes = settings.EmbeddedEmotes.editorAsset.GenerateEmotes();
+
+            foreach (IEmote embeddedEmote in embeddedEmotes)
+                emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
+        }
 
         [Serializable]
         public class EmoteSettings : IDCLPluginSettings

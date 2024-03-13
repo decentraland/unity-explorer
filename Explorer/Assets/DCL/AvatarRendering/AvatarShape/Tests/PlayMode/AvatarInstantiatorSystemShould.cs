@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                     { "skin", "hair" }, Array.Empty<string>()),
                 partitionComponent);
 
-            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new URN[] { "clap" }), partitionComponent);
+            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new URN[] { "clap" }, BodyShape.MALE), partitionComponent);
 
             world.Add(wearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {

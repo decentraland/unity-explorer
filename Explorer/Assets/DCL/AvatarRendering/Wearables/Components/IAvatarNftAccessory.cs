@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; }
-        StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
+        StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
 
         string GetMainFileHash(BodyShape bodyShape);
 

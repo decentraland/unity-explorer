@@ -2,8 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using AssetManagement;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -12,20 +14,26 @@ using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Multithreading;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
-using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -40,7 +48,7 @@ namespace DCL.AvatarRendering.Emotes
         private static readonly ThreadSafeListPool<EmoteDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
 
         private readonly StringBuilder bodyBuilder = new ();
-
+        private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
@@ -50,12 +58,14 @@ namespace DCL.AvatarRendering.Emotes
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             MutexSync mutexSync,
             IEmoteCache emoteCache,
-            IRealmData realmData)
+            IRealmData realmData,
+            URLSubdirectory customStreamingSubdirectory)
             : base(world, cache, mutexSync)
         {
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
+            this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
         protected override void Update(float t)
@@ -63,7 +73,7 @@ namespace DCL.AvatarRendering.Emotes
             base.Update(t);
 
             GetEmotesFromRealmQuery(World);
-            FinalizeWearableDTOQuery(World);
+            FinalizeEmoteDTOQuery(World);
         }
 
         protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
@@ -131,23 +141,23 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            List<URN> missingPointers = ListPool<URN>.Get();
-            List<IEmote> resolvedEmotes = ListPool<IEmote>.Get();
+            List<URN> missingPointersTmp = ListPool<URN>.Get();
+            List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
 
             var successfulResults = 0;
             var successfulDtos = 0;
+            var processedDtos = 0;
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
-                if (intention.ProcessedPointers.Contains(loadingIntentionPointer)) continue;
-                intention.ProcessedPointers.Add(loadingIntentionPointer);
-
                 if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
                         GetReportCategory(),
                         "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
                     );
+
+                    processedDtos++;
 
                     continue;
                 }
@@ -157,45 +167,74 @@ namespace DCL.AvatarRendering.Emotes
 
                 if (!emoteCache.TryGetEmote(shortenedPointer, out IEmote emote))
                 {
-                    // wearableCatalog.AddEmptyWearable(shortenedPointer);
-                    missingPointers.Add(shortenedPointer);
+                    // Many embedded emotes do not have a valid 'urn:...', like 'confettipopper'
+                    // In case there is no available embedded emote, mark it as processed anyway so the intention is resolved
+                    if (!shortenedPointer.IsValid())
+                        processedDtos++;
+                    else if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
+                    {
+                        missingPointersTmp.Add(shortenedPointer);
+                        intention.ProcessedPointers.Add(loadingIntentionPointer);
+                    }
+
                     continue;
                 }
 
                 if (emote.Model.Succeeded)
                 {
                     successfulDtos++;
-                    resolvedEmotes.Add(emote);
+                    resolvedEmotesTmp.Add(emote);
                 }
+
+                processedDtos++;
             }
 
-            if (missingPointers.Count > 0)
+            if (missingPointersTmp.Count > 0)
             {
-                var promise = EmotesFromRealmPromise.Create(World, new GetEmotesByPointersFromRealmIntention(missingPointers,
+                var promise = EmotesFromRealmPromise.Create(World, new GetEmotesByPointersFromRealmIntention(missingPointersTmp.ToList(),
                         new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)),
                     partitionComponent);
 
-                World.Create(promise, partitionComponent);
+                World.Create(promise, intention.BodyShape, partitionComponent);
 
-                ListPool<URN>.Release(missingPointers);
-                ListPool<IEmote>.Release(resolvedEmotes);
+                ListPool<URN>.Release(missingPointersTmp);
+                ListPool<IEmote>.Release(resolvedEmotesTmp);
 
                 return;
             }
 
-            if (successfulDtos == intention.Pointers.Count) { }
-
-            if (successfulResults == intention.Pointers.Count)
+            if (processedDtos == intention.Pointers.Count)
             {
-                // World.Add(entity, new StreamableResult(new EmotesResolution(hideWearablesResolution.VisibleWearables, hideWearablesResolution.HiddenCategories)));
+                foreach (IEmote? emote in resolvedEmotesTmp)
+                {
+                    if (emote.IsLoading) continue;
+                    if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
+
+                    if (emote.WearableAssetResults[intention.BodyShape] is { Succeeded: true })
+                    {
+                        successfulResults++;
+
+                        // Reference must be added only once when the wearable is resolved
+                        if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
+                        {
+                            intention.SuccessfulPointers.Add(emote.GetUrn());
+
+                            // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                            emote.WearableAssetResults[intention.BodyShape]?.Asset.AddReference();
+                        }
+                    }
+                }
             }
 
-            ListPool<URN>.Release(missingPointers);
-            ListPool<IEmote>.Release(resolvedEmotes);
+            if (successfulResults == intention.Pointers.Count)
+                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList())));
+
+            ListPool<URN>.Release(missingPointersTmp);
+            ListPool<IEmote>.Release(resolvedEmotesTmp);
         }
 
         [Query]
-        private void FinalizeWearableDTO(in Entity entity,
+        private void FinalizeEmoteDTO(in Entity entity,
             ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise,
             ref IPartitionComponent partitionComponent)
         {
@@ -228,6 +267,41 @@ namespace DCL.AvatarRendering.Emotes
 
                 World.Destroy(entity);
             }
+        }
+
+        private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
+        {
+            // Manifest is required for Web loading only
+            if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
+            {
+                var promise = AssetBundleManifestPromise.Create(World,
+                    new GetWearableAssetBundleManifestIntention(component.GetHash(),
+                        new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: intention.CancellationTokenSource)),
+                    partitionComponent);
+
+                component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
+                component.IsLoading = true;
+                World.Create(promise, component, intention.BodyShape);
+                return true;
+            }
+
+            if (component.WearableAssetResults[intention.BodyShape] == null)
+            {
+                SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
+
+                var promise = AssetBundlePromise.Create(World,
+                    GetAssetBundleIntention.FromHash(component.GetMainFileHash(intention.BodyShape) + PlatformUtils.GetPlatform(),
+                        permittedSources: intention.PermittedSources,
+                        customEmbeddedSubDirectory: customStreamingSubdirectory,
+                        manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),
+                    partitionComponent);
+
+                component.IsLoading = true;
+                World.Create(promise, component, intention.BodyShape);
+                return true;
+            }
+
+            return false;
         }
     }
 }
