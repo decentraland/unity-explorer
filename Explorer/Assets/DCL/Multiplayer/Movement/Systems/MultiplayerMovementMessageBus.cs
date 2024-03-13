@@ -1,11 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Connections.Typing;
+using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
+using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -14,9 +16,9 @@ using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Multithreading;
 using Utility.PriorityQueue;
 using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
-using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.System
 {
@@ -27,7 +29,6 @@ namespace DCL.Multiplayer.Movement.System
         public readonly Dictionary<string, SimplePriorityQueue<FullMovementMessage>> InboxByParticipantMap = new ();
 
         private readonly IRoomHub roomHub;
-        private IMultiplayerMovementSettings settings;
 
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
@@ -41,44 +42,32 @@ namespace DCL.Multiplayer.Movement.System
             this.multiPool = multiPool;
             packetParser = new MessageParser<Packet>(multiPool.Get<Packet>);
 
-            if (roomHub.IslandRoom() is IslandRoomMock)
-            {
-                roomHub.IslandRoom().DataPipe.DataReceived += InboxSelfMessageWithDelay;
-                // roomHub.SceneRoom().DataPipe.DataReceived += InboxSelfMessageWithDelay;
-            }
-            else
-            {
-                roomHub.IslandRoom().DataPipe.DataReceived += InboxDeserializedMessage;
-                roomHub.SceneRoom().DataPipe.DataReceived += InboxDeserializedMessage;
-            }
+            roomHub.IslandRoom().DataPipe.DataReceived += InboxMessage;
+            roomHub.SceneRoom().DataPipe.DataReceived += InboxMessage;
         }
 
         ~MultiplayerMovementMessageBus()
         {
-            if (roomHub.IslandRoom() is IslandRoomMock)
-            {
-                roomHub.IslandRoom().DataPipe.DataReceived -= InboxSelfMessageWithDelay;
-                // roomHub.SceneRoom().DataPipe.DataReceived -= InboxSelfMessageWithDelay;
-            }
-            else
-            {
-                roomHub.IslandRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
-                roomHub.SceneRoom().DataPipe.DataReceived -= InboxDeserializedMessage;
-            }
+            roomHub.IslandRoom().DataPipe.DataReceived -= InboxMessage;
+            roomHub.SceneRoom().DataPipe.DataReceived -= InboxMessage;
         }
 
-        public void SetSettings(IMultiplayerMovementSettings settings)
+        private void InboxMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            this.settings = settings;
+            if (TryParse(data, out Packet? response) == false)
+                return;
+
+            if (response!.MessageCase is Packet.MessageOneofCase.Movement)
+                HandleAsync(new SmartWrap<Packet>(response, multiPool), participant).Forget();
         }
 
         public void Send(Vector3 position, Vector3 velocity, AnimationStates animState, bool isStunned)
         {
-            using var wrap = multiPool.TempResource<Packet>();
-            var packet = wrap.value;
+            using SmartWrap<Packet> wrap = multiPool.TempResource<Packet>();
+            Packet? packet = wrap.value;
 
-            using var chatWrap = multiPool.TempResource<Decentraland.Kernel.Comms.Rfc4.Movement>();
-            packet.Movement = chatWrap.value;
+            using SmartWrap<Decentraland.Kernel.Comms.Rfc4.Movement> moveWrap = multiPool.TempResource<Decentraland.Kernel.Comms.Rfc4.Movement>();
+            packet.Movement = moveWrap.value;
 
             {
                 packet.Movement.Timestamp = UnityEngine.Time.unscaledTime;
@@ -103,7 +92,7 @@ namespace DCL.Multiplayer.Movement.System
                 packet.Movement.IsStunned = isStunned;
             }
 
-            using var memoryWrap = memoryPool.Memory(packet);
+            using MemoryWrap memoryWrap = memoryPool.Memory(packet);
             packet.WriteTo(memoryWrap);
 
             Send(memoryWrap.Span());
@@ -117,27 +106,59 @@ namespace DCL.Multiplayer.Movement.System
 
         private static void Send(IRoom room, Span<byte> data)
         {
-            room.DataPipe.PublishData(data, TOPIC, room.Participants.RemoteParticipantSids(), DataPacketKind.KindReliable);
+            room.DataPipe.PublishData(data, TOPIC, room.Participants.RemoteParticipantSids());
         }
 
-        private void InboxSelfMessageWithDelay(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        private bool TryParse(ReadOnlySpan<byte> data, out Packet? packet)
         {
-            if (settings == null) return;
+            try
+            {
+                packet = packetParser.ParseFrom(data).EnsureNotNull();
+                return true;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(
+                    ReportCategory.ARCHIPELAGO_REQUEST,
+                    $"Someone sent invalid packet: {data.Length} {data.HexReadableString()} {e}"
+                );
 
-            FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
-
-            if (message != null)
-                UniTask.Delay(TimeSpan.FromSeconds(settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))))
-                       .ContinueWith(() => Inbox(message.Value, @for: RemotePlayerMovementComponent.TEST_ID))
-                       .Forget();
+                packet = null;
+                return false;
+            }
         }
 
-        private void InboxDeserializedMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        private async UniTaskVoid HandleAsync(SmartWrap<Packet> packet, Participant participant)
         {
-            FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
+            using (packet)
+            {
+                await using var _ = await ExecuteOnMainThreadScope.NewScopeAsync();
 
-            if (message != null)
-                Inbox(message.Value, @for: participant.Identity); // TODO (Vit): filter out Island messages if Participant is presented in the Room
+                if (packet.value.Movement != null) // TODO (Vit): filter out Island messages if Participant is presented in the Room
+                {
+                    Decentraland.Kernel.Comms.Rfc4.Movement proto = packet.value.Movement;
+
+                    FullMovementMessage message = new FullMovementMessage
+                    {
+                        timestamp = proto.Timestamp,
+                        position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
+                        velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
+                        animState = new AnimationStates
+                        {
+                            MovementBlendValue = proto.MovementBlendValue,
+                            SlideBlendValue = proto.SlideBlendValue,
+                            IsGrounded = proto.IsGrounded,
+                            IsJumping = proto.IsJumping,
+                            IsLongJump = proto.IsLongJump,
+                            IsFalling = proto.IsFalling,
+                            IsLongFall = proto.IsLongFall,
+                        },
+                        isStunned = proto.IsStunned,
+                    };
+
+                    Inbox(message, participant.Identity);
+                }
+            }
         }
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
@@ -152,5 +173,18 @@ namespace DCL.Multiplayer.Movement.System
                 InboxByParticipantMap.Add(@for, newQueue);
             }
         }
+
+        // private void InboxSelfMessageWithDelay(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        // {
+        //     if (settings == null) return;
+        //
+        //     FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
+        //
+        //     if (message != null)
+        //         UniTask.Delay(TimeSpan.FromSeconds(settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))))
+        //                .ContinueWith(() => Inbox(message.Value, @for: RemotePlayerMovementComponent.TEST_ID))
+        //                .Forget();
+        // }
+
     }
 }

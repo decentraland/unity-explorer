@@ -33,7 +33,9 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.spatialStateSettings, ct);
-            messageBus.SetSettings(this.settings.Value);
+
+            // if()
+            // messageBus.SetSettings(this.settings.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
