@@ -33,9 +33,7 @@ namespace SceneRuntime.Apis.Modules
             public ITypedArray<byte> content;
             public string hash;
         }
-
-        public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
-
+        
         public struct GetRealmResponse
         {
             public RealmInfo realmInfo;
