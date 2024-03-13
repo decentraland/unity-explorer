@@ -31,6 +31,7 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement.System;
 using DCL.Nametags;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
@@ -226,7 +227,9 @@ namespace Global.Dynamic
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner,
-                  roomHub // new RoomHub(new IslandRoomMock(), new IslandRoomMock())
+                    new MultiplayerMovementMessageBus(
+                        roomHub // new RoomHub(new IslandRoomMock(), new IslandRoomMock())
+                      ,memoryPool, multiPool)
                   , staticContainer.CharacterContainer.CharacterObject),
             };
 

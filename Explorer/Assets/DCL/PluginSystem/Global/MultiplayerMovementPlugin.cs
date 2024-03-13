@@ -2,8 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Movement.System;
 using System.Threading;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
 using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.Systems.RemotePlayersMovementSystem;
@@ -13,15 +13,15 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IRoomHub roomHub;
+        private readonly MultiplayerMovementMessageBus messageBus;
         private readonly ICharacterObject characterObject;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, IRoomHub roomHub, ICharacterObject characterObject)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, ICharacterObject characterObject)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.roomHub = roomHub;
+            this.messageBus = messageBus;
             this.characterObject = characterObject;
         }
 
@@ -33,12 +33,13 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.spatialStateSettings, ct);
+            messageBus.SetSettings(this.settings.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, roomHub, settings.Value, characterObject.Controller);
-            RemotePlayersMovementSystem.InjectToWorld(ref builder, roomHub, settings.Value);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, characterObject.Controller);
+            RemotePlayersMovementSystem.InjectToWorld(ref builder, messageBus, settings.Value);
         }
     }
 }

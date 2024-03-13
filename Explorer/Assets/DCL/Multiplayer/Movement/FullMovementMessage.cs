@@ -1,6 +1,6 @@
-﻿using DCL.CharacterMotion.Components;
-using System;
+﻿using System;
 using UnityEngine;
+using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement
         public Vector3 position;
         public Vector3 velocity;
 
-        public CharacterAnimationComponent.AnimationStates animState;
+        public AnimationStates animState;
         public bool isStunned;
     }
 }

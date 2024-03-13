@@ -7,6 +7,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private const int MAX_MESSAGES_PER_SEC = 10; // 10 Hz == 10 [msg/sec]
 
-        private readonly IRoomHub roomHub;
+        private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
 
         private readonly CharacterController playerCharacter;
@@ -30,9 +31,9 @@ namespace DCL.Multiplayer.Movement.Systems
         private int messagesSentInSec;
         private float mesPerSecResetCooldown;
 
-        public PlayerMovementNetSendSystem(World world, IRoomHub roomHub, IMultiplayerMovementSettings settings, CharacterController playerCharacter) : base(world)
+        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings, CharacterController playerCharacter) : base(world)
         {
-            this.roomHub = roomHub;
+            this.messageBus = messageBus;
             this.settings = settings;
             this.playerCharacter = playerCharacter;
         }
@@ -95,13 +96,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = playerStunComponent.IsStunned,
             };
 
-            var byteMessage = new Span<byte>(FullMovementMessageSerializer.SerializeMessage(lastSentMessage.Value));
-
-            IReadOnlyCollection<string>? islandParticipants = roomHub.IslandRoom()?.Participants == null ? null : roomHub.IslandRoom()?.Participants.RemoteParticipantSids();
-            roomHub.IslandRoom()?.DataPipe.PublishData(byteMessage, "Movement", islandParticipants);
-
-            IReadOnlyCollection<string>? roomParticipants = roomHub.SceneRoom()?.Participants == null ? null : roomHub.SceneRoom()?.Participants.RemoteParticipantSids();
-            roomHub.SceneRoom()?.DataPipe.PublishData(byteMessage, "Movement", roomParticipants);
+            messageBus.Send(playerCharacter.transform.position, playerCharacter.velocity, playerAnimationComponent.States, playerStunComponent.IsStunned);
         }
 
         private static string GetColorBasedOnDeltaTime(float deltaTime)

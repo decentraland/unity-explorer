@@ -7,7 +7,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
@@ -21,12 +20,12 @@ namespace DCL.Multiplayer.Movement.Systems
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
         private readonly IMultiplayerMovementSettings settings;
-        private readonly RemotePlayersMovementInbox messagePipe;
+        private readonly MultiplayerMovementMessageBus messageBus;
 
-        public RemotePlayersMovementSystem(World world, IRoomHub roomHub, IMultiplayerMovementSettings settings) : base(world)
+        public RemotePlayersMovementSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
         {
             this.settings = settings;
-            messagePipe = new RemotePlayersMovementInbox(roomHub, settings);
+            this.messageBus = messageBus;
         }
 
         protected override void Update(float t)
@@ -48,7 +47,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, in IAvatarView view)
         {
-            if (!messagePipe.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<FullMovementMessage>? playerInbox))
+            if (!messageBus.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<FullMovementMessage>? playerInbox))
                 return;
 
             settings.InboxCount = playerInbox.Count;
