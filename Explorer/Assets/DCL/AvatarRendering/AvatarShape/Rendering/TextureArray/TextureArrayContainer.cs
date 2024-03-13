@@ -8,10 +8,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
         internal readonly TextureArrayType[] textureArrayTypes;
         private readonly int textureArraySize = 500;
 
-        public TextureArrayContainer()
+        public TextureArrayContainer(TextureFormat textureFormat)
         {
             textureArrayTypes = new TextureArrayType[1];
-            textureArrayTypes[(int)ComputeShaderConstants.TextureArrayType.ALBEDO] = new TextureArrayType(textureArraySize, ComputeShaderConstants._BaseMapArr_ShaderID, ComputeShaderConstants._BaseMapArrTex_ShaderID);
+            textureArrayTypes[(int)ComputeShaderConstants.TextureArrayType.ALBEDO] = new TextureArrayType(textureArraySize, ComputeShaderConstants._BaseMapArr_ShaderID, ComputeShaderConstants._BaseMapArrTex_ShaderID, textureFormat);
         }
 
         public TextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderConstants.TextureArrayType type) =>

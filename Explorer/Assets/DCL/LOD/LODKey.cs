@@ -31,6 +31,6 @@ namespace DCL.LOD
             HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash), Level);
 
         public override string ToString() =>
-            $"{Hash}_{Level}{PlatformUtils.GetPlatform()}";
+            $"{Hash}_{Level}";
     }
 }

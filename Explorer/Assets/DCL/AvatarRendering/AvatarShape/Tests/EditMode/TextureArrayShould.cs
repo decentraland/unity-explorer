@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [SetUp]
         public void SetUp()
         {
-            textureArrayContainer = new TextureArrayContainer();
+            textureArrayContainer = new TextureArrayContainer(TextureFormat.BC7);
             testResolution = 256;
             testTexture = new Texture2D(testResolution, testResolution, TextureArrayConstants.DEFAULT_TEXTURE_FORMAT, false, false);
             testMaterial = new Material(Shader.Find("Standard"));

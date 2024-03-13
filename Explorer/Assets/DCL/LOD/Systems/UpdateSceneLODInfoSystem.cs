@@ -6,6 +6,8 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
+using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
@@ -21,6 +23,8 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -39,6 +43,9 @@ namespace DCL.LOD.Systems
 
         private readonly Transform lodsTransformParent;
 
+        private static readonly Shader shader = Shader.Find("DCL/Avatar_CelShading");
+        private readonly Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary;
+
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
         {
@@ -49,6 +56,15 @@ namespace DCL.LOD.Systems
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
+            textureArrayContainerDictionary = new Dictionary<TextureFormat, TextureArrayContainer>
+            {
+                {
+                    TextureFormat.BC7, new TextureArrayContainer(TextureFormat.BC7)
+                },
+                {
+                    TextureFormat.DXT1, new TextureArrayContainer(TextureFormat.DXT1)
+                }
+            };
         }
 
         protected override void Update(float t)
@@ -81,9 +97,40 @@ namespace DCL.LOD.Systems
                 {
                     GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity, lodsTransformParent);
-                    ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
-                        in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
+                    //ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
+                    //    in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
 
+                    if (!sceneLODInfo.CurrentLODLevel.Equals(0))
+                    {
+                        var componentsInChildren = instantiatedLOD.GetComponentsInChildren<MeshRenderer>();
+                        for (int i = 0; i < componentsInChildren.Length; i++)
+                        {
+                            var newMaterials =  new List<Material>();
+                            for (int j = 0; j < componentsInChildren[i].materials.Length; j++)
+                            {
+                                var newMaterial = new Material(shader);
+                                if (componentsInChildren[i].materials[j].mainTexture != null)
+                                {
+                                    switch (componentsInChildren[i].materials[j].mainTexture.graphicsFormat)
+                                    {
+                                        case GraphicsFormat.RGBA_BC7_UNorm:
+                                        case GraphicsFormat.RGBA_BC7_SRGB:
+                                            textureArrayContainerDictionary[TextureFormat.BC7].SetTexture(newMaterial, (Texture2D)componentsInChildren[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
+                                            break;
+                                        case GraphicsFormat.RGBA_DXT1_UNorm:
+                                        case GraphicsFormat.RGBA_DXT1_SRGB:
+                                            textureArrayContainerDictionary[TextureFormat.DXT1].SetTexture(newMaterial, (Texture2D)componentsInChildren[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
+                                            break;
+                                    }
+                                }
+
+                                newMaterials.Add(newMaterial);
+                            }
+
+                            componentsInChildren[i].materials = newMaterials.ToArray();
+                        }
+                    }
+                    
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                         instantiatedLOD, result.Asset, lodCache);
                 }

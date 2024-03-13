@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.Global
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.memoryBudget = memoryBudget;
             componentPoolsRegistry = poolsRegistry;
-            textureArrayContainer = new TextureArrayContainer();
+            textureArrayContainer = new TextureArrayContainer(TextureFormat.BC7);
 
             cacheCleaner.Register(wearableAssetsCache);
         }

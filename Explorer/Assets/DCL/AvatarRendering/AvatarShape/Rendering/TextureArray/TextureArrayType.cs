@@ -9,17 +9,19 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
         private readonly int minArraySize;
         private readonly int arrayID;
         private readonly int textureID;
+        private readonly TextureFormat textureFormat;
 
-        public TextureArrayType(int minArraySize, int arrayID, int textureID)
+        public TextureArrayType(int minArraySize, int arrayID, int textureID, TextureFormat textureFormat)
         {
             resolutionDictionary = new Dictionary<int, TextureArrayResolution>();
             this.minArraySize = minArraySize;
             this.arrayID = arrayID;
             this.textureID = textureID;
+            this.textureFormat = textureFormat;
 
             //We initialize some default values
-            resolutionDictionary.Add(256, new TextureArrayResolution(256, minArraySize));
-            resolutionDictionary.Add(512, new TextureArrayResolution(512, minArraySize));
+            resolutionDictionary.Add(256, new TextureArrayResolution(256, minArraySize, textureFormat));
+            resolutionDictionary.Add(512, new TextureArrayResolution(512, minArraySize, textureFormat));
         }
 
         public TextureArraySlot SetTexture(Material material, Texture2D texture)
@@ -28,7 +30,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
             int resolution = texture.width;
 
             if (!resolutionDictionary.ContainsKey(resolution))
-                resolutionDictionary.Add(resolution, new TextureArrayResolution(resolution, minArraySize));
+                resolutionDictionary.Add(resolution, new TextureArrayResolution(resolution, minArraySize, textureFormat));
 
             TextureArraySlot slot = resolutionDictionary[resolution].GetNextFreeSlot();
             Graphics.CopyTexture(texture, srcElement: 0, srcMip: 0, slot.TextureArray, dstElement: slot.UsedSlotIndex, dstMip: 0);

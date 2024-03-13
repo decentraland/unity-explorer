@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 randomSkinColor, randomHairColor);
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPool, computeShaderPool,
-                new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4), new ObjectProxy<AvatarBase>());
+                new TextureArrayContainer(TextureFormat.BC7), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4), new ObjectProxy<AvatarBase>());
         }
 
         private IWearable GetMockWearable(string materialName, string category)
