@@ -11,6 +11,8 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }
 
         [field: Header("TEST NETWORK")]
+        [field: SerializeField] public bool SelfSending { get; set; } = false;
+
         [field: Min(0)]
         [field: SerializeField] public float Latency { get; set; } = 0.1f;
 

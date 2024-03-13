@@ -52,16 +52,7 @@ namespace DCL.Multiplayer.Movement.System
             roomHub.SceneRoom().DataPipe.DataReceived -= InboxMessage;
         }
 
-        private void InboxMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
-        {
-            if (TryParse(data, out Packet? response) == false)
-                return;
-
-            if (response!.MessageCase is Packet.MessageOneofCase.Movement)
-                HandleAsync(new SmartWrap<Packet>(response, multiPool), participant).Forget();
-        }
-
-        public void Send(Vector3 position, Vector3 velocity, AnimationStates animState, bool isStunned)
+        public void Send(FullMovementMessage message)
         {
             using SmartWrap<Packet> wrap = multiPool.TempResource<Packet>();
             Packet? packet = wrap.value;
@@ -72,24 +63,24 @@ namespace DCL.Multiplayer.Movement.System
             {
                 packet.Movement.Timestamp = UnityEngine.Time.unscaledTime;
 
-                packet.Movement.PositionX = position.x;
-                packet.Movement.PositionY = position.y;
-                packet.Movement.PositionZ = position.z;
+                packet.Movement.PositionX = message.position.x;
+                packet.Movement.PositionY = message.position.y;
+                packet.Movement.PositionZ = message.position.z;
 
-                packet.Movement.VelocityX = velocity.x;
-                packet.Movement.VelocityY = velocity.y;
-                packet.Movement.VelocityZ = velocity.z;
+                packet.Movement.VelocityX = message.velocity.x;
+                packet.Movement.VelocityY = message.velocity.y;
+                packet.Movement.VelocityZ = message.velocity.z;
 
-                packet.Movement.MovementBlendValue = animState.MovementBlendValue;
-                packet.Movement.SlideBlendValue = animState.SlideBlendValue;
+                packet.Movement.MovementBlendValue = message.animState.MovementBlendValue;
+                packet.Movement.SlideBlendValue = message.animState.SlideBlendValue;
 
-                packet.Movement.IsGrounded = animState.IsGrounded;
-                packet.Movement.IsJumping = animState.IsJumping;
-                packet.Movement.IsLongJump = animState.IsLongJump;
-                packet.Movement.IsFalling = animState.IsFalling;
-                packet.Movement.IsLongFall = animState.IsLongFall;
+                packet.Movement.IsGrounded = message.animState.IsGrounded;
+                packet.Movement.IsJumping = message.animState.IsJumping;
+                packet.Movement.IsLongJump = message.animState.IsLongJump;
+                packet.Movement.IsFalling = message.animState.IsFalling;
+                packet.Movement.IsLongFall = message.animState.IsLongFall;
 
-                packet.Movement.IsStunned = isStunned;
+                packet.Movement.IsStunned = message.isStunned;
             }
 
             using MemoryWrap memoryWrap = memoryPool.Memory(packet);
@@ -107,6 +98,15 @@ namespace DCL.Multiplayer.Movement.System
         private static void Send(IRoom room, Span<byte> data)
         {
             room.DataPipe.PublishData(data, TOPIC, room.Participants.RemoteParticipantSids());
+        }
+
+        private void InboxMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind _)
+        {
+            if (TryParse(data, out Packet? response) == false)
+                return;
+
+            if (response!.MessageCase is Packet.MessageOneofCase.Movement)
+                HandleAsync(new SmartWrap<Packet>(response, multiPool), participant).Forget();
         }
 
         private bool TryParse(ReadOnlySpan<byte> data, out Packet? packet)
@@ -132,13 +132,13 @@ namespace DCL.Multiplayer.Movement.System
         {
             using (packet)
             {
-                await using var _ = await ExecuteOnMainThreadScope.NewScopeAsync();
+                await using ExecuteOnMainThreadScope _ = await ExecuteOnMainThreadScope.NewScopeAsync();
 
                 if (packet.value.Movement != null) // TODO (Vit): filter out Island messages if Participant is presented in the Room
                 {
                     Decentraland.Kernel.Comms.Rfc4.Movement proto = packet.value.Movement;
 
-                    FullMovementMessage message = new FullMovementMessage
+                    var message = new FullMovementMessage
                     {
                         timestamp = proto.Timestamp,
                         position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
@@ -174,17 +174,11 @@ namespace DCL.Multiplayer.Movement.System
             }
         }
 
-        // private void InboxSelfMessageWithDelay(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
-        // {
-        //     if (settings == null) return;
-        //
-        //     FullMovementMessage? message = FullMovementMessageSerializer.DeserializeMessage(data);
-        //
-        //     if (message != null)
-        //         UniTask.Delay(TimeSpan.FromSeconds(settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))))
-        //                .ContinueWith(() => Inbox(message.Value, @for: RemotePlayerMovementComponent.TEST_ID))
-        //                .Forget();
-        // }
-
+        public void SelfSendWithDelay(FullMovementMessage message, float delay)
+        {
+            UniTask.Delay(TimeSpan.FromSeconds(delay))
+                   .ContinueWith(() => Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID))
+                   .Forget();
+        }
     }
 }

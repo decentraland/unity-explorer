@@ -9,6 +9,7 @@ namespace DCL.Multiplayer.Movement.Settings
         int InboxCount { get; set; }
 
         // TEST NETWORK
+        bool SelfSending { get; set; }
         float Latency { get; set; }
         float LatencyJitter { get; set; }
 

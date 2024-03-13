@@ -15,6 +15,7 @@ MonoBehaviour:
   <InboxCount>k__BackingField: 0
   <SendRules>k__BackingField:
   - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
+  <SelfSending>k__BackingField: 1
   <Latency>k__BackingField: 0.1
   <LatencyJitter>k__BackingField: 10
   <MinPositionDelta>k__BackingField: 0.001
