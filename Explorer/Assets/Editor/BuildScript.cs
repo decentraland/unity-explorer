@@ -9,46 +9,78 @@ namespace Editor
 {
     public static class BuildScript
     {
-        private static readonly string[] Secrets =
-            {};
+        private static readonly string Eol = Environment.NewLine;
 
-        [UsedImplicitly]
+        private static readonly string[] Secrets =
+            {"androidKeystorePass", "androidKeyaliasName", "androidKeyaliasPass"};
+
         public static void Build()
         {
+            // Gather values from args
             Dictionary<string, string> options = GetValidatedOptions();
 
-            var currentMethod = System.Reflection.MethodBase.GetCurrentMethod();
-            if (currentMethod != null)
+            // Set version for this build
+            PlayerSettings.bundleVersion = options["buildVersion"];
+            PlayerSettings.macOS.buildNumber = options["buildVersion"];
+            PlayerSettings.Android.bundleVersionCode = int.Parse(options["androidVersionCode"]);
+
+            // Apply build target
+            var buildTarget = (BuildTarget) Enum.Parse(typeof(BuildTarget), options["buildTarget"]);
+            switch (buildTarget)
             {
-                var fullMethodName = currentMethod.DeclaringType.FullName + "." + currentMethod.Name;
-                Console.WriteLine("Invoked " + fullMethodName + " (BuildScript.cs)");
+                case BuildTarget.Android:
+                {
+                    EditorUserBuildSettings.buildAppBundle = options["customBuildPath"].EndsWith(".aab");
+                    if (options.TryGetValue("androidKeystoreName", out string keystoreName) &&
+                        !string.IsNullOrEmpty(keystoreName))
+                    {
+                      PlayerSettings.Android.useCustomKeystore = true;
+                      PlayerSettings.Android.keystoreName = keystoreName;
+                    }
+                    if (options.TryGetValue("androidKeystorePass", out string keystorePass) &&
+                        !string.IsNullOrEmpty(keystorePass))
+                        PlayerSettings.Android.keystorePass = keystorePass;
+                    if (options.TryGetValue("androidKeyaliasName", out string keyaliasName) &&
+                        !string.IsNullOrEmpty(keyaliasName))
+                        PlayerSettings.Android.keyaliasName = keyaliasName;
+                    if (options.TryGetValue("androidKeyaliasPass", out string keyaliasPass) &&
+                        !string.IsNullOrEmpty(keyaliasPass))
+                        PlayerSettings.Android.keyaliasPass = keyaliasPass;
+                    if (options.TryGetValue("androidTargetSdkVersion", out string androidTargetSdkVersion) &&
+                        !string.IsNullOrEmpty(androidTargetSdkVersion))
+                    {
+                        var targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+                        try
+                        {
+                            targetSdkVersion =
+                                (AndroidSdkVersions) Enum.Parse(typeof(AndroidSdkVersions), androidTargetSdkVersion);
+                        }
+                        catch
+                        {
+                            UnityEngine.Debug.Log("Failed to parse androidTargetSdkVersion! Fallback to AndroidApiLevelAuto");
+                        }
+
+                        PlayerSettings.Android.targetSdkVersion = targetSdkVersion;
+                    }
+
+                    break;
+                }
+                case BuildTarget.StandaloneOSX:
+                    PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
+                    break;
             }
 
+            // Determine subtarget
+            int buildSubtarget = 0;
+#if UNITY_2021_2_OR_NEWER
             if (!options.TryGetValue("standaloneBuildSubtarget", out var subtargetValue) || !Enum.TryParse(subtargetValue, out StandaloneBuildSubtarget buildSubtargetValue)) {
                 buildSubtargetValue = default;
             }
-            var buildSubtarget = (int) buildSubtargetValue;
+            buildSubtarget = (int) buildSubtargetValue;
+#endif
 
-            string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(s => s.path).ToArray();
-            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions()
-            {
-                scenes = scenes,
-                locationPathName = options["customBuildPath"],
-                subtarget = buildSubtarget,
-            };
-            
-
-            buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
-            if (Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD") == "true")
-            {
-                buildPlayerOptions.options |= BuildOptions.AllowDebugging;
-                buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
-                buildPlayerOptions.options |= BuildOptions.Development;
-            }
-
-            BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
-            ReportSummary(buildSummary);
-            ExitWithResult(buildSummary.result);
+            // Custom build
+            Build(buildTarget, buildSubtarget, options["customBuildPath"]);
         }
 
         private static Dictionary<string, string> GetValidatedOptions()
@@ -100,11 +132,11 @@ namespace Editor
             string[] args = Environment.GetCommandLineArgs();
 
             Console.WriteLine(
-                $"{Environment.NewLine}" +
-                $"###########################{Environment.NewLine}" +
-                $"#    Parsing settings     #{Environment.NewLine}" +
-                $"###########################{Environment.NewLine}" +
-                $"{Environment.NewLine}"
+                $"{Eol}" +
+                $"###########################{Eol}" +
+                $"#    Parsing settings     #{Eol}" +
+                $"###########################{Eol}" +
+                $"{Eol}"
             );
 
             // Extract flags with optional values
@@ -127,21 +159,42 @@ namespace Editor
             }
         }
 
+        private static void Build(BuildTarget buildTarget, int buildSubtarget, string filePath)
+        {
+            string[] scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(s => s.path).ToArray();
+            var buildPlayerOptions = new BuildPlayerOptions
+            {
+                scenes = scenes,
+                target = buildTarget,
+//                targetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget),
+                locationPathName = filePath,
+//                options = UnityEditor.BuildOptions.Development
+#if UNITY_2021_2_OR_NEWER
+                subtarget = buildSubtarget
+#endif
+            };
+
+            BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
+            ReportSummary(buildSummary);
+            ExitWithResult(buildSummary.result);
+        }
+
         private static void ReportSummary(BuildSummary summary)
         {
             Console.WriteLine(
-                $"{Environment.NewLine}" +
-                $"###########################{Environment.NewLine}" +
-                $"#      Build results      #{Environment.NewLine}" +
-                $"###########################{Environment.NewLine}" +
-                $"{Environment.NewLine}" +
-                $"Duration: {summary.totalTime.ToString()}{Environment.NewLine}" +
-                $"Warnings: {summary.totalWarnings.ToString()}{Environment.NewLine}" +
-                $"Errors: {summary.totalErrors.ToString()}{Environment.NewLine}" +
-                $"Size: {summary.totalSize.ToString()} bytes{Environment.NewLine}" +
-                $"{Environment.NewLine}"
+                $"{Eol}" +
+                $"###########################{Eol}" +
+                $"#      Build results      #{Eol}" +
+                $"###########################{Eol}" +
+                $"{Eol}" +
+                $"Duration: {summary.totalTime.ToString()}{Eol}" +
+                $"Warnings: {summary.totalWarnings.ToString()}{Eol}" +
+                $"Errors: {summary.totalErrors.ToString()}{Eol}" +
+                $"Size: {summary.totalSize.ToString()} bytes{Eol}" +
+                $"{Eol}"
             );
         }
+
         private static void ExitWithResult(BuildResult result)
         {
             switch (result)
