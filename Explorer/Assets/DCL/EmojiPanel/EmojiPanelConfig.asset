@@ -13,15 +13,65 @@ MonoBehaviour:
   m_Name: EmojiPanelConfig
   m_EditorClassIdentifier: 
   EmojiSections:
-  - title: FACES AND PEOPLE
-    startHex: 1F600
-    endHex: 1F64F
-  - title: FOOD AND DRINK
-    startHex: 1F95A
-    endHex: 1F96F
-  - title: ANIMALS AND NATURE
-    startHex: 1F40A
-    endHex: 1F43F
-  - title: SPORTS
-    startHex: 1F3BE
-    endHex: 1F3C6
+  - title: Smileys and People
+    ranges:
+    - key: 1F600
+      value: 1F64F
+    - key: 1F9CC
+      value: 1F9DF
+    - key: 1F910
+      value: 1F917
+  - title: Animals and Nature
+    ranges:
+    - key: 1F40A
+      value: 1F43F
+    - key: 1F9A0
+      value: 1F9AE
+  - title: Foods and Drinks
+    ranges:
+    - key: 1F95A
+      value: 1F96F
+    - key: 1F9C0
+      value: 1F9CB
+    - key: 1F32D
+      value: 1F37F
+  - title: Activities
+    ranges:
+    - key: 1F3A0
+      value: 1F3D3
+    - key: 1F3F8
+      value: 1F3F9
+    - key: 1F6B4
+      value: 1F6B6
+  - title: Travel and Places
+    ranges:
+    - key: 1F3D4
+      value: 1F3F0
+    - key: 1F5FA
+      value: 1F6A2
+    - key: 1F6E3
+      value: 1F6FC
+    - key: 1F68A
+      value: 1F69F
+  - title: Objects
+    ranges:
+    - key: 1F4AB
+      value: 1F5F3
+    - key: 1F6A4
+      value: 1F6AA
+    - key: 1F9E0
+      value: 1F9FF
+  - title: Symbols and Signs
+    ranges:
+    - key: 1F1E6
+      value: 1F1FF
+    - key: 1F6AB
+      value: 1F6B3
+    - key: 1F6B7
+      value: 1F6BE
+    - key: 1F6C2
+      value: 1F6C5
+  - title: Flags
+    ranges:
+    - key: 1F3F3
+      value: 1F3F4

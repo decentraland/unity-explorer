@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Emoji
 {
@@ -15,7 +16,6 @@ namespace DCL.Emoji
     public class EmojiSection
     {
         public string title;
-        public string startHex;
-        public string endHex;
+        public List<SerializableKeyValuePair<string, string>> ranges;
     }
 }

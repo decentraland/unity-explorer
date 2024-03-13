@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
@@ -56,7 +57,10 @@ namespace DCL.Emoji
             {
                 EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.emojiContainer).GetComponent<EmojiSectionView>();
                 sectionView.SectionTitle.text = emojiSection.title;
-                GenerateEmojis(emojiSection.startHex, emojiSection.endHex, sectionView);
+                foreach (SerializableKeyValuePair<string, string> range in emojiSection.ranges)
+                {
+                    GenerateEmojis(range.key, range.value, sectionView);
+                }
                 emojiSectionViews.Add(sectionView);
                 LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.EmojiContainer);
                 LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
