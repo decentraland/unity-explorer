@@ -107,7 +107,7 @@ namespace CrdtEcsBridge.Engine
         }
 
         public IRuntime.CurrentSceneEntityResponse GetSceneInformation() =>
-            new IRuntime.CurrentSceneEntityResponse()
+            new ()
             {
                 baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
                 contentMapping = sceneData.SceneEntityDefinition.content,
