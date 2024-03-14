@@ -15,10 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         internal static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
 
-        /// <summary>
-        ///     Can be null in case of a texture
-        /// </summary>
-        public readonly GameObject? GameObject;
+        private UnityEngine.Object? MainAsset { get; }
         private readonly AssetBundleData assetBundleData;
         private readonly List<RendererInfo> rendererInfos;
 
@@ -28,14 +25,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public WearableAsset(GameObject? gameObject, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData)
+        public WearableAsset(UnityEngine.Object? mainAsset, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData)
         {
-            GameObject = gameObject;
+            MainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
 
             this.assetBundleData = assetBundleData;
 
-            if (gameObject == null)
+            if (mainAsset == null)
                 ProfilingCounters.EmptyWearablesAssetsAmount.Value++;
 
             ProfilingCounters.WearablesAssetsAmount.Value++;
@@ -57,10 +54,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (ReferenceCount > 0)
                 ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
 
-            if (GameObject == null)
+            if (MainAsset == null)
                 ProfilingCounters.EmptyWearablesAssetsAmount.Value--;
 
             ProfilingCounters.WearablesAssetsAmount.Value--;
+        }
+
+        public T GetMainAsset<T>() where T : UnityEngine.Object
+        {
+            return MainAsset as T;
         }
 
         public void AddReference()

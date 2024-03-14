@@ -19,19 +19,25 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (!result.Succeeded) return new StreamableLoadingResult<WearableAsset>(result.Exception);
 
-            // in case of a texture just return the result
-            if (result.Asset.GameObject == null)
-                return new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, WearableAsset.RENDERER_INFO_POOL.Get(), result.Asset));
+            // in case of a texture we return a WearableAsset with texture
+            if (result.Asset.GetMainAsset<Texture>() != null)
+                return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GetMainAsset<Texture>(), WearableAsset.RENDERER_INFO_POOL.Get(), result.Asset));
 
-            // collect all renderers
-            List<WearableAsset.RendererInfo> rendererInfos = WearableAsset.RENDERER_INFO_POOL.Get();
+            if(result.Asset.GetMainAsset<GameObject>() != null)
+            {
+                // collect all renderers
+                List<WearableAsset.RendererInfo> rendererInfos = WearableAsset.RENDERER_INFO_POOL.Get();
+           
+                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = result.Asset.GetMainAsset<GameObject>().GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
-            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = result.Asset.GameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+                    rendererInfos.Add(new WearableAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                rendererInfos.Add(new WearableAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
-
-            return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos, result.Asset));
+                return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GetMainAsset<GameObject>(), rendererInfos, result.Asset));
+            }
+            
+            //If we got here, there is an issue with the AB
+            return new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, WearableAsset.RENDERER_INFO_POOL.Get(), result.Asset));
         }
 
         public static void ReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
@@ -47,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (wearableAssetsCache.TryGet(originalAsset, out CachedWearable cachedWearable))
                 cachedWearable.Instance.transform.SetParent(parent);
             else
-                cachedWearable = new CachedWearable(originalAsset, Object.Instantiate(originalAsset.GameObject, parent));
+                cachedWearable = new CachedWearable(originalAsset, Object.Instantiate(originalAsset.GetMainAsset<GameObject>(), parent));
 
             cachedWearable.Instance.transform.ResetLocalTRS();
             cachedWearable.Instance.gameObject.layer = parent.gameObject.layer;

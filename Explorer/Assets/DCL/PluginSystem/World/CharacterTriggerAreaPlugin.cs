@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ICharacterObject characterObject;
 
-        private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
+        private IComponentPool<CharacterTriggerArea.CharacterTriggerArea> characterTriggerAreaPoolRegistry;
 
         public CharacterTriggerAreaPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            characterTriggerAreaPoolRegistry?.Dispose();
+            characterTriggerAreaPoolRegistry.Dispose();
         }
 
         public async UniTask InitializeAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
