@@ -29,7 +29,7 @@ module.exports.readFile = async function(message) {
 
 module.exports.getSceneInformation = async function(message) {
 
-    const { urn, baseUrl, content, metadataJson } = await UnityRuntime.GetSceneInformation()    
+    const { urn, baseUrl, content, metadataJson } = UnityRuntime.GetSceneInformation()    
 
     return { 
         urn, 

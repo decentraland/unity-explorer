@@ -11,14 +11,10 @@ namespace SceneRuntime.Apis.Modules
     public class SceneApiWrapper : IDisposable
     {
         private readonly ISceneApi api;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
-        private readonly CancellationTokenSource cancellationTokenSource;
 
-        public SceneApiWrapper(ISceneApi api, ISceneExceptionsHandler exceptionsHandler)
+        public SceneApiWrapper(ISceneApi api)
         {
             this.api = api;
-            this.exceptionsHandler = exceptionsHandler;
-            cancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Dispose()
@@ -27,10 +23,7 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public object GetSceneInfo()
-        {
-            try { return api.GetSceneInfoAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
-        }
+        public object GetSceneInfo() =>
+            api.GetSceneInfo();
     }
 }

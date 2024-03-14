@@ -8,7 +8,7 @@ namespace SceneRuntime.Apis.Modules
 {
     public interface ISceneApi : IDisposable
     {
-        public UniTask<GetSceneResponse> GetSceneInfoAsync(CancellationToken ct);
+        public GetSceneResponse GetSceneInfo();
 
         public struct GetSceneResponse
         {

@@ -17,7 +17,7 @@ namespace CrdtEcsBridge.Engine
 
         public void Dispose() { }
 
-        public async UniTask<ISceneApi.GetSceneResponse> GetSceneInfoAsync(CancellationToken ct) =>
+        public ISceneApi.GetSceneResponse GetSceneInfo() =>
             new ()
             {
                 baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,

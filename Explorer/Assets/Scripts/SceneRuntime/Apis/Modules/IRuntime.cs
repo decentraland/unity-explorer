@@ -17,7 +17,7 @@ namespace SceneRuntime.Apis.Modules
 
         public UniTask<GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct);
 
-        public UniTask<CurrentSceneEntityResponse> GetSceneInformationAsync(CancellationToken ct);
+        public CurrentSceneEntityResponse GetSceneInformation();
 
         public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
 
