@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Flower3
   m_EditorClassIdentifier: 
-  asset: {fileID: 919132149155446097, guid: 40bd352b044e67e4cadfdb0db1d0ee25, type: 3}
-  noiseData: {fileID: 11400000, guid: 1c46150372a3b0c409f123af86dfbae9, type: 2}
+  asset: {fileID: 8197679525369401166, guid: 11055c0853dd6484f9fb5572e2179979, type: 3}
+  noiseData: {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}
     randomRotationY: {x: 0, y: 0}
@@ -28,14 +28,14 @@ MonoBehaviour:
     positionOffsetZ: {x: 0, y: 0}
   radius: 1
   TerrainDetailSettings:
-    alignToGround: 15.9
+    alignToGround: 100
     positionJitter: 50
-    minWidth: 1
-    maxWidth: 1
-    minHeight: 1
-    maxHeight: 1.17
+    minWidth: 2
+    maxWidth: 3
+    minHeight: 2
+    maxHeight: 3
     noiseSeed: 1
-    noiseSpread: 49.6
-    holeEdgePadding: 75
-    detailDensity: 1
+    noiseSpread: 12.15
+    holeEdgePadding: 0
+    detailDensity: 0.1
     affectedByGlobalDensityScale: 1

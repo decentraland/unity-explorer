@@ -158,30 +158,31 @@ namespace DCL.ParcelsService
 
         private static Vector3 GetOffsetFromSpawnPoint(SceneMetadata.SpawnPoint spawnPoint)
         {
-            if (spawnPoint.SP != null)
+            static float GetMidPoint(float[] coordArray)
             {
-                SceneMetadata.SpawnPoint.SinglePosition val = spawnPoint.SP.Value;
-                return new Vector3(val.x, val.y, val.z);
+                var sum = 0f;
+
+                for (var i = 0; i < coordArray.Length; i++)
+                    sum += (int)coordArray[i];
+
+                return sum / coordArray.Length;
             }
 
-            if (spawnPoint.MP != null)
+            static float? GetSpawnComponent(SceneMetadata.SpawnPoint.Coordinate coordinate)
             {
-                static float GetMidPoint(float[] coordArray)
-                {
-                    var sum = 0f;
+                if (coordinate.SingleValue != null)
+                    return coordinate.SingleValue.Value;
 
-                    for (var i = 0; i < coordArray.Length; i++)
-                        sum += (int)coordArray[i];
+                if (coordinate.MultiValue != null)
+                    return GetMidPoint(coordinate.MultiValue);
 
-                    return sum / coordArray.Length;
-                }
-
-                SceneMetadata.SpawnPoint.MultiPosition val = spawnPoint.MP.Value;
-                return new Vector3(GetMidPoint(val.x), GetMidPoint(val.y), GetMidPoint(val.z));
+                return null;
             }
 
-            // Center
-            return new Vector3(ParcelMathHelper.PARCEL_SIZE / 2f, 0, ParcelMathHelper.PARCEL_SIZE / 2f);
+            return new Vector3(
+                GetSpawnComponent(spawnPoint.position.x) ?? ParcelMathHelper.PARCEL_SIZE / 2f,
+                GetSpawnComponent(spawnPoint.position.y) ?? 0,
+                GetSpawnComponent(spawnPoint.position.z) ?? ParcelMathHelper.PARCEL_SIZE / 2f);
         }
 
         [Query]

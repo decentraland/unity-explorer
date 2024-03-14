@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Flower1
   m_EditorClassIdentifier: 
-  asset: {fileID: 919132149155446097, guid: 693ecee34e1a87b4ba375fa99b39ac5f, type: 3}
+  asset: {fileID: 4014139367857823368, guid: 36f2ef51fd1df5942b1a0b6dcbfdf2e2, type: 3}
   noiseData: {fileID: 11400000, guid: e8037df2c354cc94f9d1f7729844ae93, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}
@@ -31,9 +31,9 @@ MonoBehaviour:
     alignToGround: 15.9
     positionJitter: 50
     minWidth: 1
-    maxWidth: 1
-    minHeight: 1
-    maxHeight: 2.6
+    maxWidth: 1.5
+    minHeight: 0.5
+    maxHeight: 1
     noiseSeed: 85
     noiseSpread: 193.5
     holeEdgePadding: 75
