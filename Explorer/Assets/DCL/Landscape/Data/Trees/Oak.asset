@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Oak
   m_EditorClassIdentifier: 
-  asset: {fileID: 1259289328022311128, guid: 4a69c6fa4b4e7b944864fe60c98d1674, type: 3}
+  asset: {fileID: 2187335638020092438, guid: a5880297cd94bc64697d703509a25311, type: 3}
   noiseData: {fileID: 11400000, guid: 98168fd9bb2b1684da2d788ed0532a5c, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
@@ -27,7 +27,6 @@ MonoBehaviour:
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: 0, y: 0}
   radius: 15
-  secondaryRadius: 2
   TerrainDetailSettings:
     alignToGround: 100
     positionJitter: 50

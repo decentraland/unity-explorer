@@ -4,6 +4,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility.Multithreading;
+using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -18,22 +19,16 @@ namespace ECS.StreamableLoading.AssetBundles
         [CanBeNull] public readonly AssetBundleMetrics? Metrics;
 
         internal int referencesCount;
+        private Object MainAsset { get; }
 
-        private GameObject gameObject;
-        private bool gameObjectLoaded;
-
-        /// <summary>
-        ///     Root assets - Game Objects
-        /// </summary>
-        public GameObject GameObject { get; }
         public long LastUsedFrame { get; private set; }
 
-        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject, AssetBundleData[] dependencies)
+        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, Object mainAsset, AssetBundleData[] dependencies)
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
 
-            GameObject = gameObject;
+            MainAsset = mainAsset;
             Dependencies = dependencies;
 
             ProfilingCounters.ABDataAmount.Value++;
@@ -50,6 +45,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 ProfilingCounters.ABReferencedAmount.Value--;
 
             ProfilingCounters.ABDataAmount.Value--;
+        }
+        
+        public T? GetMainAsset<T>() where T : Object
+        {
+            return MainAsset as T;
         }
 
         public bool CanBeDisposed() =>

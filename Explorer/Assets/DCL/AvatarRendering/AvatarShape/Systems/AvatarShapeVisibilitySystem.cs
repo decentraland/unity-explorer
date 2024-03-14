@@ -27,6 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             UpdatePlayerFirstPersonQuery(World, camera.GetCameraComponent(World));
             UpdateAvatarsVisibilityStateQuery(World);
+            UpdateWearableRendererBoundsQuery(World);
         }
 
         [Query]
@@ -51,6 +52,19 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     Hide(ref avatarShape);
                 else
                     Show(ref avatarShape);
+            }
+        }
+
+        [Query]
+        private void UpdateWearableRendererBounds(ref AvatarShapeComponent avatarShape)
+        {
+            foreach (CachedWearable wearable in avatarShape.InstantiatedWearables)
+            {
+                foreach (Renderer renderer in wearable.Renderers)
+                {
+                    if (!renderer.enabled) continue;
+                    renderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 5);
+                }
             }
         }
 
