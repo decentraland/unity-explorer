@@ -178,22 +178,16 @@ namespace Editor
 
             buildPlayerOptions.options |=  BuildOptions.DetailedBuildReport;
 
-            bool isDevelopmentBuild = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DEVELOPMENT_BUILD"));
-            bool isProfilingBuild = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_PROFILING"));
-            bool isDeepProfilingBuild = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ENABLE_DEEP_PROFILING"));
+            bool isProfilingBuild = options.TryGetValue("profile", out string _);
+            bool isDeepProfilingBuild = options.TryGetValue("deepProfile", out string _);
 
             Console.WriteLine($"Profiling Enabled: {isProfilingBuild}, Deep Profiling Enabled: {isDeepProfilingBuild}");
 
-            if (isDevelopmentBuild || isProfilingBuild)
+            if (isProfilingBuild || isDeepProfilingBuild)
             {
-                buildPlayerOptions.options |= BuildOptions.AllowDebugging;
                 buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
                 buildPlayerOptions.options |= BuildOptions.Development;
 
-            }
-
-            if (isProfilingBuild || isDeepProfilingBuild)
-            {
                 buildPlayerOptions.extraScriptingDefines = new[] {"ENABLE_PROFILING"};
             }
 
