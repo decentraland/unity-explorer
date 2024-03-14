@@ -1,5 +1,4 @@
 ﻿using DCL.Profiling;
-using JetBrains.Annotations;
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -15,11 +14,10 @@ namespace ECS.StreamableLoading.AssetBundles
         public readonly AssetBundle AssetBundle;
         public readonly AssetBundleData[] Dependencies;
 
-        [CanBeNull] public readonly AssetBundleMetrics? Metrics;
+        public readonly AssetBundleMetrics? Metrics;
 
         internal int referencesCount;
 
-        private GameObject gameObject;
         private bool gameObjectLoaded;
 
         /// <summary>
@@ -28,7 +26,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public GameObject GameObject { get; }
         public long LastUsedFrame { get; private set; }
 
-        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject, AssetBundleData[] dependencies)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject gameObject, AssetBundleData[] dependencies)
         {
             AssetBundle = assetBundle;
             Metrics = metrics;

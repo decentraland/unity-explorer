@@ -1,7 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <summary>
         ///     Can be null in case of a texture
         /// </summary>
-        [CanBeNull] public readonly GameObject GameObject;
+        public readonly GameObject? GameObject;
         private readonly AssetBundleData assetBundleData;
         private readonly List<RendererInfo> rendererInfos;
 
@@ -29,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public WearableAsset(GameObject gameObject, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData)
+        public WearableAsset(GameObject? gameObject, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData)
         {
             GameObject = gameObject;
             this.rendererInfos = rendererInfos;
