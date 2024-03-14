@@ -67,14 +67,7 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public object GetSceneInformation()
-        {
-            try { return api.GetSceneInformationAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
-            catch (Exception e)
-            {
-                return Task.FromException(e).ToPromise();
-            }
-        }
-
+        public object GetSceneInformation() =>
+            api.GetSceneInformation();
     }
 }
