@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public long LastUsedFrame { get; private set; }
 
-        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, Object mainAsset, AssetBundleData[] dependencies)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, AssetBundleData[] dependencies)
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
