@@ -6,6 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
+using DCL.AvatarRendering;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -66,6 +67,12 @@ namespace DCL.PluginSystem.Global
         public class LODSettingsRef : AssetReferenceT<LODSettingsAsset>
         {
             public LODSettingsRef(string guid) : base(guid) { }
+        }
+        
+        [Serializable]
+        public class AvatarRandomizerSettingsRef : AssetReferenceT<AvatarRandomizerAsset>
+        {
+            public AvatarRandomizerSettingsRef(string guid) : base(guid) { }
         }
     }
 }

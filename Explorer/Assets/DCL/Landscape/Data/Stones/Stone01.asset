@@ -27,7 +27,6 @@ MonoBehaviour:
     positionOffsetY: {x: 0, y: 0}
     positionOffsetZ: {x: -0.5, y: 0.5}
   radius: 1
-  secondaryRadius: 1
   TerrainDetailSettings:
     alignToGround: 100
     positionJitter: 50
