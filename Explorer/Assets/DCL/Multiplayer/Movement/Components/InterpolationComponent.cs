@@ -7,7 +7,6 @@
 
         public float Time;
         public float TotalDuration;
-        public float SlowDownFactor; // Slow down is used to limit max speed when blending from stopped extrapolation
 
         public InterpolationType SplineType;
         public bool Enabled { get; private set; }
@@ -20,7 +19,6 @@
             End = to;
 
             Time = 0f;
-            SlowDownFactor = 1f; // no slow-down
             TotalDuration = End.timestamp - Start.timestamp;
 
             Enabled = true;

@@ -18,8 +18,11 @@ namespace DCL.Multiplayer.Movement.Settings
 
         [field: Min(1)]
         [field: Tooltip("When using speed up, this value controls its maximum speed. Higher values results in the faster transition speed. "
-                        + "Maximum speeded transition duration is clamped by initial transition duration divided by this value.")]
-       public float MaxSpeedUpTimeDivider { get; } = 1f; // Temporarily disabled (set to 1) as not stable solution
+                        + "Accelerated transition is a maximum between calculated and initial transition duration divided by this value. Thus, 1 = no acceleration (normal transition)")]
+        [field: SerializeField] public float MaxSpeedUpTimeDivider { get; set; } = 1f;
+
+        [field: Tooltip("Minimum of not processed messages in inbox, after which we start catching up process (speed-up interpolation).")]
+        [field: SerializeField] public int CatchUpMessagesMin { get; set; } = 3;
 
         [field: Space]
         [field: Tooltip("Blending is a transition to an interpolation from terminated extrapolation point.")]

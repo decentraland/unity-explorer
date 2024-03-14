@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Movement
             var remainedDeltaTime = 0f;
             Vector3 lookDirection;
 
-            intComp.Time += deltaTime / intComp.SlowDownFactor;
+            intComp.Time += deltaTime;
 
             if (intComp.Time < intComp.TotalDuration)
             {
@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Movement
             }
             else
             {
-                remainedDeltaTime = (intComp.Time - intComp.TotalDuration) * intComp.SlowDownFactor;
+                remainedDeltaTime = intComp.Time - intComp.TotalDuration;
 
                 intComp.Time = intComp.TotalDuration;
                 transComp.Transform.position = intComp.End.position;

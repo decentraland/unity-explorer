@@ -12,6 +12,7 @@ using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
 using UnityEngine;
 using Utility.PriorityQueue;
+using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -19,6 +20,13 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
+        // Amount of positions with delta below MinPositionDelta, that will be skip in one frame.
+        private const int SAME_POSITION_BATCH = 10;
+
+        // Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.
+        private const int OLD_MESSAGES_BATCH = 10;
+        private const int BEHIND_EXTRAPOLATION_BATCH = 10;
+
         private readonly IMultiplayerMovementSettings settings;
         private readonly MultiplayerMovementMessageBus messageBus;
 
@@ -36,7 +44,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private static void HandleFirstMessage(FullMovementMessage firstRemote, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, in IAvatarView view)
         {
             transComp.Transform.position = firstRemote.position;
-            UpdateAnimations(firstRemote, ref anim, view);
+            UpdateAnimations(firstRemote.animState, firstRemote.isStunned, ref anim, view);
 
             remotePlayerMovement.AddPassed(firstRemote, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
@@ -66,7 +74,7 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             // Filter old messages that arrived too late
-            while (playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
+            for (var i = 0; i < OLD_MESSAGES_BATCH && playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp; i++)
                 playerInbox.Dequeue();
 
             // When there is no messages, we extrapolate
@@ -85,7 +93,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 HandleNewMessage(deltaTime, ref transComp, ref anim, ref remotePlayerMovement, ref intComp, ref extComp, view, playerInbox);
         }
 
-        private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, IAvatarView view, SimplePriorityQueue<FullMovementMessage> playerInbox)
+        private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
+            ref ExtrapolationComponent extComp, IAvatarView view, SimplePriorityQueue<FullMovementMessage> playerInbox)
         {
             FullMovementMessage remote = playerInbox.Dequeue();
             var isBlend = false;
@@ -117,7 +126,7 @@ namespace DCL.Multiplayer.Movement.Systems
             float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
             // Filter all messages that are behind in time (otherwise we will run back)
-            while (playerInbox.Count > 0 && remote.timestamp <= minExtTimestamp)
+            for (var i = 0; i < BEHIND_EXTRAPOLATION_BATCH && playerInbox.Count > 0 && remote.timestamp <= minExtTimestamp; i++)
                 remote = playerInbox.Dequeue();
 
             if (remote.timestamp <= minExtTimestamp)
@@ -139,7 +148,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 };
 
                 remotePlayerMovement.AddPassed(local);
-                UpdateAnimations(local, ref anim, view);
+                UpdateAnimations(local.animState, local.isStunned, ref anim, view);
             }
 
             return true;
@@ -150,12 +159,12 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
-                while (playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
+                for (var i = 0; i < SAME_POSITION_BATCH && playerInbox.Count > 0 && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta; i++)
                     remote = playerInbox.Dequeue();
 
             transComp.Transform.position = remote.position;
             remotePlayerMovement.AddPassed(remote, wasTeleported: true);
-            UpdateAnimations(remote, ref anim, view);
+            UpdateAnimations(remote.animState, remote.isStunned, ref anim, view);
         }
 
         private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in FullMovementMessage remote) =>
@@ -183,14 +192,14 @@ namespace DCL.Multiplayer.Movement.Systems
             in IAvatarView view)
         {
             float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta);
-            InterpolateAnimations(deltaTime, ref anim, ref intComp);
+            InterpolateAnimations(deltaTime, intComp.TotalDuration, ref anim, intComp.Start.animState, intComp.End.animState);
 
             if (intComp.Time < intComp.TotalDuration)
                 return -1;
 
             intComp.Stop();
             remotePlayerMovement.AddPassed(intComp.End);
-            UpdateAnimations(intComp.End, ref anim, view);
+            UpdateAnimations(intComp.End.animState, intComp.End.isStunned, ref anim, view);
 
             return unusedTime;
         }
@@ -200,28 +209,29 @@ namespace DCL.Multiplayer.Movement.Systems
             float positionDiff = Vector3.Distance(intComp.Start.position, intComp.End.position);
             float speed = positionDiff / intComp.TotalDuration;
 
+            // we can do more precise, but more expensive solution -  if (speed * speed > Mathf.Max(maxBlendSpeed * maxBlendSpeed, intComp.Start.velocity.sqrMagnitude, intComp.End.velocity.sqrMagnitude))
             if (speed > maxBlendSpeed)
-            {
-                float desiredDuration = positionDiff / maxBlendSpeed;
-                intComp.SlowDownFactor = desiredDuration / intComp.TotalDuration;
-            }
+                intComp.TotalDuration = positionDiff / maxBlendSpeed;
         }
 
         private void SpeedUpForCatchingUp(ref InterpolationComponent intComp, int inboxMessages)
         {
-            float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
-            intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
+            if (inboxMessages > settings.InterpolationSettings.CatchUpMessagesMin)
+            {
+                float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
+                intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
+            }
         }
 
-        private static void InterpolateAnimations(float t, ref CharacterAnimationComponent anim, ref InterpolationComponent intComp)
+        private static void InterpolateAnimations(float t, float totalDuration, ref CharacterAnimationComponent anim, AnimationStates startState, AnimationStates endStates)
         {
-            anim.States.MovementBlendValue = Mathf.Lerp(intComp.Start.animState.MovementBlendValue, intComp.End.animState.MovementBlendValue, t / intComp.TotalDuration);
-            anim.States.SlideBlendValue = Mathf.Lerp(intComp.Start.animState.SlideBlendValue, intComp.End.animState.SlideBlendValue, t / intComp.TotalDuration);
+            anim.States.MovementBlendValue = Mathf.Lerp(startState.MovementBlendValue, endStates.MovementBlendValue, t / totalDuration);
+            anim.States.SlideBlendValue = Mathf.Lerp(startState.SlideBlendValue, endStates.SlideBlendValue, t / totalDuration);
         }
 
-        private static void UpdateAnimations(FullMovementMessage fullMovementMessage, ref CharacterAnimationComponent animationComponent, IAvatarView view)
+        private static void UpdateAnimations(AnimationStates animState, bool isStunned, ref CharacterAnimationComponent animationComponent, IAvatarView view)
         {
-            animationComponent.States = fullMovementMessage.animState;
+            animationComponent.States = animState;
 
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
@@ -229,7 +239,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (view.GetAnimatorBool(AnimationHashes.JUMPING))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
-            view.SetAnimatorBool(AnimationHashes.STUNNED, fullMovementMessage.isStunned);
+            view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
             view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
             view.SetAnimatorBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
             view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);

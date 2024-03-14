@@ -17,9 +17,6 @@ namespace DCL.Multiplayer.Movement.Settings
         float MinPositionDelta { get; set; }
         float MinTeleportDistance { get; set; }
 
-        int SkipOldMessagesBatch { get; set; }
-        int SkipSamePositionBatch { get; set; }
-
         // INTERPOLATION
         RemotePlayerInterpolationSettings InterpolationSettings { get; }
 

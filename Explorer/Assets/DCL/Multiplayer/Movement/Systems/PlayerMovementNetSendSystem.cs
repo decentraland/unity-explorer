@@ -9,8 +9,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -99,7 +97,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             messageBus.Send(lastSentMessage.Value);
 
-            if (settings.SelfSending)
+            if (settings.SelfSending && movement.Kind != MovementKind.Run)
                 messageBus.SelfSendWithDelay(lastSentMessage.Value, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter)));
         }
 

@@ -16,8 +16,8 @@ MonoBehaviour:
   <SendRules>k__BackingField:
   - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
   <SelfSending>k__BackingField: 1
-  <Latency>k__BackingField: 0.1
-  <LatencyJitter>k__BackingField: 10
+  <Latency>k__BackingField: 0
+  <LatencyJitter>k__BackingField: 0
   <MinPositionDelta>k__BackingField: 0.001
   <MinTeleportDistance>k__BackingField: 100
   <SkipSamePositionBatch>k__BackingField: 10

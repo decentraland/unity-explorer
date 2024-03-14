@@ -23,21 +23,12 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: Min(0)]
         [field: Tooltip("Minimal position (sqr) delta to consider a new position. "
                         + "If delta is less then this value, then player will just teleport to this position without any transition.")]
-
         [field: SerializeField] public float MinPositionDelta { get; set; } = 0.001f;
 
         [field: Min(0)]
         [field: Tooltip("Minimal distance after which player will be teleported instead of interpolated. "
                         + "If distance is more then this value, then player will just teleport to this position without any transition.")]
         [field: SerializeField] public float MinTeleportDistance { get; set; } = 50f;
-
-        [field: Min(0)]
-        [field: Tooltip("Amount of positions with delta below MinPositionDelta, that will be skip in one frame.")]
-        [field: SerializeField] public int SkipSamePositionBatch { get; set; } = 10;
-
-        [field: Min(0)]
-        [field: Tooltip("Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.")]
-        [field: SerializeField] public int SkipOldMessagesBatch { get; set; } = 10;
 
         [field: Space]
         [field: SerializeField] public RemotePlayerInterpolationSettings InterpolationSettings { get; set; }
