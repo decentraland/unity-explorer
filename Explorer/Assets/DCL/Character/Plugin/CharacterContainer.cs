@@ -80,7 +80,7 @@ namespace DCL.Character.Plugin
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
                 new CharacterTransform(characterObject.Value.Transform),
-                new PlayerMovementNetSendComponent(characterObject.Value.Controller));
+                new PlayerMovementNetworkComponent(characterObject.Value.Controller));
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {
