@@ -183,17 +183,18 @@ namespace Editor
 
             Console.WriteLine($"Profiling Enabled: {isProfilingBuild}, Deep Profiling Enabled: {isDeepProfilingBuild}");
 
+            string enableProfilingDefine = "ENABLE_PROFILING";
             if (isProfilingBuild || isDeepProfilingBuild)
             {
                 buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
                 buildPlayerOptions.options |= BuildOptions.Development;
 
                 if(buildPlayerOptions.extraScriptingDefines == null)
-                    buildPlayerOptions.extraScriptingDefines = new[] {"ENABLE_PROFILING"};
+                    buildPlayerOptions.extraScriptingDefines = new[] {enableProfilingDefine};
                 else
                 {
                     var currentDefines = buildPlayerOptions.extraScriptingDefines.ToList();
-                    currentDefines.Add("ENABLE_PROFILING");
+                    currentDefines.Add(enableProfilingDefine);
                     buildPlayerOptions.extraScriptingDefines = currentDefines.ToArray();
                 }
             }
