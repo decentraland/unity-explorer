@@ -156,8 +156,11 @@ namespace DCL.NftPrompt
             viewInstance.TextOwner.gameObject.SetActive(!hasMultipleOwners);
             viewInstance.MultipleOwnersContainer.gameObject.SetActive(hasMultipleOwners);
 
-            if (!string.IsNullOrEmpty(info.description))
+            bool hasDescription = !string.IsNullOrEmpty(info.description);
+            if (hasDescription)
                 viewInstance.TextDescription.text = info.description;
+
+            viewInstance.ContainerDescription.SetActive(hasDescription);
 
             viewInstance.TextOpenMarketButton.text = "VIEW";
             if (!string.IsNullOrEmpty(info.marketName))

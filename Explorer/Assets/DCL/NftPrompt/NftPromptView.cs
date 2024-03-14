@@ -16,6 +16,7 @@ namespace DCL.NftPrompt
         [field: SerializeField] public TextMeshProUGUI TextMultipleOwner { get; private set; }
         [field: SerializeField] public GameObject MultipleOwnersContainer { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextDescription { get; private set; }
+        [field: SerializeField] public GameObject ContainerDescription { get; private set; }
         [field: SerializeField] public GameObject SpinnerGeneral { get; private set; }
         [field: SerializeField] public GameObject SpinnerNftImage { get; private set; }
         [field: SerializeField] public Button ButtonClose { get; private set; }
