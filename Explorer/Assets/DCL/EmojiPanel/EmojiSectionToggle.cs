@@ -18,6 +18,9 @@ namespace DCL.Emoji
         [field: SerializeField]
         public Color UnselectedColor { get; private set; }
 
+        [field: SerializeField]
+        public EmojiSectionName SectionName { get; private set; }
+
         public void Start() =>
             SectionToggle.onValueChanged.AddListener(OnValueChanged);
 

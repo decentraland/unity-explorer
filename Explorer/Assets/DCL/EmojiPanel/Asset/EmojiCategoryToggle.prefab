@@ -86,6 +86,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1955171022183651506}
   - component: {fileID: 3080306961025418869}
+  - component: {fileID: 7874130938599543881}
   m_Layer: 5
   m_Name: EmojiCategoryToggle
   m_TagString: Untagged
@@ -162,6 +163,23 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &7874130938599543881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6317688264855187350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <SectionToggle>k__BackingField: {fileID: 3080306961025418869}
+  <SectionImage>k__BackingField: {fileID: 4032303664444875150}
+  <SelectedColor>k__BackingField: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
+  <UnselectedColor>k__BackingField: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
+  <SectionName>k__BackingField: 0
 --- !u!1 &9202855093104912329
 GameObject:
   m_ObjectHideFlags: 0
@@ -256,3 +274,4 @@ MonoBehaviour:
   <SectionImage>k__BackingField: {fileID: 4032303664444875150}
   <SelectedColor>k__BackingField: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
   <UnselectedColor>k__BackingField: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
+  <SectionName>k__BackingField: 0

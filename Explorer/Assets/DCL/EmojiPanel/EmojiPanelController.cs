@@ -19,6 +19,12 @@ namespace DCL.Emoji
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
         public readonly Dictionary<string, EmojiData> emojiNameMapping = new ();
         private readonly Dictionary<string, string> emojiValueMapping = new ();
+        private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
+
+        private int startDec;
+        private int endDec;
+        private int emojiCode;
+        private string emojiChar;
 
         public EmojiPanelController(
             EmojiPanelView view,
@@ -40,6 +46,15 @@ namespace DCL.Emoji
 
             view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
+            view.OnSectionSelected += OnSectionSelected;
+        }
+
+        private void OnSectionSelected(EmojiSectionName obj, bool isOn)
+        {
+            if (!isOn)
+                return;
+
+            view.scrollView.normalizedPosition = new Vector2(0, 1 - Mathf.Clamp01(Mathf.Abs(sectionTransforms[obj].anchoredPosition.y) / view.scrollView.content.rect.height));
         }
 
         public void SetPanelVisibility(bool isVisible) =>
@@ -61,29 +76,34 @@ namespace DCL.Emoji
                 {
                     GenerateEmojis(range.key, range.value, sectionView);
                 }
+
+                sectionView.SectionName = emojiSection.sectionName;
                 emojiSectionViews.Add(sectionView);
                 LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.EmojiContainer);
                 LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
             }
         }
 
+        //This function is called at the first panel open, necessary due to the need of having the gameobject active to
+        //calculate the proper sizing and positions
         private void SetUiSizes(EmojiSectionView sectionView)
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.EmojiContainer);
             sectionView.EmojiContainer.sizeDelta = new Vector2(sectionView.EmojiContainer.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.EmojiContainer));
             LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
             sectionView.SectionRectTransform.sizeDelta = new Vector2(sectionView.SectionRectTransform.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.SectionRectTransform));
+            sectionTransforms.Add(sectionView.SectionName, sectionView.SectionRectTransform);
         }
 
         private void GenerateEmojis(string hexRangeStart, string hexRageEnd, EmojiSectionView sectionView)
         {
-            int startDec = int.Parse(hexRangeStart, System.Globalization.NumberStyles.HexNumber);
-            int endDec = int.Parse(hexRageEnd, System.Globalization.NumberStyles.HexNumber);
+            startDec = int.Parse(hexRangeStart, System.Globalization.NumberStyles.HexNumber);
+            endDec = int.Parse(hexRageEnd, System.Globalization.NumberStyles.HexNumber);
 
             for (int i = 0; i < endDec-startDec; i++)
             {
-                int emojiCode = startDec + i;
-                string emojiChar = char.ConvertFromUtf32(emojiCode);
+                emojiCode = startDec + i;
+                emojiChar = char.ConvertFromUtf32(emojiCode);
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
                 emojiButton.EmojiImage.text = emojiChar;
                 emojiButton.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(emojiChar));

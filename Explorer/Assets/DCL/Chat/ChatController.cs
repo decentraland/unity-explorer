@@ -5,7 +5,6 @@ using DCL.Emoji;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -17,6 +16,7 @@ namespace DCL.Chat
     public partial class ChatController : ControllerBase<ChatView>
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
+        private const int MINIMAL_LENGTH = 2;
 
         private readonly Regex emojiPatternRegex = new (EMOJI_SUGGESTION_PATTERN);
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -34,6 +34,7 @@ namespace DCL.Chat
         private string currentMessage = string.Empty;
         private List<ChatMessage> chatMessages = new ();
         private CancellationTokenSource cts;
+        private CancellationTokenSource emojiPanelCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -112,8 +113,17 @@ namespace DCL.Chat
 
         private void ToggleEmojiPanel()
         {
+            emojiPanelCts.SafeCancelAndDispose();
+            emojiPanelCts = new CancellationTokenSource();
+            ToggleEmojiPanelAsync(emojiPanelCts.Token).Forget();
+        }
+
+        private UniTask ToggleEmojiPanelAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
             viewInstance.InputField.ActivateInputField();
+            return UniTask.CompletedTask;
         }
 
         private void OnSubmit(string _)
@@ -166,9 +176,8 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
-            const int MINIMAL_LENGHT = 2;
 
-            if (inputText.Length > MINIMAL_LENGHT)
+            if (inputText.Length > MINIMAL_LENGTH)
                 currentMessage = inputText;
         }
 

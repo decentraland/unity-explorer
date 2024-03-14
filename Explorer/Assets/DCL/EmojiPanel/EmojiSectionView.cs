@@ -16,9 +16,7 @@ namespace DCL.Emoji
         [field: SerializeField]
         public RectTransform EmojiContainer { get; private set; }
 
-        public void Configure(string sectionTitle)
-        {
-            SectionTitle.text = sectionTitle;
-        }
+        public EmojiSectionName SectionName;
+
     }
 }

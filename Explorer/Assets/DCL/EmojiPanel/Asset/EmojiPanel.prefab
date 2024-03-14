@@ -279,6 +279,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ebd3771315604fc09ca02ca37850846, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  emojiSections:
+  - {fileID: 4158666550470728424}
+  - {fileID: 5283514871832570185}
+  - {fileID: 4163005131837077112}
+  - {fileID: 5312459376235547598}
+  - {fileID: 743103262521345348}
+  - {fileID: 7160438464910587101}
+  - {fileID: 1357930980053164000}
+  - {fileID: 3025870403953755872}
+  scrollView: {fileID: 4725557382226260701}
   emojiContainer: {fileID: 3915152310419264944}
 --- !u!1 &3533251197398900182
 GameObject:
@@ -863,6 +873,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: m_IsOn
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2504118146835621429}
@@ -874,6 +888,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -884,6 +902,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
   m_PrefabInstance: {fileID: 1015689834966704276}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7160438464910587101 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 1015689834966704276}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2599800290382281984
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -977,6 +1006,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: m_IsOn
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2504118146835621429}
@@ -988,6 +1021,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -998,6 +1035,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
   m_PrefabInstance: {fileID: 2599800290382281984}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5283514871832570185 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 2599800290382281984}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2665900053273845639
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1091,6 +1139,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: m_IsOn
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2504118146835621429}
@@ -1102,6 +1154,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1112,6 +1168,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
   m_PrefabInstance: {fileID: 2665900053273845639}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5312459376235547598 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 2665900053273845639}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4951854331930055337
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1205,6 +1272,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: m_IsOn
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2504118146835621429}
@@ -1216,11 +1287,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (7)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+--- !u!114 &3025870403953755872 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 4951854331930055337}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &6889008696447158811 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
@@ -1330,11 +1416,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+--- !u!114 &4163005131837077112 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 6089851045924921905}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &5737962977412364931 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
@@ -1449,6 +1550,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+--- !u!114 &4158666550470728424 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 6120397868268834465}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &5751708879840613907 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
@@ -1737,6 +1849,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: m_IsOn
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2504118146835621429}
@@ -1748,11 +1864,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 4
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+--- !u!114 &743103262521345348 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 7428265528779034893}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &8949964777183218111 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
@@ -1851,6 +1982,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: m_IsOn
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3080306961025418869, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 2504118146835621429}
@@ -1862,11 +1997,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: EmojiCategoryToggle (6)
       objectReference: {fileID: 0}
+    - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+      propertyPath: <SectionName>k__BackingField
+      value: 6
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+--- !u!114 &1357930980053164000 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
+  m_PrefabInstance: {fileID: 9196033052712799145}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8e538916364b2bbb0ec3777bca6249, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7258948249624924955 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1955171022183651506, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
