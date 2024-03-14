@@ -174,11 +174,10 @@ namespace DCL.Multiplayer.Movement.System
             }
         }
 
-        public void SelfSendWithDelay(FullMovementMessage message, float delay)
+        public async UniTaskVoid SelfSendWithDelay(FullMovementMessage message, float delay)
         {
-            UniTask.Delay(TimeSpan.FromSeconds(delay))
-                   .ContinueWith(() => Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID))
-                   .Forget();
+            await UniTask.Delay(TimeSpan.FromSeconds(delay));
+            Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
         }
     }
 }

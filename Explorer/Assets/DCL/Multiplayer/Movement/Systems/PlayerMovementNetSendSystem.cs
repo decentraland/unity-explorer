@@ -5,7 +5,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
@@ -49,7 +48,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 mesPerSecResetCooldown -= t;
             else
             {
-                // Debug.Log($"VVV ------- MES PER SEC: <color={GetColorBasedOnMesPerSec(MessagesSentInSec)}> {MessagesSentInSec} </color> ----------");
                 mesPerSecResetCooldown = 1; // 1 [sec]
                 messagesSentInSec = 0;
             }
@@ -82,10 +80,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             messagesSentInSec++;
 
-            // float deltaTime = UnityEngine.Time.unscaledTime - (lastSentMessage?.timestamp ?? 0);
-            // string color = GetColorBasedOnDeltaTime(deltaTime);
-            // Debug.Log($">VVV {from}: <color={color}> {deltaTime}</color>");
-
             lastSentMessage = new FullMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
@@ -98,34 +92,7 @@ namespace DCL.Multiplayer.Movement.Systems
             messageBus.Send(lastSentMessage.Value);
 
             if (settings.SelfSending && movement.Kind != MovementKind.Run)
-                messageBus.SelfSendWithDelay(lastSentMessage.Value, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter)));
-        }
-
-        private static string GetColorBasedOnDeltaTime(float deltaTime)
-        {
-            return deltaTime switch
-                   {
-                       > 1.49f => "grey",
-                       > 0.99f => "lightblue",
-                       > 0.49f => "green",
-                       > 0.31f => "yellow",
-                       > 0.19f => "orange",
-                       _ => "red",
-                   };
-        }
-
-        private static string GetColorBasedOnMesPerSec(int amount)
-        {
-            return amount switch
-                   {
-                       > 30 => "red",
-                       > 20 => "orange",
-                       >= 10 => "yellow",
-                       >= 5 => "green",
-                       >= 3 => "lightblue",
-                       >= 2 => "olive",
-                       _ => "grey",
-                   };
+                messageBus.SelfSendWithDelay(lastSentMessage.Value, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }
 }
