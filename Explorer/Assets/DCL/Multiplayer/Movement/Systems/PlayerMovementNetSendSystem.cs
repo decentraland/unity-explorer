@@ -2,13 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
-using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -22,18 +20,13 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
 
-        private readonly CharacterController playerCharacter;
-
-        private FullMovementMessage? lastSentMessage;
-
         private int messagesSentInSec;
         private float mesPerSecResetCooldown;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings, CharacterController playerCharacter) : base(world)
+        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
-            this.playerCharacter = playerCharacter;
         }
 
         protected override void Update(float t)
@@ -54,45 +47,47 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
-        private void SendPlayerNetMovement(ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
+        private void SendPlayerNetMovement(ref PlayerMovementNetSendComponent playerMovement, ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
         {
             if (messagesSentInSec >= MAX_MESSAGES_PER_SEC) return;
 
-            if (lastSentMessage == null)
+            if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref animation, ref stun, ref move, ref jump, "FIRST");
+                SendMessage(ref playerMovement, ref animation, ref stun, ref move, ref jump, "FIRST");
+                playerMovement.IsFirstMessage = false;
                 return;
             }
 
-            float timeDiff = UnityEngine.Time.unscaledTime - lastSentMessage!.Value.timestamp;
+            float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
             foreach (SendRuleBase sendRule in settings.SendRules)
                 if (timeDiff > sendRule.MinTimeDelta
-                    && sendRule.IsSendConditionMet(timeDiff, lastSentMessage!.Value, ref animation, ref stun, ref move, ref jump, playerCharacter, settings))
+                    && sendRule.IsSendConditionMet(timeDiff, playerMovement.LastSentMessage, ref animation, ref stun, ref move, ref jump, playerMovement.Character, settings))
                 {
-                    SendMessage(ref animation, ref stun, ref move, ref jump, sendRule.Message);
+                    SendMessage(ref playerMovement, ref animation, ref stun, ref move, ref jump, sendRule.Message);
                     return;
                 }
         }
 
-        private void SendMessage(ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump, string from)
+        private void SendMessage(ref PlayerMovementNetSendComponent playerMovement, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump,
+            string from)
         {
             messagesSentInSec++;
 
-            lastSentMessage = new FullMovementMessage
+            playerMovement.LastSentMessage = new FullMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
-                position = playerCharacter.transform.position,
-                velocity = playerCharacter.velocity,
+                position = playerMovement.Character.transform.position,
+                velocity = playerMovement.Character.velocity,
                 animState = playerAnimationComponent.States,
                 isStunned = playerStunComponent.IsStunned,
             };
 
-            messageBus.Send(lastSentMessage.Value);
+            messageBus.Send(playerMovement.LastSentMessage);
 
+            // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending && movement.Kind != MovementKind.Run)
-                messageBus.SelfSendWithDelay(lastSentMessage.Value, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
+                messageBus.SelfSendWithDelay(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }
 }

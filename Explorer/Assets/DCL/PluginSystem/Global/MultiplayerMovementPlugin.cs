@@ -1,7 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Character;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.System;
 using System.Threading;
@@ -14,15 +13,13 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
-        private readonly ICharacterObject characterObject;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, ICharacterObject characterObject)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
-            this.characterObject = characterObject;
         }
 
         public void Dispose()
@@ -37,7 +34,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value, characterObject.Controller);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, messageBus, settings.Value);
         }
     }

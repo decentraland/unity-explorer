@@ -226,7 +226,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(roomHub, memoryPool, multiPool), staticContainer.CharacterContainer.CharacterObject),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(roomHub, memoryPool, multiPool)),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
