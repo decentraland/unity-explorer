@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class AnimationMovementBlendChangedRuleBase : SendRuleBase
+    public class AnimationMovementBlendChangedRule : SendRuleBase
     {
         public override string Message => $"<color={color}> ANIM {reason} </color>";
 

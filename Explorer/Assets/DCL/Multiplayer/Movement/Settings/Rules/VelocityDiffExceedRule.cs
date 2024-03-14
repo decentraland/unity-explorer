@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class VelocityDiffExceedRuleBase : SendRuleBase
+    public class VelocityDiffExceedRule : SendRuleBase
     {
         public override string Message => $"$\"<color={color}> VELOCITY DIFF </color>\"";
 

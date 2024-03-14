@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class PositionDiffExceedRuleBase : SendRuleBase
+    public class PositionDiffExceedRule : SendRuleBase
     {
         [Space]
         public float PositionChangeThreshold;

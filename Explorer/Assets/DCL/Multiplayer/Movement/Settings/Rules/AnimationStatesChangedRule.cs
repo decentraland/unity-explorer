@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class AnimationStatesChangedRuleBase : SendRuleBase
+    public class AnimationStatesChangedRule : SendRuleBase
     {
         [Space]
         public bool Stun = true;

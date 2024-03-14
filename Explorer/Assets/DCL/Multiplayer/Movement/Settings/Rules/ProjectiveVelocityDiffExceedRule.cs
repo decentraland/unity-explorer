@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings.Rules
 {
-    public class ProjectiveVelocityDiffExceedRuleBase : SendRuleBase
+    public class ProjectiveVelocityDiffExceedRule : SendRuleBase
     {
         [Space]
         public float VelocityChangeThreshold;

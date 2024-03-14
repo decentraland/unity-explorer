@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class MaxWaitingTimeExceedRuleBase : SendRuleBase
+    public class MaxWaitingTimeExceedRule : SendRuleBase
     {
         [Space]
         public float MaxSentDelay;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class VelocityAngleDiffExceedRuleBase : SendRuleBase
+    public class VelocityAngleDiffExceedRule : SendRuleBase
     {
         [Space]
         public float VelocityCosAngleDiffInverseThreshold;

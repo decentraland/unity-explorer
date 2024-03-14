@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
-    public class VelocitySpeedTiersRuleBase : SendRuleBase
+    public class VelocitySpeedTiersRule : SendRuleBase
     {
         [Header("SPEED SENT RATES")]
         public float SprintSentRate;
