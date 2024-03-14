@@ -265,7 +265,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         SkyboxAnimationCycle:
-          m_AssetGUID: e8f593404f0a19749bc68df2b5064215
+          m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -283,7 +283,42 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         celShadingMaterial:
-          m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_AssetGUID: 4ae49825f39c564478515b4c2ae201af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        faceFeatureMaterial:
+          m_AssetGUID: 00657accebbe6c348b5208e385e5ec73
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultMain256>k__BackingField:
+          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultMain512>k__BackingField:
+          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultNormal256>k__BackingField:
+          m_AssetGUID: 2df144b808932744487656f89a42fb11
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultNormal512>k__BackingField:
+          m_AssetGUID: 4428c33e669492748afd75828965504b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultEmmisive256>k__BackingField:
+          m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultEmmisive512>k__BackingField:
+          m_AssetGUID: f3fd7329d073f964aaec82eb9acc9ed3
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -295,6 +330,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <AvatarRandomizerSettingsRef>k__BackingField:
+          m_AssetGUID: e18034962a56eac40ab5df62e159c314
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
