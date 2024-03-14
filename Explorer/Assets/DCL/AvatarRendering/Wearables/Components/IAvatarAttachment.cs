@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IAvatarNftAccessory
+    public interface IAvatarAttachment
     {
         bool IsLoading { get; set; }
 

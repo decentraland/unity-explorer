@@ -3,7 +3,7 @@ using ECS.StreamableLoading.Common.Components;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IWearable : IAvatarNftAccessory
+    public interface IWearable : IAvatarAttachment
     {
         StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
     }
