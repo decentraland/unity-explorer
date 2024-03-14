@@ -21,16 +21,14 @@ namespace DCL.PluginSystem.Global
     public class CharacterCameraPlugin : IDCLGlobalPlugin<CharacterCameraSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly CameraSamplingData cameraSamplingData;
         private readonly ExposedCameraData exposedCameraData;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
 
-        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, CameraSamplingData cameraSamplingData, ExposedCameraData exposedCameraData)
+        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, ExposedCameraData exposedCameraData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmSamplingData = realmSamplingData;
-            this.cameraSamplingData = cameraSamplingData;
             this.exposedCameraData = exposedCameraData;
         }
 
@@ -68,7 +66,6 @@ namespace DCL.PluginSystem.Global
                 exposedCameraData,
                 cinemachinePreset,
                 new CinemachineCameraState(),
-                cameraSamplingData,
                 realmSamplingData
             );
 

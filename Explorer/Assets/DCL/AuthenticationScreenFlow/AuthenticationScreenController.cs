@@ -9,6 +9,7 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
 
@@ -37,7 +38,7 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
-        private World world;
+        private World? world;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -92,7 +93,8 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.LoginInProgress);
             });
 
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world);
+            Assert.IsNotNull(world);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
         }
 
         protected override void OnBeforeViewShow()
