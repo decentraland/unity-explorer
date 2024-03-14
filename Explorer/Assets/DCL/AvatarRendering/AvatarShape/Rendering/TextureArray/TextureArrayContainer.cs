@@ -1,20 +1,50 @@
-using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
+namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public class TextureArrayContainer
     {
-        internal readonly TextureArrayType[] textureArrayTypes;
-        private readonly int textureArraySize = 500;
+        internal readonly IReadOnlyList<TextureArrayMapping> mappings;
+        internal int count => mappings.Count;
 
-        public TextureArrayContainer()
+        public TextureArrayContainer(IReadOnlyList<TextureArrayMapping> mappings)
         {
-            textureArrayTypes = new TextureArrayType[1];
-            textureArrayTypes[(int)ComputeShaderConstants.TextureArrayType.ALBEDO] = new TextureArrayType(textureArraySize, ComputeShaderConstants._BaseMapArr_ShaderID, ComputeShaderConstants._BaseMapArrTex_ShaderID);
+            this.mappings = mappings;
         }
 
-        public TextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderConstants.TextureArrayType type) =>
-            textureArrayTypes[(int)type].SetTexture(material, texture);
+        /// <summary>
+        ///     Sets textures from every mapping
+        /// </summary>
+        public TextureArraySlot?[] SetTexturesFromOriginalMaterial(Material originalMaterial, Material targetMaterial)
+        {
+            TextureArraySlot?[] results = TextureArrayContainerFactory.SLOTS_POOL.Get();
+
+            for (var i = 0; i < mappings.Count; i++)
+            {
+                TextureArrayMapping mapping = mappings[i];
+                // Check if the texture is present in the original material
+                var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
+                if (tex)
+                    results[i] = mapping.Handler.SetTexture(targetMaterial, tex);
+                else
+                   mapping.Handler.SetDefaultTexture(targetMaterial);
+            }
+
+            return results;
+        }
+
+        public TextureArraySlot?[] SetTexturesFromOriginalMaterial(int mappingID, Texture2D texture, Material targetMaterial)
+        {
+            TextureArraySlot?[] results = TextureArrayContainerFactory.SLOTS_POOL.Get();
+            for (var i = 0; i < mappings.Count; i++)
+            {
+                TextureArrayMapping mapping = mappings[i];
+                if(mapping.OriginalTextureID == mappingID)
+                    results[i] = mapping.Handler.SetTexture(targetMaterial, texture);
+            }
+            return results;
+
+        }
     }
 }

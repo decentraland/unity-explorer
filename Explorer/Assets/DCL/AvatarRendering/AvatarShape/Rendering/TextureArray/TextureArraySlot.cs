@@ -1,23 +1,23 @@
 ﻿using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
+namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public struct TextureArraySlot
     {
         public int UsedSlotIndex;
         public Texture2DArray TextureArray;
-        public TextureArrayResolution TextureArrayResolution;
+        public TextureArraySlotHandler TextureArraySlotHandler;
 
-        public TextureArraySlot(int usedSlotIndex, Texture2DArray textureArray, TextureArrayResolution textureArrayResolution)
+        public TextureArraySlot(int usedSlotIndex, Texture2DArray textureArray, TextureArraySlotHandler textureArraySlotHandler)
         {
             UsedSlotIndex = usedSlotIndex;
             TextureArray = textureArray;
-            TextureArrayResolution = textureArrayResolution;
+            TextureArraySlotHandler = textureArraySlotHandler;
         }
 
         public void FreeSlot()
         {
-            TextureArrayResolution.FreeSlot(this);
+            TextureArraySlotHandler.FreeSlot(this);
         }
     }
 }

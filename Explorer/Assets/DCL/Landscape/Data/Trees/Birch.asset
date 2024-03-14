@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Birch
   m_EditorClassIdentifier: 
-  asset: {fileID: 8336709437150543695, guid: ce2371175990d184a820800a4d92a8fc, type: 3}
+  asset: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
   noiseData: {fileID: 11400000, guid: 0429db70c8952b8439d3fc344f503cc9, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
@@ -27,7 +27,6 @@ MonoBehaviour:
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: 0, y: 0}
   radius: 7
-  secondaryRadius: 2
   TerrainDetailSettings:
     alignToGround: 100
     positionJitter: 50
