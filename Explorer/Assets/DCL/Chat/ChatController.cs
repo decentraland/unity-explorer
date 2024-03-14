@@ -115,13 +115,14 @@ namespace DCL.Chat
         {
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
+            viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
             ToggleEmojiPanelAsync(emojiPanelCts.Token).Forget();
         }
 
         private UniTask ToggleEmojiPanelAsync(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
+            viewInstance.EmojiPanel.emojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
         }
