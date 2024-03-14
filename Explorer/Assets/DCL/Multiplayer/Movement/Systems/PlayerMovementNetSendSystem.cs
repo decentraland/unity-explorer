@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             foreach (SendRuleBase sendRule in settings.SendRules)
                 if (timeDiff > sendRule.MinTimeDelta
-                    && sendRule.IsSendConditionMet(timeDiff, playerMovement.LastSentMessage, ref animation, ref stun, ref move, ref jump, playerMovement.Character, settings))
+                    && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in animation, in stun, in move, in jump, playerMovement.Character, settings))
                 {
                     SendMessage(ref playerMovement, ref animation, ref stun, ref move, ref jump, sendRule.Message);
                     return;

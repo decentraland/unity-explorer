@@ -9,11 +9,14 @@ namespace DCL.Multiplayer.Movement.Settings
         public float MinTimeDelta = 0;
         public virtual string Message { get; set; }
 
-        public abstract bool IsSendConditionMet(float t,
-            FullMovementMessage lastFullMovementMessage,
-            ref CharacterAnimationComponent playerAnimationComponent,
-            ref StunComponent playerStunComponent,
-            ref MovementInputComponent move, ref JumpInputComponent jump,
-            CharacterController playerCharacter, IMultiplayerMovementSettings settings);
+        public abstract bool IsSendConditionMet(
+            in float t,
+            in FullMovementMessage lastFullMovementMessage,
+            in CharacterAnimationComponent playerAnimationComponent,
+            in StunComponent playerStunComponent,
+            in MovementInputComponent move,
+            in JumpInputComponent jump,
+            CharacterController playerCharacter,
+            IMultiplayerMovementSettings settings);
     }
 }

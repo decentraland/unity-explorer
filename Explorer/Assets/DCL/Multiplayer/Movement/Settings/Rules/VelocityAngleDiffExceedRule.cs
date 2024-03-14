@@ -10,9 +10,15 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override string Message => $"$\"<color={color}> VELOCITY ANGLE </color>\"";
 
-        public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
-            ref JumpInputComponent jump, CharacterController playerCharacter,
-            IMultiplayerMovementSettings ____) =>
+        public override bool IsSendConditionMet(
+            in float t,
+            in FullMovementMessage lastFullMovementMessage,
+            in CharacterAnimationComponent playerAnimationComponent,
+            in StunComponent playerStunComponent,
+            in MovementInputComponent move,
+            in JumpInputComponent jump,
+            CharacterController playerCharacter,
+            IMultiplayerMovementSettings settings) =>
             lastFullMovementMessage.velocity != Vector3.zero && playerCharacter.velocity != Vector3.zero &&
             Vector3.Dot(lastFullMovementMessage.velocity, playerCharacter.velocity) < VelocityCosAngleDiffInverseThreshold;
     }

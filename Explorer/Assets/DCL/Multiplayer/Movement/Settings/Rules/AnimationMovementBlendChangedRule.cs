@@ -13,9 +13,15 @@ namespace DCL.Multiplayer.Movement.Settings
 
         private string reason = string.Empty;
 
-        public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent move,
-            ref JumpInputComponent jump, CharacterController ___,
-            IMultiplayerMovementSettings ____)
+        public override bool IsSendConditionMet(
+            in float t,
+            in FullMovementMessage lastFullMovementMessage,
+            in CharacterAnimationComponent playerAnimationComponent,
+            in StunComponent playerStunComponent,
+            in MovementInputComponent move,
+            in JumpInputComponent jump,
+            CharacterController playerCharacter,
+            IMultiplayerMovementSettings settings)
         {
             // Maybe we don't need it because of velocity change?
             if (Mathf.Abs(GetMovementBlendTier(lastFullMovementMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)) >= MoveBlendTiersDiff)

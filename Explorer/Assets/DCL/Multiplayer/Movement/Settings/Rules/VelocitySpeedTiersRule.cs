@@ -18,12 +18,18 @@ namespace DCL.Multiplayer.Movement.Settings
         private string reason = string.Empty;
         public override string Message => $"$\"<color={color}> VELOCITY TIERS {reason}</color>\"";
 
-        public override bool IsSendConditionMet(float t, FullMovementMessage lastFullMovementMessage, ref CharacterAnimationComponent _, ref StunComponent __, ref MovementInputComponent move,
-            ref JumpInputComponent jump, CharacterController playerCharacter,
-            IMultiplayerMovementSettings ____)
+        public override bool IsSendConditionMet(
+            in float t,
+            in FullMovementMessage lastFullMovementMessage,
+            in CharacterAnimationComponent playerAnimationComponent,
+            in StunComponent playerStunComponent,
+            in MovementInputComponent move,
+            in JumpInputComponent jump,
+            CharacterController playerCharacter,
+            IMultiplayerMovementSettings settings)
         {
             // Velocity tiers - 0 = idle, 1 = walk, 2 = run, 3 = sprint
-            (float Threshold, float Rate, string Reason)[] conditions = new[]
+            (float Threshold, float Rate, string Reason)[] conditions =
             {
                 (Threshold: SprintSqrSpeed, Rate: SprintSentRate, Reason: "SPRINT"),
                 (Threshold: RunSqrSpeed, Rate: RunSentRate, Reason: "RUN"),
