@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 188344c0509e8a841979fc004c7f983a, type: 3}
+  m_Name: Avatar Randomizer
+  m_EditorClassIdentifier: 
+  <RandomOrder>k__BackingField: 0
+  <Avatars>k__BackingField:
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x956b8d57066fc3d2562de22efd63624a1ba56e35:11
+    - urn:decentraland:matic:collections-v2:0xded1e53d7a43ac1844b66c0ca0f02627eb42e16d:11
+    - urn:decentraland:matic:collections-v2:0xca520eea5aadff51b48d9e9b3038001a751139ca:0
+    - urn:decentraland:matic:collections-v2:0xd50191baed16bc532feb9d499fdaa805fe01d3ff:8
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xf8a87150ca602dbeb2e748ad7c9c790d55d10528:0
+    - urn:decentraland:matic:collections-v2:0xf8a87150ca602dbeb2e748ad7c9c790d55d10528:1
+    - urn:decentraland:matic:collections-v2:0xf8a87150ca602dbeb2e748ad7c9c790d55d10528:2
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x722dbe4677dd3069c1277946aab57b2e8553bd0f:0
+    - urn:decentraland:matic:collections-v2:0x722dbe4677dd3069c1277946aab57b2e8553bd0f:3
+    - urn:decentraland:matic:collections-v2:0x0be429aa3c8fa39a82a005f97c7913ee669c7675:0
+    - urn:decentraland:matic:collections-v2:0x838ec0cbf71fbacbd047f717c89a8c96526a4680:0
+    - urn:decentraland:matic:collections-v2:0x722dbe4677dd3069c1277946aab57b2e8553bd0f:1
+    - urn:decentraland:matic:collections-v2:0xd50191baed16bc532feb9d499fdaa805fe01d3ff:7
+    - urn:decentraland:matic:collections-v2:0xded1e53d7a43ac1844b66c0ca0f02627eb42e16d:4
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x777cdea72334f2c4e5e8a32cc508db20aab9fde1:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xe9a19898cc03f15f3b665a35f2876b6c54918f2e:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xded1e53d7a43ac1844b66c0ca0f02627eb42e16d:10
+    - urn:decentraland:matic:collections-v2:0xb04cec2681910ad8ce3e093a7084ecde0fda56b3:1
+    - urn:decentraland:matic:collections-v2:0xb187264af67cf6d147521626203dedcfd901ceb3:2
+    - urn:decentraland:matic:collections-v2:0xad8bf81b98747c3547510b96af759ee647f9717f:0
+    - urn:decentraland:matic:collections-v2:0xc65c3e0dd85d993678e02a1407be7d804fae4667:2
+    - urn:decentraland:ethereum:collections-v1:rtfkt_x_atari:p_rtfkt_x_atari_feet
+    - urn:decentraland:matic:collections-v2:0x8c577ed701041178a710f419df57cce7fea43e3b:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x0607fc0400090ab141604b04cee95f2985f1f07a:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x3530abc9dcd2e6ffc4a04fc27878330ba1ad19cb:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xf907f7abe1af828ac16fd5525df019c6e44cf977:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:3
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:0
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:1
+    - urn:decentraland:matic:collections-v2:0x9cac588b45b72d0476297cc47947dc488db9878f:2
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xfaa99e11cf1cd37660975ae7f3623114b1e1b7a6:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xe9a19898cc03f15f3b665a35f2876b6c54918f2e:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xfb1d9d5dbb92f2dccc841bd3085081bb1bbeb04d:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x793b73e9f7c8d3df3fb16f4a23568838baf2eb0a:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x4353e39228813bfcb123f9822928ff4d5ac9288e:0
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x84a1d84f183fa0fd9b6b9cb1ed0ff1b7f5409ebb:5
+  - pointers:
+    - urn:decentraland:ethereum:collections-v1:halloween_2020:hwn_2020_dracula_mouth
+  - pointers:
+    - urn:decentraland:ethereum:collections-v1:dappcraft_moonminer:moonminer_neurahairs_hair
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0x9ef30e8babfd367e2f31f3374ffe35ff4862e914:2
+  <RandomizeCollection>k__BackingField:
+  - pointer: base-wearable
+    page_size: 282

@@ -41,10 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             ("ubody", WearablesConstants.Categories.UPPER_BODY),
             ("lbody", WearablesConstants.Categories.LOWER_BODY),
             ("hands", WearablesConstants.Categories.HANDS),
-            ("feet", WearablesConstants.Categories.FEET),
-            ("eyes", WearablesConstants.Categories.EYES),
-            ("eyebrows", WearablesConstants.Categories.EYEBROWS),
-            ("mouth", WearablesConstants.Categories.MOUTH),
+            ("feet", WearablesConstants.Categories.FEET), ("eyes", WearablesConstants.Categories.HEAD), ("eyebrows", WearablesConstants.Categories.HEAD), ("mouth", WearablesConstants.Categories.HEAD)
         };
 
         private static readonly HashSet<string> HIDE_CATEGORIES = new (StringComparer.OrdinalIgnoreCase);
