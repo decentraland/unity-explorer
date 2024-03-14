@@ -13,6 +13,8 @@ namespace DCL.NftPrompt
         [field: SerializeField] public ImageView ImageNft { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextNftName { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextOwner { get; private set; }
+        [field: SerializeField] public TextMeshProUGUI TextMultipleOwner { get; private set; }
+        [field: SerializeField] public GameObject MultipleOwnersContainer { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextDescription { get; private set; }
         [field: SerializeField] public GameObject SpinnerGeneral { get; private set; }
         [field: SerializeField] public GameObject SpinnerNftImage { get; private set; }

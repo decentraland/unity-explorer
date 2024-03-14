@@ -4247,6 +4247,8 @@ MonoBehaviour:
   <ImageNft>k__BackingField: {fileID: 5712046108915266405}
   <TextNftName>k__BackingField: {fileID: 3662939688014105892}
   <TextOwner>k__BackingField: {fileID: 6990931756527358370}
+  <TextMultipleOwner>k__BackingField: {fileID: 408852613075912122}
+  <MultipleOwnersContainer>k__BackingField: {fileID: 6630887080188623616}
   <TextDescription>k__BackingField: {fileID: 16547192600818429}
   <SpinnerGeneral>k__BackingField: {fileID: 1970746354775609528}
   <SpinnerNftImage>k__BackingField: {fileID: 63657141747170948}

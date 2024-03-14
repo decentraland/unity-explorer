@@ -14,6 +14,8 @@ namespace DCL.NftPrompt
 {
     public partial class NftPromptController : ControllerBase<NftPromptView, NftPromptController.Params>
     {
+        private const string OWNER_NOT_AVAILABLE = "NOT AVAILABLE";
+        private const string MULTIPLE_OWNERS_FORMAT = "{0} owners";
         private const int ADDRESS_MAX_CHARS = 11;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -140,7 +142,19 @@ namespace DCL.NftPrompt
             ShowMainErrorFeedback(false);
             viewInstance.NftContent.SetActive(true);
             viewInstance.TextNftName.text = info.name;
-            viewInstance.TextOwner.text = FormatOwnerAddress(info.owners[0].address, ADDRESS_MAX_CHARS);
+
+            bool hasMultipleOwners = info.owners.Length > 1;
+            if (hasMultipleOwners)
+                viewInstance.TextMultipleOwner.text = string.Format(MULTIPLE_OWNERS_FORMAT, info.owners.Length);
+            else
+            {
+                viewInstance.TextOwner.text = info.owners.Length == 1
+                    ? FormatOwnerAddress(info.owners[0].address, ADDRESS_MAX_CHARS)
+                    : OWNER_NOT_AVAILABLE;
+            }
+
+            viewInstance.TextOwner.gameObject.SetActive(!hasMultipleOwners);
+            viewInstance.MultipleOwnersContainer.gameObject.SetActive(hasMultipleOwners);
 
             if (!string.IsNullOrEmpty(info.description))
                 viewInstance.TextDescription.text = info.description;
