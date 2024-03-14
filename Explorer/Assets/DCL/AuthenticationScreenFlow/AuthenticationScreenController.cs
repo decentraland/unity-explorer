@@ -188,9 +188,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            characterPreviewController!.OnHide();
             lifeCycleTask!.TrySetResult();
             lifeCycleTask = null;
-            characterPreviewController!.OnHide();
         }
 
         private void SwitchState(ViewState state)
