@@ -195,7 +195,7 @@ namespace DCL.Chat
                 cts.SafeCancelAndDispose();
                 cts = new CancellationTokenSource();
 
-                SearchAndSetEmojiSuggestions(match.Value, cts.Token).Forget();
+                SearchAndSetEmojiSuggestionsAsync(match.Value, cts.Token).Forget();
             }
             else
             {
@@ -203,7 +203,7 @@ namespace DCL.Chat
             }
         }
 
-        private async UniTaskVoid SearchAndSetEmojiSuggestions(string value, CancellationToken ct)
+        private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
             IEnumerable<EmojiData> keysWithPrefixAsync = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, ct);
