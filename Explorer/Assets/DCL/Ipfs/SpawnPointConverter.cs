@@ -7,36 +7,20 @@ namespace DCL.Ipfs
     /// <summary>
     ///     Provides support for polymorphic definition of "position"
     /// </summary>
-    public class SpawnPointConverter : JsonConverter<SceneMetadata.SpawnPoint>
+    public class SpawnPointCoordinateConverter : JsonConverter<SceneMetadata.SpawnPoint.Coordinate>
     {
-        public override bool CanWrite => false;
-
-        public override void WriteJson(JsonWriter writer, SceneMetadata.SpawnPoint value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, SceneMetadata.SpawnPoint.Coordinate value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
         }
 
-        public override SceneMetadata.SpawnPoint ReadJson(JsonReader reader, Type objectType, SceneMetadata.SpawnPoint existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override SceneMetadata.SpawnPoint.Coordinate ReadJson(JsonReader reader, Type objectType, SceneMetadata.SpawnPoint.Coordinate existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            var jsonObject = JObject.Load(reader);
-            var spawnPoint = new SceneMetadata.SpawnPoint();
+            var token = JToken.Load(reader);
 
-            spawnPoint.name = jsonObject["name"].Value<string>();
-            JToken position = jsonObject["position"];
-
-            // Check if 'position' is an array or a single object
-            if (position["x"].Type == JTokenType.Array)
-            {
-                // Deserialize as MultiPosition
-                spawnPoint.MP = position.ToObject<SceneMetadata.SpawnPoint.MultiPosition>();
-            }
-            else
-            {
-                // Deserialize as SinglePosition
-                spawnPoint.SP = position.ToObject<SceneMetadata.SpawnPoint.SinglePosition>();
-            }
-
-            return spawnPoint;
+            return token.Type == JTokenType.Array
+                ? new SceneMetadata.SpawnPoint.Coordinate { MultiValue = token.ToObject<float[]>() }
+                : new SceneMetadata.SpawnPoint.Coordinate { SingleValue = token.ToObject<float>() };
         }
     }
 }
