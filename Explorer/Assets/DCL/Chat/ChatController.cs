@@ -206,7 +206,7 @@ namespace DCL.Chat
         private async UniTaskVoid SearchAndSetEmojiSuggestions(string value, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            IEnumerable<EmojiData> keysWithPrefixAsync = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.emojiNameMapping, value, ct);
+            IEnumerable<EmojiData> keysWithPrefixAsync = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, ct);
 
             emojiSuggestionPanelController.SetValues(keysWithPrefixAsync);
             emojiSuggestionPanelController.SetPanelVisibility(true);

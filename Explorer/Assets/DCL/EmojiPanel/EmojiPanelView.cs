@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using DCL.UI;
 using UnityEngine;
-using UnityEngine.TextCore.Text;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Emoji
@@ -15,6 +14,10 @@ namespace DCL.Emoji
 
         [SerializeField] public ScrollRect scrollView;
         [SerializeField] public Transform emojiContainer;
+        [SerializeField] public Transform emojiContainerScrollView;
+        [SerializeField] public Transform emojiSearchResults;
+        [SerializeField] public Transform emojiSearchedContent;
+        [SerializeField] public SearchBarView searchPanelView;
 
         public event Action OnEmojiFirstOpen;
 
@@ -23,9 +26,7 @@ namespace DCL.Emoji
             OnEmojiFirstOpen?.Invoke();
 
             foreach (EmojiSectionToggle emojiSectionToggle in emojiSections)
-            {
                 emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => OnSectionSelected?.Invoke(emojiSectionToggle.SectionName, isOn));
-            }
         }
     }
 }

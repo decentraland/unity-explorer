@@ -1,6 +1,8 @@
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -15,11 +17,14 @@ namespace DCL.Emoji
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly EmojiButton emojiButtonPrefab;
         private readonly EmojiSectionView emojiSectionPrefab;
+        private readonly EmojiSearchController emojiSearchController;
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
-        public readonly Dictionary<string, EmojiData> emojiNameMapping = new ();
+        public readonly Dictionary<string, EmojiData> EmojiNameMapping = new ();
         private readonly Dictionary<string, string> emojiValueMapping = new ();
         private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
+
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         private int startDec;
         private int endDec;
@@ -37,16 +42,34 @@ namespace DCL.Emoji
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
-
+            emojiSearchController = new EmojiSearchController(view.searchPanelView, view.emojiSearchedContent, emojiButtonPrefab);
+            emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
-                emojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
+                EmojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
                 emojiValueMapping.Add(emojiData.Value.ToUpper(), emojiData.Key);
             }
 
             view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
             view.OnSectionSelected += OnSectionSelected;
+        }
+
+        private void OnSearchTextChanged(string searchText)
+        {
+            view.emojiContainerScrollView.gameObject.SetActive(string.IsNullOrEmpty(searchText));
+            view.emojiSearchResults.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
+            if (string.IsNullOrEmpty(searchText))
+                return;
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            OnSearchTextChangedAsync(searchText, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid OnSearchTextChangedAsync(string searchText, CancellationToken ct)
+        {
+            IEnumerable<EmojiData> foundEmojis = await DictionaryUtils.GetKeysContainingTextAsync(EmojiNameMapping, searchText, ct);
+            emojiSearchController.SetValues(foundEmojis);
         }
 
         private void OnSectionSelected(EmojiSectionName obj, bool isOn)

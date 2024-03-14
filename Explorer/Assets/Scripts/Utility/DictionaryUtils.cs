@@ -17,5 +17,17 @@ namespace Utility
             await UniTask.CompletedTask;
             return result;
         }
+
+        public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(Dictionary<string, TValue> dictionary, string matchingText, CancellationToken ct)
+        {
+            List<TValue> result = new List<TValue>();
+            foreach (var key in dictionary.Keys)
+            {
+                if (key.Contains(matchingText))
+                    result.Add(dictionary[key]);
+            }
+            await UniTask.CompletedTask;
+            return result;
+        }
     }
 }
