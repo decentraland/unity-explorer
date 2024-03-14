@@ -15,13 +15,8 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
-        private const int MAX_MESSAGES_PER_SEC = 10; // 10 Hz == 10 [msg/sec]
-
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly IMultiplayerMovementSettings settings;
-
-        private int messagesSentInSec;
-        private float mesPerSecResetCooldown;
 
         public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
         {
@@ -31,29 +26,20 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
-            UpdateMessagePerSecondCounter(t);
-            SendPlayerNetMovementQuery(World);
-        }
-
-        private void UpdateMessagePerSecondCounter(float t)
-        {
-            if (mesPerSecResetCooldown > 0)
-                mesPerSecResetCooldown -= t;
-            else
-            {
-                mesPerSecResetCooldown = 1; // 1 [sec]
-                messagesSentInSec = 0;
-            }
+            SendPlayerNetMovementQuery(World, t);
         }
 
         [Query]
-        private void SendPlayerNetMovement(ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
+        private void SendPlayerNetMovement([Data] float t, ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move,
+            ref JumpInputComponent jump)
         {
-            if (messagesSentInSec >= MAX_MESSAGES_PER_SEC) return;
+            UpdateMessagePerSecondTimer(t, ref playerMovement);
+
+            if (playerMovement.MessagesSentInSec >= PlayerMovementNetworkComponent.MAX_MESSAGES_PER_SEC) return;
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, ref animation, ref stun, ref move, ref jump, "FIRST");
+                SendMessage(ref playerMovement, ref animation, ref stun, ref move);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -64,15 +50,25 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (timeDiff > sendRule.MinTimeDelta
                     && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in animation, in stun, in move, in jump, playerMovement.Character, settings))
                 {
-                    SendMessage(ref playerMovement, ref animation, ref stun, ref move, ref jump, sendRule.Message);
+                    SendMessage(ref playerMovement, ref animation, ref stun, ref move);
                     return;
                 }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump,
-            string from)
+        private static void UpdateMessagePerSecondTimer(float t, ref PlayerMovementNetworkComponent playerMovement)
         {
-            messagesSentInSec++;
+            if (playerMovement.MessagesPerSecResetCooldown > 0)
+                playerMovement.MessagesPerSecResetCooldown -= t;
+            else
+            {
+                playerMovement.MessagesPerSecResetCooldown = 1; // 1 [sec]
+                playerMovement.MessagesSentInSec = 0;
+            }
+        }
+
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement)
+        {
+            playerMovement.MessagesSentInSec++;
 
             playerMovement.LastSentMessage = new FullMovementMessage
             {
