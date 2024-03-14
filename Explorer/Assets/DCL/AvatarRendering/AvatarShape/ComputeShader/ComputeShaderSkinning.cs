@@ -243,16 +243,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON"))
                 {
                     avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
-                    avatarMaterial.SetFloat("_IsBaseMapAlphaAsClippingMask", 1.0f);
-                    avatarMaterial.SetInt("_ZWriteMode", 0);
-                    avatarMaterial.SetFloat("_ZOverDrawMode", 1);
-                    avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                    avatarMaterial.SetFloat("_Clipping_Level", 0.49f);
                 }
-                if (originalMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"))
-                {
-                    avatarMaterial.SetFloat("_Clipping_Level", 0.5f);
-                    avatarMaterial.SetFloat("_Tweak_transparency", 0.0f);
-                }
+
 
                 slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
             }
