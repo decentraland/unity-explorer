@@ -1,4 +1,5 @@
-﻿using MVC;
+﻿using DCL.UI;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,8 +10,7 @@ namespace DCL.NftPrompt
     {
         [field: SerializeField] public GameObject NftContent { get; private set; }
         [field: SerializeField] public GameObject MainErrorFeedbackContent { get; private set; }
-        [field: SerializeField] public GameObject ImageErrorFeedbackContent { get; private set; }
-        [field: SerializeField] public RawImage ImageNft { get; private set; }
+        [field: SerializeField] public ImageView ImageNft { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextNftName { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextOwner { get; private set; }
         [field: SerializeField] public TextMeshProUGUI TextDescription { get; private set; }

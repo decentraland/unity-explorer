@@ -2,6 +2,8 @@
 using DCL.Browser;
 using DCL.Input;
 using DCL.NftInfoAPIService;
+using DCL.UI;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -19,25 +21,30 @@ namespace DCL.NftPrompt
         private readonly IWebBrowser webBrowser;
         private readonly ICursor cursor;
         private readonly INftInfoAPIService nftInfoAPIService;
+        private readonly IWebRequestController webRequestController;
         private Action<NftPromptResultType> resultCallback;
 
         private NftInfo? lastNftInfo;
         private string marketUrl;
+        private ImageController placeImageController;
         private CancellationTokenSource cts;
 
         public NftPromptController(
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             ICursor cursor,
-            INftInfoAPIService nftInfoAPIService) : base(viewFactory)
+            INftInfoAPIService nftInfoAPIService,
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.cursor = cursor;
             this.nftInfoAPIService = nftInfoAPIService;
+            this.webRequestController = webRequestController;
         }
 
         protected override void OnViewInstantiated()
         {
+            placeImageController = new ImageController(viewInstance.ImageNft, webRequestController);
             viewInstance.ButtonClose.onClick.AddListener(Dismiss);
             viewInstance.ButtonCancel.onClick.AddListener(Dismiss);
             viewInstance.ButtonOpenMarket.onClick.AddListener(ViewOnMarket);
@@ -86,7 +93,7 @@ namespace DCL.NftPrompt
                 await UniTask.SwitchToMainThread();
                 SetNftInfo(nftInfo);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 ShowMainErrorFeedback(true);
             }
@@ -94,7 +101,6 @@ namespace DCL.NftPrompt
 
         private void SetLoading()
         {
-            viewInstance.ImageNft.gameObject.SetActive(false);
             viewInstance.NftContent.SetActive(false);
             ShowImageLoading(false);
             ShowMainLoading(true);
@@ -148,6 +154,9 @@ namespace DCL.NftPrompt
                 marketUrl = info.marketLink;
             else if (!string.IsNullOrEmpty(info.assetLink))
                 marketUrl = info.assetLink;
+
+            placeImageController.SetImage(null);
+            placeImageController.RequestImage(info.imageUrl);
 
             lastNftInfo = info;
         }
