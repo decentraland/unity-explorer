@@ -29,13 +29,13 @@ namespace DCL.CharacterMotion.Emotes
             this.embedEmotesData = embedEmotesData;
 
             // todo: remove this
-            emotes = embedEmotesData.emotes.ToDictionary(e => e.id, e =>
-            {
-                AnimationClip clip = e.prefab.GetComponent<UnityEngine.Animation>().clip;
-
-                return new EmoteData
-                    { id = e.id, avatarClip = clip, loop = e.entity.loop };
-            });
+            // emotes = embedEmotesData.emotes.ToDictionary(e => e.id, e =>
+            // {
+            //     AnimationClip? clip = e.prefab.GetComponent<UnityEngine.Animation>()?.clip;
+            //
+            //     return new EmoteData
+            //         { id = e.id, avatarClip = clip, loop = e.entity.loop };
+            // });
 
             using var embedEmotes = emotes.Values.GetEnumerator();
 
