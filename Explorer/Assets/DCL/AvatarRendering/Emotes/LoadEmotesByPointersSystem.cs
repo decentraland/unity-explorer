@@ -136,6 +136,9 @@ namespace DCL.AvatarRendering.Emotes
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {
+            // The intention has already been resolved
+            if (World.Has<StreamableResult>(entity)) return;
+
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
                 if (!World.Has<StreamableResult>(entity))
