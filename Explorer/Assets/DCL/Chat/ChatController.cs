@@ -221,6 +221,14 @@ namespace DCL.Chat
             viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count - 1, 0);
         }
 
+        public override void Dispose()
+        {
+            chatMessagesBus.OnMessageAdded -= CreateChatEntry;
+            emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
+            emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
+            emojiPanelController.Dispose();
+        }
+
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
     }

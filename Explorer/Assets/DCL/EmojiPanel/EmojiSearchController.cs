@@ -10,7 +10,7 @@ namespace DCL.Emoji
 {
     public class EmojiSearchController
     {
-        public event Action<EmojiData> OnEmojiSelected;
+        public event Action<string> OnEmojiSelected;
         public event Action<string> OnSearchTextChanged;
 
         private readonly SearchBarView view;
@@ -55,7 +55,8 @@ namespace DCL.Emoji
                 EmojiButton emojiView = searchItemsPool.Get();
                 emojiView.EmojiImage.text = foundEmoji.EmojiCode;
                 emojiView.TooltipText.text = foundEmoji.EmojiName;
-                emojiView.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji));
+                emojiView.Button.onClick.RemoveAllListeners();
+                emojiView.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji.EmojiCode));
                 usedPoolItems.Add(emojiView);
             }
         }
@@ -66,6 +67,11 @@ namespace DCL.Emoji
                 searchItemsPool.Release(emojiSuggestionView);
 
             usedPoolItems.Clear();
+        }
+
+        public void Dispose()
+        {
+            ReleaseSearchResults();
         }
     }
 }

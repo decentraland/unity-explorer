@@ -44,6 +44,7 @@ namespace DCL.Emoji
             this.emojiButtonPrefab = emojiButtonPrefab;
             emojiSearchController = new EmojiSearchController(view.searchPanelView, view.emojiSearchedContent, emojiButtonPrefab);
             emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
+            emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
                 EmojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
@@ -136,6 +137,14 @@ namespace DCL.Emoji
                 else
                     emojiButton.TooltipText.text = string.Empty;
             }
+        }
+
+        public void Dispose()
+        {
+            emojiSearchController.OnSearchTextChanged -= OnSearchTextChanged;
+            view.OnEmojiFirstOpen -= ConfigureEmojiSectionSizes;
+            view.OnSectionSelected -= OnSectionSelected;
+            emojiSearchController?.Dispose();
         }
     }
 }
