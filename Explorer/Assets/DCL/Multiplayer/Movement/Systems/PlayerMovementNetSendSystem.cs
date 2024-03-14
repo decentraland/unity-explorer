@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        private void SendPlayerNetMovement(ref PlayerMovementNetSendComponent playerMovement, ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
+        private void SendPlayerNetMovement(ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move, ref JumpInputComponent jump)
         {
             if (messagesSentInSec >= MAX_MESSAGES_PER_SEC) return;
 
@@ -69,7 +69,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 }
         }
 
-        private void SendMessage(ref PlayerMovementNetSendComponent playerMovement, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump,
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement, ref JumpInputComponent jump,
             string from)
         {
             messagesSentInSec++;
@@ -87,7 +87,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending && movement.Kind != MovementKind.Run)
-                messageBus.SelfSendWithDelay(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
+                messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }
 }

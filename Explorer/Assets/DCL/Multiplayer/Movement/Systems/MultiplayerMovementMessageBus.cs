@@ -174,7 +174,7 @@ namespace DCL.Multiplayer.Movement.System
             }
         }
 
-        public async UniTaskVoid SelfSendWithDelay(FullMovementMessage message, float delay)
+        public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(delay));
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
