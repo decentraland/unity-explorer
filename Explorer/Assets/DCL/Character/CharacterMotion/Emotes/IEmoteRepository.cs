@@ -2,13 +2,16 @@ using DCL.AvatarRendering.Emotes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Emotes
 {
     public interface IEmoteRepository
     {
         public string GetHotkeyEmote(int index);
+
         public bool Exists(string emoteId);
+
         public EmoteData Get(string emoteId);
     }
 
@@ -26,9 +29,16 @@ namespace DCL.CharacterMotion.Emotes
             this.embedEmotesData = embedEmotesData;
 
             // todo: remove this
-            emotes = embedEmotesData.emotes.ToDictionary(e => e.id, e => new EmoteData() { id = e.id, avatarClip = e.avatarClip, loop = e.avatarClip.isLooping});
+            emotes = embedEmotesData.emotes.ToDictionary(e => e.id, e =>
+            {
+                AnimationClip clip = e.prefab.GetComponent<UnityEngine.Animation>().clip;
+
+                return new EmoteData
+                    { id = e.id, avatarClip = clip, loop = e.entity.loop };
+            });
 
             using var embedEmotes = emotes.Values.GetEnumerator();
+
             for (var i = 0; i < 8; i++)
             {
                 embedEmotes.MoveNext();

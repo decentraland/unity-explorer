@@ -18,8 +18,8 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
+        public StreamableLoadingResult<AudioClip>? AudioAssetResult { get; set; }
         public bool IsLoading { get; set; } = true;
-        public bool IsLoadSuccess => Model.Succeeded;
 
         public URLPath GetThumbnail()
         {

@@ -331,7 +331,11 @@ namespace DCL.AvatarRendering.Emotes
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Manifest is required for Web loading only
-            if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
+            if (component.ManifestResult == null
+                && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
+
+                // Skip processing manifest for embedded emotes which do not start with 'urn'
+                && component.GetUrn().IsValid())
             {
                 var promise = AssetBundleManifestPromise.Create(World,
                     new GetWearableAssetBundleManifestIntention(component.GetHash(),

@@ -15,13 +15,9 @@ MonoBehaviour:
   emotes:
   - id: clap
     name: clap
-    avatarClip: {fileID: 7400000, guid: cdd7ed60f3e76514bbbbf1f6f83b0ad9, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: bc7c208d1e7e942f0b37191bd9fad362, type: 3}
     entity:
       representations: []
       category: 
@@ -32,13 +28,9 @@ MonoBehaviour:
       loop: 0
   - id: crafting
     name: crafting
-    avatarClip: {fileID: 7400000, guid: b5aad1c8a920a104abbb045ca5a4709a, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 7938434e632b598489b8b03e6effa995, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 465491e0be2fa411dab6fd5716fe1a54, type: 3}
     entity:
       representations: []
       category: 
@@ -49,13 +41,9 @@ MonoBehaviour:
       loop: 0
   - id: cry
     name: cry
-    avatarClip: {fileID: 7400000, guid: 3f2ea2fbf3b5c4d4ab568eeedd41335e, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 421866c63941c466aaa78f9f5098685b, type: 3}
     entity:
       representations: []
       category: 
@@ -66,13 +54,9 @@ MonoBehaviour:
       loop: 0
   - id: dab
     name: dab
-    avatarClip: {fileID: 7400000, guid: 818d387aeab05224cb002fb2b276d983, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: e6a1e80b5ad78344ab7aa751eb27c30d, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 555e042d4b9b14ac0a4d086bdb749500, type: 3}
     entity:
       representations: []
       category: 
@@ -83,13 +67,9 @@ MonoBehaviour:
       loop: 0
   - id: dance
     name: dance
-    avatarClip: {fileID: 7400000, guid: 155c6b028418ca5428d4f23ac56bb0dc, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: fb2a51422f4f0f84ca589e9716428e06, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 37c280bbf7a8f43c5bd4eb8918058365, type: 3}
     entity:
       representations: []
       category: 
@@ -100,13 +80,9 @@ MonoBehaviour:
       loop: 0
   - id: disco
     name: disco
-    avatarClip: {fileID: 7400000, guid: 3ce1ed24f42ee034f909ba20fd75a54a, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5dc96a095ce3483459044bf3e74ccb59, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: c62cead1fc46347a9bb0193ed3259ba2, type: 3}
     entity:
       representations: []
       category: 
@@ -117,13 +93,9 @@ MonoBehaviour:
       loop: 0
   - id: dontsee
     name: dontsee
-    avatarClip: {fileID: 7400000, guid: a114b2355696f4a4fb9fa93c575da4a6, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 869cd89681c12421da3da0478168e421, type: 3}
     entity:
       representations: []
       category: 
@@ -134,13 +106,9 @@ MonoBehaviour:
       loop: 0
   - id: fistpump
     name: fistpump
-    avatarClip: {fileID: 7400000, guid: bea3f032af253a9468148be4fff401cd, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 7693f9dc71d4e4a58816014d4ece5b06, type: 3}
     entity:
       representations: []
       category: 
@@ -151,13 +119,9 @@ MonoBehaviour:
       loop: 0
   - id: hammer
     name: hammer
-    avatarClip: {fileID: 7400000, guid: 67154a843c1ca8a49a735631084e1c4d, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 90d19c500d961c44f8941c69dcdae46a, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: f38d7869f314e4cb4a908407fed6dbd3, type: 3}
     entity:
       representations: []
       category: 
@@ -168,13 +132,9 @@ MonoBehaviour:
       loop: 0
   - id: hands_in_the_air
     name: hands_in_the_air
-    avatarClip: {fileID: 7400000, guid: b612fba32c3f5104688dddf785b1fd7c, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d2792b82c53724fcf9376888f3953c32, type: 3}
     entity:
       representations: []
       category: 
@@ -185,13 +145,9 @@ MonoBehaviour:
       loop: 0
   - id: handsair
     name: handsair
-    avatarClip: {fileID: 7400000, guid: 8f31df01c693d3846aca4697baf91d32, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 425469edfdeba472c907877cc4c364c3, type: 3}
     entity:
       representations: []
       category: 
@@ -202,13 +158,9 @@ MonoBehaviour:
       loop: 0
   - id: headexplode
     name: headexplode
-    avatarClip: {fileID: 7400000, guid: badf1a8769fbd1341845562c1594d102, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 8771091787928289351, guid: e4f71ee087f33480fb8f4294f850112e, type: 3}
-    glbFemale: {fileID: 8771091787928289351, guid: e4f71ee087f33480fb8f4294f850112e, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: eb3fb75fdcb3b4748863cad3e2fbc570, type: 3}
     entity:
       representations: []
       category: 
@@ -219,13 +171,9 @@ MonoBehaviour:
       loop: 0
   - id: hohoho
     name: hohoho
-    avatarClip: {fileID: 7400000, guid: 8e372658ec054974e858b50605325373, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 08fb89e42a3f7d44e9b2a391aa41aff6, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 69f0da6e0085e47dd8dd41624072fec8, type: 3}
     entity:
       representations: []
       category: 
@@ -236,13 +184,9 @@ MonoBehaviour:
       loop: 0
   - id: kiss
     name: kiss
-    avatarClip: {fileID: 7400000, guid: 23bb7833b02ee6541920324af49bb0d1, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 8845b5e9671db49409bf747319c8f5c7, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d222a0241a8f34e8dbf033b971717370, type: 3}
     entity:
       representations: []
       category: 
@@ -253,13 +197,9 @@ MonoBehaviour:
       loop: 0
   - id: money
     name: money
-    avatarClip: {fileID: 7400000, guid: ebefcc1d9dbf7c445bab138814de32ae, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: e2b6332b93b06ab488a93d40b83c69fe, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 21d1b0898364d4ac590ece2883709553, type: 3}
     entity:
       representations: []
       category: 
@@ -270,13 +210,9 @@ MonoBehaviour:
       loop: 0
   - id: raiseHand
     name: raiseHand
-    avatarClip: {fileID: 7400000, guid: 14f0d6c3de3a4a841aa87c1b06a35437, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 4c2f52d666b4140cfb9fabb951379dcd, type: 3}
     entity:
       representations: []
       category: 
@@ -287,13 +223,9 @@ MonoBehaviour:
       loop: 0
   - id: robot
     name: robot
-    avatarClip: {fileID: 7400000, guid: 059135e932812b947b74388a329ae330, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 736224c3cee06814dbf03a9bc3396382, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: f47550258031f44b69d3c23a32aadbac, type: 3}
     entity:
       representations: []
       category: 
@@ -304,13 +236,9 @@ MonoBehaviour:
       loop: 0
   - id: shrug
     name: shrug
-    avatarClip: {fileID: 7400000, guid: 588cba7ca1588244eb08dd898f753d8a, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: f992e8febb67b5d47a24e9f16d5cc190, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 9cd9034953b9e43d38a38f3cde21226f, type: 3}
     entity:
       representations: []
       category: 
@@ -321,13 +249,9 @@ MonoBehaviour:
       loop: 0
   - id: snowfall
     name: snowfall
-    avatarClip: {fileID: 7400000, guid: b5dccc691e029c948a962268096f14a5, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 9622f862db0a54f49a26e220aac90cbe, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: fe2d0358d08da4382ba641136ab6ffa8, type: 3}
     entity:
       representations: []
       category: 
@@ -338,13 +262,9 @@ MonoBehaviour:
       loop: 0
   - id: tektonik
     name: tektonik
-    avatarClip: {fileID: 7400000, guid: b3aa1925e0626ae409b41b0911e666ef, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: cbb63c683b55046749f6cb47138ca9bc, type: 3}
     entity:
       representations: []
       category: 
@@ -355,13 +275,9 @@ MonoBehaviour:
       loop: 0
   - id: tik
     name: tik
-    avatarClip: {fileID: 7400000, guid: 172198ea2bbe60b48be9750a4c32cb33, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 832a50a328da0294f809c85f37abca0e, type: 3}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: ab5239f8d474a41838f111c6cf9a26f6, type: 3}
     entity:
       representations: []
       category: 
@@ -372,13 +288,9 @@ MonoBehaviour:
       loop: 0
   - id: Victory
     name: Victory
-    avatarClip: {fileID: 7400000, guid: 6ddee46b4ec2cde4b831465c0e1450be, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 58f49f496e83e4327a36e0b77fccfdee, type: 3}
     entity:
       representations: []
       category: 
@@ -389,13 +301,9 @@ MonoBehaviour:
       loop: 0
   - id: wave
     name: wave
-    avatarClip: {fileID: 7400000, guid: e2d7f9e0fd4d4c84fbbc80abd87ec3f7, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: c1d9a11790afd475fbf6ad94eb29306c, type: 3}
     entity:
       representations: []
       category: 
@@ -406,13 +314,9 @@ MonoBehaviour:
       loop: 0
   - id: Waving
     name: Waving
-    avatarClip: {fileID: 7400000, guid: 5a7a631904b62cc49bbfd2193b397bfe, type: 2}
-    propClip: {fileID: 0}
-    propModel: {fileID: 0}
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    glbMale: {fileID: 0}
-    glbFemale: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d667e461497064fcb8e5caf9125cc9d8, type: 3}
     entity:
       representations: []
       category: 

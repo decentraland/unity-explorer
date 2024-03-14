@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -15,8 +16,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         internal static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
 
-        private UnityEngine.Object? MainAsset { get; }
-        private readonly AssetBundleData assetBundleData;
+        private readonly Object? mainAsset;
+        private readonly AssetBundleData? assetBundleData;
         private readonly List<RendererInfo> rendererInfos;
 
         private bool disposed;
@@ -25,11 +26,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public WearableAsset(UnityEngine.Object? mainAsset, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData)
+        public WearableAsset(Object? mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData)
         {
-            MainAsset = mainAsset;
+            this.mainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
-
             this.assetBundleData = assetBundleData;
 
             if (mainAsset == null)
@@ -54,16 +54,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (ReferenceCount > 0)
                 ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
 
-            if (MainAsset == null)
+            if (mainAsset == null)
                 ProfilingCounters.EmptyWearablesAssetsAmount.Value--;
 
             ProfilingCounters.WearablesAssetsAmount.Value--;
         }
 
-        public T GetMainAsset<T>() where T : UnityEngine.Object
-        {
-            return MainAsset as T;
-        }
+        public T? GetMainAsset<T>() where T: Object =>
+            mainAsset as T;
 
         public void AddReference()
         {

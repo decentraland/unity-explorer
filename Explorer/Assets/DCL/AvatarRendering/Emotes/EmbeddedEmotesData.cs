@@ -1,7 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,13 +16,9 @@ namespace DCL.AvatarRendering.Emotes
     {
         public string id;
         public string name;
-        public AnimationClip avatarClip;
-        public AnimationClip propClip;
-        public GameObject propModel;
         public AudioClip audioClip;
         public Sprite thumbnail;
-        public GameObject glbMale;
-        public GameObject glbFemale;
+        public GameObject prefab;
         public EmoteDTO.Metadata.Data entity;
     }
 
@@ -46,39 +41,8 @@ namespace DCL.AvatarRendering.Emotes
                 var model = new EmoteDTO();
                 model.id = embeddedEmote.id;
 
-                var contents = new List<EmoteDTO.Content>();
-
-                if (embeddedEmote.propClip != null)
-                {
-                    contents.Add(new EmoteDTO.Content
-                    {
-                        file = "propClip.anim",
-                        hash = "propClip",
-                    });
-                }
-
-                if (embeddedEmote.audioClip != null)
-                {
-                    contents.Add(new EmoteDTO.Content
-                    {
-                        file = "audioClip.mp3",
-                        hash = "audioClip",
-                    });
-                }
-
-                contents.Add(new EmoteDTO.Content
-                {
-                    file = "avatarClip.anim",
-                    hash = "avatarClip",
-                });
-
-                contents.Add(new EmoteDTO.Content
-                {
-                    file = "thumbnail.png",
-                    hash = "thumbnail",
-                });
-
-                model.content = contents.ToArray();
+                // No content hashes available
+                model.content = Array.Empty<EmoteDTO.Content>();
                 model.pointers = new[] { embeddedEmote.id };
                 model.type = "emote";
                 model.version = "v3";
@@ -102,22 +66,31 @@ namespace DCL.AvatarRendering.Emotes
                 emote.IsLoading = false;
                 emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
 
-                // TODO: solve rendererInfos (?)
-                if (embeddedEmote.glbMale != null)
-                    emote.WearableAssetResults[BodyShape.MALE] = new StreamableLoadingResult<WearableAsset>(
-                        new WearableAsset(embeddedEmote.glbMale, new List<WearableAsset.RendererInfo>(), null));
+                WearableAsset asset = CreateWearableAsset(embeddedEmote.prefab);
+                asset.AddReference();
+                var assetLoadResult = new StreamableLoadingResult<WearableAsset>(asset);
+                emote.WearableAssetResults[BodyShape.MALE] = assetLoadResult;
+                emote.WearableAssetResults[BodyShape.FEMALE] = assetLoadResult;
 
-                if (embeddedEmote.glbFemale != null)
-                    emote.WearableAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<WearableAsset>(
-                        new WearableAsset(embeddedEmote.glbFemale, new List<WearableAsset.RendererInfo>(), null));
+                if (embeddedEmote.audioClip != null)
+                    emote.AudioAssetResult = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
 
-                // TODO: initialize manifest (?)
-                emote.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception($"No existing asset bundle manifest for embedded emote {embeddedEmote.id}"));
+                emote.ManifestResult = null;
 
                 generatedEmotes.Add(emote);
             }
 
             return generatedEmotes;
+        }
+
+        private static WearableAsset CreateWearableAsset(GameObject glb)
+        {
+            var rendererInfos = new List<WearableAsset.RendererInfo>();
+
+            foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
+                rendererInfos.Add(new WearableAsset.RendererInfo(renderer, renderer.sharedMaterial));
+
+            return new WearableAsset(glb, rendererInfos, null);
         }
 
 #if UNITY_EDITOR
@@ -127,11 +100,11 @@ namespace DCL.AvatarRendering.Emotes
             {
                 var emotes = new List<EmbeddedEmote>();
 
-                string[] clipGUIDs = AssetDatabase.FindAssets("t:AnimationClip", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbedEmotes/Animations/" });
-                string[] thumbGUIDs = AssetDatabase.FindAssets("t:Sprite", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbedEmotes/Thumbnails" });
+                string[] thumbGUIDs = AssetDatabase.FindAssets("t:Sprite", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbeddedEmotes/Thumbnails" });
+                string[] prefabGUIDs = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/DCL/AvatarRendering/AvatarShape/Assets/EmbeddedEmotes/Prefabs" });
 
                 var sprites = new List<Sprite>();
-                var clips = new List<AnimationClip>();
+                var prefabs = new List<GameObject>();
 
                 foreach (string thumbGUID in thumbGUIDs)
                 {
@@ -140,21 +113,23 @@ namespace DCL.AvatarRendering.Emotes
                     sprites.Add(sprite);
                 }
 
-                foreach (string clipGUID in clipGUIDs)
+                foreach (string prefabGUID in prefabGUIDs)
                 {
-                    string assetPath = AssetDatabase.GUIDToAssetPath(clipGUID);
-                    AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
-                    clips.Add(clip);
+                    string assetPath = AssetDatabase.GUIDToAssetPath(prefabGUID);
+                    GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                    prefabs.Add(prefab);
                 }
 
-                foreach (AnimationClip clip in clips)
+                foreach (GameObject prefab in prefabs)
                 {
+                    string nameWithoutSuffix = prefab.name.Replace("_Emote", "");
+
                     emotes.Add(new EmbeddedEmote
                     {
-                        avatarClip = clip,
-                        id = clip.name,
-                        name = clip.name,
-                        thumbnail = sprites.FirstOrDefault(t => t.name.Contains(clip.name))!,
+                        id = nameWithoutSuffix,
+                        name = nameWithoutSuffix,
+                        thumbnail = sprites.FirstOrDefault(t => t.name.Contains(prefab.name))!,
+                        prefab = prefab,
                     });
                 }
 
