@@ -67,6 +67,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             debugBuilder.AddWidget("Avatar Debug")
                         .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
                         .AddIntFieldWithConfirmation(10, "Instantiate", AddRandomAvatar)
+                        .AddSingleButton("Instantiate Self Replica", AddRandomSelfReplicaAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
                         .AddSingleButton("Destroy Random Amount of Avatars", DestroyRandomAmountOfAvatars)
@@ -121,7 +122,13 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             totalAvatarsInstantiated.Value = 0;
         }
 
-        private void AddRandomAvatar(int number)
+        private void AddRandomSelfReplicaAvatar() =>
+            AddRandomAvatar(1, true);
+
+        private void AddRandomAvatar(int number) =>
+            AddRandomAvatar(number, false);
+
+        private void AddRandomAvatar(int number, bool isSelfReplica)
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
@@ -136,6 +143,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                         ("collectionType", "base-wearable"), ("pageSize", "50"),
                     }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
+                IsSelfReplica = isSelfReplica,
             };
 
             World.Create(randomAvatarRequest);
@@ -159,7 +167,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 if (baseWearables.Succeeded)
                 {
                     GenerateRandomizers(baseWearables);
-                    GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
+
+                    if (randomAvatarRequest.IsSelfReplica)
+                        GenerateSelfReplicaAvatar(cameraComponent.Camera.transform.position, characterControllerSettings);
+                    else
+                        GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
                 }
                 else
                     ReportHub.LogError(GetReportCategory(), "Base wearables couldn't be loaded!");
@@ -184,6 +196,61 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             randomizers = new[] { male, female };
             randomizerInitialized = true;
+        }
+
+        private void GenerateSelfReplicaAvatar(Vector3 cameraPosition, in ICharacterControllerSettings characterControllerSettings)
+        {
+            float startXPosition = cameraPosition.x;
+            float startZPosition = cameraPosition.z;
+
+            AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+
+            var wearables = new List<string>();
+
+            foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
+                wearables.Add(randomAvatarWearable);
+
+            // Create a transform, normally it will be created either by JS Scene or by Comms
+            var transformComp = new CharacterTransform(transformPool.Get());
+
+            transformComp.Transform.position = StartPosition(0, startXPosition, startZPosition);
+            transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
+
+            CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
+            characterController.radius = 0.4f;
+            characterController.height = 2;
+            characterController.center = Vector3.up;
+            characterController.slopeLimit = 50f;
+            characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
+
+            TrailRenderer trail = transformComp.Transform.gameObject.AddComponent<TrailRenderer>();
+            trail.time = 1.0f; // The time in seconds that the trail will fade out over
+            trail.startWidth = 0.07f; // The starting width of the trail
+            trail.endWidth = 0.07f; // The end
+
+            trail.material = new Material(Shader.Find("Unlit/Color"))
+            {
+                color = Color.yellow,
+            };
+
+            var avatarShape = new PBAvatarShape
+            {
+                Id = $"User{avatarIndex}",
+                Name = $"User{avatarIndex}",
+                BodyShape = currentRandomizer.BodyShape,
+                Wearables = { wearables },
+                SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
+                HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
+            };
+
+            World.Create(avatarShape,
+                transformComp,
+                new CharacterAnimationComponent(),
+                new RemotePlayerMovementComponent(RemotePlayerMovementComponent.TEST_ID),
+                new InterpolationComponent(),
+                new ExtrapolationComponent(),
+                characterControllerSettings
+            );
         }
 
         private void GenerateRandomAvatars(int randomAvatarsToInstantiate, Vector3 cameraPosition, ICharacterControllerSettings characterControllerSettings)
@@ -240,22 +307,16 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
                 World.Create(avatarShape,
                     transformComp,
-
-                    // characterController,
+                    characterController,
+                    new CharacterRigidTransform(),
                     new CharacterAnimationComponent(),
-
-                    // new CharacterRigidTransform(),
-                    // new CharacterPlatformComponent(),
-                    // new StunComponent(),
-                    // new FeetIKComponent(),
-                    // new HandsIKComponent(),
-                    // new HeadIKComponent(),
-                    new RemotePlayerMovementComponent(RemotePlayerMovementComponent.TEST_ID),
-                    new InterpolationComponent(),
-                    new ExtrapolationComponent(),
-
-                    // new JumpInputComponent(),
-                    // new MovementInputComponent(),
+                    new CharacterPlatformComponent(),
+                    new StunComponent(),
+                    new FeetIKComponent(),
+                    new HandsIKComponent(),
+                    new HeadIKComponent(),
+                    new JumpInputComponent(),
+                    new MovementInputComponent(),
                     characterControllerSettings
                 );
             }
