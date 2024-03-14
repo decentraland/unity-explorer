@@ -188,7 +188,14 @@ namespace Editor
                 buildPlayerOptions.options |= BuildOptions.ConnectWithProfiler;
                 buildPlayerOptions.options |= BuildOptions.Development;
 
-                buildPlayerOptions.extraScriptingDefines = new[] {"ENABLE_PROFILING"};
+                if(buildPlayerOptions.extraScriptingDefines == null)
+                    buildPlayerOptions.extraScriptingDefines = new[] {"ENABLE_PROFILING"};
+                else
+                {
+                    var currentDefines = buildPlayerOptions.extraScriptingDefines.ToList();
+                    currentDefines.Add("ENABLE_PROFILING");
+                    buildPlayerOptions.extraScriptingDefines = currentDefines.ToArray();
+                }
             }
 
             if (isDeepProfilingBuild)
