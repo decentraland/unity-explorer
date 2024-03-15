@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -78,7 +79,8 @@ namespace DCL.Character.Plugin
             world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
-                new CharacterTransform(characterObject.Value.Transform));
+                new CharacterTransform(characterObject.Value.Transform),
+                new PlayerMovementNetworkComponent(characterObject.Value.Controller));
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {
