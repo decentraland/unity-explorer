@@ -6,7 +6,6 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using Realm;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -25,8 +24,6 @@ namespace ECS.SceneLifeCycle.Systems
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
-    [UpdateAfter(typeof(LoadPointersByRadiusSystem))]
-    [UpdateBefore(typeof(ResolveSceneStateByRadiusSystem))]
     [UpdateBefore(typeof(ResolveStaticPointersSystem))]
     public partial class PartitionSceneEntitiesSystem : BaseUnityLoopSystem
     {

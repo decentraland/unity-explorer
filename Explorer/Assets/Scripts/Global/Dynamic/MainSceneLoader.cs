@@ -130,7 +130,6 @@ namespace Global.Dynamic
                     new DynamicWorldParams
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
-                        SceneLoadRadius = settings.SceneLoadRadius,
                         Realms = settings.Realms,
                         StartParcel = settings.StartPosition,
                         EnableLandscape = enableLandscape,

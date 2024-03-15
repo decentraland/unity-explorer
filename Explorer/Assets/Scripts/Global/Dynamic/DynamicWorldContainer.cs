@@ -161,7 +161,6 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                dynamicWorldParams.SceneLoadRadius,
                 dynamicWorldParams.StaticLoadPositions,
                 realmData,
                 staticContainer.ScenesCache);
