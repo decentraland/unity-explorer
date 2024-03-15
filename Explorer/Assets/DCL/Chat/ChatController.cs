@@ -16,7 +16,6 @@ namespace DCL.Chat
     public partial class ChatController : ControllerBase<ChatView>
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
-        private const int MINIMAL_LENGTH = 2;
 
         private readonly Regex emojiPatternRegex = new (EMOJI_SUGGESTION_PATTERN);
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -178,8 +177,7 @@ namespace DCL.Chat
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
 
-            if (inputText.Length > MINIMAL_LENGTH)
-                currentMessage = inputText;
+            currentMessage = inputText;
         }
 
         private void HandleEmojiSearch(string inputText)
