@@ -139,8 +139,10 @@ namespace Global.Dynamic
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
+            var realFlowLoadingStatus = new RealFlowLoadingStatus();
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
+                realFlowLoadingStatus,
                 parcelServiceContainer.TeleportController,
                 container.MvcManager,
                 identityCache,
@@ -178,7 +180,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),

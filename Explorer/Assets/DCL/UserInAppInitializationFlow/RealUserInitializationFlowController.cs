@@ -18,16 +18,12 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Avatar = DCL.Profiles.Avatar;
+using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInitializationFlowController : IUserInAppInitializationFlow
     {
-        private const float LOADING_PROGRESS_PROFILE = 0.1f;
-        private const float LOADING_PROGRESS_LANDSCAPE = 0.9f;
-        private const float LOADING_PROGRESS_TELEPORT = 0.95f;
-        private const float LOADING_PROGRESS_COMPLETE = 1f;
-
         private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -35,6 +31,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly Vector2Int startParcel;
         private readonly bool enableLandscape;
         private readonly ILandscapeInitialization landscapeInitialization;
+        private readonly RealFlowLoadingStatus loadingStatus;
 
         private readonly CameraSamplingData cameraSamplingData;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -42,14 +39,14 @@ namespace DCL.UserInAppInitializationFlow
 
         private AsyncLoadProcessReport? loadReport;
 
-        public RealUserInitializationFlowController(ITeleportController teleportController,
+        public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
+            ITeleportController teleportController,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            ObjectProxy<Entity> cameraEntity,
-            CameraSamplingData cameraSamplingData, bool enableLandscape, ILandscapeInitialization landscapeInitialization)
+            ObjectProxy<Entity> cameraEntity, CameraSamplingData cameraSamplingData, bool enableLandscape, ILandscapeInitialization landscapeInitialization)
         {
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
@@ -58,6 +55,7 @@ namespace DCL.UserInAppInitializationFlow
             this.startParcel = startParcel;
             this.enableLandscape = enableLandscape;
             this.landscapeInitialization = landscapeInitialization;
+            this.loadingStatus = loadingStatus;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.cameraEntity = cameraEntity;
             this.cameraSamplingData = cameraSamplingData;
@@ -86,7 +84,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
-            loadReport!.ProgressCounter.Value = LOADING_PROGRESS_PROFILE;
+            loadReport!.ProgressCounter.Value = loadingStatus.SetStage(ProfileLoaded);
 
             await LoadPlayerAvatar(world, ownPlayerEntity, ownProfile, ct);
 
@@ -99,7 +97,7 @@ namespace DCL.UserInAppInitializationFlow
             Assert.IsTrue(cameraEntity.Configured);
             world.Add(cameraEntity.Object, cameraSamplingData);
 
-            loadReport.ProgressCounter.Value = LOADING_PROGRESS_COMPLETE;
+            loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
             loadReport.CompletionSource.TrySetResult();
         }
 
@@ -107,8 +105,11 @@ namespace DCL.UserInAppInitializationFlow
         {
             var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_LANDSCAPE),
+            await UniTask.WhenAny(
+                landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]),
                 landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
+
+            loadingStatus.SetStage(LandscapeLoaded);
         }
 
         /// <summary>
@@ -149,9 +150,11 @@ namespace DCL.UserInAppInitializationFlow
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_TELEPORT),
+            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
                 teleportController.TeleportToSceneSpawnPointAsync(
                     startParcel, teleportLoadReport, ct));
+
+            loadingStatus.SetStage(PlayerTeleported);
         }
 
         private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
