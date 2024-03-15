@@ -135,6 +135,7 @@ namespace DCL.Chat
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
             emojiPanelController.SetPanelVisibility(false);
+            viewInstance.InputField.ActivateInputField();
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
