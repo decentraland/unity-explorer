@@ -35,10 +35,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool OpenExternalUrl(string url)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "OpenExternalUrl: Player is not inside of scene");
                 return false;
-            }
 
             OpenUrlAsync(url).Forget();
             return true;
@@ -47,10 +44,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void MovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Player is not inside of scene");
                 return;
-            }
 
             Vector3 newAbsolutePosition = sceneData.Geometry.BaseParcelPosition + newRelativePosition;
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
@@ -68,10 +62,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void TeleportTo(Vector2Int coords)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TeleportTo: Player is not inside of scene");
                 return;
-            }
 
             TeleportAsync(coords).Forget();
         }
@@ -79,10 +70,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool ChangeRealm(string message, string realm)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "ChangeRealm: Player is not inside of scene");
                 return false;
-            }
 
             ChangeRealmAsync(message, realm).Forget();
             return true;
@@ -91,10 +79,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void TriggerEmote(string predefinedEmote)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TriggerEmote: Player is not inside of scene");
                 return;
-            }
 
             // TODO: Implement emote triggering (blocked until emotes are implemented)...
         }
@@ -102,10 +87,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool TriggerSceneEmote(string src, bool loop)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TriggerSceneEmote: Player is not inside of scene");
                 return false;
-            }
 
             // TODO: Implement scene emote triggering (blocked until emotes are implemented)...
 
@@ -115,10 +97,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool OpenNftDialog(string urn)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "OpenNftDialog: Player is not inside of scene");
                 return false;
-            }
 
             if (!NftUtils.TryParseUrn(urn, out string contractAddress, out string tokenId))
             {
