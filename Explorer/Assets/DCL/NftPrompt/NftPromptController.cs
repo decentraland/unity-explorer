@@ -22,7 +22,7 @@ namespace DCL.NftPrompt
 
         private readonly IWebBrowser webBrowser;
         private readonly ICursor cursor;
-        private readonly INftInfoAPIService nftInfoAPIService;
+        private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
         private Action<NftPromptResultType> resultCallback;
 
@@ -35,12 +35,12 @@ namespace DCL.NftPrompt
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             ICursor cursor,
-            INftInfoAPIService nftInfoAPIService,
+            INftMarketAPIClient nftInfoAPIClient,
             IWebRequestController webRequestController) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.cursor = cursor;
-            this.nftInfoAPIService = nftInfoAPIService;
+            this.nftInfoAPIClient = nftInfoAPIClient;
             this.webRequestController = webRequestController;
         }
 
@@ -91,7 +91,7 @@ namespace DCL.NftPrompt
             try
             {
                 SetLoading();
-                var nftInfo = await nftInfoAPIService.FetchNftInfoAsync(contractAddress, tokenId, ct);
+                var nftInfo = await nftInfoAPIClient.FetchNftInfoAsync(contractAddress, tokenId, ct);
                 await UniTask.SwitchToMainThread();
                 SetNftInfo(nftInfo);
             }

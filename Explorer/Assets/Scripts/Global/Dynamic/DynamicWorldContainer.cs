@@ -125,7 +125,7 @@ namespace Global.Dynamic
 
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
-            var nftInfoAPIService = new NftInfoAPIService(new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var webBrowser = new UnityAppWebBrowser();
@@ -225,7 +225,7 @@ namespace Global.Dynamic
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
                     realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
-                new NftPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIService, staticContainer.WebRequestsContainer.WebRequestController),
+                new NftPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,

@@ -18,7 +18,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
-        private readonly INftInfoAPIService nftInfoAPIService;
+        private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
         private NftPromptController nftPromptController;
 
@@ -26,13 +26,13 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
-            INftInfoAPIService nftInfoAPIService,
+            INftMarketAPIClient nftInfoAPIClient,
             IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
-            this.nftInfoAPIService = nftInfoAPIService;
+            this.nftInfoAPIClient = nftInfoAPIClient;
             this.webRequestController = webRequestController;
         }
 
@@ -43,7 +43,7 @@ namespace DCL.PluginSystem.Global
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.NftPromptPrefab, ct: ct)).Value.GetComponent<NftPromptView>(), null),
                 webBrowser,
                 new DCLCursor(),
-                nftInfoAPIService,
+                nftInfoAPIClient,
                 webRequestController);
 
             mvcManager.RegisterController(nftPromptController);
