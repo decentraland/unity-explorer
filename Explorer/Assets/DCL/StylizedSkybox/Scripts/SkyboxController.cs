@@ -101,7 +101,14 @@ public class SkyboxController : MonoBehaviour
             RenderSettings.sun = DirectionalLight;
 
             //create animation component in runtime and assign animation clip
-            lightAnimator = DirectionalLight.gameObject.AddComponent<Animation>();
+            if(DirectionalLight.gameObject.GetComponent<Animation>() == null)
+            {
+                lightAnimator = DirectionalLight.gameObject.AddComponent<Animation>();
+            }
+            else
+            {
+                lightAnimator = DirectionalLight.gameObject.GetComponent<Animation>();
+            }
 
             if (LightAnimation == null)
             {
@@ -271,6 +278,8 @@ public class SkyboxController : MonoBehaviour
             lightAnimator.Sample();
             lightAnimator.Stop();
         }
+        RenderSettings.skybox.SetFloat("_SunSize", DirectionalLight.gameObject.transform.localScale.x);
+        RenderSettings.skybox.SetFloat("_SunOpacity", DirectionalLight.gameObject.transform.localScale.y);
     }
 
     /// <summary>

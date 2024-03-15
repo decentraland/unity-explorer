@@ -70,8 +70,24 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 },
             };
 
+            var mesh = new Mesh();
+            mesh.vertices = new []
+            {
+                Vector3.zero
+            };
+            var boneWeights = new BoneWeight[1];
+            boneWeights[0].weight0 = 1; // 100% influence from the first (and only) bone
+            mesh.boneWeights = boneWeights;
+
+            var rendererInfos = new List<WearableAsset.RendererInfo>();
+            foreach (var skinnedMeshRenderer in emptyDefaultWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                skinnedMeshRenderer.sharedMesh = mesh;
+                rendererInfos.Add(new WearableAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+            }
+            
             IWearable emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO, false);
-            var wearableAsset = new WearableAsset(emptyDefaultWearable, new List<WearableAsset.RendererInfo>(), null);
+            var wearableAsset = new WearableAsset(emptyDefaultWearable, rendererInfos, null);
             wearableAsset.AddReference();
 
             emptyWearable.WearableAssetResults[BodyShape.MALE] =

@@ -31,12 +31,12 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement.System;
 using DCL.Nametags;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;
-using Unity.Mathematics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -197,6 +197,7 @@ namespace Global.Dynamic
                     debugBuilder,
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration,
+                    new DefaultFaceFeaturesHandler(wearableCatalog),
                     nametagsData),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -234,6 +235,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(roomHub, memoryPool, multiPool)),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
