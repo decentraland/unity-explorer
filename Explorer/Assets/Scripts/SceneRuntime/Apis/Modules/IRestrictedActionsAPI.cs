@@ -11,5 +11,6 @@ namespace SceneRuntime.Apis.Modules
         bool ChangeRealm(string message, string realm);
         void TriggerEmote(string predefinedEmote);
         bool TriggerSceneEmote(string src, bool loop);
+        bool OpenNftDialog(string urn);
     }
 }
