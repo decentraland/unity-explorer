@@ -1,5 +1,6 @@
 ﻿using DCL.ChangeRealmPrompt;
 using DCL.ExternalUrlPrompt;
+using DCL.NftPrompt;
 using DCL.TeleportPrompt;
 using MVC;
 using NSubstitute;
@@ -100,6 +101,19 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(TEST_MESSAGE, TEST_REALM)));
+        }
+
+        [Test]
+        public void OpenNftDialog()
+        {
+            // Arrange
+            const string TEST_URN = "urn:decentraland:ethereum:erc721:0x06012c8cf97bead5deae237070f9587f8e7a266d:1540722";
+
+            // Act
+            bool result = restrictedActionsAPIImplementation.OpenNftDialog(TEST_URN);
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
         }
     }
 }
