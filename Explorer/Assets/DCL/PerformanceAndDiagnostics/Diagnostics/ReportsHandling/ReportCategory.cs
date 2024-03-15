@@ -200,7 +200,7 @@
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
 
-
         public const string LIVEKIT = nameof(LIVEKIT);
+        public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
     }
 }
