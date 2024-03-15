@@ -7,9 +7,9 @@ using DCL.NftInfoAPIService;
 using DCL.NftPrompt;
 using DCL.WebRequests;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -61,7 +61,13 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(NftPromptPlugin) + "." + nameof(NftPromptSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject NftPromptPrefab;
+            public NftPromptViewRef NftPromptPrefab;
+
+            [Serializable]
+            public class NftPromptViewRef : ComponentReference<NftPromptView>
+            {
+                public NftPromptViewRef(string guid) : base(guid) { }
+            }
         }
     }
 }
