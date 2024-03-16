@@ -1,26 +1,21 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using DCL.Diagnostics;
 using UnityEngine;
 using TMPro;
+using UnityEngine.Rendering;
 
 public class SkyboxController : MonoBehaviour
 {
-    private bool pause = false;
-
     [HideInInspector]
     public int SecondsInDay = 86400;
-    public bool PlayOnStart = false;
+    public bool PlayOnStart;
     public float Speed = 1 * 60;
 
-    [HideInInspector] public float NaturalTime = 0;
-    [HideInInspector] public float NormalizedTime = 0;
+    [HideInInspector] public float NaturalTime;
+    [HideInInspector] public float NormalizedTime;
     [SerializeField] private Material skyboxMaterial;
 
     [Header("Refresh Time")]
     public float RefreshTime = 5;
-    private float sinceLastRefresh = 5;
 
     [Header("Directional Light")]
     public Light DirectionalLight;
@@ -28,7 +23,6 @@ public class SkyboxController : MonoBehaviour
 
     [GradientUsage(true)]
     public Gradient DirectionalColorRamp;
-    private Animation lightAnimator;
 
     [Header("Skybox Color")]
     [GradientUsage(true)] public Gradient SkyZenitColorRamp;
@@ -54,19 +48,45 @@ public class SkyboxController : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI textUI;
     private bool isInitialized;
+    private Animation lightAnimator;
+    private bool pause;
+    private float sinceLastRefresh = 5;
 
-#if UNITY_EDITOR
-
-    public bool editMode;
-
-    public void Awake()
+    private void Start()
     {
-        //Added the flag to allow editing of the prefab in a separate scene
-        //that doesn't have the regular plugin init flow
-        if(editMode)
-            Initialize(null, null, null);
+        SetTime(SecondsInDay / 2);
+
+        if (PlayOnStart) { Play(); }
+        else { Pause(); }
     }
-#endif
+
+    private void Update()
+    {
+        if (!isInitialized)
+            return;
+
+        //update natural and relative time
+        if (!pause)
+        {
+            float deltaTime = Time.deltaTime * Speed;
+            NaturalTime += deltaTime;
+            NormalizedTime += deltaTime / SecondsInDay;
+        }
+
+        //loops time at the end of the cycle
+        if (NaturalTime >= SecondsInDay) { NaturalTime = NormalizedTime = 0; }
+
+        //update skybox only after certain time
+        sinceLastRefresh += Time.deltaTime;
+
+        if (sinceLastRefresh >= RefreshTime)
+        {
+            UpdateSkybox();
+            sinceLastRefresh = 0;
+        }
+
+        UpdateTimeUI();
+    }
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip)
     {
@@ -80,10 +100,7 @@ public class SkyboxController : MonoBehaviour
             LightAnimation = skyboxAnimationClip;
 
         //setup skybox material
-        if (!skyboxMaterial)
-        {
-            ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: No skybox material assigned");
-        }
+        if (!skyboxMaterial) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: No skybox material assigned"); }
         else
         {
             //assign skybox to render settings
@@ -91,33 +108,22 @@ public class SkyboxController : MonoBehaviour
         }
 
         //setup directional light
-        if (DirectionalLight == null)
-        {
-            ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: Directional Light has not been assigned");
-        }
+        if (DirectionalLight == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light has not been assigned"); }
         else
         {
             //assign light to render settings
             RenderSettings.sun = DirectionalLight;
 
             //create animation component in runtime and assign animation clip
-            lightAnimator = DirectionalLight.gameObject.AddComponent<Animation>();
+            if (DirectionalLight.gameObject.GetComponent<Animation>() == null) { lightAnimator = DirectionalLight.gameObject.AddComponent<Animation>(); }
+            else { lightAnimator = DirectionalLight.gameObject.GetComponent<Animation>(); }
 
-            if (LightAnimation == null)
-            {
-                ReportHub.LogWarning(ReportCategory.LANDSCAPE, $"Skybox Controller: Directional Light animation has not been assigned");
-            }
-            else
-            {
-                lightAnimator.AddClip(LightAnimation, LightAnimation.name);
-            }
+            if (LightAnimation == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned"); }
+            else { lightAnimator.AddClip(LightAnimation, LightAnimation.name); }
         }
 
         //setup indirect light
-        if (IndirectLight)
-        {
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-        }
+        if (IndirectLight) { RenderSettings.ambientMode = AmbientMode.Trilight; }
 
         //setup fog
         if (Fog)
@@ -130,44 +136,8 @@ public class SkyboxController : MonoBehaviour
         isInitialized = true;
     }
 
-    void Start()
-    {
-        SetTime(SecondsInDay / 2);
-        if (PlayOnStart) { Play(); } else { Pause(); }
-    }
-
-    void Update()
-    {
-        if (!isInitialized)
-            return;
-
-        //update natural and relative time
-        if (!pause)
-        {
-            float deltaTime = (Time.deltaTime * Speed);
-            NaturalTime += deltaTime;
-            NormalizedTime += deltaTime / SecondsInDay;
-        }
-
-        //loops time at the end of the cycle
-        if (NaturalTime >= SecondsInDay)
-        {
-            NaturalTime = NormalizedTime = 0;
-        }
-
-        //update skybox only after certain time
-        sinceLastRefresh += Time.deltaTime;
-        if (sinceLastRefresh >= RefreshTime)
-        {
-            UpdateSkybox();
-            sinceLastRefresh = 0;
-        }
-
-        UpdateTimeUI();
-    }
-
     /// <summary>
-    /// Auxiliary method for the Inspector to Pause the cycle
+    ///     Auxiliary method for the Inspector to Pause the cycle
     /// </summary>
     public void Pause()
     {
@@ -175,7 +145,7 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Auxiliary method for the Inspector to Play the cycle
+    ///     Auxiliary method for the Inspector to Play the cycle
     /// </summary>
     public void Play()
     {
@@ -183,7 +153,7 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Set the material of the skybox and modify the Render Settings
+    ///     Set the material of the skybox and modify the Render Settings
     /// </summary>
     /// <param name="skyboxMaterial"></param>
     public void SetSkyboxMaterial(Material skyboxMaterial)
@@ -193,7 +163,7 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the time of the skybox to an specific second
+    ///     Sets the time of the skybox to an specific second
     /// </summary>
     /// <param name="seconds"></param>
     public void SetTime(float seconds)
@@ -203,20 +173,20 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Auxiliary function to returnt the normalized time in HH:MM:SS
+    ///     Auxiliary function to returnt the normalized time in HH:MM:SS
     /// </summary>
     public string GetFormatedTime()
     {
-        int totalSec = (int)NaturalTime;
+        var totalSec = (int)NaturalTime;
 
         int hours = totalSec / 3600;
-        int minutes = (totalSec % 3600) / 60;
+        int minutes = totalSec % 3600 / 60;
         int seconds = totalSec % 60;
         return string.Format("{0:00}:{1:00}:{2:00} - {3}", hours, minutes, seconds, NormalizedTime.ToString("0.000"));
     }
 
     /// <summary>
-    /// Calls all the necessary methods to update the skybox and environment
+    ///     Calls all the necessary methods to update the skybox and environment
     /// </summary>
     private void UpdateSkybox()
     {
@@ -227,8 +197,8 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Updates the exposed parameters of the material to update gradient colors
-    /// and sun size
+    ///     Updates the exposed parameters of the material to update gradient colors
+    ///     and sun size
     /// </summary>
     private void UpdateSkyboxColor()
     {
@@ -241,8 +211,8 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Updates the indirect light of the render settings sampling the colors
-    /// from the defined gradients based on the normalized time
+    ///     Updates the indirect light of the render settings sampling the colors
+    ///     from the defined gradients based on the normalized time
     /// </summary>
     private void UpdateIndirectLight()
     {
@@ -255,11 +225,13 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
-    /// Updates the directional light color by sampling the colors
-    /// from the defined gradient an plays the correspoding animation frame
+    ///     Updates the directional light color by sampling the colors
+    ///     from the defined gradient an plays the correspoding animation frame
     /// </summary>
     private void UpdateDirectionaLight()
     {
+        if (!DirectionalLight) return;
+
         //change the color of the light based on the color ramp
         DirectionalLight.color = DirectionalColorRamp.Evaluate(NormalizedTime);
 
@@ -271,27 +243,37 @@ public class SkyboxController : MonoBehaviour
             lightAnimator.Sample();
             lightAnimator.Stop();
         }
+
+        RenderSettings.skybox.SetFloat("_SunSize", DirectionalLight.gameObject.transform.localScale.x);
+        RenderSettings.skybox.SetFloat("_SunOpacity", DirectionalLight.gameObject.transform.localScale.y);
     }
 
     /// <summary>
-    /// Updates the fog color of the RenderSettings if enabled
+    ///     Updates the fog color of the RenderSettings if enabled
     /// </summary>
     private void UpdateFog()
     {
-        if (Fog)
-        {
-            RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime);
-        }
+        if (Fog) { RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime); }
     }
 
     /// <summary>
-    /// Auxiliary function to render the time in the UI
+    ///     Auxiliary function to render the time in the UI
     /// </summary>
     private void UpdateTimeUI()
     {
-        if (textUI)
-        {
-            textUI.text = GetFormatedTime();
-        }
+        if (textUI) { textUI.text = GetFormatedTime(); }
     }
+
+#if UNITY_EDITOR
+
+    public bool editMode;
+
+    public void Awake()
+    {
+        //Added the flag to allow editing of the prefab in a separate scene
+        //that doesn't have the regular plugin init flow
+        if (editMode)
+            Initialize(null, null, null);
+    }
+#endif
 }

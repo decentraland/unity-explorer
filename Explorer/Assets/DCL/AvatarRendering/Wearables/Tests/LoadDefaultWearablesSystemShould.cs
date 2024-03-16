@@ -93,7 +93,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY,
                     out bool shouldntBeEmpty);
 
-            Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject,
+            Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GetMainAsset<GameObject>(),
                 emptyDefaultWearable);
 
             Assert.AreEqual(tiaraDefaultWearable.GetUrn().ToString(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);

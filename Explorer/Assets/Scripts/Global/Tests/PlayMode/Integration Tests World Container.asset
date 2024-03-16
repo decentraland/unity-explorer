@@ -16,6 +16,7 @@ MonoBehaviour:
   - rid: 6784895267130048516
   - rid: 1268264197252972545
   - rid: 4753057106328551425
+  - rid: 4555433133200637954
   references:
     version: 2
     RefIds:
@@ -26,6 +27,14 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
+    - rid: 4555433133200637954
+      type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        CharacterTriggerAreaPrefab:
+          m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4753057106328551425
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

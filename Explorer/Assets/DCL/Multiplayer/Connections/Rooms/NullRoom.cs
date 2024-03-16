@@ -4,6 +4,7 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Tracks.Hub;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,6 +32,9 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event Room.MetaDelegate? RoomMetadataChanged;
 
         public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            Task.FromResult(true);
+
+        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
             Task.FromResult(true);
 
         public void Disconnect()

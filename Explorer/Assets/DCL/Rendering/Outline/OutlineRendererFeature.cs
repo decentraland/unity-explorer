@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -20,20 +21,18 @@ namespace DCL.Rendering.Avatar
 
     public partial class OutlineRendererFeature : ScriptableRendererFeature
     {
-        private const string k_ShaderName_DepthNormals = "Outline/DepthNormals";
+        //private const string k_ShaderName_DepthNormals = "Outline/DepthNormals";
         private const string k_ShaderName_Outline = "Avatar/Outline";
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private OutlineRendererFeature_Settings m_Settings;
 
         // DepthNormals Pass Data
-        private DepthNormalsRenderPass depthNormalsRenderPass;
-        private Material depthNormalsMaterial;
-        private Shader m_ShaderDepthNormals;
-        private RTHandle depthNormalsRTHandle_Colour;
-        private RTHandle depthNormalsRTHandle_Depth;
-        private RenderTextureDescriptor depthNormalsRTDescriptor_Colour;
-        private RenderTextureDescriptor depthNormalsRTDescriptor_Depth;
+        private OutlineDrawPass outlineDrawPass;
+        private RTHandle outlineRTHandle_Colour;
+        private RTHandle outlineRTHandle_Depth;
+        private RenderTextureDescriptor outlineRTDescriptor_Colour;
+        private RenderTextureDescriptor outlineRTDescriptor_Depth;
 
         // Outline Pass Data
         private OutlineRenderPass outlineRenderPass;
@@ -49,8 +48,8 @@ namespace DCL.Rendering.Avatar
 
         public override void Create()
         {
-            depthNormalsRenderPass = new DepthNormalsRenderPass();
-            depthNormalsRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
+            outlineDrawPass = new OutlineDrawPass();
+            outlineDrawPass.renderPassEvent = RenderPassEvent.BeforeRenderingOpaques;
 
             outlineRenderPass = new OutlineRenderPass();
             outlineRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
@@ -58,28 +57,9 @@ namespace DCL.Rendering.Avatar
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)
         {
-            // DepthNormals Material, Shader, RenderTarget and pass setups
+            // OutlineDraw - RenderTarget and pass setups
             {
-                if (depthNormalsMaterial == null)
-                {
-                    m_ShaderDepthNormals = Shader.Find(k_ShaderName_DepthNormals);
-
-                    if (m_ShaderDepthNormals == null)
-                    {
-                        ReportHub.LogError(m_ReportData, "m_ShaderDepthNormals not found.");
-                        return;
-                    }
-
-                    depthNormalsMaterial = CoreUtils.CreateEngineMaterial(m_ShaderDepthNormals);
-
-                    if (depthNormalsMaterial == null)
-                    {
-                        ReportHub.LogError(m_ReportData, "depthNormalsMaterial not found.");
-                        return;
-                    }
-                }
-
-                // DepthNormals - Colour Texture
+                // OutlineDraw - Colour Texture
                 {
                     var desc = new RenderTextureDescriptor();
                     desc.autoGenerateMips = false;
@@ -102,11 +82,11 @@ namespace DCL.Rendering.Avatar
                     desc.volumeDepth = 0;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
-                    depthNormalsRTDescriptor_Colour = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref depthNormalsRTHandle_Colour, depthNormalsRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_DepthNormals_ColourTexture");
+                    outlineRTDescriptor_Colour = desc;
+                    RenderingUtils.ReAllocateIfNeeded(ref outlineRTHandle_Colour, outlineRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Outline_ColourTexture");
                 }
 
-                // DepthNormals - Depth Texture
+                // OutlineDraw - Depth Texture
                 {
                     var desc = new RenderTextureDescriptor();
                     desc.autoGenerateMips = false;
@@ -129,14 +109,15 @@ namespace DCL.Rendering.Avatar
                     desc.volumeDepth = 0;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
-                    depthNormalsRTDescriptor_Depth = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref depthNormalsRTHandle_Depth, depthNormalsRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_DepthNormals_DepthTexture");
+                    outlineRTDescriptor_Depth = desc;
+                    RenderingUtils.ReAllocateIfNeeded(ref outlineRTHandle_Depth, outlineRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Outline_DepthTexture");
                 }
 
-                depthNormalsRenderPass.Setup(depthNormalsMaterial, depthNormalsRTHandle_Colour, depthNormalsRTDescriptor_Colour, depthNormalsRTHandle_Depth, depthNormalsRTDescriptor_Depth);
+                outlineDrawPass.Setup(_renderer.cameraColorTargetHandle, _renderer.cameraDepthTargetHandle, outlineRTDescriptor_Colour, outlineRTDescriptor_Depth);
+                //outlineDrawPass.Setup( outlineRTHandle_Colour, outlineRTHandle_Depth, outlineRTDescriptor_Colour, outlineRTDescriptor_Depth);
             }
 
-            // Outline Material, Shader, RenderTarget and pass setups
+            // OutlineRender - Material, Shader, RenderTarget and pass setups
             {
                 if (outlineMaterial == null)
                 {
@@ -160,26 +141,26 @@ namespace DCL.Rendering.Avatar
                 outlineRTDescriptor = _renderingData.cameraData.cameraTargetDescriptor;
                 outlineRTDescriptor.depthBufferBits = 0;
                 RenderingUtils.ReAllocateIfNeeded(ref outlineRTHandle, outlineRTDescriptor, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_OutlineTexture");
-                outlineRenderPass.Setup(m_Settings, outlineMaterial, outlineRTHandle, outlineRTDescriptor, depthNormalsRTHandle_Colour);
+                outlineRenderPass.Setup(m_Settings, outlineMaterial, outlineRTHandle, outlineRTDescriptor, outlineRTHandle_Colour);
             }
         }
 
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
         {
             // DepthNormals
-            if (depthNormalsMaterial != null && m_ShaderDepthNormals != null && depthNormalsRTHandle_Colour != null) { _renderer.EnqueuePass(depthNormalsRenderPass); }
+            if (outlineRTHandle_Colour != null) { _renderer.EnqueuePass(outlineDrawPass); }
 
             // Outline
-            if (outlineMaterial != null && m_ShaderOutline != null && outlineRTHandle != null) { _renderer.EnqueuePass(outlineRenderPass); }
+            //if (outlineMaterial != null && m_ShaderOutline != null && outlineRTHandle != null) { _renderer.EnqueuePass(outlineRenderPass); }
         }
 
         protected override void Dispose(bool _bDisposing)
         {
             // DepthNormals cleanup
             {
-                depthNormalsRenderPass?.Dispose();
-                depthNormalsRTHandle_Colour?.Release();
-                depthNormalsRTHandle_Depth?.Release();
+                outlineDrawPass?.Dispose();
+                outlineRTHandle_Colour?.Release();
+                outlineRTHandle_Depth?.Release();
             }
 
             // Outline cleanup
