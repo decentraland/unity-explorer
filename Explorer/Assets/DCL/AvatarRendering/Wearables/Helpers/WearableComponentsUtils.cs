@@ -47,13 +47,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static void CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment wearable, World world, IPartitionComponent partitionComponent)
+        public static void CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent)
         {
-            URLPath thumbnailPath = wearable.GetThumbnail();
+            URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
-                wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
                 return;
             }
 
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 },
                 partitionComponent);
 
-            world.Create(wearable, promise, partitionComponent);
+            world.Create(attachment, promise, partitionComponent);
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)

@@ -52,6 +52,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetTextureIntention, Texture2D>(),
                 CreateQuery<GetNFTShapeIntention, Texture2D>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
+                CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
             };
         }
 

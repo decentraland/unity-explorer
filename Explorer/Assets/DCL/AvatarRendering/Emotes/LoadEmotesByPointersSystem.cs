@@ -150,7 +150,7 @@ namespace DCL.AvatarRendering.Emotes
             List<URN> missingPointersTmp = ListPool<URN>.Get();
             List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
 
-            var requestedEmotes = 0;
+            var processedUrns = 0;
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
@@ -161,7 +161,7 @@ namespace DCL.AvatarRendering.Emotes
                         "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
                     );
 
-                    requestedEmotes++;
+                    processedUrns++;
 
                     continue;
                 }
@@ -174,7 +174,7 @@ namespace DCL.AvatarRendering.Emotes
                     // Many embedded emotes do not have a valid 'urn:...', like 'confettipopper'
                     // In case there is no available embedded emote, mark it as processed anyway so the intention is resolved
                     if (!shortenedPointer.IsValid())
-                        requestedEmotes++;
+                        processedUrns++;
                     else if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
                     {
                         missingPointersTmp.Add(shortenedPointer);
@@ -187,7 +187,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (emote.Model.Succeeded)
                     resolvedEmotesTmp.Add(emote);
 
-                requestedEmotes++;
+                processedUrns++;
             }
 
             if (missingPointersTmp.Count > 0)
@@ -206,7 +206,7 @@ namespace DCL.AvatarRendering.Emotes
 
             var emotesWithResponse = 0;
 
-            if (requestedEmotes == intention.Pointers.Count)
+            if (processedUrns == intention.Pointers.Count)
             {
                 foreach (IEmote emote in resolvedEmotesTmp)
                 {
@@ -234,7 +234,7 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             if (emotesWithResponse == intention.Pointers.Count)
-                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList())));
+                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), processedUrns)));
 
             ListPool<URN>.Release(missingPointersTmp);
             ListPool<IEmote>.Release(resolvedEmotesTmp);

@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,7 +21,8 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
 
         public EmotePlugin(IWebRequestController webRequestController,
-            IEmoteCache emoteCache, IRealmData realmData)
+            IEmoteCache emoteCache,
+            IRealmData realmData)
         {
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
@@ -33,11 +33,17 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            var mutexSync = new MutexSync();
+
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                new MutexSync(),
+                mutexSync,
                 emoteCache, realmData,
                 URLSubdirectory.FromString("/Emotes/"));
+
+            LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
+                new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
+                emoteCache, mutexSync);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

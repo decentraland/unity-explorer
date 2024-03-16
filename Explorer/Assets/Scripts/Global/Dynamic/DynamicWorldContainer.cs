@@ -1,6 +1,6 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
@@ -48,6 +48,8 @@ namespace Global.Dynamic
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
 
+        private IRealmData? realmData;
+
         public MVCManager MvcManager { get; private set; } = null!;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
@@ -65,6 +67,8 @@ namespace Global.Dynamic
         public ParcelServiceContainer ParcelServiceContainer { get; private set; }
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
+
+        public IEmoteProvider? EmoteProvider { get; private set; }
 
         public void Dispose()
         {
@@ -118,6 +122,7 @@ namespace Global.Dynamic
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             var realmData = new RealmData();
+            container.realmData = realmData;
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
@@ -256,6 +261,11 @@ namespace Global.Dynamic
             BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder, dynamicWorldParams.Realms);
 
             return (container, true);
+        }
+
+        public void InitializeWorldDependencies(World world, Entity playerEntity)
+        {
+            EmoteProvider = new EcsEmoteProvider(world, realmData!);
         }
     }
 }

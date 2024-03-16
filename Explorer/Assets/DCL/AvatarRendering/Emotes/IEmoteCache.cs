@@ -1,5 +1,7 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -12,5 +14,9 @@ namespace DCL.AvatarRendering.Emotes
         IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true);
 
         void Unload(IPerformanceBudget frameTimeBudget);
+
+        void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation);
+
+        bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry);
     }
 }
