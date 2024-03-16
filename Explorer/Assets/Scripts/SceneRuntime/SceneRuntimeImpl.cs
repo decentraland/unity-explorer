@@ -98,6 +98,7 @@ namespace SceneRuntime
             engine.Dispose();
             runtimeWrapper?.Dispose();
             restrictedActionsApi?.Dispose();
+            sceneApiWrapper?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -112,7 +113,7 @@ namespace SceneRuntime
 
         public void RegisterSceneApi(ISceneApi api)
         {
-            engine.AddHostObject("UnitySceneApi", sceneApiWrapper = new SceneApiWrapper(api, sceneExceptionsHandler));
+            engine.AddHostObject("UnitySceneApi", sceneApiWrapper = new SceneApiWrapper(api));
         }
 
         public void RegisterEthereumApi(IEthereumApi ethereumApi)
