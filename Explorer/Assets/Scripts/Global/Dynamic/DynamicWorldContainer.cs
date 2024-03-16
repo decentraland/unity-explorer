@@ -31,7 +31,9 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement.System;
 using DCL.Nametags;
+using DCL.NftInfoAPIService;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -124,6 +126,7 @@ namespace Global.Dynamic
 
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var webBrowser = new UnityAppWebBrowser();
@@ -223,9 +226,11 @@ namespace Global.Dynamic
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
                     realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
+                new NftPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(roomHub, memoryPool, multiPool)),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

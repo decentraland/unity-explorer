@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Prioritization.Components;
@@ -29,11 +30,16 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (entityParticipantTable.Has(profile.WalletId))
                 return;
 
+            var transformComp = new CharacterTransform(new GameObject("REMOTE_ENTITY").transform); //TODO pooling
+
             Entity entity = world.Create(
                 profile.Profile,
                 PartitionComponent.TOP_PRIORITY,
-                new CharacterTransform(new GameObject("REMOTE_ENTITY").transform), //TODO pooling
-                new CharacterAnimationComponent()
+                transformComp,
+                new CharacterAnimationComponent(),
+                new RemotePlayerMovementComponent(profile.WalletId),
+                new InterpolationComponent(),
+                new ExtrapolationComponent()
             );
             entityParticipantTable.Register(profile.WalletId, entity);
         }

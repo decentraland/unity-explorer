@@ -194,7 +194,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.27",
+      "version": "3.0.28",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -279,6 +279,15 @@
       "depth": 0,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.project-auditor": {
+      "version": "0.10.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.mono-cecil": "1.10.2"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.render-pipelines.core": {
