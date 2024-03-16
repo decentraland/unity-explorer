@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36736ce96ff04f67aaec3d8efa0026b3, type: 3}
+  m_Name: MultiplayerMovementSettings
+  m_EditorClassIdentifier: 
+  <InboxCount>k__BackingField: 0
+  <SendRules>k__BackingField:
+  - {fileID: 11400000, guid: edb22be6b5998b94d882122dd5227f2c, type: 2}
+  <SelfSending>k__BackingField: 0
+  <Latency>k__BackingField: 0
+  <LatencyJitter>k__BackingField: 0
+  <MinPositionDelta>k__BackingField: 0.001
+  <MinTeleportDistance>k__BackingField: 100
+  <InterpolationSettings>k__BackingField: {fileID: 11400000, guid: bc6d8c8af4871f14082de8f9d29040c6, type: 2}
+  <UseExtrapolation>k__BackingField: 1
+  <ExtrapolationSettings>k__BackingField: {fileID: 11400000, guid: 1c9e6c7c419eba54eafe152d131a4305, type: 2}

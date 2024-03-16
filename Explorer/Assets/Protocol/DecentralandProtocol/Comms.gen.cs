@@ -25,7 +25,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CipkZWNlbnRyYWxhbmQva2VybmVsL2NvbW1zL3JmYzQvY29tbXMucHJvdG8S",
-            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLiAwoGUGFja2V0EjwK",
+            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCKgBAoGUGFja2V0EjwK",
             "CHBvc2l0aW9uGAEgASgLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
             "ZmM0LlBvc2l0aW9uSAASUQoPcHJvZmlsZV92ZXJzaW9uGAIgASgLMjYuZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LkFubm91bmNlUHJvZmlsZVZl",
@@ -36,25 +36,35 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "bnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuQ2hhdEgAEjYKBXNjZW5lGAYg",
             "ASgLMiUuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LlNjZW5lSAAS",
             "NgoFdm9pY2UYByABKAsyJS5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJm",
-            "YzQuVm9pY2VIAEIJCgdtZXNzYWdlIqUBCghQb3NpdGlvbhINCgVpbmRleBgB",
-            "IAEoDRISCgpwb3NpdGlvbl94GAMgASgCEhIKCnBvc2l0aW9uX3kYBCABKAIS",
-            "EgoKcG9zaXRpb25fehgFIAEoAhISCgpyb3RhdGlvbl94GAYgASgCEhIKCnJv",
-            "dGF0aW9uX3kYByABKAISEgoKcm90YXRpb25fehgIIAEoAhISCgpyb3RhdGlv",
-            "bl93GAkgASgCIjEKFkFubm91bmNlUHJvZmlsZVZlcnNpb24SFwoPcHJvZmls",
-            "ZV92ZXJzaW9uGAEgASgNIjoKDlByb2ZpbGVSZXF1ZXN0Eg8KB2FkZHJlc3MY",
-            "BCABKAkSFwoPcHJvZmlsZV92ZXJzaW9uGAMgASgNIj8KD1Byb2ZpbGVSZXNw",
-            "b25zZRIaChJzZXJpYWxpemVkX3Byb2ZpbGUYASABKAkSEAoIYmFzZV91cmwY",
-            "AiABKAkiKgoEQ2hhdBIPCgdtZXNzYWdlGAEgASgJEhEKCXRpbWVzdGFtcBgC",
-            "IAEoASInCgVTY2VuZRIQCghzY2VuZV9pZBgBIAEoCRIMCgRkYXRhGAIgASgM",
-            "IosBCgVWb2ljZRIXCg9lbmNvZGVkX3NhbXBsZXMYASABKAwSDQoFaW5kZXgY",
-            "AiABKA0SPwoFY29kZWMYAyABKA4yMC5kZWNlbnRyYWxhbmQua2VybmVsLmNv",
-            "bW1zLnJmYzQuVm9pY2UuVm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVjEgsKB1ZD",
-            "X09QVVMQAGIGcHJvdG8z"));
+            "YzQuVm9pY2VIABI8Cghtb3ZlbWVudBgIIAEoCzIoLmRlY2VudHJhbGFuZC5r",
+            "ZXJuZWwuY29tbXMucmZjNC5Nb3ZlbWVudEgAQgkKB21lc3NhZ2UipQEKCFBv",
+            "c2l0aW9uEg0KBWluZGV4GAEgASgNEhIKCnBvc2l0aW9uX3gYAyABKAISEgoK",
+            "cG9zaXRpb25feRgEIAEoAhISCgpwb3NpdGlvbl96GAUgASgCEhIKCnJvdGF0",
+            "aW9uX3gYBiABKAISEgoKcm90YXRpb25feRgHIAEoAhISCgpyb3RhdGlvbl96",
+            "GAggASgCEhIKCnJvdGF0aW9uX3cYCSABKAIiywIKCE1vdmVtZW50EhEKCXRp",
+            "bWVzdGFtcBgBIAEoAhISCgpwb3NpdGlvbl94GAIgASgCEhIKCnBvc2l0aW9u",
+            "X3kYAyABKAISEgoKcG9zaXRpb25fehgEIAEoAhISCgp2ZWxvY2l0eV94GAUg",
+            "ASgCEhIKCnZlbG9jaXR5X3kYBiABKAISEgoKdmVsb2NpdHlfehgHIAEoAhIc",
+            "ChRtb3ZlbWVudF9ibGVuZF92YWx1ZRgIIAEoAhIZChFzbGlkZV9ibGVuZF92",
+            "YWx1ZRgJIAEoAhITCgtpc19ncm91bmRlZBgKIAEoCBISCgppc19qdW1waW5n",
+            "GAsgASgIEhQKDGlzX2xvbmdfanVtcBgMIAEoCBIUCgxpc19sb25nX2ZhbGwY",
+            "DSABKAgSEgoKaXNfZmFsbGluZxgOIAEoCBISCgppc19zdHVubmVkGA8gASgI",
+            "IjEKFkFubm91bmNlUHJvZmlsZVZlcnNpb24SFwoPcHJvZmlsZV92ZXJzaW9u",
+            "GAEgASgNIjoKDlByb2ZpbGVSZXF1ZXN0Eg8KB2FkZHJlc3MYBCABKAkSFwoP",
+            "cHJvZmlsZV92ZXJzaW9uGAMgASgNIj8KD1Byb2ZpbGVSZXNwb25zZRIaChJz",
+            "ZXJpYWxpemVkX3Byb2ZpbGUYASABKAkSEAoIYmFzZV91cmwYAiABKAkiKgoE",
+            "Q2hhdBIPCgdtZXNzYWdlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoASInCgVT",
+            "Y2VuZRIQCghzY2VuZV9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIosBCgVWb2lj",
+            "ZRIXCg9lbmNvZGVkX3NhbXBsZXMYASABKAwSDQoFaW5kZXgYAiABKA0SPwoF",
+            "Y29kZWMYAyABKA4yMC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQu",
+            "Vm9pY2UuVm9pY2VDb2RlYyIZCgpWb2ljZUNvZGVjEgsKB1ZDX09QVVMQAGIG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest), global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest.Parser, new[]{ "Address", "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileResponse), global::Decentraland.Kernel.Comms.Rfc4.ProfileResponse.Parser, new[]{ "SerializedProfile", "BaseUrl" }, null, null, null, null),
@@ -122,6 +132,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           break;
         case MessageOneofCase.Voice:
           Voice = other.Voice.Clone();
+          break;
+        case MessageOneofCase.Movement:
+          Movement = other.Movement.Clone();
           break;
       }
 
@@ -218,6 +231,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "movement" field.</summary>
+    public const int MovementFieldNumber = 8;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.Rfc4.Movement Movement {
+      get { return messageCase_ == MessageOneofCase.Movement ? (global::Decentraland.Kernel.Comms.Rfc4.Movement) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.Movement;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -229,6 +254,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       Chat = 5,
       Scene = 6,
       Voice = 7,
+      Movement = 8,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -266,6 +292,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!object.Equals(Chat, other.Chat)) return false;
       if (!object.Equals(Scene, other.Scene)) return false;
       if (!object.Equals(Voice, other.Voice)) return false;
+      if (!object.Equals(Movement, other.Movement)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -281,6 +308,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.Chat) hash ^= Chat.GetHashCode();
       if (messageCase_ == MessageOneofCase.Scene) hash ^= Scene.GetHashCode();
       if (messageCase_ == MessageOneofCase.Voice) hash ^= Voice.GetHashCode();
+      if (messageCase_ == MessageOneofCase.Movement) hash ^= Movement.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -328,6 +356,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(58);
         output.WriteMessage(Voice);
       }
+      if (messageCase_ == MessageOneofCase.Movement) {
+        output.WriteRawTag(66);
+        output.WriteMessage(Movement);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -366,6 +398,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(58);
         output.WriteMessage(Voice);
       }
+      if (messageCase_ == MessageOneofCase.Movement) {
+        output.WriteRawTag(66);
+        output.WriteMessage(Movement);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -396,6 +432,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (messageCase_ == MessageOneofCase.Voice) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Voice);
+      }
+      if (messageCase_ == MessageOneofCase.Movement) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Movement);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -451,6 +490,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             Voice = new global::Decentraland.Kernel.Comms.Rfc4.Voice();
           }
           Voice.MergeFrom(other.Voice);
+          break;
+        case MessageOneofCase.Movement:
+          if (Movement == null) {
+            Movement = new global::Decentraland.Kernel.Comms.Rfc4.Movement();
+          }
+          Movement.MergeFrom(other.Movement);
           break;
       }
 
@@ -532,6 +577,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             Voice = subBuilder;
             break;
           }
+          case 66: {
+            global::Decentraland.Kernel.Comms.Rfc4.Movement subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.Movement();
+            if (messageCase_ == MessageOneofCase.Movement) {
+              subBuilder.MergeFrom(Movement);
+            }
+            input.ReadMessage(subBuilder);
+            Movement = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -608,6 +662,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             }
             input.ReadMessage(subBuilder);
             Voice = subBuilder;
+            break;
+          }
+          case 66: {
+            global::Decentraland.Kernel.Comms.Rfc4.Movement subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.Movement();
+            if (messageCase_ == MessageOneofCase.Movement) {
+              subBuilder.MergeFrom(Movement);
+            }
+            input.ReadMessage(subBuilder);
+            Movement = subBuilder;
             break;
           }
         }
@@ -1074,6 +1137,725 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
 
   }
 
+  public sealed partial class Movement : pb::IMessage<Movement>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<Movement> _parser = new pb::MessageParser<Movement>(() => new Movement());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<Movement> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Movement() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Movement(Movement other) : this() {
+      timestamp_ = other.timestamp_;
+      positionX_ = other.positionX_;
+      positionY_ = other.positionY_;
+      positionZ_ = other.positionZ_;
+      velocityX_ = other.velocityX_;
+      velocityY_ = other.velocityY_;
+      velocityZ_ = other.velocityZ_;
+      movementBlendValue_ = other.movementBlendValue_;
+      slideBlendValue_ = other.slideBlendValue_;
+      isGrounded_ = other.isGrounded_;
+      isJumping_ = other.isJumping_;
+      isLongJump_ = other.isLongJump_;
+      isLongFall_ = other.isLongFall_;
+      isFalling_ = other.isFalling_;
+      isStunned_ = other.isStunned_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Movement Clone() {
+      return new Movement(this);
+    }
+
+    /// <summary>Field number for the "timestamp" field.</summary>
+    public const int TimestampFieldNumber = 1;
+    private float timestamp_;
+    /// <summary>
+    /// command number
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Timestamp {
+      get { return timestamp_; }
+      set {
+        timestamp_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_x" field.</summary>
+    public const int PositionXFieldNumber = 2;
+    private float positionX_;
+    /// <summary>
+    /// world position
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PositionX {
+      get { return positionX_; }
+      set {
+        positionX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_y" field.</summary>
+    public const int PositionYFieldNumber = 3;
+    private float positionY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PositionY {
+      get { return positionY_; }
+      set {
+        positionY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_z" field.</summary>
+    public const int PositionZFieldNumber = 4;
+    private float positionZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float PositionZ {
+      get { return positionZ_; }
+      set {
+        positionZ_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "velocity_x" field.</summary>
+    public const int VelocityXFieldNumber = 5;
+    private float velocityX_;
+    /// <summary>
+    /// velocity
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float VelocityX {
+      get { return velocityX_; }
+      set {
+        velocityX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "velocity_y" field.</summary>
+    public const int VelocityYFieldNumber = 6;
+    private float velocityY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float VelocityY {
+      get { return velocityY_; }
+      set {
+        velocityY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "velocity_z" field.</summary>
+    public const int VelocityZFieldNumber = 7;
+    private float velocityZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float VelocityZ {
+      get { return velocityZ_; }
+      set {
+        velocityZ_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "movement_blend_value" field.</summary>
+    public const int MovementBlendValueFieldNumber = 8;
+    private float movementBlendValue_;
+    /// <summary>
+    /// animations
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float MovementBlendValue {
+      get { return movementBlendValue_; }
+      set {
+        movementBlendValue_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "slide_blend_value" field.</summary>
+    public const int SlideBlendValueFieldNumber = 9;
+    private float slideBlendValue_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float SlideBlendValue {
+      get { return slideBlendValue_; }
+      set {
+        slideBlendValue_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_grounded" field.</summary>
+    public const int IsGroundedFieldNumber = 10;
+    private bool isGrounded_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsGrounded {
+      get { return isGrounded_; }
+      set {
+        isGrounded_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_jumping" field.</summary>
+    public const int IsJumpingFieldNumber = 11;
+    private bool isJumping_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsJumping {
+      get { return isJumping_; }
+      set {
+        isJumping_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_long_jump" field.</summary>
+    public const int IsLongJumpFieldNumber = 12;
+    private bool isLongJump_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsLongJump {
+      get { return isLongJump_; }
+      set {
+        isLongJump_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_long_fall" field.</summary>
+    public const int IsLongFallFieldNumber = 13;
+    private bool isLongFall_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsLongFall {
+      get { return isLongFall_; }
+      set {
+        isLongFall_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_falling" field.</summary>
+    public const int IsFallingFieldNumber = 14;
+    private bool isFalling_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsFalling {
+      get { return isFalling_; }
+      set {
+        isFalling_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_stunned" field.</summary>
+    public const int IsStunnedFieldNumber = 15;
+    private bool isStunned_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsStunned {
+      get { return isStunned_; }
+      set {
+        isStunned_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Movement);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Movement other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PositionX, other.PositionX)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PositionY, other.PositionY)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(PositionZ, other.PositionZ)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(VelocityX, other.VelocityX)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(VelocityY, other.VelocityY)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(VelocityZ, other.VelocityZ)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MovementBlendValue, other.MovementBlendValue)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SlideBlendValue, other.SlideBlendValue)) return false;
+      if (IsGrounded != other.IsGrounded) return false;
+      if (IsJumping != other.IsJumping) return false;
+      if (IsLongJump != other.IsLongJump) return false;
+      if (IsLongFall != other.IsLongFall) return false;
+      if (IsFalling != other.IsFalling) return false;
+      if (IsStunned != other.IsStunned) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
+      if (PositionX != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PositionX);
+      if (PositionY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PositionY);
+      if (PositionZ != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(PositionZ);
+      if (VelocityX != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(VelocityX);
+      if (VelocityY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(VelocityY);
+      if (VelocityZ != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(VelocityZ);
+      if (MovementBlendValue != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MovementBlendValue);
+      if (SlideBlendValue != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SlideBlendValue);
+      if (IsGrounded != false) hash ^= IsGrounded.GetHashCode();
+      if (IsJumping != false) hash ^= IsJumping.GetHashCode();
+      if (IsLongJump != false) hash ^= IsLongJump.GetHashCode();
+      if (IsLongFall != false) hash ^= IsLongFall.GetHashCode();
+      if (IsFalling != false) hash ^= IsFalling.GetHashCode();
+      if (IsStunned != false) hash ^= IsStunned.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Timestamp != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Timestamp);
+      }
+      if (PositionX != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(PositionX);
+      }
+      if (PositionY != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(PositionY);
+      }
+      if (PositionZ != 0F) {
+        output.WriteRawTag(37);
+        output.WriteFloat(PositionZ);
+      }
+      if (VelocityX != 0F) {
+        output.WriteRawTag(45);
+        output.WriteFloat(VelocityX);
+      }
+      if (VelocityY != 0F) {
+        output.WriteRawTag(53);
+        output.WriteFloat(VelocityY);
+      }
+      if (VelocityZ != 0F) {
+        output.WriteRawTag(61);
+        output.WriteFloat(VelocityZ);
+      }
+      if (MovementBlendValue != 0F) {
+        output.WriteRawTag(69);
+        output.WriteFloat(MovementBlendValue);
+      }
+      if (SlideBlendValue != 0F) {
+        output.WriteRawTag(77);
+        output.WriteFloat(SlideBlendValue);
+      }
+      if (IsGrounded != false) {
+        output.WriteRawTag(80);
+        output.WriteBool(IsGrounded);
+      }
+      if (IsJumping != false) {
+        output.WriteRawTag(88);
+        output.WriteBool(IsJumping);
+      }
+      if (IsLongJump != false) {
+        output.WriteRawTag(96);
+        output.WriteBool(IsLongJump);
+      }
+      if (IsLongFall != false) {
+        output.WriteRawTag(104);
+        output.WriteBool(IsLongFall);
+      }
+      if (IsFalling != false) {
+        output.WriteRawTag(112);
+        output.WriteBool(IsFalling);
+      }
+      if (IsStunned != false) {
+        output.WriteRawTag(120);
+        output.WriteBool(IsStunned);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Timestamp != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Timestamp);
+      }
+      if (PositionX != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(PositionX);
+      }
+      if (PositionY != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(PositionY);
+      }
+      if (PositionZ != 0F) {
+        output.WriteRawTag(37);
+        output.WriteFloat(PositionZ);
+      }
+      if (VelocityX != 0F) {
+        output.WriteRawTag(45);
+        output.WriteFloat(VelocityX);
+      }
+      if (VelocityY != 0F) {
+        output.WriteRawTag(53);
+        output.WriteFloat(VelocityY);
+      }
+      if (VelocityZ != 0F) {
+        output.WriteRawTag(61);
+        output.WriteFloat(VelocityZ);
+      }
+      if (MovementBlendValue != 0F) {
+        output.WriteRawTag(69);
+        output.WriteFloat(MovementBlendValue);
+      }
+      if (SlideBlendValue != 0F) {
+        output.WriteRawTag(77);
+        output.WriteFloat(SlideBlendValue);
+      }
+      if (IsGrounded != false) {
+        output.WriteRawTag(80);
+        output.WriteBool(IsGrounded);
+      }
+      if (IsJumping != false) {
+        output.WriteRawTag(88);
+        output.WriteBool(IsJumping);
+      }
+      if (IsLongJump != false) {
+        output.WriteRawTag(96);
+        output.WriteBool(IsLongJump);
+      }
+      if (IsLongFall != false) {
+        output.WriteRawTag(104);
+        output.WriteBool(IsLongFall);
+      }
+      if (IsFalling != false) {
+        output.WriteRawTag(112);
+        output.WriteBool(IsFalling);
+      }
+      if (IsStunned != false) {
+        output.WriteRawTag(120);
+        output.WriteBool(IsStunned);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Timestamp != 0F) {
+        size += 1 + 4;
+      }
+      if (PositionX != 0F) {
+        size += 1 + 4;
+      }
+      if (PositionY != 0F) {
+        size += 1 + 4;
+      }
+      if (PositionZ != 0F) {
+        size += 1 + 4;
+      }
+      if (VelocityX != 0F) {
+        size += 1 + 4;
+      }
+      if (VelocityY != 0F) {
+        size += 1 + 4;
+      }
+      if (VelocityZ != 0F) {
+        size += 1 + 4;
+      }
+      if (MovementBlendValue != 0F) {
+        size += 1 + 4;
+      }
+      if (SlideBlendValue != 0F) {
+        size += 1 + 4;
+      }
+      if (IsGrounded != false) {
+        size += 1 + 1;
+      }
+      if (IsJumping != false) {
+        size += 1 + 1;
+      }
+      if (IsLongJump != false) {
+        size += 1 + 1;
+      }
+      if (IsLongFall != false) {
+        size += 1 + 1;
+      }
+      if (IsFalling != false) {
+        size += 1 + 1;
+      }
+      if (IsStunned != false) {
+        size += 1 + 1;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Movement other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Timestamp != 0F) {
+        Timestamp = other.Timestamp;
+      }
+      if (other.PositionX != 0F) {
+        PositionX = other.PositionX;
+      }
+      if (other.PositionY != 0F) {
+        PositionY = other.PositionY;
+      }
+      if (other.PositionZ != 0F) {
+        PositionZ = other.PositionZ;
+      }
+      if (other.VelocityX != 0F) {
+        VelocityX = other.VelocityX;
+      }
+      if (other.VelocityY != 0F) {
+        VelocityY = other.VelocityY;
+      }
+      if (other.VelocityZ != 0F) {
+        VelocityZ = other.VelocityZ;
+      }
+      if (other.MovementBlendValue != 0F) {
+        MovementBlendValue = other.MovementBlendValue;
+      }
+      if (other.SlideBlendValue != 0F) {
+        SlideBlendValue = other.SlideBlendValue;
+      }
+      if (other.IsGrounded != false) {
+        IsGrounded = other.IsGrounded;
+      }
+      if (other.IsJumping != false) {
+        IsJumping = other.IsJumping;
+      }
+      if (other.IsLongJump != false) {
+        IsLongJump = other.IsLongJump;
+      }
+      if (other.IsLongFall != false) {
+        IsLongFall = other.IsLongFall;
+      }
+      if (other.IsFalling != false) {
+        IsFalling = other.IsFalling;
+      }
+      if (other.IsStunned != false) {
+        IsStunned = other.IsStunned;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 13: {
+            Timestamp = input.ReadFloat();
+            break;
+          }
+          case 21: {
+            PositionX = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            PositionY = input.ReadFloat();
+            break;
+          }
+          case 37: {
+            PositionZ = input.ReadFloat();
+            break;
+          }
+          case 45: {
+            VelocityX = input.ReadFloat();
+            break;
+          }
+          case 53: {
+            VelocityY = input.ReadFloat();
+            break;
+          }
+          case 61: {
+            VelocityZ = input.ReadFloat();
+            break;
+          }
+          case 69: {
+            MovementBlendValue = input.ReadFloat();
+            break;
+          }
+          case 77: {
+            SlideBlendValue = input.ReadFloat();
+            break;
+          }
+          case 80: {
+            IsGrounded = input.ReadBool();
+            break;
+          }
+          case 88: {
+            IsJumping = input.ReadBool();
+            break;
+          }
+          case 96: {
+            IsLongJump = input.ReadBool();
+            break;
+          }
+          case 104: {
+            IsLongFall = input.ReadBool();
+            break;
+          }
+          case 112: {
+            IsFalling = input.ReadBool();
+            break;
+          }
+          case 120: {
+            IsStunned = input.ReadBool();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 13: {
+            Timestamp = input.ReadFloat();
+            break;
+          }
+          case 21: {
+            PositionX = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            PositionY = input.ReadFloat();
+            break;
+          }
+          case 37: {
+            PositionZ = input.ReadFloat();
+            break;
+          }
+          case 45: {
+            VelocityX = input.ReadFloat();
+            break;
+          }
+          case 53: {
+            VelocityY = input.ReadFloat();
+            break;
+          }
+          case 61: {
+            VelocityZ = input.ReadFloat();
+            break;
+          }
+          case 69: {
+            MovementBlendValue = input.ReadFloat();
+            break;
+          }
+          case 77: {
+            SlideBlendValue = input.ReadFloat();
+            break;
+          }
+          case 80: {
+            IsGrounded = input.ReadBool();
+            break;
+          }
+          case 88: {
+            IsJumping = input.ReadBool();
+            break;
+          }
+          case 96: {
+            IsLongJump = input.ReadBool();
+            break;
+          }
+          case 104: {
+            IsLongFall = input.ReadBool();
+            break;
+          }
+          case 112: {
+            IsFalling = input.ReadBool();
+            break;
+          }
+          case 120: {
+            IsStunned = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class AnnounceProfileVersion : pb::IMessage<AnnounceProfileVersion>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1088,7 +1870,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1277,7 +2059,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1503,7 +2285,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1729,7 +2511,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1955,7 +2737,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2181,7 +2963,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

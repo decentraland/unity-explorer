@@ -92,10 +92,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool GetAnimatorBool(int hash) =>
             avatarAnimator.GetBool(hash);
 
-        public void SetAnimatorBool(int hash, bool value)
-        {
+        public void SetAnimatorBool(int hash, bool value) =>
             avatarAnimator.SetBool(hash, value);
-        }
 
         public void ReplaceEmoteAnimation(AnimationClip animationClip)
         {
@@ -116,9 +114,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void SetAnimatorBool(int hash, bool value);
 
-        void ReplaceEmoteAnimation(AnimationClip animationClip);
-
         bool GetAnimatorBool(int hash);
+
+        void ReplaceEmoteAnimation(AnimationClip animationClip);
 
         bool IsAnimatorInTag(string tag);
     }

@@ -33,8 +33,10 @@ MonoBehaviour:
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
+  - rid: 6156380652633325570
   - rid: 7162477752737071106
   - rid: 7162477796324278274
+  - rid: 3836309668583964676
   - rid: 6697045322133929986
   references:
     version: 2
@@ -180,6 +182,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3836309668583964676
+      type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        NftPromptPrefab:
+          m_AssetGUID: d504e2da7abe71a4582c8c2e08e3c285
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -329,10 +339,23 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 6156380652633325570
+      type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <spatialStateSettings>k__BackingField:
+          m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ReportHandlingSettings>k__BackingField:
+        <ReportHandlingSettingsDevelopment>k__BackingField:
+          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ReportHandlingSettingsProduction>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
           m_SubObjectName: 
           m_SubObjectType: 
