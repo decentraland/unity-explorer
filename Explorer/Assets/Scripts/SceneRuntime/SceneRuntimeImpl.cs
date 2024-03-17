@@ -38,6 +38,7 @@ namespace SceneRuntime
         private RestrictedActionsAPIWrapper restrictedActionsApi;
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
+        private WebSocketApiWrapper? webSocketApiWrapper;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -99,6 +100,7 @@ namespace SceneRuntime
             runtimeWrapper?.Dispose();
             restrictedActionsApi?.Dispose();
             sceneApiWrapper?.Dispose();
+            webSocketApiWrapper?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -130,6 +132,12 @@ namespace SceneRuntime
         {
             engine.AddHostObject("UnityUserIdentityApi", userIdentity = new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }
+
+        public void RegisterWebSocketApi(IWebSocketApi webSocketApi)
+        {
+            engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
+        }
+
 
         public void SetIsDisposing()
         {
