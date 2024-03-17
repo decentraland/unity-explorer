@@ -1,11 +1,8 @@
-using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
-using SocketIOClient.Transport.WebSockets;
 using System;
-using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +17,13 @@ namespace SceneRuntime.Apis.Modules
         {
             this.api = api;
             cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public void Dispose()
+        {
+            api.Dispose();
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
@@ -52,15 +56,6 @@ namespace SceneRuntime.Apis.Modules
         {
             try { return api.CloseAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
-        }
-
-
-
-        public void Dispose()
-        {
-            api.Dispose();
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
         }
     }
 }

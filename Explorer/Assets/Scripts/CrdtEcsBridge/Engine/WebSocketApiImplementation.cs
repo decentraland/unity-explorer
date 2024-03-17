@@ -12,9 +12,15 @@ namespace CrdtEcsBridge.Engine
     {
         private SocketIO webSocket;
 
+        public void Dispose()
+        {
+            webSocket.Dispose();
+        }
+
         public void CreateWebSocket(string url)
         {
             var uri = new Uri(url);
+
             webSocket = new SocketIO(uri, new SocketIOOptions
             {
                 Transport = TransportProtocol.WebSocket,
@@ -38,29 +44,18 @@ namespace CrdtEcsBridge.Engine
 
         public async UniTask<string> ReceiveAsync(CancellationToken ct)
         {
-            // Create a task completion source to await the event
             var tcs = new UniTaskCompletionSource<string>();
 
-            // Define the event handler for the OnReceived event
-            Action<IMessage> receivedHandler = null;
-            receivedHandler = (message) =>
+            void ReceivedHandler(IMessage message)
             {
-                // Unsubscribe the event handler
-                webSocket.Transport.OnReceived -= receivedHandler;
+                webSocket.Transport.OnReceived -= ReceivedHandler;
                 string messageContent = message.Write();
-                // Set the result of the task completion source
                 tcs.TrySetResult(messageContent);
-            };
-
-            webSocket.Transport.OnReceived += receivedHandler;
-
-            await using (ct.Register(() => tcs.TrySetCanceled()))
-            {
-                return await tcs.Task;
             }
+
+            webSocket.Transport.OnReceived += ReceivedHandler;
+
+            await using (ct.Register(() => tcs.TrySetCanceled())) { return await tcs.Task; }
         }
-
-        public void Dispose() { }
-
     }
 }
