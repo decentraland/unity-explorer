@@ -31,16 +31,23 @@ class WebSocket {
    }
 
    receive() {
-       return WebSocketApiWrapper.ReceiveAsync().then(data => {
-           if (typeof this.onmessage === 'function') {
-               this.onmessage(data);
-           }
-       }).catch(error => {
-           if (typeof this.onerror === 'function') {
-               this.onerror(error);
-           }
-       });
-   }
+      return new Promise((resolve, reject) => {
+          const receiveData = () => {
+              WebSocketApiWrapper.ReceiveAsync().then(data => {
+                  if (typeof this.onmessage === 'function') {
+                      this.onmessage(data);
+                  }
+                  receiveData();
+              }).catch(error => {
+                  if (typeof this.onerror === 'function') {
+                      this.onerror(error);
+                  }
+                  reject(error);
+              });
+          };
+          receiveData();
+      });
+  }
 
    close() {
        return WebSocketApiWrapper.CloseAsync().then(() => {
