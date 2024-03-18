@@ -74,14 +74,16 @@ namespace DCL.Multiplayer.Movement.Systems
             // When there is no messages, we extrapolate
             if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
             {
-                if (!extComp.Enabled)
+                if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocity.sqrMagnitude > settings.ExtrapolationSettings.MinSpeed)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
-                // TODO (Vit): properly handle animations for Extrapolation: InterpolateAnimations(deltaTime, ref anim, extComp.Start, extComp.Start);
-                Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
-
-                return;
+                if (extComp.Enabled)
+                {
+                    Extrapolation.Execute(deltaTime, ref transComp, ref extComp, settings.ExtrapolationSettings);
+                    return;
+                }
             }
+
 
             if (playerInbox.Count > 0)
                 HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
@@ -159,9 +161,13 @@ namespace DCL.Multiplayer.Movement.Systems
             remotePlayerMovement.AddPassed(remote, wasTeleported: true);
         }
 
-        private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in FullMovementMessage remote) =>
-            Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position) > settings.MinTeleportDistance ||
-            (settings.InterpolationSettings.UseSpeedUp && Vector3.SqrMagnitude(remotePlayerMovement.PastMessage!.position - remote.position) < settings.MinPositionDelta);
+        private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in FullMovementMessage remote)
+        {
+            float sqrDistance = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
+
+            return sqrDistance > settings.MinTeleportDistance ||
+                   (settings.InterpolationSettings.UseSpeedUp && sqrDistance < settings.MinPositionDelta);
+        }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp, in FullMovementMessage remote, bool isBlend)
