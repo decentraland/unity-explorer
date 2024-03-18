@@ -499,6 +499,8 @@ Shader "DCL/DCL_Toon"
 
     HLSLINCLUDE
 
+    #define _DCL_TEXTURE_ARRAYS
+    #define _DCL_COMPUTE_SKINNING
     #define DISABLE_RP_SHADERS
     //-------------------------------------------------------------------------------------
     // Variant

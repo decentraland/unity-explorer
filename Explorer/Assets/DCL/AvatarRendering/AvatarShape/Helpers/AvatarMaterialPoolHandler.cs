@@ -24,21 +24,20 @@ namespace DCL.AvatarRendering.AvatarShape
             {
                 foreach (int resolution in resolutionToCreate)
                 {
-                    Material? activatedMaterial = ActivateMaterial(material);
-                    var textureArrayContainer = TextureArrayContainerFactory.Create(activatedMaterial.shader, resolution, defaultTextures);
+                    var textureArrayContainer = TextureArrayContainerFactory.Create(material.shader, resolution, defaultTextures);
                     TextureArrayContainerFactory.ARRAY_TYPES_COUNT = Mathf.Max(TextureArrayContainerFactory.ARRAY_TYPES_COUNT, textureArrayContainer.count);
                     
                     //Create the pool
                     IExtendedObjectPool<Material> pool = new ExtendedObjectPool<Material>(
                         () =>
                         {
-                            var mat = new Material(activatedMaterial);
+                            var mat = new Material(material);
                             return mat;
                         },
                         actionOnRelease: mat =>
                         {
                             // reset material so it does not contain any old properties
-                            mat.CopyPropertiesFromMaterial(activatedMaterial);
+                            mat.CopyPropertiesFromMaterial(material);
                         },
                         actionOnDestroy: UnityObjectUtils.SafeDestroy,
                         defaultCapacity: defaultMaterialCapacity);
@@ -55,7 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape
                         Pool = pool, TextureArrayContainer = textureArrayContainer
                     };
 
-                    int materialID = activatedMaterial.shader.name switch
+                    int materialID = material.shader.name switch
                     {
                         TextureArrayConstants.TOON_SHADER => TextureArrayConstants.SHADERID_DCL_TOON,
                         TextureArrayConstants.FACIAL_SHADER => TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES,
@@ -77,23 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape
             return materialDictionary[shaderName];
         }
 
-        private Material ActivateMaterial(Material material)
-        {
-            var activatedMaterial = new Material(material);
-            switch(material.shader.name)
-            {
-                case TextureArrayConstants.TOON_SHADER:
-                    activatedMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-                    activatedMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-                    return activatedMaterial;
-                case TextureArrayConstants.FACIAL_SHADER:
-                    activatedMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-                    activatedMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-                    return activatedMaterial;
-                default:
-                    return material;
-            }
-        }
+
 
         public void Release(Material usedMaterial, int poolIndex)
         {

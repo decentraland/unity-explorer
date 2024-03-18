@@ -13,9 +13,7 @@ StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct VertexInput
 {
-    #if _DCL_COMPUTE_SKINNING
-        uint index : SV_VertexID;
-    #endif
+    uint index : SV_VertexID;
     float4 vertex : POSITION;
     float3 normal : NORMAL;
     float4 tangent : TANGENT;
