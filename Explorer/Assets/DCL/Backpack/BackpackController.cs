@@ -116,10 +116,17 @@ namespace DCL.Backpack
                 await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
-            backpackCommandBus.SendCommand(new BackpackEquipCommand(avatar.BodyShape.Value));
+            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
 
             foreach (URN w in avatar.Wearables)
-                backpackCommandBus.SendCommand(new BackpackEquipCommand(w.Shorten()));
+                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten()));
+
+            for (var i = 0; i < avatar.Emotes.Count; i++)
+            {
+                URN avatarEmote = avatar.Emotes[i];
+                if (avatarEmote.IsNullOrEmpty()) continue;
+                backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i));
+            }
 
             initialLoadingIsDone = true;
         }

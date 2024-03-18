@@ -14,7 +14,7 @@ namespace DCL.Profiles
         private Color eyesColor;
         private Color hairColor;
         private Color skinColor;
-        private Dictionary<string, Emote>? emotes;
+        private IReadOnlyCollection<URN>? emotes;
         private HashSet<string>? forceRender;
         private HashSet<string>? blocked;
         private List<string>? interests;
@@ -86,6 +86,12 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithEmotes(IReadOnlyCollection<URN> emotes)
+        {
+            this.emotes = emotes;
+            return this;
+        }
+
         public Profile Build()
         {
             var profile = new Profile();
@@ -124,8 +130,12 @@ namespace DCL.Profiles
             avatar.BodyShape = bodyShape;
 
             if (emotes != null)
-                foreach ((string? emoteId, Emote emote) in emotes)
-                    avatar.emotes[emoteId] = emote;
+            {
+                var i = 0;
+
+                foreach (URN urn in emotes)
+                    avatar.emotes[i++] = urn;
+            }
 
             if (forceRender != null)
                 foreach (string s in forceRender)

@@ -15,8 +15,8 @@ namespace DCL.Backpack.CharacterPreview
             : base(view, previewFactory, world)
         {
             this.backpackEventBus = backpackEventBus;
-            backpackEventBus.EquipEvent += OnEquipped;
-            backpackEventBus.UnEquipEvent += OnUnequipped;
+            backpackEventBus.EquipWearableEvent += OnEquipped;
+            backpackEventBus.UnEquipWearableEvent += OnUnequipped;
             backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
         }
@@ -24,8 +24,8 @@ namespace DCL.Backpack.CharacterPreview
         public new void Dispose()
         {
             base.Dispose();
-            backpackEventBus.EquipEvent -= OnEquipped;
-            backpackEventBus.UnEquipEvent -= OnUnequipped;
+            backpackEventBus.EquipWearableEvent -= OnEquipped;
+            backpackEventBus.UnEquipWearableEvent -= OnUnequipped;
         }
 
         private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)

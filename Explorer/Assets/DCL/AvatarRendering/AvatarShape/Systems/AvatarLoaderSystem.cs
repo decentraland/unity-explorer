@@ -119,8 +119,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             var urns = new List<URN>();
 
-            foreach (string s in pbAvatarShape.Wearables)
-                urns.Add(s);
+            foreach (URN emote in pbAvatarShape.Emotes)
+            {
+                if (emote.IsNullOrEmpty()) continue;
+                urns.Add(emote);
+            }
 
             var intention = new GetEmotesByPointersIntention(urns, pbAvatarShape);
             return EmotePromise.Create(World, intention, partition);
@@ -130,8 +133,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             var urns = new List<URN>();
 
-            foreach (string emote in profile.Avatar.Emotes.Keys)
+            foreach (URN emote in profile.Avatar.Emotes)
+            {
+                if (emote.IsNullOrEmpty()) continue;
                 urns.Add(emote);
+            }
 
             var intention = new GetEmotesByPointersIntention(urns, profile.Avatar.BodyShape);
             return EmotePromise.Create(World, intention, partition);

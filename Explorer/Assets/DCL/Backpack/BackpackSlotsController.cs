@@ -35,8 +35,8 @@ namespace DCL.Backpack
             this.backpackEventBus = backpackEventBus;
             this.rarityBackgrounds = rarityBackgrounds;
 
-            this.backpackEventBus.EquipEvent += EquipInSlot;
-            this.backpackEventBus.UnEquipEvent += UnEquipInSlot;
+            this.backpackEventBus.EquipWearableEvent += EquipInSlot;
+            this.backpackEventBus.UnEquipWearableEvent += UnEquipInSlot;
             this.backpackEventBus.FilterCategoryEvent += DeselectCategory;
             this.backpackEventBus.ForceRenderEvent += SetForceRender;
 
@@ -46,7 +46,7 @@ namespace DCL.Backpack
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.OverrideHide.onClick.AddListener(() => RemoveForceRender(avatarSlotView.Category));
                 avatarSlotView.NoOverride.onClick.AddListener(() => AddForceRender(avatarSlotView.Category));
-                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipCommand(avatarSlotView.SlotWearableUrn)));
+                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(avatarSlotView.SlotWearableUrn)));
             }
         }
 
@@ -177,8 +177,8 @@ namespace DCL.Backpack
 
         public void Dispose()
         {
-            backpackEventBus.EquipEvent -= EquipInSlot;
-            backpackEventBus.UnEquipEvent -= UnEquipInSlot;
+            backpackEventBus.EquipWearableEvent -= EquipInSlot;
+            backpackEventBus.UnEquipWearableEvent -= UnEquipInSlot;
             foreach (var avatarSlotView in avatarSlots.Values)
                 avatarSlotView.Item1.OnSlotButtonPressed -= OnSlotButtonPressed;
         }

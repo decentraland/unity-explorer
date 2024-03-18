@@ -5,21 +5,43 @@ using System.Linq;
 
 namespace DCL.Backpack.BackpackBus
 {
-    public readonly struct BackpackEquipCommand
+    public readonly struct BackpackEquipEmoteCommand
+    {
+        public readonly string Id;
+        public readonly int Slot;
+
+        public BackpackEquipEmoteCommand(string id, int slot)
+        {
+            Id = id;
+            Slot = slot;
+        }
+    }
+
+    public readonly struct BackpackUnEquipEmoteCommand
+    {
+        public readonly int Slot;
+
+        public BackpackUnEquipEmoteCommand(int slot)
+        {
+            Slot = slot;
+        }
+    }
+
+    public readonly struct BackpackEquipWearableCommand
     {
         public readonly string Id;
 
-        public BackpackEquipCommand(string id)
+        public BackpackEquipWearableCommand(string id)
         {
             Id = id;
         }
     }
 
-    public readonly struct BackpackUnEquipCommand
+    public readonly struct BackpackUnEquipWearableCommand
     {
         public readonly string Id;
 
-        public BackpackUnEquipCommand(string id)
+        public BackpackUnEquipWearableCommand(string id)
         {
             Id = id;
         }
