@@ -11,6 +11,7 @@ using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
@@ -87,6 +88,7 @@ namespace DCL.PluginSystem.Global
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new ThreadSafeRemoteAnnouncements(messagePipesHub),
+                new ThreadSafeRemoveIntentions(roomHub),
                 new RemoteProfiles(profileRepository),
                 new DebounceProfileBroadcast(
                     new ProfileBroadcast(roomHub, memoryPool, multiPool)
