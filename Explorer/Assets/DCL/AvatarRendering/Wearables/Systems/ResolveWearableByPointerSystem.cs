@@ -94,6 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         GetReportCategory(),
                         $"ResolveWearableByPointerSystem: Null pointer found in the list of pointers: index {index}"
                     );
+
                     continue;
                 }
 
@@ -163,6 +164,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                foreach (string pointerID in promise.LoadingIntention.Pointers)
+                {
+                    wearableCatalog.TryGetWearable(pointerID, out IWearable component);
+                    component.IsLoading = false;
+                }
+
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
@@ -202,6 +209,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                wearable.IsLoading = false;
+                wearable.ManifestResult = null;
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
@@ -224,6 +233,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                ResetWearableResultOnCancellation(wearable, in bodyShape);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
@@ -321,6 +331,33 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
 
             wearable.WearableDTO.Asset.Sanitize(hasEmptyDefaultWearableAB);
+        }
+
+        /// <summary>
+        ///     If the loading of the asset was cancelled reset the promise so we can start downloading it again with a new intent
+        /// </summary>
+        /// <param name="wearable"></param>
+        /// <param name="bodyShape"></param>
+        private static void ResetWearableResultOnCancellation(IWearable wearable, in BodyShape bodyShape)
+        {
+            wearable.IsLoading = false;
+
+            void ResetBodyShape(BodyShape bs)
+            {
+                StreamableLoadingResult<WearableAsset>? result = wearable.WearableAssetResults[bs];
+                if (result == null) return;
+
+                if (!result.Value.IsInitialized)
+                    wearable.WearableAssetResults[bs] = null;
+            }
+
+            if (wearable.IsUnisex())
+            {
+                ResetBodyShape(BodyShape.MALE);
+                ResetBodyShape(BodyShape.FEMALE);
+            }
+            else
+                ResetBodyShape(bodyShape);
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)

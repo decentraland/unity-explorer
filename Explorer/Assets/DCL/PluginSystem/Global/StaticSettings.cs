@@ -17,7 +17,10 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
         [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettings { get; private set; }
+        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
 
         [field: SerializeField]
         public PartitionSettingsRef PartitionSettings { get; private set; }

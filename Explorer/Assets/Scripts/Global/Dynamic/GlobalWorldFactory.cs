@@ -126,11 +126,6 @@ namespace Global.Dynamic
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
-            // Archaic systems
-            //CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
-            //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
-            //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
-
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
