@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -10,6 +12,8 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.CharacterPreview
 {
@@ -66,6 +70,10 @@ namespace DCL.CharacterPreview
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, avatarModel.Wearables, avatarModel.ForceRenderCategories),
                 PartitionComponent.TOP_PRIORITY
             );
+
+            avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
+                new GetEmotesByPointersIntention(Array.Empty<URN>(), avatarShape.BodyShape),
+                PartitionComponent.TOP_PRIORITY);
 
             avatarShape.IsDirty = true;
         }

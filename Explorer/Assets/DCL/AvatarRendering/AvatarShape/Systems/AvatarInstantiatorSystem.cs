@@ -17,7 +17,6 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using JetBrains.Annotations;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -84,8 +83,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        [CanBeNull]
-        private AvatarBase InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
@@ -98,18 +96,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             else
                 wearablesResult = avatarShapeComponent.WearablePromise.Result!.Value;
 
-            // EmotesLoadResult emotesResult;
-            //
-            // if (!avatarShapeComponent.EmotePromise.IsConsumed)
-            // {
-            //     if (!avatarShapeComponent.EmotePromise.TryConsume(World, out emotesResult))
-            //         return;
-            // }
-            // else
-            //     emotesResult = avatarShapeComponent.EmotePromise.Result!.Value;
+            EmotesLoadResult emotesResult;
 
-            // TODO: get emotes from promise
-            EmotesLoadResult emotesResult = new ();
+            if (!avatarShapeComponent.EmotePromise.IsConsumed)
+            {
+                if (!avatarShapeComponent.EmotePromise.TryConsume(World, out emotesResult)) return null;
+            }
+            else
+                emotesResult = avatarShapeComponent.EmotePromise.Result!.Value;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -146,7 +140,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
-            if (avatarBase)
+
+            if (avatarBase != null)
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
         }
 
@@ -187,15 +182,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < visibleWearables.Count; i++)
             {
                 IWearable resultWearable = visibleWearables[i];
-                WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
+                WearableAsset? originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
                 if (resultWearable.IsFacialFeature())
                 {
-                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset.GetMainAsset<Texture>();
+                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset?.GetMainAsset<Texture>();
                 }
                 else
                 {
-                    if (originalAsset.GetMainAsset<GameObject>() == null)
+                    if (originalAsset?.GetMainAsset<GameObject>() == null)
                     {
                         ReportHub.LogError(GetReportCategory(),
                             $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
@@ -261,7 +256,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
-            else
+            else if (avatarShapeComponent.WearablePromise.Result.HasValue)
                 foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset.Wearables)
                     wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
         }

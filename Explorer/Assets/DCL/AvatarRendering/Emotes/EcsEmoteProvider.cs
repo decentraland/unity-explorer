@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
 using DCL.Web3;
 using ECS;
 using ECS.Prioritization.Components;
@@ -11,7 +12,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetOwnedEmotesFromRealmIntention>;
 
@@ -63,7 +64,7 @@ namespace DCL.AvatarRendering.Emotes
             return promise.Result.Value.Asset.Emotes;
         }
 
-        public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, CancellationToken ct)
+        public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, BodyShape bodyShape, CancellationToken ct)
         {
             List<URN> pointers = ListPool<URN>.Get();
 
@@ -71,9 +72,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 pointers.AddRange(emoteIds);
 
-                var intention = new GetEmotesByPointersFromRealmIntention(pointers,
-                    new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint));
-
+                var intention = new GetEmotesByPointersIntention(pointers, bodyShape);
                 var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
                 promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
