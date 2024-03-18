@@ -33,7 +33,7 @@ namespace SceneRuntime.Apis.Modules
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
         public object ConnectAsync(string url)
         {
-            try { return api.ConnectAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.ConnectAsync(url, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 

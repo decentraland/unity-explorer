@@ -54,7 +54,7 @@ namespace SceneRunner
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
-        private IGlobalWorldActions globalWorldActions;
+        private IGlobalWorldActions? globalWorldActions;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -220,8 +220,8 @@ namespace SceneRunner
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             sceneRuntime.RegisterSceneApi(sceneApiImplementation);
 
-            var webSocketApiImplementation = new WebSocketApiImplementation();
-            sceneRuntime.RegisterWebSocketApi(webSocketApiImplementation);
+            var webSocketAipImplementation = new WebSocketApiImplementation();
+            sceneRuntime.RegisterWebSocketApi(webSocketAipImplementation);
 
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);

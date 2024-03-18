@@ -8,10 +8,10 @@ namespace SceneRuntime.Apis.Modules
     {
         public void CreateWebSocket(string url);
 
-        public UniTask ConnectAsync(CancellationToken ct);
-        public UniTask SendAsync(string data, CancellationToken ct);
+        public UniTask ConnectAsync(string url, CancellationToken ct);
+        public UniTask SendAsync(object data, CancellationToken ct);
         public UniTask CloseAsync(CancellationToken ct);
-        public UniTask<string> ReceiveAsync(CancellationToken ct);
+        public UniTask<object> ReceiveAsync(CancellationToken ct);
 
     }
 }

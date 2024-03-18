@@ -3,14 +3,24 @@ using SceneRuntime.Apis.Modules;
 using SocketIOClient;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
+using SocketIOClient.Transport.WebSockets;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace CrdtEcsBridge.Engine
 {
     public class WebSocketApiImplementation : IWebSocketApi
     {
-        private SocketIO webSocket;
+        private WebSocketTransport  webSocket;
+        private readonly TransportOptions transportOptions = new TransportOptions()
+        {
+            EIO = EngineIO.V4,
+            ConnectionTimeout = TimeSpan.FromSeconds(20),
+        };
+
 
         public void Dispose()
         {
@@ -19,41 +29,75 @@ namespace CrdtEcsBridge.Engine
 
         public void CreateWebSocket(string url)
         {
-            var uri = new Uri(url);
+            webSocket = new WebSocketTransport(transportOptions, new DefaultClientWebSocket());
+        }
 
-            webSocket = new SocketIO(uri, new SocketIOOptions
+        public async UniTask ConnectAsync(string url, CancellationToken ct)
+        {
+            await webSocket.ConnectAsync(new Uri(url), ct);
+        }
+
+        public async UniTask SendAsync(object data, CancellationToken ct)
+        {
+            if (data is Dictionary<string, object> dataDict && dataDict.ContainsKey("type"))
             {
-                Transport = TransportProtocol.WebSocket,
-            });
-        }
+                var type = dataDict["type"].ToString();
 
-        public async UniTask ConnectAsync(CancellationToken ct)
-        {
-            await webSocket.ConnectAsync();
-        }
-
-        public async UniTask SendAsync(string data, CancellationToken ct)
-        {
-            await webSocket.EmitAsync("Send", ct, data);
+                if (type == "Text" && dataDict.ContainsKey("data") && dataDict["data"] is string textData)
+                {
+                    var payload = new Payload() { Text = textData };
+                    await webSocket.SendAsync(payload, ct);
+                }
+                else if (type == "Binary" && dataDict.ContainsKey("data") && dataDict["data"] is List<object> binaryData)
+                {
+                    byte[] byteArray = binaryData.Select(Convert.ToByte).ToArray();
+                    var payload = new Payload() { Bytes = new List<byte[]>() {byteArray} };
+                    await webSocket.SendAsync(payload, ct);
+                }
+                else
+                {
+                    throw new ArgumentException("Unsupported data type or invalid format");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Invalid data format");
+            }
         }
 
         public async UniTask CloseAsync(CancellationToken ct)
         {
-            await webSocket.DisconnectAsync();
+            await webSocket.DisconnectAsync(ct);
         }
 
-        public async UniTask<string> ReceiveAsync(CancellationToken ct)
+        public async UniTask<object> ReceiveAsync(CancellationToken ct)
         {
-            var tcs = new UniTaskCompletionSource<string>();
+            var tcs = new UniTaskCompletionSource<object>();
 
             void ReceivedHandler(IMessage message)
             {
-                webSocket.Transport.OnReceived -= ReceivedHandler;
-                string messageContent = message.Write();
-                tcs.TrySetResult(messageContent);
+                if (message is BinaryMessage binaryMessage)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        for (var i = 0; i < binaryMessage.IncomingBytes.Count; i++)
+                        {
+                            byte[] byteArray = binaryMessage.IncomingBytes[i];
+                            memoryStream.Write(byteArray, 0, byteArray.Length);
+                        }
+
+                        byte[] bytes = memoryStream.ToArray();
+                        tcs.TrySetResult(new { type = "Binary", data = bytes });
+                    }
+                }
+                else
+                {
+                    string text = message.Write();
+                    tcs.TrySetResult(new { type = "Text", data = text });
+                }
             }
 
-            webSocket.Transport.OnReceived += ReceivedHandler;
+            webSocket.OnReceived += ReceivedHandler;
 
             await using (ct.Register(() => tcs.TrySetCanceled())) { return await tcs.Task; }
         }
