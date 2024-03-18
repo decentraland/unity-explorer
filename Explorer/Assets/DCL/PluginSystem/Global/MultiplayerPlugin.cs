@@ -27,6 +27,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
+        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly RealFlowLoadingStatus realFlowLoadingStatus;
 
@@ -38,7 +39,8 @@ namespace DCL.PluginSystem.Global
             IMemoryPool memoryPool,
             IMultiPool multiPool,
             IDebugContainerBuilder debugContainerBuilder,
-            RealFlowLoadingStatus realFlowLoadingStatus
+            RealFlowLoadingStatus realFlowLoadingStatus,
+            IEntityParticipantTable entityParticipantTable
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -49,6 +51,7 @@ namespace DCL.PluginSystem.Global
             this.multiPool = multiPool;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
+            this.entityParticipantTable = entityParticipantTable;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
@@ -66,7 +69,7 @@ namespace DCL.PluginSystem.Global
                     new ProfileBroadcast(roomHub, memoryPool, multiPool)
                 ),
                 new RemoteEntities(
-                    new EntityParticipantTable()
+                    entityParticipantTable
                 )
             );
 #endif
