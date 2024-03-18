@@ -134,7 +134,14 @@ namespace DCL.Multiplayer.Movement.System
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(delay));
+            AddTestEntityIfNot();
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
+        }
+
+        private void AddTestEntityIfNot()
+        {
+            if (entityParticipantTable.Has(RemotePlayerMovementComponent.TEST_ID) == false)
+                entityParticipantTable.Register(RemotePlayerMovementComponent.TEST_ID, globalWorld.Create());
         }
     }
 }
