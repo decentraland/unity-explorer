@@ -35,7 +35,6 @@ namespace Global.Dynamic
         private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
-        private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
@@ -60,14 +59,12 @@ namespace Global.Dynamic
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
             RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld,
-            int sceneLoadRadius,
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
             IScenesCache scenesCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
-            this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
             this.teleportController = teleportController;
