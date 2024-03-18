@@ -4,7 +4,7 @@ namespace DCL.Multiplayer.Movement
 {
     public struct ExtrapolationComponent
     {
-        public FullMovementMessage Start;
+        public NetworkMovementMessage Start;
         public Vector3 Velocity;
 
         public float Time;
@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Movement
 
         public bool Enabled { get; private set; }
 
-        public void Restart(FullMovementMessage from, float moveDuration)
+        public void Restart(NetworkMovementMessage from, float moveDuration)
         {
             Start = from;
             Velocity = from.velocity;

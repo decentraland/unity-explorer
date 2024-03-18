@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private const string TOPIC = "movement";
 
-        public readonly Dictionary<string, SimplePriorityQueue<FullMovementMessage>> InboxByParticipantMap = new ();
+        public readonly Dictionary<string, SimplePriorityQueue<NetworkMovementMessage>> InboxByParticipantMap = new ();
 
         private readonly IRoomHub roomHub;
 
@@ -52,7 +52,7 @@ namespace DCL.Multiplayer.Movement.Systems
             roomHub.SceneRoom().DataPipe.DataReceived -= InboxMessage;
         }
 
-        public void Send(FullMovementMessage message)
+        public void Send(NetworkMovementMessage message)
         {
             using SmartWrap<Packet> wrap = multiPool.TempResource<Packet>();
             Packet? packet = wrap.value;
@@ -138,7 +138,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 {
                     Decentraland.Kernel.Comms.Rfc4.Movement proto = packet.value.Movement;
 
-                    var message = new FullMovementMessage
+                    var message = new NetworkMovementMessage
                     {
                         timestamp = proto.Timestamp,
                         position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
@@ -161,20 +161,20 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void Inbox(FullMovementMessage fullMovementMessage, string @for)
+        private void Inbox(NetworkMovementMessage networkMovementMessage, string @for)
         {
-            if (InboxByParticipantMap.TryGetValue(@for, out SimplePriorityQueue<FullMovementMessage>? queue) && !queue.Contains(fullMovementMessage))
-                queue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+            if (InboxByParticipantMap.TryGetValue(@for, out SimplePriorityQueue<NetworkMovementMessage>? queue) && !queue.Contains(networkMovementMessage))
+                queue.Enqueue(networkMovementMessage, networkMovementMessage.timestamp);
             else
             {
-                var newQueue = new SimplePriorityQueue<FullMovementMessage>(); // TODO (Vit): pooling
-                newQueue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+                var newQueue = new SimplePriorityQueue<NetworkMovementMessage>(); // TODO (Vit): pooling
+                newQueue.Enqueue(networkMovementMessage, networkMovementMessage.timestamp);
 
                 InboxByParticipantMap.Add(@for, newQueue);
             }
         }
 
-        public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
+        public async UniTaskVoid SelfSendWithDelayAsync(NetworkMovementMessage message, float delay)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(delay));
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);

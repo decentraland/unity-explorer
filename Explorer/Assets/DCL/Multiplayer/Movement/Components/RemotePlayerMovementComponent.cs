@@ -6,7 +6,7 @@
 
         public readonly string PlayerWalletId;
 
-        public FullMovementMessage PastMessage;
+        public NetworkMovementMessage PastMessage;
 
         public bool Initialized;
         public bool WasTeleported;
@@ -16,14 +16,14 @@
         {
             PlayerWalletId = playerWalletId;
 
-            PastMessage = new FullMovementMessage();
+            PastMessage = new NetworkMovementMessage();
             Initialized = false;
             WasTeleported = false;
 
             RequireAnimationsUpdate = false;
         }
 
-        public void AddPassed(FullMovementMessage message, bool wasTeleported = false)
+        public void AddPassed(NetworkMovementMessage message, bool wasTeleported = false)
         {
             PastMessage = message;
             WasTeleported = wasTeleported;

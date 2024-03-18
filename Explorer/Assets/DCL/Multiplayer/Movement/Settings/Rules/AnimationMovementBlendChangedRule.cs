@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage lastFullMovementMessage,
+            in NetworkMovementMessage lastNetworkMovementMessage,
             in CharacterAnimationComponent playerAnimationComponent,
             in StunComponent playerStunComponent,
             in MovementInputComponent move,
@@ -24,13 +24,13 @@ namespace DCL.Multiplayer.Movement.Settings
             IMultiplayerMovementSettings settings)
         {
             // Maybe we don't need it because of velocity change?
-            if (Mathf.Abs(GetMovementBlendTier(lastFullMovementMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)) >= MoveBlendTiersDiff)
+            if (Mathf.Abs(GetMovementBlendTier(lastNetworkMovementMessage.animState.MovementBlendValue) - GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)) >= MoveBlendTiersDiff)
             {
-                reason = $"MOVEMENT {GetMovementBlendTier(lastFullMovementMessage.animState.MovementBlendValue)} vs {GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)}";
+                reason = $"MOVEMENT {GetMovementBlendTier(lastNetworkMovementMessage.animState.MovementBlendValue)} vs {GetMovementBlendTier(playerAnimationComponent.States.MovementBlendValue)}";
                 return true;
             }
 
-            if (Mathf.Abs(lastFullMovementMessage.animState.SlideBlendValue - playerAnimationComponent.States.SlideBlendValue) > MinSlideBlendDiff)
+            if (Mathf.Abs(lastNetworkMovementMessage.animState.SlideBlendValue - playerAnimationComponent.States.SlideBlendValue) > MinSlideBlendDiff)
             {
                 reason = "SLIDE";
                 return true;

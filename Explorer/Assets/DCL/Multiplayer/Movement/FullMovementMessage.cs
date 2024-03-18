@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement
 {
     [Serializable]
-    public struct FullMovementMessage
+    public struct NetworkMovementMessage
     {
         public float timestamp;
         public Vector3 position;

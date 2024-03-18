@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Movement
         public readonly CharacterController Character;
 
         public bool IsFirstMessage;
-        public FullMovementMessage LastSentMessage;
+        public NetworkMovementMessage LastSentMessage;
 
         public int MessagesSentInSec;
         public float MessagesPerSecResetCooldown;
@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Movement
         {
             Character = character;
             IsFirstMessage = true;
-            LastSentMessage = new FullMovementMessage();
+            LastSentMessage = new NetworkMovementMessage();
 
             MessagesSentInSec = 0;
             MessagesPerSecResetCooldown = 1;

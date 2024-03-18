@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private static void HandleFirstMessage(ref CharacterTransform transComp, FullMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
+        private static void HandleFirstMessage(ref CharacterTransform transComp, NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             transComp.Transform.position = firstRemote.position;
 
@@ -49,7 +49,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
-            if (!messageBus.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<FullMovementMessage>? playerInbox))
+            if (!messageBus.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<NetworkMovementMessage>? playerInbox))
                 return;
 
             settings.InboxCount = playerInbox.Count;
@@ -90,9 +90,9 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<FullMovementMessage> playerInbox)
+            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
-            FullMovementMessage remote = playerInbox.Dequeue();
+            NetworkMovementMessage remote = playerInbox.Dequeue();
             var isBlend = false;
 
             if (extComp.Enabled)
@@ -116,8 +116,8 @@ namespace DCL.Multiplayer.Movement.Systems
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
 
-        private static bool StopExtrapolationIfCan(ref FullMovementMessage remote, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<FullMovementMessage> playerInbox)
+        private static bool StopExtrapolationIfCan(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
@@ -132,7 +132,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 extComp.Stop();
 
-                var local = new FullMovementMessage
+                var local = new NetworkMovementMessage
                 {
                     timestamp = minExtTimestamp, // we need to take the timestamp that < remote.timestamp
 
@@ -149,8 +149,8 @@ namespace DCL.Multiplayer.Movement.Systems
             return true;
         }
 
-        private void TeleportFiltered(ref FullMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            SimplePriorityQueue<FullMovementMessage> playerInbox)
+        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
+            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
@@ -161,7 +161,7 @@ namespace DCL.Multiplayer.Movement.Systems
             remotePlayerMovement.AddPassed(remote, wasTeleported: true);
         }
 
-        private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in FullMovementMessage remote)
+        private bool CanTeleport(in RemotePlayerMovementComponent remotePlayerMovement, in NetworkMovementMessage remote)
         {
             float sqrDistance = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
 
@@ -170,7 +170,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, in FullMovementMessage remote, bool isBlend)
+            ref InterpolationComponent intComp, in NetworkMovementMessage remote, bool isBlend)
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
             intComp.Restart(remotePlayerMovement.PastMessage, remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);

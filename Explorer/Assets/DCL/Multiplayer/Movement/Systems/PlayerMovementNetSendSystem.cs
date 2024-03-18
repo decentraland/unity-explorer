@@ -69,7 +69,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             playerMovement.MessagesSentInSec++;
 
-            playerMovement.LastSentMessage = new FullMovementMessage
+            playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,

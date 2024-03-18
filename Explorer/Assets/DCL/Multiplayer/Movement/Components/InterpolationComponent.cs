@@ -2,8 +2,8 @@
 {
     public struct InterpolationComponent
     {
-        public FullMovementMessage Start;
-        public FullMovementMessage End;
+        public NetworkMovementMessage Start;
+        public NetworkMovementMessage End;
 
         public float Time;
         public float TotalDuration;
@@ -11,7 +11,7 @@
         public InterpolationType SplineType;
         public bool Enabled { get; private set; }
 
-        public void Restart(FullMovementMessage from, FullMovementMessage to, InterpolationType interpolationType)
+        public void Restart(NetworkMovementMessage from, NetworkMovementMessage to, InterpolationType interpolationType)
         {
             SplineType = interpolationType;
 

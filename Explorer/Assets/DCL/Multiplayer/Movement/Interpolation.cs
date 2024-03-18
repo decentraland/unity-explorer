@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Movement
             }
         }
 
-        private static Vector3 DoTransition(FullMovementMessage start, FullMovementMessage end, float time, float totalDuration, InterpolationType blendType)
+        private static Vector3 DoTransition(NetworkMovementMessage start, NetworkMovementMessage end, float time, float totalDuration, InterpolationType blendType)
         {
             return blendType switch
                    {

@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage lastFullMovementMessage,
+            in NetworkMovementMessage lastNetworkMovementMessage,
             in CharacterAnimationComponent playerAnimationComponent,
             in StunComponent playerStunComponent,
             in MovementInputComponent move,
@@ -28,12 +28,12 @@ namespace DCL.Multiplayer.Movement.Settings
         {
             (bool stateMismatch, string reason)[] checks =
             {
-                (Stun && lastFullMovementMessage.isStunned != playerStunComponent.IsStunned, "STUN"),
-                (Jump && lastFullMovementMessage.animState.IsJumping != playerAnimationComponent.States.IsJumping, "JUMP"),
-                (Ground && lastFullMovementMessage.animState.IsGrounded != playerAnimationComponent.States.IsGrounded, "GROUND"),
-                (Fall && lastFullMovementMessage.animState.IsFalling != playerAnimationComponent.States.IsFalling, "FALL"),
-                (LongFall && lastFullMovementMessage.animState.IsLongFall != playerAnimationComponent.States.IsLongFall, "LONG FALL"),
-                (LongJump && lastFullMovementMessage.animState.IsLongJump != playerAnimationComponent.States.IsLongJump, "LONG JUMP"),
+                (Stun && lastNetworkMovementMessage.isStunned != playerStunComponent.IsStunned, "STUN"),
+                (Jump && lastNetworkMovementMessage.animState.IsJumping != playerAnimationComponent.States.IsJumping, "JUMP"),
+                (Ground && lastNetworkMovementMessage.animState.IsGrounded != playerAnimationComponent.States.IsGrounded, "GROUND"),
+                (Fall && lastNetworkMovementMessage.animState.IsFalling != playerAnimationComponent.States.IsFalling, "FALL"),
+                (LongFall && lastNetworkMovementMessage.animState.IsLongFall != playerAnimationComponent.States.IsLongFall, "LONG FALL"),
+                (LongJump && lastNetworkMovementMessage.animState.IsLongJump != playerAnimationComponent.States.IsLongJump, "LONG JUMP"),
             };
 
             foreach ((bool stateMismatch, string reason) check in checks)

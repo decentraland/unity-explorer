@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement.Settings.Rules
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage lastFullMovementMessage,
+            in NetworkMovementMessage lastNetworkMovementMessage,
             in CharacterAnimationComponent playerAnimationComponent,
             in StunComponent playerStunComponent,
             in MovementInputComponent move,
@@ -21,8 +21,8 @@ namespace DCL.Multiplayer.Movement.Settings.Rules
         {
             RemotePlayerExtrapolationSettings extSettings = settings.ExtrapolationSettings;
 
-            Vector3 extrapolatedVelocity = Extrapolation.DampVelocity(lastFullMovementMessage.velocity, t, extSettings.TotalMoveDuration, extSettings.LinearTime);
-            return Vector3.SqrMagnitude(lastFullMovementMessage.velocity - extrapolatedVelocity) > VelocityChangeThreshold;
+            Vector3 extrapolatedVelocity = Extrapolation.DampVelocity(lastNetworkMovementMessage.velocity, t, extSettings.TotalMoveDuration, extSettings.LinearTime);
+            return Vector3.SqrMagnitude(lastNetworkMovementMessage.velocity - extrapolatedVelocity) > VelocityChangeThreshold;
         }
     }
 }
