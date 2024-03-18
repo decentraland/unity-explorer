@@ -4,8 +4,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 {
     public interface IRoomHub
     {
-        IRoom? IslandRoom();
+        IRoom IslandRoom();
 
-        IRoom? SceneRoom();
+        IRoom SceneRoom();
     }
 }

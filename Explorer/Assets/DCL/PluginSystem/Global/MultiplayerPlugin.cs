@@ -23,17 +23,27 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly RealFlowLoadingStatus realFlowLoadingStatus;
 
-        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IProfileRepository profileRepository, IMemoryPool memoryPool, IMultiPool multiPool,
-            IDebugContainerBuilder debugContainerBuilder, RealFlowLoadingStatus realFlowLoadingStatus)
+        public MultiplayerPlugin(
+            IArchipelagoIslandRoom archipelagoIslandRoom,
+            IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IRoomHub roomHub,
+            IProfileRepository profileRepository,
+            IMemoryPool memoryPool,
+            IMultiPool multiPool,
+            IDebugContainerBuilder debugContainerBuilder,
+            RealFlowLoadingStatus realFlowLoadingStatus
+        )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.roomHub = roomHub;
             this.profileRepository = profileRepository;
             this.memoryPool = memoryPool;
             this.multiPool = multiPool;
@@ -45,8 +55,6 @@ namespace DCL.PluginSystem.Global
         {
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
-
-            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
 
             DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);

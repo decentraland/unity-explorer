@@ -30,6 +30,7 @@ using System.Threading;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.System;
 using DCL.Nametags;
@@ -170,6 +171,7 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache);
 
             var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            var messagePipesHub = new MessagePipesHub(roomHub, multiPool, memoryPool);
 
             var chatMessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
@@ -182,7 +184,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
