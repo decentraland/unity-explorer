@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
                 new ThreadSafeRemoveIntentions(roomHub),
                 new RemoteProfiles(profileRepository),
                 new DebounceProfileBroadcast(
-                    new ProfileBroadcast(roomHub, memoryPool, multiPool)
+                    new ProfileBroadcast(messagePipesHub, roomHub)
                 ),
                 remoteEntities
             );
