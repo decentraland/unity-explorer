@@ -3,6 +3,7 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
@@ -24,6 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IRoomHub roomHub;
+        private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
@@ -40,7 +42,8 @@ namespace DCL.PluginSystem.Global
             IMultiPool multiPool,
             IDebugContainerBuilder debugContainerBuilder,
             RealFlowLoadingStatus realFlowLoadingStatus,
-            IEntityParticipantTable entityParticipantTable
+            IEntityParticipantTable entityParticipantTable,
+            IMessagePipesHub messagePipesHub
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -52,6 +55,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.entityParticipantTable = entityParticipantTable;
+            this.messagePipesHub = messagePipesHub;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
@@ -63,7 +67,7 @@ namespace DCL.PluginSystem.Global
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                new ThreadSafeRemoteAnnouncements(roomHub, multiPool),
+                new ThreadSafeRemoteAnnouncements(messagePipesHub),
                 new RemoteProfiles(profileRepository),
                 new DebounceProfileBroadcast(
                     new ProfileBroadcast(roomHub, memoryPool, multiPool)
