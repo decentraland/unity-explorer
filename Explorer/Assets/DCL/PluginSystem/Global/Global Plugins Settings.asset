@@ -36,6 +36,7 @@ MonoBehaviour:
   - rid: 6156380652633325570
   - rid: 7162477752737071106
   - rid: 7162477796324278274
+  - rid: 3836309668583964676
   references:
     version: 2
     RefIds:
@@ -180,6 +181,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3836309668583964676
+      type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        NftPromptPrefab:
+          m_AssetGUID: d504e2da7abe71a4582c8c2e08e3c285
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
