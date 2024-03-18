@@ -1,18 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
-using DCL.Multiplayer.Connections.Pools;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Typing;
-using DCL.Utilities.Extensions;
-using Decentraland.Kernel.Comms.Rfc4;
-using Google.Protobuf;
-using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using LiveKit.Rooms;
-using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -24,119 +15,71 @@ namespace DCL.Multiplayer.Movement.System
 {
     public class MultiplayerMovementMessageBus
     {
-        private const string TOPIC = "movement";
-
         public readonly Dictionary<string, SimplePriorityQueue<FullMovementMessage>> InboxByParticipantMap = new ();
 
+        private readonly IMessagePipesHub messagePipesHub;
         private readonly IRoomHub roomHub;
 
-        private readonly IMemoryPool memoryPool;
-        private readonly IMultiPool multiPool;
-        private readonly MessageParser<Packet> packetParser;
-
-        public MultiplayerMovementMessageBus(IRoomHub roomHub, IMemoryPool memoryPool, IMultiPool multiPool)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub)
         {
+            this.messagePipesHub = messagePipesHub;
             this.roomHub = roomHub;
 
-            this.memoryPool = memoryPool;
-            this.multiPool = multiPool;
-            packetParser = new MessageParser<Packet>(multiPool.Get<Packet>);
-
-            roomHub.IslandRoom().DataPipe.DataReceived += InboxMessage;
-            roomHub.SceneRoom().DataPipe.DataReceived += InboxMessage;
+            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(OnMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(OnMessageReceived);
         }
 
-        ~MultiplayerMovementMessageBus()
+        private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
         {
-            roomHub.IslandRoom().DataPipe.DataReceived -= InboxMessage;
-            roomHub.SceneRoom().DataPipe.DataReceived -= InboxMessage;
+            HandleAsync(obj).Forget();
         }
 
         public void Send(FullMovementMessage message)
         {
-            using SmartWrap<Packet> wrap = multiPool.TempResource<Packet>();
-            Packet? packet = wrap.value;
-
-            using SmartWrap<Decentraland.Kernel.Comms.Rfc4.Movement> moveWrap = multiPool.TempResource<Decentraland.Kernel.Comms.Rfc4.Movement>();
-            packet.Movement = moveWrap.value;
-
-            {
-                packet.Movement.Timestamp = UnityEngine.Time.unscaledTime;
-
-                packet.Movement.PositionX = message.position.x;
-                packet.Movement.PositionY = message.position.y;
-                packet.Movement.PositionZ = message.position.z;
-
-                packet.Movement.VelocityX = message.velocity.x;
-                packet.Movement.VelocityY = message.velocity.y;
-                packet.Movement.VelocityZ = message.velocity.z;
-
-                packet.Movement.MovementBlendValue = message.animState.MovementBlendValue;
-                packet.Movement.SlideBlendValue = message.animState.SlideBlendValue;
-
-                packet.Movement.IsGrounded = message.animState.IsGrounded;
-                packet.Movement.IsJumping = message.animState.IsJumping;
-                packet.Movement.IsLongJump = message.animState.IsLongJump;
-                packet.Movement.IsFalling = message.animState.IsFalling;
-                packet.Movement.IsLongFall = message.animState.IsLongFall;
-
-                packet.Movement.IsStunned = message.isStunned;
-            }
-
-            using MemoryWrap memoryWrap = memoryPool.Memory(packet);
-            packet.WriteTo(memoryWrap);
-
-            Send(memoryWrap.Span());
+            WriteAndSend(message, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
+            WriteAndSend(message, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
         }
 
-        private void Send(Span<byte> data)
+        private static void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe, IRoom room)
         {
-            Send(roomHub.IslandRoom(), data);
-            Send(roomHub.SceneRoom(), data);
+            var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
+            WriteToProto(message, messageWrap.Payload);
+            messageWrap.AddRecipients(room);
+            messageWrap.SendAndDisposeAsync().Forget();
         }
 
-        private static void Send(IRoom room, Span<byte> data)
+        private static void WriteToProto(FullMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
-            room.DataPipe.PublishData(data, TOPIC, room.Participants.RemoteParticipantSids());
+            movement.Timestamp = UnityEngine.Time.unscaledTime;
+
+            movement.PositionX = message.position.x;
+            movement.PositionY = message.position.y;
+            movement.PositionZ = message.position.z;
+
+            movement.VelocityX = message.velocity.x;
+            movement.VelocityY = message.velocity.y;
+            movement.VelocityZ = message.velocity.z;
+
+            movement.MovementBlendValue = message.animState.MovementBlendValue;
+            movement.SlideBlendValue = message.animState.SlideBlendValue;
+
+            movement.IsGrounded = message.animState.IsGrounded;
+            movement.IsJumping = message.animState.IsJumping;
+            movement.IsLongJump = message.animState.IsLongJump;
+            movement.IsFalling = message.animState.IsFalling;
+            movement.IsLongFall = message.animState.IsLongFall;
+
+            movement.IsStunned = message.isStunned;
         }
 
-        private void InboxMessage(ReadOnlySpan<byte> data, Participant participant, DataPacketKind _)
+        private async UniTaskVoid HandleAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
         {
-            if (TryParse(data, out Packet? response) == false)
-                return;
-
-            if (response!.MessageCase is Packet.MessageOneofCase.Movement)
-                HandleAsync(new SmartWrap<Packet>(response, multiPool), participant).Forget();
-        }
-
-        private bool TryParse(ReadOnlySpan<byte> data, out Packet? packet)
-        {
-            try
-            {
-                packet = packetParser.ParseFrom(data).EnsureNotNull();
-                return true;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(
-                    ReportCategory.ARCHIPELAGO_REQUEST,
-                    $"Someone sent invalid packet: {data.Length} {data.HexReadableString()} {e}"
-                );
-
-                packet = null;
-                return false;
-            }
-        }
-
-        private async UniTaskVoid HandleAsync(SmartWrap<Packet> packet, Participant participant)
-        {
-            using (packet)
+            using (obj)
             {
                 await using ExecuteOnMainThreadScope _ = await ExecuteOnMainThreadScope.NewScopeAsync();
-
-                if (packet.value.Movement != null) // TODO (Vit): filter out Island messages if Participant is presented in the Room
+                // TODO (Vit): filter out Island messages if Participant is presented in the Room
                 {
-                    Decentraland.Kernel.Comms.Rfc4.Movement proto = packet.value.Movement;
+                    Decentraland.Kernel.Comms.Rfc4.Movement proto = obj.Payload;
 
                     var message = new FullMovementMessage
                     {
@@ -156,11 +99,12 @@ namespace DCL.Multiplayer.Movement.System
                         isStunned = proto.IsStunned,
                     };
 
-                    Inbox(message, participant.Identity);
+                    Inbox(message, obj.FromWalletId);
                 }
             }
         }
 
+        //TODO entity table
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
             if (InboxByParticipantMap.TryGetValue(@for, out SimplePriorityQueue<FullMovementMessage>? queue) && !queue.Contains(fullMovementMessage))
