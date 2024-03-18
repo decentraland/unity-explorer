@@ -2,24 +2,38 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.CharacterMotion.Emotes;
 using DCL.CharacterMotion.Components;
-using DCL.CharacterMotion.Emotes;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
+using DCL.Optimization.ThreadSafePool;
 using ECS.Abstract;
+using ECS.StreamableLoading.Common.Components;
+using System;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.CharacterMotion.Systems
 {
+    [LogCategory(ReportCategory.EMOTE)]
     [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
     [UpdateBefore(typeof(CharacterAnimationSystem))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
-        private readonly IEmoteRepository emoteRepository;
+        private readonly IEmoteCache emoteCache;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly string reportCategory;
+        private readonly EmotePlayer emotePlayer;
 
-        public CharacterEmoteSystem(World world, IEmoteRepository emoteRepository, IDebugContainerBuilder debugContainerBuilder) : base(world)
+        public CharacterEmoteSystem(World world, IEmoteCache emoteCache, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
-            this.emoteRepository = emoteRepository;
+            this.emoteCache = emoteCache;
             this.debugContainerBuilder = debugContainerBuilder;
+            reportCategory = GetReportCategory();
+            emotePlayer = new EmotePlayer(reportCategory);
         }
 
         protected override void Update(float t)
@@ -28,19 +42,25 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void TriggerEmotes(in Entity entity, ref CharacterAnimationComponent animationComponent, in CharacterEmoteIntent emoteIntent)
+        private void TriggerEmotes(in Entity entity, ref CharacterAnimationComponent animationComponent, in CharacterEmoteIntent emoteIntent, in AvatarBase avatarBase)
         {
             string emoteId = emoteIntent.EmoteId;
 
-            if (!emoteRepository.Exists(emoteId)) return;
+            if (emoteCache.TryGetEmote(emoteId, out IEmote emote))
+            {
+                StreamableLoadingResult<WearableAsset>? streamableAsset = emote.WearableAssetResults[0];
 
-            var emoteData = emoteRepository.Get(emoteId);
+                if (streamableAsset == null) return;
+                if (!streamableAsset.Value.Succeeded) return;
 
-            animationComponent.States.WasEmoteJustTriggered = true;
-            animationComponent.States.EmoteClip = emoteData.avatarClip;
-            animationComponent.States.EmoteLoop = emoteData.avatarClip.isLooping;
+                GameObject? mainAsset = streamableAsset.Value.Asset.GetMainAsset<GameObject>();
 
-            World.Remove<CharacterEmoteIntent>(entity);
+                if (mainAsset != null)
+                {
+                    if (emotePlayer.Play(mainAsset, in avatarBase, ref animationComponent))
+                        World.Remove<CharacterEmoteIntent>(entity);
+                }
+            }
         }
     }
 }

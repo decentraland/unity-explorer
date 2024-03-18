@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
-using DCL.CharacterMotion.Emotes;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.DebugUtilities;
@@ -191,14 +190,11 @@ namespace Global.Dynamic
             var emotesCache = new MemoryEmotesCache();
             staticContainer.CacheCleaner.Register(emotesCache);
 
-            var embeddedEmotes = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.EmbeddedEmotes, ct);
-            var emotesRepository = new EmoteRepository(embeddedEmotes.Value);
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus),
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesRepository),
-                new InputPlugin(dclInput, emotesRepository),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesCache),
+                new InputPlugin(dclInput, emotesCache),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),

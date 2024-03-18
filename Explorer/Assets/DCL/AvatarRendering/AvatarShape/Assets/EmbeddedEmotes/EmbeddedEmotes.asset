@@ -134,7 +134,7 @@ MonoBehaviour:
     name: hands_in_the_air
     audioClip: {fileID: 0}
     thumbnail: {fileID: 0}
-    prefab: {fileID: 8018143466885850673, guid: d2792b82c53724fcf9376888f3953c32, type: 3}
+    prefab: {fileID: 6200107889642170044, guid: 42bbd277642a57346972d66d0c99bf1f, type: 3}
     entity:
       representations: []
       category: 
@@ -325,8 +325,8 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       loop: 0
-  - id: confettipopper
-    name: confettipopper
+  - id: confetti
+    name: confetti
     audioClip: {fileID: 8300000, guid: 5caae9f69edac88479351686704e0c94, type: 3}
     thumbnail: {fileID: 21300000, guid: 52e4def7262db19429d325d7cb5f1a7a, type: 3}
     prefab: {fileID: 3460472286760622397, guid: c7a4733cc5ffc1249ada6f436f6dd167, type: 3}

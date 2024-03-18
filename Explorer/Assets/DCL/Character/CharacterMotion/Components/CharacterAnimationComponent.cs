@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Character.CharacterMotion.Emotes;
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
@@ -19,6 +20,7 @@ namespace DCL.CharacterMotion.Components
             public bool WasEmoteJustTriggered;
             public bool EmoteLoop;
             public AnimationClip EmoteClip;
+            public EmoteReferences? CurrentEmoteReference;
         }
 
         public AnimationStates States;

@@ -1,11 +1,12 @@
 using UnityEngine;
 
-namespace DCL.CharacterMotion.Emotes
+namespace DCL.AvatarRendering.Emotes
 {
     public struct EmoteData
     {
         public string id;
         public bool loop;
-        public AnimationClip avatarClip;
+        public GameObject prefab;
+        public AudioClip audioClip;
     }
 }

@@ -1,6 +1,6 @@
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera.Systems;
-using DCL.CharacterMotion.Emotes;
 using DCL.CharacterMotion.Systems;
 using DCL.Input;
 using DCL.Input.Component;
@@ -12,12 +12,12 @@ namespace DCL.PluginSystem.Global
     public class InputPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly DCLInput dclInput;
-        private readonly IEmoteRepository emotesRepository;
+        private readonly IEmoteCache emoteCache;
 
-        public InputPlugin(DCLInput dclInput, IEmoteRepository emotesRepository)
+        public InputPlugin(DCLInput dclInput, IEmoteCache emoteCache)
         {
             this.dclInput = dclInput;
-            this.emotesRepository = emotesRepository;
+            this.emoteCache = emoteCache;
             dclInput.Enable();
         }
 
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UnityEventSystem(EventSystem.current), new DCLCursor());
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, emotesRepository);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, emoteCache);
         }
     }
 }

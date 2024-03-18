@@ -1,9 +1,9 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.CharacterMotion.Emotes;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Systems;
@@ -18,14 +18,20 @@ namespace DCL.CharacterMotion.Systems
     {
         private readonly Dictionary<string, int> actionNameById = new ();
         private DCLInput.EmotesActions emotesActions;
-        private readonly IEmoteRepository emoteRepository;
         private readonly string reportCategory;
         private int triggeredEmote = -1;
 
-        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions, IEmoteRepository emoteRepository) : base(world)
+        private static readonly List<string> embedEmotes = new ()
+        {
+            "confetti",
+            "dance",
+            "dab",
+            "clap",
+        };
+
+        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions, IEmoteCache emoteCache) : base(world)
         {
             this.emotesActions = emotesActions;
-            this.emoteRepository = emoteRepository;
             reportCategory = GetReportCategory();
             InputActionMap inputActionMap = emotesActions.Get();
 
@@ -64,9 +70,14 @@ namespace DCL.CharacterMotion.Systems
             if (triggeredEmote >= 0)
             {
                 // TODO: here we have to convert the emote wheel id to an emote id, for now we are going to load one from the embedded list
-                TriggerEmoteQuery(World, emoteRepository.GetHotkeyEmote(triggeredEmote));
+                if (triggeredEmote < embedEmotes.Count)
+                {
+                    string hotkeyEmote = embedEmotes[triggeredEmote];
 
-                triggeredEmote = -1;
+                    TriggerEmoteQuery(World, hotkeyEmote);
+
+                    triggeredEmote = -1;
+                }
             }
         }
 

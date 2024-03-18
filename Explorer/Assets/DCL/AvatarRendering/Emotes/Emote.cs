@@ -60,6 +60,9 @@ namespace DCL.AvatarRendering.Emotes
             return GetContentHashByKey(mainFileKey);
         }
 
+        public override string ToString() =>
+            $"Emote({GetHash()} | {GetUrn()})";
+
         public string GetHash() =>
             Model.Asset.id;
 
