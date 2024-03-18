@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -38,10 +39,16 @@ namespace DCL.Multiplayer.Connections.Messaging
             if (sent)
                 throw new Exception("Request already sent");
 
+            SendAsync(dataPacketKind).Forget();
+            sent = true;
+        }
+
+        private async UniTaskVoid SendAsync(DataPacketKind dataPacketKind)
+        {
+            await UniTask.SwitchToThreadPool();
             using MemoryWrap memory = memoryPool.Memory(Payload);
             Payload.WriteTo(memory);
             dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
-            sent = true;
         }
 
         public void AddRecipient(string sid)

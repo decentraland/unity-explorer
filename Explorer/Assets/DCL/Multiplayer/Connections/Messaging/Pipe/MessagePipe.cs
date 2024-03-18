@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
@@ -54,9 +55,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            Packet? packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
+            Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
             var name = packet.MessageCase.ToString()!;
+            NotifySubscribersAsync(name, packet, participant).Forget();
+        }
 
+        private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant)
+        {
+            await UniTask.SwitchToMainThread();
             foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
                 action((packet, participant));
         }
