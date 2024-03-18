@@ -21,7 +21,12 @@ namespace DCL.Multiplayer.Movement
         public static Vector3 DampVelocity(Vector3 velocity, float time, float totalMoveDuration, float linearTime)
         {
             if (time > linearTime && time < totalMoveDuration)
-                return Vector3.Lerp(velocity, Vector3.zero, time / totalMoveDuration);
+            {
+                float dampDuration = totalMoveDuration - linearTime;
+                float dampTime = time - linearTime;
+
+                return Vector3.Lerp(velocity, Vector3.zero, dampTime / dampDuration);
+            }
 
             return time >= totalMoveDuration ? Vector3.zero : velocity;
         }

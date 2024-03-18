@@ -29,10 +29,7 @@ namespace DCL.CharacterMotion.Animation
             var targetBlend = 0f;
 
             if (maxVelocity > 0)
-            {
-                float velocityMagnitude = velocity.magnitude;
-                targetBlend = velocityMagnitude / maxVelocity * movementBlendId;
-            }
+                targetBlend = velocity.magnitude / maxVelocity * movementBlendId;
 
             animationComponent.States.MovementBlendValue = Mathf.MoveTowards(animationComponent.States.MovementBlendValue, targetBlend, dt * settings.MovAnimBlendSpeed);
 

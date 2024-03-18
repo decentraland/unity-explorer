@@ -7,7 +7,9 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -17,7 +19,12 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
     {
-        public RemotePlayerAnimationSystem(World world) : base(world) { }
+        private readonly RemotePlayerExtrapolationSettings settings;
+
+        public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings) : base(world)
+        {
+            this.settings = settings;
+        }
 
         protected override void Update(float t)
         {
@@ -36,16 +43,40 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             if (intComp.Enabled)
-                InterpolateAnimations(deltaTime, intComp.TotalDuration, ref anim, intComp.Start.animState, intComp.End.animState);
+                InterpolateAnimations(view, deltaTime, intComp.TotalDuration, ref anim, intComp.Start.animState, intComp.End.animState);
             else if (extComp.Enabled)
-                // Handle extrapolated animations (depending on speed)
-                ;
+                ExtrapolateAnimations(view, ref anim, ref extComp, settings.LinearTime);
         }
 
-        private static void InterpolateAnimations(float t, float totalDuration, ref CharacterAnimationComponent anim, AnimationStates startState, AnimationStates endStates)
+        private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, ref ExtrapolationComponent extComp, float linearTime)
+        {
+            float time = extComp.Time;
+            float totalMoveDuration = extComp.TotalMoveDuration;
+
+            if (time >= totalMoveDuration)
+            {
+                anim.States.MovementBlendValue = 0f;
+                anim.States.SlideBlendValue = 0f;
+            }
+            else if (time > linearTime && time < totalMoveDuration)
+            {
+                float dampDuration = totalMoveDuration - linearTime;
+                float dampTime = time - linearTime;
+
+                anim.States.MovementBlendValue = Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration);
+                anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
+            }
+
+            UpdateBlends(view, anim.States);
+        }
+
+        private static void InterpolateAnimations(IAvatarView view, float t, float totalDuration, ref CharacterAnimationComponent anim, AnimationStates startState,
+            AnimationStates endStates)
         {
             anim.States.MovementBlendValue = Mathf.Lerp(startState.MovementBlendValue, endStates.MovementBlendValue, t / totalDuration);
             anim.States.SlideBlendValue = Mathf.Lerp(startState.SlideBlendValue, endStates.SlideBlendValue, t / totalDuration);
+
+            UpdateBlends(view, anim.States);
         }
 
         private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, AnimationStates animState, bool isStunned)
@@ -54,9 +85,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
 
             animationComponent.States = animState;
-
-            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
-            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
+            UpdateBlends(view, animState);
 
             if (view.GetAnimatorBool(AnimationHashes.JUMPING))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
@@ -67,6 +96,12 @@ namespace DCL.Multiplayer.Movement.Systems
             view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
+        }
+
+        private static void UpdateBlends(IAvatarView view, in AnimationStates animStates)
+        {
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue);
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue);
         }
     }
 }
