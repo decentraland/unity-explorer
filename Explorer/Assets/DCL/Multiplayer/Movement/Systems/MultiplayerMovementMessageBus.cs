@@ -121,7 +121,7 @@ namespace DCL.Multiplayer.Movement.System
         private SimplePriorityQueue<FullMovementMessage> QueueFor(string walletId)
         {
             if (entityParticipantTable.Has(walletId) == false)
-                ReportHub.WithReport(ReportCategory.MULTIPLAYER_MOVEMENT).Log($"Entity for wallet {walletId} not found");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
 
             var entity = entityParticipantTable.Entity(walletId);
 
