@@ -205,7 +205,9 @@ namespace Global.Dynamic
                     staticContainer.CacheCleaner,
                     chatEntryConfiguration,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
-                    nametagsData),
+                    entityParticipantTable,
+                    nametagsData
+                ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
