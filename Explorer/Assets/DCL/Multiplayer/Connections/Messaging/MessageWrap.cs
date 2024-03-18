@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
-    public struct MessageWrap<T> : IDisposable where T: class, IMessage, new()
+    public struct MessageWrap<T> where T: class, IMessage, new()
     {
         public readonly T Payload;
         private readonly IDataPipe dataPipe;
@@ -53,7 +53,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             recipients.Add(sid);
         }
 
-        public void Dispose()
+        private void Dispose()
         {
             recipients.Clear();
             multiPool.Release(recipients);
