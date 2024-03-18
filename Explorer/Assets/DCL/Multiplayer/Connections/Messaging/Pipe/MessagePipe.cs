@@ -87,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         var receivedMessage = new ReceivedMessage<T>(
                             Payload<T>(packet),
                             packet,
-                            participant.Sid,
+                            participant.Identity,
                             multiPool
                         );
 

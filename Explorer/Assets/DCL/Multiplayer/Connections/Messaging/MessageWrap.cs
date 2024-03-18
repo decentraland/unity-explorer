@@ -3,6 +3,7 @@ using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
+using LiveKit.Rooms;
 using LiveKit.Rooms.DataPipes;
 using System;
 using System.Collections.Generic;
@@ -34,21 +35,17 @@ namespace DCL.Multiplayer.Connections.Messaging
             sent = false;
         }
 
-        public void Send(DataPacketKind dataPacketKind = DataPacketKind.KindLossy)
+        public async UniTaskVoid SendAndDisposeAsync(DataPacketKind dataPacketKind = DataPacketKind.KindLossy)
         {
             if (sent)
                 throw new Exception("Request already sent");
 
-            SendAsync(dataPacketKind).Forget();
-            sent = true;
-        }
-
-        private async UniTaskVoid SendAsync(DataPacketKind dataPacketKind)
-        {
             await UniTask.SwitchToThreadPool();
             using MemoryWrap memory = memoryPool.Memory(Payload);
             Payload.WriteTo(memory);
             dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
+            sent = true;
+            Dispose();
         }
 
         public void AddRecipient(string sid)
@@ -61,6 +58,20 @@ namespace DCL.Multiplayer.Connections.Messaging
             recipients.Clear();
             multiPool.Release(recipients);
             multiPool.Release(Payload);
+        }
+    }
+
+    public static class MessageWrapExtensions
+    {
+        public static void AddRecipients<T>(this MessageWrap<T> messageWrap, IReadOnlyCollection<string> sidList) where T: class, IMessage, new()
+        {
+            foreach (string s in sidList)
+                messageWrap.AddRecipient(s);
+        }
+
+        public static void AddRecipients<T>(this MessageWrap<T> messageWrap, IRoom room) where T: class, IMessage, new()
+        {
+            messageWrap.AddRecipients(room.Participants.RemoteParticipantSids());
         }
     }
 }

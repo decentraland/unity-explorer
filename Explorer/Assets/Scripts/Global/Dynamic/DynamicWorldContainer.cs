@@ -175,7 +175,7 @@ namespace Global.Dynamic
 
             var chatMessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(roomHub, memoryPool, multiPool, container.ProfileRepository),
+                    new MultiplayerChatMessagesBus(messagePipesHub, roomHub, container.ProfileRepository),
                     identityCache,
                     container.ProfileRepository
                 ),
