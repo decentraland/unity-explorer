@@ -105,6 +105,7 @@ GameObject:
   - component: {fileID: 2240066706468443773}
   - component: {fileID: 1690638418576157065}
   - component: {fileID: 243621710923428424}
+  - component: {fileID: 3440437672233669333}
   m_Layer: 5
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
@@ -220,6 +221,18 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!225 &3440437672233669333
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 703502823598823341}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1914636636247234566
 GameObject:
   m_ObjectHideFlags: 0
@@ -2125,6 +2138,7 @@ MonoBehaviour:
   <InputField>k__BackingField: {fileID: 5622104160664987093}
   <CharacterCounter>k__BackingField: {fileID: 5274648269416443391}
   <PanelBackgroundCanvasGroup>k__BackingField: {fileID: 4742269820946521976}
+  <ScrollbarCanvasGroup>k__BackingField: {fileID: 3440437672233669333}
   <ChatEntriesCanvasGroup>k__BackingField: {fileID: 4191034874546973006}
   <LoopList>k__BackingField: {fileID: 6671003195211882300}
   <EmojiPanelButton>k__BackingField: {fileID: 8143675807956903832}
