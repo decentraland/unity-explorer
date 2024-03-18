@@ -103,7 +103,7 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            backpackEventBus.SendUnEquipEmote(command.Slot);
+            backpackEventBus.SendUnEquipEmote(command.Slot, backpackEquipStatusController.GetEquippedEmote(command.Slot));
             backpackEventBus.SendEquipEmote(command.Slot, emote);
         }
 
@@ -117,7 +117,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipEmoteCommand(BackpackUnEquipEmoteCommand command)
         {
-            backpackEventBus.SendUnEquipEmote(command.Slot);
+            backpackEventBus.SendUnEquipEmote(command.Slot, backpackEquipStatusController.GetEquippedEmote(command.Slot));
         }
 
         private void HandleHideCommand(BackpackHideCommand command)

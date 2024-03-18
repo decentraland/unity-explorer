@@ -12,7 +12,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
         public event Action<int, IEmote>? EquipEmoteEvent;
-        public event Action<int>? UnEquipEmoteEvent;
+        public event Action<int, IEmote?>? UnEquipEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
@@ -44,8 +44,8 @@ namespace DCL.Backpack.BackpackBus
         public void SendPublishProfile() =>
             PublishProfileEvent?.Invoke();
 
-        public void SendUnEquipEmote(int slot) =>
-            UnEquipEmoteEvent?.Invoke(slot);
+        public void SendUnEquipEmote(int slot, IEmote? emote) =>
+            UnEquipEmoteEvent?.Invoke(slot, emote);
 
         public void SendEquipEmote(int slot, IEmote emote) =>
             EquipEmoteEvent?.Invoke(slot, emote);

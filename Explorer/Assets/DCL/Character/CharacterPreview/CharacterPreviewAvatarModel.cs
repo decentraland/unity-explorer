@@ -11,7 +11,8 @@ namespace DCL.CharacterPreview
         public Color SkinColor;
         public Color HairColor;
 
-        public List<URN> Wearables;
+        public List<URN>? Wearables;
+        public HashSet<URN>? Emotes;
         public HashSet<string> ForceRenderCategories;
 
         public bool Initialized;

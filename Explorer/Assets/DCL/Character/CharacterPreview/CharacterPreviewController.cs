@@ -12,6 +12,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
+using System.Collections.Generic;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
@@ -72,7 +73,7 @@ namespace DCL.CharacterPreview
             );
 
             avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
-                new GetEmotesByPointersIntention(Array.Empty<URN>(), avatarShape.BodyShape),
+                new GetEmotesByPointersIntention((IReadOnlyCollection<URN>?)avatarModel.Emotes ?? Array.Empty<URN>(), avatarShape.BodyShape),
                 PartitionComponent.TOP_PRIORITY);
 
             avatarShape.IsDirty = true;

@@ -122,7 +122,7 @@ namespace DCL.Backpack
         private void EquipEmote(int slot, IEmote emote) =>
             equippedEmotes[slot] = emote;
 
-        private void UnEquipEmote(int slot) =>
+        private void UnEquipEmote(int slot, IEmote? emote) =>
             equippedEmotes[slot] = null;
 
         private void ConvertEquippedEmotesIntoUniqueUrns(Profile profile, IList<URN> uniqueEmotes)

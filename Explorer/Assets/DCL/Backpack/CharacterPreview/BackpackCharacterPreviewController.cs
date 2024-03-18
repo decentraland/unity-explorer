@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -15,8 +16,10 @@ namespace DCL.Backpack.CharacterPreview
             : base(view, previewFactory, world)
         {
             this.backpackEventBus = backpackEventBus;
-            backpackEventBus.EquipWearableEvent += OnEquipped;
-            backpackEventBus.UnEquipWearableEvent += OnUnequipped;
+            backpackEventBus.EquipWearableEvent += OnWearableEquipped;
+            backpackEventBus.UnEquipWearableEvent += OnWearableUnequipped;
+            backpackEventBus.EquipEmoteEvent += OnEmoteEquipped;
+            backpackEventBus.UnEquipEmoteEvent += OnEmoteUnEquipped;
             backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
         }
@@ -24,8 +27,8 @@ namespace DCL.Backpack.CharacterPreview
         public new void Dispose()
         {
             base.Dispose();
-            backpackEventBus.EquipWearableEvent -= OnEquipped;
-            backpackEventBus.UnEquipWearableEvent -= OnUnequipped;
+            backpackEventBus.EquipWearableEvent -= OnWearableEquipped;
+            backpackEventBus.UnEquipWearableEvent -= OnWearableUnequipped;
         }
 
         private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -42,7 +45,7 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
-        private void OnEquipped(IWearable i)
+        private void OnWearableEquipped(IWearable i)
         {
             previewAvatarModel.Wearables ??= new List<URN>();
 
@@ -53,9 +56,27 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
-        private void OnUnequipped(IWearable i)
+        private void OnWearableUnequipped(IWearable i)
         {
             previewAvatarModel.Wearables.Remove(i.GetUrn());
+            OnModelUpdated();
+        }
+
+        private void OnEmoteUnEquipped(int slot, IEmote? emote)
+        {
+            if (emote == null) return;
+            if (previewAvatarModel.Emotes == null) return;
+            previewAvatarModel.Emotes.Remove(emote.GetUrn());
+            OnModelUpdated();
+        }
+
+        private void OnEmoteEquipped(int slot, IEmote emote)
+        {
+            previewAvatarModel.Emotes ??= new HashSet<URN>();
+
+            URN urn = emote.GetUrn();
+            if (previewAvatarModel.Emotes.Contains(urn)) return;
+            previewAvatarModel.Emotes.Add(urn);
             OnModelUpdated();
         }
     }

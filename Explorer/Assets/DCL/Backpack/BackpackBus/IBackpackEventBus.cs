@@ -12,7 +12,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
         public event Action<int, IEmote> EquipEmoteEvent;
-        public event Action<int> UnEquipEmoteEvent;
+        public event Action<int, IEmote?> UnEquipEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
@@ -32,7 +32,7 @@ namespace DCL.Backpack.BackpackBus
 
         void SendPublishProfile();
 
-        void SendUnEquipEmote(int slot);
+        void SendUnEquipEmote(int slot, IEmote? emote);
 
         void SendEquipEmote(int slot, IEmote emote);
     }
