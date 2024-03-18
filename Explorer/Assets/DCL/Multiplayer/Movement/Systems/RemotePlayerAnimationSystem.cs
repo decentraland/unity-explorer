@@ -9,7 +9,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -87,7 +86,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             UpdateBlends(view, animState);
 
-            if (animationComponent.States.IsGrounded && !animState.IsGrounded)
+            if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
             view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
