@@ -11,14 +11,10 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
-using Ipfs;
-using Realm;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.LOD.Components;
-using System;
-using DCL.LOD;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -26,14 +22,10 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
 {
-    /// <summary>
-    ///     Mutually exclusive to <see cref="ResolveSceneStateByRadiusSystem" />
-    /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(LoadPointersByIncreasingRadiusSystem))]
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
-    [UpdateAfter(typeof(CalculateParcelsInRangeSystem))]
     [UpdateAfter(typeof(CreateEmptyPointersInFixedRealmSystem))]
     public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem
     {
