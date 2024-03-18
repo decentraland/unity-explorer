@@ -7,6 +7,8 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public interface IRemoteEntities
     {
+        void Initialize();
+
         void TryCreate(IReadOnlyCollection<RemoteProfile> list, World world);
     }
 

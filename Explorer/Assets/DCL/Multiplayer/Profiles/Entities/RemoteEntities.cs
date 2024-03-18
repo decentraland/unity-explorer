@@ -4,6 +4,8 @@ using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,10 +15,20 @@ namespace DCL.Multiplayer.Profiles.Entities
     public class RemoteEntities : IRemoteEntities
     {
         private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IEntityParticipantTable entityParticipantTable)
+        public RemoteEntities(IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry)
         {
             this.entityParticipantTable = entityParticipantTable;
+            this.componentPoolsRegistry = componentPoolsRegistry;
+        }
+
+        public void Initialize()
+        {
+            transformPool = componentPoolsRegistry
+                           .GetReferenceTypePool<Transform>()
+                           .EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
         }
 
         public void TryCreate(IReadOnlyCollection<RemoteProfile> list, World world)
@@ -30,7 +42,9 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (entityParticipantTable.Has(profile.WalletId))
                 return;
 
-            var transformComp = new CharacterTransform(new GameObject("REMOTE_ENTITY").transform); //TODO pooling
+            var transform = transformPool.Get()!;
+            transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
+            var transformComp = new CharacterTransform(transform);
 
             Entity entity = world.Create(
                 profile.Profile,
@@ -41,6 +55,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );
+
             entityParticipantTable.Register(profile.WalletId, entity);
         }
     }

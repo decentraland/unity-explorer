@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.FfiClients;
@@ -12,11 +13,13 @@ using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
@@ -30,8 +33,11 @@ namespace DCL.PluginSystem.Global
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
         private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly RealFlowLoadingStatus realFlowLoadingStatus;
+
+        private IRemoteEntities remoteEntities;
 
         public MultiplayerPlugin(
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -43,6 +49,7 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             RealFlowLoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
+            IComponentPoolsRegistry componentPoolsRegistry,
             IMessagePipesHub messagePipesHub
         )
         {
@@ -55,7 +62,14 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.entityParticipantTable = entityParticipantTable;
+            this.componentPoolsRegistry = componentPoolsRegistry;
             this.messagePipesHub = messagePipesHub;
+        }
+
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
+        {
+            remoteEntities.Initialize();
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
@@ -66,15 +80,18 @@ namespace DCL.PluginSystem.Global
             DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
+            remoteEntities = new RemoteEntities(
+                entityParticipantTable,
+                componentPoolsRegistry
+            );
+
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new ThreadSafeRemoteAnnouncements(messagePipesHub),
                 new RemoteProfiles(profileRepository),
                 new DebounceProfileBroadcast(
                     new ProfileBroadcast(roomHub, memoryPool, multiPool)
                 ),
-                new RemoteEntities(
-                    entityParticipantTable
-                )
+                remoteEntities
             );
 #endif
         }
