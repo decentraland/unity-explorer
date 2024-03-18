@@ -33,12 +33,9 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
-        private readonly IEntityParticipantTable entityParticipantTable;
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly RealFlowLoadingStatus realFlowLoadingStatus;
-
-        private IRemoteEntities remoteEntities;
+        private readonly IRemoteEntities remoteEntities;
 
         public MultiplayerPlugin(
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -62,9 +59,12 @@ namespace DCL.PluginSystem.Global
             this.multiPool = multiPool;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
-            this.entityParticipantTable = entityParticipantTable;
-            this.componentPoolsRegistry = componentPoolsRegistry;
             this.messagePipesHub = messagePipesHub;
+
+            remoteEntities = new RemoteEntities(
+                entityParticipantTable,
+                componentPoolsRegistry
+            );
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -80,11 +80,6 @@ namespace DCL.PluginSystem.Global
 
             DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
-
-            remoteEntities = new RemoteEntities(
-                entityParticipantTable,
-                componentPoolsRegistry
-            );
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new ThreadSafeRemoteAnnouncements(messagePipesHub),

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -119,6 +120,9 @@ namespace DCL.Multiplayer.Movement.System
 
         private SimplePriorityQueue<FullMovementMessage> QueueFor(string walletId)
         {
+            if (entityParticipantTable.Has(walletId) == false)
+                ReportHub.WithReport(ReportCategory.MULTIPLAYER_MOVEMENT).Log($"Entity for wallet {walletId} not found");
+
             var entity = entityParticipantTable.Entity(walletId);
 
             if (globalWorld.Has<SimplePriorityQueue<FullMovementMessage>>(entity) == false)
