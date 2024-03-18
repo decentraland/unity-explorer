@@ -154,9 +154,18 @@ namespace Global.Dynamic
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
+            var realFlowLoadingStatus = new RealFlowLoadingStatus();
 
-            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
-                container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
+            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
+                realFlowLoadingStatus,
+                parcelServiceContainer.TeleportController,
+                container.MvcManager,
+                identityCache,
+                container.ProfileRepository, dynamicWorldParams.StartParcel,
+                staticContainer.MainPlayerAvatarBaseProxy,
+                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                exposedGlobalDataContainer.CameraSamplingData,
+                dynamicWorldParams.EnableLandscape, landscapePlugin);
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
 
@@ -169,7 +178,6 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                dynamicWorldParams.SceneLoadRadius,
                 dynamicWorldParams.StaticLoadPositions,
                 realmData,
                 staticContainer.ScenesCache);
@@ -193,11 +201,11 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesRepository),
                 new InputPlugin(dclInput, emotesRepository),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
-                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
+                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
