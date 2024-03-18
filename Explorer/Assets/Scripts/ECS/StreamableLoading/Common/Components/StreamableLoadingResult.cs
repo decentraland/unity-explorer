@@ -7,9 +7,9 @@ namespace ECS.StreamableLoading.Common.Components
     /// </summary>
     public readonly struct StreamableLoadingResult<T>
     {
-        public readonly Exception Exception;
+        public readonly Exception? Exception;
         public readonly bool Succeeded;
-        public readonly T Asset;
+        public readonly T? Asset;
 
         public StreamableLoadingResult(T asset) : this()
         {
@@ -21,5 +21,7 @@ namespace ECS.StreamableLoading.Common.Components
         {
             Exception = exception;
         }
+
+        public bool IsInitialized => Exception != null || Asset != null;
     }
 }

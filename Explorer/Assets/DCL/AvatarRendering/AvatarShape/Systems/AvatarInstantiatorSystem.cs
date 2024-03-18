@@ -17,6 +17,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using JetBrains.Annotations;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -74,11 +75,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [CanBeNull]
+        private AvatarBase InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
+            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
-            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableResult wearablesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableResult wearablesResult)) return null;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -106,6 +108,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
+            return avatarBase;
         }
 
         [Query]
@@ -113,9 +116,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
-            InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
-
-            if (World.TryGet(entity, out AvatarBase avatarBase))
+            var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
+            if (avatarBase)
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
         }
 
