@@ -216,6 +216,10 @@ namespace SceneRunner
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
+
+            var sceneApiImplementation = new SceneApiImplementation(sceneData);
+            sceneRuntime.RegisterSceneApi(sceneApiImplementation);
+
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 

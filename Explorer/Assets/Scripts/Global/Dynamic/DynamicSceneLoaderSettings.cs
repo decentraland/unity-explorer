@@ -9,7 +9,6 @@ namespace Global.Dynamic
     public class DynamicSceneLoaderSettings : ScriptableObject
     {
         [field: SerializeField] public Vector2Int StartPosition { get; private set; }
-        [field: SerializeField] [Obsolete] public int SceneLoadRadius { get; private set; } = 4;
 
         [Tooltip("If it's 0, it will load every parcel in the range")]
         [field: SerializeField] public List<int2> StaticLoadPositions { get; private set; }

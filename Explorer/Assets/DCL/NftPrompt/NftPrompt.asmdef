@@ -1,0 +1,26 @@
+{
+    "name": "NftPrompt",
+    "rootNamespace": "",
+    "references": [
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:91cf8206af184dac8e30eb46747e9939",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:6395fcf60b5b4e33b418ab4e9388b270",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Assertions;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
@@ -85,6 +86,8 @@ namespace DCL.Profiles
 
             if (profileInCache?.Version > version)
                 return profileInCache;
+
+            Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
 
             IIpfsRealm ipfs = realm.Ipfs;
 
