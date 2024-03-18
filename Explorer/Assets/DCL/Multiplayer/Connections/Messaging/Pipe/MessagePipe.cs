@@ -73,12 +73,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         public void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
-            const string CURRENT_TYPE = nameof(T);
+            string currentType = typeof(T).Name;
 
-            if (SUPPORTED_TYPES.Contains(CURRENT_TYPE) == false)
-                throw new NotSupportedException($"Type {CURRENT_TYPE} is not supported");
+            if (SUPPORTED_TYPES.Contains(currentType) == false)
+                throw new NotSupportedException($"Type {currentType} is not supported");
 
-            SubscribersList(CURRENT_TYPE)
+            SubscribersList(currentType)
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
