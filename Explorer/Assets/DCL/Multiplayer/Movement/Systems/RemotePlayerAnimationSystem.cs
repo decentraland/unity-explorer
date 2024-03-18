@@ -19,6 +19,7 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
     {
+        private const float BLEND_EPSILON = 0.01f;
         private readonly RemotePlayerExtrapolationSettings settings;
 
         public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings) : base(world)
@@ -101,8 +102,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private static void UpdateBlends(IAvatarView view, in AnimationStates animStates)
         {
-            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue);
-            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue);
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
         }
     }
 }

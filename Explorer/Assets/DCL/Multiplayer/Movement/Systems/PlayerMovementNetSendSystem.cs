@@ -2,6 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
@@ -10,7 +12,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class PlayerMovementNetSendSystem : BaseUnityLoopSystem
     {
@@ -29,7 +31,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        private void SendPlayerNetMovement([Data] float t, ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent animation, ref StunComponent stun, ref MovementInputComponent move,
+        private void SendPlayerNetMovement([Data] float t, ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, ref CharacterAnimationComponent anim, ref StunComponent stun, ref MovementInputComponent move,
             ref JumpInputComponent jump)
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
@@ -38,7 +40,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, ref animation, ref stun, ref move);
+                SendMessage(ref playerMovement, view, in anim, in stun, in move);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -47,9 +49,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
             foreach (SendRuleBase sendRule in settings.SendRules)
                 if (timeDiff > sendRule.MinTimeDelta
-                    && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in animation, in stun, in move, in jump, playerMovement.Character, settings))
+                    && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in anim, in stun, in move, in jump, playerMovement.Character, settings))
                 {
-                    SendMessage(ref playerMovement, ref animation, ref stun, ref move);
+                    SendMessage(ref playerMovement, view, in anim, in stun, in move);
                     return;
                 }
         }
@@ -65,7 +67,7 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, ref CharacterAnimationComponent playerAnimationComponent, ref StunComponent playerStunComponent, ref MovementInputComponent movement)
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view,  in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
 
@@ -74,14 +76,19 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
-                animState = playerAnimationComponent.States,
+                animState = animation.States,
                 isStunned = playerStunComponent.IsStunned,
             };
+
+            // Animator state is not always equal to actual Controller due to the blend shapes. Check ApplyAnimationMovementBlend.cs logic for more details.
+            playerMovement.LastSentMessage.animState.MovementBlendValue = view.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND);
 
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
-            if (settings.SelfSending && movement.Kind != MovementKind.Run)
+            if (settings.SelfSending
+                // && movement.Kind != MovementKind.Run
+                )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }
