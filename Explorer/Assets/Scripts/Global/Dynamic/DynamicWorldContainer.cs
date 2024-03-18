@@ -33,6 +33,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.System;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
 using DCL.Utilities.Extensions;
@@ -182,9 +183,11 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
+            var entityParticipantTable = new EntityParticipantTable();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus, entityParticipantTable),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
@@ -240,7 +243,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(messagePipesHub, roomHub)),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(messagePipesHub, roomHub, entityParticipantTable)),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

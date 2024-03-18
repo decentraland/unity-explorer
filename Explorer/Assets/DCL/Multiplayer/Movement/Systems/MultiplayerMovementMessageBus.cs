@@ -1,11 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Tables;
 using LiveKit.Rooms;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
@@ -15,15 +16,16 @@ namespace DCL.Multiplayer.Movement.System
 {
     public class MultiplayerMovementMessageBus
     {
-        public readonly Dictionary<string, SimplePriorityQueue<FullMovementMessage>> InboxByParticipantMap = new ();
-
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IRoomHub roomHub;
+        private readonly IEntityParticipantTable entityParticipantTable;
+        private World globalWorld = null!;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IEntityParticipantTable entityParticipantTable)
         {
             this.messagePipesHub = messagePipesHub;
             this.roomHub = roomHub;
+            this.entityParticipantTable = entityParticipantTable;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(OnMessageReceived);
@@ -38,6 +40,11 @@ namespace DCL.Multiplayer.Movement.System
         {
             WriteAndSend(message, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
             WriteAndSend(message, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
+        }
+
+        public void InjectWorld(World world)
+        {
+            this.globalWorld = world;
         }
 
         private static void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe, IRoom room)
@@ -77,6 +84,7 @@ namespace DCL.Multiplayer.Movement.System
             using (obj)
             {
                 await using ExecuteOnMainThreadScope _ = await ExecuteOnMainThreadScope.NewScopeAsync();
+
                 // TODO (Vit): filter out Island messages if Participant is presented in the Room
                 {
                     Decentraland.Kernel.Comms.Rfc4.Movement proto = obj.Payload;
@@ -104,18 +112,19 @@ namespace DCL.Multiplayer.Movement.System
             }
         }
 
-        //TODO entity table
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
-            if (InboxByParticipantMap.TryGetValue(@for, out SimplePriorityQueue<FullMovementMessage>? queue) && !queue.Contains(fullMovementMessage))
-                queue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
-            else
-            {
-                var newQueue = new SimplePriorityQueue<FullMovementMessage>(); // TODO (Vit): pooling
-                newQueue.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+            QueueFor(@for).Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+        }
 
-                InboxByParticipantMap.Add(@for, newQueue);
-            }
+        private SimplePriorityQueue<FullMovementMessage> QueueFor(string walletId)
+        {
+            var entity = entityParticipantTable.Entity(walletId);
+
+            if (globalWorld.Has<SimplePriorityQueue<FullMovementMessage>>(entity) == false)
+                globalWorld.Add<SimplePriorityQueue<FullMovementMessage>>(entity); // TODO (Vit): pooling
+
+            return globalWorld.Get<SimplePriorityQueue<FullMovementMessage>>(entity);
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)

@@ -38,6 +38,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
+            messageBus.InjectWorld(World!);
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
@@ -52,12 +53,17 @@ namespace DCL.Multiplayer.Movement.Systems
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, in IAvatarView view)
+        private void UpdateRemotePlayersMovement(
+            [Data] float deltaTime,
+            ref CharacterTransform transComp,
+            ref CharacterAnimationComponent anim,
+            ref RemotePlayerMovementComponent remotePlayerMovement,
+            ref InterpolationComponent intComp,
+            ref ExtrapolationComponent extComp,
+            in SimplePriorityQueue<FullMovementMessage> playerInbox,
+            in IAvatarView view
+        )
         {
-            if (!messageBus.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<FullMovementMessage>? playerInbox))
-                return;
-
             settings.InboxCount = playerInbox.Count;
 
             // First message
