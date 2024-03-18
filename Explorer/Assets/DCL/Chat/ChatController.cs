@@ -17,7 +17,8 @@ namespace DCL.Chat
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
 
-        private readonly Regex emojiPatternRegex = new (EMOJI_SUGGESTION_PATTERN);
+        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
+
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private EmojiPanelController emojiPanelController;
@@ -34,6 +35,7 @@ namespace DCL.Chat
         private List<ChatMessage> chatMessages = new ();
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
+        private IEnumerable<EmojiData> keysWithPrefix;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -91,7 +93,7 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(EmojiData emojiData)
         {
-            viewInstance.InputField.text = viewInstance.InputField.text.Replace(emojiPatternRegex.Match(viewInstance.InputField.text).Value, emojiData.EmojiCode);
+            viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiData.EmojiCode);
             viewInstance.InputField.ActivateInputField();
             viewInstance.InputField.caretPosition = viewInstance.InputField.text.Length;
         }
@@ -121,7 +123,7 @@ namespace DCL.Chat
         private UniTask ToggleEmojiPanelAsync(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            viewInstance.EmojiPanel.emojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
+            viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
         }
@@ -183,7 +185,7 @@ namespace DCL.Chat
 
         private void HandleEmojiSearch(string inputText)
         {
-            Match match = emojiPatternRegex.Match(inputText);
+            Match match = EMOJI_PATTERN_REGEX.Match(inputText);
             if (match.Success)
             {
                 if (match.Value.Length < 2)
@@ -205,9 +207,10 @@ namespace DCL.Chat
         private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            IEnumerable<EmojiData> keysWithPrefixAsync = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, ct);
 
-            emojiSuggestionPanelController.SetValues(keysWithPrefixAsync);
+            keysWithPrefix = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, ct);
+
+            emojiSuggestionPanelController.SetValues(keysWithPrefix);
             emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 

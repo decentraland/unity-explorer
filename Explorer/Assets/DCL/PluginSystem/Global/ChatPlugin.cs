@@ -68,16 +68,16 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
             [field: SerializeField]
-            public ChatViewRef ChatPanelPrefab;
+            public ChatViewRef ChatPanelPrefab { get; private set; }
 
             [field: SerializeField]
-            public EmojiButtonRef EmojiButtonPrefab;
+            public EmojiButtonRef EmojiButtonPrefab { get; private set; }
 
             [field: SerializeField]
-            public EmojiSectionRef EmojiSectionPrefab;
+            public EmojiSectionRef EmojiSectionPrefab { get; private set; }
 
             [field: SerializeField]
-            public EmojiSuggestionRef EmojiSuggestionPrefab;
+            public EmojiSuggestionRef EmojiSuggestionPrefab { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }

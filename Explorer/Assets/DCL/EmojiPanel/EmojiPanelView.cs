@@ -10,14 +10,27 @@ namespace DCL.Emoji
     public class EmojiPanelView : MonoBehaviour
     {
         public event Action<EmojiSectionName, bool> OnSectionSelected;
-        [SerializeField] public List<EmojiSectionToggle> emojiSections;
 
-        [SerializeField] public ScrollRect scrollView;
-        [SerializeField] public Transform emojiContainer;
-        [SerializeField] public Transform emojiContainerScrollView;
-        [SerializeField] public Transform emojiSearchResults;
-        [SerializeField] public Transform emojiSearchedContent;
-        [SerializeField] public SearchBarView searchPanelView;
+        [field: SerializeField]
+        public List<EmojiSectionToggle> EmojiSections { get; private set; }
+
+        [field: SerializeField]
+        public ScrollRect ScrollView { get; private set; }
+
+        [field: SerializeField]
+        public Transform EmojiContainer { get; private set; }
+
+        [field: SerializeField]
+        public Transform EmojiContainerScrollView { get; private set; }
+
+        [field: SerializeField]
+        public Transform EmojiSearchResults { get; private set; }
+
+        [field: SerializeField]
+        public Transform EmojiSearchedContent { get; private set; }
+
+        [field: SerializeField]
+        public SearchBarView SearchPanelView { get; private set; }
 
         public event Action OnEmojiFirstOpen;
 
@@ -25,7 +38,7 @@ namespace DCL.Emoji
         {
             OnEmojiFirstOpen?.Invoke();
 
-            foreach (EmojiSectionToggle emojiSectionToggle in emojiSections)
+            foreach (EmojiSectionToggle emojiSectionToggle in EmojiSections)
                 emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => OnSectionSelected?.Invoke(emojiSectionToggle.SectionName, isOn));
         }
     }

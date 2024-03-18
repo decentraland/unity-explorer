@@ -643,7 +643,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ebd3771315604fc09ca02ca37850846, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  emojiSections:
+  <EmojiSections>k__BackingField:
   - {fileID: 4158666550470728424}
   - {fileID: 5283514871832570185}
   - {fileID: 4163005131837077112}
@@ -652,12 +652,12 @@ MonoBehaviour:
   - {fileID: 7160438464910587101}
   - {fileID: 1357930980053164000}
   - {fileID: 3025870403953755872}
-  scrollView: {fileID: 4725557382226260701}
-  emojiContainer: {fileID: 3915152310419264944}
-  emojiContainerScrollView: {fileID: 8309160911758153689}
-  emojiSearchResults: {fileID: 5257736242087549617}
-  emojiSearchedContent: {fileID: 6826751768916131577}
-  searchPanelView: {fileID: 7628895206988975841}
+  <ScrollView>k__BackingField: {fileID: 4725557382226260701}
+  <EmojiContainer>k__BackingField: {fileID: 3915152310419264944}
+  <EmojiContainerScrollView>k__BackingField: {fileID: 8309160911758153689}
+  <EmojiSearchResults>k__BackingField: {fileID: 5257736242087549617}
+  <EmojiSearchedContent>k__BackingField: {fileID: 6826751768916131577}
+  <SearchPanelView>k__BackingField: {fileID: 7628895206988975841}
 --- !u!1 &3533251197398900182
 GameObject:
   m_ObjectHideFlags: 0

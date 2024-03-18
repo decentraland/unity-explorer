@@ -42,7 +42,7 @@ namespace DCL.Emoji
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
-            emojiSearchController = new EmojiSearchController(view.searchPanelView, view.emojiSearchedContent, emojiButtonPrefab);
+            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
             emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
             emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
@@ -58,8 +58,8 @@ namespace DCL.Emoji
 
         private void OnSearchTextChanged(string searchText)
         {
-            view.emojiContainerScrollView.gameObject.SetActive(string.IsNullOrEmpty(searchText));
-            view.emojiSearchResults.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
+            view.EmojiContainerScrollView.gameObject.SetActive(string.IsNullOrEmpty(searchText));
+            view.EmojiSearchResults.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
             if (string.IsNullOrEmpty(searchText))
                 return;
             cts.SafeCancelAndDispose();
@@ -78,7 +78,7 @@ namespace DCL.Emoji
             if (!isOn)
                 return;
 
-            view.scrollView.normalizedPosition = new Vector2(0, 1 - Mathf.Clamp01(Mathf.Abs(sectionTransforms[obj].anchoredPosition.y) / view.scrollView.content.rect.height));
+            view.ScrollView.normalizedPosition = new Vector2(0, 1 - Mathf.Clamp01(Mathf.Abs(sectionTransforms[obj].anchoredPosition.y) / view.ScrollView.content.rect.height));
         }
 
         public void SetPanelVisibility(bool isVisible) =>
@@ -94,7 +94,7 @@ namespace DCL.Emoji
         {
             foreach (EmojiSection emojiSection in emojiPanelConfiguration.EmojiSections)
             {
-                EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.emojiContainer).GetComponent<EmojiSectionView>();
+                EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.EmojiContainer);
                 sectionView.SectionTitle.text = emojiSection.title;
                 foreach (SerializableKeyValuePair<string, string> range in emojiSection.ranges)
                 {
