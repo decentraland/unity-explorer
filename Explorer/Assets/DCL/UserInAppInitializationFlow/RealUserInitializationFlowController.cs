@@ -2,32 +2,28 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Landscape.Interface;
 using DCL.ParcelsService;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Avatar = DCL.Profiles.Avatar;
-using LoadAvatarPromise = ECS.StreamableLoading.Common.AssetPromise<
-    DCL.Profiles.Profile,
-    DCL.Profiles.GetProfileIntention>;
+using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInitializationFlowController : IUserInAppInitializationFlow
     {
-        private const float LOADING_PROGRESS_PROFILE = 0.1f;
-        private const float LOADING_PROGRESS_LANDSCAPE = 0.9f;
-        private const float LOADING_PROGRESS_TELEPORT = 0.95f;
-        private const float LOADING_PROGRESS_COMPLETE = 1f;
-
         private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -35,16 +31,22 @@ namespace DCL.UserInAppInitializationFlow
         private readonly Vector2Int startParcel;
         private readonly bool enableLandscape;
         private readonly ILandscapeInitialization landscapeInitialization;
+        private readonly RealFlowLoadingStatus loadingStatus;
+
+        private readonly CameraSamplingData cameraSamplingData;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
+        private readonly ObjectProxy<Entity> cameraEntity;
 
         private AsyncLoadProcessReport? loadReport;
 
-        public RealUserInitializationFlowController(ITeleportController teleportController,
+        public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
+            ITeleportController teleportController,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             Vector2Int startParcel,
-            bool enableLandscape,
-            ILandscapeInitialization landscapeInitialization)
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            ObjectProxy<Entity> cameraEntity, CameraSamplingData cameraSamplingData, bool enableLandscape, ILandscapeInitialization landscapeInitialization)
         {
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
@@ -53,6 +55,10 @@ namespace DCL.UserInAppInitializationFlow
             this.startParcel = startParcel;
             this.enableLandscape = enableLandscape;
             this.landscapeInitialization = landscapeInitialization;
+            this.loadingStatus = loadingStatus;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.cameraEntity = cameraEntity;
+            this.cameraSamplingData = cameraSamplingData;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -78,16 +84,20 @@ namespace DCL.UserInAppInitializationFlow
         {
             Profile ownProfile = await GetOwnProfileAsync(ct);
 
-            loadReport!.ProgressCounter.Value = LOADING_PROGRESS_PROFILE;
+            loadReport!.ProgressCounter.Value = loadingStatus.SetStage(ProfileLoaded);
 
-            CreateAvatarPromise(world, ownPlayerEntity, ownProfile);
+            await LoadPlayerAvatar(world, ownPlayerEntity, ownProfile, ct);
 
             if (enableLandscape)
                 await LoadLandscapeAsync(ct);
 
             await TeleportToSpawnPointAsync(ct);
 
-            loadReport.ProgressCounter.Value = LOADING_PROGRESS_COMPLETE;
+            // add camera sampling data to the camera entity to start partitioning
+            Assert.IsTrue(cameraEntity.Configured);
+            world.Add(cameraEntity.Object, cameraSamplingData);
+
+            loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
             loadReport.CompletionSource.TrySetResult();
         }
 
@@ -95,26 +105,28 @@ namespace DCL.UserInAppInitializationFlow
         {
             var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_LANDSCAPE),
+            await UniTask.WhenAny(
+                landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]),
                 landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
+
+            loadingStatus.SetStage(LandscapeLoaded);
         }
 
-        private void CreateAvatarPromise(World world, Entity playerEntity, Profile profile)
+        /// <summary>
+        ///     Resolves Player profile and waits for the avatar to be loaded
+        /// </summary>
+        private UniTask LoadPlayerAvatar(World world, Entity playerEntity, Profile profile, CancellationToken ct)
         {
-            const int VERSION = 0;
-
             // Add the profile into the player entity so it will create the avatar in world
-            var promise = LoadAvatarPromise.Create(world, new GetProfileIntention(profile.UserId, VERSION), PartitionComponent.TOP_PRIORITY);
 
-            ref LoadAvatarPromise previousPromise = ref world.TryGetRef<LoadAvatarPromise>(playerEntity, out bool found);
-
-            if (found)
-            {
-                previousPromise.ForgetLoading(world);
-                world.Set(playerEntity, promise);
-            }
+            if (world.Has<Profile>(playerEntity))
+                world.Set(playerEntity, profile);
             else
-                world.Add(playerEntity, promise);
+                world.Add(playerEntity, profile);
+
+            // Eventually it will lead to the Avatar Resolution or the entity destruction
+            // if the avatar is already downloaded by the authentication screen it will be resolved immediately
+            return UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
         }
 
         private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
@@ -138,9 +150,11 @@ namespace DCL.UserInAppInitializationFlow
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, LOADING_PROGRESS_TELEPORT),
+            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
                 teleportController.TeleportToSceneSpawnPointAsync(
                     startParcel, teleportLoadReport, ct));
+
+            loadingStatus.SetStage(PlayerTeleported);
         }
 
         private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
