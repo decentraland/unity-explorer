@@ -229,6 +229,7 @@ namespace DCL.Chat
             emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
             emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
             emojiPanelController.Dispose();
+            cts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

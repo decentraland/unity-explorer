@@ -103,8 +103,6 @@ namespace DCL.Emoji
 
                 sectionView.SectionName = emojiSection.sectionName;
                 emojiSectionViews.Add(sectionView);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.EmojiContainer);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
             }
         }
 
