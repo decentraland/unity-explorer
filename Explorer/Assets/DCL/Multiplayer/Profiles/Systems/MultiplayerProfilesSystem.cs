@@ -5,6 +5,7 @@ using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
 using ECS.Abstract;
 
 namespace DCL.Multiplayer.Profiles.Systems
@@ -20,6 +21,7 @@ namespace DCL.Multiplayer.Profiles.Systems
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
         private readonly IRemoteAnnouncements remoteAnnouncements;
+        private readonly IRemoveIntentions removeIntentions;
         private readonly IRemoteProfiles remoteProfiles;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IRemoteEntities remoteEntities;
@@ -27,12 +29,14 @@ namespace DCL.Multiplayer.Profiles.Systems
         public MultiplayerProfilesSystem(
             World world,
             IRemoteAnnouncements remoteAnnouncements,
+            IRemoveIntentions removeIntentions,
             IRemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
             IRemoteEntities remoteEntities
         ) : base(world)
         {
             this.remoteAnnouncements = remoteAnnouncements;
+            this.removeIntentions = removeIntentions;
             this.remoteProfiles = remoteProfiles;
             this.profileBroadcast = profileBroadcast;
             this.remoteEntities = remoteEntities;
@@ -42,6 +46,7 @@ namespace DCL.Multiplayer.Profiles.Systems
         {
             remoteProfiles.Download(remoteAnnouncements);
             remoteEntities.TryCreate(remoteProfiles, World!);
+            remoteEntities.Remove(removeIntentions, World!);
             profileBroadcast.NotifyRemotesAsync();
         }
     }

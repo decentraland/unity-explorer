@@ -3,6 +3,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
@@ -35,6 +36,21 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             foreach (RemoteProfile remoteProfile in list)
                 TryCreateRemoteEntity(remoteProfile, world);
+        }
+
+        public void Remove(IReadOnlyCollection<RemoveIntention> list, World world)
+        {
+            foreach (RemoveIntention removeIntention in list)
+            {
+                string walletId = removeIntention.WalletId;
+
+                if (entityParticipantTable.Has(walletId) == false)
+                    continue;
+
+                var entity = entityParticipantTable.Entity(walletId);
+                world.Destroy(entity);
+                entityParticipantTable.Release(walletId);
+            }
         }
 
         private void TryCreateRemoteEntity(in RemoteProfile profile, World world)
