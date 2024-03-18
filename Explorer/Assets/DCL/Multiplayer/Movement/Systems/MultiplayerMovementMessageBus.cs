@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
@@ -18,9 +19,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
-using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
-namespace DCL.Multiplayer.Movement.System
+namespace DCL.Multiplayer.Movement.Systems
 {
     public class MultiplayerMovementMessageBus
     {

@@ -5,7 +5,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
 using Random = UnityEngine.Random;
 

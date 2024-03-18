@@ -31,7 +31,7 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.System;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.Nametags;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
