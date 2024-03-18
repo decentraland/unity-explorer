@@ -84,18 +84,19 @@ namespace DCL.Multiplayer.Movement.Systems
             if (animationComponent.States.Equals(animState))
                 return;
 
-            animationComponent.States = animState;
             UpdateBlends(view, animState);
 
-            if (view.GetAnimatorBool(AnimationHashes.JUMPING))
+            if (animationComponent.States.IsGrounded && !animState.IsGrounded)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
             view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
-            view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
-            view.SetAnimatorBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
-            view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
-            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
-            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
+            view.SetAnimatorBool(AnimationHashes.GROUNDED, animState.IsGrounded);
+            view.SetAnimatorBool(AnimationHashes.JUMPING, animState.IsJumping);
+            view.SetAnimatorBool(AnimationHashes.FALLING, animState.IsFalling);
+            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animState.IsLongJump);
+            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animState.IsLongFall);
+
+            animationComponent.States = animState;
         }
 
         private static void UpdateBlends(IAvatarView view, in AnimationStates animStates)
