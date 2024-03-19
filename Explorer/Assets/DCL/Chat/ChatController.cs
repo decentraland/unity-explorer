@@ -48,7 +48,8 @@ namespace DCL.Chat
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionViewPrefab,
             EmojiButton emojiButtonPrefab,
-            EmojiSuggestionView emojiSuggestionViewPrefab) : base(viewFactory)
+            EmojiSuggestionView emojiSuggestionViewPrefab,
+            World world) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -58,13 +59,9 @@ namespace DCL.Chat
             this.emojiSectionViewPrefab = emojiSectionViewPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
+            this.world = world;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder)
-        {
-            world = builder.World;
         }
 
         protected override void OnViewInstantiated()
