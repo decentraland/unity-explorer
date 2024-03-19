@@ -60,15 +60,16 @@ namespace DCL.Multiplayer.Chats
 
         public void Send(string message)
         {
-            SendTo(message, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
-            SendTo(message, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
+            double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+            SendTo(message, timestamp, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
+            SendTo(message, timestamp, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
         }
 
-        private static void SendTo(string message, IMessagePipe messagePipe, IRoom room)
+        private static void SendTo(string message, double timestamp, IMessagePipe messagePipe, IRoom room)
         {
             var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
-            chat.Payload.Timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+            chat.Payload.Timestamp = timestamp;
             chat.AddRecipients(room);
             chat.SendAndDisposeAsync(DataPacketKind.KindReliable).Forget();
         }
