@@ -14,6 +14,8 @@ namespace DCL.Multiplayer.Connections.Messaging
 {
     public struct MessageWrap<T> where T: class, IMessage, new()
     {
+        private static readonly Type SELF_MESSAGE_TYPE = typeof(T);
+
         public readonly T Payload;
         private readonly IDataPipe dataPipe;
         private readonly List<string> recipients;
@@ -60,10 +62,8 @@ namespace DCL.Multiplayer.Connections.Messaging
 
         private void WritePayloadToPacket(Packet packet)
         {
-            var type = typeof(T);
-
-            if (MessageWrapExtensions.WRITES_MAP.TryGetValue(type, out var writeAction) == false)
-                throw new NotSupportedException($"Type {type.FullName} is not supported");
+            if (MessageWrapExtensions.WRITES_MAP.TryGetValue(SELF_MESSAGE_TYPE, out var writeAction) == false)
+                throw new NotSupportedException($"Type {SELF_MESSAGE_TYPE.FullName} is not supported");
 
             writeAction!(packet, Payload);
         }
