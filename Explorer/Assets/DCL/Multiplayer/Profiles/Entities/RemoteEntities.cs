@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -12,6 +13,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -66,6 +68,17 @@ namespace DCL.Multiplayer.Profiles.Entities
 
                 world.Add(entity, new DeleteEntityIntention());
                 entityParticipantTable.Release(walletId);
+
+
+                //TODO remove on merge
+                object?[] components = world.GetAllComponents(entity);
+                var sb = new StringBuilder();
+                sb.AppendLine("Components to delete:");
+
+                foreach (object? component in components)
+                    sb.AppendLine(component?.GetType().FullName ?? "NULL");
+
+                ReportHub.Log(ReportCategory.LIVEKIT, sb.ToString());
             }
         }
 
