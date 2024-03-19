@@ -62,6 +62,7 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
 
             remoteEntities = new RemoteEntities(
+                roomHub,
                 entityParticipantTable,
                 componentPoolsRegistry
             );
