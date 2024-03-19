@@ -58,8 +58,8 @@ Shader "DCL/DCL_Toon"
 
  
         [Enum(OFF, 0, FRONT, 1, BACK, 2)] _CullMode("Cull Mode", int) = 2  //OFF/FRONT/BACK
-        [Enum(OFF, 0, ONT, 1)]	_ZWriteMode("ZWrite Mode", int) = 1  //OFF/ON
-        [Enum(OFF, 0, ONT, 1)]	_ZOverDrawMode("ZOver Draw Mode", Float) = 0  //OFF/ON
+        [Enum(OFF, 0, ON, 1)]	_ZWriteMode("ZWrite Mode", int) = 1  //OFF/ON
+        [Enum(OFF, 0, ON, 1)]	_ZOverDrawMode("ZOver Draw Mode", Float) = 0  //OFF/ON
         _SPRDefaultUnlitColorMask("SPRDefaultUnlit Path Color Mask", int) = 15
         [Enum(OFF, 0, FRONT, 1, BACK, 2)] _SRPDefaultUnlitColMode("SPRDefaultUnlit  Cull Mode", int) = 1  //OFF/FRONT/BACK
         // ClippingMask paramaters from Here.
@@ -496,657 +496,7 @@ Shader "DCL/DCL_Toon"
 	//////////////////// End of HDRP material default values. ////////////////////
 	//////////////////////////////////////////////////////////////////////////////
     } 
-
-    HLSLINCLUDE
-
-    #define DISABLE_RP_SHADERS
-    //-------------------------------------------------------------------------------------
-    // Variant
-    //-------------------------------------------------------------------------------------
-#ifndef DISABLE_RP_SHADERS
-// HDRP Variant
-    #pragma shader_feature_local _ALPHATEST_ON
-    #pragma shader_feature_local _DEPTHOFFSET_ON
-    #pragma shader_feature_local _DOUBLESIDED_ON
-    #pragma shader_feature_local _ _VERTEX_DISPLACEMENT _PIXEL_DISPLACEMENT
-    #pragma shader_feature_local _VERTEX_DISPLACEMENT_LOCK_OBJECT_SCALE
-    #pragma shader_feature_local _DISPLACEMENT_LOCK_TILING_SCALE
-    #pragma shader_feature_local _PIXEL_DISPLACEMENT_LOCK_OBJECT_SCALE
-    #pragma shader_feature_local _TESSELLATION_PHONG
-    #pragma shader_feature_local _ _REFRACTION_PLANE _REFRACTION_SPHERE _REFRACTION_THIN
-
-    #pragma shader_feature_local _ _EMISSIVE_MAPPING_PLANAR _EMISSIVE_MAPPING_TRIPLANAR
-    #pragma shader_feature_local _ _MAPPING_PLANAR _MAPPING_TRIPLANAR
-    #pragma shader_feature_local _NORMALMAP_TANGENT_SPACE
-    #pragma shader_feature_local _ _REQUIRE_UV2 _REQUIRE_UV3
-
-    #pragma shader_feature_local _NORMALMAP
-    #pragma shader_feature_local _MASKMAP
-    #pragma shader_feature_local _BENTNORMALMAP
-    #pragma shader_feature_local _EMISSIVE_COLOR_MAP
-
-    // _ENABLESPECULAROCCLUSION keyword is obsolete but keep here for compatibility. Do not used
-    // _ENABLESPECULAROCCLUSION and _SPECULAR_OCCLUSION_X can't exist at the same time (the new _SPECULAR_OCCLUSION replace it)
-    // When _ENABLESPECULAROCCLUSION is found we define _SPECULAR_OCCLUSION_X so new code to work
-    #pragma shader_feature_local _ENABLESPECULAROCCLUSION
-    #pragma shader_feature_local _ _SPECULAR_OCCLUSION_NONE _SPECULAR_OCCLUSION_FROM_BENT_NORMAL_MAP
-    #ifdef _ENABLESPECULAROCCLUSION
-    #define _SPECULAR_OCCLUSION_FROM_BENT_NORMAL_MAP
-    #endif
-
-    #pragma shader_feature_local _HEIGHTMAP
-    #pragma shader_feature_local _TANGENTMAP
-    #pragma shader_feature_local _ANISOTROPYMAP
-    #pragma shader_feature_local _DETAIL_MAP
-    #pragma shader_feature_local _SUBSURFACE_MASK_MAP
-    #pragma shader_feature_local _THICKNESSMAP
-    #pragma shader_feature_local _IRIDESCENCE_THICKNESSMAP
-    #pragma shader_feature_local _SPECULARCOLORMAP
-    #pragma shader_feature_local _TRANSMITTANCECOLORMAP
-
-    #pragma shader_feature_local _DISABLE_DECALS
-    #pragma shader_feature_local _DISABLE_SSR
-    #pragma shader_feature_local _ADD_PRECOMPUTED_VELOCITY
-    #pragma shader_feature_local _ENABLE_GEOMETRIC_SPECULAR_AA
-
-    // Keyword for transparent
-    #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-    #pragma shader_feature_local _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_PRE_MULTIPLY
-    #pragma shader_feature_local _BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-    #pragma shader_feature_local _ENABLE_FOG_ON_TRANSPARENT
-    #pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-
-    // MaterialFeature are used as shader feature to allow compiler to optimize properly
-    #pragma shader_feature_local _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-    #pragma shader_feature_local _MATERIAL_FEATURE_TRANSMISSION
-    #pragma shader_feature_local _MATERIAL_FEATURE_ANISOTROPY
-    #pragma shader_feature_local _MATERIAL_FEATURE_CLEAR_COAT
-    #pragma shader_feature_local _MATERIAL_FEATURE_IRIDESCENCE
-    #pragma shader_feature_local _MATERIAL_FEATURE_SPECULAR_COLOR
-
-
-
-
-    // enable dithering LOD crossfade
-    #pragma multi_compile _ LOD_FADE_CROSSFADE
-
-    //enable GPU instancing support
-    #pragma multi_compile_instancing
-    #pragma instancing_options renderinglayer
-    // enable debug shado
-    //    #pragma multi_compile _ UTS_DEBUG_SELFSHADOW
-    //    #pragma multi_compile _ UTS_DEBUG_SHADOWMAP
-    //    #pragma multi_compile _ UTS_DEBUG_SHADOWMAP_NO_OUTLINE
-    // end of HDRP Variants
-#endif //#ifndef DISABLE_RP_SHADERS
-
-    ENDHLSL
-
-
-    // *************************** //
-    // ****** HDRP Subshader ***** //
-    // *************************** //
-//    SubShader
-//    {
-//        PackageRequirements
-//        {
-//           "com.unity.render-pipelines.high-definition": "10.5.0"
-//        }    
-//        // This tags allow to use the shader replacement features
-//        Tags{ "RenderPipeline"="HDRenderPipeline" }
-//
-//        Pass
-//        {
-//            Name "SceneSelectionPass"
-//            Tags { "LightMode" = "SceneSelectionPass" }
-//
-//            Cull Off
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            // Note: Require _ObjectId and _PassValue variables
-//
-//            // We reuse depth prepass for the scene selection, allow to handle alpha correctly as well as tessellation and vertex animation
-//            #define SHADERPASS SHADERPASS_DEPTH_ONLY
-//            #define SCENESELECTIONPASS // This will drive the output of the scene selection shader
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            #pragma editor_sync_compilation
-//
-//            ENDHLSL
-//        }
-//
-//        // Caution: The outline selection in the editor use the vertex shader/hull/domain shader of the first pass declare. So it should not bethe  meta pass.
-//        Pass
-//        {
-//            Name "GBuffer"
-//            Tags { "LightMode" = "GBuffer" } // This will be only for opaque object based on the RenderQueue index
-//
-//            Cull[_CullMode]
-//            ZTest[_ZTestGBuffer]
-//
-//            Stencil
-//            {
-//                WriteMask[_StencilWriteMaskGBuffer]
-//                Ref[_StencilRefGBuffer]
-//                Comp Always
-//                Pass Replace
-//            }
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma multi_compile _ DOTS_INSTANCING_ON
-//
-//
-//            #pragma multi_compile _ DEBUG_DISPLAY
-//            #pragma multi_compile _ LIGHTMAP_ON
-//            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-//            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-//            #pragma multi_compile _ SHADOWS_SHADOWMASK
-//            // Setup DECALS_OFF so the shader stripper can remove variants
-//            #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
-//            #pragma multi_compile _ LIGHT_LAYERS
-//
-//        #ifndef DEBUG_DISPLAY
-//            // When we have alpha test, we will force a depth prepass so we always bypass the clip instruction in the GBuffer
-//            // Don't do it with debug display mode as it is possible there is no depth prepass in this case
-//            #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-//        #endif
-//
-//            #define SHADERPASS SHADERPASS_GBUFFER
-//            #ifdef DEBUG_DISPLAY
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-//            #endif
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            //            #include "MaterialGBufferMacrosUTS.hlsl" // must be above lit.hlsl
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            //            #include "EncodeIntoGBufferUTS.hlsl" // must be bellow lit.hlsl
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassGBuffer.hlsl"
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//
-//        // Extracts information for lightmapping, GI (emission, albedo, ...)
-//        // This pass it not used during regular rendering.
-//        Pass
-//        {
-//            Name "META"
-//            Tags{ "LightMode" = "META" }
-//
-//            Cull Off
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            // Lightmap memo
-//            // DYNAMICLIGHTMAP_ON is used when we have an "enlighten lightmap" ie a lightmap updated at runtime by enlighten.This lightmap contain indirect lighting from realtime lights and realtime emissive material.Offline baked lighting(from baked material / light,
-//            // both direct and indirect lighting) will hand up in the "regular" lightmap->LIGHTMAP_ON.
-//
-//            #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassLightTransport.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//            Name "ShadowCaster"
-//            Tags{ "LightMode" = "ShadowCaster" }
-//
-//            Cull[_CullMode]
-//
-//            ZClip [_ZClip]
-//            ZWrite On
-//            ZTest LEqual
-//
-//            ColorMask 0
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//
-//            #define SHADERPASS SHADERPASS_SHADOWS
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//            Name "DepthForwardOnly"
-//            Tags{ "LightMode" = "DepthForwardOnly" }
-//
-//            Cull[_CullMode]
-//
-//            // To be able to tag stencil with disableSSR information for forward
-//            Stencil
-//            {
-//                WriteMask [_StencilWriteMaskDepth]
-//                Ref [_StencilRefDepth]
-//                Comp Always
-//                Pass Replace
-//            }
-//
-//            ZWrite On
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            // In deferred, depth only pass don't output anything.
-//            // In forward it output the normal buffer
-//            #pragma multi_compile _ WRITE_NORMAL_BUFFER
-//            #pragma multi_compile _ WRITE_MSAA_DEPTH
-//
-//            #define SHADERPASS SHADERPASS_DEPTH_ONLY
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//
-//            #ifdef WRITE_NORMAL_BUFFER // If enabled we need all regular interpolator
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #else
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
-//            #endif
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//            Name "MotionVectors"
-//            Tags{ "LightMode" = "MotionVectors" } // Caution, this need to be call like this to setup the correct parameters by C++ (legacy Unity)
-//
-//            // If velocity pass (motion vectors) is enabled we tag the stencil so it don't perform CameraMotionVelocity
-//            Stencil
-//            {
-//                WriteMask [_StencilWriteMaskMV]
-//                Ref [_StencilRefMV]
-//                Comp Always
-//                Pass Replace
-//            }
-//
-//            Cull[_CullMode]
-//
-//            ZWrite On
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            #pragma multi_compile _ WRITE_NORMAL_BUFFER
-//            #pragma multi_compile _ WRITE_MSAA_DEPTH
-//
-//            #define SHADERPASS SHADERPASS_MOTION_VECTORS
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #ifdef WRITE_NORMAL_BUFFER // If enabled we need all regular interpolator
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #else
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitMotionVectorPass.hlsl"
-//            #endif
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassMotionVectors.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//            Name "DistortionVectors"
-//            Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
-//
-//            Stencil
-//            {
-//                WriteMask [_StencilRefDistortionVec]
-//                Ref [_StencilRefDistortionVec]
-//                Comp Always
-//                Pass Replace
-//            }
-//
-//            Blend [_DistortionSrcBlend] [_DistortionDstBlend], [_DistortionBlurSrcBlend] [_DistortionBlurDstBlend]
-//            BlendOp Add, [_DistortionBlurBlendOp]
-//            ZTest [_ZTestModeDistortion]
-//            ZWrite off
-//            Cull [_CullMode]
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            #define SHADERPASS SHADERPASS_DISTORTION
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDistortionPass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDistortion.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//            Name "TransparentDepthPrepass"
-//            Tags{ "LightMode" = "TransparentDepthPrepass" }
-//
-//            Cull[_CullMode]
-//            ZWrite On
-//            ColorMask 0
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            #define SHADERPASS SHADERPASS_DEPTH_ONLY
-//            #define CUTOFF_TRANSPARENT_DEPTH_PREPASS
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        // Caution: Order is important: TransparentBackface, then Forward/ForwardOnly
-//        Pass
-//        {
-//            Name "TransparentBackface"
-//            Tags { "LightMode" = "TransparentBackface" }
-//
-//            Blend [_SrcBlend] [_DstBlend], [_AlphaSrcBlend] [_AlphaDstBlend]
-//            ZWrite [_ZWrite]
-//            Cull Front
-//            ColorMask [_ColorMaskTransparentVel] 1
-//            ZTest [_ZTestTransparent]
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            #pragma multi_compile _ DEBUG_DISPLAY
-//            #pragma multi_compile _ LIGHTMAP_ON
-//            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-//            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-//            #pragma multi_compile _ SHADOWS_SHADOWMASK
-//            #pragma multi_compile SCREEN_SPACE_SHADOWS_OFF SCREEN_SPACE_SHADOWS_ON
-//            // Setup DECALS_OFF so the shader stripper can remove variants
-//            #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
-//
-//            // Supported shadow modes per light type
-//            #pragma multi_compile SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
-//
-//            #define USE_CLUSTERED_LIGHTLIST // There is not FPTL lighting when using transparent
-//            #define AREA_SHADOW_LOW
-//            #define SHADERPASS SHADERPASS_FORWARD
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
-//
-//        #ifdef DEBUG_DISPLAY
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-//        #endif
-//
-//            // The light loop (or lighting architecture) is in charge to:
-//            // - Define light list
-//            // - Define the light loop
-//            // - Setup the constant/data
-//            // - Do the reflection hierarchy
-//            // - Provide sampling function for shadowmap, ies, cookie and reflection (depends on the specific use with the light loops like index array or atlas or single and texture format (cubemap/latlong))
-//
-//            #define HAS_LIGHTLOOP
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoopDef.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForward.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//
-//            Name "ForwardOnly"
-//            Tags { "LightMode" = "ForwardOnly" } 
-//
-//            ZWrite[_ZWriteMode]
-//            Cull[_CullMode]
-//            Blend SrcAlpha OneMinusSrcAlpha
-//            Stencil {
-//
-//                Ref[_StencilNo]
-//
-//                Comp[_StencilComp]
-//                Pass[_StencilOpPass]
-//                Fail[_StencilOpFail]
-//
-//            }
-//
-//
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-////            #pragma multi_compile _ UTS_DEBUG_SHADOWMAP_BINALIZATION
-//            #pragma multi_compile _ DEBUG_DISPLAY
-//            #pragma multi_compile _ LIGHTMAP_ON
-//            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-//            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-//            #pragma multi_compile _ SHADOWS_SHADOWMASK
-//            // Setup DECALS_OFF so the shader stripper can remove variants
-//            #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
-//            #pragma multi_compile SCREEN_SPACE_SHADOWS_OFF SCREEN_SPACE_SHADOWS_ON
-//            // Supported shadow modes per light type
-//            #pragma multi_compile SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
-//            #define LIGHTLOOP_DISABLE_TILE_AND_CLUSTER
-////	    #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
-//            #define AREA_SHADOW_LOW
-//            #define SHADERPASS SHADERPASS_FORWARD
-//            // In case of opaque we don't want to perform the alpha test, it is done in depth prepass and we use depth equal for ztest (setup from UI)
-//            // Don't do it with debug display mode as it is possible there is no depth prepass in this case
-//            #if !defined(_SURFACE_TYPE_TRANSPARENT) && !defined(DEBUG_DISPLAY)
-//                #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-//            #endif
-//            #pragma shader_feature_local _ _SHADINGGRADEMAP
-//            // used in ShadingGradeMap
-//            #pragma shader_feature _IS_TRANSCLIPPING_OFF _IS_TRANSCLIPPING_ON
-//            #pragma shader_feature _IS_ANGELRING_OFF _IS_ANGELRING_ON
-//            // used in Shadow calculation 
-//            #pragma shader_feature_local _ UTS_USE_RAYTRACING_SHADOW
-//            // used in DoubleShadeWithFeather
-//            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
-//            // controlling mask rendering
-//            #pragma shader_feature _ _IS_CLIPPING_MATTE
-//            #pragma shader_feature _EMISSIVE_SIMPLE _EMISSIVE_ANIMATION
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
-//
-//        #ifdef DEBUG_DISPLAY
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-//        #endif
-//
-//            // The light loop (or lighting architecture) is in charge to:
-//            // - Define light list
-//            // - Define the light loop
-//            // - Setup the constant/data
-//            // - Do the reflection hierarchy
-//            // - Provide sampling function for shadowmap, ies, cookie and reflection (depends on the specific use with the light loops like index array or atlas or single and texture format (cubemap/latlong))
-//
-//            #define HAS_LIGHTLOOP
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoopDef.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//#ifdef UNITY_SHADER_VARIABLES_INCLUDED
-//            #include "../../HDRP/Shaders/UtsLightLoop.hlsl"
-//            #include "../../HDRP/Shaders/ShaderPassForwardUTS.hlsl"
-//#endif
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Pass
-//        {
-//            Name "TransparentDepthPostpass"
-//            Tags { "LightMode" = "TransparentDepthPostpass" }
-//
-//            Cull[_CullMode]
-//            ZWrite On
-//            ColorMask 0
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            #define SHADERPASS SHADERPASS_DEPTH_ONLY
-//            #define CUTOFF_TRANSPARENT_DEPTH_POSTPASS
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//        Tags{
-//           "RenderType" = "Opaque"
-//        }
-//        Pass{
-//            Name "Outline"
-//            Tags {
-//                "LightMode" = "SRPDefaultUnlit"
-//            }
-//            Cull[_SRPDefaultUnlitColMode]
-//            ColorMask[_SPRDefaultUnlitColorMask]
-//            Blend SrcAlpha OneMinusSrcAlpha
-//            Stencil
-//            {
-//                Ref[_StencilNo]
-//                Comp[_StencilComp]
-//                Pass[_StencilOpPass]
-//                Fail[_StencilOpFail]
-//
-//            }
-//
-//            HLSLPROGRAM
-//            #pragma only_renderers d3d11 playstation xboxone xboxseries vulkan metal switch
-//            #pragma target 4.5	    
-//            #include "../../HDRP/Shaders/UtsHDRP.hlsl"
-//            #define AREA_SHADOW_LOW
-//            #define SHADERPASS SHADERPASS_FORWARD
-//            #define SHADOW_LOW
-//            #define LIGHTLOOP_DISABLE_TILE_AND_CLUSTER
-//
-//            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO _IS_OUTLINE_CLIPPING_YES
-//            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
-//            #pragma shader_feature _ _IS_CLIPPING_MATTE
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
-//
-//            #ifdef DEBUG_DISPLAY
-//                #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-//            #endif
-//
-//            // The light loop (or lighting architecture) is in charge to:
-//            // - Define light list
-//            // - Define the light loop
-//            // - Setup the constant/data
-//            // - Do the reflection hierarchy
-//            // - Provide sampling function for shadowmap, ies, cookie and reflection (depends on the specific use with the light loops like index array or atlas or single and texture format (cubemap/latlong))
-//
-//            #define HAS_LIGHTLOOP
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoopDef.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-//
-//
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitData.hlsl"
-//
-//#ifdef UNITY_SHADER_VARIABLES_INCLUDED
-//            #include "../../HDRP/Shaders/HDRPToonHead.hlsl"
-//            #include "../../HDRP/Shaders/HDRPToonOutline.hlsl"
-//#endif
-//
-//            #pragma vertex Vert
-//            #pragma fragment Frag
-//
-//            ENDHLSL
-//        }
-//
-//    }
-    // *************************** //
-    // ****** URP Subshader  ***** //
-    // *************************** //
+    
     SubShader 
     {
         PackageRequirements
@@ -1199,8 +549,7 @@ Shader "DCL/DCL_Toon"
 #endif
             ENDHLSL
         }
-
-//ToonCoreStart
+        
         Pass {
             Name "ForwardLit"
             Tags{"LightMode" = "UniversalForward"}
@@ -1218,67 +567,50 @@ Shader "DCL/DCL_Toon"
             }
 
             HLSLPROGRAM
-            #pragma target 4.5
-            //#pragma prefer_hlslcc gles
-            //#pragma exclude_renderers d3d11_9x
-
+            #pragma target 5.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma enable_d3d11_debug_symbols
-
-#ifndef DISABLE_RP_SHADERS
-            // -------------------------------------
-            // urp Material Keywords
-            // -------------------------------------
-            #pragma shader_feature_local _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature_local _EMISSION
-            #pragma shader_feature_local _METALLICSPECGLOSSMAP
-            #pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-//            #pragma shader_feature _OCCLUSIONMAP
-
-            #pragma shader_feature_local _SPECULARHIGHLIGHTS_OFF
-            #pragma shader_feature_local _ENVIRONMENTREFLECTIONS_OFF
-            #pragma shader_feature_local _SPECULAR_SETUP
-            #pragma shader_feature_local _RECEIVE_SHADOWS_OFF
-#endif
+            
             // -------------------------------------
             // Lightweight Pipeline keywords
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile _ _FORWARD_PLUS
 
-            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
+            //#pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
             // -------------------------------------
             // Unity defined keywords
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            // #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            // #pragma multi_compile _ SHADOWS_SHADOWMASK
+            // #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            // #pragma multi_compile _ LIGHTMAP_ON
+            // #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            #define _IS_PASS_FWDBASE
+            //#define _IS_PASS_FWDBASE
             // DoubleShadeWithFeather and ShadingGradeMap use different fragment shader.  
-            #pragma shader_feature_local _ _SHADINGGRADEMAP
+            //#pragma shader_feature_local _ _SHADINGGRADEMAP
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
 
             // used in ShadingGradeMap
-            #pragma shader_feature _IS_TRANSCLIPPING_OFF _IS_TRANSCLIPPING_ON
-            #pragma shader_feature _IS_ANGELRING_OFF _IS_ANGELRING_ON
+            //#pragma shader_feature _IS_TRANSCLIPPING_OFF _IS_TRANSCLIPPING_ON
+            //#pragma shader_feature _IS_ANGELRING_OFF _IS_ANGELRING_ON
 
             // used in Shadow calculation 
-            #pragma shader_feature_local _ UTS_USE_RAYTRACING_SHADOW
+            //#pragma shader_feature_local _ UTS_USE_RAYTRACING_SHADOW
             // used in DoubleShadeWithFeather
             #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
 
-            #pragma shader_feature _EMISSIVE_SIMPLE _EMISSIVE_ANIMATION
+            #define _EMISSIVE_SIMPLE
+            //#pragma shader_feature _EMISSIVE_SIMPLE// _EMISSIVE_ANIMATION
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
@@ -1288,7 +620,6 @@ Shader "DCL/DCL_Toon"
             #include "DCL_ToonBody.hlsl"
 #endif
             ENDHLSL
-            
         }
 
         Pass
@@ -1301,13 +632,8 @@ Shader "DCL/DCL_Toon"
             Cull[_CullMode]
 
             HLSLPROGRAM
-            #pragma target 4.5
+            #pragma target 5.0
 	    
-            // Required to compile gles 2.0 with standard srp library
-            //#pragma prefer_hlslcc gles
-            //#pragma exclude_renderers d3d11_9x
-
-
             #pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
 
             #pragma multi_compile_instancing
@@ -1336,12 +662,8 @@ Shader "DCL/DCL_Toon"
             Cull[_CullMode]
 
             HLSLPROGRAM
-            #pragma target 4.5
-	    
-            // Required to compile gles 2.0 with standard srp library
-            //#pragma prefer_hlslcc gles
-            //#pragma exclude_renderers d3d11_9x
-
+            #pragma target 5.0
+            
             #pragma vertex DepthOnlyVertex
             #pragma fragment DepthOnlyFragment
             #pragma enable_d3d11_debug_symbols
@@ -1371,14 +693,10 @@ Shader "DCL/DCL_Toon"
             Cull[_CullMode]
 
             HLSLPROGRAM
-            #pragma target 4.5	    
+            #pragma target 5.0	    
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Version.hlsl"
 
-
-            // Required to compile gles 2.0 with standard srp library
-            //#pragma prefer_hlslcc gles
-            //#pragma exclude_renderers d3d11_9x
-
+            
             #pragma vertex DepthNormalsVertex
             #pragma fragment DepthNormalsFragment
             #pragma enable_d3d11_debug_symbols
@@ -1393,193 +711,13 @@ Shader "DCL/DCL_Toon"
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
-
-
+            
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonDepthNormalsPass.hlsl"
 
             ENDHLSL
         }
-
-//ToonCoreEnd
     }
-
-//    // ***************************** //
-//    // ****** Legacy Subshader ***** //
-//    // ***************************** //
-//
-//    SubShader {
-//        Tags {
-//            "RenderType"="Opaque"
-//        }
-//        Pass {
-//            Name "Outline"
-//            Tags {
-//                "LightMode"="ForwardBase"
-//            }
-//            Cull[_SRPDefaultUnlitColMode]
-//            ColorMask[_SPRDefaultUnlitColorMask]
-//            Blend SrcAlpha OneMinusSrcAlpha
-//            Stencil
-//            {
-//                Ref[_StencilNo]
-//                Comp[_StencilComp]
-//                Pass[_StencilOpPass]
-//                Fail[_StencilOpFail]
-//
-//            }
-//            CGPROGRAM
-//            #pragma vertex vert
-//            #pragma fragment frag
-//            #include "UnityCG.cginc"
-//            //#pragma fragmentoption ARB_precision_hint_fastest
-//            //#pragma multi_compile_shadowcaster
-//            //#pragma multi_compile_fog
-//            #pragma only_renderers d3d9 d3d11 glcore gles gles3 playstation xboxone xboxseries vulkan metal switch
-//
-//            #pragma target 3.0
-//            //V.2.0.4
-//            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO 
-//            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
-//            // Unity Toon Shader 0.5.0
-//            #pragma multi_compile _ _DISABLE_OUTLINE
-//            //The outline process goes to UTS_Outline.cginc.
-//            #include "../../Legacy/Shaders/UCTS_Outline.cginc"
-//            ENDCG
-//        }
-////ToonCoreStart
-//        Pass {
-//            Name "FORWARD"
-//            Tags {
-//                "LightMode"="ForwardBase"
-//            }
-//            ZWrite[_ZWriteMode]
-//            Cull[_CullMode]
-//            Blend SrcAlpha OneMinusSrcAlpha
-//            Stencil {
-//
-//                Ref[_StencilNo]
-//
-//                Comp[_StencilComp]
-//                Pass[_StencilOpPass]
-//                Fail[_StencilOpFail]
-//
-//            }
-//            CGPROGRAM
-//            #pragma vertex vert
-//            #pragma fragment frag
-//            //#define UNITY_PASS_FORWARDBASE
-//            #include "UnityCG.cginc"
-//            #include "AutoLight.cginc"
-//            #include "Lighting.cginc"
-//            #pragma multi_compile_fwdbase_fullshadows
-//            #pragma multi_compile_fog
-//            #pragma only_renderers d3d9 d3d11 glcore gles gles3 playstation xboxone xboxseries vulkan metal switch
-//
-//            #pragma target 3.0
-//            // DoubleShadeWithFeather and ShadingGradeMap use different fragment shader.  
-//            #pragma shader_feature_local _ _SHADINGGRADEMAP
-//            // used in ShadingGradeMap
-//            #pragma shader_feature _IS_TRANSCLIPPING_OFF _IS_TRANSCLIPPING_ON
-//            #pragma shader_feature _IS_ANGELRING_OFF _IS_ANGELRING_ON
-//            // used in DoubleShadeWithFeather
-//            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
-//            #pragma shader_feature _EMISSIVE_SIMPLE _EMISSIVE_ANIMATION
-//            #pragma multi_compile _IS_PASS_FWDBASE
-//
-//            //
-//            #pragma shader_feature_local UTS_USE_RAYTRACING_SHADOW
-//#if defined(_SHADINGGRADEMAP)
-//
-//#include "../../Legacy/Shaders/UCTS_ShadingGradeMap.cginc"
-//
-//
-//#else //#if defined(_SHADINGGRADEMAP)
-//
-//#include "../../Legacy/Shaders/UCTS_DoubleShadeWithFeather.cginc"
-//
-//
-//#endif //#if defined(_SHADINGGRADEMAP)
-//
-//            ENDCG
-//        }
-//        Pass {
-//            Name "FORWARD_DELTA"
-//            Tags {
-//                "LightMode"="ForwardAdd"
-//            }
-//
-//            Blend One One
-//            Cull[_CullMode]
-//            
-//            
-//            CGPROGRAM
-//            #pragma vertex vert
-//            #pragma fragment frag
-//            //#define UNITY_PASS_FORWARDADD
-//            #include "UnityCG.cginc"
-//            #include "AutoLight.cginc"
-//            #include "Lighting.cginc"
-//            //for Unity2018.x
-//            #pragma multi_compile_fwdadd_fullshadows
-//            #pragma multi_compile_fog
-//            #pragma only_renderers d3d9 d3d11 glcore gles gles3 playstation xboxone xboxseries vulkan metal switch
-//
-//            #pragma target 3.0
-//            // DoubleShadeWithFeather and ShadingGradeMap use different fragment shader.  
-//            #pragma shader_feature_local _ _SHADINGGRADEMAP
-//            // used in ShadingGradeMap
-//            #pragma shader_feature _IS_TRANSCLIPPING_OFF _IS_TRANSCLIPPING_ON
-//            #pragma shader_feature _IS_ANGELRING_OFF _IS_ANGELRING_ON
-//            // used in DoubleShadeWithFeather
-//            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
-//            #pragma shader_feature _EMISSIVE_SIMPLE _EMISSIVE_ANIMATION
-//            //v.2.0.4
-//
-//            #pragma multi_compile _IS_PASS_FWDDELTA
-//            #pragma shader_feature_local UTS_USE_RAYTRACING_SHADOW
-//
-//#if defined(_SHADINGGRADEMAP)
-//
-//#include "../../Legacy/Shaders/UCTS_ShadingGradeMap.cginc"
-//
-//
-//#else //#if defined(_SHADINGGRADEMAP)
-//
-//#include "../../Legacy/Shaders/UCTS_DoubleShadeWithFeather.cginc"
-//
-//
-//#endif //#if defined(_SHADINGGRADEMAP)
-//
-//            ENDCG
-//        }
-//        Pass {
-//            Name "ShadowCaster"
-//            Tags {
-//                "LightMode"="ShadowCaster"
-//            }
-//            Offset 1, 1
-//            Cull Off
-//            
-//            CGPROGRAM
-//            #pragma vertex vert
-//            #pragma fragment frag
-//            //#define UNITY_PASS_SHADOWCASTER
-//            #include "UnityCG.cginc"
-//            #include "Lighting.cginc"
-//            #pragma fragmentoption ARB_precision_hint_fastest
-//            #pragma multi_compile_shadowcaster
-//            #pragma multi_compile_fog
-//            #pragma only_renderers d3d9 d3d11 glcore gles gles3 playstation xboxone xboxseries vulkan metal switch
-//
-//            #pragma target 3.0
-//            //v.2.0.4
-//            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
-//            #include "../../Legacy/Shaders/UCTS_ShadowCaster.cginc"
-//            ENDCG
-//        }
-////ToonCoreEnd
-//    }
-
+    
     CustomEditor "UnityEditor.Rendering.Toon.UTS3GUI"
 }
