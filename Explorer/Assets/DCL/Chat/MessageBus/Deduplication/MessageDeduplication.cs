@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Multiplayer.Chats.Deduplication
+namespace DCL.Chat.MessageBus.Deduplication
 {
     public class MessageDeduplication : IMessageDeduplication
     {

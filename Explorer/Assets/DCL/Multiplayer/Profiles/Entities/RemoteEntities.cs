@@ -12,6 +12,8 @@ using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Profiles.Entities
 {
@@ -19,14 +21,16 @@ namespace DCL.Multiplayer.Profiles.Entities
     {
         private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry)
+        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
         {
             this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
+            this.queuePool = queuePool;
         }
 
         public void Initialize()
@@ -55,6 +59,10 @@ namespace DCL.Multiplayer.Profiles.Entities
                     continue;
 
                 var entity = entityParticipantTable.Entity(walletId);
+
+                if (world.Has<SimplePriorityQueue<FullMovementMessage>>(entity))
+                    queuePool.Release(world.Get<SimplePriorityQueue<FullMovementMessage>>(entity));
+
                 world.Destroy(entity);
                 entityParticipantTable.Release(walletId);
             }

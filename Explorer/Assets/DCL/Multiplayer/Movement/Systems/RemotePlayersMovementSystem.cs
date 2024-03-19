@@ -8,7 +8,6 @@ using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.System;
 using ECS.Abstract;
 using UnityEngine;
 using Utility.PriorityQueue;

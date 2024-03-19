@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
@@ -12,13 +13,14 @@ namespace DCL.Chat
 {
     public partial class ChatController : ControllerBase<ChatView>
     {
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
         private World world;
 
         private string currentMessage = string.Empty;
-        private List<ChatMessage> chatMessages = new ();
+        private readonly List<ChatMessage> chatMessages = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -26,16 +28,19 @@ namespace DCL.Chat
             ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
-            NametagsData nametagsData) : base(viewFactory)
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            NametagsData nametagsData
+        ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
+            this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder)
         {
             world = builder.World;
         }
@@ -53,7 +58,6 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
-
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -72,7 +76,7 @@ namespace DCL.Chat
             currentMessage = string.Empty;
         }
 
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
+        private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
             if (index < 0 || index >= chatMessages.Count)
                 return null;
@@ -81,7 +85,7 @@ namespace DCL.Chat
 
             LoopListViewItem2 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
 
-            ChatEntryView itemScript = item.GetComponent<ChatEntryView>();
+            ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
             itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
             itemScript.SetItemData(itemData);
 
@@ -117,7 +121,8 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            world.Create(new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+            var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+            world.Add(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);

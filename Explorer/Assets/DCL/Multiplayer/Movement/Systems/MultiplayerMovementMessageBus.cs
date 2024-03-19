@@ -11,25 +11,28 @@ using LiveKit.Rooms;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
 using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
-namespace DCL.Multiplayer.Movement.System
+namespace DCL.Multiplayer.Movement.Systems
 {
     public class MultiplayerMovementMessageBus : IDisposable
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IRoomHub roomHub;
-        private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private World globalWorld = null!;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IEntityParticipantTable entityParticipantTable)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IReadOnlyEntityParticipantTable entityParticipantTable, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
         {
             this.messagePipesHub = messagePipesHub;
             this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
+            this.queuePool = queuePool;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
@@ -133,7 +136,7 @@ namespace DCL.Multiplayer.Movement.System
             }
 
             var entity = entityParticipantTable.Entity(walletId);
-            return globalWorld.AddOrGet<SimplePriorityQueue<FullMovementMessage>>(entity);
+            return globalWorld.AddOrGet(entity, queuePool.Get());
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)

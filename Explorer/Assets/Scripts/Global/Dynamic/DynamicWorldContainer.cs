@@ -6,11 +6,11 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Chat.MessageBus;
+using DCL.Chat.MessageBus.Deduplication;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
-using DCL.Multiplayer.Chats;
-using DCL.Multiplayer.Chats.Deduplication;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -33,7 +33,8 @@ using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement.System;
+using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -43,6 +44,8 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -196,15 +199,20 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(
+                () => new SimplePriorityQueue<FullMovementMessage>(),
+                actionOnRelease: x => x.Clear()
+            );
+
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new ProfileBroadcast(messagePipesHub, roomHub)
             );
 
-            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, roomHub, entityParticipantTable);
+            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, roomHub, entityParticipantTable, queuePoolFullMovementMessage);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub, queuePoolFullMovementMessage),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
@@ -228,7 +236,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, nametagsData),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,

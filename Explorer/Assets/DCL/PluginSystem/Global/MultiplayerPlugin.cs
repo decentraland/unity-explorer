@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
@@ -19,6 +20,8 @@ using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
 
 namespace DCL.PluginSystem.Global
 {
@@ -44,7 +47,8 @@ namespace DCL.PluginSystem.Global
             RealFlowLoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
-            IMessagePipesHub messagePipesHub
+            IMessagePipesHub messagePipesHub,
+            IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -59,7 +63,8 @@ namespace DCL.PluginSystem.Global
             remoteEntities = new RemoteEntities(
                 roomHub,
                 entityParticipantTable,
-                componentPoolsRegistry
+                componentPoolsRegistry,
+                queuePool
             );
         }
 

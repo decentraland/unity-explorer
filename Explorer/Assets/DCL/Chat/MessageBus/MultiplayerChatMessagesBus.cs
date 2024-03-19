@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Multiplayer.Chats.Deduplication;
+using DCL.Chat.MessageBus.Deduplication;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -12,7 +11,7 @@ using LiveKit.Rooms;
 using System;
 using System.Threading;
 
-namespace DCL.Multiplayer.Chats
+namespace DCL.Chat.MessageBus
 {
     public class MultiplayerChatMessagesBus : IChatMessagesBus
     {

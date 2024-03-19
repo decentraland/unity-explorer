@@ -1,4 +1,4 @@
-namespace DCL.Multiplayer.Chats.Deduplication
+namespace DCL.Chat.MessageBus.Deduplication
 {
     public interface IMessageDeduplication
     {
