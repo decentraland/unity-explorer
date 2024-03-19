@@ -95,6 +95,17 @@ namespace DCL.Backpack
         public bool IsWearableEquipped(IWearable wearable) =>
             equippedWearables[wearable.GetCategory()] == wearable;
 
+        public bool IsEmoteEquipped(IEmote emote)
+        {
+            foreach (IEmote? equippedEmote in equippedEmotes)
+            {
+                if (equippedEmote == null) continue;
+                if (equippedEmote == emote) return true;
+            }
+
+            return false;
+        }
+
         //This will retrieve the list of default hides for the current equipped wearables
         //Manual hide override will be a separate task
         //TODO retrieve logic from old renderer
@@ -203,5 +214,7 @@ namespace DCL.Backpack
         IEmote? GetEquippedEmote(int slot);
 
         bool IsWearableEquipped(IWearable wearable);
+
+        bool IsEmoteEquipped(IEmote emote);
     }
 }

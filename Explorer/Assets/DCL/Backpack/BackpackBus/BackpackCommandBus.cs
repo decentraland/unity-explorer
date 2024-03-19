@@ -9,6 +9,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackUnEquipEmoteCommand>? UnEquipEmoteMessageReceived;
         public event Action<BackpackUnEquipWearableCommand>? UnEquipWearableMessageReceived;
         public event Action<BackpackSelectCommand>? SelectMessageReceived;
+        public event Action<BackpackSelectEmoteCommand>? SelectEmoteMessageReceived;
         public event Action<BackpackHideCommand>? HideMessageReceived;
         public event Action<BackpackFilterCategoryCommand>? FilterCategoryMessageReceived;
         public event Action<BackpackSearchCommand>? SearchMessageReceived;
@@ -27,6 +28,11 @@ namespace DCL.Backpack.BackpackBus
         public void SendCommand(BackpackSelectCommand command)
         {
             SelectMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackSelectEmoteCommand command)
+        {
+            SelectEmoteMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackHideCommand command)

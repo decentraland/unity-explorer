@@ -9,7 +9,22 @@ namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmoteProvider
     {
-        UniTask<IReadOnlyList<IEmote>> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct, int? pageNum = null, int? pageSize = null, URN? collectionId = null);
+        public readonly struct OrderOperation
+        {
+            public readonly string By;
+            public readonly bool IsAscendent;
+
+            public OrderOperation(string by, bool isAscendent)
+            {
+                By = by;
+                IsAscendent = isAscendent;
+            }
+        }
+
+        UniTask<(IReadOnlyList<IEmote> emotes, int totalAmount)> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
+            int? pageNum = null, int? pageSize = null, URN? collectionId = null,
+            OrderOperation? orderOperation = null, string? name = null,
+            bool? onChainCollectionsOnly = false);
 
         UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, BodyShape bodyShape, CancellationToken ct);
     }

@@ -31,7 +31,10 @@ namespace DCL.AvatarRendering.Emotes
             this.realmData = realmData;
         }
 
-        public async UniTask<IReadOnlyList<IEmote>> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct, int? pageNum = null, int? pageSize = null, URN? collectionId = null)
+        public async UniTask<(IReadOnlyList<IEmote> emotes, int totalAmount)> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
+            int? pageNum = null, int? pageSize = null, URN? collectionId = null,
+            IEmoteProvider.OrderOperation? orderOperation = null, string? name = null,
+            bool? onChainCollectionsOnly = false)
         {
             urlBuilder.Clear();
 
@@ -48,6 +51,18 @@ namespace DCL.AvatarRendering.Emotes
             if (collectionId != null)
                 urlBuilder.AppendParameter(new URLParameter("collectionId", collectionId));
 
+            if (orderOperation.HasValue)
+            {
+                urlBuilder.AppendParameter(new URLParameter("orderBy", orderOperation.Value.By));
+                urlBuilder.AppendParameter(new URLParameter("direction", orderOperation.Value.IsAscendent ? "asc" : "desc"));
+            }
+
+            if (name != null)
+                urlBuilder.AppendParameter(new URLParameter("name", name));
+
+            if (onChainCollectionsOnly != null)
+                urlBuilder.AppendParameter(new URLParameter("on-chain", onChainCollectionsOnly.Value.ToString().ToLower()));
+
             URLAddress url = urlBuilder.Build();
 
             var intention = new GetOwnedEmotesFromRealmIntention(new CommonLoadingArguments(url));
@@ -56,12 +71,12 @@ namespace DCL.AvatarRendering.Emotes
                                                                  .ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
-                return ArraySegment<IEmote>.Empty;
+                return (ArraySegment<IEmote>.Empty, 0);
 
             if (!promise.Result.Value.Succeeded)
                 throw promise.Result.Value.Exception;
 
-            return promise.Result.Value.Asset.Emotes;
+            return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
         }
 
         public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, BodyShape bodyShape, CancellationToken ct)

@@ -57,6 +57,16 @@ namespace DCL.Backpack.BackpackBus
         }
     }
 
+    public readonly struct BackpackSelectEmoteCommand
+    {
+        public readonly string Id;
+
+        public BackpackSelectEmoteCommand(string id)
+        {
+            Id = id;
+        }
+    }
+
     public readonly struct BackpackHideCommand
     {
         public readonly IReadOnlyCollection<string> ForceRender;
