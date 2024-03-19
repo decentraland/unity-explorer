@@ -88,9 +88,9 @@ namespace DCL.Chat
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
         }
 
-        private void AddEmojiFromSuggestion(EmojiData emojiData)
+        private void AddEmojiFromSuggestion(string emojiCode)
         {
-            viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiData.EmojiCode);
+            viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
             viewInstance.InputField.ActivateInputField();
             viewInstance.InputField.caretPosition = viewInstance.InputField.text.Length;
         }

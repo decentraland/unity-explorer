@@ -27,11 +27,18 @@ namespace DCL.Emoji
             view.clearSearchButton.gameObject.SetActive(false);
 
             searchItemsPool = new ObjectPool<EmojiButton>(
-                () => Object.Instantiate(emojiButton, parent),
+                () => CreatePoolElements(parent, emojiButton),
                 defaultCapacity: 20,
                 actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
                 actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
             );
+        }
+
+        private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)
+        {
+            EmojiButton poolElement = Object.Instantiate(emojiButton, parent);
+            poolElement.OnEmojiSelected += (emojiCode) => OnEmojiSelected?.Invoke(emojiCode);
+            return poolElement;
         }
 
         private void ClearSearch()
@@ -61,16 +68,12 @@ namespace DCL.Emoji
                 {
                     usedPoolItems[i].EmojiImage.text = foundEmoji.EmojiCode;
                     usedPoolItems[i].TooltipText.text = foundEmoji.EmojiName;
-                    usedPoolItems[i].Button.onClick.RemoveAllListeners();
-                    usedPoolItems[i].Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji.EmojiCode));
                 }
                 else
                 {
                     EmojiButton emojiView = searchItemsPool.Get();
                     emojiView.EmojiImage.text = foundEmoji.EmojiCode;
                     emojiView.TooltipText.text = foundEmoji.EmojiName;
-                    emojiView.Button.onClick.RemoveAllListeners();
-                    emojiView.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji.EmojiCode));
                     usedPoolItems.Add(emojiView);
                 }
             }
