@@ -115,13 +115,16 @@ namespace DCL.Multiplayer.Movement.System
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
-            QueueFor(@for).Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+            QueueFor(@for)?.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
         }
 
-        private SimplePriorityQueue<FullMovementMessage> QueueFor(string walletId)
+        private SimplePriorityQueue<FullMovementMessage>? QueueFor(string walletId)
         {
             if (entityParticipantTable.Has(walletId) == false)
+            {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
+                return null;
+            }
 
             var entity = entityParticipantTable.Entity(walletId);
 
