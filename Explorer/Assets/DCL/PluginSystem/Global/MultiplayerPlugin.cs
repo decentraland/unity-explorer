@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                new ThreadSafeRemoteAnnouncements(messagePipesHub),
+                new RemoteAnnouncements(messagePipesHub),
                 new ThreadSafeRemoveIntentions(roomHub),
                 new RemoteProfiles(profileRepository),
                 new DebounceProfileBroadcast(
