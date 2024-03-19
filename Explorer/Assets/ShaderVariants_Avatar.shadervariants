@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ShaderVariants_Avatar
+  m_Shaders:
+  - first: {fileID: 4800000, guid: 39a0f13973a45b74e9491c428916d9c2, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: UNITY_DOTS_INSTANCING_ENABLED _DCL_COMPUTE_SKINNING _DCL_TEXTURE_ARRAYS
+        passType: 8
+      - keywords: _DCL_COMPUTE_SKINNING _DCL_TEXTURE_ARRAYS
+        passType: 8
+      - keywords: 
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _EMISSIVE_SIMPLE _IS_ANGELRING_OFF _IS_CLIPPING_TRANSMODE _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+  - first: {fileID: 4800000, guid: c66b10f85c3065c47bae66386821456a, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON
+          _DCL_COMPUTE_SKINNING _DCL_TEXTURE_ARRAYS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _DCL_COMPUTE_SKINNING _DCL_TEXTURE_ARRAYS
+          _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS
+        passType: 13
