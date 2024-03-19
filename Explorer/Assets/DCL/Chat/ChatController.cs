@@ -121,8 +121,12 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
-            world.Add(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+            if (chatMessage.SentByOwnUser == false)
+            {
+                var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                world.Add(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+            }
+
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
