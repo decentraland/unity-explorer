@@ -9,6 +9,8 @@ namespace SceneRunner.Scene
         private readonly URLDomain contentBaseUrl;
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
+        public URLDomain ContentBaseUrl => contentBaseUrl;
+
         public SceneNonHashedContent(URLDomain contentBaseUrl)
         {
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(StringComparer.OrdinalIgnoreCase);

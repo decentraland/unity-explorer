@@ -28,6 +28,13 @@ module.exports.readFile = async function(message) {
 }
 
 module.exports.getSceneInformation = async function(message) {
-    console.log('JSMODULE: getSceneInformation')
-    return {};
+
+    const { urn, baseUrl, content, metadataJson } = UnityRuntime.GetSceneInformation()    
+
+    return { 
+        urn, 
+        baseUrl, 
+        content, 
+        metadataJson 
+    };
 }

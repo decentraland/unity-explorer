@@ -14,6 +14,9 @@ namespace SceneRunner.Scene
         private readonly ISceneContent sceneContent;
         private readonly SceneEntityDefinition sceneDefinition;
 
+        public ISceneContent SceneContent => sceneContent;
+        public SceneEntityDefinition SceneEntityDefinition => sceneDefinition;
+
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
