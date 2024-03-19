@@ -146,20 +146,23 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     // Clipping modes - early outs
     #if defined(_IS_CLIPPING_MODE) 
         //DoubleShadeWithFeather_Clipping
-        int nClippingMaskArrID = _ClippingMaskArr_ID;
-        float4 _ClippingMask_var = SAMPLE_CLIPPINGMASK(TRANSFORM_TEX(Set_UV0, _ClippingMask), nClippingMaskArrID);
-        float Set_Clipping = saturate((lerp( _ClippingMask_var.r, (1.0 - _ClippingMask_var.r), _Inverse_Clipping )+_Clipping_Level));
-        clip(Set_Clipping - 0.5);
-    #elif defined(_IS_CLIPPING_TRANSMODE) || defined(_IS_TRANSCLIPPING_ON)
-        //DoubleShadeWithFeather_TransClipping
-        int nClippingMaskArrID = _ClippingMaskArr_ID;
-        float4 _ClippingMask_var = SAMPLE_CLIPPINGMASK(TRANSFORM_TEX(Set_UV0, _ClippingMask), nClippingMaskArrID);
+        // int nClippingMaskArrID = _ClippingMaskArr_ID;
+        // float4 _ClippingMask_var = SAMPLE_CLIPPINGMASK(TRANSFORM_TEX(Set_UV0, _ClippingMask), nClippingMaskArrID);
+        // float Set_Clipping = saturate((lerp( _ClippingMask_var.r, (1.0 - _ClippingMask_var.r), _Inverse_Clipping )+_Clipping_Level));
         float Set_MainTexAlpha = _MainTex_var.a;
-        float _IsBaseMapAlphaAsClippingMask_var = lerp( _ClippingMask_var.r, Set_MainTexAlpha, _IsBaseMapAlphaAsClippingMask );
-        float _Inverse_Clipping_var = lerp( _IsBaseMapAlphaAsClippingMask_var, (1.0 - _IsBaseMapAlphaAsClippingMask_var), _Inverse_Clipping );
-        float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
-        clip(Set_Clipping - 0.5);
-    #elif defined(_IS_CLIPPING_OFF) || defined(_IS_TRANSCLIPPING_OFF)
+        clip(Set_MainTexAlpha-_Clipping_Level);
+    #elif defined(_IS_CLIPPING_TRANSMODE)// || defined(_IS_TRANSCLIPPING_ON)
+        //DoubleShadeWithFeather_TransClipping
+        // int nClippingMaskArrID = _ClippingMaskArr_ID;
+        // float4 _ClippingMask_var = SAMPLE_CLIPPINGMASK(TRANSFORM_TEX(Set_UV0, _ClippingMask), nClippingMaskArrID);
+        float Set_MainTexAlpha = _MainTex_var.a;
+        // float _IsBaseMapAlphaAsClippingMask_var = lerp( _ClippingMask_var.r, Set_MainTexAlpha, _IsBaseMapAlphaAsClippingMask );
+        // float _Inverse_Clipping_var = lerp( _IsBaseMapAlphaAsClippingMask_var, (1.0 - _IsBaseMapAlphaAsClippingMask_var), _Inverse_Clipping );
+        // float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
+        float _Inverse_Clipping_var = _MainTex_var.a;
+        clip(Set_MainTexAlpha-_Clipping_Level);
+        //clip(Set_Clipping - 0.5);
+    //#elif defined(_IS_CLIPPING_OFF) || defined(_IS_TRANSCLIPPING_OFF)
         //DoubleShadeWithFeather
     #endif
 
@@ -169,7 +172,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     #endif
 
     // Mainlight colour and default lighting colour (Unlit)
-    #ifdef _IS_PASS_FWDBASE
+    //#ifdef _IS_PASS_FWDBASE
         float3 defaultLightDirection = normalize(UNITY_MATRIX_V[2].xyz + UNITY_MATRIX_V[1].xyz);
         float3 defaultLightColor = saturate(max(half3(0.05,0.05,0.05)*_Unlit_Intensity,max(ShadeSH9(half4(0.0, 0.0, 0.0, 1.0)),ShadeSH9(half4(0.0, -1.0, 0.0, 1.0)).rgb)*_Unlit_Intensity));
         float3 customLightDirection = normalize(mul( unity_ObjectToWorld, float4(((float3(1.0,0.0,0.0)*_Offset_X_Axis_BLD*10)+(float3(0.0,1.0,0.0)*_Offset_Y_Axis_BLD*10)+(float3(0.0,0.0,-1.0)*lerp(-1.0,1.0,_Inverse_Z_Axis_BLD))),0)).xyz);
@@ -179,13 +182,13 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         half3 originalLightColor = mainLightColor.rgb;
 
         float3 lightColor = lerp(max(defaultLightColor, originalLightColor), max(defaultLightColor, saturate(originalLightColor)), _Is_Filter_LightColor);
-    #endif
+    //#endif
 
     ////// Lighting:
     float3 halfDirection = normalize(viewDirection+lightDirection);
     _Color = _BaseColor;
 
-    #ifdef _IS_PASS_FWDBASE
+    //#ifdef _IS_PASS_FWDBASE
         // SHARED START
         float3 Set_LightColor = lightColor.rgb;
         float3 Set_BaseColor = lerp( (_BaseColor.rgb*_MainTex_var.rgb), ((_BaseColor.rgb*_MainTex_var.rgb)*Set_LightColor), _Is_LightColor_Base );
@@ -513,7 +516,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         finalColor = SATURATE_IF_SDR(finalColor) + (envLightColor*envLightIntensity*_GI_Intensity*smoothstep(1,0,envLightIntensity/2)) + emissive;
         
         finalColor += pointLightColor;
-    #endif
+    //#endif
 
 
     //v.2.0.4
