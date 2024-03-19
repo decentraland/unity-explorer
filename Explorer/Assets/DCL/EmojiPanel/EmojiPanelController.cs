@@ -21,7 +21,7 @@ namespace DCL.Emoji
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
         public readonly Dictionary<string, EmojiData> EmojiNameMapping = new ();
-        private readonly Dictionary<string, string> emojiValueMapping = new ();
+        private readonly Dictionary<int, string> emojiValueMapping = new ();
         private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
         private readonly List<EmojiData> foundEmojis = new ();
 
@@ -49,7 +49,7 @@ namespace DCL.Emoji
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
                 EmojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
-                emojiValueMapping.Add(emojiData.Value.ToUpper(), emojiData.Key);
+                emojiValueMapping.Add(int.Parse(emojiData.Value, System.Globalization.NumberStyles.HexNumber), emojiData.Key);
             }
 
             view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
@@ -131,7 +131,7 @@ namespace DCL.Emoji
                 emojiButton.EmojiImage.text = emojiChar;
                 emojiButton.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(emojiButton.EmojiImage.text));
 
-                if (emojiValueMapping.TryGetValue(emojiCode.ToString("X"), out string emojiValue))
+                if (emojiValueMapping.TryGetValue(emojiCode, out string emojiValue))
                     emojiButton.TooltipText.text = emojiValue;
                 else
                     emojiButton.TooltipText.text = string.Empty;
