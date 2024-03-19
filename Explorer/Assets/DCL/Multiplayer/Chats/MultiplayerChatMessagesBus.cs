@@ -20,6 +20,7 @@ namespace DCL.Multiplayer.Chats
         private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication messageDeduplication;
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IProfileRepository profileRepository, IMessageDeduplication messageDeduplication)
         {
@@ -44,7 +45,7 @@ namespace DCL.Multiplayer.Chats
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
                     return;
 
-                var profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, 0, CancellationToken.None);
+                var profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, 0, cancellationTokenSource.Token);
 
                 OnMessageAdded?.Invoke(
                     new ChatMessage(
@@ -61,6 +62,9 @@ namespace DCL.Multiplayer.Chats
 
         public void Send(string message)
         {
+            if (cancellationTokenSource.IsCancellationRequested)
+                throw new Exception("ChatMessagesBus is disposed");
+
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             SendTo(message, timestamp, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
             SendTo(message, timestamp, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
@@ -73,6 +77,12 @@ namespace DCL.Multiplayer.Chats
             chat.Payload.Timestamp = timestamp;
             chat.AddRecipients(room);
             chat.SendAndDisposeAsync(DataPacketKind.KindReliable).Forget();
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
     }
 }

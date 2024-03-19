@@ -23,6 +23,11 @@ namespace DCL.Multiplayer.Chats
             this.origin.OnMessageAdded -= OriginOnOnMessageAdded;
         }
 
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
+
         public void Send(string message)
         {
             origin.Send(message);

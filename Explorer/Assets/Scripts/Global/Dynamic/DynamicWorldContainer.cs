@@ -68,9 +68,12 @@ namespace Global.Dynamic
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
+        public IChatMessagesBus MessagesBus { get; private set; } = null!;
+
         public void Dispose()
         {
             MvcManager.Dispose();
+            MessagesBus.Dispose();
         }
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
@@ -175,7 +178,7 @@ namespace Global.Dynamic
             var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(roomHub, multiPool, memoryPool);
 
-            var chatMessagesBus = new DebugPanelChatMessageBus(
+            container.MessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
                     new MultiplayerChatMessagesBus(messagePipesHub, roomHub, container.ProfileRepository, new MessageDeduplication()),
                     identityCache,
@@ -212,7 +215,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus, nametagsData),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, nametagsData),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,

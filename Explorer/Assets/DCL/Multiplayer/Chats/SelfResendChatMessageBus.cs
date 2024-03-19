@@ -29,6 +29,11 @@ namespace DCL.Multiplayer.Chats
             this.origin.OnMessageAdded -= OriginOnOnMessageAdded;
         }
 
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
+
         private void OriginOnOnMessageAdded(ChatMessage obj)
         {
             OnMessageAdded?.Invoke(obj);
