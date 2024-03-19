@@ -38,6 +38,7 @@ namespace SceneRuntime
         private RestrictedActionsAPIWrapper restrictedActionsApi;
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
+        private CommunicationsControllerAPIWrapper communicationsControllerApi;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -99,6 +100,7 @@ namespace SceneRuntime
             runtimeWrapper?.Dispose();
             restrictedActionsApi?.Dispose();
             sceneApiWrapper?.Dispose();
+            communicationsControllerApi?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -129,6 +131,11 @@ namespace SceneRuntime
         public void RegisterUserIdentityApi(IProfileRepository profileRepository, IWeb3IdentityCache identityCache)
         {
             engine.AddHostObject("UnityUserIdentityApi", userIdentity = new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
+        }
+
+        public void RegisterCommunicationsControllerApi(ICommunicationsControllerAPI api)
+        {
+            engine.AddHostObject("UnityCommunicationsControllerApi", communicationsControllerApi = new CommunicationsControllerAPIWrapper(api));
         }
 
         public void SetIsDisposing()

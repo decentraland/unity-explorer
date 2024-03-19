@@ -99,6 +99,7 @@ namespace SceneRuntime.Factory
             await AddModuleAsync("SignedFetch.js", moduleDictionary, ct);
             await AddModuleAsync("Testing.js", moduleDictionary, ct);
             await AddModuleAsync("UserIdentity.js", moduleDictionary, ct);
+            await AddModuleAsync("CommunicationsController.js", moduleDictionary, ct);
 
             return moduleDictionary;
         }

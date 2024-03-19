@@ -1,5 +1,7 @@
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using System.Threading;
@@ -53,5 +55,12 @@ namespace SceneRunner
         /// </summary>
         /// <param name="actions"></param>
         void SetGlobalWorldActions(IGlobalWorldActions actions);
+
+        /// <summary>
+        /// Used for passing references from the global world to the scene world
+        /// </summary>
+        /// <param name="messagePipes"></param>
+        /// <param name="room"></param>
+        void SetMultiplayerReferences(IMessagePipesHub messagePipes, IRoomHub room);
     }
 }
