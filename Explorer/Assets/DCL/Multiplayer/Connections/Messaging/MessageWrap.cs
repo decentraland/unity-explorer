@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Pools;
+using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -41,8 +43,10 @@ namespace DCL.Multiplayer.Connections.Messaging
                 throw new Exception("Request already sent");
 
             await UniTask.SwitchToThreadPool();
-            using MemoryWrap memory = memoryPool.Memory(Payload);
-            Payload.WriteTo(memory);
+            using var packetWrap = multiPool.TempResource<Packet>();
+            WritePayloadToPacket(packetWrap.value);
+            using MemoryWrap memory = memoryPool.Memory(packetWrap.value);
+            packetWrap.value.WriteTo(memory);
             dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
             sent = true;
             Dispose();
@@ -51,6 +55,16 @@ namespace DCL.Multiplayer.Connections.Messaging
         public void AddRecipient(string sid)
         {
             recipients.Add(sid);
+        }
+
+        private void WritePayloadToPacket(Packet packet)
+        {
+            var type = typeof(T);
+
+            if (MessageWrapExtensions.WRITES_MAP.TryGetValue(type, out var writeAction) == false)
+                throw new NotSupportedException($"Type {type.FullName} is not supported");
+
+            writeAction!(packet, Payload);
         }
 
         private void Dispose()
@@ -73,5 +87,17 @@ namespace DCL.Multiplayer.Connections.Messaging
         {
             messageWrap.AddRecipients(room.Participants.RemoteParticipantSids());
         }
+
+        public static readonly IReadOnlyDictionary<Type, Action<Packet, object>> WRITES_MAP = new Dictionary<Type, Action<Packet, object>>
+        {
+            [typeof(AnnounceProfileVersion)] = (packet, o) => packet.ProfileVersion = (AnnounceProfileVersion)o,
+            [typeof(Position)] = (packet, o) => packet.Position = (Position)o,
+            [typeof(ProfileRequest)] = (packet, o) => packet.ProfileRequest = (ProfileRequest)o,
+            [typeof(ProfileResponse)] = (packet, o) => packet.ProfileResponse = (ProfileResponse)o,
+            [typeof(Scene)] = (packet, o) => packet.Scene = (Scene)o,
+            [typeof(Voice)] = (packet, o) => packet.Voice = (Voice)o,
+            [typeof(Decentraland.Kernel.Comms.Rfc4.Chat)] = (packet, o) => packet.Chat = (Decentraland.Kernel.Comms.Rfc4.Chat)o,
+            [typeof(Decentraland.Kernel.Comms.Rfc4.Movement)] = (packet, o) => packet.Movement = (Decentraland.Kernel.Comms.Rfc4.Movement)o
+        };
     }
 }
