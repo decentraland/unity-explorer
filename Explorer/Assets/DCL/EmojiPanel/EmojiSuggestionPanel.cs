@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
@@ -25,30 +27,35 @@ namespace DCL.Emoji
             );
         }
 
-        public void SetPanelVisibility(bool isVisible)
-        {
+        public void SetPanelVisibility(bool isVisible) =>
             view.gameObject.SetActive(isVisible);
-        }
 
-        public void SetValues(IEnumerable<EmojiData> foundEmojis)
+        public void SetValues(List<EmojiData> foundEmojis)
         {
-            ReleaseSuggestions();
-            foreach (EmojiData foundEmoji in foundEmojis)
+            for(int i = foundEmojis.Count; i < usedPoolItems.Count; i++)
+                suggestionItemsPool.Release(usedPoolItems[i]);
+
+            for(int i = usedPoolItems.Count - 1; i >= foundEmojis.Count; i--)
+                usedPoolItems.RemoveAt(i);
+
+            for(int i = 0; i < foundEmojis.Count; i++)
             {
-                EmojiSuggestionView emojiSuggestionView = suggestionItemsPool.Get();
-                emojiSuggestionView.SetEmoji(foundEmoji);
-                emojiSuggestionView.EmojiButton.onClick.RemoveAllListeners();
-                emojiSuggestionView.EmojiButton.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji));
-                usedPoolItems.Add(emojiSuggestionView);
+                EmojiData foundEmoji = foundEmojis[i];
+                if(usedPoolItems.Count > i)
+                {
+                    usedPoolItems[i].SetEmoji(foundEmoji);
+                    usedPoolItems[i].EmojiButton.onClick.RemoveAllListeners();
+                    usedPoolItems[i].EmojiButton.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji));
+                }
+                else
+                {
+                    EmojiSuggestionView emojiSuggestionView = suggestionItemsPool.Get();
+                    emojiSuggestionView.SetEmoji(foundEmoji);
+                    emojiSuggestionView.EmojiButton.onClick.RemoveAllListeners();
+                    emojiSuggestionView.EmojiButton.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji));
+                    usedPoolItems.Add(emojiSuggestionView);
+                }
             }
-        }
-
-        private void ReleaseSuggestions()
-        {
-            foreach (EmojiSuggestionView emojiSuggestionView in usedPoolItems)
-                suggestionItemsPool.Release(emojiSuggestionView);
-
-            usedPoolItems.Clear();
         }
     }
 }

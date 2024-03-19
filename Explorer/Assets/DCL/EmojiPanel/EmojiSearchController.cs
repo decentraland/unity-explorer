@@ -46,22 +46,37 @@ namespace DCL.Emoji
             OnSearchTextChanged?.Invoke(searchText);
         }
 
-
-        public void SetValues(IEnumerable<EmojiData> foundEmojis)
+        public void SetValues(List<EmojiData> foundEmojis)
         {
-            ReleaseSearchResults();
-            foreach (EmojiData foundEmoji in foundEmojis)
+            for(int i = foundEmojis.Count; i < usedPoolItems.Count; i++)
+                searchItemsPool.Release(usedPoolItems[i]);
+
+            for(int i = usedPoolItems.Count - 1; i >= foundEmojis.Count; i--)
+                usedPoolItems.RemoveAt(i);
+
+            for(int i = 0; i < foundEmojis.Count; i++)
             {
-                EmojiButton emojiView = searchItemsPool.Get();
-                emojiView.EmojiImage.text = foundEmoji.EmojiCode;
-                emojiView.TooltipText.text = foundEmoji.EmojiName;
-                emojiView.Button.onClick.RemoveAllListeners();
-                emojiView.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji.EmojiCode));
-                usedPoolItems.Add(emojiView);
+                EmojiData foundEmoji = foundEmojis[i];
+                if(usedPoolItems.Count > i)
+                {
+                    usedPoolItems[i].EmojiImage.text = foundEmoji.EmojiCode;
+                    usedPoolItems[i].TooltipText.text = foundEmoji.EmojiName;
+                    usedPoolItems[i].Button.onClick.RemoveAllListeners();
+                    usedPoolItems[i].Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji.EmojiCode));
+                }
+                else
+                {
+                    EmojiButton emojiView = searchItemsPool.Get();
+                    emojiView.EmojiImage.text = foundEmoji.EmojiCode;
+                    emojiView.TooltipText.text = foundEmoji.EmojiName;
+                    emojiView.Button.onClick.RemoveAllListeners();
+                    emojiView.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(foundEmoji.EmojiCode));
+                    usedPoolItems.Add(emojiView);
+                }
             }
         }
 
-        private void ReleaseSearchResults()
+        private void ReleaseAllSearchResults()
         {
             foreach (EmojiButton emojiSuggestionView in usedPoolItems)
                 searchItemsPool.Release(emojiSuggestionView);
@@ -71,7 +86,7 @@ namespace DCL.Emoji
 
         public void Dispose()
         {
-            ReleaseSearchResults();
+            ReleaseAllSearchResults();
         }
     }
 }
