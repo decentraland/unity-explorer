@@ -17,11 +17,13 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             this.roomHub = roomHub;
 
             this.roomHub.IslandRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
+            this.roomHub.SceneRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
         }
 
         ~ThreadSafeRemoveIntentions()
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
+            roomHub.SceneRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
         }
 
         private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)

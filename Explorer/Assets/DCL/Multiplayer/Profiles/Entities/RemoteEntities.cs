@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
@@ -8,6 +9,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
+using LiveKit.Rooms;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,12 +17,14 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public class RemoteEntities : IRemoteEntities
     {
+        private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry)
+        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry)
         {
+            this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
         }
@@ -47,10 +51,32 @@ namespace DCL.Multiplayer.Profiles.Entities
                 if (entityParticipantTable.Has(walletId) == false)
                     continue;
 
+                if (DoesStillExist(walletId))
+                    continue;
+
                 var entity = entityParticipantTable.Entity(walletId);
                 world.Destroy(entity);
                 entityParticipantTable.Release(walletId);
             }
+        }
+
+        private bool DoesStillExist(string wallet)
+        {
+            bool ContainsInRoom(IRoom room)
+            {
+                foreach (string? sid in room.Participants.RemoteParticipantSids())
+                {
+                    if (sid != null
+                        && room.Participants.RemoteParticipant(sid) is { } participant
+                        && participant.Identity == wallet
+                       )
+                        return true;
+                }
+
+                return false;
+            }
+
+            return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());
         }
 
         private void TryCreateRemoteEntity(in RemoteProfile profile, World world)
