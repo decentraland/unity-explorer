@@ -84,7 +84,9 @@ namespace DCL.PluginSystem.Global
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),
-                new ThreadSafeRemoveIntentions(roomHub),
+                new LogRemoveIntentions(
+                    new ThreadSafeRemoveIntentions(roomHub)
+                ),
                 new RemoteProfiles(profileRepository),
                 profileBroadcast,
                 remoteEntities
