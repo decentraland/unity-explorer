@@ -10,7 +10,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMessagePipe origin;
         private readonly Action<string> log;
 
-        public LogMessagePipe(IMessagePipe origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
+        public LogMessagePipe(IMessagePipe origin, string fromPipe) : this(
+            origin,
+            m => ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"From: {fromPipe} - {m}")
+        ) { }
 
         public LogMessagePipe(IMessagePipe origin, Action<string> log)
         {

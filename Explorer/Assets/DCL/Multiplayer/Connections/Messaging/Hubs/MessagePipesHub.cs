@@ -11,8 +11,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
         private readonly IMessagePipe islandPipe;
 
         public MessagePipesHub(IRoomHub roomHub, IMultiPool multiPool, IMemoryPool memoryPool) : this(
-            new MessagePipe(roomHub.SceneRoom().DataPipe, multiPool, memoryPool).WithLog(),
-            new MessagePipe(roomHub.IslandRoom().DataPipe, multiPool, memoryPool).WithLog()
+            new MessagePipe(roomHub.SceneRoom().DataPipe, multiPool, memoryPool).WithLog("Scene"),
+            new MessagePipe(roomHub.IslandRoom().DataPipe, multiPool, memoryPool).WithLog("Island")
             )
         {
         }

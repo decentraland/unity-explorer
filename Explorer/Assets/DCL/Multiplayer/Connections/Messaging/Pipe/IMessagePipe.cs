@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
     public static class MessagePipeExtensions
     {
-        public static LogMessagePipe WithLog(this IMessagePipe messagePipe) =>
-            new (messagePipe);
+        public static LogMessagePipe WithLog(this IMessagePipe messagePipe, string fromPipe) =>
+            new (messagePipe, fromPipe);
     }
 }
