@@ -14,7 +14,18 @@ namespace DCL.Multiplayer.Movement
             ext.Velocity = DampVelocity(ext.Start.velocity, ext.Time, ext.TotalMoveDuration, settings.LinearTime);
 
             if (ext.Velocity.sqrMagnitude > settings.MinSpeed)
-                transComp.Transform.position += ext.Velocity * deltaTime;
+            {
+                var newPosition = transComp.Transform.position + (ext.Velocity * deltaTime);
+
+                // Clamp the Y position to avoid passing the floor (for both cases - above and below the floor)
+                if (transComp.Transform.position.y * newPosition.y < 0)
+                {
+                    newPosition.y = 0;
+                    ext.Velocity.y = 0;
+                }
+
+                transComp.Transform.position = newPosition;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

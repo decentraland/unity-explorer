@@ -5,7 +5,7 @@ namespace DCL.Multiplayer.Movement
 {
     public static class Interpolation
     {
-        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.01f;
+        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.001f;
 
         public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp, float lookAtTimeDelta)
         {
@@ -23,10 +23,11 @@ namespace DCL.Multiplayer.Movement
             else
             {
                 remainedDeltaTime = intComp.Time - intComp.TotalDuration;
-
                 intComp.Time = intComp.TotalDuration;
+
+                lookDirection = intComp.End.velocity != Vector3.zero ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
+
                 transComp.Transform.position = intComp.End.position;
-                lookDirection = intComp.End.velocity;
             }
 
             LookAt(ref transComp, lookDirection);

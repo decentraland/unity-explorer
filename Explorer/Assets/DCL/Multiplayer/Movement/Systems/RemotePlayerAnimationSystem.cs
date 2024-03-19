@@ -19,8 +19,8 @@ namespace DCL.Multiplayer.Movement.Systems
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
     {
         private const float BLEND_EPSILON = 0.01f;
-        private const float MOVEMENT_EPSILON = 0.1f;
         private const float JUMP_EPSILON = 0.01f;
+        private const float MOVEMENT_EPSILON = 0.1f;
 
         private readonly RemotePlayerExtrapolationSettings settings;
 
