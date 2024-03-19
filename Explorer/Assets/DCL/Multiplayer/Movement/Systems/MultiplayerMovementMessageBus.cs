@@ -89,6 +89,9 @@ namespace DCL.Multiplayer.Movement.System
             {
                 await using ExecuteOnMainThreadScope _ = await ExecuteOnMainThreadScope.NewScopeAsync();
 
+                if (cancellationTokenSource.Token.IsCancellationRequested)
+                    return;
+
                 // TODO (Vit): filter out Island messages if Participant is presented in the Room
                 {
                     Decentraland.Kernel.Comms.Rfc4.Movement proto = obj.Payload;
@@ -139,7 +142,7 @@ namespace DCL.Multiplayer.Movement.System
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(delay));
+            await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
         }
 
