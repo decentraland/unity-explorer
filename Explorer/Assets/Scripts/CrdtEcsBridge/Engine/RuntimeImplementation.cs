@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
+using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
