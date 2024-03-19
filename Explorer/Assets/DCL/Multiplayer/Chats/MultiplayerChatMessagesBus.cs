@@ -70,13 +70,13 @@ namespace DCL.Multiplayer.Chats
             SendTo(message, timestamp, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
         }
 
-        private static void SendTo(string message, double timestamp, IMessagePipe messagePipe, IRoom room)
+        private  void SendTo(string message, double timestamp, IMessagePipe messagePipe, IRoom room)
         {
             var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
             chat.AddRecipients(room);
-            chat.SendAndDisposeAsync(DataPacketKind.KindReliable).Forget();
+            chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
         public void Dispose()

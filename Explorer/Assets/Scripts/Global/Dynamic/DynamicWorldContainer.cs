@@ -34,6 +34,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement.System;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
@@ -70,10 +71,16 @@ namespace Global.Dynamic
 
         public IChatMessagesBus MessagesBus { get; private set; } = null!;
 
+        public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
+
+        public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
+
         public void Dispose()
         {
             MvcManager.Dispose();
             MessagesBus.Dispose();
+            ProfileBroadcast.Dispose();
+            MultiplayerMovementMessageBus.Dispose();
         }
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
@@ -178,6 +185,8 @@ namespace Global.Dynamic
             var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(roomHub, multiPool, memoryPool);
 
+            var entityParticipantTable = new EntityParticipantTable();
+
             container.MessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
                     new MultiplayerChatMessagesBus(messagePipesHub, roomHub, container.ProfileRepository, new MessageDeduplication()),
@@ -187,11 +196,15 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
-            var entityParticipantTable = new EntityParticipantTable();
+            container.ProfileBroadcast = new DebounceProfileBroadcast(
+                new ProfileBroadcast(messagePipesHub, roomHub)
+            );
+
+            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, roomHub, entityParticipantTable);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, memoryPool, multiPool, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub),
+                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
@@ -249,7 +262,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(messagePipesHub, roomHub, entityParticipantTable)),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, container.MultiplayerMovementMessageBus),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

@@ -18,8 +18,6 @@ using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -31,8 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
-        private readonly IMemoryPool memoryPool;
-        private readonly IMultiPool multiPool;
+        private readonly IProfileBroadcast profileBroadcast;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly RealFlowLoadingStatus realFlowLoadingStatus;
         private readonly IRemoteEntities remoteEntities;
@@ -42,8 +39,7 @@ namespace DCL.PluginSystem.Global
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IRoomHub roomHub,
             IProfileRepository profileRepository,
-            IMemoryPool memoryPool,
-            IMultiPool multiPool,
+            IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
             RealFlowLoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
@@ -55,8 +51,7 @@ namespace DCL.PluginSystem.Global
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
             this.roomHub = roomHub;
             this.profileRepository = profileRepository;
-            this.memoryPool = memoryPool;
-            this.multiPool = multiPool;
+            this.profileBroadcast = profileBroadcast;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.messagePipesHub = messagePipesHub;
@@ -86,9 +81,7 @@ namespace DCL.PluginSystem.Global
                 new RemoteAnnouncements(messagePipesHub),
                 new ThreadSafeRemoveIntentions(roomHub),
                 new RemoteProfiles(profileRepository),
-                new DebounceProfileBroadcast(
-                    new ProfileBroadcast(messagePipesHub, roomHub)
-                ),
+                profileBroadcast,
                 remoteEntities
             );
 #endif

@@ -25,5 +25,10 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             previousNotify = DateTime.UtcNow;
             return origin.NotifyRemotesAsync();
         }
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

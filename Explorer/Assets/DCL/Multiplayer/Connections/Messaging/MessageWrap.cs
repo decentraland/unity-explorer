@@ -9,6 +9,7 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.DataPipes;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
@@ -39,12 +40,16 @@ namespace DCL.Multiplayer.Connections.Messaging
             sent = false;
         }
 
-        public async UniTaskVoid SendAndDisposeAsync(DataPacketKind dataPacketKind = DataPacketKind.KindLossy)
+        public async UniTaskVoid SendAndDisposeAsync(CancellationToken cancellationToken, DataPacketKind dataPacketKind = DataPacketKind.KindLossy)
         {
             if (sent)
                 throw new Exception("Request already sent");
 
             await UniTask.SwitchToThreadPool();
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             using var packetWrap = multiPool.TempResource<Packet>();
             packetWrap.value.ClearMessage();
             WritePayloadToPacket(packetWrap.value);

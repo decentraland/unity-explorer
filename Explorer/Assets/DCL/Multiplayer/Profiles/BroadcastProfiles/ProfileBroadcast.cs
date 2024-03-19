@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Rooms;
+using System.Threading;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
@@ -13,6 +14,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         private const int CURRENT_PROFILE_VERSION = 0;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IRoomHub roomHub;
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public ProfileBroadcast(IMessagePipesHub messagePipesHub, IRoomHub roomHub)
         {
@@ -27,12 +29,18 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             return new UniTaskVoid();
         }
 
-        private static void SendTo(IMessagePipe messagePipe, IRoom room)
+        private void SendTo(IMessagePipe messagePipe, IRoom room)
         {
             var message = messagePipe.NewMessage<AnnounceProfileVersion>();
             message.Payload.ProfileVersion = CURRENT_PROFILE_VERSION;
             message.AddRecipients(room);
-            message.SendAndDisposeAsync().Forget();
+            message.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
     }
 }

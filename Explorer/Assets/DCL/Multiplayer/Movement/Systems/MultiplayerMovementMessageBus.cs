@@ -9,6 +9,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Rooms;
 using System;
+using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
@@ -16,11 +17,12 @@ using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
 namespace DCL.Multiplayer.Movement.System
 {
-    public class MultiplayerMovementMessageBus
+    public class MultiplayerMovementMessageBus : IDisposable
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
         private World globalWorld = null!;
 
         public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IEntityParticipantTable entityParticipantTable)
@@ -49,12 +51,12 @@ namespace DCL.Multiplayer.Movement.System
             this.globalWorld = world;
         }
 
-        private static void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe, IRoom room)
+        private void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe, IRoom room)
         {
             var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
             WriteToProto(message, messageWrap.Payload);
             messageWrap.AddRecipients(room);
-            messageWrap.SendAndDisposeAsync().Forget();
+            messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
         private static void WriteToProto(FullMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
@@ -139,6 +141,12 @@ namespace DCL.Multiplayer.Movement.System
         {
             await UniTask.Delay(TimeSpan.FromSeconds(delay));
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
     }
 }
