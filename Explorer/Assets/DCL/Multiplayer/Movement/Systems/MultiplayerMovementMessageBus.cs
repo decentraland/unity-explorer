@@ -133,11 +133,7 @@ namespace DCL.Multiplayer.Movement.System
             }
 
             var entity = entityParticipantTable.Entity(walletId);
-
-            if (globalWorld.Has<SimplePriorityQueue<FullMovementMessage>>(entity) == false)
-                globalWorld.Add<SimplePriorityQueue<FullMovementMessage>>(entity); // TODO (Vit): pooling
-
-            return globalWorld.Get<SimplePriorityQueue<FullMovementMessage>>(entity);
+            return globalWorld.AddOrGet<SimplePriorityQueue<FullMovementMessage>>(entity);
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
