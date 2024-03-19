@@ -10,6 +10,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
 using DCL.Multiplayer.Chats;
+using DCL.Multiplayer.Chats.Deduplication;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -176,7 +177,7 @@ namespace Global.Dynamic
 
             var chatMessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(messagePipesHub, roomHub, container.ProfileRepository),
+                    new MultiplayerChatMessagesBus(messagePipesHub, roomHub, container.ProfileRepository, new MessageDeduplication()),
                     identityCache,
                     container.ProfileRepository
                 ),
