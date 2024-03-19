@@ -1,3 +1,4 @@
+using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using System;
 using UnityEngine;
@@ -23,11 +24,11 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             return origin.NewMessage<T>();
         }
 
-        public void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
             log($"LogMessagePipe: Subscribing to messages of type {typeof(T).FullName}");
 
-            origin.Subscribe<T>(rm =>
+            origin.Subscribe<T>(ofCase, rm =>
             {
                 log($"LogMessagePipe: Received message of type {typeof(T).FullName} with content {rm.Payload} from {rm.FromWalletId}");
                 onMessageReceived(rm);

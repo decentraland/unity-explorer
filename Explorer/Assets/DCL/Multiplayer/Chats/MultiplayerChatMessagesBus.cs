@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
+using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
@@ -27,8 +28,8 @@ namespace DCL.Multiplayer.Chats
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
         }
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)

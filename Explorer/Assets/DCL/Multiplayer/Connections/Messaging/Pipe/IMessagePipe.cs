@@ -1,3 +1,4 @@
+using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using System;
 
@@ -7,7 +8,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
     {
         MessageWrap<T> NewMessage<T>() where T: class, IMessage, new();
 
-        void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new();
+        void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new();
 
         class Null : IMessagePipe
         {
@@ -16,7 +17,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
                 throw new Exception("Null implementation");
 
-            public void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+            public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
             {
                 //ignore
             }

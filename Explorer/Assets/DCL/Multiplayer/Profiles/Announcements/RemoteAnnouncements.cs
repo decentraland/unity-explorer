@@ -12,8 +12,8 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 
         public RemoteAnnouncements(IMessagePipesHub messagePipesHub)
         {
-            messagePipesHub.IslandPipe().Subscribe<AnnounceProfileVersion>(OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<AnnounceProfileVersion>(OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<AnnounceProfileVersion>(Packet.MessageOneofCase.ProfileVersion, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<AnnounceProfileVersion>(Packet.MessageOneofCase.ProfileVersion, OnMessageReceived);
         }
 
         private void OnMessageReceived(ReceivedMessage<AnnounceProfileVersion> obj)

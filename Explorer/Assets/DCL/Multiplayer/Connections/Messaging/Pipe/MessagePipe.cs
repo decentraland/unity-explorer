@@ -14,17 +14,6 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
     public class MessagePipe : IMessagePipe
     {
-        private static readonly ISet<string> SUPPORTED_TYPES = new HashSet<string>
-        {
-            nameof(Position),
-            nameof(AnnounceProfileVersion),
-            nameof(ProfileRequest),
-            nameof(ProfileResponse),
-            nameof(Chat),
-            nameof(Scene),
-            nameof(Voice),
-            nameof(Decentraland.Kernel.Comms.Rfc4.Movement),
-        };
         private readonly IDataPipe dataPipe;
         private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
@@ -71,12 +60,9 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
             new (dataPipe, multiPool, memoryPool);
 
-        public void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
-            string currentType = typeof(T).Name;
-
-            if (SUPPORTED_TYPES.Contains(currentType) == false)
-                throw new NotSupportedException($"Type {currentType} is not supported");
+            var currentType = ofCase.ToString()!;
 
             SubscribersList(currentType)
                .Add(tuple =>
