@@ -8,6 +8,7 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
@@ -63,7 +64,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 if (world.Has<SimplePriorityQueue<FullMovementMessage>>(entity))
                     queuePool.Release(world.Get<SimplePriorityQueue<FullMovementMessage>>(entity));
 
-                world.Destroy(entity);
+                world.Add(entity, new DeleteEntityIntention());
                 entityParticipantTable.Release(walletId);
             }
         }
