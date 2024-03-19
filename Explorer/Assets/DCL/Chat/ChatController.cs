@@ -29,13 +29,13 @@ namespace DCL.Chat
         private readonly EmojiSectionView emojiSectionViewPrefab;
         private readonly EmojiButton emojiButtonPrefab;
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
+        private readonly List<ChatMessage> chatMessages = new ();
+        private readonly List<EmojiData> keysWithPrefix = new ();
         private World world;
 
         private string currentMessage = string.Empty;
-        private List<ChatMessage> chatMessages = new ();
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
-        private IEnumerable<EmojiData> keysWithPrefix;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -208,7 +208,7 @@ namespace DCL.Chat
         {
             ct.ThrowIfCancellationRequested();
 
-            keysWithPrefix = await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, ct);
+            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, keysWithPrefix, ct);
 
             emojiSuggestionPanelController.SetValues(keysWithPrefix);
             emojiSuggestionPanelController.SetPanelVisibility(true);

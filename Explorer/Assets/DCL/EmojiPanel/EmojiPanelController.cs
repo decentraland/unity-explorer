@@ -23,8 +23,9 @@ namespace DCL.Emoji
         public readonly Dictionary<string, EmojiData> EmojiNameMapping = new ();
         private readonly Dictionary<string, string> emojiValueMapping = new ();
         private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
+        private readonly List<EmojiData> foundEmojis = new ();
 
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private CancellationTokenSource cts = new ();
 
         private int startDec;
         private int endDec;
@@ -69,7 +70,7 @@ namespace DCL.Emoji
 
         private async UniTaskVoid OnSearchTextChangedAsync(string searchText, CancellationToken ct)
         {
-            IEnumerable<EmojiData> foundEmojis = await DictionaryUtils.GetKeysContainingTextAsync(EmojiNameMapping, searchText, ct);
+            await DictionaryUtils.GetKeysContainingTextAsync(EmojiNameMapping, searchText, foundEmojis, ct);
             emojiSearchController.SetValues(foundEmojis);
         }
 

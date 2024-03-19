@@ -8,9 +8,9 @@ namespace Utility
     {
         private const int THROTTLE_RATE = 100;
 
-        public static async UniTask<IEnumerable<TValue>> GetKeysWithPrefixAsync<TValue>(Dictionary<string, TValue> dictionary, string prefix, CancellationToken ct)
+        public static async UniTask<IEnumerable<TValue>> GetKeysWithPrefixAsync<TValue>(Dictionary<string, TValue> dictionary, string prefix, List<TValue> result, CancellationToken ct)
         {
-            List<TValue> result = new List<TValue>();
+            result.Clear();
             int iterationCount = 0;
             foreach (var key in dictionary.Keys)
             {
@@ -26,9 +26,9 @@ namespace Utility
             return result;
         }
 
-        public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(Dictionary<string, TValue> dictionary, string matchingText, CancellationToken ct)
+        public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(Dictionary<string, TValue> dictionary, string matchingText, List<TValue> result, CancellationToken ct)
         {
-            List<TValue> result = new List<TValue>();
+            result.Clear();
             int iterationCount = 0;
             foreach (var key in dictionary.Keys)
             {
