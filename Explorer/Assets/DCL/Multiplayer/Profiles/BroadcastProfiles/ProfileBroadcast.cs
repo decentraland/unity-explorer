@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
 using Decentraland.Kernel.Comms.Rfc4;
+using LiveKit.Rooms;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
@@ -20,10 +22,17 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         public UniTaskVoid NotifyRemotesAsync()
         {
-            var message = messagePipesHub.IslandPipe().NewMessage<AnnounceProfileVersion>();
+            SendTo(messagePipesHub.IslandPipe(), roomHub.IslandRoom());
+            SendTo(messagePipesHub.ScenePipe(), roomHub.SceneRoom());
+            return new UniTaskVoid();
+        }
+
+        private static void SendTo(IMessagePipe messagePipe, IRoom room)
+        {
+            var message = messagePipe.NewMessage<AnnounceProfileVersion>();
             message.Payload.ProfileVersion = CURRENT_PROFILE_VERSION;
-            message.AddRecipients(roomHub.IslandRoom());
-            return message.SendAndDisposeAsync();
+            message.AddRecipients(room);
+            message.SendAndDisposeAsync().Forget();
         }
     }
 }
