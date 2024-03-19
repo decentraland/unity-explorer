@@ -81,16 +81,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = playerStunComponent.IsStunned,
             };
 
-            // Animator state is not always equal to actual Controller due to the blend shapes. Check ApplyAnimationMovementBlend.cs logic for more details.
+            // We use AnimatorController value directly, because AnimationState is not always equal to actual Controller due to the blend shapes. Check ApplyAnimationMovementBlend.cs logic for more details.
             playerMovement.LastSentMessage.animState.MovementBlendValue = view.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND);
 
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
-            if (settings.SelfSending
-
-                // && movement.Kind != MovementKind.Run
-               )
+            if (settings.SelfSending && movement.Kind != MovementKind.Run)
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }

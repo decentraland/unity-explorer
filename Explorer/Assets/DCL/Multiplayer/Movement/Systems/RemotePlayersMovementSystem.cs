@@ -175,6 +175,7 @@ namespace DCL.Multiplayer.Movement.Systems
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
             InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
+                // Interpolate linearly to/from zero velocities to avoid position overshooting
                 remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ? InterpolationType.Linear :
                 intSettings.InterpolationType;
 

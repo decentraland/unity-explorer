@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement
                 remainedDeltaTime = intComp.Time - intComp.TotalDuration;
                 intComp.Time = intComp.TotalDuration;
 
-                lookDirection = intComp.End.velocity != Vector3.zero ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
+                lookDirection = intComp.End.velocity.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
 
                 transComp.Transform.position = intComp.End.position;
             }
@@ -40,6 +40,7 @@ namespace DCL.Multiplayer.Movement
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
 
+            // Avoid flickering for small direction changes
             if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE)
             {
                 var lookRotation = Quaternion.LookRotation(direction, Vector3.up);

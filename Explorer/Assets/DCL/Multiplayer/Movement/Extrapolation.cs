@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Movement
                 var newPosition = transComp.Transform.position + (ext.Velocity * deltaTime);
 
                 // Clamp the Y position to avoid passing the floor (for both cases - above and below the floor)
-                if (transComp.Transform.position.y * newPosition.y < 0)
+                if (transComp.Transform.position.y * newPosition.y <= 0)
                 {
                     newPosition.y = 0;
                     ext.Velocity.y = 0;
