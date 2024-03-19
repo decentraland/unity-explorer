@@ -95,7 +95,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
-                // TODO (Vit): filter out Island messages if Participant is presented in the Room
                 {
                     Decentraland.Kernel.Comms.Rfc4.Movement proto = obj.Payload;
 
