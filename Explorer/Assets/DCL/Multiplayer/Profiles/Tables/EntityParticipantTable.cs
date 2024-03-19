@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Profiles.Tables
 
         public Entity Entity(string walletId)
         {
-            try { return walletIdToEntity[walletId].EnsureNotNull(); }
+            try { return walletIdToEntity[walletId]; }
             catch (Exception e) { throw new Exception($"Cannot find entity for walletId: {walletId}", e); }
         }
 
