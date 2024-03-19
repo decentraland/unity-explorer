@@ -9,9 +9,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMessagePipe origin;
         private readonly Action<string> log;
 
-        public LogMessagePipe(IMessagePipe origin) : this(origin, Debug.Log)
-        {
-        }
+        public LogMessagePipe(IMessagePipe origin) : this(origin, Debug.Log) { }
 
         public LogMessagePipe(IMessagePipe origin, Action<string> log)
         {
@@ -28,7 +26,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         public void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
             log($"LogMessagePipe: Subscribing to messages of type {typeof(T).FullName}");
-            origin.Subscribe(onMessageReceived);
+
+            origin.Subscribe<T>(rm =>
+            {
+                log($"LogMessagePipe: Received message of type {typeof(T).FullName} with content {rm.Payload} from {rm.FromWalletId}");
+                onMessageReceived(rm);
+            });
         }
     }
 }
