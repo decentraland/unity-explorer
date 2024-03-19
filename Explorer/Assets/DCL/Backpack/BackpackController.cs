@@ -44,7 +44,8 @@ namespace DCL.Backpack
             BackpackGridController gridController,
             BackpackInfoPanelController infoPanelController,
             World world, Entity playerEntity,
-            BackpackEmoteGridController backpackEmoteGridController)
+            BackpackEmoteGridController backpackEmoteGridController,
+            AvatarSlotView[] avatarSlotViews)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -56,7 +57,7 @@ namespace DCL.Backpack
 
             avatarController = new AvatarController(
                 avatarView,
-                view.GetComponentsInChildren<AvatarSlotView>(),
+                avatarSlotViews,
                 rarityInfoPanelBackgrounds,
                 backpackCommandBus,
                 backpackEventBus,
