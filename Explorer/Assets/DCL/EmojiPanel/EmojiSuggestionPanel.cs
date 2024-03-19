@@ -54,7 +54,6 @@ namespace DCL.Emoji
                 {
                     EmojiSuggestionView emojiSuggestionView = suggestionItemsPool.Get();
                     emojiSuggestionView.SetEmoji(foundEmoji);
-                    emojiSuggestionView.EmojiButton.onClick.RemoveAllListeners();
                     usedPoolItems.Add(emojiSuggestionView);
                 }
             }
