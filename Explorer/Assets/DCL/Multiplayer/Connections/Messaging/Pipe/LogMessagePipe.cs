@@ -1,7 +1,7 @@
+using DCL.Diagnostics;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using System;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMessagePipe origin;
         private readonly Action<string> log;
 
-        public LogMessagePipe(IMessagePipe origin) : this(origin, Debug.Log) { }
+        public LogMessagePipe(IMessagePipe origin) : this(origin, ReportHub.WithReport(ReportCategory.LIVEKIT).Log) { }
 
         public LogMessagePipe(IMessagePipe origin, Action<string> log)
         {
