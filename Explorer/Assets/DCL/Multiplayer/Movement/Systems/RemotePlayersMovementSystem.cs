@@ -21,6 +21,7 @@ namespace DCL.Multiplayer.Movement.Systems
         // Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.
         private const int OLD_MESSAGES_BATCH = 10;
         private const int BEHIND_EXTRAPOLATION_BATCH = 10;
+        private const float ZERO_VELOCITY_THRESHOLD = 0.01f;
 
         private readonly IMultiplayerMovementSettings settings;
         private readonly MultiplayerMovementMessageBus messageBus;
@@ -83,7 +84,6 @@ namespace DCL.Multiplayer.Movement.Systems
                     return;
                 }
             }
-
 
             if (playerInbox.Count > 0)
                 HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
@@ -173,7 +173,12 @@ namespace DCL.Multiplayer.Movement.Systems
             ref InterpolationComponent intComp, in NetworkMovementMessage remote, bool isBlend)
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
-            intComp.Restart(remotePlayerMovement.PastMessage, remote, intSettings.UseBlend ? intSettings.BlendType : intSettings.InterpolationType);
+
+            InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
+                remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ? InterpolationType.Linear :
+                intSettings.InterpolationType;
+
+            intComp.Restart(remotePlayerMovement.PastMessage, remote, spline);
 
             if (intSettings.UseBlend && isBlend)
                 SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);

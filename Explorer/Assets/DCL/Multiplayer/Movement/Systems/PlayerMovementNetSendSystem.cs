@@ -31,7 +31,8 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        private void SendPlayerNetMovement([Data] float t, ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, ref CharacterAnimationComponent anim, ref StunComponent stun, ref MovementInputComponent move,
+        private void SendPlayerNetMovement([Data] float t, ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, ref CharacterAnimationComponent anim, ref StunComponent stun,
+            ref MovementInputComponent move,
             ref JumpInputComponent jump)
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
@@ -67,7 +68,7 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view,  in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
 
@@ -87,8 +88,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending
+
                 // && movement.Kind != MovementKind.Run
-                )
+               )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }
