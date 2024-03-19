@@ -6,27 +6,41 @@ namespace Utility
 {
     public static class DictionaryUtils
     {
+        private const int THROTTLE_RATE = 100;
+
         public static async UniTask<IEnumerable<TValue>> GetKeysWithPrefixAsync<TValue>(Dictionary<string, TValue> dictionary, string prefix, CancellationToken ct)
         {
             List<TValue> result = new List<TValue>();
+            int iterationCount = 0;
             foreach (var key in dictionary.Keys)
             {
+                iterationCount++;
+                if (iterationCount % THROTTLE_RATE == 0)
+                {
+                    await UniTask.Yield(cancellationToken: ct);
+                    iterationCount = 0;
+                }
                 if (key.StartsWith(prefix))
                     result.Add(dictionary[key]);
             }
-            await UniTask.CompletedTask;
             return result;
         }
 
         public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(Dictionary<string, TValue> dictionary, string matchingText, CancellationToken ct)
         {
             List<TValue> result = new List<TValue>();
+            int iterationCount = 0;
             foreach (var key in dictionary.Keys)
             {
+                iterationCount++;
+                if (iterationCount % THROTTLE_RATE == 0)
+                {
+                    await UniTask.Yield(cancellationToken: ct);
+                    iterationCount = 0;
+                }
                 if (key.Contains(matchingText))
                     result.Add(dictionary[key]);
             }
-            await UniTask.CompletedTask;
             return result;
         }
     }
