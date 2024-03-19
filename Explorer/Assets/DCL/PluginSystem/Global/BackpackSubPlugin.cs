@@ -72,6 +72,10 @@ namespace DCL.PluginSystem.Global
             var infoPanelController = new BackpackInfoPanelController(avatarView.backpackInfoPanelView, backpackEventBus,
                 categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController);
 
+            EmotesView emoteView = view.GetComponentInChildren<EmotesView>();
+
+            ObjectPool<BackpackItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
+
             await infoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
@@ -85,8 +89,13 @@ namespace DCL.PluginSystem.Global
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                     backpackEquipStatusController, sortController, pageButtonView, gridPool, builder.World);
 
+                var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
+                    web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, backpackEquipStatusController,
+                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider);
+
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
-                    characterPreviewFactory, gridController, infoPanelController, builder.World, args.PlayerEntity);
+                    characterPreviewFactory, gridController, infoPanelController, builder.World, args.PlayerEntity,
+                    emoteGridController);
             };
         }
 

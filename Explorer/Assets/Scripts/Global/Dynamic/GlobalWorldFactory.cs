@@ -2,8 +2,8 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
@@ -156,7 +156,9 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity);
+            IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
+
+            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);

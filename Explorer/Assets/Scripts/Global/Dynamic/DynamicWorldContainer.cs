@@ -69,8 +69,6 @@ namespace Global.Dynamic
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
-        public IEmoteProvider? EmoteProvider { get; private set; }
-
         public void Dispose()
         {
             MvcManager.Dispose();
@@ -271,11 +269,6 @@ namespace Global.Dynamic
             BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder, dynamicWorldParams.Realms);
 
             return (container, true);
-        }
-
-        public void InitializeWorldDependencies(World world, Entity playerEntity)
-        {
-            EmoteProvider = new EcsEmoteProvider(world, realmData!);
         }
     }
 }

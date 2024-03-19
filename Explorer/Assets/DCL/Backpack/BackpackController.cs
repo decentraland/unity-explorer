@@ -28,6 +28,7 @@ namespace DCL.Backpack
 
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly BackpackEmoteGridController backpackEmoteGridController;
         private CancellationTokenSource animationCts;
 
         private CancellationTokenSource profileLoadingCts;
@@ -42,12 +43,14 @@ namespace DCL.Backpack
             ICharacterPreviewFactory characterPreviewFactory,
             BackpackGridController gridController,
             BackpackInfoPanelController infoPanelController,
-            World world, Entity playerEntity)
+            World world, Entity playerEntity,
+            BackpackEmoteGridController backpackEmoteGridController)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.backpackEmoteGridController = backpackEmoteGridController;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -90,6 +93,7 @@ namespace DCL.Backpack
         {
             view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
             avatarController?.Dispose();
+            backpackEmoteGridController.Dispose();
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController?.Dispose();
@@ -110,6 +114,7 @@ namespace DCL.Backpack
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
             avatarController.RequestInitialWearablesPage();
+            backpackEmoteGridController.RequestAndFillEmotes(1);
             backpackCharacterPreviewController.Initialize(avatar);
 
             if (!avatarShapeComponent.WearablePromise.IsConsumed)

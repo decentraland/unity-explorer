@@ -172,8 +172,6 @@ namespace Global.Dynamic
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory);
 
-                dynamicWorldContainer.InitializeWorldDependencies(globalWorld.EcsWorld, playerEntity);
-
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 

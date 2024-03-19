@@ -93,6 +93,41 @@ namespace DCL.Backpack
             );
         }
 
+        public void RequestAndFillEmotes(int pageNumber)
+        {
+            loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
+
+            SetGridAsLoading();
+
+            async UniTaskVoid RequestPageAsync(CancellationToken ct)
+            {
+                (IReadOnlyList<IEmote>? emotes, int totalAmount) = await emoteProvider.GetOwnedEmotesAsync(web3IdentityCache.Identity!.Address,
+                    pageNum: pageNumber, pageSize: CURRENT_PAGE_SIZE,
+                    orderOperation: currentOrder,
+                    name: currentSearch,
+                    onChainCollectionsOnly: onChainEmotesOnly,
+                    ct: ct);
+
+                if (emotes.Count == 0)
+                {
+                    view.NoSearchResults.SetActive(!string.IsNullOrEmpty(currentSearch));
+                    view.NoCategoryResults.SetActive(!string.IsNullOrEmpty(currentCategory));
+                    view.RegularResults.SetActive(string.IsNullOrEmpty(currentSearch) && string.IsNullOrEmpty(currentCategory));
+                }
+                else
+                {
+                    view.NoSearchResults.SetActive(false);
+                    view.NoCategoryResults.SetActive(false);
+                    view.RegularResults.SetActive(true);
+                }
+
+                SetGridElements(emotes);
+                pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
+            }
+
+            RequestPageAsync(loadElementsCancellationToken!.Token).Forget();
+        }
+
         private void SetGridAsLoading()
         {
             ClearPoolElements();
@@ -165,41 +200,6 @@ namespace DCL.Backpack
         {
             onChainEmotesOnly = collectiblesOnly;
             RequestAndFillEmotes(1);
-        }
-
-        private void RequestAndFillEmotes(int pageNumber)
-        {
-            loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
-
-            SetGridAsLoading();
-
-            async UniTaskVoid RequestPageAsync(CancellationToken ct)
-            {
-                (IReadOnlyList<IEmote>? emotes, int totalAmount) = await emoteProvider.GetOwnedEmotesAsync(web3IdentityCache.Identity!.Address,
-                    pageNum: pageNumber, pageSize: CURRENT_PAGE_SIZE,
-                    orderOperation: currentOrder,
-                    name: currentSearch,
-                    onChainCollectionsOnly: onChainEmotesOnly,
-                    ct: ct);
-
-                if (emotes.Count == 0)
-                {
-                    view.NoSearchResults.SetActive(!string.IsNullOrEmpty(currentSearch));
-                    view.NoCategoryResults.SetActive(!string.IsNullOrEmpty(currentCategory));
-                    view.RegularResults.SetActive(string.IsNullOrEmpty(currentSearch) && string.IsNullOrEmpty(currentCategory));
-                }
-                else
-                {
-                    view.NoSearchResults.SetActive(false);
-                    view.NoCategoryResults.SetActive(false);
-                    view.RegularResults.SetActive(true);
-                }
-
-                SetGridElements(emotes);
-                pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
-            }
-
-            RequestPageAsync(loadElementsCancellationToken!.Token).Forget();
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment emote, BackpackItemView itemView, CancellationToken ct)
