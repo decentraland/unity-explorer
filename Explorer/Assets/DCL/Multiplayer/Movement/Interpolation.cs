@@ -17,7 +17,8 @@ namespace DCL.Multiplayer.Movement
             if (intComp.Time < intComp.TotalDuration)
             {
                 transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
-                lookDirection = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType) - transComp.Transform.position; // look into future step
+                var nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
+                lookDirection = nextStep - transComp.Transform.position; // look into future step
             }
             else
             {
@@ -40,8 +41,6 @@ namespace DCL.Multiplayer.Movement
 
             if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE)
             {
-                Debug.Log($"VVV {direction.sqrMagnitude} {direction}");
-
                 var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
                 transComp.Transform.rotation = lookRotation;
             }

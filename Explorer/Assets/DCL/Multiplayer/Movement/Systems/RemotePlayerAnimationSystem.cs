@@ -19,6 +19,7 @@ namespace DCL.Multiplayer.Movement.Systems
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
     {
         private const float BLEND_EPSILON = 0.01f;
+        private const float MOVEMENT_EPSILON = 0.1f;
         private readonly RemotePlayerExtrapolationSettings settings;
 
         public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings) : base(world)
@@ -28,12 +29,12 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
-            UpdatePlayersAnimationQuery(World, t);
+            UpdatePlayersAnimationQuery(World);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdatePlayersAnimation([Data] float deltaTime, in IAvatarView view, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement
+        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement
           , ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
             if (remotePlayerMovement.RequireAnimationsUpdate)
@@ -43,16 +44,13 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             if (intComp.Enabled)
-                InterpolateAnimations(view, deltaTime, intComp.TotalDuration, ref anim, intComp.Start.animState, intComp.End.animState);
+                InterpolateAnimations(view, ref anim, intComp);
             else if (extComp.Enabled)
-                ExtrapolateAnimations(view, ref anim, ref extComp, settings.LinearTime);
+                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
-        private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, ref ExtrapolationComponent extComp, float linearTime)
+        private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, float time, float totalMoveDuration, float linearTime)
         {
-            float time = extComp.Time;
-            float totalMoveDuration = extComp.TotalMoveDuration;
-
             if (time >= totalMoveDuration)
             {
                 anim.States.MovementBlendValue = 0f;
@@ -70,16 +68,26 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateBlends(view, anim.States);
         }
 
-        private static void InterpolateAnimations(IAvatarView view, float t, float totalDuration, ref CharacterAnimationComponent anim, AnimationStates startState,
-            AnimationStates endStates)
+        private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
         {
-            anim.States.MovementBlendValue = Mathf.Lerp(startState.MovementBlendValue, endStates.MovementBlendValue, t / totalDuration);
-            anim.States.SlideBlendValue = Mathf.Lerp(startState.SlideBlendValue, endStates.SlideBlendValue, t / totalDuration);
+            AnimationStates startAnimStates = intComp.Start.animState;
+            AnimationStates endAnimStates = intComp.End.animState;
+
+            bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON;
+            if (bothPointBlendsAreZero && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > MOVEMENT_EPSILON)
+            {
+                Debug.Log($"VVV recive ZERO!!!");
+            }
+            else
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
+                anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
+            }
 
             UpdateBlends(view, anim.States);
         }
 
-        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, AnimationStates animState, bool isStunned)
+        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, in AnimationStates animState, bool isStunned)
         {
             if (animationComponent.States.Equals(animState))
                 return;
@@ -101,6 +109,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private static void UpdateBlends(IAvatarView view, in AnimationStates animStates)
         {
+            if (!animStates.IsGrounded)
+                return;
+
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
             view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
         }
