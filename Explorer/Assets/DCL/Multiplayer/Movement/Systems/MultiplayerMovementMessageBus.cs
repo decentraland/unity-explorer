@@ -136,7 +136,11 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             var entity = entityParticipantTable.Entity(walletId);
-            return globalWorld.AddOrGet(entity, queuePool.Get());
+
+            if (globalWorld.Has<SimplePriorityQueue<FullMovementMessage>>(entity) == false)
+                globalWorld.Add(entity, queuePool.Get());
+
+            return globalWorld.Get<SimplePriorityQueue<FullMovementMessage>>(entity);
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
