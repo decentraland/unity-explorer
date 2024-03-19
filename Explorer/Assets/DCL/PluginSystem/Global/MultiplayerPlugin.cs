@@ -12,6 +12,7 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles;
+using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -26,9 +27,10 @@ namespace DCL.PluginSystem.Global
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly RealFlowLoadingStatus realFlowLoadingStatus;
 
         public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IProfileRepository profileRepository, IMemoryPool memoryPool, IMultiPool multiPool,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder, RealFlowLoadingStatus realFlowLoadingStatus)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -36,6 +38,7 @@ namespace DCL.PluginSystem.Global
             this.memoryPool = memoryPool;
             this.multiPool = multiPool;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.realFlowLoadingStatus = realFlowLoadingStatus;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
@@ -46,7 +49,7 @@ namespace DCL.PluginSystem.Global
             var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
 
             DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
-            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom);
+            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new ThreadSafeRemoteAnnouncements(roomHub, multiPool),

@@ -2,7 +2,9 @@
 using DCL.ChangeRealmPrompt;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
+using DCL.NftPrompt;
 using DCL.TeleportPrompt;
+using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
@@ -33,10 +35,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool OpenExternalUrl(string url)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "OpenExternalUrl: Player is not inside of scene");
                 return false;
-            }
 
             OpenUrlAsync(url).Forget();
             return true;
@@ -45,10 +44,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void MovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Player is not inside of scene");
                 return;
-            }
 
             Vector3 newAbsolutePosition = sceneData.Geometry.BaseParcelPosition + newRelativePosition;
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
@@ -66,10 +62,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void TeleportTo(Vector2Int coords)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TeleportTo: Player is not inside of scene");
                 return;
-            }
 
             TeleportAsync(coords).Forget();
         }
@@ -77,10 +70,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool ChangeRealm(string message, string realm)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "ChangeRealm: Player is not inside of scene");
                 return false;
-            }
 
             ChangeRealmAsync(message, realm).Forget();
             return true;
@@ -89,10 +79,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void TriggerEmote(string predefinedEmote)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TriggerEmote: Player is not inside of scene");
                 return;
-            }
 
             // TODO: Implement emote triggering (blocked until emotes are implemented)...
         }
@@ -100,14 +87,27 @@ namespace CrdtEcsBridge.RestrictedActions
         public bool TriggerSceneEmote(string src, bool loop)
         {
             if (!sceneStateProvider.IsCurrent)
-            {
-                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "TriggerSceneEmote: Player is not inside of scene");
                 return false;
-            }
 
             // TODO: Implement scene emote triggering (blocked until emotes are implemented)...
 
             return true;
+        }
+
+        public bool OpenNftDialog(string urn)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return false;
+
+            if (!NftUtils.TryParseUrn(urn, out string contractAddress, out string tokenId))
+            {
+                ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, $"OpenNftDialog: Urn '{urn}' is not valid");
+                return false;
+            }
+
+            OpenNftDialogAsync(contractAddress, tokenId).Forget();
+            return true;
+
         }
 
         private async UniTask OpenUrlAsync(string url)
@@ -138,6 +138,12 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+        }
+
+        private async UniTask OpenNftDialogAsync(string contractAddress, string tokenId)
+        {
+            await UniTask.SwitchToMainThread();
+            await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(contractAddress, tokenId)));
         }
 
         public void Dispose() { }

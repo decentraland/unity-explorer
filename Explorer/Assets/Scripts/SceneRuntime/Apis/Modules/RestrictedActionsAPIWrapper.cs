@@ -56,5 +56,9 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public bool TriggerSceneEmote(string src, bool loop) =>
             api.TriggerSceneEmote(src, loop);
+
+        [UsedImplicitly]
+        public bool OpenNftDialog(string urn) =>
+            api.OpenNftDialog(urn);
     }
 }
