@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Chats.Deduplication
         }
 
         [Serializable]
-        private struct RegisteredStamp
+        private struct RegisteredStamp : IEquatable<RegisteredStamp>
         {
             public string walletId;
             public double timestamp;
@@ -44,6 +44,16 @@ namespace DCL.Multiplayer.Chats.Deduplication
                 this.walletId = walletId;
                 this.timestamp = timestamp;
             }
+
+            public bool Equals(RegisteredStamp other) =>
+                walletId == other.walletId
+                && timestamp.Equals(other.timestamp);
+
+            public override bool Equals(object? obj) =>
+                obj is RegisteredStamp other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(walletId, timestamp);
         }
     }
 }
