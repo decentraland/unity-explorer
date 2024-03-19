@@ -20,6 +20,8 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private const float BLEND_EPSILON = 0.01f;
         private const float MOVEMENT_EPSILON = 0.1f;
+        private const float JUMP_EPSILON = 0.01f;
+
         private readonly RemotePlayerExtrapolationSettings settings;
 
         public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings) : base(world)
@@ -34,8 +36,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim, ref RemotePlayerMovementComponent remotePlayerMovement
-          , ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
+        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim,
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
             if (remotePlayerMovement.RequireAnimationsUpdate)
             {
@@ -65,26 +67,60 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
             }
 
-            UpdateBlends(view, anim.States);
+            UpdateAnimatorBlends(view, anim.States);
         }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
         {
+            if (!anim.States.IsJumping && intComp.End.animState.IsJumping && Mathf.Abs(intComp.Start.position.y - intComp.End.position.y) > JUMP_EPSILON)
+                AnimateFutureJump(view, ref anim, intComp.End.animState);
+
             AnimationStates startAnimStates = intComp.Start.animState;
             AnimationStates endAnimStates = intComp.End.animState;
 
             bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON;
+
             if (bothPointBlendsAreZero && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > MOVEMENT_EPSILON)
-            {
-                Debug.Log($"VVV recive ZERO!!!");
-            }
+                BlendBetweenTwoZeroMovementPoints(ref anim, intComp);
             else
             {
                 anim.States.MovementBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
-                anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
+                anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.SlideBlendValue, endAnimStates.SlideBlendValue, intComp.Time / intComp.TotalDuration);
             }
 
-            UpdateBlends(view, anim.States);
+            UpdateAnimatorBlends(view, anim.States);
+        }
+
+        private static void AnimateFutureJump(IAvatarView view, ref CharacterAnimationComponent anim, in AnimationStates animState)
+        {
+            anim.States.IsGrounded = animState.IsGrounded;
+            anim.States.IsJumping = animState.IsJumping;
+
+            view.SetAnimatorTrigger(AnimationHashes.JUMP);
+
+            view.SetAnimatorBool(AnimationHashes.GROUNDED, anim.States.IsGrounded);
+            view.SetAnimatorBool(AnimationHashes.JUMPING, anim.States.IsJumping);
+        }
+
+        private static void BlendBetweenTwoZeroMovementPoints(ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
+        {
+            float speed = Vector3.Distance(intComp.Start.position, intComp.End.position) / intComp.TotalDuration;
+
+            float midPointBlendValue = speed > 9.5f ? 3f :
+                speed > 4 ? 2f : 1f;
+
+            float lerpValue = intComp.Time / intComp.TotalDuration;
+
+            if (intComp.Time < intComp.TotalDuration / 2)
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(intComp.Start.animState.MovementBlendValue, midPointBlendValue, lerpValue);
+                anim.States.SlideBlendValue = Mathf.Lerp(intComp.Start.animState.SlideBlendValue, midPointBlendValue, lerpValue);
+            }
+            else
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(midPointBlendValue, intComp.End.animState.MovementBlendValue, lerpValue);
+                anim.States.SlideBlendValue = Mathf.Lerp(midPointBlendValue, intComp.End.animState.SlideBlendValue, lerpValue);
+            }
         }
 
         private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, in AnimationStates animState, bool isStunned)
@@ -92,7 +128,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (animationComponent.States.Equals(animState))
                 return;
 
-            UpdateBlends(view, animState);
+            UpdateAnimatorBlends(view, animState);
 
             if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
@@ -107,7 +143,7 @@ namespace DCL.Multiplayer.Movement.Systems
             animationComponent.States = animState;
         }
 
-        private static void UpdateBlends(IAvatarView view, in AnimationStates animStates)
+        private static void UpdateAnimatorBlends(IAvatarView view, in AnimationStates animStates)
         {
             if (!animStates.IsGrounded)
                 return;
