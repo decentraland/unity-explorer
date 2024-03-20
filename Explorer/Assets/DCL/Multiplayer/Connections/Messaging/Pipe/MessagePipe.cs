@@ -25,7 +25,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             dataPipe,
             multiPool,
             memoryPool,
-            new MessageParser<Packet>(multiPool.Get<Packet>)
+            new MessageParser<Packet>(() =>
+            {
+                var packet = multiPool.Get<Packet>();
+                packet.ClearMessage();
+                return packet;
+            })
         ) { }
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser)
@@ -53,6 +58,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant)
         {
             await UniTask.SwitchToMainThread();
+
             foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
                 action((packet, participant));
         }

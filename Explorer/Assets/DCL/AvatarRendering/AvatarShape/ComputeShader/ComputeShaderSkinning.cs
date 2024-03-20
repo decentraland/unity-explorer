@@ -220,16 +220,22 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase))
             {
                 (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.EYES], meshRenderer, avatarShapeComponent);
+                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+                avatarMaterial.SetInt("_ZWriteMode", 0);
             }
             else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase))
             {
                 (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.EYEBROWS], meshRenderer, avatarShapeComponent);
                 avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.HairColor);
+                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+                avatarMaterial.SetInt("_ZWriteMode", 0);
             }
             else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
             {
                 (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.MOUTH], meshRenderer, avatarShapeComponent);
                 avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.SkinColor);
+                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+                avatarMaterial.SetInt("_ZWriteMode", 0);
             }
             else
             {
@@ -240,12 +246,26 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 var poolMaterialSetup = poolHandler.GetMaterialPool(materialIndexInPool);
                 avatarMaterial = poolMaterialSetup.Pool.Get();
 
-                if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON"))
+                if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON") || originalMaterial.GetFloat("_AlphaClip") > 0)
                 {
-                    avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
-                    avatarMaterial.SetFloat("_Clipping_Level", 0.49f);
+                    avatarMaterial.EnableKeyword("_IS_CLIPPING_MODE");
+                    avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");
+                    Color baseColour = originalMaterial.GetColor("_BaseColor");
+                    avatarMaterial.SetFloat("_Tweak_transparency", 1.0f - baseColour.a);
+                    avatarMaterial.SetFloat("_Clipping_Level", originalMaterial.GetFloat("_Cutoff"));
+                    avatarMaterial.SetInt("_ZWriteMode", 1);
+                    avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
                 }
-
+                if (originalMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT") || originalMaterial.GetFloat("_Surface") > 0)
+                {
+                    avatarMaterial.DisableKeyword("_IS_CLIPPING_MODE");
+                    avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
+                    Color baseColour = originalMaterial.GetColor("_BaseColor");
+                    avatarMaterial.SetFloat("_Tweak_transparency", 0.0f - (1.0f - baseColour.a));
+                    avatarMaterial.SetFloat("_Clipping_Level", originalMaterial.GetFloat("_Cutoff"));
+                    avatarMaterial.SetInt("_ZWriteMode", 0);
+                    avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                }
 
                 slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
             }
