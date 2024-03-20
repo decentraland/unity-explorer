@@ -3,6 +3,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -21,8 +22,13 @@ namespace DCL.Character.CharacterMotion.Emotes
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER").transform;
         }
 
-        public bool Play(GameObject mainAsset, in AvatarBase avatarBase, ref CharacterAnimationComponent animationComponent)
+        public bool Play(GameObject mainAsset, bool isLooping, in AvatarBase avatarBase, ref CharacterAnimationComponent animationComponent)
         {
+            Animator animator = mainAsset.GetComponent<Animator>();
+
+            if (animator == null)
+                return false;
+
             EmoteReferences? emoteInUse = animationComponent.States.CurrentEmoteReference;
 
             if (emoteInUse != null)
@@ -35,7 +41,7 @@ namespace DCL.Character.CharacterMotion.Emotes
             }
 
             if (!pools.ContainsKey(mainAsset))
-                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset)));
+                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping)));
 
             EmoteReferences? emoteReferences = pools[mainAsset].Get();
             if (!emoteReferences) return false;
@@ -49,7 +55,7 @@ namespace DCL.Character.CharacterMotion.Emotes
             {
                 animationComponent.States.WasEmoteJustTriggered = true;
                 animationComponent.States.EmoteClip = emoteReferences.avatarClip;
-                animationComponent.States.EmoteLoop = emoteReferences.avatarClip.isLooping;
+                animationComponent.States.EmoteLoop = isLooping;
             }
 
             if (emoteReferences.propClip != null)
@@ -60,7 +66,7 @@ namespace DCL.Character.CharacterMotion.Emotes
             return true;
         }
 
-        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
+        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool isLooping)
         {
             GameObject? mainGameObject = Object.Instantiate(mainAsset);
 
@@ -77,6 +83,14 @@ namespace DCL.Character.CharacterMotion.Emotes
             else
                 foreach (AnimationClip animationClip in clips)
                 {
+                    if (isLooping)
+                    {
+                        animationClip.wrapMode = WrapMode.Loop;
+                        AnimationClipSettings? settings = AnimationUtility.GetAnimationClipSettings(animationClip);
+                        settings.loopTime = true;
+                        AnimationUtility.SetAnimationClipSettings(animationClip, settings);
+                    }
+
                     if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
                         references.avatarClip = animationClip;
 

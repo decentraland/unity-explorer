@@ -94,6 +94,8 @@ namespace CommunicationData.URLHelpers
 
         public URN Shorten()
         {
+            if (string.IsNullOrEmpty(urn)) return urn;
+
             int index = -1;
 
             for (var i = 0; i < SHORTEN_URN_PARTS; i++)

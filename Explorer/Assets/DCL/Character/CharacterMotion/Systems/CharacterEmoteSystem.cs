@@ -48,18 +48,27 @@ namespace DCL.CharacterMotion.Systems
 
             if (emoteCache.TryGetEmote(emoteId, out IEmote emote))
             {
+                // emote failed to load? remove intent
+                if (emote.ManifestResult is { IsInitialized: true, Exception: not null })
+                {
+                    ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                    World.Remove<CharacterEmoteIntent>(entity);
+                    return;
+                }
+
                 StreamableLoadingResult<WearableAsset>? streamableAsset = emote.WearableAssetResults[0];
 
+                // the emote is still loading? dont remove the intent yet, wait for it
                 if (streamableAsset == null) return;
                 if (!streamableAsset.Value.Succeeded) return;
-
-                if (streamableAsset.Value.Exception != null)
-                    return;
+                if (streamableAsset.Value.Exception != null) return;
 
                 GameObject? mainAsset = streamableAsset.Value.Asset?.GetMainAsset<GameObject>();
 
                 if (mainAsset == null) return;
-                if (!emotePlayer.Play(mainAsset, in avatarBase, ref animationComponent)) return;
+
+                if (!emotePlayer.Play(mainAsset, emote.IsLooping(), in avatarBase, ref animationComponent))
+                    ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.dto.version} should be >= 16");
 
                 World.Remove<CharacterEmoteIntent>(entity);
             }

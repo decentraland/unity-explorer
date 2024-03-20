@@ -8,5 +8,7 @@ namespace DCL.AvatarRendering.Emotes
     {
         StreamableLoadingResult<EmoteDTO> Model { get; set; }
         StreamableLoadingResult<AudioClip>? AudioAssetResult { get; set; }
+
+        bool IsLooping();
     }
 }

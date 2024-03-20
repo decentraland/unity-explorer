@@ -84,6 +84,9 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsUnisex() =>
             Model.Asset.metadata.emoteDataADR74.representations.Length > 1;
 
+        public bool IsLooping() =>
+            Model.Asset.metadata.emoteDataADR74.loop;
+
         public void GetHidingList(string bodyShapeType, HashSet<string> hideListResult)
         {
             EmoteDTO.Metadata.Representation? representation = GetRepresentation(bodyShapeType);

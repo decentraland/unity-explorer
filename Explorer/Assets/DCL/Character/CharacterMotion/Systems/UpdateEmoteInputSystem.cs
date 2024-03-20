@@ -1,12 +1,13 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.Emotes;
+using CommunicationData.URLHelpers;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.Profiles;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
@@ -18,21 +19,12 @@ namespace DCL.CharacterMotion.Systems
     {
         private readonly Dictionary<string, int> actionNameById = new ();
         private DCLInput.EmotesActions emotesActions;
-        private readonly string reportCategory;
         private int triggeredEmote = -1;
 
-        private static readonly List<string> embedEmotes = new ()
-        {
-            "confetti",
-            "dance",
-            "dab",
-            "clap",
-        };
-
-        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions, IEmoteCache emoteCache) : base(world)
+        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions) : base(world)
         {
             this.emotesActions = emotesActions;
-            reportCategory = GetReportCategory();
+            GetReportCategory();
             InputActionMap inputActionMap = emotesActions.Get();
 
             for (int i = 0; i < 8; i++)
@@ -61,32 +53,29 @@ namespace DCL.CharacterMotion.Systems
 
         private void OnSlotPerformed(InputAction.CallbackContext obj)
         {
-            var emoteIndex = actionNameById[obj.action.name];
+            int emoteIndex = actionNameById[obj.action.name];
             triggeredEmote = emoteIndex;
         }
 
         protected override void Update(float t)
         {
-            if (triggeredEmote >= 0)
-            {
-                // TODO: here we have to convert the emote wheel id to an emote id, for now we are going to load one from the embedded list
-                if (triggeredEmote < embedEmotes.Count)
-                {
-                    string hotkeyEmote = embedEmotes[triggeredEmote];
-
-                    TriggerEmoteQuery(World, hotkeyEmote);
-
-                    triggeredEmote = -1;
-                }
-            }
+            if (triggeredEmote < 0) return;
+            TriggerEmoteQuery(World, triggeredEmote);
+            triggeredEmote = -1;
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] string emoteId, in Entity entity)
+        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
         {
-            World.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId});
+            IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
+            if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
+
+            URN emoteId = emotes[emoteIndex].Shorten();
+
+            if (!string.IsNullOrEmpty(emoteId))
+                World.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
         }
     }
 }

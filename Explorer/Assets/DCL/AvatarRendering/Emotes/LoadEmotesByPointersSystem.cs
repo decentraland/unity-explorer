@@ -345,9 +345,6 @@ namespace DCL.AvatarRendering.Emotes
 
             if (component.WearableAssetResults[intention.BodyShape] == null)
             {
-                if (!component.ManifestResult.HasValue) return false;
-                if (component.ManifestResult.Value is { IsInitialized: true, Succeeded: false }) return false;
-
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
                 var promise = AssetBundlePromise.Create(World,

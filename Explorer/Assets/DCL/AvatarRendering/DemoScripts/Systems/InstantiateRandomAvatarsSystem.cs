@@ -167,7 +167,6 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         protected override void Update(float t)
         {
             SetDebugViewActivity();
-
             FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World), in settings.GetCharacterSettings(World));
         }
 
