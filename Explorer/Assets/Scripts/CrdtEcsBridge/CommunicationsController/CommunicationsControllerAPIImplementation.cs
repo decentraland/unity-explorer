@@ -25,12 +25,13 @@ namespace CrdtEcsBridge.CommunicationsController
             Uint8Array = 2,
         }
 
-        public CommunicationsControllerAPIImplementation(
-            ISceneData sceneData,
-            IMessagePipesHub messagePipesHub)
+        public CommunicationsControllerAPIImplementation(ISceneData sceneData, IMessagePipesHub messagePipesHub)
         {
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
+
+            if (messagePipesHub == null)
+                return;
 
             messagePipesHub.IslandPipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
