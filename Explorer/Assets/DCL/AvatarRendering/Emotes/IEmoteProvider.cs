@@ -23,8 +23,7 @@ namespace DCL.AvatarRendering.Emotes
 
         UniTask<(IReadOnlyList<IEmote> emotes, int totalAmount)> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
             int? pageNum = null, int? pageSize = null, URN? collectionId = null,
-            OrderOperation? orderOperation = null, string? name = null,
-            bool? onChainCollectionsOnly = false);
+            OrderOperation? orderOperation = null, string? name = null);
 
         UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, BodyShape bodyShape, CancellationToken ct);
     }

@@ -33,8 +33,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public async UniTask<(IReadOnlyList<IEmote> emotes, int totalAmount)> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
             int? pageNum = null, int? pageSize = null, URN? collectionId = null,
-            IEmoteProvider.OrderOperation? orderOperation = null, string? name = null,
-            bool? onChainCollectionsOnly = false)
+            IEmoteProvider.OrderOperation? orderOperation = null, string? name = null)
         {
             urlBuilder.Clear();
 
@@ -59,9 +58,6 @@ namespace DCL.AvatarRendering.Emotes
 
             if (name != null)
                 urlBuilder.AppendParameter(new URLParameter("name", name));
-
-            if (onChainCollectionsOnly != null)
-                urlBuilder.AppendParameter(new URLParameter("on-chain", onChainCollectionsOnly.Value.ToString().ToLower()));
 
             URLAddress url = urlBuilder.Build();
 

@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -10,6 +11,7 @@ using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3.Identities;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 
@@ -21,6 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableCatalog wearableCatalog;
         private readonly IProfileRepository profileRepository;
         private readonly IEmoteCache emoteCache;
+        private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
@@ -35,7 +38,8 @@ namespace DCL.PluginSystem.Global
         public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog,
             IProfileRepository profileRepository,
-            IEmoteCache emoteCache)
+            IEmoteCache emoteCache,
+            IReadOnlyCollection<URN> embeddedEmotes)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -43,6 +47,7 @@ namespace DCL.PluginSystem.Global
             this.wearableCatalog = wearableCatalog;
             this.profileRepository = profileRepository;
             this.emoteCache = emoteCache;
+            this.embeddedEmotes = embeddedEmotes;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -96,7 +101,7 @@ namespace DCL.PluginSystem.Global
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, backpackEquipStatusController,
-                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider);
+                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes);
 
                 var emotesController = new EmotesController(view.GetComponentInChildren<EmotesView>(),
                     new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, rarityInfoPanelBackgroundsMapping));
