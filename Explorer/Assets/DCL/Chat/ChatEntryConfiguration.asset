@@ -12,5 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be6907d7f7a1c4e72a28968e9243b5bb, type: 3}
   m_Name: ChatEntryConfiguration
   m_EditorClassIdentifier: 
-  nameColorSaturation: 0.8
-  nameColorValue: 0.9
+  nameColors:
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 1, g: 0.3025452, b: 0, a: 1}
+  - {r: 1, g: 0.65705246, b: 0, a: 1}
+  - {r: 1, g: 0.8548728, b: 0, a: 1}
+  - {r: 0.6836611, g: 1, b: 0, a: 1}
+  - {r: 0.10893285, g: 1, b: 0, a: 1}
+  - {r: 0, g: 1, b: 0.86376, a: 1}
+  - {r: 0, g: 0.47993517, b: 1, a: 1}
+  - {r: 0.23358631, g: 0, b: 1, a: 1}
+  - {r: 1, g: 0, b: 0.8628917, a: 1}
