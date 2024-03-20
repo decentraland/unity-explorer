@@ -6,12 +6,14 @@ namespace SceneRuntime.Apis.Modules
 {
     public interface IWebSocketApi : IDisposable
     {
-        public void CreateWebSocket(string url);
+        public int CreateWebSocket(string url);
 
-        public UniTask ConnectAsync(string url, CancellationToken ct);
-        public UniTask SendAsync(object data, CancellationToken ct);
-        public UniTask CloseAsync(CancellationToken ct);
-        public UniTask<object> ReceiveAsync(CancellationToken ct);
+        public UniTask ConnectAsync(int websocketId, string url, CancellationToken ct);
 
+        public UniTask SendAsync(int websocketId, object data, CancellationToken ct);
+
+        public UniTask CloseAsync(int websocketId, CancellationToken ct);
+
+        public UniTask<object> ReceiveAsync(int websocketId, CancellationToken ct);
     }
 }

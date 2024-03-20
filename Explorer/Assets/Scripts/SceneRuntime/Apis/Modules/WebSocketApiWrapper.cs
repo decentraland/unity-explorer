@@ -27,34 +27,34 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public void Create(string url) =>
+        public int Create(string url) =>
             api.CreateWebSocket(url);
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object ConnectAsync(string url)
+        public object ConnectAsync(int websocketId, string url)
         {
-            try { return api.ConnectAsync(url, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.ConnectAsync(websocketId, url, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object SendAsync(string data)
+        public object SendAsync(int websocketId, string data)
         {
-            try { return api.SendAsync(data, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.SendAsync(websocketId, data, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object ReceiveAsync()
+        public object ReceiveAsync(int websocketId)
         {
-            try { return api.ReceiveAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.ReceiveAsync(websocketId, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object CloseAsync()
+        public object CloseAsync(int websocketId)
         {
-            try { return api.CloseAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.CloseAsync(websocketId, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
     }

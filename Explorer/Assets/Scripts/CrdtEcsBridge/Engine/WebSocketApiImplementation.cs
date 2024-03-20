@@ -9,69 +9,89 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace CrdtEcsBridge.Engine
 {
     public class WebSocketApiImplementation : IWebSocketApi
     {
-        private WebSocketTransport  webSocket;
-        private readonly TransportOptions transportOptions = new TransportOptions()
+        private readonly Dictionary<int, WebSocketTransport> webSockets = new ();
+        private readonly ObjectPool<WebSocketTransport> webSocketPool;
+
+        private readonly TransportOptions transportOptions = new ()
         {
             EIO = EngineIO.V4,
             ConnectionTimeout = TimeSpan.FromSeconds(20),
         };
+        private int nextId;
 
+        public WebSocketApiImplementation()
+        {
+            webSocketPool = new ObjectPool<WebSocketTransport>(() => new WebSocketTransport(transportOptions, new DefaultClientWebSocket()), null, null, w => w.Dispose());
+        }
 
         public void Dispose()
         {
-            webSocket.Dispose();
+            foreach (KeyValuePair<int, WebSocketTransport> valuePair in webSockets) { valuePair.Value.Dispose(); }
+
+            webSocketPool.Dispose();
         }
 
-        public void CreateWebSocket(string url)
+        public int CreateWebSocket(string url)
         {
-            webSocket = new WebSocketTransport(transportOptions, new DefaultClientWebSocket());
+            nextId++;
+            webSockets.Add(nextId, webSocketPool.Get());
+            return nextId;
         }
 
-        public async UniTask ConnectAsync(string url, CancellationToken ct)
+        public async UniTask ConnectAsync(int websocketId, string url, CancellationToken ct)
         {
-            await webSocket.ConnectAsync(new Uri(url), ct);
+            if (webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) { await webSocket.ConnectAsync(new Uri(url), ct); }
+            else { throw new ArgumentException($"WebSocket with id {websocketId} does not exist."); }
         }
 
-        public async UniTask SendAsync(object data, CancellationToken ct)
+        public async UniTask SendAsync(int websocketId, object data, CancellationToken ct)
         {
-            if (data is Dictionary<string, object> dataDict && dataDict.ContainsKey("type"))
+            if (!webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) { throw new ArgumentException($"WebSocket with id {websocketId} does not exist."); }
+
+            if (data is not Dictionary<string, object> dataDict || !dataDict.ContainsKey("type")) { throw new ArgumentException("Invalid data format"); }
+
+            var type = dataDict["type"].ToString();
+
+            if (type == "Text" && dataDict.ContainsKey("data") && dataDict["data"] is string textData)
             {
-                var type = dataDict["type"].ToString();
+                var payload = new Payload
+                    { Text = textData };
 
-                if (type == "Text" && dataDict.ContainsKey("data") && dataDict["data"] is string textData)
-                {
-                    var payload = new Payload() { Text = textData };
-                    await webSocket.SendAsync(payload, ct);
-                }
-                else if (type == "Binary" && dataDict.ContainsKey("data") && dataDict["data"] is List<object> binaryData)
-                {
-                    byte[] byteArray = binaryData.Select(Convert.ToByte).ToArray();
-                    var payload = new Payload() { Bytes = new List<byte[]>() {byteArray} };
-                    await webSocket.SendAsync(payload, ct);
-                }
-                else
-                {
-                    throw new ArgumentException("Unsupported data type or invalid format");
-                }
+                await webSocket.SendAsync(payload, ct);
             }
-            else
+            else if (type == "Binary" && dataDict.ContainsKey("data") && dataDict["data"] is List<object> binaryData)
             {
-                throw new ArgumentException("Invalid data format");
+                byte[] byteArray = binaryData.Select(Convert.ToByte).ToArray();
+
+                var payload = new Payload
+                {
+                    Bytes = new List<byte[]>
+                        { byteArray },
+                };
+
+                await webSocket.SendAsync(payload, ct);
             }
+            else { throw new ArgumentException("Unsupported data type or invalid format"); }
         }
 
-        public async UniTask CloseAsync(CancellationToken ct)
+        public async UniTask CloseAsync(int websocketId, CancellationToken ct)
         {
+            if (!webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) { throw new ArgumentException($"WebSocket with id {websocketId} does not exist."); }
+
             await webSocket.DisconnectAsync(ct);
+            webSocketPool.Release(webSocket);
         }
 
-        public async UniTask<object> ReceiveAsync(CancellationToken ct)
+        public async UniTask<object> ReceiveAsync(int websocketId, CancellationToken ct)
         {
+            if (!webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) throw new ArgumentException($"WebSocket with id {websocketId} does not exist.");
+
             var tcs = new UniTaskCompletionSource<object>();
 
             void ReceivedHandler(IMessage message)

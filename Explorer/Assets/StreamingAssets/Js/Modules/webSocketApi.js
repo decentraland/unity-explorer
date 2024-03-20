@@ -5,16 +5,21 @@ class WebSocket {
     static CONNECTING = 3
     static OPEN = 4
 
-    constructor(url) {
-        WebSocketApiWrapper.Create(url);
-        this.readyState = WebSocket.CONNECTING;
+    constructor(url, protocols) {
+        //TODO: add checks if Scene can actually use WebSocket
+
+        if (url.toString().toLowerCase().substr(0, 4) !== 'wss:') {
+                throw new Error("Can't connect to unsafe WebSocket server")
+            }
+          
+        this.webSocketId = WebSocketApiWrapper.Create(url);
         this.url = url;
         this.onopen = null;
         this.onmessage = null;
         this.onerror = null;
         this.onclose = null;
-        this.connect().then(() => {
-            this.receive().catch(error => {
+        this.#connect().then(() => {
+            this.#receive().catch(error => {
                 console.error('Error receiving data:', error);
                 });
         }).catch(error => {
@@ -23,21 +28,22 @@ class WebSocket {
     }
 
 
-   connect() {
-       return WebSocketApiWrapper.ConnectAsync().then(() => {
-           if (typeof this.onopen === 'function') {
+    #connect() {
+        this.readyState = WebSocket.CONNECTING;
+        return WebSocketApiWrapper.ConnectAsync(webSocketId).then(() => {
+            if (typeof this.onopen === 'function') {
                this.readyState = WebSocket.OPEN
                this.onopen({ type: "open" });
-           }
-       }).catch(error => {
-           if (typeof this.onerror === 'function') {
+            }
+        }).catch(error => {
+            if (typeof this.onerror === 'function') {
                this.onerror(error);
-           }
-       });
-   }
+            }
+        });
+    }
 
-   get readyState() {
-    return this.readyState
+    get readyState() {
+        return this.readyState
     }
 
     get binaryType() {
@@ -63,17 +69,22 @@ class WebSocket {
             return 0
         }
 
-    get url(){
+    get url() {
         return this.url;
     }
     
 
-   send(data) {
+   async send(data) {
+    if (this.readyState !== WebSocket.OPEN){
+        const errorMessage = `WebSocket state is ${this.readyState}, cannot send data`;
+        return Promise.reject(new Error(errorMessage));
+    }
+
     let sendPromise;
     if (typeof data === 'string') {
-        sendPromise = WebSocketApiWrapper.SendAsync({ type: 'Text', data });
+        sendPromise = WebSocketApiWrapper.SendAsync(webSocketId, { type: 'Text', data });
     } else if (data instanceof Uint8Array || data instanceof ArrayBuffer || Array.isArray(data)) {
-        sendPromise = WebSocketApiWrapper.SendAsync({ type: 'Binary', data });
+        sendPromise = WebSocketApiWrapper.SendAsync(webSocketId, { type: 'Binary', data });
     }
     else {
         console.error(`Unsupported data type: ${typeof data}`, data);
@@ -85,14 +96,14 @@ class WebSocket {
             this.onerror(error);
         }
     });
-
     return sendPromise;
 }
+    
 
-   receive() {
+   #receive() {
       return new Promise((resolve, reject) => {
           const receiveData = () => {
-              WebSocketApiWrapper.ReceiveAsync().then(data => {
+            WebSocketApiWrapper.ReceiveAsync(webSocketId).then(data => {
                   if (typeof this.onmessage === 'function') {
                     if (data.type === 'Binary'){
                         data = new Uint8Array(data.data);
@@ -116,17 +127,24 @@ class WebSocket {
     }
 
     close() {
-        this.readyState = WebSocket.CLOSING;
-        return WebSocketApiWrapper.CloseAsync().then(() => {
-            if (typeof this.onclose === 'function') {
-                this.readyState = WebSocket.CLOSED;
-                this.onclose({type: "close"});
-           }
-        }).catch(error => {
-            if (typeof this.onerror === 'function') {
-                this.onerror(error);
-            }
-        });
+        if (this.readyState === WebSocket.OPEN || this.readyState === WebSocket.CONNECTING) {
+
+            this.readyState = WebSocket.CLOSING;
+
+            return WebSocketApiWrapper.CloseAsync(webSocketId).then(() => {
+                if (typeof this.onclose === 'function') {
+                    this.readyState = WebSocket.CLOSED;
+                    this.onclose({ type: "close" });
+                }
+            }).catch(error => {
+                if (typeof this.onerror === 'function') {
+                    this.onerror(error);
+                }
+            });
+        } else {
+            const errorMessage = `WebSocket state is ${this.readyState}, cannot close`;
+            console.error(errorMessage);
+        }
     }
 }
 
