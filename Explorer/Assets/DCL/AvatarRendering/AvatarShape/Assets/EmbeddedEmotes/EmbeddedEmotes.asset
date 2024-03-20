@@ -325,7 +325,7 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       loop: 0
-  - id: confetti
+  - id: confettipopper
     name: confetti
     audioClip: {fileID: 8300000, guid: 5caae9f69edac88479351686704e0c94, type: 3}
     thumbnail: {fileID: 21300000, guid: 52e4def7262db19429d325d7cb5f1a7a, type: 3}
