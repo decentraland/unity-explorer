@@ -208,7 +208,7 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub)
             );
 
-            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, queuePoolFullMovementMessage);
+            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
