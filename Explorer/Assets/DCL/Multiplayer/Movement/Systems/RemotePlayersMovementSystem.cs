@@ -67,6 +67,8 @@ namespace DCL.Multiplayer.Movement.Systems
         )
         {
             var playerInbox = remotePlayerMovement.Queue;
+            if (playerInbox == null) return;
+
             settings.InboxCount = playerInbox.Count;
 
             // First message

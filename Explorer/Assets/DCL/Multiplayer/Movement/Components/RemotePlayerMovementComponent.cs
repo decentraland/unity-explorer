@@ -21,16 +21,7 @@ namespace DCL.Multiplayer.Movement
         public bool Initialized;
         public bool WasTeleported;
 
-        public readonly SimplePriorityQueue<FullMovementMessage> Queue
-        {
-            get
-            {
-                if (disposed)
-                    throw new ObjectDisposedException("RemotePlayerMovementComponent");
-
-                return queue;
-            }
-        }
+        public readonly SimplePriorityQueue<FullMovementMessage>? Queue => disposed ? null : queue;
 
         public RemotePlayerMovementComponent(string playerWalletId, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
         {
