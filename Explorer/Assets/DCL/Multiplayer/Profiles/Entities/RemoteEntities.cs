@@ -68,17 +68,6 @@ namespace DCL.Multiplayer.Profiles.Entities
 
                 world.Add(entity, new DeleteEntityIntention());
                 entityParticipantTable.Release(walletId);
-
-
-                //TODO remove on merge
-                object?[] components = world.GetAllComponents(entity);
-                var sb = new StringBuilder();
-                sb.AppendLine("Components to delete:");
-
-                foreach (object? component in components)
-                    sb.AppendLine(component?.GetType().FullName ?? "NULL");
-
-                ReportHub.Log(ReportCategory.LIVEKIT, sb.ToString());
             }
         }
 
