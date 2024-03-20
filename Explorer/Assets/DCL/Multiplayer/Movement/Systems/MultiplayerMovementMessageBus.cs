@@ -4,10 +4,8 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
-using LiveKit.Rooms;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -21,16 +19,14 @@ namespace DCL.Multiplayer.Movement.Systems
     public class MultiplayerMovementMessageBus : IDisposable
     {
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IRoomHub roomHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private World globalWorld = null!;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IReadOnlyEntityParticipantTable entityParticipantTable, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
         {
             this.messagePipesHub = messagePipesHub;
-            this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.queuePool = queuePool;
 
@@ -45,8 +41,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void Send(FullMovementMessage message)
         {
-            WriteAndSend(message, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
-            WriteAndSend(message, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
+            WriteAndSend(message, messagePipesHub.IslandPipe());
+            WriteAndSend(message, messagePipesHub.ScenePipe());
         }
 
         public void InjectWorld(World world)
@@ -54,11 +50,10 @@ namespace DCL.Multiplayer.Movement.Systems
             this.globalWorld = world;
         }
 
-        private void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe, IRoom room)
+        private void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe)
         {
             var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
             WriteToProto(message, messageWrap.Payload);
-            messageWrap.AddRecipients(room);
             messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 

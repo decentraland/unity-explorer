@@ -5,7 +5,6 @@ using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
-using LiveKit.Rooms;
 using LiveKit.Rooms.DataPipes;
 using System;
 using System.Collections.Generic;
@@ -60,7 +59,10 @@ namespace DCL.Multiplayer.Connections.Messaging
             Dispose();
         }
 
-        public void AddRecipient(string sid)
+        /// <summary>
+        /// Adding special participant removes broadcasting to all participants
+        /// </summary>
+        public void AddSpecialRecipient(string sid)
         {
             recipients.Add(sid);
         }
@@ -83,17 +85,6 @@ namespace DCL.Multiplayer.Connections.Messaging
 
     public static class MessageWrapExtensions
     {
-        public static void AddRecipients<T>(this MessageWrap<T> messageWrap, IReadOnlyCollection<string> sidList) where T: class, IMessage, new()
-        {
-            foreach (string s in sidList)
-                messageWrap.AddRecipient(s);
-        }
-
-        public static void AddRecipients<T>(this MessageWrap<T> messageWrap, IRoom room) where T: class, IMessage, new()
-        {
-            messageWrap.AddRecipients(room.Participants.RemoteParticipantSids());
-        }
-
         public static readonly IReadOnlyDictionary<Type, Action<Packet, object>> WRITES_MAP = new Dictionary<Type, Action<Packet, object>>
         {
             [typeof(AnnounceProfileVersion)] = (packet, o) => packet.ProfileVersion = (AnnounceProfileVersion)o,

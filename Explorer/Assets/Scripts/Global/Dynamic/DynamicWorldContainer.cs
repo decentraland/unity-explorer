@@ -192,7 +192,7 @@ namespace Global.Dynamic
 
             container.MessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(messagePipesHub, roomHub, container.ProfileRepository, new MessageDeduplication()),
+                    new MultiplayerChatMessagesBus(messagePipesHub, container.ProfileRepository, new MessageDeduplication()),
                     identityCache,
                     container.ProfileRepository
                 ),
@@ -205,10 +205,10 @@ namespace Global.Dynamic
             );
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
-                new ProfileBroadcast(messagePipesHub, roomHub)
+                new ProfileBroadcast(messagePipesHub)
             );
 
-            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, roomHub, entityParticipantTable, queuePoolFullMovementMessage);
+            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, queuePoolFullMovementMessage);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

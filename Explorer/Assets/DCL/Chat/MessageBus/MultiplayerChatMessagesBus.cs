@@ -7,7 +7,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
-using LiveKit.Rooms;
 using System;
 using System.Threading;
 
@@ -16,15 +15,13 @@ namespace DCL.Chat.MessageBus
     public class MultiplayerChatMessagesBus : IChatMessagesBus
     {
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IRoomHub roomHub, IProfileRepository profileRepository, IMessageDeduplication messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
-            this.roomHub = roomHub;
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
 
@@ -65,16 +62,15 @@ namespace DCL.Chat.MessageBus
                 throw new Exception("ChatMessagesBus is disposed");
 
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
-            SendTo(message, timestamp, messagePipesHub.IslandPipe(), roomHub.IslandRoom());
-            SendTo(message, timestamp, messagePipesHub.ScenePipe(), roomHub.SceneRoom());
+            SendTo(message, timestamp, messagePipesHub.IslandPipe());
+            SendTo(message, timestamp, messagePipesHub.ScenePipe());
         }
 
-        private  void SendTo(string message, double timestamp, IMessagePipe messagePipe, IRoom room)
+        private  void SendTo(string message, double timestamp, IMessagePipe messagePipe)
         {
             var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
-            chat.AddRecipients(room);
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
