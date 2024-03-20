@@ -9,7 +9,6 @@ using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -71,13 +70,12 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
         private readonly CharacterContainer characterContainer;
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IRoomHub roomHub;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache,
-            IMessagePipesHub messagePipesHub, IRoomHub roomHub)
+            IMessagePipesHub messagePipesHub)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -96,7 +94,6 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.messagePipesHub = messagePipesHub;
-            this.roomHub = roomHub;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -180,7 +177,7 @@ namespace Global.Dynamic
             staticContainer.GlobalWorldProxy.SetObject(world);
 
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
-            sceneFactory.SetMultiplayerReferences(messagePipesHub, roomHub);
+            sceneFactory.SetMultiplayerReferences(messagePipesHub);
 
             return (globalWorld, playerEntity);
             ;

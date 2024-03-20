@@ -142,10 +142,9 @@ namespace SceneRunner
             globalWorldActions = actions;
         }
 
-        public void SetMultiplayerReferences(IMessagePipesHub messagePipes, IRoomHub room)
+        public void SetMultiplayerReferences(IMessagePipesHub messagePipes)
         {
             this.messagePipesHub = messagePipes;
-            this.roomHub = room;
         }
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -234,7 +233,7 @@ namespace SceneRunner
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 
-            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(instanceDependencies.SceneStateProvider, messagePipesHub, roomHub);
+            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(instanceDependencies.SceneStateProvider, messagePipesHub);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
 
             return new SceneFacade(

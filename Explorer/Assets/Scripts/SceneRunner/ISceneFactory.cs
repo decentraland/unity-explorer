@@ -60,7 +60,6 @@ namespace SceneRunner
         /// Used for passing references from the global world to the scene world
         /// </summary>
         /// <param name="messagePipes"></param>
-        /// <param name="room"></param>
-        void SetMultiplayerReferences(IMessagePipesHub messagePipes, IRoomHub room);
+        void SetMultiplayerReferences(IMessagePipesHub messagePipes);
     }
 }

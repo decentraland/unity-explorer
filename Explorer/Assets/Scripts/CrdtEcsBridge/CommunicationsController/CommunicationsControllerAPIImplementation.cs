@@ -1,5 +1,6 @@
-﻿using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.RoomHubs;
+﻿using DCL.Multiplayer.Connections.Messaging;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
 using System;
@@ -10,16 +11,16 @@ namespace CrdtEcsBridge.CommunicationsController
     {
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IRoomHub roomHub;
 
         public CommunicationsControllerAPIImplementation(
             ISceneStateProvider sceneStateProvider,
-            IMessagePipesHub messagePipesHub,
-            IRoomHub roomHub)
+            IMessagePipesHub messagePipesHub)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.messagePipesHub = messagePipesHub;
-            this.roomHub = roomHub;
+
+            messagePipesHub.IslandPipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
         }
 
         public byte[] SendBinary(byte[] data)
@@ -27,10 +28,15 @@ namespace CrdtEcsBridge.CommunicationsController
             if (!sceneStateProvider.IsCurrent)
                 return Array.Empty<byte>();
 
-            // TODO (Santi): Implement this...
+            // TODO (Santi): Implement sending of messages
             return Array.Empty<byte>();
         }
 
         public void Dispose() { }
+
+        private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
+        {
+            // TODO (Santi): Implement reception of messages
+        }
     }
 }
