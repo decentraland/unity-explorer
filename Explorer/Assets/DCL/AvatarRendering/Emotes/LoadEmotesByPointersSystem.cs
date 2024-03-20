@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             base.Update(t);
 
-            GetEmotesFromRealmQuery(World);
+            GetEmotesFromRealmQuery(World, t);
             FinalizeEmoteDTOQuery(World);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
@@ -132,7 +132,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void GetEmotesFromRealm(in Entity entity,
+        private void GetEmotesFromRealm([Data] float dt, in Entity entity,
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {
@@ -147,10 +147,10 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
+            intention.elapsedTime += dt;
+
             List<URN> missingPointersTmp = ListPool<URN>.Get();
             List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
-
-            var processedUrns = 0;
 
             foreach (URN loadingIntentionPointer in intention.Pointers)
             {
@@ -161,8 +161,6 @@ namespace DCL.AvatarRendering.Emotes
                         "ResolveWearableByPointerSystem: Null pointer found in the list of pointers"
                     );
 
-                    processedUrns++;
-
                     continue;
                 }
 
@@ -171,11 +169,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 if (!emoteCache.TryGetEmote(shortenedPointer, out IEmote emote))
                 {
-                    // Many embedded emotes do not have a valid 'urn:...', like 'confettipopper'
-                    // In case there is no available embedded emote, mark it as processed anyway so the intention is resolved
-                    if (!shortenedPointer.IsValid())
-                        processedUrns++;
-                    else if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
+                    if (!intention.ProcessedPointers.Contains(loadingIntentionPointer))
                     {
                         missingPointersTmp.Add(shortenedPointer);
                         intention.ProcessedPointers.Add(loadingIntentionPointer);
@@ -186,8 +180,6 @@ namespace DCL.AvatarRendering.Emotes
 
                 if (emote.Model.Succeeded)
                     resolvedEmotesTmp.Add(emote);
-
-                processedUrns++;
             }
 
             if (missingPointersTmp.Count > 0)
@@ -206,35 +198,32 @@ namespace DCL.AvatarRendering.Emotes
 
             var emotesWithResponse = 0;
 
-            if (processedUrns == intention.Pointers.Count)
+            foreach (IEmote emote in resolvedEmotesTmp)
             {
-                foreach (IEmote emote in resolvedEmotesTmp)
+                if (emote.IsLoading) continue;
+                if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
+
+                if (emote.WearableAssetResults[intention.BodyShape] != null)
+
+                    // TODO: it may occur that the requested emote does not support the body shape
+                    // If that is the case, the promise will never be resolved
+                    emotesWithResponse++;
+
+                if (emote.WearableAssetResults[intention.BodyShape] is { Succeeded: true })
                 {
-                    if (emote.IsLoading) continue;
-                    if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
-
-                    if (emote.WearableAssetResults[intention.BodyShape] != null)
-
-                        // TODO: it may occur that the requested emote does not support the body shape
-                        // If that is the case, the promise will never be resolved
-                        emotesWithResponse++;
-
-                    if (emote.WearableAssetResults[intention.BodyShape] is { Succeeded: true })
+                    // Reference must be added only once when the wearable is resolved
+                    if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
                     {
-                        // Reference must be added only once when the wearable is resolved
-                        if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
-                        {
-                            intention.SuccessfulPointers.Add(emote.GetUrn());
+                        intention.SuccessfulPointers.Add(emote.GetUrn());
 
-                            // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                            emote.WearableAssetResults[intention.BodyShape]?.Asset.AddReference();
-                        }
+                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                        emote.WearableAssetResults[intention.BodyShape]?.Asset.AddReference();
                     }
                 }
             }
 
-            if (emotesWithResponse == intention.Pointers.Count)
-                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), processedUrns)));
+            if (emotesWithResponse == resolvedEmotesTmp.Count || intention.elapsedTime >= intention.Timeout)
+                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
 
             ListPool<URN>.Release(missingPointersTmp);
             ListPool<IEmote>.Release(resolvedEmotesTmp);

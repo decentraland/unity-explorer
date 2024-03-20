@@ -1,6 +1,7 @@
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public readonly struct GetEmotesByPointersIntention : IAssetIntention, IEquatable<GetEmotesByPointersIntention>
+    public struct GetEmotesByPointersIntention : IAssetIntention, IEquatable<GetEmotesByPointersIntention>
     {
         public CancellationTokenSource CancellationTokenSource { get; }
 
@@ -17,10 +18,14 @@ namespace DCL.AvatarRendering.Emotes
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
+        public int Timeout { get; }
+
+        internal float elapsedTime;
 
         public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
-            AssetSource permittedSources = AssetSource.ALL) : this()
+            AssetSource permittedSources = AssetSource.ALL,
+            int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
         {
             Pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
@@ -28,6 +33,7 @@ namespace DCL.AvatarRendering.Emotes
             SuccessfulPointers = new HashSet<URN>();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
+            Timeout = timeout;
         }
 
         public bool Equals(GetEmotesByPointersIntention other) =>
