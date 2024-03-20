@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 using SceneRuntime.Apis.Modules;
 using SocketIOClient;
 using SocketIOClient.Messages;
@@ -54,28 +56,32 @@ namespace CrdtEcsBridge.Engine
         {
             if (!webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) { throw new ArgumentException($"WebSocket with id {websocketId} does not exist."); }
 
-            if (data is not Dictionary<string, object> dataDict || !dataDict.ContainsKey("type")) { throw new ArgumentException("Invalid data format"); }
+            if (data is not IScriptObject scriptObject || scriptObject.GetProperty("type") == null) {throw new ArgumentException("Invalid data format");}
 
-            var type = dataDict["type"].ToString();
+            object messageData = scriptObject.GetProperty("data");
 
-            if (type == "Text" && dataDict.ContainsKey("data") && dataDict["data"] is string textData)
+            if (messageData != null)
             {
-                var payload = new Payload
-                    { Text = textData };
-
-                await webSocket.SendAsync(payload, ct);
-            }
-            else if (type == "Binary" && dataDict.ContainsKey("data") && dataDict["data"] is List<object> binaryData)
-            {
-                byte[] byteArray = binaryData.Select(Convert.ToByte).ToArray();
-
-                var payload = new Payload
+                var type = scriptObject.GetProperty("type").ToString();
+                if (type == "Text")
                 {
-                    Bytes = new List<byte[]>
-                        { byteArray },
-                };
+                    var payload = new Payload
+                            { Text = messageData.ToString() };
 
-                await webSocket.SendAsync(payload, ct);
+                    await webSocket.SendAsync(payload, ct);
+                }
+                else if (type == "Binary" && messageData is List<object> binaryData)
+                {
+                    byte[] byteArray = binaryData.Select(Convert.ToByte).ToArray();
+
+                    var payload = new Payload
+                    {
+                        Bytes = new List<byte[]>
+                            { byteArray },
+                    };
+
+                    await webSocket.SendAsync(payload, ct);
+                }
             }
             else { throw new ArgumentException("Unsupported data type or invalid format"); }
         }

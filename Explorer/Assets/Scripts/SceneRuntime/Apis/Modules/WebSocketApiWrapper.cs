@@ -21,9 +21,9 @@ namespace SceneRuntime.Apis.Modules
 
         public void Dispose()
         {
-            api.Dispose();
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
+            api.Dispose();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
@@ -38,7 +38,7 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object SendAsync(int websocketId, string data)
+        public object SendAsync(int websocketId, object data)
         {
             try { return api.SendAsync(websocketId, data, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
