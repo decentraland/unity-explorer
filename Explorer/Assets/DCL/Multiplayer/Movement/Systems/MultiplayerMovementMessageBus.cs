@@ -128,9 +128,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
             var entity = entityParticipantTable.Entity(walletId);
 
-            return globalWorld.Has<RemotePlayerMovementComponent>(entity) == false
-                ? null
-                : globalWorld.Get<RemotePlayerMovementComponent>(entity).Queue;
+            return globalWorld.Has<RemotePlayerMovementComponent>(entity)
+                ? globalWorld.Get<RemotePlayerMovementComponent>(entity).Queue
+                : null;
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
