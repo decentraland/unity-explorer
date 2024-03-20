@@ -5,6 +5,11 @@ class WebSocket {
     static CONNECTING = 3
     static OPEN = 4
 
+    #url;
+    #readyState;
+
+
+
     constructor(url, protocols) {
         //TODO: add checks if Scene can actually use WebSocket
 
@@ -12,8 +17,8 @@ class WebSocket {
                 throw new Error("Can't connect to unsafe WebSocket server")
             }
           
-        this.webSocketId = WebSocketApiWrapper.Create(url);
-        this.url = url;
+        this.webSocketId = UnityWebSocketApi.Create(url);
+        this.#url = url;
         this.onopen = null;
         this.onmessage = null;
         this.onerror = null;
@@ -29,10 +34,10 @@ class WebSocket {
 
 
     #connect() {
-        this.readyState = WebSocket.CONNECTING;
-        return WebSocketApiWrapper.ConnectAsync(webSocketId).then(() => {
+        this.#readyState = WebSocket.CONNECTING;
+        return UnityWebSocketApi.ConnectAsync(webSocketId).then(() => {
             if (typeof this.onopen === 'function') {
-               this.readyState = WebSocket.OPEN
+               this.#readyState = WebSocket.OPEN
                this.onopen({ type: "open" });
             }
         }).catch(error => {
@@ -43,7 +48,7 @@ class WebSocket {
     }
 
     get readyState() {
-        return this.readyState
+        return this.#readyState
     }
 
     get binaryType() {
@@ -70,7 +75,7 @@ class WebSocket {
         }
 
     get url() {
-        return this.url;
+        return this.#url;
     }
     
 
@@ -82,9 +87,9 @@ class WebSocket {
 
     let sendPromise;
     if (typeof data === 'string') {
-        sendPromise = WebSocketApiWrapper.SendAsync(webSocketId, { type: 'Text', data });
+        sendPromise = UnityWebSocketApi.SendAsync(webSocketId, { type: 'Text', data });
     } else if (data instanceof Uint8Array || data instanceof ArrayBuffer || Array.isArray(data)) {
-        sendPromise = WebSocketApiWrapper.SendAsync(webSocketId, { type: 'Binary', data });
+        sendPromise = UnityWebSocketApi.SendAsync(webSocketId, { type: 'Binary', data });
     }
     else {
         console.error(`Unsupported data type: ${typeof data}`, data);
@@ -103,7 +108,7 @@ class WebSocket {
    #receive() {
       return new Promise((resolve, reject) => {
           const receiveData = () => {
-            WebSocketApiWrapper.ReceiveAsync(webSocketId).then(data => {
+            UnityWebSocketApi.ReceiveAsync(webSocketId).then(data => {
                   if (typeof this.onmessage === 'function') {
                     if (data.type === 'Binary'){
                         data = new Uint8Array(data.data);
@@ -131,7 +136,7 @@ class WebSocket {
 
             this.readyState = WebSocket.CLOSING;
 
-            return WebSocketApiWrapper.CloseAsync(webSocketId).then(() => {
+            return UnityWebSocketApi.CloseAsync(webSocketId).then(() => {
                 if (typeof this.onclose === 'function') {
                     this.readyState = WebSocket.CLOSED;
                     this.onclose({ type: "close" });
@@ -149,4 +154,4 @@ class WebSocket {
 }
 
  
- module.exports.webSocket = WebSocket
+ module.exports.WebSocket = WebSocket
