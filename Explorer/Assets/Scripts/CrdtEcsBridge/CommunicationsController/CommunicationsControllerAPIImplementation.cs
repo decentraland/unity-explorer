@@ -15,6 +15,7 @@ namespace CrdtEcsBridge.CommunicationsController
     public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
     {
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly ISceneData sceneData;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
@@ -22,9 +23,11 @@ namespace CrdtEcsBridge.CommunicationsController
 
         public CommunicationsControllerAPIImplementation(
             ISceneStateProvider sceneStateProvider,
+            ISceneData sceneData,
             IMessagePipesHub messagePipesHub)
         {
             this.sceneStateProvider = sceneStateProvider;
+            this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
 
             messagePipesHub.IslandPipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
@@ -57,7 +60,7 @@ namespace CrdtEcsBridge.CommunicationsController
         {
             var sceneMessage = messagePipe.NewMessage<Scene>();
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
-            //sceneMessage.Payload.SceneId = ¿?
+            sceneMessage.Payload.SceneId = sceneData.SceneEntityDefinition.id;
             sceneMessage.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
