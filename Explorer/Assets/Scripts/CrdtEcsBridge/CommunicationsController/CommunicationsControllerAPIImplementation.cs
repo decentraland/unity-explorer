@@ -14,19 +14,21 @@ namespace CrdtEcsBridge.CommunicationsController
 {
     public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
     {
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneData sceneData;
         private readonly IMessagePipesHub messagePipesHub;
+        private readonly List<byte[]> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        private readonly List<byte[]> eventsToProcess = new ();
+        private enum MsgType
+        {
+            String = 1, // Deprecated in SDK7
+            Uint8Array = 2,
+        }
 
         public CommunicationsControllerAPIImplementation(
-            ISceneStateProvider sceneStateProvider,
             ISceneData sceneData,
             IMessagePipesHub messagePipesHub)
         {
-            this.sceneStateProvider = sceneStateProvider;
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
 
@@ -36,13 +38,15 @@ namespace CrdtEcsBridge.CommunicationsController
 
         public byte[][] SendBinary(byte[][] data)
         {
-            if (!sceneStateProvider.IsCurrent)
-                return Array.Empty<byte[]>();
-
             foreach (byte[] message in data)
             {
-                SendTo(message, messagePipesHub.IslandPipe());
-                SendTo(message, messagePipesHub.ScenePipe());
+                if (message.Length == 0)
+                    continue;
+
+                byte[] encodedMessage = EncodeMessage(message, MsgType.Uint8Array);
+
+                SendMessage(encodedMessage, messagePipesHub.IslandPipe());
+                SendMessage(encodedMessage, messagePipesHub.ScenePipe());
             }
 
             byte[][] resultData = eventsToProcess.ToArray();
@@ -56,7 +60,7 @@ namespace CrdtEcsBridge.CommunicationsController
             cancellationTokenSource.Dispose();
         }
 
-        private  void SendTo(byte[] message, IMessagePipe messagePipe)
+        private  void SendMessage(byte[] message, IMessagePipe messagePipe)
         {
             var sceneMessage = messagePipe.NewMessage<Scene>();
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
@@ -66,18 +70,34 @@ namespace CrdtEcsBridge.CommunicationsController
 
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
-            if (receivedMessage.Payload.Data.IsEmpty)
+            var decodedMessage = DecodeMessage(receivedMessage.Payload.Data.ToByteArray());
+            if (decodedMessage.msgType != MsgType.Uint8Array || decodedMessage.data.Length == 0)
                 return;
 
             byte[] senderBytes = Encoding.UTF8.GetBytes(receivedMessage.FromWalletId);
-            int messageLength = senderBytes.Length + receivedMessage.Payload.Data.Length + 1;
-
+            int messageLength = senderBytes.Length + decodedMessage.data.Length + 1;
             var serializedMessage = new byte[messageLength];
             serializedMessage[0] = (byte)senderBytes.Length;
             Array.Copy(senderBytes, 0, serializedMessage, 1, senderBytes.Length);
-            Array.Copy(receivedMessage.Payload.Data.ToByteArray(), 0, serializedMessage, senderBytes.Length + 1, receivedMessage.Payload.Data.Length);
+            Array.Copy(decodedMessage.data, 0, serializedMessage, senderBytes.Length + 1, decodedMessage.data.Length);
 
             eventsToProcess.Add(serializedMessage);
+        }
+
+        private static byte[] EncodeMessage(byte[] data, MsgType type)
+        {
+            var message = new byte[data.Length + 1];
+            message[0] = (byte)type;
+            Array.Copy(data, 0, message, 1, data.Length);
+            return message;
+        }
+
+        private static (MsgType msgType, byte[] data) DecodeMessage(byte[] value)
+        {
+            MsgType msgType = (MsgType)value[0];
+            var data = new byte[value.Length - 1];
+            Array.Copy(value, 1, data, 0, value.Length - 1);
+            return (msgType, data);
         }
     }
 }
