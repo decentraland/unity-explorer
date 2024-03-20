@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.Engine
 
         public WebSocketApiImplementation()
         {
-            webSocketPool = new ObjectPool<WebSocketTransport>(() => new WebSocketTransport(transportOptions, new DefaultClientWebSocket()), null, null, w => w.Dispose());
+            webSocketPool = new ObjectPool<WebSocketTransport>(() => new WebSocketTransport(transportOptions, new DefaultClientWebSocket()), null, null, w => w.Dispose(), true, 1);
         }
 
         public void Dispose()
