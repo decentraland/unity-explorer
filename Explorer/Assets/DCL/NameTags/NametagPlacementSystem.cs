@@ -3,10 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Profiles.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -17,6 +19,8 @@ using UnityEngine.Pool;
 namespace DCL.Nametags
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
+    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
@@ -79,7 +83,6 @@ namespace DCL.Nametags
             nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID}</color>");
             nametagView.gameObject.name = avatarShape.ID;
 
-
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
@@ -96,10 +99,10 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void RemoveTag(NametagView nametagView)
+        private void RemoveTag(NametagView nametagView, in DeleteEntityIntention deleteEntityIntention)
         {
-            nametagViewPool.Release(nametagView);
+            if (deleteEntityIntention.DeferDeletion == false)
+                nametagViewPool.Release(nametagView);
         }
 
         [Query]

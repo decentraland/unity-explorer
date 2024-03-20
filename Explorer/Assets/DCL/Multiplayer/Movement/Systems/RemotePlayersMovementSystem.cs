@@ -2,12 +2,14 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Profiles.Systems;
 using ECS.Abstract;
 using UnityEngine;
 using Utility.PriorityQueue;
@@ -16,6 +18,8 @@ using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
+    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
