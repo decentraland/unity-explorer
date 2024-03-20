@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using JetBrains.Annotations;
 using System;
 
@@ -18,7 +19,7 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public byte[] SendBinary(byte[] data) =>
+        public ByteString SendBinary(ByteString data) =>
             api.SendBinary(data);
     }
 }
