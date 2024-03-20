@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UnityEventSystem(EventSystem.current), new DCLCursor());
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, emoteCache);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes);
         }
     }
 }
