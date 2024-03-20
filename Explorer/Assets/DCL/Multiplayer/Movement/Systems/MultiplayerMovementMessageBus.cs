@@ -9,7 +9,6 @@ using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
 using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
@@ -20,15 +19,13 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private World globalWorld = null!;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
-            this.queuePool = queuePool;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
@@ -131,10 +128,9 @@ namespace DCL.Multiplayer.Movement.Systems
 
             var entity = entityParticipantTable.Entity(walletId);
 
-            if (globalWorld.Has<SimplePriorityQueue<FullMovementMessage>>(entity) == false)
-                globalWorld.Add(entity, queuePool.Get());
-
-            return globalWorld.Get<SimplePriorityQueue<FullMovementMessage>>(entity);
+            return globalWorld.Has<RemotePlayerMovementComponent>(entity)
+                ? globalWorld.Get<RemotePlayerMovementComponent>(entity).Queue
+                : null;
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)

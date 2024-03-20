@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -13,7 +12,6 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -63,8 +61,8 @@ namespace DCL.Multiplayer.Profiles.Entities
 
                 var entity = entityParticipantTable.Entity(walletId);
 
-                if (world.Has<SimplePriorityQueue<FullMovementMessage>>(entity))
-                    queuePool.Release(world.Get<SimplePriorityQueue<FullMovementMessage>>(entity));
+                if (world.Has<RemotePlayerMovementComponent>(entity))
+                    world.Get<RemotePlayerMovementComponent>(entity).Dispose();
 
                 world.Add(entity, new DeleteEntityIntention());
                 entityParticipantTable.Release(walletId);
@@ -104,7 +102,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 PartitionComponent.TOP_PRIORITY,
                 transformComp,
                 new CharacterAnimationComponent(),
-                new RemotePlayerMovementComponent(profile.WalletId),
+                new RemotePlayerMovementComponent(profile.WalletId, queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );

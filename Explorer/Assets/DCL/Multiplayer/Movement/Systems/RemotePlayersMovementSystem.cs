@@ -63,10 +63,10 @@ namespace DCL.Multiplayer.Movement.Systems
             ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp,
             ref ExtrapolationComponent extComp,
-            in SimplePriorityQueue<FullMovementMessage> playerInbox,
             in IAvatarView view
         )
         {
+            var playerInbox = remotePlayerMovement.Queue;
             settings.InboxCount = playerInbox.Count;
 
             // First message

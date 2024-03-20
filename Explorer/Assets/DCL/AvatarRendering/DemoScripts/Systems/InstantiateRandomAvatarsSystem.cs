@@ -27,11 +27,12 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
+using Utility.PriorityQueue;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -354,7 +355,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var entity = World.Create(avatarShape,
                 transformComp,
                 new CharacterAnimationComponent(),
-                new RemotePlayerMovementComponent(RemotePlayerMovementComponent.TEST_ID),
+                new RemotePlayerMovementComponent(
+                    RemotePlayerMovementComponent.TEST_ID,
+                    new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(() => new SimplePriorityQueue<FullMovementMessage>())
+                ),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),
                 characterControllerSettings
