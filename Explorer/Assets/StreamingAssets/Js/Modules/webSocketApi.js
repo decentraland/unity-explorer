@@ -44,6 +44,78 @@ class WebSocket {
                this.onerror(error);
             }
         });
+    }  
+
+   async send(data) {
+    if (this.#readyState !== WebSocket.OPEN){
+        const errorMessage = `WebSocket state is ${this.#readyState}, cannot send data`;
+        return Promise.reject(new Error(errorMessage));
+    }
+
+    let sendPromise;
+    if (typeof data === 'string') {
+        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, { type: 'Text', data });
+    } else if (data instanceof Uint8Array || data instanceof ArrayBuffer || Array.isArray(data)) {
+        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, { type: 'Binary', data });
+    }
+    else {
+        console.error(`Unsupported data type: ${typeof data}`, data);
+        return Promise.reject(new Error("Unsupported data type"));
+    }
+
+    sendPromise.catch(error => {
+        if (typeof this.onerror === 'function') {
+            this.onerror(error);
+        }
+    });
+    return sendPromise;
+}
+    
+   #receive() {
+      return new Promise((resolve, reject) => {
+          const receiveData = () => {
+            UnityWebSocketApi.ReceiveAsync(this.webSocketId).then(data => {
+                  if (typeof this.onmessage === 'function') {
+                    if (data.type === 'Binary'){
+                        data = new Uint8Array(data.data);
+                        type = "binary";
+                    } else {
+                        data = data.data;
+                        type = "text";
+                     }
+                      this.onmessage(type, data);
+                  }
+                  receiveData();
+              }).catch(error => {
+                  if (typeof this.onerror === 'function') {
+                      this.onerror(error);
+                  }
+                  reject(error);
+              });
+          };
+          receiveData();
+      });
+    }
+
+    close(code = undefined, reason = undefined) {
+        if (this.#readyState === WebSocket.OPEN || this.#readyState === WebSocket.CONNECTING) {
+
+            this.#readyState = WebSocket.CLOSING;
+
+            return UnityWebSocketApi.CloseAsync(this.webSocketId).then(() => {
+                if (typeof this.onclose === 'function') {
+                    this.readyState = WebSocket.CLOSED;
+                    this.onclose({ type: "close" });
+                }
+            }).catch(error => {
+                if (typeof this.onerror === 'function') {
+                    this.onerror(error);
+                }
+            });
+        } else {
+            const errorMessage = `WebSocket state is ${this.#readyState}, cannot close`;
+            console.error(errorMessage);
+        }
     }
 
     get readyState() {
@@ -75,80 +147,6 @@ class WebSocket {
 
     get url() {
         return this.#url;
-    }
-    
-
-   async send(data) {
-    if (this.readyState !== WebSocket.OPEN){
-        const errorMessage = `WebSocket state is ${this.readyState}, cannot send data`;
-        return Promise.reject(new Error(errorMessage));
-    }
-
-    let sendPromise;
-    if (typeof data === 'string') {
-        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, { type: 'Text', data });
-    } else if (data instanceof Uint8Array || data instanceof ArrayBuffer || Array.isArray(data)) {
-        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, { type: 'Binary', data });
-    }
-    else {
-        console.error(`Unsupported data type: ${typeof data}`, data);
-        return Promise.reject(new Error("Unsupported data type"));
-    }
-
-    sendPromise.catch(error => {
-        if (typeof this.onerror === 'function') {
-            this.onerror(error);
-        }
-    });
-    return sendPromise;
-}
-    
-
-   #receive() {
-      return new Promise((resolve, reject) => {
-          const receiveData = () => {
-            UnityWebSocketApi.ReceiveAsync(this.webSocketId).then(data => {
-                  if (typeof this.onmessage === 'function') {
-                    if (data.type === 'Binary'){
-                        data = new Uint8Array(data.data);
-                        type = "binary";
-                    } else {
-                        data = data.data;
-                        type = "text";
-                     }
-                      this.onmessage(type, data);
-                  }
-                  receiveData();
-              }).catch(error => {
-                  if (typeof this.onerror === 'function') {
-                      this.onerror(error);
-                  }
-                  reject(error);
-              });
-          };
-          receiveData();
-      });
-    }
-
-    close() {
-        if (this.readyState === WebSocket.OPEN || this.readyState === WebSocket.CONNECTING) {
-
-            this.readyState = WebSocket.CLOSING;
-
-            return UnityWebSocketApi.CloseAsync(this.webSocketId).then(() => {
-                if (typeof this.onclose === 'function') {
-                    this.readyState = WebSocket.CLOSED;
-                    this.onclose({ type: "close" });
-                }
-            }).catch(error => {
-                if (typeof this.onerror === 'function') {
-                    this.onerror(error);
-                }
-            });
-        } else {
-            const errorMessage = `WebSocket state is ${this.readyState}, cannot close`;
-            console.error(errorMessage);
-        }
     }
 }
 

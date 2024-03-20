@@ -91,6 +91,7 @@ namespace CrdtEcsBridge.Engine
             if (!webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) { throw new ArgumentException($"WebSocket with id {websocketId} does not exist."); }
 
             await webSocket.DisconnectAsync(ct);
+
             webSocketPool.Release(webSocket);
         }
 
