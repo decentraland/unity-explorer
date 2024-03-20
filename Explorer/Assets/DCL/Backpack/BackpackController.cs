@@ -30,9 +30,9 @@ namespace DCL.Backpack
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly BackpackEmoteGridController backpackEmoteGridController;
-        private CancellationTokenSource animationCts;
-
-        private CancellationTokenSource profileLoadingCts;
+        private readonly EmotesController emotesController;
+        private CancellationTokenSource? animationCts;
+        private CancellationTokenSource? profileLoadingCts;
         private bool initialLoadingIsDone;
 
         public BackpackController(
@@ -47,7 +47,8 @@ namespace DCL.Backpack
             BackpackInfoPanelController emoteInfoPanelController,
             World world, Entity playerEntity,
             BackpackEmoteGridController backpackEmoteGridController,
-            AvatarSlotView[] avatarSlotViews)
+            AvatarSlotView[] avatarSlotViews,
+            EmotesController emotesController)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -55,6 +56,7 @@ namespace DCL.Backpack
             this.world = world;
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
+            this.emotesController = emotesController;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -70,7 +72,7 @@ namespace DCL.Backpack
             Dictionary<BackpackSections, ISection> backpackSections = new ()
             {
                 { BackpackSections.Avatar, avatarController },
-                { BackpackSections.Emotes, new EmotesController(view.GetComponentInChildren<EmotesView>()) },
+                { BackpackSections.Emotes, emotesController },
             };
 
             var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
@@ -96,11 +98,12 @@ namespace DCL.Backpack
         public void Dispose()
         {
             view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
-            avatarController?.Dispose();
+            avatarController.Dispose();
+            emotesController.Dispose();
             backpackEmoteGridController.Dispose();
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
-            backpackCharacterPreviewController?.Dispose();
+            backpackCharacterPreviewController.Dispose();
             emoteInfoPanelController.Dispose();
         }
 

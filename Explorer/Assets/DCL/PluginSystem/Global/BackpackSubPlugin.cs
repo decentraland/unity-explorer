@@ -98,9 +98,12 @@ namespace DCL.PluginSystem.Global
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, backpackEquipStatusController,
                     sortController, pageButtonView, emoteGridPool, args.EmoteProvider);
 
+                var emotesController = new EmotesController(view.GetComponentInChildren<EmotesView>(),
+                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, rarityInfoPanelBackgroundsMapping));
+
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
                     characterPreviewFactory, gridController, wearableInfoPanelController, emoteInfoPanelController, builder.World, args.PlayerEntity,
-                    emoteGridController, view.GetComponentsInChildren<AvatarSlotView>());
+                    emoteGridController, avatarView.GetComponentsInChildren<AvatarSlotView>(), emotesController);
             };
         }
 
