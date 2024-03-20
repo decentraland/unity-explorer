@@ -19,7 +19,7 @@ namespace CrdtEcsBridge.CommunicationsController
         private readonly IMessagePipesHub messagePipesHub;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        private List<byte[]> eventsToProcess = new ();
+        private readonly List<byte[]> eventsToProcess = new ();
 
         public CommunicationsControllerAPIImplementation(
             ISceneStateProvider sceneStateProvider,
