@@ -47,11 +47,11 @@ namespace DCL.Backpack.BackpackBus
         }
     }
 
-    public readonly struct BackpackSelectCommand
+    public readonly struct BackpackSelectWearableCommand
     {
         public readonly string Id;
 
-        public BackpackSelectCommand(string id)
+        public BackpackSelectWearableCommand(string id)
         {
             Id = id;
         }

@@ -69,14 +69,19 @@ namespace DCL.PluginSystem.Global
 
             AvatarView? avatarView = view.GetComponentInChildren<AvatarView>();
 
-            var infoPanelController = new BackpackInfoPanelController(avatarView.backpackInfoPanelView, backpackEventBus,
-                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController);
+            BackpackInfoPanelController wearableInfoPanelController = new (avatarView.backpackInfoPanelView, backpackEventBus,
+                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController,
+                BackpackInfoPanelController.AttachmentType.Wearable);
 
             EmotesView emoteView = view.GetComponentInChildren<EmotesView>();
 
+            BackpackInfoPanelController emoteInfoPanelController = new (emoteView.BackpackInfoPanelView, backpackEventBus,
+                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController,
+                BackpackInfoPanelController.AttachmentType.Emote);
+
             ObjectPool<BackpackItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
 
-            await infoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            await wearableInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
@@ -94,7 +99,7 @@ namespace DCL.PluginSystem.Global
                     sortController, pageButtonView, emoteGridPool, args.EmoteProvider);
 
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
-                    characterPreviewFactory, gridController, infoPanelController, builder.World, args.PlayerEntity,
+                    characterPreviewFactory, gridController, wearableInfoPanelController, emoteInfoPanelController, builder.World, args.PlayerEntity,
                     emoteGridController, view.GetComponentsInChildren<AvatarSlotView>());
             };
         }

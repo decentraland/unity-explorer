@@ -21,6 +21,7 @@ namespace DCL.Backpack
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
+        private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
         private readonly AvatarController avatarController;
 
@@ -42,13 +43,15 @@ namespace DCL.Backpack
             BackpackEventBus backpackEventBus,
             ICharacterPreviewFactory characterPreviewFactory,
             BackpackGridController gridController,
-            BackpackInfoPanelController infoPanelController,
+            BackpackInfoPanelController wearableInfoPanelController,
+            BackpackInfoPanelController emoteInfoPanelController,
             World world, Entity playerEntity,
             BackpackEmoteGridController backpackEmoteGridController,
             AvatarSlotView[] avatarSlotViews)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
+            this.emoteInfoPanelController = emoteInfoPanelController;
             this.world = world;
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
@@ -62,7 +65,7 @@ namespace DCL.Backpack
                 backpackCommandBus,
                 backpackEventBus,
                 gridController,
-                infoPanelController);
+                wearableInfoPanelController);
 
             Dictionary<BackpackSections, ISection> backpackSections = new ()
             {
@@ -98,6 +101,7 @@ namespace DCL.Backpack
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController?.Dispose();
+            emoteInfoPanelController.Dispose();
         }
 
         private void ToggleTipsContent()

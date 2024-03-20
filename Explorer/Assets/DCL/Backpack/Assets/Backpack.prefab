@@ -4853,6 +4853,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e39c4ecd66084c1283c581811923055, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <BackpackInfoPanelView>k__BackingField: {fileID: 5535795034186601730}
   <GridView>k__BackingField: {fileID: 3261146987923329214}
 --- !u!1001 &33969487770751067
 PrefabInstance:
@@ -6034,6 +6035,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1540264655622709600, guid: 1059933b1543f4e4c949327e8711addb, type: 3}
   m_PrefabInstance: {fileID: 999779402808468544}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5535795034186601730 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4687392140680425794, guid: 1059933b1543f4e4c949327e8711addb, type: 3}
+  m_PrefabInstance: {fileID: 999779402808468544}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e72586a42cf441ff84e93576d0da1d6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1433271170330108735
 PrefabInstance:
   m_ObjectHideFlags: 0

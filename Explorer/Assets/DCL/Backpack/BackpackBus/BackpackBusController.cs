@@ -34,7 +34,8 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.EquipEmoteMessageReceived += HandleEmoteEquipCommand;
             this.backpackCommandBus.UnEquipEmoteMessageReceived += HandleUnEquipEmoteCommand;
             this.backpackCommandBus.HideMessageReceived += HandleHideCommand;
-            this.backpackCommandBus.SelectMessageReceived += HandleSelectCommand;
+            this.backpackCommandBus.SelectWearableMessageReceived += HandleSelectWearableCommand;
+            this.backpackCommandBus.SelectEmoteMessageReceived += HandleSelectEmoteCommand;
             this.backpackCommandBus.FilterCategoryMessageReceived += HandleFilterCategoryCommand;
             this.backpackCommandBus.SearchMessageReceived += HandleSearchCommand;
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
@@ -53,10 +54,10 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendSearch(command.SearchText);
         }
 
-        private void HandleSelectCommand(BackpackSelectCommand command)
+        private void HandleSelectWearableCommand(BackpackSelectWearableCommand command)
         {
             if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
-                backpackEventBus.SendSelect(wearable);
+                backpackEventBus.SendWearableSelect(wearable);
         }
 
         private void HandleFilterCategoryCommand(BackpackFilterCategoryCommand command)
@@ -120,6 +121,12 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendUnEquipEmote(command.Slot, backpackEquipStatusController.GetEquippedEmote(command.Slot));
         }
 
+        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
+        {
+            if (emoteCache.TryGetEmote(command.Id, out IEmote emote))
+                backpackEventBus.SendEmoteSelect(emote);
+        }
+
         private void HandleHideCommand(BackpackHideCommand command)
         {
             backpackEventBus.SendForceRender(command.ForceRender);
@@ -130,7 +137,7 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.EquipWearableMessageReceived -= HandleEquipWearableCommand;
             backpackCommandBus.UnEquipWearableMessageReceived -= HandleUnEquipWearableCommand;
             backpackCommandBus.HideMessageReceived -= HandleHideCommand;
-            backpackCommandBus.SelectMessageReceived -= HandleSelectCommand;
+            backpackCommandBus.SelectWearableMessageReceived -= HandleSelectWearableCommand;
             backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
             backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
         }

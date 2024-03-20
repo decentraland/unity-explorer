@@ -8,11 +8,12 @@ namespace DCL.Backpack.BackpackBus
 {
     public class BackpackEventBus : IBackpackEventBus
     {
-        public event Action<IWearable> SelectEvent;
+        public event Action<IWearable> SelectWearableEvent;
         public event Action<IWearable> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
         public event Action<int, IEmote>? EquipEmoteEvent;
         public event Action<int, IEmote?>? UnEquipEmoteEvent;
+        public event Action<IEmote>? SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
@@ -20,8 +21,8 @@ namespace DCL.Backpack.BackpackBus
 
         public event Action<string> SearchEvent;
 
-        public void SendSelect(IWearable equipWearable) =>
-            SelectEvent?.Invoke(equipWearable);
+        public void SendWearableSelect(IWearable equipWearable) =>
+            SelectWearableEvent?.Invoke(equipWearable);
 
         public void SendEquipWearable(IWearable equipWearable) =>
             EquipWearableEvent?.Invoke(equipWearable);
@@ -49,5 +50,8 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendEquipEmote(int slot, IEmote emote) =>
             EquipEmoteEvent?.Invoke(slot, emote);
+
+        public void SendEmoteSelect(IEmote emote) =>
+            SelectEmoteEvent?.Invoke(emote);
     }
 }

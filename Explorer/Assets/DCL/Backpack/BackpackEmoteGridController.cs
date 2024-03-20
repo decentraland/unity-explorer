@@ -173,7 +173,7 @@ namespace DCL.Backpack
                 backpackItemView.IsEquipped = backpackEquipStatusController.IsEmoteEquipped(gridWearables[i]);
 
                 backpackItemView.SetEquipButtonsState();
-                WaitForThumbnailAsync(gridWearables[i], backpackItemView, loadElementsCancellationToken.Token).Forget();
+                WaitForThumbnailAsync(gridWearables[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
 

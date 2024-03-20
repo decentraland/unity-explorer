@@ -296,7 +296,7 @@ namespace DCL.Backpack
         }
 
         private void SelectItem(string itemId) =>
-            commandBus.SendCommand(new BackpackSelectCommand(itemId));
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
 
         private void OnUnequip(IWearable unequippedWearable)
         {
