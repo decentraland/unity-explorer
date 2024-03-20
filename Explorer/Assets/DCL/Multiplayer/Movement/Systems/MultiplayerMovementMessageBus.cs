@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private static void WriteToProto(FullMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
-            movement.Timestamp = UnityEngine.Time.unscaledTime;
+            movement.Timestamp = message.timestamp;
 
             movement.PositionX = message.position.x;
             movement.PositionY = message.position.y;
