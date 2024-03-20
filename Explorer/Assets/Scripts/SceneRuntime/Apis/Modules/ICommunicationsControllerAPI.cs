@@ -1,10 +1,9 @@
-﻿using Google.Protobuf;
-using System;
+﻿using System;
 
 namespace SceneRuntime.Apis.Modules
 {
     public interface ICommunicationsControllerAPI : IDisposable
     {
-        ByteString SendBinary(ByteString data);
+        byte[][] SendBinary(byte[][] data);
     }
 }

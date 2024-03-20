@@ -3,9 +3,9 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
-using LiveKit.Proto;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
+using System;
 using System.Threading;
 
 namespace CrdtEcsBridge.CommunicationsController
@@ -27,13 +27,16 @@ namespace CrdtEcsBridge.CommunicationsController
             messagePipesHub.ScenePipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
         }
 
-        public ByteString SendBinary(ByteString data)
+        public byte[][] SendBinary(byte[][] data)
         {
             if (!sceneStateProvider.IsCurrent)
-                return ByteString.Empty;
+                return Array.Empty<byte[]>();
 
-            SendTo(data, messagePipesHub.IslandPipe());
-            SendTo(data, messagePipesHub.ScenePipe());
+            foreach (byte[] message in data)
+            {
+                SendTo(message, messagePipesHub.IslandPipe());
+                SendTo(message, messagePipesHub.ScenePipe());
+            }
 
             return data;
         }
@@ -44,12 +47,12 @@ namespace CrdtEcsBridge.CommunicationsController
             cancellationTokenSource.Dispose();
         }
 
-        private  void SendTo(ByteString message, IMessagePipe messagePipe)
+        private  void SendTo(byte[] message, IMessagePipe messagePipe)
         {
             var sceneMessage = messagePipe.NewMessage<Scene>();
-            sceneMessage.Payload.Data = message;
+            sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             //sceneMessage.Payload.SceneId = ¿?
-            sceneMessage.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            sceneMessage.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
