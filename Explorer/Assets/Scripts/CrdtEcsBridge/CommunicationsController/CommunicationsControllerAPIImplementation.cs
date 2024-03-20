@@ -6,6 +6,8 @@ using Google.Protobuf;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
 using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 
 namespace CrdtEcsBridge.CommunicationsController
@@ -15,6 +17,8 @@ namespace CrdtEcsBridge.CommunicationsController
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
+
+        private List<byte[]> eventsToProcess = new ();
 
         public CommunicationsControllerAPIImplementation(
             ISceneStateProvider sceneStateProvider,
@@ -38,7 +42,9 @@ namespace CrdtEcsBridge.CommunicationsController
                 SendTo(message, messagePipesHub.ScenePipe());
             }
 
-            return data;
+            byte[][] resultData = eventsToProcess.ToArray();
+            eventsToProcess.Clear();
+            return resultData;
         }
 
         public void Dispose()
@@ -57,7 +63,18 @@ namespace CrdtEcsBridge.CommunicationsController
 
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
-            // TODO (Santi): Implement reception of messages
+            if (receivedMessage.Payload.Data.IsEmpty)
+                return;
+
+            byte[] senderBytes = Encoding.UTF8.GetBytes(receivedMessage.FromWalletId);
+            int messageLength = senderBytes.Length + receivedMessage.Payload.Data.Length + 1;
+
+            var serializedMessage = new byte[messageLength];
+            serializedMessage[0] = (byte)senderBytes.Length;
+            Array.Copy(senderBytes, 0, serializedMessage, 1, senderBytes.Length);
+            Array.Copy(receivedMessage.Payload.Data.ToByteArray(), 0, serializedMessage, senderBytes.Length + 1, receivedMessage.Payload.Data.Length);
+
+            eventsToProcess.Add(serializedMessage);
         }
     }
 }
