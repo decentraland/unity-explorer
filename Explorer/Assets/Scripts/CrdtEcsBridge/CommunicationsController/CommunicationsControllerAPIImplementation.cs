@@ -1,9 +1,12 @@
 ﻿using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
+using Google.Protobuf;
+using LiveKit.Proto;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
-using System;
+using System.Threading;
 
 namespace CrdtEcsBridge.CommunicationsController
 {
@@ -11,6 +14,7 @@ namespace CrdtEcsBridge.CommunicationsController
     {
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IMessagePipesHub messagePipesHub;
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public CommunicationsControllerAPIImplementation(
             ISceneStateProvider sceneStateProvider,
@@ -23,16 +27,30 @@ namespace CrdtEcsBridge.CommunicationsController
             messagePipesHub.ScenePipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
         }
 
-        public byte[] SendBinary(byte[] data)
+        public ByteString SendBinary(ByteString data)
         {
             if (!sceneStateProvider.IsCurrent)
-                return Array.Empty<byte>();
+                return ByteString.Empty;
 
-            // TODO (Santi): Implement sending of messages
-            return Array.Empty<byte>();
+            SendTo(data, messagePipesHub.IslandPipe());
+            SendTo(data, messagePipesHub.ScenePipe());
+
+            return data;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
+        }
+
+        private  void SendTo(ByteString message, IMessagePipe messagePipe)
+        {
+            var sceneMessage = messagePipe.NewMessage<Scene>();
+            sceneMessage.Payload.Data = message;
+            //sceneMessage.Payload.SceneId = ¿?
+            sceneMessage.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+        }
 
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
