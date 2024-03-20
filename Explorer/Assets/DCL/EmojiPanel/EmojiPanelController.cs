@@ -129,13 +129,18 @@ namespace DCL.Emoji
                 emojiChar = char.ConvertFromUtf32(emojiCode);
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
                 emojiButton.EmojiImage.text = emojiChar;
-                emojiButton.Button.onClick.AddListener(() => OnEmojiSelected?.Invoke(emojiButton.EmojiImage.text));
+                emojiButton.OnEmojiSelected += EmojiSelected;
 
                 if (emojiValueMapping.TryGetValue(emojiCode, out string emojiValue))
                     emojiButton.TooltipText.text = emojiValue;
                 else
                     emojiButton.TooltipText.text = string.Empty;
             }
+        }
+
+        private void EmojiSelected(string code)
+        {
+            OnEmojiSelected?.Invoke(code);
         }
 
         public void Dispose()
