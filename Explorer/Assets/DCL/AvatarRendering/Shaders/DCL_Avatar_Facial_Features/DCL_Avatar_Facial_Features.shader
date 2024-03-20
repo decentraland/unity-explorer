@@ -145,6 +145,10 @@ Shader "DCL/DCL_Avatar_Facial_Features"
             //--------------------------------------
             // Defines
             #define BUMP_SCALE_NOT_SUPPORTED 1
+            #define _DCL_COMPUTE_SKINNING
+            #define _DCL_TEXTURE_ARRAYS
+            #define _ALPHATEST_ON
+            #define DISABLE_RP_SHADERS
 
             // -------------------------------------
             // Includes

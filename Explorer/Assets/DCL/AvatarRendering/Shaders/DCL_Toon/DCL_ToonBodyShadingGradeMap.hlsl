@@ -107,7 +107,7 @@ float4 fragShadingGradeMap(VertexOutput i, half facing : VFACE) : SV_TARGET
     //v.2.0.5
     _Color = _BaseColor;
 
-    #ifdef _IS_PASS_FWDBASE
+    //#ifdef _IS_PASS_FWDBASE
         float3 Set_LightColor = lightColor.rgb;
         float3 Set_BaseColor = lerp( (_MainTex_var.rgb*_BaseColor.rgb), ((_MainTex_var.rgb*_BaseColor.rgb)*Set_LightColor), _Is_LightColor_Base );
         //v.2.0.5
@@ -237,25 +237,25 @@ float4 fragShadingGradeMap(VertexOutput i, half facing : VFACE) : SV_TARGET
         float3 matCapColorOnMultiplyMode = Set_HighColor*(1-_Tweak_MatcapMaskLevel_var_MultiplyMode) + Set_HighColor*Set_MatCap*_Tweak_MatcapMaskLevel_var_MultiplyMode + lerp(float3(0,0,0),Set_RimLight,_RimLight);
         float3 matCapColorFinal = lerp(matCapColorOnMultiplyMode, matCapColorOnAddMode, _Is_BlendAddToMatCap);
         //v.2.0.4
-        #ifdef _IS_ANGELRING_OFF
+        //#ifdef _IS_ANGELRING_OFF
             float3 finalColor = lerp(_RimLight_var, matCapColorFinal, _MatCap);// Final Composition before Emissive
             //
-        #elif _IS_ANGELRING_ON
-            float3 finalColor = lerp(_RimLight_var, matCapColorFinal, _MatCap);// Final Composition before AR
-            //v.2.0.7 AR Camera Rolling Stabilizer
-            float3 _AR_OffsetU_var = lerp(mul(UNITY_MATRIX_V, float4(i.normalDir,0)).xyz,float3(0,0,1),_AR_OffsetU);
-            float2 AR_VN = _AR_OffsetU_var.xy*0.5 + float2(0.5,0.5);
-            float2 AR_VN_Rotate = RotateUV(AR_VN, -(_Camera_Dir*_Camera_Roll), float2(0.5,0.5), 1.0);
-            float2 _AR_OffsetV_var = float2(AR_VN_Rotate.x, lerp(i.uv1.y, AR_VN_Rotate.y, _AR_OffsetV));
-            int nAngelRing_SamplerArr_ID = _AngelRing_SamplerArr_ID;
-            float4 _AngelRing_Sampler_var = SAMPLE_ANGELRING(TRANSFORM_TEX(_AR_OffsetV_var, _AngelRing_Sampler), nAngelRing_SamplerArr_ID);
-            float3 _Is_LightColor_AR_var = lerp( (_AngelRing_Sampler_var.rgb*_AngelRing_Color.rgb), ((_AngelRing_Sampler_var.rgb*_AngelRing_Color.rgb)*Set_LightColor), _Is_LightColor_AR );
-            float3 Set_AngelRing = _Is_LightColor_AR_var;
-            float Set_ARtexAlpha = _AngelRing_Sampler_var.a;
-            float3 Set_AngelRingWithAlpha = (_Is_LightColor_AR_var*_AngelRing_Sampler_var.a);
-            //Composition: MatCap and AngelRing as finalColor
-            finalColor = lerp(finalColor, lerp((finalColor + Set_AngelRing), ((finalColor*(1.0 - Set_ARtexAlpha))+Set_AngelRingWithAlpha), _ARSampler_AlphaOn ), _AngelRing );// Final Composition before Emissive
-        #endif
+        // #elif _IS_ANGELRING_ON
+        //     float3 finalColor = lerp(_RimLight_var, matCapColorFinal, _MatCap);// Final Composition before AR
+        //     //v.2.0.7 AR Camera Rolling Stabilizer
+        //     float3 _AR_OffsetU_var = lerp(mul(UNITY_MATRIX_V, float4(i.normalDir,0)).xyz,float3(0,0,1),_AR_OffsetU);
+        //     float2 AR_VN = _AR_OffsetU_var.xy*0.5 + float2(0.5,0.5);
+        //     float2 AR_VN_Rotate = RotateUV(AR_VN, -(_Camera_Dir*_Camera_Roll), float2(0.5,0.5), 1.0);
+        //     float2 _AR_OffsetV_var = float2(AR_VN_Rotate.x, lerp(i.uv1.y, AR_VN_Rotate.y, _AR_OffsetV));
+        //     int nAngelRing_SamplerArr_ID = _AngelRing_SamplerArr_ID;
+        //     float4 _AngelRing_Sampler_var = SAMPLE_ANGELRING(TRANSFORM_TEX(_AR_OffsetV_var, _AngelRing_Sampler), nAngelRing_SamplerArr_ID);
+        //     float3 _Is_LightColor_AR_var = lerp( (_AngelRing_Sampler_var.rgb*_AngelRing_Color.rgb), ((_AngelRing_Sampler_var.rgb*_AngelRing_Color.rgb)*Set_LightColor), _Is_LightColor_AR );
+        //     float3 Set_AngelRing = _Is_LightColor_AR_var;
+        //     float Set_ARtexAlpha = _AngelRing_Sampler_var.a;
+        //     float3 Set_AngelRingWithAlpha = (_Is_LightColor_AR_var*_AngelRing_Sampler_var.a);
+        //     //Composition: MatCap and AngelRing as finalColor
+        //     finalColor = lerp(finalColor, lerp((finalColor + Set_AngelRing), ((finalColor*(1.0 - Set_ARtexAlpha))+Set_AngelRingWithAlpha), _ARSampler_AlphaOn ), _AngelRing );// Final Composition before Emissive
+        // #endif
     
         //v.2.0.7
         #ifdef _EMISSIVE_SIMPLE
@@ -498,7 +498,7 @@ float4 fragShadingGradeMap(VertexOutput i, half facing : VFACE) : SV_TARGET
         //Final Composition
         finalColor = SATURATE_IF_SDR(finalColor) + (envLightColor*envLightIntensity*_GI_Intensity*smoothstep(1,0,envLightIntensity/2)) + emissive;
         finalColor += pointLightColor;
-    #endif
+    //#endif
 
 
     //v.2.0.4
