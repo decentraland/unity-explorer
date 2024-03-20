@@ -156,7 +156,7 @@ namespace DCL.Backpack
                     gridItemsPool.Release(loadingResults[j]!);
             }
 
-            for (int i = gridWearables.Count; i >= 0; i--)
+            for (int i = gridWearables.Count - 1; i >= 0; i--)
             {
                 BackpackItemView backpackItemView = loadingResults[i]!;
                 usedPoolItems.Remove(i);
