@@ -200,6 +200,9 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (IEmote emote in resolvedEmotesTmp)
             {
+                if (emote.ManifestResult is { Exception: not null })
+                    emotesWithResponse++;
+
                 if (emote.IsLoading) continue;
                 if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
 
@@ -222,7 +225,10 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            if (emotesWithResponse == resolvedEmotesTmp.Count || intention.elapsedTime >= intention.Timeout)
+            bool isTimeout = intention.elapsedTime >= intention.Timeout;
+            bool isSucceeded = emotesWithResponse == resolvedEmotesTmp.Count;
+
+            if (isSucceeded || isTimeout)
                 World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
 
             ListPool<URN>.Release(missingPointersTmp);
@@ -271,6 +277,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                emote.IsLoading = false;
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
@@ -278,9 +285,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
-                if (result.Succeeded)
-                    emote.ManifestResult = result;
-
+                emote.ManifestResult = result;
                 emote.IsLoading = false;
                 World.Destroy(entity);
             }
@@ -332,6 +337,7 @@ namespace DCL.AvatarRendering.Emotes
                     partitionComponent);
 
                 component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
+
                 component.IsLoading = true;
                 World.Create(promise, component, intention.BodyShape);
                 return true;
@@ -339,6 +345,9 @@ namespace DCL.AvatarRendering.Emotes
 
             if (component.WearableAssetResults[intention.BodyShape] == null)
             {
+                if (!component.ManifestResult.HasValue) return false;
+                if (component.ManifestResult.Value is { IsInitialized: true, Succeeded: false }) return false;
+
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
                 var promise = AssetBundlePromise.Create(World,

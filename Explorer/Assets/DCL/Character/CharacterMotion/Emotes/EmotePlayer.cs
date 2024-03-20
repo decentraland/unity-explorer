@@ -43,6 +43,7 @@ namespace DCL.Character.CharacterMotion.Emotes
             Transform emoteTransform = emoteReferences.transform;
             emoteTransform.SetParent(avatarBase.transform, false);
             emoteTransform.localPosition = Vector3.zero;
+            emoteTransform.localRotation = Quaternion.identity;
 
             if (emoteReferences.avatarClip != null)
             {

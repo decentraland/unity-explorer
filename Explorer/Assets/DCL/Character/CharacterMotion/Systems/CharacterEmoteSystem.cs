@@ -53,13 +53,20 @@ namespace DCL.CharacterMotion.Systems
                 if (streamableAsset == null) return;
                 if (!streamableAsset.Value.Succeeded) return;
 
-                GameObject? mainAsset = streamableAsset.Value.Asset.GetMainAsset<GameObject>();
+                if (streamableAsset.Value.Exception != null)
+                    return;
 
-                if (mainAsset != null)
-                {
-                    if (emotePlayer.Play(mainAsset, in avatarBase, ref animationComponent))
-                        World.Remove<CharacterEmoteIntent>(entity);
-                }
+                GameObject? mainAsset = streamableAsset.Value.Asset?.GetMainAsset<GameObject>();
+
+                if (mainAsset == null) return;
+                if (!emotePlayer.Play(mainAsset, in avatarBase, ref animationComponent)) return;
+
+                World.Remove<CharacterEmoteIntent>(entity);
+            }
+            else
+            {
+                // if it does not even exist in the cache, then this failed completely
+                World.Remove<CharacterEmoteIntent>(entity);
             }
         }
     }
