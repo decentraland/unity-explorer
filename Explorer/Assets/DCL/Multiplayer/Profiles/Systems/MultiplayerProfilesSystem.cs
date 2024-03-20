@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
@@ -18,6 +19,7 @@ namespace DCL.Multiplayer.Profiles.Systems
     ///     4 auto flow of avatar
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
         private readonly IRemoteAnnouncements remoteAnnouncements;
