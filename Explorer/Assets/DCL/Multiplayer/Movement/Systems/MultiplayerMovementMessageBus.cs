@@ -9,7 +9,6 @@ using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 using Utility.PriorityQueue;
 using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
@@ -104,6 +103,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
             QueueFor(@for)?.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+            ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
 
         private SimplePriorityQueue<FullMovementMessage>? QueueFor(string walletId)
