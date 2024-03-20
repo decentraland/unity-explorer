@@ -74,7 +74,6 @@ namespace DCL.Chat.MessageBus
             var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
-            chat.AddRecipients(room);
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
