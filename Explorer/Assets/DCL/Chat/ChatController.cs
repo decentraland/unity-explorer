@@ -36,7 +36,6 @@ namespace DCL.Chat
         private World world;
 
         private string currentMessage = string.Empty;
-        private readonly List<ChatMessage> chatMessages = new ();
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
 
@@ -47,15 +46,14 @@ namespace DCL.Chat
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            NametagsData nametagsData
-        ) : base(viewFactory)
             NametagsData nametagsData,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionViewPrefab,
             EmojiButton emojiButtonPrefab,
             EmojiSuggestionView emojiSuggestionViewPrefab,
-            World world) : base(viewFactory)
+            World world
+        ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -197,6 +195,7 @@ namespace DCL.Chat
         private void HandleEmojiSearch(string inputText)
         {
             Match match = EMOJI_PATTERN_REGEX.Match(inputText);
+
             if (match.Success)
             {
                 if (match.Value.Length < 2)
@@ -204,15 +203,13 @@ namespace DCL.Chat
                     emojiSuggestionPanelController.SetPanelVisibility(false);
                     return;
                 }
+
                 cts.SafeCancelAndDispose();
                 cts = new CancellationTokenSource();
 
                 SearchAndSetEmojiSuggestionsAsync(match.Value, cts.Token).Forget();
             }
-            else
-            {
-                emojiSuggestionPanelController.SetPanelVisibility(false);
-            }
+            else { emojiSuggestionPanelController.SetPanelVisibility(false); }
         }
 
         private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)

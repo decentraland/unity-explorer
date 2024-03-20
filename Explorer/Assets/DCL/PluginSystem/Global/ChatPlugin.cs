@@ -55,16 +55,15 @@ namespace DCL.PluginSystem.Global
                     ChatController.CreateLazily(chatView, null),
                     chatEntryConfiguration,
                     chatMessagesBus,
-                entityParticipantTable,
-                nametagsData
-            );
+                    entityParticipantTable,
                     nametagsData,
                     emojiPanelConfig,
                     settings.EmojiMappingJson,
                     emojiSectionPrefab,
                     emojiButtonPrefab,
                     emojiSuggestionPrefab,
-                    builder.World);
+                    builder.World
+                );
 
                 mvcManager.RegisterController(chatController);
                 mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
