@@ -33,7 +33,11 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
         {
-            HandleAsync(obj).Forget();
+            if (cancellationTokenSource.Token.IsCancellationRequested)
+                return;
+
+            var message = MovementMessage(obj.Payload);
+            Inbox(message, obj.FromWalletId);
         }
 
         public void Send(FullMovementMessage message)
@@ -78,40 +82,24 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
         }
 
-        private async UniTaskVoid HandleAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
-        {
-            using (obj)
+        private static FullMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
+            new()
             {
-                await using ExecuteOnMainThreadScope _ = await ExecuteOnMainThreadScope.NewScopeAsync();
-
-                if (cancellationTokenSource.Token.IsCancellationRequested)
-                    return;
-
+                timestamp = proto.Timestamp,
+                position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
+                velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
+                animState = new AnimationStates
                 {
-                    Decentraland.Kernel.Comms.Rfc4.Movement proto = obj.Payload;
-
-                    var message = new FullMovementMessage
-                    {
-                        timestamp = proto.Timestamp,
-                        position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
-                        velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
-                        animState = new AnimationStates
-                        {
-                            MovementBlendValue = proto.MovementBlendValue,
-                            SlideBlendValue = proto.SlideBlendValue,
-                            IsGrounded = proto.IsGrounded,
-                            IsJumping = proto.IsJumping,
-                            IsLongJump = proto.IsLongJump,
-                            IsFalling = proto.IsFalling,
-                            IsLongFall = proto.IsLongFall,
-                        },
-                        isStunned = proto.IsStunned,
-                    };
-
-                    Inbox(message, obj.FromWalletId);
-                }
-            }
-        }
+                    MovementBlendValue = proto.MovementBlendValue,
+                    SlideBlendValue = proto.SlideBlendValue,
+                    IsGrounded = proto.IsGrounded,
+                    IsJumping = proto.IsJumping,
+                    IsLongJump = proto.IsLongJump,
+                    IsFalling = proto.IsFalling,
+                    IsLongFall = proto.IsLongFall,
+                },
+                isStunned = proto.IsStunned,
+            };
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
