@@ -33,7 +33,11 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
         {
-            HandleAsync(obj).Forget();
+            if (cancellationTokenSource.Token.IsCancellationRequested)
+                return;
+
+            var message = MovementMessage(obj.Payload);
+            Inbox(message, obj.FromWalletId);
         }
 
         public void Send(FullMovementMessage message)
@@ -96,20 +100,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 },
                 isStunned = proto.IsStunned,
             };
-
-        private async UniTaskVoid HandleAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
-        {
-            using (obj)
-            {
-                await using ExecuteOnMainThreadScope _ = await ExecuteOnMainThreadScope.NewScopeAsync();
-
-                if (cancellationTokenSource.Token.IsCancellationRequested)
-                    return;
-
-                var message = MovementMessage(obj.Payload);
-                Inbox(message, obj.FromWalletId);
-            }
-        }
 
         private void Inbox(FullMovementMessage fullMovementMessage, string @for)
         {
