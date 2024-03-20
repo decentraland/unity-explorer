@@ -78,6 +78,25 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
         }
 
+        private static FullMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
+            new()
+            {
+                timestamp = proto.Timestamp,
+                position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
+                velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
+                animState = new AnimationStates
+                {
+                    MovementBlendValue = proto.MovementBlendValue,
+                    SlideBlendValue = proto.SlideBlendValue,
+                    IsGrounded = proto.IsGrounded,
+                    IsJumping = proto.IsJumping,
+                    IsLongJump = proto.IsLongJump,
+                    IsFalling = proto.IsFalling,
+                    IsLongFall = proto.IsLongFall,
+                },
+                isStunned = proto.IsStunned,
+            };
+
         private async UniTaskVoid HandleAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
         {
             using (obj)
@@ -87,29 +106,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
-                {
-                    Decentraland.Kernel.Comms.Rfc4.Movement proto = obj.Payload;
-
-                    var message = new FullMovementMessage
-                    {
-                        timestamp = proto.Timestamp,
-                        position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
-                        velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
-                        animState = new AnimationStates
-                        {
-                            MovementBlendValue = proto.MovementBlendValue,
-                            SlideBlendValue = proto.SlideBlendValue,
-                            IsGrounded = proto.IsGrounded,
-                            IsJumping = proto.IsJumping,
-                            IsLongJump = proto.IsLongJump,
-                            IsFalling = proto.IsFalling,
-                            IsLongFall = proto.IsLongFall,
-                        },
-                        isStunned = proto.IsStunned,
-                    };
-
-                    Inbox(message, obj.FromWalletId);
-                }
+                var message = MovementMessage(obj.Payload);
+                Inbox(message, obj.FromWalletId);
             }
         }
 
