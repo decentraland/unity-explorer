@@ -126,7 +126,7 @@ namespace DCL.Backpack
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
 
             avatarController.RequestInitialWearablesPage();
-            backpackEmoteGridController.RequestAndFillEmotes(1);
+            backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar);
 
             if (!avatarShapeComponent.WearablePromise.IsConsumed)

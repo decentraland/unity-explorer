@@ -44,7 +44,6 @@ namespace DCL.Backpack
         private string? currentSearch;
         private bool onChainEmotesOnly;
         private IEmoteProvider.OrderOperation currentOrder = new ("date", false);
-        private BackpackBreadCrumbController breadCrumbController;
         private BodyShape currentBodyShape = BodyShape.MALE;
 
         public BackpackEmoteGridController(
@@ -83,7 +82,6 @@ namespace DCL.Backpack
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
-            breadCrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
         }
 
         public void Dispose()
@@ -102,7 +100,12 @@ namespace DCL.Backpack
             );
         }
 
-        public void RequestAndFillEmotes(int pageNumber)
+        private void RequestAndFillEmotes(int pageNumber)
+        {
+            RequestAndFillEmotes(pageNumber, false);
+        }
+
+        public void RequestAndFillEmotes(int pageNumber, bool reconfigurePageSelector)
         {
             loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
 
@@ -146,7 +149,9 @@ namespace DCL.Backpack
                 }
 
                 SetGridElements(emotes);
-                pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
+
+                if(reconfigurePageSelector)
+                    pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
             }
 
             RequestPageAsync(loadElementsCancellationToken!.Token).Forget();
@@ -204,26 +209,26 @@ namespace DCL.Backpack
         private void OnFilterCategory(string category)
         {
             currentCategory = string.IsNullOrEmpty(category) ? null : category;
-            RequestAndFillEmotes(1);
+            RequestAndFillEmotes(1, true);
         }
 
         private void OnSearch(string searchText)
         {
             currentSearch = string.IsNullOrEmpty(searchText) ? null : searchText;
-            RequestAndFillEmotes(1);
+            RequestAndFillEmotes(1, true);
         }
 
         private void OnSortChanged(BackpackGridSort sort)
         {
             string by = sort.OrderByOperation.ToString().ToLower();
             currentOrder = new IEmoteProvider.OrderOperation(by, sort.SortAscending);
-            RequestAndFillEmotes(1);
+            RequestAndFillEmotes(1, true);
         }
 
         private void OnCollectiblesOnlyChanged(bool collectiblesOnly)
         {
             onChainEmotesOnly = collectiblesOnly;
-            RequestAndFillEmotes(1);
+            RequestAndFillEmotes(1, true);
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment emote, BackpackItemView itemView, CancellationToken ct)
