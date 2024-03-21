@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -22,6 +23,7 @@ namespace DCL.Backpack
     public class BackpackEmoteGridController : IDisposable
     {
         private const int CURRENT_PAGE_SIZE = 16;
+        private const string EMOTE_CATEGORY = "emote";
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
@@ -190,7 +192,7 @@ namespace DCL.Backpack
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
-                backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(emotes[i].GetCategory());
+                backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(EMOTE_CATEGORY);
                 backpackItemView.EquippedIcon.SetActive(backpackEquipStatusController.IsEmoteEquipped(emotes[i]));
                 backpackItemView.IsEquipped = backpackEquipStatusController.IsEmoteEquipped(emotes[i]);
 
