@@ -51,6 +51,7 @@ namespace DCL.PluginSystem.Global
                 (ICharacterControllerSettings)settings.Value,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new CharacterPlatformComponent(),
                 new StunComponent(),
                 new FeetIKComponent(),

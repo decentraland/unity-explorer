@@ -122,7 +122,6 @@ namespace DCL.Multiplayer.Emotes
             if (!string.IsNullOrEmpty(emoteId))
             {
                 globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
-                globalWorld.Get<CharacterAnimationComponent>(entity).States.WasEmoteJustTriggered = true;
             }
         }
     }

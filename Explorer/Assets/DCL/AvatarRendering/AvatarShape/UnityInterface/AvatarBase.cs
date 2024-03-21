@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -76,6 +77,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             overrideController.ApplyOverrides(animationOverrides);
         }
 
+        public Transform GetTransform() =>
+            transform;
+
         public void SetAnimatorFloat(int hash, float value)
         {
             avatarAnimator.SetFloat(hash, value);
@@ -86,8 +90,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetTrigger(hash);
         }
 
-        public bool IsAnimatorInTag(string tag) =>
-            avatarAnimator.GetCurrentAnimatorStateInfo(0).IsTag(tag);
+        public bool IsAnimatorInTag(int hashTag) =>
+            avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
+
+        public int GetAnimatorCurrentStateTag() =>
+            avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
 
         public bool GetAnimatorBool(int hash) =>
             avatarAnimator.GetBool(hash);
@@ -108,6 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
     public interface IAvatarView
     {
+        Transform GetTransform();
         void SetAnimatorFloat(int hash, float value);
 
         void SetAnimatorTrigger(int hash);
@@ -118,6 +126,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void ReplaceEmoteAnimation(AnimationClip animationClip);
 
-        bool IsAnimatorInTag(string tag);
+        bool IsAnimatorInTag(int hashTag);
+
+        int GetAnimatorCurrentStateTag();
     }
 }

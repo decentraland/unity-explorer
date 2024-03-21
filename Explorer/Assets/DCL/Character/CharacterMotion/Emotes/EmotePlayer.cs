@@ -22,14 +22,14 @@ namespace DCL.Character.CharacterMotion.Emotes
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER").transform;
         }
 
-        public bool Play(GameObject mainAsset, bool isLooping, in AvatarBase avatarBase, ref CharacterAnimationComponent animationComponent)
+        public bool Play(GameObject mainAsset, bool isLooping, in IAvatarView avatarBase, ref CharacterEmoteComponent animationComponent)
         {
             Animator animator = mainAsset.GetComponent<Animator>();
 
             if (animator == null)
                 return false;
 
-            EmoteReferences? emoteInUse = animationComponent.States.CurrentEmoteReference;
+            EmoteReferences? emoteInUse = animationComponent.CurrentEmoteReference;
 
             if (emoteInUse != null)
                 Stop(emoteInUse);
@@ -41,22 +41,22 @@ namespace DCL.Character.CharacterMotion.Emotes
             if (!emoteReferences) return false;
 
             Transform emoteTransform = emoteReferences.transform;
-            emoteTransform.SetParent(avatarBase.transform, false);
+            emoteTransform.SetParent(avatarBase.GetTransform(), false);
             emoteTransform.localPosition = Vector3.zero;
             emoteTransform.localRotation = Quaternion.identity;
 
             if (emoteReferences.avatarClip != null)
             {
-                animationComponent.States.WasEmoteJustTriggered = true;
-                animationComponent.States.EmoteClip = emoteReferences.avatarClip;
-                animationComponent.States.EmoteLoop = isLooping;
+                animationComponent.WasEmoteJustTriggered = true;
+                animationComponent.EmoteClip = emoteReferences.avatarClip;
+                animationComponent.EmoteLoop = isLooping;
             }
 
             if (emoteReferences.propClip != null)
                 emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
-            animationComponent.States.CurrentEmoteReference = emoteReferences;
+            animationComponent.CurrentEmoteReference = emoteReferences;
             return true;
         }
 

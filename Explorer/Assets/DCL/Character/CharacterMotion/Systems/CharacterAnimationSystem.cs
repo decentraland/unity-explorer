@@ -19,7 +19,6 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateAnimationQuery(World, t);
-            UpdateRemotePlayersAnimationQuery(World);
         }
 
         [Query]
@@ -41,13 +40,6 @@ namespace DCL.CharacterMotion.Systems
 
             // Apply other states
             ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
-        }
-
-        [Query]
-        [All(typeof(RemotePlayerMovementComponent))]
-        private void UpdateRemotePlayersAnimation(ref CharacterAnimationComponent animationComponent, in IAvatarView view)
-        {
-            ApplyAnimationState.ExecuteEmote(ref animationComponent, in view);
         }
     }
 }

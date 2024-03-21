@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Emotes;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -35,12 +36,13 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            TriggerEmotesQuery(World);
             CancelEmotesQuery(World);
+            ConsumeEmoteIntentQuery(World);
+            ReplicateLoopingEmotesQuery(World);
         }
 
         [Query]
-        private void CancelEmotes(ref CharacterAnimationComponent animationComponent, in CharacterRigidTransform rigidTransform)
+        private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform)
         {
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
             float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
@@ -48,16 +50,16 @@ namespace DCL.CharacterMotion.Systems
             bool canEmoteBeCancelled = velocity > 0.2f || verticalVelocity > 0.2f;
             if (!canEmoteBeCancelled) return;
 
-            EmoteReferences? emoteReference = animationComponent.States.CurrentEmoteReference;
+            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
             if (emoteReference == null) return;
 
-            animationComponent.States.EmoteClip = null;
-            animationComponent.States.EmoteLoop = false;
+            emoteComponent.EmoteClip = null;
+            emoteComponent.EmoteLoop = false;
             emotePlayer.Stop(emoteReference);
         }
 
         [Query]
-        private void TriggerEmotes(in Entity entity, ref CharacterAnimationComponent animationComponent, in CharacterEmoteIntent emoteIntent, in AvatarBase avatarBase)
+        private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
         {
             string emoteId = emoteIntent.EmoteId;
 
@@ -82,16 +84,36 @@ namespace DCL.CharacterMotion.Systems
 
                 if (mainAsset == null) return;
 
-                if (!emotePlayer.Play(mainAsset, emote.IsLooping(), in avatarBase, ref animationComponent))
+                if (!emotePlayer.Play(mainAsset, emote.IsLooping(), in avatarView, ref emoteComponent))
                     ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.dto.version} should be >= 16");
 
-                World.Remove<CharacterEmoteIntent>(entity);
+                // If the avatar is already doing an emote and we re-trigger it, we want to restart the animation to enable emote spamming
+                if (emoteComponent.WasEmoteJustTriggered && emoteComponent.EmoteClip != null)
+                {
+                    avatarView.SetAnimatorTrigger(avatarView.IsAnimatorInTag(AnimationHashes.EMOTE) || avatarView.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
+                    avatarView.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
+                    avatarView.ReplaceEmoteAnimation(emoteComponent.EmoteClip);
+                }
+
+                emoteComponent.WasEmoteJustTriggered = false;
             }
-            else
+
+            World.Remove<CharacterEmoteIntent>(entity);
+        }
+
+        [Query]
+        private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView)
+        {
+            int prevTag = animationComponent.CurrentAnimationTag;
+            int currentTag = avatarView.GetAnimatorCurrentStateTag();
+
+            if ((prevTag == AnimationHashes.EMOTE && currentTag == AnimationHashes.EMOTE_LOOP)
+                || (prevTag == AnimationHashes.EMOTE_LOOP && currentTag == AnimationHashes.EMOTE))
             {
-                // if it does not even exist in the cache, then this failed completely
-                World.Remove<CharacterEmoteIntent>(entity);
+                // this means that the emote just looped
             }
+
+            animationComponent.CurrentAnimationTag = currentTag;
         }
     }
 }

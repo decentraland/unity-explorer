@@ -6,10 +6,10 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Input.Systems;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using Decentraland.Kernel.Comms.Rfc4;
+using ECS.Abstract;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
@@ -17,7 +17,7 @@ namespace DCL.CharacterMotion.Systems
 {
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateInGroup(typeof(InputGroup))]
-    public partial class UpdateEmoteInputSystem : UpdateInputSystem<EmoteInputComponent, PlayerComponent>
+    public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
     {
         private readonly Dictionary<string, int> actionNameById = new ();
         private DCLInput.EmotesActions emotesActions;
