@@ -17,11 +17,10 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             this.messagePipesHub = messagePipesHub;
         }
 
-        public UniTaskVoid NotifyRemotesAsync()
+        public void NotifyRemotes()
         {
             SendTo(messagePipesHub.IslandPipe());
             SendTo(messagePipesHub.ScenePipe());
-            return new UniTaskVoid();
         }
 
         private void SendTo(IMessagePipe messagePipe)
