@@ -29,10 +29,5 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         {
             origin.Dispose();
         }
-
-        public void Dispose()
-        {
-            origin.Dispose();
-        }
     }
 }
