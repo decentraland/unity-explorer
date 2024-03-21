@@ -140,10 +140,13 @@ namespace DCL.Profiles
 
             for (var i = 0; i < avatar.emotes.Length; i++)
             {
+                URN urn = avatar.emotes[i];
+                if (urn.IsNullOrEmpty()) continue;
+
                 var emoteDto = new EmoteJsonDto
                 {
                     slot = i,
-                    urn = avatar.emotes[i],
+                    urn = urn,
                 };
                 emotes.Add(emoteDto);
             }
