@@ -56,6 +56,9 @@ namespace SceneRuntime
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode);
 
+            // Load and Compile Js Modules
+            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
+
             // Initialize init API
             unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
@@ -63,9 +66,6 @@ namespace SceneRuntime
 
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
-
-            // Load and Compile Js Modules
-            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')
