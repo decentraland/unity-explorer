@@ -36,6 +36,14 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
 
+            ExecuteEmote(ref animationComponent, in view);
+        }
+
+
+        // General Animation Controller flags update
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ExecuteEmote(ref CharacterAnimationComponent animationComponent, in IAvatarView view)
+        {
             // If the avatar is already doing an emote and we re-trigger it, we want to restart the animation to enable emote spamming
             if (animationComponent.States.WasEmoteJustTriggered)
             {

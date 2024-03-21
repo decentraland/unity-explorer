@@ -104,7 +104,10 @@ namespace DCL.Multiplayer.Emotes
             URN emoteId = new URN("cry");
 
             if (!string.IsNullOrEmpty(emoteId))
+            {
                 globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
+                globalWorld.Get<CharacterAnimationComponent>(entity).States.WasEmoteJustTriggered = true;
+            }
         }
 
         private void OnMessageReceived(ReceivedMessage<Emote> obj)

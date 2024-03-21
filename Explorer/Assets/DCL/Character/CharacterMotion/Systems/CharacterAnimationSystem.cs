@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 
 namespace DCL.CharacterMotion.Systems
@@ -18,6 +19,7 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateAnimationQuery(World, t);
+            UpdateRemotePlayersAnimationQuery(World);
         }
 
         [Query]
@@ -39,6 +41,13 @@ namespace DCL.CharacterMotion.Systems
 
             // Apply other states
             ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
+        }
+
+        [Query]
+        [All(typeof(RemotePlayerMovementComponent))]
+        private void UpdateRemotePlayersAnimation(ref CharacterAnimationComponent animationComponent, in IAvatarView view)
+        {
+            ApplyAnimationState.ExecuteEmote(ref animationComponent, in view);
         }
     }
 }
