@@ -8,6 +8,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -138,6 +139,9 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             RoomMetadataChanged?.Invoke(metadata);
         }
+
+        public void UpdateLocalMetadata(string metadata) =>
+            assigned.UpdateLocalMetadata(metadata);
 
         public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
             assigned.EnsureAssigned().Connect(url, authToken, cancelToken, autoSubscribe);

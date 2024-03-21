@@ -142,6 +142,12 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackPublished?.Invoke(publication, participant);
         }
 
+        public void UpdateLocalMetadata(string metadata)
+        {
+            log($"{PREFIX} update local metadata: '{metadata}'");
+            origin.UpdateLocalMetadata(metadata);
+        }
+
         [IgnoreAsyncNaming("Depends on the contract that is without async suffix")]
         public async Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
