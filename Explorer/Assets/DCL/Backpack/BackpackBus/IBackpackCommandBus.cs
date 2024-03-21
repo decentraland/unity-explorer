@@ -17,13 +17,19 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackPublishProfileCommand> PublishProfileReceived;
 
         void SendCommand(BackpackEquipWearableCommand command);
+
         void SendCommand(BackpackUnEquipWearableCommand command);
 
         void SendCommand(BackpackSelectWearableCommand command);
+
         void SendCommand(BackpackHideCommand command);
+
         void SendCommand(BackpackFilterCategoryCommand command);
+
         void SendCommand(BackpackSearchCommand command);
 
         void SendCommand(BackpackEmoteSlotSelectCommand command);
+
+        void SendCommand(BackpackUnEquipEmoteCommand command);
     }
 }

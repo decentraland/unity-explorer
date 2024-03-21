@@ -35,9 +35,11 @@ namespace DCL.Backpack
 
             for (var i = 0; i < avatarSlotViews.Length; i++)
             {
+                int slot = i;
                 EmoteSlotContainerView avatarSlotView = avatarSlotViews[i];
                 avatarSlots[i] = (avatarSlotView, new CancellationTokenSource());
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
+                avatarSlotView.UnEquipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipEmoteCommand(slot: slot)));
 
                 UnEquipInSlot(i, null);
             }

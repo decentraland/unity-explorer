@@ -43,6 +43,9 @@ namespace DCL.Backpack
         [field: SerializeField]
         public GameObject NftContainer { get; private set; }
 
+        [field: SerializeField]
+        public Button UnEquipButton { get; private set; }
+
         public event Action<EmoteSlotContainerView>? OnSlotButtonPressed;
 
         private void Start()
@@ -52,6 +55,7 @@ namespace DCL.Backpack
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            UnEquipButton.gameObject.SetActive(!EmptyOverlay.activeSelf);
             FocusedImage.enabled = true;
             ScaleUpAnimation(FocusedImage.transform);
         }
@@ -59,6 +63,7 @@ namespace DCL.Backpack
         public void OnPointerExit(PointerEventData eventData)
         {
             FocusedImage.enabled = false;
+            UnEquipButton.gameObject.SetActive(false);
         }
 
         public void StartLoadingAnimation()
