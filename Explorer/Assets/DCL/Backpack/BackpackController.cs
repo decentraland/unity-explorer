@@ -34,6 +34,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private bool initialLoadingIsDone;
+        private Dictionary<BackpackSections, ISection> backpackSections;
 
         public BackpackController(
             BackpackView view,
@@ -69,11 +70,14 @@ namespace DCL.Backpack
                 gridController,
                 wearableInfoPanelController);
 
-            Dictionary<BackpackSections, ISection> backpackSections = new ()
+            backpackSections = new ()
             {
                 { BackpackSections.Avatar, avatarController },
                 { BackpackSections.Emotes, emotesController },
             };
+
+            foreach (KeyValuePair<BackpackSections, ISection> keyValuePair in backpackSections)
+                keyValuePair.Value.Deactivate();
 
             var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
 
@@ -151,6 +155,7 @@ namespace DCL.Backpack
                 profileLoadingCts = new CancellationTokenSource();
                 AwaitForProfileAsync(profileLoadingCts).Forget();
             }
+            backpackSections[BackpackSections.Avatar].Activate();
 
             view.gameObject.SetActive(true);
             backpackCharacterPreviewController.OnShow();
@@ -162,6 +167,9 @@ namespace DCL.Backpack
                 profileLoadingCts.SafeCancelAndDispose();
             else
                 backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
+
+            foreach (ISection backpackSectionsValue in backpackSections.Values)
+                backpackSectionsValue.Deactivate();
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
