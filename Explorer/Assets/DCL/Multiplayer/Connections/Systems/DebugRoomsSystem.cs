@@ -32,13 +32,13 @@ namespace DCL.Multiplayer.Connections.Systems
             //             .AddCustomMarker("Remote Participants", remoteParticipantsScene);
 
             var gateKeeperRoomDisplay = new DebugPanelRoomDisplay(
-                "Scene Room",
+                "Room: Scene",
                 gateKeeperSceneRoom,
                 debugBuilder
             );
 
             var archipelagoRoomDisplay = new DebugPanelRoomDisplay(
-                "Island Room",
+                "Room: Island",
                 archipelagoIslandRoom,
                 debugBuilder
             );
