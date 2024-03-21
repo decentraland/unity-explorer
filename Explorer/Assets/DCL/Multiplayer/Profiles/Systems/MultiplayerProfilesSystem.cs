@@ -7,6 +7,7 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
+using DCL.UserInAppInitializationFlow;
 using ECS.Abstract;
 
 namespace DCL.Multiplayer.Profiles.Systems
@@ -27,6 +28,7 @@ namespace DCL.Multiplayer.Profiles.Systems
         private readonly IRemoteProfiles remoteProfiles;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IRemoteEntities remoteEntities;
+        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
 
         public MultiplayerProfilesSystem(
             World world,
@@ -34,7 +36,8 @@ namespace DCL.Multiplayer.Profiles.Systems
             IRemoveIntentions removeIntentions,
             IRemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
-            IRemoteEntities remoteEntities
+            IRemoteEntities remoteEntities,
+            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus
         ) : base(world)
         {
             this.remoteAnnouncements = remoteAnnouncements;
@@ -42,10 +45,14 @@ namespace DCL.Multiplayer.Profiles.Systems
             this.remoteProfiles = remoteProfiles;
             this.profileBroadcast = profileBroadcast;
             this.remoteEntities = remoteEntities;
+            this.realFlowLoadingStatus = realFlowLoadingStatus;
         }
 
         protected override void Update(float t)
         {
+            if (realFlowLoadingStatus.CurrentStage is not RealFlowLoadingStatus.Stage.Completed)
+                return;
+
             remoteProfiles.Download(remoteAnnouncements);
             remoteEntities.TryCreate(remoteProfiles, World!);
             remoteEntities.Remove(removeIntentions, World!);
