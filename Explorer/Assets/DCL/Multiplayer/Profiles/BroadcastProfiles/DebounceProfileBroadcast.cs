@@ -17,13 +17,17 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             this.debounce = debounce;
         }
 
-        public UniTaskVoid NotifyRemotesAsync()
+        public void NotifyRemotes()
         {
             if (DateTime.UtcNow - previousNotify < debounce)
-                return new UniTaskVoid();
+                return;
 
             previousNotify = DateTime.UtcNow;
-            return origin.NotifyRemotesAsync();
+        }
+
+        public void Dispose()
+        {
+            origin.Dispose();
         }
 
         public void Dispose()

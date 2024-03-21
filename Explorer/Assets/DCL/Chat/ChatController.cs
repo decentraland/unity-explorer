@@ -225,7 +225,7 @@ namespace DCL.Chat
             if (chatMessage.SentByOwnUser == false)
             {
                 var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
-                world.Add(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             }
 
             viewInstance.ResetChatEntriesFadeout();
