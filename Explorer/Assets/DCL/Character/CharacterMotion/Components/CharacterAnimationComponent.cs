@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Components
             public bool IsFalling;
             public bool WasEmoteJustTriggered;
             public bool EmoteLoop;
-            public AnimationClip EmoteClip;
+            public AnimationClip? EmoteClip;
             public EmoteReferences? CurrentEmoteReference;
         }
 

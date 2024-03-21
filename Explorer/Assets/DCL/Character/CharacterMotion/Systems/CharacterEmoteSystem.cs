@@ -9,12 +9,9 @@ using DCL.Character.CharacterMotion.Emotes;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.Optimization.ThreadSafePool;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -39,6 +36,24 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             TriggerEmotesQuery(World);
+            CancelEmotesQuery(World);
+        }
+
+        [Query]
+        private void CancelEmotes(ref CharacterAnimationComponent animationComponent, in CharacterRigidTransform rigidTransform)
+        {
+            float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
+            float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
+
+            bool canEmoteBeCancelled = velocity > 0.2f || verticalVelocity > 0.2f;
+            if (!canEmoteBeCancelled) return;
+
+            EmoteReferences? emoteReference = animationComponent.States.CurrentEmoteReference;
+            if (emoteReference == null) return;
+
+            animationComponent.States.EmoteClip = null;
+            animationComponent.States.EmoteLoop = false;
+            emotePlayer.Stop(emoteReference);
         }
 
         [Query]

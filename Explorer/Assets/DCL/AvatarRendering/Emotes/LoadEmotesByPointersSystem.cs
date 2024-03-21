@@ -229,7 +229,12 @@ namespace DCL.AvatarRendering.Emotes
             bool isSucceeded = emotesWithResponse == resolvedEmotesTmp.Count;
 
             if (isSucceeded || isTimeout)
+            {
+                if (isTimeout)
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {string.Join(",", intention.Pointers)}");
+
                 World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
+            }
 
             ListPool<URN>.Release(missingPointersTmp);
             ListPool<IEmote>.Release(resolvedEmotesTmp);

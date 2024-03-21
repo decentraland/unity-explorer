@@ -32,13 +32,7 @@ namespace DCL.Character.CharacterMotion.Emotes
             EmoteReferences? emoteInUse = animationComponent.States.CurrentEmoteReference;
 
             if (emoteInUse != null)
-            {
-                if (emotesInUse.TryGetValue(emoteInUse, out GameObjectPool<EmoteReferences>? pool))
-                {
-                    pool.Release(emoteInUse);
-                    emotesInUse.Remove(emoteInUse);
-                }
-            }
+                Stop(emoteInUse);
 
             if (!pools.ContainsKey(mainAsset))
                 pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping)));
@@ -103,8 +97,14 @@ namespace DCL.Character.CharacterMotion.Emotes
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
             animator.fireEvents = false;
-
             return references;
+        }
+
+        public void Stop(EmoteReferences emoteReference)
+        {
+            if (!emotesInUse.TryGetValue(emoteReference, out GameObjectPool<EmoteReferences>? pool)) return;
+            pool.Release(emoteReference);
+            emotesInUse.Remove(emoteReference);
         }
     }
 }
