@@ -125,7 +125,7 @@ namespace DCL.Backpack
                     emotes = customOwnedEmotes;
                 else
                 {
-                    IReadOnlyList<IEmote> embeddedEmotes = await emoteProvider.GetEmotesAsync(embeddedEmoteIds, BodyShape.MALE, ct);
+                    IReadOnlyList<IEmote> embeddedEmotes = await emoteProvider.GetEmotesAsync(embeddedEmoteIds, currentBodyShape, ct);
                     totalAmount += embeddedEmotes.Count;
 
                     emotes = customOwnedEmotes
