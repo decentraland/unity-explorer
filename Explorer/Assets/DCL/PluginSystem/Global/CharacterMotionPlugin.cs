@@ -7,6 +7,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Emotes;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -17,18 +18,20 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IEmoteCache emoteCache;
+        private readonly MultiplayerEmotesMessageBus multiplayerEmotesMessageBus;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
         public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
-            IEmoteCache emoteCache)
+            IEmoteCache emoteCache, MultiplayerEmotesMessageBus multiplayerEmotesMessageBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.emoteCache = emoteCache;
+            this.multiplayerEmotesMessageBus = multiplayerEmotesMessageBus;
         }
 
         public void Dispose()
@@ -68,7 +71,7 @@ namespace DCL.PluginSystem.Global
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, debugContainerBuilder);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, multiplayerEmotesMessageBus, debugContainerBuilder);
         }
     }
 }

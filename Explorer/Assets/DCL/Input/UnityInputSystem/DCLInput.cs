@@ -1810,6 +1810,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 9"",
+                    ""type"": ""Button"",
+                    ""id"": ""56d85adb-1a3c-48eb-b6ba-4be66e6798de"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 0"",
+                    ""type"": ""Button"",
+                    ""id"": ""5224b16a-34cd-4fb9-8e3e-b7e6028530cc"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2076,6 +2094,72 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Slot 8"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""bb1b81bd-9740-4c45-86aa-6ee357e6bf01"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 9"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""68170e46-e102-4333-97f2-1e88742dae47"",
+                    ""path"": ""<Keyboard>/b"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 9"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""bf319ab8-90fd-4c47-acbe-6a4e3e619eed"",
+                    ""path"": ""<Keyboard>/9"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 9"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""9f9ff94f-6440-4bdd-9bc5-f25773fd641c"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""a0d0cb92-6d9b-45c0-81bf-6708906f7319"",
+                    ""path"": ""<Keyboard>/b"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""8f464c0c-ef68-4894-add9-d149d9d333c4"",
+                    ""path"": ""<Keyboard>/0"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -2146,6 +2230,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Emotes_Slot6 = m_Emotes.FindAction("Slot 6", throwIfNotFound: true);
         m_Emotes_Slot7 = m_Emotes.FindAction("Slot 7", throwIfNotFound: true);
         m_Emotes_Slot8 = m_Emotes.FindAction("Slot 8", throwIfNotFound: true);
+        m_Emotes_Slot9 = m_Emotes.FindAction("Slot 9", throwIfNotFound: true);
+        m_Emotes_Slot0 = m_Emotes.FindAction("Slot 0", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -2687,6 +2773,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Emotes_Slot6;
     private readonly InputAction m_Emotes_Slot7;
     private readonly InputAction m_Emotes_Slot8;
+    private readonly InputAction m_Emotes_Slot9;
+    private readonly InputAction m_Emotes_Slot0;
     public struct EmotesActions
     {
         private @DCLInput m_Wrapper;
@@ -2699,6 +2787,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Slot6 => m_Wrapper.m_Emotes_Slot6;
         public InputAction @Slot7 => m_Wrapper.m_Emotes_Slot7;
         public InputAction @Slot8 => m_Wrapper.m_Emotes_Slot8;
+        public InputAction @Slot9 => m_Wrapper.m_Emotes_Slot9;
+        public InputAction @Slot0 => m_Wrapper.m_Emotes_Slot0;
         public InputActionMap Get() { return m_Wrapper.m_Emotes; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2732,6 +2822,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Slot8.started += instance.OnSlot8;
             @Slot8.performed += instance.OnSlot8;
             @Slot8.canceled += instance.OnSlot8;
+            @Slot9.started += instance.OnSlot9;
+            @Slot9.performed += instance.OnSlot9;
+            @Slot9.canceled += instance.OnSlot9;
+            @Slot0.started += instance.OnSlot0;
+            @Slot0.performed += instance.OnSlot0;
+            @Slot0.canceled += instance.OnSlot0;
         }
 
         private void UnregisterCallbacks(IEmotesActions instance)
@@ -2760,6 +2856,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Slot8.started -= instance.OnSlot8;
             @Slot8.performed -= instance.OnSlot8;
             @Slot8.canceled -= instance.OnSlot8;
+            @Slot9.started -= instance.OnSlot9;
+            @Slot9.performed -= instance.OnSlot9;
+            @Slot9.canceled -= instance.OnSlot9;
+            @Slot0.started -= instance.OnSlot0;
+            @Slot0.performed -= instance.OnSlot0;
+            @Slot0.canceled -= instance.OnSlot0;
         }
 
         public void RemoveCallbacks(IEmotesActions instance)
@@ -2848,5 +2950,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnSlot6(InputAction.CallbackContext context);
         void OnSlot7(InputAction.CallbackContext context);
         void OnSlot8(InputAction.CallbackContext context);
+        void OnSlot9(InputAction.CallbackContext context);
+        void OnSlot0(InputAction.CallbackContext context);
     }
 }

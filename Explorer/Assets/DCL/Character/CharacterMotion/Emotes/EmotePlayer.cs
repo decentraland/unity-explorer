@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
@@ -11,25 +12,23 @@ namespace DCL.Character.CharacterMotion.Emotes
 {
     public class EmotePlayer
     {
-        private readonly string reportCategory;
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
 
-        public EmotePlayer(string reportCategory)
+        public EmotePlayer()
         {
-            this.reportCategory = reportCategory;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER").transform;
         }
 
-        public bool Play(GameObject mainAsset, bool isLooping, in IAvatarView avatarBase, ref CharacterEmoteComponent animationComponent)
+        public bool Play(GameObject mainAsset, bool isLooping, in IAvatarView view, ref CharacterEmoteComponent emoteComponent)
         {
             Animator animator = mainAsset.GetComponent<Animator>();
 
             if (animator == null)
                 return false;
 
-            EmoteReferences? emoteInUse = animationComponent.CurrentEmoteReference;
+            EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
             if (emoteInUse != null)
                 Stop(emoteInUse);
@@ -40,7 +39,7 @@ namespace DCL.Character.CharacterMotion.Emotes
             EmoteReferences? emoteReferences = pools[mainAsset].Get();
             if (!emoteReferences) return false;
 
-            Transform avatarTransform = avatarBase.GetTransform();
+            Transform avatarTransform = view.GetTransform();
             Transform emoteTransform = emoteReferences.transform;
             emoteTransform.SetParent(avatarTransform, false);
             emoteTransform.localPosition = Vector3.zero;
@@ -58,16 +57,18 @@ namespace DCL.Character.CharacterMotion.Emotes
 
             if (emoteReferences.avatarClip != null)
             {
-                animationComponent.WasEmoteJustTriggered = true;
-                animationComponent.EmoteClip = emoteReferences.avatarClip;
-                animationComponent.EmoteLoop = isLooping;
+                view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
+                emoteComponent.EmoteLoop = isLooping;
             }
+
+            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
+            view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
             if (emoteReferences.propClip != null)
                 emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
-            animationComponent.CurrentEmoteReference = emoteReferences;
+            emoteComponent.CurrentEmoteReference = emoteReferences;
             return true;
         }
 

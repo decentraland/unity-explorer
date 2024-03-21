@@ -10,6 +10,7 @@ using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using Decentraland.Kernel.Comms.Rfc4;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
@@ -31,12 +32,17 @@ namespace DCL.CharacterMotion.Systems
             GetReportCategory();
             InputActionMap inputActionMap = emotesActions.Get();
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 10; i++)
             {
-                var actionName = GetActionName(i+1);
-                InputAction inputAction = inputActionMap.FindAction(actionName);
-                inputAction.started += OnSlotPerformed;
-                actionNameById.Add(actionName, i);
+                string actionName = GetActionName(i);
+
+                try
+                {
+                    InputAction inputAction = inputActionMap.FindAction(actionName);
+                    inputAction.started += OnSlotPerformed;
+                    actionNameById.Add(actionName, i);
+                }
+                catch (Exception) { ReportHub.LogError(GetReportCategory(), "Input action " + actionName + " does not exist"); }
             }
         }
 
@@ -85,7 +91,7 @@ namespace DCL.CharacterMotion.Systems
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
-            URN emoteId = emotes[emoteIndex].Shorten();
+            URN emoteId = emotes[emoteIndex];
 
             if (!string.IsNullOrEmpty(emoteId))
                 World.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });

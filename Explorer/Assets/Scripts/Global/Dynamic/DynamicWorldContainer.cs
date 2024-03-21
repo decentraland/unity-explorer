@@ -213,10 +213,12 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub)
             );
 
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, container.ProfileRepository);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesCache),
-                new InputPlugin(dclInput, emotesCache, new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, container.ProfileRepository)),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesCache, multiplayerEmotesMessageBus),
+                new InputPlugin(dclInput, emotesCache, multiplayerEmotesMessageBus),
                 new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub, queuePoolFullMovementMessage),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
