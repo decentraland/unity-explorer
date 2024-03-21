@@ -1,5 +1,7 @@
 using JetBrains.Annotations;
+using Microsoft.ClearScript.JavaScript;
 using System;
+using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -18,7 +20,13 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public byte[][] SendBinary(byte[][] data) =>
-            api.SendBinary(data);
+        public byte[][] SendBinary(IList<object> dataList)
+        {
+            List<byte[]> data = new List<byte[]>();
+            foreach (ITypedArray<byte> message in dataList)
+                data.Add(message.ToArray());
+
+            return api.SendBinary(data.ToArray());
+        }
     }
 }
