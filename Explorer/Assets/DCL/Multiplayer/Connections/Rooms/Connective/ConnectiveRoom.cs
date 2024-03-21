@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Pools;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
@@ -76,15 +76,24 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             while (token.IsCancellationRequested == false)
             {
-                await runConnectCycleStepAsync(ConnectToRoomAsync, token);
+                await runConnectCycleStepAsync(TryConnectToRoomAsync, token);
                 await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
             }
         }
 
-        private async UniTask ConnectToRoomAsync(string connectionString, CancellationToken token)
+        private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
             LogRoom newRoom = multiPool.Get<LogRoom>();
-            await newRoom.EnsuredConnectAsync(connectionString, multiPool, token);
+            var credentials = new ConnectionStringCredentials(connectionString);
+            bool connectResult = await newRoom.ConnectAsync(credentials, token);
+
+            if (connectResult == false)
+            {
+                multiPool.Release(newRoom);
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
+                return;
+            }
+
             room.Assign(newRoom, out IRoom? previous);
             previous?.Disconnect();
             multiPool.TryRelease(previous);
