@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.System;
+using DCL.Multiplayer.Movement.Systems;
 using System.Threading;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
 using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.Systems.RemotePlayersMovementSystem;

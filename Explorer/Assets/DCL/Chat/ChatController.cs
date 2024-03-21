@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Emoji;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
@@ -19,6 +20,7 @@ namespace DCL.Chat
 
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
 
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private EmojiPanelController emojiPanelController;
@@ -43,16 +45,19 @@ namespace DCL.Chat
             ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionViewPrefab,
             EmojiButton emojiButtonPrefab,
             EmojiSuggestionView emojiSuggestionViewPrefab,
-            World world) : base(viewFactory)
+            World world
+        ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
+            this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiMappingJson = emojiMappingJson;
@@ -62,6 +67,11 @@ namespace DCL.Chat
             this.world = world;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder)
+        {
+            world = builder.World;
         }
 
         protected override void OnViewInstantiated()
@@ -137,7 +147,7 @@ namespace DCL.Chat
             viewInstance.InputField.ActivateInputField();
         }
 
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
+        private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
             if (index < 0 || index >= chatMessages.Count)
                 return null;
@@ -146,7 +156,7 @@ namespace DCL.Chat
 
             LoopListViewItem2 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
 
-            ChatEntryView itemScript = item.GetComponent<ChatEntryView>();
+            ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
             itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
             itemScript.SetItemData(itemData);
 
@@ -176,13 +186,16 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
+            const int MINIMAL_LENGHT = 2;
 
-            currentMessage = inputText;
+            if (inputText.Length > MINIMAL_LENGHT)
+                currentMessage = inputText;
         }
 
         private void HandleEmojiSearch(string inputText)
         {
             Match match = EMOJI_PATTERN_REGEX.Match(inputText);
+
             if (match.Success)
             {
                 if (match.Value.Length < 2)
@@ -190,15 +203,13 @@ namespace DCL.Chat
                     emojiSuggestionPanelController.SetPanelVisibility(false);
                     return;
                 }
+
                 cts.SafeCancelAndDispose();
                 cts = new CancellationTokenSource();
 
                 SearchAndSetEmojiSuggestionsAsync(match.Value, cts.Token).Forget();
             }
-            else
-            {
-                emojiSuggestionPanelController.SetPanelVisibility(false);
-            }
+            else { emojiSuggestionPanelController.SetPanelVisibility(false); }
         }
 
         private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
@@ -211,7 +222,12 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            world.Create(new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+            if (chatMessage.SentByOwnUser == false)
+            {
+                var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+            }
+
             viewInstance.ResetChatEntriesFadeout();
             chatMessages.Add(chatMessage);
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);

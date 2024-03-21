@@ -20,17 +20,19 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
+using Utility.PriorityQueue;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -45,6 +47,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private const int MAX_AVATAR_NUMBER = 1000;
 
         private readonly IRealmData realmData;
+        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IComponentPool<Transform> transformPool;
 
         private readonly DebugWidgetVisibilityBinding debugVisibilityBinding;
@@ -62,10 +65,18 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private bool requestDone;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
 
-        internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery, IComponentPool<Transform> componentPools,
-            AvatarRandomizerAsset avatarRandomizerAsset) : base(world)
+        internal InstantiateRandomAvatarsSystem(
+            World world,
+            IDebugContainerBuilder debugBuilder,
+            IRealmData realmData,
+            IEntityParticipantTable entityParticipantTable,
+            QueryDescription avatarsQuery,
+            IComponentPool<Transform> componentPools,
+            AvatarRandomizerAsset avatarRandomizerAsset
+        ) : base(world)
         {
             this.realmData = realmData;
+            this.entityParticipantTable = entityParticipantTable;
             this.avatarsQuery = avatarsQuery;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
@@ -342,14 +353,19 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
             };
 
-            World.Create(avatarShape,
+            var entity = World.Create(avatarShape,
                 transformComp,
                 new CharacterAnimationComponent(),
-                new RemotePlayerMovementComponent(RemotePlayerMovementComponent.TEST_ID),
+                new RemotePlayerMovementComponent(
+                    RemotePlayerMovementComponent.TEST_ID,
+                    new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(() => new SimplePriorityQueue<FullMovementMessage>())
+                ),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),
                 characterControllerSettings
             );
+
+            entityParticipantTable.Register(RemotePlayerMovementComponent.TEST_ID, entity);
         }
 
         private static Vector3 StartRandomPosition(float spawnArea, float startXPosition, float startZPosition)
