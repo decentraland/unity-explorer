@@ -35,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly RealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IRemoteEntities remoteEntities;
 
         public MultiplayerPlugin(
@@ -58,6 +59,7 @@ namespace DCL.PluginSystem.Global
             this.profileBroadcast = profileBroadcast;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
+            this.entityParticipantTable = entityParticipantTable;
             this.messagePipesHub = messagePipesHub;
 
             remoteEntities = new RemoteEntities(
@@ -79,7 +81,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
+            DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,

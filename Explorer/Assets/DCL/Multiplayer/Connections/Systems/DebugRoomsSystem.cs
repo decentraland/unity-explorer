@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Systems.Debug;
+using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 
 namespace DCL.Multiplayer.Connections.Systems
@@ -19,31 +20,32 @@ namespace DCL.Multiplayer.Connections.Systems
             World world,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
             IDebugContainerBuilder debugBuilder
         ) : base(world)
         {
-            //TODO remove
-            // var stateScene = new ElementBinding<string>(string.Empty);
-            // var remoteParticipantsScene = new ElementBinding<string>(string.Empty);
-
-            // debugBuilder.AddWidget("Rooms")!
-            //             .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
-            //             .AddCustomMarker("State", stateScene)!
-            //             .AddCustomMarker("Remote Participants", remoteParticipantsScene);
-
-            var gateKeeperRoomDisplay = new DebugPanelRoomDisplay(
+            var gateKeeperRoomDisplay = new DebugWidgetRoomDisplay(
                 "Room: Scene",
                 gateKeeperSceneRoom,
                 debugBuilder
             );
 
-            var archipelagoRoomDisplay = new DebugPanelRoomDisplay(
+            var archipelagoRoomDisplay = new DebugWidgetRoomDisplay(
                 "Room: Island",
                 archipelagoIslandRoom,
                 debugBuilder
             );
 
-            roomDisplay = new SeveralRoomDisplay(gateKeeperRoomDisplay, archipelagoRoomDisplay);
+            var avatarsRoomDisplay = new AvatarsRoomDisplay(
+                entityParticipantTable,
+                debugBuilder
+            );
+
+            roomDisplay = new SeveralRoomDisplay(
+                gateKeeperRoomDisplay,
+                archipelagoRoomDisplay,
+                avatarsRoomDisplay
+            );
         }
 
         protected override void Update(float t)

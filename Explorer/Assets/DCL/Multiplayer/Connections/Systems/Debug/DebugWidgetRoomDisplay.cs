@@ -1,10 +1,11 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using System;
 
 namespace DCL.Multiplayer.Connections.Systems.Debug
 {
-    public class DebugPanelRoomDisplay : IRoomDisplay
+    public class DebugWidgetRoomDisplay : IRoomDisplay
     {
         private readonly IConnectiveRoom room;
         private readonly ElementBinding<string> stateScene;
@@ -12,7 +13,16 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> roomId;
         private readonly ElementBinding<string> connectionQuality;
 
-        public DebugPanelRoomDisplay(string roomName, IConnectiveRoom connectiveRoom, IDebugContainerBuilder debugBuilder)
+        public DebugWidgetRoomDisplay(
+            string roomName,
+            IConnectiveRoom connectiveRoom,
+            IDebugContainerBuilder debugBuilder,
+            Action<DebugWidgetBuilder>? postBuildAction = null
+        ) : this(
+            connectiveRoom, debugBuilder.AddWidget(roomName)!, postBuildAction
+        ) { }
+
+        public DebugWidgetRoomDisplay(IConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
         {
             room = connectiveRoom;
             roomId = new ElementBinding<string>(string.Empty);
@@ -20,15 +30,17 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             stateScene = new ElementBinding<string>(string.Empty);
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
 
-            debugBuilder.AddWidget(roomName)!
-                        .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
-                        .AddCustomMarker("Connecting State", stateScene)!
-                        .AddCustomMarker("Connection Quality", connectionQuality)!
-                        .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
-                        .AddCustomMarker("Self Sid", roomId);
+            widgetBuilder
+               .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
+               .AddCustomMarker("Connecting State", stateScene)!
+               .AddCustomMarker("Connection Quality", connectionQuality)!
+               .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
+               .AddCustomMarker("Self Sid", roomId);
+
+            postBuildAction?.Invoke(widgetBuilder);
         }
 
-        public DebugPanelRoomDisplay(
+        public DebugWidgetRoomDisplay(
             IConnectiveRoom room,
             ElementBinding<string> stateScene,
             ElementBinding<string> remoteParticipantsScene,
