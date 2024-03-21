@@ -34,19 +34,27 @@ namespace DCL.Character.CharacterMotion.Emotes
             if (emoteInUse != null)
                 Stop(emoteInUse);
 
-            Transform avatarTransform = avatarBase.GetTransform();
-
             if (!pools.ContainsKey(mainAsset))
-                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping, avatarTransform.gameObject.layer)));
+                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping)));
 
             EmoteReferences? emoteReferences = pools[mainAsset].Get();
             if (!emoteReferences) return false;
 
+            Transform avatarTransform = avatarBase.GetTransform();
             Transform emoteTransform = emoteReferences.transform;
             emoteTransform.SetParent(avatarTransform, false);
             emoteTransform.localPosition = Vector3.zero;
             emoteTransform.localRotation = Quaternion.identity;
+
+            // Set the layer of the objects & children everytime since the emote can be created and stored in the pool elsewhere, like the avatar preview
+            // In that case, the hierarchy will keep the wrong layer in the future usages
             emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
+
+            PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            foreach (Transform? child in children.Value)
+                if (child != null)
+                    child.gameObject.layer = avatarTransform.gameObject.layer;
 
             if (emoteReferences.avatarClip != null)
             {
@@ -63,16 +71,9 @@ namespace DCL.Character.CharacterMotion.Emotes
             return true;
         }
 
-        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool isLooping, int layer)
+        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool isLooping)
         {
             GameObject? mainGameObject = Object.Instantiate(mainAsset);
-            mainGameObject.layer = layer;
-
-            PoolExtensions.Scope<List<Transform>> children = mainGameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
-
-            foreach (Transform? child in children.Value)
-                if (child != null)
-                    child.gameObject.layer = layer;
 
             Animator? animator = mainGameObject.GetComponent<Animator>();
             EmoteReferences? references = mainGameObject.AddComponent<EmoteReferences>();
