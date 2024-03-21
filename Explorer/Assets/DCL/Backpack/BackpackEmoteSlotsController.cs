@@ -12,6 +12,7 @@ namespace DCL.Backpack
         private const int MIN_WAIT_TIME = 500;
 
         private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackCommandBus backpackCommandBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly (EmoteSlotContainerView, CancellationTokenSource)[] avatarSlots;
 
@@ -20,9 +21,11 @@ namespace DCL.Backpack
         public BackpackEmoteSlotsController(
             EmoteSlotContainerView[] avatarSlotViews,
             BackpackEventBus backpackEventBus,
+            IBackpackCommandBus backpackCommandBus,
             NftTypeIconSO rarityBackgrounds)
         {
             this.backpackEventBus = backpackEventBus;
+            this.backpackCommandBus = backpackCommandBus;
             this.rarityBackgrounds = rarityBackgrounds;
 
             this.backpackEventBus.EquipEmoteEvent += EquipInSlot;
@@ -106,6 +109,18 @@ namespace DCL.Backpack
 
             previousSlot = avatarSlot;
             avatarSlot.SelectedBackground.SetActive(true);
+            backpackCommandBus.SendCommand(new BackpackEmoteSlotSelectCommand(GetSlot(avatarSlot)));
+        }
+
+        private int GetSlot(EmoteSlotContainerView view)
+        {
+            for (var i = 0; i < avatarSlots.Length; i++)
+            {
+                if (avatarSlots[i].Item1 == view)
+                    return i;
+            }
+
+            return -1;
         }
     }
 }

@@ -8,6 +8,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackUnEquipWearableCommand> UnEquipWearableMessageReceived;
         public event Action<BackpackEquipEmoteCommand> EquipEmoteMessageReceived;
         public event Action<BackpackUnEquipEmoteCommand> UnEquipEmoteMessageReceived;
+        public event Action<BackpackEmoteSlotSelectCommand>? EmoteSlotSelectMessageReceived;
         public event Action<BackpackSelectWearableCommand> SelectWearableMessageReceived;
         public event Action<BackpackSelectEmoteCommand> SelectEmoteMessageReceived;
         public event Action<BackpackHideCommand> HideMessageReceived;
@@ -22,5 +23,7 @@ namespace DCL.Backpack.BackpackBus
         void SendCommand(BackpackHideCommand command);
         void SendCommand(BackpackFilterCategoryCommand command);
         void SendCommand(BackpackSearchCommand command);
+
+        void SendCommand(BackpackEmoteSlotSelectCommand command);
     }
 }

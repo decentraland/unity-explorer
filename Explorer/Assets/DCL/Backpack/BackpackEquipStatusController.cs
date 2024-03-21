@@ -8,7 +8,6 @@ using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -19,8 +18,6 @@ namespace DCL.Backpack
 {
     public class BackpackEquipStatusController : IBackpackEquipStatusController
     {
-        private static readonly ArrayPool<URN> OWNED_EMOTES_ARRAY_POOL = ArrayPool<URN>.Create(10, 10);
-
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWearableCatalog wearableCatalog;
@@ -63,7 +60,7 @@ namespace DCL.Backpack
                 Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
 
                 HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
-                URN[] uniqueEmotes = OWNED_EMOTES_ARRAY_POOL.Rent(10);
+                var uniqueEmotes = new URN[profile!.Avatar.Emotes.Count];
 
                 ConvertEquippedWearablesIntoUniqueUrns(profile!, uniqueWearables);
                 ConvertEquippedEmotesIntoUniqueUrns(profile!, uniqueEmotes);
@@ -74,7 +71,6 @@ namespace DCL.Backpack
                                         .Build();
 
                 HashSetPool<URN>.Release(uniqueWearables);
-                OWNED_EMOTES_ARRAY_POOL.Return(uniqueEmotes);
 
                 await profileRepository.SetAsync(profile, ct);
 
@@ -91,6 +87,15 @@ namespace DCL.Backpack
 
         public IEmote? GetEquippedEmote(int slot) =>
             equippedEmotes[slot];
+
+        public int GetEmoteEquippedSlot(string id)
+        {
+            for (var i = 0; i < equippedEmotes.Length; i++)
+                if (equippedEmotes[i]?.GetUrn() == id)
+                    return i;
+
+            return -1;
+        }
 
         public bool IsWearableEquipped(IWearable wearable) =>
             equippedWearables[wearable.GetCategory()] == wearable;
@@ -212,6 +217,8 @@ namespace DCL.Backpack
         IWearable? GetEquippedWearableForCategory(string category);
 
         IEmote? GetEquippedEmote(int slot);
+
+        int GetEmoteEquippedSlot(string id);
 
         bool IsWearableEquipped(IWearable wearable);
 

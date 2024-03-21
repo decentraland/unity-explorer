@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.Global
                     sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes);
 
                 var emotesController = new EmotesController(view.GetComponentInChildren<EmotesView>(),
-                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, rarityInfoPanelBackgroundsMapping));
+                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityInfoPanelBackgroundsMapping));
 
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
                     characterPreviewFactory, gridController, wearableInfoPanelController, emoteInfoPanelController, builder.World, args.PlayerEntity,

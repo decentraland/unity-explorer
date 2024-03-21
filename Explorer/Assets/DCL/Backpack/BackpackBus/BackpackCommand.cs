@@ -5,12 +5,22 @@ using System.Linq;
 
 namespace DCL.Backpack.BackpackBus
 {
+    public readonly struct BackpackEmoteSlotSelectCommand
+    {
+        public readonly int Slot;
+
+        public BackpackEmoteSlotSelectCommand(int slot)
+        {
+            Slot = slot;
+        }
+    }
+
     public readonly struct BackpackEquipEmoteCommand
     {
         public readonly string Id;
-        public readonly int Slot;
+        public readonly int? Slot;
 
-        public BackpackEquipEmoteCommand(string id, int slot)
+        public BackpackEquipEmoteCommand(string id, int? slot = null)
         {
             Id = id;
             Slot = slot;
@@ -19,10 +29,12 @@ namespace DCL.Backpack.BackpackBus
 
     public readonly struct BackpackUnEquipEmoteCommand
     {
-        public readonly int Slot;
+        public readonly string? Id;
+        public readonly int? Slot;
 
-        public BackpackUnEquipEmoteCommand(int slot)
+        public BackpackUnEquipEmoteCommand(string? id = null, int? slot = null)
         {
+            Id = id;
             Slot = slot;
         }
     }

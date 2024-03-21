@@ -13,6 +13,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> UnEquipWearableEvent;
         public event Action<int, IEmote> EquipEmoteEvent;
         public event Action<int, IEmote?> UnEquipEmoteEvent;
+        public event Action<int> EmoteSlotSelectEvent;
         public event Action<IEmote> SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;

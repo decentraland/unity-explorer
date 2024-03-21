@@ -16,6 +16,8 @@ namespace DCL.Backpack.BackpackBus
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
         private readonly IEmoteCache emoteCache;
 
+        private int currentEmoteSlot = -1;
+
         public BackpackBusController(
             IWearableCatalog wearableCatalog,
             IBackpackEventBus backpackEventBus,
@@ -39,6 +41,22 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.FilterCategoryMessageReceived += HandleFilterCategoryCommand;
             this.backpackCommandBus.SearchMessageReceived += HandleSearchCommand;
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
+            this.backpackCommandBus.EmoteSlotSelectMessageReceived += HandleEmoteSlotSelectCommand;
+        }
+
+        public void Dispose()
+        {
+            backpackCommandBus.EquipWearableMessageReceived -= HandleEquipWearableCommand;
+            backpackCommandBus.UnEquipWearableMessageReceived -= HandleUnEquipWearableCommand;
+            backpackCommandBus.EquipEmoteMessageReceived -= HandleEmoteEquipCommand;
+            backpackCommandBus.UnEquipEmoteMessageReceived -= HandleUnEquipEmoteCommand;
+            backpackCommandBus.HideMessageReceived -= HandleHideCommand;
+            backpackCommandBus.SelectWearableMessageReceived -= HandleSelectWearableCommand;
+            backpackCommandBus.SelectEmoteMessageReceived -= HandleSelectEmoteCommand;
+            backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
+            backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
+            backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
+            backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
         }
 
         private void HandlePublishProfile(BackpackPublishProfileCommand command)
@@ -98,14 +116,16 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            if (command.Slot is < 0 or >= 10)
+            int slot = command.Slot ?? currentEmoteSlot;
+
+            if (slot is < 0 or >= 10)
             {
                 ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Cannot equip emote, slot out of bounds: {command.Id} - {command.Slot}");
                 return;
             }
 
-            backpackEventBus.SendUnEquipEmote(command.Slot, backpackEquipStatusController.GetEquippedEmote(command.Slot));
-            backpackEventBus.SendEquipEmote(command.Slot, emote);
+            backpackEventBus.SendUnEquipEmote(slot, backpackEquipStatusController.GetEquippedEmote(slot));
+            backpackEventBus.SendEquipEmote(slot, emote);
         }
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
@@ -118,7 +138,20 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipEmoteCommand(BackpackUnEquipEmoteCommand command)
         {
-            backpackEventBus.SendUnEquipEmote(command.Slot, backpackEquipStatusController.GetEquippedEmote(command.Slot));
+            int slot = -1;
+
+            if (command.Slot != null)
+                slot = command.Slot.Value;
+            else if (command.Id != null)
+                slot = backpackEquipStatusController.GetEmoteEquippedSlot(command.Id);
+
+            if (slot == -1)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Cannot unequip emote, slot out of bounds: {command.Id} - {command.Slot}");
+                return;
+            }
+
+            backpackEventBus.SendUnEquipEmote(slot, backpackEquipStatusController.GetEquippedEmote(slot));
         }
 
         private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
@@ -132,14 +165,9 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendForceRender(command.ForceRender);
         }
 
-        public void Dispose()
+        private void HandleEmoteSlotSelectCommand(BackpackEmoteSlotSelectCommand command)
         {
-            backpackCommandBus.EquipWearableMessageReceived -= HandleEquipWearableCommand;
-            backpackCommandBus.UnEquipWearableMessageReceived -= HandleUnEquipWearableCommand;
-            backpackCommandBus.HideMessageReceived -= HandleHideCommand;
-            backpackCommandBus.SelectWearableMessageReceived -= HandleSelectWearableCommand;
-            backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
-            backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
+            currentEmoteSlot = command.Slot;
         }
     }
 }
