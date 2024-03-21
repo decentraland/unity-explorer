@@ -34,16 +34,19 @@ namespace DCL.Character.CharacterMotion.Emotes
             if (emoteInUse != null)
                 Stop(emoteInUse);
 
+            Transform avatarTransform = avatarBase.GetTransform();
+
             if (!pools.ContainsKey(mainAsset))
-                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping)));
+                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping, avatarTransform.gameObject.layer)));
 
             EmoteReferences? emoteReferences = pools[mainAsset].Get();
             if (!emoteReferences) return false;
 
             Transform emoteTransform = emoteReferences.transform;
-            emoteTransform.SetParent(avatarBase.GetTransform(), false);
+            emoteTransform.SetParent(avatarTransform, false);
             emoteTransform.localPosition = Vector3.zero;
             emoteTransform.localRotation = Quaternion.identity;
+            emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
 
             if (emoteReferences.avatarClip != null)
             {
@@ -60,9 +63,16 @@ namespace DCL.Character.CharacterMotion.Emotes
             return true;
         }
 
-        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool isLooping)
+        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool isLooping, int layer)
         {
             GameObject? mainGameObject = Object.Instantiate(mainAsset);
+            mainGameObject.layer = layer;
+
+            PoolExtensions.Scope<List<Transform>> children = mainGameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            foreach (Transform? child in children.Value)
+                if (child != null)
+                    child.gameObject.layer = layer;
 
             Animator? animator = mainGameObject.GetComponent<Animator>();
             EmoteReferences? references = mainGameObject.AddComponent<EmoteReferences>();
