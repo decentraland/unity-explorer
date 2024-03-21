@@ -212,7 +212,7 @@ namespace Global.Dynamic
             container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);
 
             var remotePoses = new DebounceRemotePoses(
-                new RemotePoses(roomHub)
+                new IRemotePoses.Fake()
             );
 
             var globalPlugins = new List<IDCLGlobalPlugin>
