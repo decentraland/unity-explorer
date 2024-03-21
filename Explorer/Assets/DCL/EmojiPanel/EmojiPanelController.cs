@@ -48,6 +48,9 @@ namespace DCL.Emoji
             emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
+                if(emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromName(emojiData.Value.ToUpper()) == -1)
+                    continue;
+
                 EmojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
                 emojiValueMapping.Add(int.Parse(emojiData.Value, System.Globalization.NumberStyles.HexNumber), emojiData.Key);
             }
@@ -127,6 +130,10 @@ namespace DCL.Emoji
             {
                 emojiCode = startDec + i;
                 emojiChar = char.ConvertFromUtf32(emojiCode);
+
+                if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromUnicode((uint) emojiCode) == -1)
+                    continue;
+
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
                 emojiButton.EmojiImage.text = emojiChar;
                 emojiButton.OnEmojiSelected += EmojiSelected;
