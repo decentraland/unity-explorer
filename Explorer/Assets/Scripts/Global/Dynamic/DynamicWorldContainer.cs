@@ -36,6 +36,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
@@ -210,9 +211,27 @@ namespace Global.Dynamic
 
             container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);
 
+            var remotePoses = new DebounceRemotePoses(
+                new RemotePoses(roomHub)
+            );
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub, queuePoolFullMovementMessage),
+                new MultiplayerPlugin(
+                    archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    roomHub,
+                    container.ProfileRepository,
+                    container.ProfileBroadcast,
+                    debugBuilder,
+                    realFlowLoadingStatus,
+                    entityParticipantTable,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    messagePipesHub,
+                    remotePoses,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    queuePoolFullMovementMessage
+                ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
