@@ -40,13 +40,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             /// </summary>
             internal readonly Material usedMaterial;
 
-            internal readonly int MaterialIndexInPool;
+            internal readonly int shaderId;
 
-            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material usedMaterial, int materialIndexInPool)
+            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material usedMaterial, int shaderId)
             {
                 this.usedTextureArraySlots = usedTextureArraySlots;
                 this.usedMaterial = usedMaterial;
-                MaterialIndexInPool = materialIndexInPool;
+                this.shaderId = shaderId;
             }
         }
 
@@ -81,8 +81,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 for (var j = 0; j < material.usedTextureArraySlots.Length; j++)
                     material.usedTextureArraySlots[j]?.FreeSlot();
 
-                objectPool.Release(material.usedMaterial, material.MaterialIndexInPool);
-                TextureArrayContainerFactory.SLOTS_POOL.Release(material.usedTextureArraySlots);
+                objectPool.Release(material);
             }
 
             computeShaderSkinningPool.Release(computeShaderInstance);

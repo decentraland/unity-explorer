@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IWearable mockWearable = Substitute.For<IWearable>();
 
             var assetBundleData
-                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
+                = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
 
             //Creating a hierarchy
             var avatarGameObject = new GameObject();
@@ -148,13 +148,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             skinnedMeshRenderer.material = fakeABMaterial;
 
-            var rendererInfo = new WearableAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
+            var rendererInfo = new WearableAssetBase.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
-            var wearableAsset = new WearableAsset(avatarGameObject, new List<WearableAsset.RendererInfo> { rendererInfo }, null);
+            var wearableAsset = new WearableAssetBase(avatarGameObject, new List<WearableAssetBase.RendererInfo> { rendererInfo }, null);
             wearableAsset.AddReference();
 
             assetBundleData[BodyShape.MALE]
-                = new StreamableLoadingResult<WearableAsset>(wearableAsset);
+                = new StreamableLoadingResult<WearableAssetBase>(wearableAsset);
 
             mockWearable.WearableAssetResults.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);

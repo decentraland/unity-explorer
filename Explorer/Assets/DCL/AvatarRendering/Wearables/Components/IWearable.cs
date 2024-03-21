@@ -11,15 +11,26 @@ namespace DCL.AvatarRendering.Wearables.Components
     {
         bool IsLoading { get; set; }
 
+        WearableType Type { get; }
+
         /// <summary>
         ///     Might be never resolved if Wearable is loaded from the Embedded Source
         /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; }
-        StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+        // StreamableLoadingResult<WearableAssetBase>?[] WearableAssetResults { get; }
+
+        /// <summary>
+        /// Per <see cref="BodyShape"/> [MALE, FEMALE]
+        /// </summary>
+        WearableAssets[] WearableAssetResults { get; }
+
+        StreamableLoadingResult<WearableDTO> WearableDTO { get; }
         StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
 
-        string GetMainFileHash(BodyShape bodyShape);
+        /// <summary>
+        /// DTO must be resolved only one
+        /// </summary>
+        void ResolveDTO(StreamableLoadingResult<WearableDTO> result);
 
         string GetHash();
 
@@ -35,18 +46,12 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetRarity();
 
-        URLPath GetThumbnail();
-
         bool IsUnisex();
 
         bool IsCompatibleWithBodyShape(string bodyShape);
 
-        bool IsBodyShape();
-
         void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
 
         WearableDTO.WearableMetadataDto.DataDto GetData();
-
-        bool isFacialFeature();
     }
 }

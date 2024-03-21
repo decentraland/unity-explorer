@@ -79,22 +79,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
             boneWeights[0].weight0 = 1; // 100% influence from the first (and only) bone
             mesh.boneWeights = boneWeights;
 
-            var rendererInfos = new List<WearableAsset.RendererInfo>();
+            var rendererInfos = new List<WearableRegularAsset.RendererInfo>();
             foreach (var skinnedMeshRenderer in emptyDefaultWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 skinnedMeshRenderer.sharedMesh = mesh;
-                rendererInfos.Add(new WearableAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+                rendererInfos.Add(new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
             }
-            
+
             IWearable emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO, false);
-            var wearableAsset = new WearableAsset(emptyDefaultWearable, rendererInfos, null);
+            var wearableAsset = new WearableRegularAsset(emptyDefaultWearable, rendererInfos, null);
             wearableAsset.AddReference();
 
-            emptyWearable.WearableAssetResults[BodyShape.MALE] =
-                new StreamableLoadingResult<WearableAsset>(wearableAsset);
-
-            emptyWearable.WearableAssetResults[BodyShape.FEMALE] =
-                new StreamableLoadingResult<WearableAsset>(wearableAsset);
+            // only game-objects here
+            emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.MALE);
+            emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.FEMALE);
 
             World.Create(state);
         }

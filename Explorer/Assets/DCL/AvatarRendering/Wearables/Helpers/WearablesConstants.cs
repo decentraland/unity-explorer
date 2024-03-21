@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             Categories.HANDS,
         };
 
-        public static readonly IList<string> FACIAL_FEATURES = new List<string>
+        public static readonly IReadOnlyList<string> FACIAL_FEATURES = new List<string>
         {
             Categories.EYEBROWS,
             Categories.EYES,

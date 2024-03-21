@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             //We recreate the material with no texture so the default one is applied
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
-            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
 
             for (int i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void SetTexture()
         {
-            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
 
             for (var i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -91,7 +91,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void ReleaseAndReuseTexture()
         {
-            var originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            var originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
 
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -104,7 +104,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 Assert.AreEqual(textureArrayContainer.mappings[i].Handler.slotHandler.freeSlots.Count, 1);
             }
 
-            var replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
+            var replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
 
             // Check the slots are the same as the original ones
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)

@@ -25,24 +25,24 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             var mockEyes = Substitute.For<IWearable>();
             eyesTexture = new Texture2D(1, 1);
-            var eyes = new StreamableLoadingResult<WearableAsset>(new WearableAsset(eyesTexture, null, null));
-            mockEyes.WearableAssetResults.Returns(new StreamableLoadingResult<WearableAsset>?[2]
+            var eyes = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(eyesTexture, null, null));
+            mockEyes.WearableAssetResults.Returns(new StreamableLoadingResult<WearableAssetBase>?[2]
             {
                 eyes, eyes
             });
 
             var mockMouth = Substitute.For<IWearable>();
             mouthTexture = new Texture2D(2, 2);
-            var mouth = new StreamableLoadingResult<WearableAsset>(new WearableAsset(mouthTexture, null, null));
-            mockMouth.WearableAssetResults.Returns(new StreamableLoadingResult<WearableAsset>?[2]
+            var mouth = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(mouthTexture, null, null));
+            mockMouth.WearableAssetResults.Returns(new StreamableLoadingResult<WearableAssetBase>?[2]
             {
                 mouth, mouth
             });
 
             var mockEyebros = Substitute.For<IWearable>();
             eyebrowsTexture = new Texture2D(3, 3);
-            var eyebros = new StreamableLoadingResult<WearableAsset>(new WearableAsset(eyebrowsTexture, null, null));
-            mockEyebros.WearableAssetResults.Returns(new StreamableLoadingResult<WearableAsset>?[2]
+            var eyebros = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(eyebrowsTexture, null, null));
+            mockEyebros.WearableAssetResults.Returns(new StreamableLoadingResult<WearableAssetBase>?[2]
             {
                 eyebros, eyebros
             });

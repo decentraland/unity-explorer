@@ -170,13 +170,15 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
 
 
-            var defaultTextures = new Dictionary<string, Texture>();
-            defaultTextures.Add("Main_256", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMain256, ct: ct)).Value);
-            defaultTextures.Add("Main_512", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMain512, ct: ct)).Value);
-            defaultTextures.Add("Normal_256", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal256, ct: ct)).Value);
-            defaultTextures.Add("Normal_512", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal512, ct: ct)).Value);
-            defaultTextures.Add("Emmisive_256", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive256, ct: ct)).Value);
-            defaultTextures.Add("Emmisive_512", (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive512, ct: ct)).Value);
+            var defaultTextures = new Dictionary<TextureArrayKey, Texture>();
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMain256, ct: ct)).Value);
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, 512) , (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMain512, ct: ct)).Value);
+
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal256, ct: ct)).Value);
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal512, ct: ct)).Value);
+
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive256, ct: ct)).Value);
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive512, ct: ct)).Value);
 
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
@@ -210,7 +212,7 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             private AssetReferenceMaterial? celShadingMaterial;
-            
+
             [field: SerializeField]
             private AssetReferenceMaterial? faceFeatureMaterial;
 
@@ -249,9 +251,9 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceGameObject NametagView => nametagView.EnsureNotNull();
 
             public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
-            
+
             public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
-            
+
             public AssetReferenceMaterial FaceFeatureMaterial => faceFeatureMaterial.EnsureNotNull();
 
             [Serializable]

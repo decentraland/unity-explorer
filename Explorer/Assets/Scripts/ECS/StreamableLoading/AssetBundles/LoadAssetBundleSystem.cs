@@ -13,8 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -42,10 +40,10 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        private async UniTask<AssetBundleData[]> LoadDependenciesAsync(SceneAssetBundleManifest manifest, IPartitionComponent partition, URLSubdirectory customEmbeddedSubdirectory, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            string metadata;
+            string? metadata;
 
             using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 metadata = GetMetadata(assetBundle)?.text;
@@ -61,7 +59,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 // Switch to main thread to create dependency promises
                 await UniTask.SwitchToMainThread();
 
-                return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
+                var manifest = parentIntent.Manifest;
+                var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
+                var expectedObjectType = parentIntent.ExpectedObjectType;
+
+                return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, expectedObjectType, hash, customEmbeddedSubdirectory, partition, ct)));
             }
 
             return Array.Empty<AssetBundleData>();
@@ -105,17 +107,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-                AssetBundleData[] dependencies = await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
+                AssetBundleData[] dependencies = await LoadDependenciesAsync(intention, partition, assetBundle, ct);
 
                 await UniTask.SwitchToMainThread();
                 ct.ThrowIfCancellationRequested();
 
-                GameObject? mainGameObject = await LoadAllAssetsAsync<GameObject>(assetBundle, ct);
-                if(mainGameObject!=null)
-                    return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, mainGameObject, dependencies));
-
-                Texture? mainTexture = await LoadAllAssetsAsync<Texture>(assetBundle, ct);
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, mainTexture, dependencies));
+                var asset = await LoadAllAssetsAsync(assetBundle, intention.ExpectedObjectType, ct);
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, intention.ExpectedObjectType, dependencies));
             }
             catch (Exception)
             {
@@ -131,31 +129,31 @@ namespace ECS.StreamableLoading.AssetBundles
         protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
             asset.AddReference();
 
-        private async UniTask<T?> LoadAllAssetsAsync<T>(AssetBundle assetBundle, CancellationToken ct) where T : Object {
+        private async UniTask<Object?> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             // we are only interested in game objects
-            AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<T>();
+            AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync(objectType);
             await asyncOp.WithCancellation(ct);
 
-            // Can't avoid an array instantiation - no API with List
-            // Can't avoid casting - no generic API
-            var asset = new List<T?>(asyncOp.allAssets.Cast<T>());
+            var assets = asyncOp.allAssets;
 
-            if (asset.Count > 1)
-                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root GameObject. Only the first one will be used.");
+            if (assets.Length > 1)
+                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
 
-            T? rootAsset = asset.Count > 0 ? asset[0] : null;
+            Object? rootAsset = assets.Length > 0 ? assets[0] : null;
 
             return rootAsset;
         }
 
-        private async UniTask<AssetBundleData> WaitForDependencyAsync(SceneAssetBundleManifest manifest,
+        private async UniTask<AssetBundleData> WaitForDependencyAsync(
+            SceneAssetBundleManifest? manifest,
+            Type expectedObjectType,
             string hash, URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, manifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(expectedObjectType, hash, manifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
 
             try
             {
@@ -176,7 +174,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private static TextAsset GetMetadata(AssetBundle assetBundle) =>
+        private static TextAsset? GetMetadata(AssetBundle assetBundle) =>
             assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME);
     }
 }

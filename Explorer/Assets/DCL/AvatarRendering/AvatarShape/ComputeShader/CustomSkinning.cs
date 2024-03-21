@@ -13,16 +13,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class CustomSkinning
     {
-        private static readonly int baseColor = Shader.PropertyToID("_BaseColor");
-
         public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterial,
-            AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatureTexture);
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture);
 
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
 
         private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
-            AvatarShapeComponent shapeComponent, Dictionary<string, Texture> facialFeatureTexture);
+            AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);
 
         public abstract void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent);
 
@@ -37,22 +35,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 currentTransform.ResetLocalTRS();
                 currentTransform = currentTransform.parent;
             }
-        }
-
-        protected void SetAvatarColors(Material avatarMaterial, Material originalMaterial, AvatarShapeComponent avatarShapeComponent)
-        {
-            // PATO: If this is modified, check DecentralandMaterialGenerator.SetMaterialName,
-            // its important for the asset bundles materials to have normalized names but this functionality should work too
-            string name = originalMaterial.name.ToLower();
-
-            if (name.Contains(ComputeShaderConstants.SKIN_MATERIAL_NAME))
-                avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.SkinColor);
-            else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME))
-                avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.HairColor);
-
-            avatarMaterial.renderQueue = originalMaterial.renderQueue;
-            avatarMaterial.SetInt("_CullMode", (int)originalMaterial.GetFloat("_Cull"));
-            avatarMaterial.SetInt("_ZWriteMode", (int)originalMaterial.GetFloat("_ZWrite"));
         }
     }
 }

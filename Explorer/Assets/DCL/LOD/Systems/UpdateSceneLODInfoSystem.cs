@@ -155,7 +155,7 @@ namespace DCL.LOD.Systems
 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,
-                        GetAssetBundleIntention.FromHash(newLODKey.ToString(),
+                        GetAssetBundleIntention.FromHash(typeof(GameObject),newLODKey.ToString(),
                             permittedSources: AssetSource.EMBEDDED,
                             customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
                         partitionComponent);

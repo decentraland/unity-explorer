@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveWearableThumbnailSystem>
     {
-        private StreamableLoadingResult<WearableAsset> mockedDefaultAB;
+        private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private WearableCatalog wearableCatalog;
@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog = new WearableCatalog();
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
             wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
-            mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(null, null, null));
             realmData = new RealmData(new TestIpfsRealm());
             system = new ResolveWearableThumbnailSystem(world);
         }
@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearable.GetThumbnail().Returns(new URLPath("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku"));
 
             var assetBundleData
-                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
+                = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
 
             if (isDefaultWearable)
                 assetBundleData[BodyShape.MALE] = mockedDefaultAB;

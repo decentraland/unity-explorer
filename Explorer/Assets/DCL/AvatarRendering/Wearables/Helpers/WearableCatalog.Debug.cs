@@ -15,10 +15,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 foreach (IWearable wearable in wearablesCache.Values)
                     if (wearable.WearableAssetResults != null)
-                        foreach (StreamableLoadingResult<WearableAsset>? result in wearable.WearableAssetResults)
+                        foreach (WearableAssets assets in wearable.WearableAssetResults)
+                        foreach (StreamableLoadingResult<WearableAssetBase>? result in assets.Results)
                             if (result is { Asset: not null })
                                 sum++;
-
                 return sum;
             }
         }

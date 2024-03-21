@@ -13,18 +13,19 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public string Hash;
+        public string? Hash;
 
         /// <summary>
         ///     Name not resolved into <see cref="Hash" />
         /// </summary>
-        public readonly string Name;
+        public readonly string? Name;
+
+        public readonly Type ExpectedObjectType;
 
         /// <summary>
         ///     Manifest can be null if <see cref="CommonArguments" />.<see cref="CommonLoadingArguments.PermittedSources" /> does not contain <see cref="AssetSource.WEB" />
         /// </summary>
-        [CanBeNull]
-        public SceneAssetBundleManifest Manifest;
+        public SceneAssetBundleManifest? Manifest;
 
         /// <summary>
         ///     Sanitized hash used by Unity's Caching system,
@@ -37,13 +38,15 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <param name="assetBundleManifest"></param>
         /// <param name="customEmbeddedSubDirectory"></param>
         /// <param name="cancellationTokenSource"></param>
-        private GetAssetBundleIntention(string name = null, string hash = null,
-            AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest assetBundleManifest = null,
+        private GetAssetBundleIntention(Type expectedObjectType, string? name = null,
+            string? hash = null, AssetSource permittedSources = AssetSource.ALL,
+            SceneAssetBundleManifest? assetBundleManifest = null,
             URLSubdirectory customEmbeddedSubDirectory = default,
-            CancellationTokenSource cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             Name = name;
             Hash = hash;
+            ExpectedObjectType = expectedObjectType;
 
             // Don't resolve URL here
 
@@ -55,14 +58,14 @@ namespace ECS.StreamableLoading.AssetBundles
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL, URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
+            new (typeof(GameObject), name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
+        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
+            new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(string hash, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL,
             SceneAssetBundleManifest manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
+            new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
 
         public bool Equals(GetAssetBundleIntention other) =>
             StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) || Name == other.Name;

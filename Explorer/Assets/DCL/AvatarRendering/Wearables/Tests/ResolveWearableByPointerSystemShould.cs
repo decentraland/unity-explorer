@@ -32,8 +32,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
             wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
 
-            mockedAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
-            mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
+            mockedAB = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(null, null, null));
 
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));
@@ -51,9 +51,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
 
-        private StreamableLoadingResult<WearableAsset> mockedDefaultAB;
+        private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
         private StreamableLoadingResult<SceneAssetBundleManifest> mockedABManifest;
-        private StreamableLoadingResult<WearableAsset> mockedAB;
+        private StreamableLoadingResult<WearableAssetBase> mockedAB;
 
         private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
         {
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
 
             var assetBundleData
-                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
+                = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
 
             if (isDefaultWearable)
                 assetBundleData[BodyShape.MALE] = mockedDefaultAB;

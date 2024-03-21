@@ -15,16 +15,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true)
-        {
-            return TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true) =>
+            TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
-                : AddWearable(wearableDto.metadata.id, new Wearable
-                {
-                    WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
-                    IsLoading = false,
-                }, qualifiedForUnloading);
-        }
+                : AddWearable(wearableDto.metadata.id, new Wearable(new StreamableLoadingResult<WearableDTO>(wearableDto)), qualifiedForUnloading);
 
         public void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true)
         {
@@ -106,23 +100,34 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private static bool TryUnloadAllWearableAssets(IWearable wearable)
         {
             var countNullOrEmpty = 0;
+            var assetsCount = 0;
 
             for (var i = 0; i < wearable.WearableAssetResults.Length; i++)
             {
-                StreamableLoadingResult<WearableAsset>? result = wearable.WearableAssetResults[i];
-                WearableAsset wearableAsset = wearable.WearableAssetResults[i]?.Asset;
+                ref var assets = ref wearable.WearableAssetResults[i];
+                assetsCount += assets.Results?.Length ?? 0;
 
-                if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
+                for (var j = 0; j < assets.Results?.Length; j++)
                 {
-                    wearableAsset?.Dispose();
-                    wearable.WearableAssetResults[i] = null;
-                }
+                    StreamableLoadingResult<WearableAssetBase>? result = assets.Results[i];
 
-                if ((!wearable.IsLoading && result == null) || !result.HasValue || result.Value is { Succeeded: true, Asset: null })
-                    countNullOrEmpty++;
+                    if (result is not { Succeeded: true })
+                    {
+                        countNullOrEmpty++;
+                        continue;
+                    }
+
+                    WearableAssetBase wearableAsset = result.Value.Asset!;
+
+                    if (wearableAsset.ReferenceCount == 0)
+                    {
+                        wearableAsset?.Dispose();
+                        assets.Results[i] = null;
+                    }
+                }
             }
 
-            return countNullOrEmpty == wearable.WearableAssetResults.Length;
+            return countNullOrEmpty == assetsCount;
         }
     }
 }
