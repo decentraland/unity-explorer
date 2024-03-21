@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using Utility;
 
-namespace DCL.Backpack
+namespace DCL.Backpack.EmotesSection
 {
     public class BackpackEmoteSlotsController : IDisposable
     {

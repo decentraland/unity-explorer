@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;

@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
+using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;

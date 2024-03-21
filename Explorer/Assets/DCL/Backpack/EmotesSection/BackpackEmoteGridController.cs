@@ -16,7 +16,7 @@ using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
 
-namespace DCL.Backpack
+namespace DCL.Backpack.EmotesSection
 {
     public class BackpackEmoteGridController : IDisposable
     {
