@@ -24,9 +24,15 @@ namespace DCL.Backpack
             slotsController.Dispose();
         }
 
-        public void Activate() { }
+        public void Activate()
+        {
+            view.gameObject.SetActive(true);
+        }
 
-        public void Deactivate() { }
+        public void Deactivate()
+        {
+            view.gameObject.SetActive(false);
+        }
 
         public RectTransform GetRectTransform() =>
             rectTransform;
