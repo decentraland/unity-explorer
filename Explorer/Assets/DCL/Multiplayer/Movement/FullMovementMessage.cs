@@ -13,5 +13,8 @@ namespace DCL.Multiplayer.Movement
 
         public AnimationStates animState;
         public bool isStunned;
+
+        public override string ToString() =>
+            JsonUtility.ToJson(this);
     }
 }

@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
     {
         public static void Download(this IRemoteProfiles remoteProfiles, IRemoteAnnouncements remoteAnnouncements)
         {
-            using OwnedBunch<RemoteAnnouncement> bunch = remoteAnnouncements.Bunch();
+            using Bunch<RemoteAnnouncement> bunch = remoteAnnouncements.Bunch();
 
             if (bunch.Available() == false)
                 return;

@@ -1,9 +1,8 @@
-using DCL.Chat;
 using DCL.DebugUtilities;
 using System;
 using Utility;
 
-namespace DCL.Multiplayer.Chats
+namespace DCL.Chat.MessageBus
 {
     public class DebugPanelChatMessageBus : IChatMessagesBus
     {
@@ -21,6 +20,11 @@ namespace DCL.Multiplayer.Chats
         ~DebugPanelChatMessageBus()
         {
             this.origin.OnMessageAdded -= OriginOnOnMessageAdded;
+        }
+
+        public void Dispose()
+        {
+            origin.Dispose();
         }
 
         public void Send(string message)
