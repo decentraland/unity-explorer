@@ -2,8 +2,17 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Pools;
+using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
+using LiveKit.Rooms.ActiveSpeakers;
+using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Info;
+using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using Utility.Multithreading;
@@ -83,7 +92,21 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            LogRoom newRoom = multiPool.Get<LogRoom>();
+            LogRoom newRoom = new LogRoom(
+                new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    new ParticipantsHub(),
+                    new TracksFactory(),
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo()
+                )
+            ); //multiPool.Get<LogRoom>();
+            //TODO return pooling for performance, but get rid off the memory corruption, incorrect object reusing bug
+
             var credentials = new ConnectionStringCredentials(connectionString);
             bool connectResult = await newRoom.ConnectAsync(credentials, token);
 
