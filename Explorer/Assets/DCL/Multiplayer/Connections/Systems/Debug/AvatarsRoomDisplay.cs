@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             activeCount = new ElementBinding<string>(string.Empty);
 
             debugContainerBuilder
-               .AddWidget("Room: Remote Avatars")!
+               .AddWidget("Room: Avatars")!
                .AddCustomMarker("Active Avatars", activeCount);
         }
 
