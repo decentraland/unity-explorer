@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IAdapterAddresses adapterAddresses,
             IWeb3IdentityCache web3IdentityCache,
             IArchipelagoSignFlow signFlow,
-            IMultiPool multiPool,
+            IMultiPool multiPool,//TODO remove
             ICharacterObject characterObject,
             string aboutUrl
         )

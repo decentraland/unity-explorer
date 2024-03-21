@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
             IMetaDataSource metaDataSource,
-            IMultiPool multiPool,
+            IMultiPool multiPool,//TODO remove
             string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter"
         )
         {
@@ -31,8 +31,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             connectiveRoom = new ConnectiveRoom(
                 _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync,
-                multiPool
+                RunConnectCycleStepAsync
             );
         }
 
