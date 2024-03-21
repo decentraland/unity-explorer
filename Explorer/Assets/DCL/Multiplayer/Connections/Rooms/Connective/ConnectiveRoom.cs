@@ -103,7 +103,19 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            IRoom newRoom = roomPool.Get()!;
+            IRoom newRoom = new LogRoom(
+                new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    new ParticipantsHub(),
+                    new TracksFactory(),
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo()
+                )
+            );//TODO move to object pool, but avoid memory corruption
 
             var credentials = new ConnectionStringCredentials(connectionString);
             bool connectResult = await newRoom.ConnectAsync(credentials, token);

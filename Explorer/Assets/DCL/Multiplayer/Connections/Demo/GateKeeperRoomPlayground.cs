@@ -10,7 +10,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using LiveKit.Internal.FFIClients;
-using LiveKit.Internal.FFIClients.Pools;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
@@ -35,13 +34,11 @@ namespace DCL.Multiplayer.Connections.Demo
             var character = new ICharacterObject.Fake(Vector3.zero);
             var webRequests = new LogWebRequestController(new WebRequestController(identityCache));
             var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests));
-            var multiPool = new ThreadSafeMultiPool();
             var realmData = new IRealmData.Fake();
 
             new GateKeeperSceneRoom(
                 webRequests,
                 new LogMetaDataSource(new MetaDataSource(realmData, character, places)),
-                multiPool,
                 gateKeeperUrl
             ).Start();
         }
