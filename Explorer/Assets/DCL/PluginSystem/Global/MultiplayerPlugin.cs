@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly RealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IRemoteEntities remoteEntities;
 
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
-            RealFlowLoadingStatus realFlowLoadingStatus,
+            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
             IMessagePipesHub messagePipesHub,
@@ -91,7 +91,8 @@ namespace DCL.PluginSystem.Global
                 ),
                 new RemoteProfiles(profileRepository),
                 profileBroadcast,
-                remoteEntities
+                remoteEntities,
+                realFlowLoadingStatus
             );
 #endif
         }
