@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Credentials;
-using DCL.Multiplayer.Connections.Pools;
 using LiveKit.Internal;
-using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -15,6 +13,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
+using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
@@ -29,23 +28,35 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private readonly PrewarmAsyncDelegate prewarmAsync;
         private readonly CycleStepDelegate runConnectCycleStepAsync;
-        private readonly IMultiPool multiPool;
 
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Sleep);
+        private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
+            () => new LogRoom(
+                new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    new ParticipantsHub(),
+                    new TracksFactory(),
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo()
+                )
+            )
+        );
 
         private CancellationTokenSource? cancellationTokenSource;
 
         public ConnectiveRoom(
             PrewarmAsyncDelegate prewarmAsync,
-            CycleStepDelegate runConnectCycleStepAsync,
-            IMultiPool multiPool
+            CycleStepDelegate runConnectCycleStepAsync
         )
         {
             this.prewarmAsync = prewarmAsync;
             this.runConnectCycleStepAsync = runConnectCycleStepAsync;
-            this.multiPool = multiPool;
         }
 
         public void Start()
@@ -92,34 +103,26 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            LogRoom newRoom = new LogRoom(
-                new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    new ParticipantsHub(),
-                    new TracksFactory(),
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo()
-                )
-            ); //multiPool.Get<LogRoom>();
-            //TODO return pooling for performance, but get rid off the memory corruption, incorrect object reusing bug
+            IRoom newRoom = roomPool.Get()!;
 
             var credentials = new ConnectionStringCredentials(connectionString);
             bool connectResult = await newRoom.ConnectAsync(credentials, token);
 
             if (connectResult == false)
             {
-                multiPool.Release(newRoom);
+                roomPool.Release(newRoom);
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
                 return;
             }
 
             room.Assign(newRoom, out IRoom? previous);
-            previous?.Disconnect();
-            multiPool.TryRelease(previous);
+
+            if (previous is not null)
+            {
+                roomPool.Release(previous);
+                previous.Disconnect();
+            }
+
             roomState.Set(IConnectiveRoom.State.Running);
         }
     }
