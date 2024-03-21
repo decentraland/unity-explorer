@@ -7,7 +7,9 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
+using Decentraland.Kernel.Comms.Rfc4;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
@@ -19,11 +21,13 @@ namespace DCL.CharacterMotion.Systems
     {
         private readonly Dictionary<string, int> actionNameById = new ();
         private DCLInput.EmotesActions emotesActions;
+        private readonly MultiplayerEmotesMessageBus messageBus;
         private int triggeredEmote = -1;
 
-        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions) : base(world)
+        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions, MultiplayerEmotesMessageBus messageBus) : base(world)
         {
             this.emotesActions = emotesActions;
+            this.messageBus = messageBus;
             GetReportCategory();
             InputActionMap inputActionMap = emotesActions.Get();
 
@@ -60,6 +64,8 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             if (triggeredEmote < 0) return;
+
+            messageBus.InjectWorld(World!);
             TriggerEmoteQuery(World, triggeredEmote);
             triggeredEmote = -1;
         }
@@ -69,6 +75,12 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(CharacterEmoteIntent))]
         private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
         {
+            messageBus.SelfSendWithDelayAsync(new Emote
+            {
+                EmoteId = (uint)emoteIndex,
+                Timestamp = UnityEngine.Time.unscaledTime,
+            }, 0.1f).Forget();
+
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
