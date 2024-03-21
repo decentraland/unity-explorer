@@ -109,7 +109,7 @@ namespace DCL.PluginSystem.Global
 
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
                     characterPreviewFactory, gridController, wearableInfoPanelController, emoteInfoPanelController, builder.World, args.PlayerEntity,
-                    emoteGridController, avatarView.GetComponentsInChildren<AvatarSlotView>(), emotesController);
+                    emoteGridController, avatarView.GetComponentsInChildren<AvatarSlotView>(), emotesController, backpackEquipStatusController);
             };
         }
 

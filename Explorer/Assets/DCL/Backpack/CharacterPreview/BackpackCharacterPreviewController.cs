@@ -11,14 +11,20 @@ namespace DCL.Backpack.CharacterPreview
     public class BackpackCharacterPreviewController : CharacterPreviewControllerBase
     {
         private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEquipStatusController backpackEquipStatusController;
 
-        public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus backpackEventBus, World world)
+        public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory,
+            BackpackEventBus backpackEventBus, World world,
+            IBackpackEquipStatusController backpackEquipStatusController)
             : base(view, previewFactory, world)
         {
             this.backpackEventBus = backpackEventBus;
+            this.backpackEquipStatusController = backpackEquipStatusController;
             backpackEventBus.EquipWearableEvent += OnWearableEquipped;
             backpackEventBus.UnEquipWearableEvent += OnWearableUnequipped;
             backpackEventBus.EquipEmoteEvent += OnEmoteEquipped;
+            backpackEventBus.SelectEmoteEvent += OnEmoteSelected;
+            backpackEventBus.EmoteSlotSelectEvent += OnEmoteSlotSelected;
             backpackEventBus.UnEquipEmoteEvent += OnEmoteUnEquipped;
             backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
@@ -27,8 +33,15 @@ namespace DCL.Backpack.CharacterPreview
         public new void Dispose()
         {
             base.Dispose();
+
             backpackEventBus.EquipWearableEvent -= OnWearableEquipped;
             backpackEventBus.UnEquipWearableEvent -= OnWearableUnequipped;
+            backpackEventBus.EquipEmoteEvent -= OnEmoteEquipped;
+            backpackEventBus.UnEquipEmoteEvent -= OnEmoteUnEquipped;
+            backpackEventBus.SelectEmoteEvent -= OnEmoteSelected;
+            backpackEventBus.EmoteSlotSelectEvent -= OnEmoteSlotSelected;
+            backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
+            backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
         }
 
         private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -77,7 +90,20 @@ namespace DCL.Backpack.CharacterPreview
             URN urn = emote.GetUrn().Shorten();
             if (previewAvatarModel.Emotes.Contains(urn)) return;
             previewAvatarModel.Emotes.Add(urn);
+
             OnModelUpdated();
+        }
+
+        private void OnEmoteSlotSelected(int slot)
+        {
+            IEmote? emote = backpackEquipStatusController.GetEquippedEmote(slot);
+            if (emote == null) return;
+            PlayEmote(emote.GetUrn().Shorten());
+        }
+
+        private void OnEmoteSelected(IEmote emote)
+        {
+            PlayEmote(emote.GetUrn().Shorten());
         }
     }
 }

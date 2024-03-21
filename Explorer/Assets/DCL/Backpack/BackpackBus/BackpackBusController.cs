@@ -168,6 +168,7 @@ namespace DCL.Backpack.BackpackBus
         private void HandleEmoteSlotSelectCommand(BackpackEmoteSlotSelectCommand command)
         {
             currentEmoteSlot = command.Slot;
+            backpackEventBus.SendEmoteSlotSelect(command.Slot);
         }
     }
 }

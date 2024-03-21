@@ -39,5 +39,7 @@ namespace DCL.Backpack.BackpackBus
         void SendEquipEmote(int slot, IEmote emote);
 
         public void SendEmoteSelect(IEmote emote);
+
+        void SendEmoteSlotSelect(int slot);
     }
 }

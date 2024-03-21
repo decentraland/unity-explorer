@@ -25,17 +25,16 @@ namespace DCL.Backpack
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
         private readonly AvatarController avatarController;
-
         private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
-
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly BackpackEmoteGridController backpackEmoteGridController;
         private readonly EmotesController emotesController;
+        private readonly Dictionary<BackpackSections, ISection> backpackSections;
+
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private bool initialLoadingIsDone;
-        private Dictionary<BackpackSections, ISection> backpackSections;
 
         public BackpackController(
             BackpackView view,
@@ -50,7 +49,8 @@ namespace DCL.Backpack
             World world, Entity playerEntity,
             BackpackEmoteGridController backpackEmoteGridController,
             AvatarSlotView[] avatarSlotViews,
-            EmotesController emotesController)
+            EmotesController emotesController,
+            IBackpackEquipStatusController backpackEquipStatusController)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -95,7 +95,7 @@ namespace DCL.Backpack
                     });
             }
 
-            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus, world);
+            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus, world, backpackEquipStatusController);
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }
