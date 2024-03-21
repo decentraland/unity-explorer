@@ -82,7 +82,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             var currentType = ofCase.ToString()!;
 
-            SubscribersList(currentType)
+            var list = SubscribersList(currentType);
+
+            if (list.Count > 0)
+                throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {currentType}");
+
+            list
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
