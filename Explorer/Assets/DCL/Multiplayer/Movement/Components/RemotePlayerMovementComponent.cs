@@ -1,8 +1,18 @@
-﻿namespace DCL.Multiplayer.Movement
+﻿#nullable enable
+
+using System;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
+
+namespace DCL.Multiplayer.Movement
 {
-    public struct RemotePlayerMovementComponent
+    public struct RemotePlayerMovementComponent : IDisposable
     {
         public const string TEST_ID = "SelfReplica";
+
+        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
+        private readonly SimplePriorityQueue<FullMovementMessage> queue;
+        private bool disposed;
 
         public readonly string PlayerWalletId;
 
@@ -12,9 +22,14 @@
         public bool WasTeleported;
         public bool RequireAnimationsUpdate;
 
-        public RemotePlayerMovementComponent(string playerWalletId)
+        public readonly SimplePriorityQueue<FullMovementMessage>? Queue => disposed ? null : queue;
+
+        public RemotePlayerMovementComponent(string playerWalletId, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
         {
             PlayerWalletId = playerWalletId;
+            this.queuePool = queuePool;
+            queue = queuePool.Get()!;
+            disposed = false;
 
             PastMessage = new NetworkMovementMessage();
             Initialized = false;
@@ -29,6 +44,12 @@
             WasTeleported = wasTeleported;
 
             RequireAnimationsUpdate = true;
+        }
+
+        public void Dispose()
+        {
+            disposed = true;
+            queuePool.Release(queue);
         }
     }
 }

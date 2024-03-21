@@ -32,5 +32,9 @@ namespace DCL.Chat
         {
             OnMessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true));
         }
+
+        public void Dispose()
+        {
+        }
     }
 }

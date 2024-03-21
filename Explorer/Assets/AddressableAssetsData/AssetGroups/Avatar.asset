@@ -27,11 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: de9170d136f61044ba3e4f295534c7f6
-    m_Address: Avatar_Shaders_Variants
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ccf99be97dbda744981e8b0ec1ef8faf
     m_Address: Avatar_CelShading
     m_ReadOnly: 0

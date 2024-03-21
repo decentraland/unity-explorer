@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Utilities.Extensions;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.Tables
@@ -12,8 +13,11 @@ namespace DCL.Multiplayer.Profiles.Tables
         private readonly Dictionary<string, Entity> walletIdToEntity = new ();
         private readonly Dictionary<Entity, string> entityToWalletId = new ();
 
-        public Entity Entity(string walletId) =>
-            walletIdToEntity[walletId].EnsureNotNull();
+        public Entity Entity(string walletId)
+        {
+            try { return walletIdToEntity[walletId]; }
+            catch (Exception e) { throw new Exception($"Cannot find entity for walletId: {walletId}", e); }
+        }
 
         public string WalletId(Entity entity) =>
             entityToWalletId[entity].EnsureNotNull();

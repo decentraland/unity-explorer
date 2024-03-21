@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using Random = System.Random;
@@ -7,8 +8,7 @@ namespace DCL.Chat
     [CreateAssetMenu(fileName = "ChatEntryConfiguration", menuName = "SO/ChatEntryConfiguration")]
     public class ChatEntryConfigurationSO : ScriptableObject
     {
-        [SerializeField] public float nameColorSaturation;
-        [SerializeField] public float nameColorValue;
+        [SerializeField] public List<Color> nameColors;
 
         private int seed;
         private byte[] asciiValues;
@@ -21,7 +21,7 @@ namespace DCL.Chat
                 seed += value;
 
             Random rand1 = new Random(seed);
-            return Color.HSVToRGB((float) rand1.NextDouble(), nameColorSaturation, nameColorValue);
+            return nameColors[rand1.Next(nameColors.Count)];
         }
     }
 }
