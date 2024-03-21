@@ -10,8 +10,8 @@ namespace DCL.Multiplayer.Movement
     {
         public const string TEST_ID = "SelfReplica";
 
-        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
-        private readonly SimplePriorityQueue<FullMovementMessage> queue;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
+        private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
         private bool disposed;
 
         public readonly string PlayerWalletId;
@@ -22,9 +22,9 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool RequireAnimationsUpdate;
 
-        public readonly SimplePriorityQueue<FullMovementMessage>? Queue => disposed ? null : queue;
+        public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
 
-        public RemotePlayerMovementComponent(string playerWalletId, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(string playerWalletId, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             PlayerWalletId = playerWalletId;
             this.queuePool = queuePool;

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -39,7 +40,7 @@ namespace DCL.Multiplayer.Movement.Systems
             Inbox(message, obj.FromWalletId);
         }
 
-        public void Send(FullMovementMessage message)
+        public void Send(NetworkMovementMessage message)
         {
             WriteAndSend(message, messagePipesHub.IslandPipe());
             WriteAndSend(message, messagePipesHub.ScenePipe());
@@ -50,14 +51,14 @@ namespace DCL.Multiplayer.Movement.Systems
             this.globalWorld = world;
         }
 
-        private void WriteAndSend(FullMovementMessage message, IMessagePipe messagePipe)
+        private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
             var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
             WriteToProto(message, messageWrap.Payload);
             messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
-        private static void WriteToProto(FullMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
+        private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
             movement.Timestamp = message.timestamp;
 
@@ -81,7 +82,7 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
         }
 
-        private static FullMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
+        private static NetworkMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
             new()
             {
                 timestamp = proto.Timestamp,
@@ -100,13 +101,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = proto.IsStunned,
             };
 
-        private void Inbox(FullMovementMessage fullMovementMessage, string @for)
+        private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
             QueueFor(@for)?.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
 
-        private SimplePriorityQueue<FullMovementMessage>? QueueFor(string walletId)
+        private SimplePriorityQueue<NetworkMovementMessage>? QueueFor(string walletId)
         {
             if (entityParticipantTable.Has(walletId) == false)
             {
@@ -121,7 +122,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 : null;
         }
 
-        public async UniTaskVoid SelfSendWithDelayAsync(FullMovementMessage message, float delay)
+        public async UniTaskVoid SelfSendWithDelayAsync(NetworkMovementMessage message, float delay)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);

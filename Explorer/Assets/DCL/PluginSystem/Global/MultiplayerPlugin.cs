@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.Global
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
             IMessagePipesHub messagePipesHub,
-            IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;

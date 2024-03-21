@@ -357,7 +357,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 new CharacterAnimationComponent(),
                 new RemotePlayerMovementComponent(
                     RemotePlayerMovementComponent.TEST_ID,
-                    new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(() => new SimplePriorityQueue<FullMovementMessage>())
+                    new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(() => new SimplePriorityQueue<NetworkMovementMessage>())
                 ),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),
