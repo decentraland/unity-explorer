@@ -75,6 +75,7 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(CharacterEmoteIntent))]
         private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
         {
+            messageBus.Send((uint)emoteIndex);
             messageBus.SelfSendWithDelayAsync(new Emote
             {
                 EmoteId = (uint)emoteIndex,

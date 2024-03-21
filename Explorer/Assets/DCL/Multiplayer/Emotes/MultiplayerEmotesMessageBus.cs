@@ -76,6 +76,14 @@ namespace DCL.Multiplayer.Emotes
             Inbox(message, walletId: RemotePlayerMovementComponent.TEST_ID).Forget();
         }
 
+        private void OnMessageReceived(ReceivedMessage<Emote> obj)
+        {
+            if (cancellationTokenSource.Token.IsCancellationRequested)
+                return;
+
+            Inbox(obj.Payload, obj.FromWalletId).Forget();
+        }
+
         private async UniTaskVoid Inbox(Emote emoteMessage, string walletId)
         {
             if (entityParticipantTable.Has(walletId) == false)
@@ -88,7 +96,6 @@ namespace DCL.Multiplayer.Emotes
 
             var entity = entityParticipantTable.Entity(walletId);
             Profile? profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
-
             TriggerEmote((int)emoteMessage.EmoteId, entity, profile!);
             // ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
@@ -96,24 +103,27 @@ namespace DCL.Multiplayer.Emotes
         // Copy-Paste from UpdateEmoteInputSystem.cs
         private void TriggerEmote(int emoteIndex, in Entity entity, in Profile profile)
         {
-            // IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
-            // if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
-            //
-            // URN emoteId = emotes[emoteIndex].Shorten();
+            URN emoteId;
 
-            URN emoteId = new URN("cry");
+            if(profile != null)
+            {
+                IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
+
+                if (emoteIndex < 0 || emoteIndex >= emotes.Count)
+                    return;
+
+                emoteId = emotes[emoteIndex].Shorten();
+            }
+            else
+            {
+                emoteId = new URN("cry");
+            }
 
             if (!string.IsNullOrEmpty(emoteId))
             {
                 globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
                 globalWorld.Get<CharacterAnimationComponent>(entity).States.WasEmoteJustTriggered = true;
             }
-        }
-
-        private void OnMessageReceived(ReceivedMessage<Emote> obj)
-        {
-            // if (cancellationTokenSource.Token.IsCancellationRequested)
-            //     return;
         }
     }
 }
