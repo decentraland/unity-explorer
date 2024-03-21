@@ -94,7 +94,8 @@ namespace DCL.Multiplayer.Connections.Messaging
             [typeof(Scene)] = (packet, o) => packet.Scene = (Scene)o,
             [typeof(Voice)] = (packet, o) => packet.Voice = (Voice)o,
             [typeof(Decentraland.Kernel.Comms.Rfc4.Chat)] = (packet, o) => packet.Chat = (Decentraland.Kernel.Comms.Rfc4.Chat)o,
-            [typeof(Decentraland.Kernel.Comms.Rfc4.Movement)] = (packet, o) => packet.Movement = (Decentraland.Kernel.Comms.Rfc4.Movement)o
+            [typeof(Decentraland.Kernel.Comms.Rfc4.Movement)] = (packet, o) => packet.Movement = (Decentraland.Kernel.Comms.Rfc4.Movement)o,
+            [typeof(Decentraland.Kernel.Comms.Rfc4.Emote)] = (packet, o) => packet.Emote = (Decentraland.Kernel.Comms.Rfc4.Emote)o
         };
     }
 }
