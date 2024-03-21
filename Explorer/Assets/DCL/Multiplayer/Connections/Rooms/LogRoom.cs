@@ -4,6 +4,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
@@ -11,7 +12,6 @@ using LiveKit.Rooms.Tracks.Hub;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 using Utility.CodeConventions;
 
 namespace DCL.Multiplayer.Connections.Rooms
@@ -26,6 +26,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IActiveSpeakers ActiveSpeakers { get; }
         public IParticipantsHub Participants { get; }
         public IDataPipe DataPipe { get; }
+        public IRoomInfo Info { get; }
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -50,9 +51,10 @@ namespace DCL.Multiplayer.Connections.Rooms
             this.origin = origin;
             this.log = log;
 
-            ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers);
-            Participants = new LogParticipantsHub(origin.Participants);
-            DataPipe = new LogDataPipe(origin.DataPipe);
+            ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers, log);
+            Participants = new LogParticipantsHub(origin.Participants, log);
+            DataPipe = new LogDataPipe(origin.DataPipe, log);
+            Info = new LogRoomInfo(origin.Info, log);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
