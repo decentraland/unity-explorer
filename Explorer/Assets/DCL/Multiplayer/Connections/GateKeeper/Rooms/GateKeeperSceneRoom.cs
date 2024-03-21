@@ -7,7 +7,6 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
@@ -56,7 +55,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             if (meta.Equals(previousMetaData) == false)
             {
                 string connectionString = await ConnectionStringAsync(meta, token);
-                ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
                 await connectToRoomAsyncDelegate(connectionString, token);
             }
 
@@ -67,7 +65,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             GenericPostRequest result = await webRequests.SignedFetchAsync(sceneHandleUrl, meta.ToJson(), token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-            return response.adapter;
+            string connectionString = response.adapter;
+            ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
+            return connectionString;
         }
 
         [Serializable]
