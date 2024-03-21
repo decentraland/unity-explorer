@@ -109,13 +109,13 @@ Varyings LitPassVertex(Attributes input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
     
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
     //TODO: Tangents
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS.xyz, input.tangentOS.xyzw);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
