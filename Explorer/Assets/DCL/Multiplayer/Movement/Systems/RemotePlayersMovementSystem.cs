@@ -2,13 +2,14 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.System;
+using DCL.Multiplayer.Profiles.Systems;
 using ECS.Abstract;
 using UnityEngine;
 using Utility.PriorityQueue;
@@ -17,6 +18,8 @@ using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
+    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
@@ -38,6 +41,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         protected override void Update(float t)
         {
+            messageBus.InjectWorld(World!);
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
@@ -52,11 +56,18 @@ namespace DCL.Multiplayer.Movement.Systems
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp, ref CharacterAnimationComponent anim,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, in IAvatarView view)
+        private void UpdateRemotePlayersMovement(
+            [Data] float deltaTime,
+            ref CharacterTransform transComp,
+            ref CharacterAnimationComponent anim,
+            ref RemotePlayerMovementComponent remotePlayerMovement,
+            ref InterpolationComponent intComp,
+            ref ExtrapolationComponent extComp,
+            in IAvatarView view
+        )
         {
-            if (!messageBus.InboxByParticipantMap.TryGetValue(remotePlayerMovement.PlayerWalletId, out SimplePriorityQueue<FullMovementMessage>? playerInbox))
-                return;
+            var playerInbox = remotePlayerMovement.Queue;
+            if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
 

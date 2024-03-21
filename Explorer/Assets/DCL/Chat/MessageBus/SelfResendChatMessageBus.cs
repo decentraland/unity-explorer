@@ -1,12 +1,11 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
 
-namespace DCL.Multiplayer.Chats
+namespace DCL.Chat.MessageBus
 {
     public class SelfResendChatMessageBus : IChatMessagesBus
     {
@@ -27,6 +26,11 @@ namespace DCL.Multiplayer.Chats
         ~SelfResendChatMessageBus()
         {
             this.origin.OnMessageAdded -= OriginOnOnMessageAdded;
+        }
+
+        public void Dispose()
+        {
+            origin.Dispose();
         }
 
         private void OriginOnOnMessageAdded(ChatMessage obj)

@@ -1,0 +1,59 @@
+using System;
+using System.Collections.Generic;
+
+namespace DCL.Chat.MessageBus.Deduplication
+{
+    public class MessageDeduplication : IMessageDeduplication
+    {
+        private readonly ISet<RegisteredStamp> registeredStamps = new HashSet<RegisteredStamp>();
+        private readonly TimeSpan cleanPerPeriod;
+        private DateTime previousClean;
+
+        public MessageDeduplication() : this(TimeSpan.FromMinutes(5))
+        {
+        }
+
+        public MessageDeduplication(TimeSpan cleanPerPeriod)
+        {
+            this.cleanPerPeriod = cleanPerPeriod;
+            previousClean = DateTime.Now;
+        }
+
+        public bool Contains(string walletId, double timestamp) =>
+            registeredStamps.Contains(new RegisteredStamp(walletId, timestamp));
+
+        public void Register(string walletId, double timestamp)
+        {
+            if (DateTime.Now - previousClean > cleanPerPeriod)
+            {
+                previousClean = DateTime.Now;
+                registeredStamps.Clear();
+            }
+
+            registeredStamps.Add(new RegisteredStamp(walletId, timestamp));
+        }
+
+        [Serializable]
+        private struct RegisteredStamp : IEquatable<RegisteredStamp>
+        {
+            public string walletId;
+            public double timestamp;
+
+            public RegisteredStamp(string walletId, double timestamp)
+            {
+                this.walletId = walletId;
+                this.timestamp = timestamp;
+            }
+
+            public bool Equals(RegisteredStamp other) =>
+                walletId == other.walletId
+                && timestamp.Equals(other.timestamp);
+
+            public override bool Equals(object? obj) =>
+                obj is RegisteredStamp other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(walletId, timestamp);
+        }
+    }
+}
