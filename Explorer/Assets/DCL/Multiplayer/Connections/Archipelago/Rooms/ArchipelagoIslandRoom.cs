@@ -68,8 +68,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
             connectiveRoom = new ConnectiveRoom(
                 PrewarmAsync,
-                SendHeartbeatAsync,
-                multiPool
+                SendHeartbeatAsync
             );
         }
 
