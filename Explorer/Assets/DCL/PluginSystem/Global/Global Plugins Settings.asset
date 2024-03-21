@@ -33,6 +33,7 @@ MonoBehaviour:
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
+  - rid: 4582970558554832898
   references:
     version: 2
     RefIds:
@@ -236,6 +237,14 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 4582970558554832898
+      type: {class: RoadSettings, ns: DCL.Roads.Systems, asm: DCL.Plugins}
+      data:
+        <RoadData>k__BackingField:
+          m_AssetGUID: d7baa85a7da60ef4b8b5252d78fa1b3d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -331,13 +340,13 @@ MonoBehaviour:
     - rid: 7249412338407702528
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:
-        <LodSettingAsset>k__BackingField:
+        <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <RoadCoordinatesAsset>k__BackingField:
-          m_AssetGUID: ef5038abf3d930a4993db8bbe7c74a9f
+        <lodMaterial>k__BackingField:
+          m_AssetGUID: ee038e77440a71e4c8e8bae23ad62c01
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

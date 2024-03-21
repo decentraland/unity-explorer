@@ -12,6 +12,5 @@ namespace DCL.LOD
         public Color[] LODDebugColors { get; set; }
 
         public GameObject FaillingCube { get; set; }
-
     }
 }

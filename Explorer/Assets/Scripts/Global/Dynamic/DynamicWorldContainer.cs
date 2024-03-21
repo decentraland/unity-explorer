@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Roads.Systems;
 using LiveKit.Internal.FFIClients.Pools;
 using Unity.Mathematics;
 using UnityEngine;
@@ -141,6 +142,8 @@ namespace Global.Dynamic
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
                 container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
 
+            var visualSceneStateResolver = new VisualSceneStateResolver();
+            
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool)),
@@ -186,11 +189,15 @@ namespace Global.Dynamic
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue, visualSceneStateResolver),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
-                landscapePlugin,
+                landscapePlugin, new RoadPlugin(staticContainer.CacheCleaner,
+                    staticContainer.AssetsProvisioner,
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget,
+                    staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    visualSceneStateResolver)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

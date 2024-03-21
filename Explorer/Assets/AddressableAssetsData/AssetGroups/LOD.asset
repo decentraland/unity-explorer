@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: LOD
+  m_EditorClassIdentifier: 
+  m_GroupName: LOD
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 3f96e21930e98c5489bb8c8c57ed4c94
+  m_SerializeEntries:
+  - m_GUID: c9870b17ce36346458f07a63c096a16a
+    m_Address: FaillingLODCubePivot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
+    m_Address: LODSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ee038e77440a71e4c8e8bae23ad62c01
+    m_Address: LOD_Material.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: acafd2f9911f8fe4bab715386d5f097f, type: 2}
+    - {fileID: 11400000, guid: f6d48776f4e6b8346b86384d85c907e6, type: 2}

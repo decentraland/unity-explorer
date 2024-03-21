@@ -110,7 +110,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                     if (partitionComponent.IsDirty)
                     {
-                        visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneStateComponent, partitionComponent, sceneDefinitionComponent, lodSettingsAsset);
+                        visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneStateComponent, partitionComponent, sceneDefinitionComponent, lodSettingsAsset, realmData);
 
                         // we call it directly so we avoid an extra query
                         if (visualSceneStateComponent.IsDirty)

@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b0b2609fd084bb696d6821c99c000c1, type: 3}
   m_Name: LODSettings
   m_EditorClassIdentifier: 
-  <IsColorDebuging>k__BackingField: 1
   <LodPartitionBucketThresholds>k__BackingField: 040000000a000000
+  <IsColorDebuging>k__BackingField: 1
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
   <FaillingCube>k__BackingField: {fileID: 3600501844928612175, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
+  <RoadsData>k__BackingField: {fileID: 11400000, guid: b539048aad9122d4289e7921b9e464db, type: 2}

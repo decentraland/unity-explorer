@@ -11,6 +11,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -43,11 +44,11 @@ namespace DCL.LOD.Systems
 
         private readonly Transform lodsTransformParent;
 
-        private static readonly Shader shader = Shader.Find("DCL/Avatar_CelShading");
+        private readonly IExtendedObjectPool<Material> materialPool;
         private readonly Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent, IExtendedObjectPool<Material> materialPool) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
@@ -56,6 +57,7 @@ namespace DCL.LOD.Systems
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
+            this.materialPool = materialPool;
             textureArrayContainerDictionary = new Dictionary<TextureFormat, TextureArrayContainer>
             {
                 {
@@ -63,6 +65,9 @@ namespace DCL.LOD.Systems
                 },
                 {
                     TextureFormat.DXT1, new TextureArrayContainer(TextureFormat.DXT1)
+                },
+                {
+                    TextureFormat.DXT5, new TextureArrayContainer(TextureFormat.DXT5)
                 }
             };
         }
@@ -102,37 +107,15 @@ namespace DCL.LOD.Systems
 
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                     {
-                        var componentsInChildren = instantiatedLOD.GetComponentsInChildren<MeshRenderer>();
-                        for (int i = 0; i < componentsInChildren.Length; i++)
-                        {
-                            var newMaterials =  new List<Material>();
-                            for (int j = 0; j < componentsInChildren[i].materials.Length; j++)
-                            {
-                                var newMaterial = new Material(shader);
-                                if (componentsInChildren[i].materials[j].mainTexture != null)
-                                {
-                                    switch (componentsInChildren[i].materials[j].mainTexture.graphicsFormat)
-                                    {
-                                        case GraphicsFormat.RGBA_BC7_UNorm:
-                                        case GraphicsFormat.RGBA_BC7_SRGB:
-                                            textureArrayContainerDictionary[TextureFormat.BC7].SetTexture(newMaterial, (Texture2D)componentsInChildren[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
-                                            break;
-                                        case GraphicsFormat.RGBA_DXT1_UNorm:
-                                        case GraphicsFormat.RGBA_DXT1_SRGB:
-                                            textureArrayContainerDictionary[TextureFormat.DXT1].SetTexture(newMaterial, (Texture2D)componentsInChildren[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
-                                            break;
-                                    }
-                                }
-
-                                newMaterials.Add(newMaterial);
-                            }
-
-                            componentsInChildren[i].materials = newMaterials.ToArray();
-                        }
+                        var newSlots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary, sceneLODInfo.CurrentLODLevel);
+                        sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                            instantiatedLOD, result.Asset, lodCache, newSlots);
                     }
-                    
-                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        instantiatedLOD, result.Asset, lodCache);
+                    else
+                    {
+                        sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                            instantiatedLOD, result.Asset, lodCache);
+                    }
                 }
                 else
                 {
@@ -149,6 +132,8 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.IsDirty = false;
             }
         }
+
+        
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
