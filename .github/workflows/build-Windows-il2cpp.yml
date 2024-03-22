@@ -104,15 +104,6 @@ jobs:
           git add .
           git reset --hard
 
-      - name: Restore Library cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            Explorer/Library
-            !Explorer/Library/Bee/**
-            !Explorer/Library/BuildPlayerData/**
-          key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
-
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
