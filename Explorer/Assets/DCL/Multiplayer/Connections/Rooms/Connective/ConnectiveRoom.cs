@@ -103,19 +103,20 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
-            IRoom newRoom = new LogRoom(
-                new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    new ParticipantsHub(),
-                    new TracksFactory(),
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo()
-                )
-            );//TODO move to object pool, but avoid memory corruption
+            // IRoom newRoom = new LogRoom(
+            //     new Room(
+            //         new ArrayMemoryPool(),
+            //         new DefaultActiveSpeakers(),
+            //         new ParticipantsHub(),
+            //         new TracksFactory(),
+            //         new FfiHandleFactory(),
+            //         new ParticipantFactory(),
+            //         new TrackPublicationFactory(),
+            //         new DataPipe(),
+            //         new MemoryRoomInfo()
+            //     )
+            // );//TODO move to object pool, but avoid memory corruption
+            var newRoom = roomPool.Get()!;
 
             var credentials = new ConnectionStringCredentials(connectionString);
             bool connectResult = await newRoom.ConnectAsync(credentials, token);
@@ -131,8 +132,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             if (previous is not null)
             {
+                await previous.DisconnectAsync(token);
                 roomPool.Release(previous);
-                previous.Disconnect();
             }
 
             roomState.Set(IConnectiveRoom.State.Running);
