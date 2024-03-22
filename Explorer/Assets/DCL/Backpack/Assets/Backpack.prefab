@@ -2041,13 +2041,16 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
+  <EmoteGridItem>k__BackingField:
+    m_AssetGUID: 
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
   <PageSelectorView>k__BackingField: {fileID: 3712294798457460945}
   <RegularResults>k__BackingField: {fileID: 4286908778797955625}
   <NoSearchResults>k__BackingField: {fileID: 2670128207509277336}
   <NoCategoryResults>k__BackingField: {fileID: 4883820917948329291}
   <BreadCrumbView>k__BackingField: {fileID: 6956049020834478445}
-  <EmptyTextCategory>k__BackingField: {fileID: 0}
-  <EmptyTextLink>k__BackingField: {fileID: 4323447657527004265}
 --- !u!1 &3190748306234886068
 GameObject:
   m_ObjectHideFlags: 0
@@ -4290,13 +4293,16 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
+  <EmoteGridItem>k__BackingField:
+    m_AssetGUID: 79eb8e4682b784de1b1b18eaeba27edc
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
   <PageSelectorView>k__BackingField: {fileID: 9151801607187252162}
   <RegularResults>k__BackingField: {fileID: 2293997709252917235}
   <NoSearchResults>k__BackingField: {fileID: 6292301406972969359}
   <NoCategoryResults>k__BackingField: {fileID: 4373380581338508548}
   <BreadCrumbView>k__BackingField: {fileID: 0}
-  <EmptyTextCategory>k__BackingField: {fileID: 0}
-  <EmptyTextLink>k__BackingField: {fileID: 0}
 --- !u!1 &7825276156756374324
 GameObject:
   m_ObjectHideFlags: 0
@@ -4790,6 +4796,7 @@ MonoBehaviour:
   <BackpackInfoPanelView>k__BackingField: {fileID: 5535795034186601730}
   <GridView>k__BackingField: {fileID: 3261146987923329214}
   <Slots>k__BackingField:
+  - {fileID: 7442891337567819801}
   - {fileID: 8215634501015982094}
   - {fileID: 1157504878225714628}
   - {fileID: 5827068332828409858}
@@ -4799,7 +4806,6 @@ MonoBehaviour:
   - {fileID: 7074038365408178231}
   - {fileID: 4299627504664504529}
   - {fileID: 5503972088058183937}
-  - {fileID: 7442891337567819801}
 --- !u!1001 &33969487770751067
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5442,6 +5448,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer
@@ -6010,6 +6024,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (5)
@@ -7340,6 +7362,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (9)
@@ -7477,6 +7507,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (6)
@@ -7735,6 +7773,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (4)
@@ -8292,6 +8338,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (2)
@@ -8635,6 +8689,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (8)
@@ -9033,6 +9095,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (3)
@@ -10110,6 +10180,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (7)
@@ -11832,6 +11910,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4360543607954712366}
     m_Modifications:
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -6.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440856632038101506, guid: e287a383d70a84214886ad4264977b89, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -9.200012
+      objectReference: {fileID: 0}
     - target: {fileID: 2606517721858630701, guid: e287a383d70a84214886ad4264977b89, type: 3}
       propertyPath: m_Name
       value: EmoteSlotContainer (1)

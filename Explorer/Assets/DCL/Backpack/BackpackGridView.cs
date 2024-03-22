@@ -1,5 +1,6 @@
 using DCL.AssetsProvision;
 using DCL.Backpack.Breadcrumb;
+using DCL.Backpack.EmotesSection;
 using DCL.UI;
 using System;
 using TMPro;
@@ -11,6 +12,9 @@ namespace DCL.Backpack
     {
         [field: SerializeField]
         public BackpackItemRef BackpackItem { get; private set; }
+
+        [field: SerializeField]
+        public BackpackEmoteGridItemRef EmoteGridItem { get; private set; }
 
         [field: SerializeField]
         public PageSelectorView PageSelectorView { get; private set; }
@@ -31,6 +35,12 @@ namespace DCL.Backpack
         public class BackpackItemRef : ComponentReference<BackpackItemView>
         {
             public BackpackItemRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class BackpackEmoteGridItemRef : ComponentReference<BackpackEmoteGridItemView>
+        {
+            public BackpackEmoteGridItemRef(string guid) : base(guid) { }
         }
     }
 }

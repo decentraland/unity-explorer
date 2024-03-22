@@ -41,8 +41,11 @@ namespace DCL.Backpack.EmotesSection
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.UnEquipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipEmoteCommand(slot: slot)));
 
-                UnEquipInSlot(i, null);
+                UnEquipInSlot(avatarSlots[i].Item1, avatarSlots[i].Item2);
             }
+
+            // Set the first slot selected as default
+            OnSlotButtonPressed(avatarSlotViews[1]);
         }
 
         public void Dispose()
@@ -59,6 +62,11 @@ namespace DCL.Backpack.EmotesSection
             EmoteSlotContainerView avatarSlotView = avatarSlots[slot].Item1;
             CancellationTokenSource cts = avatarSlots[slot].Item2;
 
+            UnEquipInSlot(avatarSlotView, cts);
+        }
+
+        private void UnEquipInSlot(EmoteSlotContainerView avatarSlotView, CancellationTokenSource cts)
+        {
             cts.SafeCancelAndDispose();
             avatarSlotView.SlotWearableThumbnail.gameObject.SetActive(false);
             avatarSlotView.SlotWearableThumbnail.sprite = null;

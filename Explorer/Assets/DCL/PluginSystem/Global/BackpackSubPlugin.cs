@@ -85,7 +85,7 @@ namespace DCL.PluginSystem.Global
                 categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController,
                 BackpackInfoPanelController.AttachmentType.Emote);
 
-            ObjectPool<BackpackItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
+            ObjectPool<BackpackEmoteGridItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
 
             await wearableInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
 

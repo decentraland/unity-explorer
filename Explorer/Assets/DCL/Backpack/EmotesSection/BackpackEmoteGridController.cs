@@ -31,9 +31,9 @@ namespace DCL.Backpack.EmotesSection
         private readonly NftTypeIconSO categoryIcons;
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
         private readonly PageSelectorController pageSelectorController;
-        private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
-        private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
-        private readonly IObjectPool<BackpackItemView> gridItemsPool;
+        private readonly Dictionary<URN, BackpackEmoteGridItemView> usedPoolItems;
+        private readonly BackpackEmoteGridItemView?[] loadingResults = new BackpackEmoteGridItemView[CURRENT_PAGE_SIZE];
+        private readonly IObjectPool<BackpackEmoteGridItemView> gridItemsPool;
         private readonly IEmoteProvider emoteProvider;
         private readonly IReadOnlyCollection<URN> embeddedEmoteIds;
 
@@ -55,7 +55,7 @@ namespace DCL.Backpack.EmotesSection
             IBackpackEquipStatusController backpackEquipStatusController,
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView,
-            IObjectPool<BackpackItemView> gridItemsPool,
+            IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
             IReadOnlyCollection<URN> embeddedEmoteIds)
         {
@@ -71,7 +71,7 @@ namespace DCL.Backpack.EmotesSection
             this.embeddedEmoteIds = embeddedEmoteIds;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
-            usedPoolItems = new Dictionary<URN, BackpackItemView>();
+            usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             eventBus.EquipEmoteEvent += OnEquip;
             eventBus.EquipWearableEvent += OnWearableEquipped;
             eventBus.UnEquipEmoteEvent += OnUnequip;
@@ -87,12 +87,12 @@ namespace DCL.Backpack.EmotesSection
             loadElementsCancellationToken.SafeCancelAndDispose();
         }
 
-        public static async UniTask<ObjectPool<BackpackItemView>> InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner,
+        public static async UniTask<ObjectPool<BackpackEmoteGridItemView>> InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner,
             BackpackGridView view, CancellationToken ct)
         {
-            BackpackItemView backpackItem = (await assetsProvisioner.ProvideMainAssetAsync(view.BackpackItem, ct: ct)).Value;
+            BackpackEmoteGridItemView backpackItem = (await assetsProvisioner.ProvideMainAssetAsync(view.EmoteGridItem, ct: ct)).Value;
 
-            return new ObjectPool<BackpackItemView>(
+            return new ObjectPool<BackpackEmoteGridItemView>(
                 () => Object.Instantiate(backpackItem, view.gameObject.transform),
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
@@ -161,7 +161,7 @@ namespace DCL.Backpack.EmotesSection
 
             for (var i = 0; i < CURRENT_PAGE_SIZE; i++)
             {
-                BackpackItemView backpackItemView = gridItemsPool.Get();
+                BackpackEmoteGridItemView backpackItemView = gridItemsPool.Get();
                 backpackItemView.LoadingView.StartLoadingAnimation(backpackItemView.FullBackpackItem);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 loadingResults[i] = backpackItemView;
@@ -185,7 +185,7 @@ namespace DCL.Backpack.EmotesSection
 
             for (int i = emotes.Count - 1; i >= 0; i--)
             {
-                BackpackItemView backpackItemView = loadingResults[i]!;
+                BackpackEmoteGridItemView backpackItemView = loadingResults[i]!;
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
@@ -196,8 +196,13 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(EMOTE_CATEGORY);
-                backpackItemView.EquippedIcon.SetActive(backpackEquipStatusController.IsEmoteEquipped(emotes[i]));
-                backpackItemView.IsEquipped = backpackEquipStatusController.IsEmoteEquipped(emotes[i]);
+
+                int equippedSlot = backpackEquipStatusController.GetEmoteEquippedSlot(emotes[i]);
+                bool isEquipped = equippedSlot != -1;
+                backpackItemView.EquippedIcon.SetActive(isEquipped);
+                backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
+                backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
 
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
@@ -242,7 +247,7 @@ namespace DCL.Backpack.EmotesSection
 
         private void ClearPoolElements()
         {
-            foreach (KeyValuePair<URN, BackpackItemView> backpackItemView in usedPoolItems)
+            foreach (KeyValuePair<URN, BackpackEmoteGridItemView> backpackItemView in usedPoolItems)
             {
                 backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
@@ -265,17 +270,20 @@ namespace DCL.Backpack.EmotesSection
         private void OnUnequip(int slot, IEmote? emote)
         {
             if (emote == null) return;
-            if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackItemView backpackItemView)) return;
+            if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
             backpackItemView.EquippedIcon.SetActive(false);
             backpackItemView.IsEquipped = false;
             backpackItemView.SetEquipButtonsState();
+            backpackItemView.EquippedSlotLabel.gameObject.SetActive(false);
         }
 
         private void OnEquip(int slot, IEmote emote)
         {
-            if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackItemView backpackItemView)) return;
+            if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
             backpackItemView.IsEquipped = true;
             backpackItemView.SetEquipButtonsState();
+            backpackItemView.EquippedSlotLabel.gameObject.SetActive(true);
+            backpackItemView.EquippedSlotLabel.text = slot.ToString();
         }
 
         private void OnWearableEquipped(IWearable wearable)
