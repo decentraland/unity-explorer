@@ -74,6 +74,7 @@ namespace DCL.Backpack.EmotesSection
             avatarSlotView.EmptyOverlay.SetActive(true);
             avatarSlotView.EmptyEmoteName.gameObject.SetActive(true);
             avatarSlotView.EmoteName.gameObject.SetActive(false);
+            avatarSlotView.BackgroundRarity.enabled = false;
         }
 
         private void EquipInSlot(int slot, IEmote emote)
@@ -81,6 +82,7 @@ namespace DCL.Backpack.EmotesSection
             EmoteSlotContainerView avatarSlotView = avatarSlots[slot].Item1;
             CancellationTokenSource cts = avatarSlots[slot].Item2;
 
+            avatarSlotView.BackgroundRarity.enabled = true;
             avatarSlotView.BackgroundRarity.sprite = rarityBackgrounds.GetTypeImage(emote.GetRarity());
             avatarSlotView.EmptyOverlay.SetActive(false);
             avatarSlotView.EmptyEmoteName.gameObject.SetActive(false);
