@@ -14,7 +14,6 @@ namespace DCL.LOD
         private static readonly ListObjectPool<Material> MATERIALS_LIST_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         private static readonly ListObjectPool<TextureArraySlot> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
-
         public static TextureArraySlot[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD,
             IExtendedObjectPool<Material> materialPool, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary, int lodValue)
         {

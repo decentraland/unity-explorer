@@ -102,20 +102,20 @@ namespace DCL.LOD.Systems
                 {
                     GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity, lodsTransformParent);
-                    //ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
-                    //    in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
-
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                     {
                         var newSlots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary, sceneLODInfo.CurrentLODLevel);
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, newSlots);
+                            instantiatedLOD, result.Asset, lodCache, newSlots, materialPool);
                     }
                     else
                     {
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache);
                     }
+
+                    ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
+                        in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
                 }
                 else
                 {
@@ -124,11 +124,8 @@ namespace DCL.LOD.Systems
 
                     sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
-
                 scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-
                 CheckSceneReadiness(sceneDefinitionComponent);
-
                 sceneLODInfo.IsDirty = false;
             }
         }
