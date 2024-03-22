@@ -10,14 +10,14 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly IConnectiveRoom room;
         private readonly ElementBinding<string> stateScene;
         private readonly ElementBinding<string> remoteParticipantsScene;
-        private readonly ElementBinding<string> roomId;
+        private readonly ElementBinding<string> selfSid;
+        private readonly ElementBinding<string> roomSid;
         private readonly ElementBinding<string> connectionQuality;
 
         public DebugWidgetRoomDisplay(
             string roomName,
             IConnectiveRoom connectiveRoom,
-            IDebugContainerBuilder debugBuilder,
-            Action<DebugWidgetBuilder>? postBuildAction = null
+            IDebugContainerBuilder debugBuilder, Action<DebugWidgetBuilder>? postBuildAction = null
         ) : this(
             connectiveRoom, debugBuilder.AddWidget(roomName)!, postBuildAction
         ) { }
@@ -25,7 +25,8 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         public DebugWidgetRoomDisplay(IConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
         {
             room = connectiveRoom;
-            roomId = new ElementBinding<string>(string.Empty);
+            selfSid = new ElementBinding<string>(string.Empty);
+            roomSid = new ElementBinding<string>(string.Empty);
             connectionQuality = new ElementBinding<string>(string.Empty);
             stateScene = new ElementBinding<string>(string.Empty);
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
@@ -35,7 +36,8 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
                .AddCustomMarker("Connecting State", stateScene)!
                .AddCustomMarker("Connection Quality", connectionQuality)!
                .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
-               .AddCustomMarker("Self Sid", roomId);
+               .AddCustomMarker("Room Sid", roomSid)!
+               .AddCustomMarker("Self Sid", selfSid);
 
             postBuildAction?.Invoke(widgetBuilder);
         }
@@ -44,22 +46,25 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             IConnectiveRoom room,
             ElementBinding<string> stateScene,
             ElementBinding<string> remoteParticipantsScene,
-            ElementBinding<string> roomId,
-            ElementBinding<string> connectionQuality
+            ElementBinding<string> selfSid,
+            ElementBinding<string> connectionQuality,
+            ElementBinding<string> roomSid
         )
         {
             this.room = room;
             this.stateScene = stateScene;
             this.remoteParticipantsScene = remoteParticipantsScene;
-            this.roomId = roomId;
+            this.selfSid = selfSid;
             this.connectionQuality = connectionQuality;
+            this.roomSid = roomSid;
         }
 
         public void Update()
         {
             connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
             stateScene.SetAndUpdate(room.CurrentState().ToString());
-            roomId.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Sid : "Not connected");
+            selfSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Sid : "Not connected");
+            roomSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Info.Sid : "Not connected");
             remoteParticipantsScene.SetAndUpdate(room.ParticipantCountInfo());
         }
     }
