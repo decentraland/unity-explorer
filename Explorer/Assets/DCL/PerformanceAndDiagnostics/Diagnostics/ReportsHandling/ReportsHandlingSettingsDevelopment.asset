@@ -444,6 +444,36 @@ MonoBehaviour:
       Severity: 4
     - Category: AVATAR_MODIFIER_AREA
       Severity: 1
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 1
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 4
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 0
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 3
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 2
+    - Category: REMOTE_MOVEMENT
+      Severity: 3
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 3
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 2
+    - Category: REMOTE_MOVEMENT
+      Severity: 2
+    - Category: REMOTE_MOVEMENT
+      Severity: 0
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 0
+    - Category: REMOTE_MOVEMENT
+      Severity: 4
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 4
+    - Category: REMOTE_MOVEMENT
+      Severity: 1
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE

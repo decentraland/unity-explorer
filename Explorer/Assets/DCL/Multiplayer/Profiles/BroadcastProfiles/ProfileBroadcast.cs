@@ -1,58 +1,39 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Messaging;
-using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
-using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Rooms;
-using System.Collections.Generic;
-using Utility.Multithreading;
+using System.Threading;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
     public class ProfileBroadcast : IProfileBroadcast
     {
-        private const string TOPIC = "Topic";
         private const int CURRENT_PROFILE_VERSION = 0;
-        private readonly IRoomHub roomHub;
-        private readonly IMemoryPool memoryPool;
-        private readonly IMultiPool multiPool;
+        private readonly IMessagePipesHub messagePipesHub;
+        private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public ProfileBroadcast(IRoomHub roomHub, IMemoryPool memoryPool, IMultiPool multiPool)
+        public ProfileBroadcast(IMessagePipesHub messagePipesHub)
         {
-            this.roomHub = roomHub;
-            this.memoryPool = memoryPool;
-            this.multiPool = multiPool;
+            this.messagePipesHub = messagePipesHub;
         }
 
-        public async UniTaskVoid NotifyRemotesAsync()
+        public void NotifyRemotes()
         {
-            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
-            using SmartWrap<AnnounceProfileVersion> versionWrap = multiPool.TempResource<AnnounceProfileVersion>();
-            versionWrap.value.ProfileVersion = CURRENT_PROFILE_VERSION;
-            AnnounceProfileVersion version = versionWrap.value;
-
-            using SmartWrap<Packet> packetWrap = multiPool.TempResource<Packet>();
-            Packet? packet = packetWrap.value;
-
-            packet.ClearMessage();
-            packet.ProfileVersion = version;
-
-            using MemoryWrap memory = memoryPool.Memory(packet);
-            packet.WriteTo(memory);
-
-            NotifyRemotesAsync(roomHub.IslandRoom(), memory);
-            NotifyRemotesAsync(roomHub.SceneRoom(), memory);
+            SendTo(messagePipesHub.IslandPipe());
+            SendTo(messagePipesHub.ScenePipe());
         }
 
-        private static void NotifyRemotesAsync(IRoom room, MemoryWrap data)
+        private void SendTo(IMessagePipe messagePipe)
         {
-            //TODO time debounce
-            //TODO remove allocation on list
-            var remotes = new List<string>(room.Participants.RemoteParticipantSids());
-            room.DataPipe.PublishData(data.Span(), TOPIC, remotes);
+            var message = messagePipe.NewMessage<AnnounceProfileVersion>();
+            message.Payload.ProfileVersion = CURRENT_PROFILE_VERSION;
+            message.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
     }
 }
