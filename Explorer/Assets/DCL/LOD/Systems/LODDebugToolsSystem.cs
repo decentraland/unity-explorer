@@ -23,9 +23,7 @@ namespace DCL.LOD.Systems
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
             .WithAll<SceneLODInfoDebug>();
 
-        private readonly ElementBinding<ulong> [] lodsAmount;
         private readonly Transform missingSceneParent;
-
 
         public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset, Transform missingSceneParent) : base(world)
         {
@@ -52,10 +50,6 @@ namespace DCL.LOD.Systems
         private void ToggleLODColor()
         {
             lodSettingsAsset.IsColorDebuging = !lodSettingsAsset.IsColorDebuging;
-            for (int i = 0; i < 3; i++)
-            {
-                lodsAmount[i].Value = 0;
-            }
 
             if (!lodSettingsAsset.IsColorDebuging)
                 World.Query(REMOVE_QUERY,
