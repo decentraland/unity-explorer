@@ -1,5 +1,4 @@
 ﻿using DCL.Profiling;
-using JetBrains.Annotations;
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -16,14 +15,14 @@ namespace ECS.StreamableLoading.AssetBundles
         public readonly AssetBundle AssetBundle;
         public readonly AssetBundleData[] Dependencies;
 
-        [CanBeNull] public readonly AssetBundleMetrics? Metrics;
+        public readonly AssetBundleMetrics? Metrics;
 
         internal int referencesCount;
         private Object MainAsset { get; }
 
         public long LastUsedFrame { get; private set; }
 
-        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, Object mainAsset, AssetBundleData[] dependencies)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, AssetBundleData[] dependencies)
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
@@ -46,7 +45,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             ProfilingCounters.ABDataAmount.Value--;
         }
-        
+
         public T? GetMainAsset<T>() where T : Object
         {
             return MainAsset as T;

@@ -102,6 +102,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 PartitionComponent.TOP_PRIORITY,
                 transformComp,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(profile.WalletId, queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent()

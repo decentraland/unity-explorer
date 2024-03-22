@@ -299,7 +299,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (!defaultWearablesLoaded)
             {
-                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.WearableDTO.Asset.id} failed to load");
+                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.GetHash()} failed to load");
 
                 StreamableLoadingResult<WearableAsset> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
                    .ToWearableAsset();
@@ -330,7 +330,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
             else
                 wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
 
-            wearable.WearableDTO.Asset.Sanitize(hasEmptyDefaultWearableAB);
+            if (hasEmptyDefaultWearableAB)
+
+                // If the default wearable is empty, we need to remove all the hiding/replacing/removing data
+                wearable.WearableDTO.Asset.Sanitize();
         }
 
         /// <summary>

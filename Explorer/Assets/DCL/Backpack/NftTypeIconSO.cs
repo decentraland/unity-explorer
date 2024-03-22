@@ -9,13 +9,13 @@ namespace DCL.Backpack
         [SerializeField] public SerializableKeyValuePair<string, Sprite>[] nftIcons;
         [SerializeField] public Sprite defaultIcon;
 
-        public Sprite GetTypeImage(string nftType)
+        public Sprite GetTypeImage(string? nftType)
         {
+            if (string.IsNullOrEmpty(nftType)) return defaultIcon;
+
             foreach (var icon in nftIcons)
-            {
                 if (icon.key == nftType)
                     return icon.value;
-            }
 
             return defaultIcon;
         }

@@ -27,12 +27,6 @@ namespace DCL.Backpack
         [field: SerializeField]
         public BackpackBreadCrumbView BreadCrumbView { get; private set; }
 
-        [field: SerializeField]
-        public TMP_Text EmptyTextCategory { get; private set; }
-
-        [field: SerializeField]
-        public TMP_Text EmptyTextLink { get; private set; }
-
         [Serializable]
         public class BackpackItemRef : ComponentReference<BackpackItemView>
         {

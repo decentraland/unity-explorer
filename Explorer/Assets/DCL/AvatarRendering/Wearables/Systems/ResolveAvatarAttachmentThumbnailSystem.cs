@@ -15,9 +15,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class ResolveWearableThumbnailSystem : BaseUnityLoopSystem
+    public partial class ResolveAvatarAttachmentThumbnailSystem : BaseUnityLoopSystem
     {
-        public ResolveWearableThumbnailSystem(World world) : base(world) { }
+        public ResolveAvatarAttachmentThumbnailSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -25,11 +25,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void CompleteWearableThumbnailDownload(in Entity entity, ref IWearable wearable, ref Promise promise)
+        private void CompleteWearableThumbnailDownload(in Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2D> result))
             {
-                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(
+                wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
                     result.Succeeded
                         ? Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height),
                             VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)

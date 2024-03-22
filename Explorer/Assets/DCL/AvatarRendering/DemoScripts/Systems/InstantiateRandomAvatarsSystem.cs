@@ -296,6 +296,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterController,
                 new CharacterRigidTransform(),
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new CharacterPlatformComponent(),
                 new StunComponent(),
                 new FeetIKComponent(),
@@ -355,6 +356,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var entity = World.Create(avatarShape,
                 transformComp,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(
                     RemotePlayerMovementComponent.TEST_ID,
                     new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(() => new SimplePriorityQueue<FullMovementMessage>())

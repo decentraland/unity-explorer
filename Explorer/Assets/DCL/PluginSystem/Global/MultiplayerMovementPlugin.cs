@@ -24,6 +24,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            messageBus.Dispose();
             settings.Dispose();
         }
 

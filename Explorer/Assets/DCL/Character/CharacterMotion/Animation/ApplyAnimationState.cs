@@ -2,7 +2,6 @@
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace DCL.CharacterMotion.Animation
 {

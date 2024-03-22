@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -57,6 +60,26 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
 
+        private AnimatorOverrideController overrideController;
+        private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
+        private AnimationClip lastEmote;
+
+        public void Awake()
+        {
+            avatarAnimator.fireEvents = false;
+
+            overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
+            animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+            overrideController.GetOverrides(animationOverrides);
+
+            // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
+            animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
+            overrideController.ApplyOverrides(animationOverrides);
+        }
+
+        public Transform GetTransform() =>
+            transform;
+
         public void SetAnimatorFloat(int hash, float value)
         {
             avatarAnimator.SetFloat(hash, value);
@@ -67,17 +90,32 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetTrigger(hash);
         }
 
-        public void SetAnimatorBool(int hash, bool value)
-        {
-            avatarAnimator.SetBool(hash, value);
-        }
+        public bool IsAnimatorInTag(int hashTag) =>
+            avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
+
+        public int GetAnimatorCurrentStateTag() =>
+            avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
 
         public bool GetAnimatorBool(int hash) =>
             avatarAnimator.GetBool(hash);
+
+        public void SetAnimatorBool(int hash, bool value) =>
+            avatarAnimator.SetBool(hash, value);
+
+        public void ReplaceEmoteAnimation(AnimationClip animationClip)
+        {
+            if (lastEmote == animationClip) return;
+
+            overrideController["Emote"] = animationClip;
+            avatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastEmote = animationClip;
+        }
     }
 
     public interface IAvatarView
     {
+        Transform GetTransform();
         void SetAnimatorFloat(int hash, float value);
 
         void SetAnimatorTrigger(int hash);
@@ -85,5 +123,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void SetAnimatorBool(int hash, bool value);
 
         bool GetAnimatorBool(int hash);
+
+        void ReplaceEmoteAnimation(AnimationClip animationClip);
+
+        bool IsAnimatorInTag(int hashTag);
+
+        int GetAnimatorCurrentStateTag();
     }
 }

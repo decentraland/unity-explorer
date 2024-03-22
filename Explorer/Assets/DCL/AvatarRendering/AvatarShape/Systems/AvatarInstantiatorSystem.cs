@@ -17,12 +17,12 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using JetBrains.Annotations;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
+using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
+using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -35,19 +35,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IAvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
-
         private readonly CustomSkinning skinningStrategy;
-
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IWearableAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
-
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-
         private readonly Dictionary<string, Texture> facialFeaturesDefaultTexture;
-
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
+
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler) : base(world)
@@ -65,6 +61,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
         }
 
+        public override void Dispose()
+        {
+            World.Query(in new QueryDescription().WithAll<AvatarBase, AvatarTransformMatrixComponent, AvatarShapeComponent, AvatarCustomSkinningComponent>().WithNone<DeleteEntityIntention>(),
+                (ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarCustomSkinningComponent skinningComponent, ref AvatarBase avatarBase)
+                    =>
+                {
+                    InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
+                });
+
+            vertOutBuffer.Dispose();
+        }
+
         protected override void Update(float t)
         {
             InstantiateMainPlayerAvatarQuery(World);
@@ -75,12 +83,27 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        [CanBeNull]
-        private AvatarBase InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
-            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableResult wearablesResult)) return null;
+            WearablesLoadResult wearablesResult;
+
+            if (!avatarShapeComponent.WearablePromise.IsConsumed)
+            {
+                if (!avatarShapeComponent.WearablePromise.TryConsume(World, out wearablesResult)) return null;
+            }
+            else
+                wearablesResult = avatarShapeComponent.WearablePromise.Result!.Value;
+
+            EmotesLoadResult emotesResult;
+
+            if (!avatarShapeComponent.EmotePromise.IsConsumed)
+            {
+                if (!avatarShapeComponent.EmotePromise.TryConsume(World, out emotesResult)) return null;
+            }
+            else
+                emotesResult = avatarShapeComponent.EmotePromise.Result!.Value;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -105,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
 
-            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
+            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, in emotesResult, avatarBase);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
             return avatarBase;
@@ -117,7 +140,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
-            if (avatarBase)
+
+            if (avatarBase != null)
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
         }
 
@@ -128,15 +152,21 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
-            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableResult wearablesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out WearablesLoadResult wearablesResult)) return;
+            if (!avatarShapeComponent.EmotePromise.TryConsume(World, out EmotesLoadResult emotesResult)) return;
 
             CommonAvatarRelease(avatarShapeComponent, skinningComponent);
 
             // Override by ref
-            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
+            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, in emotesResult, avatarBase);
         }
-      
-        private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, in StreamableResult wearablesResult, AvatarBase avatarBase)
+
+        private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
+            in WearablesLoadResult wearablesResult,
+
+            // TODO: do something with the emotes result
+            in EmotesLoadResult streamableLoadingResult,
+            AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
 
@@ -152,15 +182,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < visibleWearables.Count; i++)
             {
                 IWearable resultWearable = visibleWearables[i];
-                WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
+                WearableAsset? originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
-                if (resultWearable.isFacialFeature())
+                if (resultWearable.IsFacialFeature())
                 {
-                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset.GetMainAsset<Texture>();
+                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset?.GetMainAsset<Texture>();
                 }
                 else
                 {
-                    if (originalAsset.GetMainAsset<GameObject>() == null)
+                    if (originalAsset?.GetMainAsset<GameObject>() == null)
                     {
                         ReportHub.LogError(GetReportCategory(),
                             $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
@@ -181,7 +211,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     }
                 }
             }
-            
+
             AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
@@ -226,21 +256,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
-            else
+            else if (avatarShapeComponent.WearablePromise.Result.HasValue)
                 foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset.Wearables)
                     wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
-        }
-
-        public override void Dispose()
-        {
-            World.Query(in new QueryDescription().WithAll<AvatarBase, AvatarTransformMatrixComponent, AvatarShapeComponent, AvatarCustomSkinningComponent>().WithNone<DeleteEntityIntention>(),
-                (ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarCustomSkinningComponent skinningComponent, ref AvatarBase avatarBase)
-                    =>
-                {
-                    InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
-                });
-
-            vertOutBuffer.Dispose();
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,

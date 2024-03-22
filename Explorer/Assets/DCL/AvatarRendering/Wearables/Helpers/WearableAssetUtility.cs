@@ -12,8 +12,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public static class WearableAssetUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static WearableAsset GetOriginalAsset(this IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape].Value.Asset;
+        public static WearableAsset? GetOriginalAsset(this IWearable wearable, BodyShape bodyShape) =>
+            wearable.WearableAssetResults[bodyShape]?.Asset;
 
         public static StreamableLoadingResult<WearableAsset> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result)
         {

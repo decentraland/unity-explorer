@@ -17,7 +17,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D,
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
-    public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveWearableThumbnailSystem>
+    public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveAvatarAttachmentThumbnailSystem>
     {
         private StreamableLoadingResult<WearableAsset> mockedDefaultAB;
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
             mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
             realmData = new RealmData(new TestIpfsRealm());
-            system = new ResolveWearableThumbnailSystem(world);
+            system = new ResolveAvatarAttachmentThumbnailSystem(world);
         }
 
         private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)

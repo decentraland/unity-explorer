@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 
 namespace DCL.CharacterMotion.Systems

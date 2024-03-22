@@ -1,7 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -13,18 +12,17 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public string Hash;
+        public string? Hash;
 
         /// <summary>
         ///     Name not resolved into <see cref="Hash" />
         /// </summary>
-        public readonly string Name;
+        public readonly string? Name;
 
         /// <summary>
         ///     Manifest can be null if <see cref="CommonArguments" />.<see cref="CommonLoadingArguments.PermittedSources" /> does not contain <see cref="AssetSource.WEB" />
         /// </summary>
-        [CanBeNull]
-        public SceneAssetBundleManifest Manifest;
+        public SceneAssetBundleManifest? Manifest;
 
         /// <summary>
         ///     Sanitized hash used by Unity's Caching system,
@@ -37,10 +35,11 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <param name="assetBundleManifest"></param>
         /// <param name="customEmbeddedSubDirectory"></param>
         /// <param name="cancellationTokenSource"></param>
-        private GetAssetBundleIntention(string name = null, string hash = null,
-            AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest assetBundleManifest = null,
+        private GetAssetBundleIntention(string? name = null, string? hash = null,
+            AssetSource permittedSources = AssetSource.ALL,
+            SceneAssetBundleManifest? assetBundleManifest = null,
             URLSubdirectory customEmbeddedSubDirectory = default,
-            CancellationTokenSource cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             Name = name;
             Hash = hash;
@@ -57,11 +56,11 @@ namespace ECS.StreamableLoading.AssetBundles
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL, URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
+        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
         public static GetAssetBundleIntention FromHash(string hash, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL,
-            SceneAssetBundleManifest manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
+            SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
 
         public bool Equals(GetAssetBundleIntention other) =>
@@ -71,7 +70,7 @@ namespace ECS.StreamableLoading.AssetBundles
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash), Name);
+            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? ""), Name);
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
