@@ -79,14 +79,15 @@ namespace Global.Dynamic
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
 #if !UNITY_EDITOR
-    #if !DEVELOPMENT_BUILD
-        // To avoid configuration issues, force full flow on build
-        showSplash = true;
-        showAuthentication = true;
-        showLoading = true;
-    #endif
+#if !DEVELOPMENT_BUILD
 
-    enableLandscape = true;
+            // To avoid configuration issues, force full flow on build
+            showSplash = true;
+            showAuthentication = true;
+            showLoading = true;
+#endif
+
+            enableLandscape = true;
 #endif
 
             try
@@ -130,7 +131,6 @@ namespace Global.Dynamic
                     new DynamicWorldParams
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
-                        SceneLoadRadius = settings.SceneLoadRadius,
                         Realms = settings.Realms,
                         StartParcel = settings.StartPosition,
                         EnableLandscape = enableLandscape,
@@ -138,7 +138,7 @@ namespace Global.Dynamic
                 );
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository);
+                    identityCache, dynamicWorldContainer.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
 
                 if (!isLoaded)
                 {
@@ -147,7 +147,7 @@ namespace Global.Dynamic
                 }
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
-                    dynamicWorldContainer!.ProfileRepository);
+                    dynamicWorldContainer!.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -228,6 +228,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer.EnsureValidAsync(),
                 scenePluginSettingsContainer.EnsureValidAsync()
             );
+
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
         }
 

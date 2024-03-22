@@ -49,8 +49,10 @@ module.exports.openExternalUrl = async function(message) {
 }
 
 module.exports.openNftDialog = async function(message) {
-    console.log('JSMODULE: openNftDialog')
-    return {};
+    const isSuccess = UnityRestrictedActionsApi.OpenNftDialog(message.urn)
+    return {
+        success: isSuccess
+    };
 }
 
 module.exports.setCommunicationsAdapter = async function(message) {

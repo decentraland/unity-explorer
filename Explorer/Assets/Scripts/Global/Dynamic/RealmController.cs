@@ -35,7 +35,6 @@ namespace Global.Dynamic
         private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
-        private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
@@ -60,14 +59,12 @@ namespace Global.Dynamic
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
             RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld,
-            int sceneLoadRadius,
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
             IScenesCache scenesCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
-            this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
             this.teleportController = teleportController;
@@ -104,14 +101,16 @@ namespace Global.Dynamic
 
             await UniTask.SwitchToMainThread();
 
-            var url = realm.Append(new URLPath("/about"));
+            URLAddress url = realm.Append(new URLPath("/about"));
 
             ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
-                result.configurations.realmName.EnsureNotNull("Realm name not found")
+                result.configurations.realmName.EnsureNotNull("Realm name not found"),
+                result.configurations.networkId,
+                result.comms?.adapter
             );
 
             // Add the realm component
@@ -127,6 +126,9 @@ namespace Global.Dynamic
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
         }
+
+        public IRealmData GetRealm() =>
+            realmData;
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {

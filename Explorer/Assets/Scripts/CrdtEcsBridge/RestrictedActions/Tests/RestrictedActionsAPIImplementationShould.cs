@@ -1,5 +1,6 @@
 ﻿using DCL.ChangeRealmPrompt;
 using DCL.ExternalUrlPrompt;
+using DCL.NftPrompt;
 using DCL.TeleportPrompt;
 using MVC;
 using NSubstitute;
@@ -47,7 +48,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var testUrl = "www.test.com";
 
             // Act
-            restrictedActionsAPIImplementation.OpenExternalUrl(testUrl);
+            restrictedActionsAPIImplementation.TryOpenExternalUrl(testUrl);
 
             // Assert
             mvcManager.Received(1).ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(testUrl)));
@@ -63,7 +64,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector3? testCameraTarget = withCameraTarget ? new Vector3(5, 3, 2) : null;
 
             // Act
-            restrictedActionsAPIImplementation.MovePlayerTo(testNewRelativePosition, testCameraTarget);
+            restrictedActionsAPIImplementation.TryMovePlayerTo(testNewRelativePosition, testCameraTarget);
 
             // Assert
             globalWorldActions.Received(1).MoveAndRotatePlayer(
@@ -82,7 +83,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector2Int testCoords = new Vector2Int(10, 20);
 
             // Act
-            restrictedActionsAPIImplementation.TeleportTo(testCoords);
+            restrictedActionsAPIImplementation.TryTeleportTo(testCoords);
 
             // Assert
             mvcManager.Received(1).ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(testCoords)));
@@ -96,10 +97,23 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             const string TEST_REALM = "TestRealm";
 
             // Act
-            restrictedActionsAPIImplementation.ChangeRealm(TEST_MESSAGE, TEST_REALM);
+            restrictedActionsAPIImplementation.TryChangeRealm(TEST_MESSAGE, TEST_REALM);
 
             // Assert
             mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(TEST_MESSAGE, TEST_REALM)));
+        }
+
+        [Test]
+        public void OpenNftDialog()
+        {
+            // Arrange
+            const string TEST_URN = "urn:decentraland:ethereum:erc721:0x06012c8cf97bead5deae237070f9587f8e7a266d:1540722";
+
+            // Act
+            bool result = restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
+
+            // Assert
+            mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
         }
     }
 }

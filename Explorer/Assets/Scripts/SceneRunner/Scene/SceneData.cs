@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using Ipfs;
 using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
@@ -14,6 +13,9 @@ namespace SceneRunner.Scene
     {
         private readonly ISceneContent sceneContent;
         private readonly SceneEntityDefinition sceneDefinition;
+
+        public ISceneContent SceneContent => sceneContent;
+        public SceneEntityDefinition SceneEntityDefinition => sceneDefinition;
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }

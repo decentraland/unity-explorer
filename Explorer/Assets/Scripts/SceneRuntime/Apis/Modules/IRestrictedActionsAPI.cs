@@ -5,11 +5,12 @@ namespace SceneRuntime.Apis.Modules
 {
     public interface IRestrictedActionsAPI : IDisposable
     {
-        bool OpenExternalUrl(string url);
-        void MovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget);
-        void TeleportTo(Vector2Int newCoords);
-        bool ChangeRealm(string message, string realm);
-        void TriggerEmote(string predefinedEmote);
-        bool TriggerSceneEmote(string src, bool loop);
+        bool TryOpenExternalUrl(string url);
+        void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget);
+        void TryTeleportTo(Vector2Int newCoords);
+        bool TryChangeRealm(string message, string realm);
+        void TryTriggerEmote(string predefinedEmote);
+        bool TryTriggerSceneEmote(string src, bool loop);
+        bool TryOpenNftDialog(string urn);
     }
 }

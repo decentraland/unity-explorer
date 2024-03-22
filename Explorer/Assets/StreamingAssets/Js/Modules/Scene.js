@@ -1,4 +1,10 @@
 module.exports.getSceneInfo = async function(message) {
-    console.log('JSMODULE: getSceneInfo')
-    return {};
+    const { cid, contents, metadata, baseUrl } = UnitySceneApi.GetSceneInfo()    
+
+    return { 
+        cid, 
+        contents, 
+        metadata,
+        baseUrl 
+    };
 }

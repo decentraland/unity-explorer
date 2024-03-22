@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -11,6 +12,8 @@ namespace SceneRunner.Scene
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
+        public ISceneContent SceneContent { get;}
+        public SceneEntityDefinition SceneEntityDefinition { get; }
 
         /// <summary>
         ///     Position of the base parcel in the world
@@ -59,6 +62,9 @@ namespace SceneRunner.Scene
         {
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
+
+            public ISceneContent SceneContent => new SceneNonHashedContent(new URLDomain());
+            public SceneEntityDefinition SceneEntityDefinition => new SceneEntityDefinition();
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes());
             public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;

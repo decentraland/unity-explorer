@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: DirtGrass
   m_EditorClassIdentifier: 
-  asset: {fileID: 919132149155446097, guid: 904bb7e8f671c46488b7b0ffdb4ae43f, type: 3}
+  asset: {fileID: 8197679525369401166, guid: 11055c0853dd6484f9fb5572e2179979, type: 3}
   noiseData: {fileID: 11400000, guid: a50812127ea0b534b8ae67d403b89b46, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}

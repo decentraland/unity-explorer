@@ -1,7 +1,8 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -33,16 +34,19 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public struct MaterialSetup
         {
-            internal readonly TextureArraySlot? usedTextureArraySlot;
+            internal readonly TextureArraySlot?[] usedTextureArraySlots;
             /// <summary>
             ///     Cel Shading Material is created based on the original material
             /// </summary>
-            internal readonly Material celShadingMaterial;
+            internal readonly Material usedMaterial;
 
-            public MaterialSetup(TextureArraySlot? usedTextureArraySlot, Material celShadingMaterial)
+            internal readonly int MaterialIndexInPool;
+
+            public MaterialSetup(TextureArraySlot?[] usedTextureArraySlots, Material usedMaterial, int materialIndexInPool)
             {
-                this.usedTextureArraySlot = usedTextureArraySlot;
-                this.celShadingMaterial = celShadingMaterial;
+                this.usedTextureArraySlots = usedTextureArraySlots;
+                this.usedMaterial = usedMaterial;
+                MaterialIndexInPool = materialIndexInPool;
             }
         }
 
@@ -55,7 +59,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal readonly int vertCount;
 
-        internal readonly Buffers buffers;
+        internal Buffers buffers;
         internal readonly List<MaterialSetup> materials;
         internal readonly UnityEngine.ComputeShader computeShaderInstance;
 
@@ -68,12 +72,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
         }
 
-        public void Dispose(IObjectPool<Material> objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
+        public void Dispose(IAvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
             for (var i = 0; i < materials.Count; i++)
             {
-                materials[i].usedTextureArraySlot?.FreeSlot();
-                objectPool.Release(materials[i].celShadingMaterial);
+                MaterialSetup material = materials[i];
+
+                for (var j = 0; j < material.usedTextureArraySlots.Length; j++)
+                    material.usedTextureArraySlots[j]?.FreeSlot();
+
+                objectPool.Release(material.usedMaterial, material.MaterialIndexInPool);
+                TextureArrayContainerFactory.SLOTS_POOL.Release(material.usedTextureArraySlots);
             }
 
             computeShaderSkinningPool.Release(computeShaderInstance);

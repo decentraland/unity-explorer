@@ -64,7 +64,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             AssetBundleData assetBundleData = assetBundleResult.Asset;
 
             // if asset bundle has no game object we can't process it further but the promise should be resolved
-            if (assetBundleData.GameObject == null)
+            if (assetBundleData.GetMainAsset<GameObject>() == null)
             {
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(new MissingGltfAssetsException(assetBundleData.AssetBundle.name))));
                 return;
@@ -85,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             var result = GltfContainerAsset.Create(container, assetBundleData);
 
-            GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
+            GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())

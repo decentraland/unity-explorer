@@ -22,23 +22,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9776466c722cb644c914ee056b28d232
-    m_Address: Idle
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: aab64a77806b44a43b6f5d0da6de94c6
-    m_Address: RandomAnimator
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
     m_Address: AvatarBase
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: de9170d136f61044ba3e4f295534c7f6
-    m_Address: Avatar_Shaders_Variants
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -47,13 +32,48 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fabfcdf867b484665b44c8a158bd8eb4
-    m_Address: NameTag
+  - m_GUID: e18034962a56eac40ab5df62e159c314
+    m_Address: Avatar Randomizer.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bd2233d5950ee4b4c96fc19f60d8c582
-    m_Address: NametagParent
+  - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
+    m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
+    m_Address: DefaultBlack_512_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0989591ebd3293419eece13d705a1e3
+    m_Address: DefaultWhite_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7201c2efeb480b4293d5baae77973d6
+    m_Address: DefaultWhite_512_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2df144b808932744487656f89a42fb11
+    m_Address: FlatNormal_256_BC5.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4428c33e669492748afd75828965504b
+    m_Address: FlatNormal_512_BC5.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ae49825f39c564478515b4c2ae201af
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Toon.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 00657accebbe6c348b5208e385e5ec73
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

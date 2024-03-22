@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Grass
   m_EditorClassIdentifier: 
-  asset: {fileID: 919132149155446097, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
+  asset: {fileID: 1333259486307050118, guid: 7326c89d1e84ecb429de2f08a2baf2fe, type: 3}
   noiseData: {fileID: 11400000, guid: b2d9f65dd060ad643876b5c080de30fa, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}
@@ -31,11 +31,11 @@ MonoBehaviour:
     alignToGround: 100
     positionJitter: 50
     minWidth: 1
-    maxWidth: 1.5
+    maxWidth: 1
     minHeight: 1
-    maxHeight: 4
+    maxHeight: 2
     noiseSeed: 40
-    noiseSpread: 172.4
+    noiseSpread: 1
     holeEdgePadding: 75
-    detailDensity: 3
+    detailDensity: 1.5
     affectedByGlobalDensityScale: 1

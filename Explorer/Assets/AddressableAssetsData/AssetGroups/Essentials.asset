@@ -162,11 +162,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f3b1d401bc50845629a6b982f9793f16
-    m_Address: Chat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
     m_Address: LODSettings.asset
     m_ReadOnly: 0
@@ -244,6 +239,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99df5d970efa24583937b65c21ff559b
     m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
+    m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

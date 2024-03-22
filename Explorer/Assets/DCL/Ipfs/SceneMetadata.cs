@@ -15,30 +15,30 @@ namespace DCL.Ipfs
         public List<SpawnPoint>? spawnPoints;
 
         [Serializable]
-        [JsonConverter(typeof(SpawnPointConverter))]
         public struct SpawnPoint
         {
             public string name;
 
             public bool @default;
 
-            [field: NonSerialized] public SinglePosition? SP { get; internal set; }
-            [field: NonSerialized] public MultiPosition? MP { get; internal set; }
+            public Position position;
 
             [Serializable]
-            public struct SinglePosition
+            public struct Position
             {
-                public float x;
-                public float y;
-                public float z;
+                public Coordinate x;
+                public Coordinate y;
+                public Coordinate z;
             }
 
-            [Serializable]
-            public struct MultiPosition
+            /// <summary>
+            /// Coordinates is either a single value or a list of values
+            /// </summary>
+            [JsonConverter(typeof(SpawnPointCoordinateConverter))]
+            public struct Coordinate
             {
-                public float[] x;
-                public float[] y;
-                public float[] z;
+                public float? SingleValue { get; internal set; }
+                public float[]? MultiValue { get; internal set; }
             }
         }
     }

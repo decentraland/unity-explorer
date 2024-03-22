@@ -46,15 +46,21 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
+        public object GetRealm()
+        {
+            try { return api.GetRealmAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+        }
+
+        [UsedImplicitly]
         public object GetWorldTime()
         {
             try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
-            catch (Exception e)
-            {
-                // Report an uncategorized exception
-                exceptionsHandler.OnEngineException(e);
-                return Task.FromException(e).ToPromise();
-            }
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
+
+        [UsedImplicitly]
+        public object GetSceneInformation() =>
+            api.GetSceneInformation();
     }
 }
