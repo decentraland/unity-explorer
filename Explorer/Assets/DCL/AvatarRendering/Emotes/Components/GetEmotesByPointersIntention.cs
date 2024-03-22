@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Components
 {
     public struct GetEmotesByPointersIntention : IAssetIntention, IEquatable<GetEmotesByPointersIntention>
     {
@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Emotes
         public BodyShape BodyShape { get; }
         public int Timeout { get; }
 
-        internal float elapsedTime;
+        public float elapsedTime;
 
         public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,

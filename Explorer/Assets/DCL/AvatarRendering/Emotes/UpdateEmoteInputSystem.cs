@@ -2,17 +2,19 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.Character.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Profiles;
-using Decentraland.Kernel.Comms.Rfc4;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.InputSystem;
+using Emote = Decentraland.Kernel.Comms.Rfc4.Emote;
+using InputAction = UnityEngine.InputSystem.InputAction;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -22,10 +24,10 @@ namespace DCL.CharacterMotion.Systems
     {
         private readonly Dictionary<string, int> actionNameById = new ();
         private DCLInput.EmotesActions emotesActions;
-        private readonly MultiplayerEmotesMessageBus messageBus;
+        private readonly IEmotesMessageBus messageBus;
         private int triggeredEmote = -1;
 
-        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions, MultiplayerEmotesMessageBus messageBus) : base(world)
+        public UpdateEmoteInputSystem(World world, DCLInput.EmotesActions emotesActions, IEmotesMessageBus messageBus) : base(world)
         {
             this.emotesActions = emotesActions;
             this.messageBus = messageBus;
@@ -85,7 +87,7 @@ namespace DCL.CharacterMotion.Systems
             messageBus.SelfSendWithDelayAsync(new Emote
             {
                 EmoteId = (uint)emoteIndex,
-                Timestamp = UnityEngine.Time.unscaledTime,
+                Timestamp = Time.unscaledTime,
             }, 0.1f).Forget();
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;

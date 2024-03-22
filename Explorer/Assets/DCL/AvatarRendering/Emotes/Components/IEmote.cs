@@ -2,7 +2,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Components
 {
     public interface IEmote : IAvatarAttachment
     {

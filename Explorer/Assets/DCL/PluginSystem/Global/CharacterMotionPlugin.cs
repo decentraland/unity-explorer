@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -71,7 +72,6 @@ namespace DCL.PluginSystem.Global
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, multiplayerEmotesMessageBus, debugContainerBuilder);
         }
     }
 }

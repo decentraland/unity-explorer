@@ -4,14 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Character.CharacterMotion.Emotes;
-using DCL.CharacterMotion.Animation;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
@@ -20,20 +19,19 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using RfcEmote = Decentraland.Kernel.Comms.Rfc4.Emote;
 
-namespace DCL.CharacterMotion.Systems
+namespace DCL.AvatarRendering.Emotes
 {
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
-    [UpdateBefore(typeof(CharacterAnimationSystem))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         private readonly IEmoteCache emoteCache;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly string reportCategory;
         private readonly EmotePlayer emotePlayer;
-        private readonly MultiplayerEmotesMessageBus messageBus;
+        private readonly IEmotesMessageBus messageBus;
 
-        public CharacterEmoteSystem(World world, IEmoteCache emoteCache, MultiplayerEmotesMessageBus messageBus, IDebugContainerBuilder debugContainerBuilder) : base(world)
+        public CharacterEmoteSystem(World world, IEmoteCache emoteCache, IEmotesMessageBus messageBus, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteCache = emoteCache;
@@ -126,7 +124,7 @@ namespace DCL.CharacterMotion.Systems
                 if (mainAsset == null) return;
 
                 if (!emotePlayer.Play(mainAsset, emote.IsLooping(), in avatarView, ref emoteComponent))
-                    ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.dto.version} should be >= 16");
+                    ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                 emoteComponent.EmoteUrn = emoteId;
             }

@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
 
-namespace DCL.CharacterMotion.Animation
+namespace DCL.Character.CharacterMotion.Components
 {
     public static class AnimationHashes
     {
-
         public static readonly int EMOTE = Animator.StringToHash("Emote");
         public static readonly int EMOTE_LOOP = Animator.StringToHash("EmoteLoop");
         public static readonly int EMOTE_RESET = Animator.StringToHash("EmoteForceRestart");

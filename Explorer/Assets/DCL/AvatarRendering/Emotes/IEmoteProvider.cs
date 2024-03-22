@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Web3;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-namespace DCL.CharacterMotion.Components
+namespace DCL.AvatarRendering.Emotes.Components
 {
     public struct CharacterEmoteIntent
     {

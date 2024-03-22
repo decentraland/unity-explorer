@@ -1,6 +1,6 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterMotion.Animation;
-using DCL.CharacterMotion.Components;
+using DCL.AvatarRendering.Emotes.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace DCL.Character.CharacterMotion.Emotes
+namespace DCL.AvatarRendering.Emotes
 {
     public class EmotePlayer
     {

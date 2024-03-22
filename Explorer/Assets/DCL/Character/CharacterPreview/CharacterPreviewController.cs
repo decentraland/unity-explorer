@@ -1,22 +1,20 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution,
+    DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
 
 namespace DCL.CharacterPreview
 {

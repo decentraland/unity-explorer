@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;

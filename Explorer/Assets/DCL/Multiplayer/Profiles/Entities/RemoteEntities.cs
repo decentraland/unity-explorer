@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.RoomHubs;

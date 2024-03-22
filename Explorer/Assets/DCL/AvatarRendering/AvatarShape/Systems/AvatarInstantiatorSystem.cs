@@ -22,7 +22,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
-using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
+using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.Components.EmotesResolution>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {

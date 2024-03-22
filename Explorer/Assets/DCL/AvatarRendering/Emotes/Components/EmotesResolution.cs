@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Emotes.Components
 {
     public readonly struct EmotesResolution
     {

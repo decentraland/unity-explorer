@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -16,8 +16,8 @@ using System;
 using System.Collections.Generic;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution,
+    DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {

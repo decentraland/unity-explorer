@@ -1,8 +1,7 @@
 using CommunicationData.URLHelpers;
-using DCL.Character.CharacterMotion.Emotes;
 using UnityEngine;
 
-namespace DCL.CharacterMotion.Components
+namespace DCL.AvatarRendering.Emotes.Components
 {
     public struct CharacterEmoteComponent
     {

@@ -1,8 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Systems;
 using ECS.Abstract;

@@ -6,7 +6,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.Reporting;
-using Ipfs;
 using System;
 using System.Collections.Generic;
 using System.Threading;

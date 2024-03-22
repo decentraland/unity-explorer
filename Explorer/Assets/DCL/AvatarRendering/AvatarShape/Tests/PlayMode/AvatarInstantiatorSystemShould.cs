@@ -6,7 +6,6 @@ using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -25,13 +24,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using Google.Protobuf.WellKnownTypes;
+using DCL.AvatarRendering.Emotes.Components;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution, DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {

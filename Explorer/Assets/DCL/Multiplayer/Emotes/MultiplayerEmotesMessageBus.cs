@@ -1,10 +1,12 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.CharacterMotion.Components;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Components;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles;
@@ -13,10 +15,12 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using Emote = Decentraland.Kernel.Comms.Rfc4.Emote;
 
 namespace DCL.Multiplayer.Emotes
 {
-    public class MultiplayerEmotesMessageBus: IDisposable
+    public class MultiplayerEmotesMessageBus : IDisposable, IEmotesMessageBus
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -55,7 +59,7 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 
-            float timestamp = UnityEngine.Time.unscaledTime;
+            float timestamp = Time.unscaledTime;
 
             SendTo(emote, timestamp, messagePipesHub.IslandPipe());
             SendTo(emote, timestamp, messagePipesHub.ScenePipe());
