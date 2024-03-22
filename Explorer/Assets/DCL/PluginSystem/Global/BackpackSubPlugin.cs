@@ -85,6 +85,8 @@ namespace DCL.PluginSystem.Global
                 categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController,
                 BackpackInfoPanelController.AttachmentType.Emote);
 
+            var emoteBreadCrumb = new BackpackEmoteBreadCrumbController(emoteView.BreadCrumb, backpackEventBus);
+
             ObjectPool<BackpackEmoteGridItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
 
             await wearableInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
@@ -104,7 +106,7 @@ namespace DCL.PluginSystem.Global
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, backpackEquipStatusController,
                     sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes);
 
-                var emotesController = new EmotesController(view.GetComponentInChildren<EmotesView>(),
+                var emotesController = new EmotesController(emoteView,
                     new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityInfoPanelBackgroundsMapping));
 
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,

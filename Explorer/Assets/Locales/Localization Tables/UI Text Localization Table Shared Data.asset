@@ -23,6 +23,12 @@ MonoBehaviour:
     m_Key: NONE
     m_Metadata:
       m_Items: []
+  - m_Id: 56990860166815744
+    m_Key: 'EMOTE_SLOT_ID
+
+'
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

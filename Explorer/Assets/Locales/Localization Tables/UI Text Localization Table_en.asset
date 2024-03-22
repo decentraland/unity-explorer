@@ -16,7 +16,8 @@ MonoBehaviour:
     m_Code: en
   m_SharedData: {fileID: 11400000, guid: fa6d78a0e08f14179b202ccca9720bb9, type: 2}
   m_Metadata:
-    m_Items: []
+    m_Items:
+    - rid: 6697045577537945602
   m_TableData:
   - m_Id: 23119123067166720
     m_Localized: Backpack
@@ -26,6 +27,15 @@ MonoBehaviour:
     m_Localized: None
     m_Metadata:
       m_Items: []
+  - m_Id: 56990860166815744
+    m_Localized: Emote {slotId}
+    m_Metadata:
+      m_Items:
+      - rid: 6697045577537945602
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6697045577537945602
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 00e0afa7e278ca00
