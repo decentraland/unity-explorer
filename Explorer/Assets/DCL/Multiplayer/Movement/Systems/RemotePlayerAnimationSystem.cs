@@ -51,23 +51,33 @@ namespace DCL.Multiplayer.Movement.Systems
                 ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
-        private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, float time, float totalMoveDuration, float linearTime)
+        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, in AnimationStates animState, bool isStunned)
         {
-            if (time >= totalMoveDuration)
-            {
-                anim.States.MovementBlendValue = 0f;
-                anim.States.SlideBlendValue = 0f;
-            }
-            else if (time > linearTime && time < totalMoveDuration)
-            {
-                float dampDuration = totalMoveDuration - linearTime;
-                float dampTime = time - linearTime;
+            if (animationComponent.States.Equals(animState))
+                return;
 
-                anim.States.MovementBlendValue = Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration);
-                anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
-            }
+            UpdateAnimatorBlends(view, animState);
 
-            UpdateAnimatorBlends(view, anim.States);
+            if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
+                view.SetAnimatorTrigger(AnimationHashes.JUMP);
+
+            view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
+            view.SetAnimatorBool(AnimationHashes.GROUNDED, animState.IsGrounded);
+            view.SetAnimatorBool(AnimationHashes.JUMPING, animState.IsJumping);
+            view.SetAnimatorBool(AnimationHashes.FALLING, animState.IsFalling);
+            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animState.IsLongJump);
+            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animState.IsLongFall);
+
+            animationComponent.States = animState;
+        }
+
+        private static void UpdateAnimatorBlends(IAvatarView view, in AnimationStates animStates)
+        {
+            if (!animStates.IsGrounded)
+                return;
+
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
         }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
@@ -124,33 +134,23 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, in AnimationStates animState, bool isStunned)
+        private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, float time, float totalMoveDuration, float linearTime)
         {
-            if (animationComponent.States.Equals(animState))
-                return;
+            if (time >= totalMoveDuration)
+            {
+                anim.States.MovementBlendValue = 0f;
+                anim.States.SlideBlendValue = 0f;
+            }
+            else if (time > linearTime && time < totalMoveDuration)
+            {
+                float dampDuration = totalMoveDuration - linearTime;
+                float dampTime = time - linearTime;
 
-            UpdateAnimatorBlends(view, animState);
+                anim.States.MovementBlendValue = Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration);
+                anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
+            }
 
-            if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
-                view.SetAnimatorTrigger(AnimationHashes.JUMP);
-
-            view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
-            view.SetAnimatorBool(AnimationHashes.GROUNDED, animState.IsGrounded);
-            view.SetAnimatorBool(AnimationHashes.JUMPING, animState.IsJumping);
-            view.SetAnimatorBool(AnimationHashes.FALLING, animState.IsFalling);
-            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animState.IsLongJump);
-            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animState.IsLongFall);
-
-            animationComponent.States = animState;
-        }
-
-        private static void UpdateAnimatorBlends(IAvatarView view, in AnimationStates animStates)
-        {
-            if (!animStates.IsGrounded)
-                return;
-
-            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
-            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
+            UpdateAnimatorBlends(view, anim.States);
         }
     }
 }

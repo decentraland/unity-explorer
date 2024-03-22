@@ -5,7 +5,7 @@ namespace DCL.Multiplayer.Movement
 {
     public static class Interpolation
     {
-        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.001f;
+        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.0001f;
 
         public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp, float lookAtTimeDelta)
         {

@@ -82,6 +82,7 @@ namespace DCL.Multiplayer.Movement.Systems
             };
 
             // We use AnimatorController value directly, because AnimationState is not always equal to actual Controller due to the blend shapes. Check ApplyAnimationMovementBlend.cs logic for more details.
+            // TODO (Vit): refactor to use velocity to calculate the blend value
             playerMovement.LastSentMessage.animState.MovementBlendValue = view.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND);
 
             messageBus.Send(playerMovement.LastSentMessage);
