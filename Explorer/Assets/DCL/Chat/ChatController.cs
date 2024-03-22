@@ -17,6 +17,7 @@ namespace DCL.Chat
     public partial class ChatController : ControllerBase<ChatView>
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
+        private const int MAX_MESSAGE_LENGTH = 250;
 
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
 
@@ -69,11 +70,6 @@ namespace DCL.Chat
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder)
-        {
-            world = builder.World;
-        }
-
         protected override void OnViewInstantiated()
         {
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
@@ -100,9 +96,11 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode)
         {
+            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+                return;
+
             viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
             viewInstance.InputField.ActivateInputField();
-            viewInstance.InputField.caretPosition = viewInstance.InputField.text.Length;
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -114,6 +112,9 @@ namespace DCL.Chat
 
         private void AddEmojiToInput(string emoji)
         {
+            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+                return;
+
             int caretPosition = viewInstance.InputField.caretPosition;
             viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, emoji);
             viewInstance.InputField.ActivateInputField();
@@ -124,6 +125,7 @@ namespace DCL.Chat
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
+            emojiSuggestionPanelController.SetPanelVisibility(false);
             ToggleEmojiPanelAsync(emojiPanelCts.Token).Forget();
         }
 
@@ -145,6 +147,7 @@ namespace DCL.Chat
             viewInstance.InputField.text = string.Empty;
             emojiPanelController.SetPanelVisibility(false);
             viewInstance.InputField.ActivateInputField();
+            emojiSuggestionPanelController.SetPanelVisibility(false);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
