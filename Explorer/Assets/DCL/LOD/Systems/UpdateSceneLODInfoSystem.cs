@@ -169,7 +169,6 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.CurrentLOD = cachedAsset;
                 sceneLODInfo.IsDirty = false;
                 CheckSceneReadiness(sceneDefinitionComponent);
-                sceneLODInfo.CurrentLOD.Value.Root.transform.SetParent(lodsTransformParent);
             }
             else
             {

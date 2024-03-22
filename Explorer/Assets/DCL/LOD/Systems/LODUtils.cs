@@ -6,6 +6,7 @@ using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 namespace DCL.LOD
 {
@@ -55,8 +56,7 @@ namespace DCL.LOD
                         newMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, pooledList.Value[i].materials[j].color);
                         if (pooledList.Value[i].materials[j].name.Contains("FORCED_TRANSPARENT"))
                         {
-                            newMaterial.EnableKeyword("_ALPHATEST_ON");
-                            newMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                            ApplyTransparency(newMaterial, true);
                         }
 
                         newMaterials.Add(newMaterial);
@@ -68,6 +68,24 @@ namespace DCL.LOD
             }
 
             return newSlots.ToArray();
+        }
+
+        private static void ApplyTransparency(Material duplicatedMaterial, bool setDefaultTransparency)
+        {
+            duplicatedMaterial.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            duplicatedMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+
+            duplicatedMaterial.SetFloat("_Surface",  1);
+            duplicatedMaterial.SetFloat("_BlendMode", 0);
+            duplicatedMaterial.SetFloat("_AlphaCutoffEnable", 0);
+            duplicatedMaterial.SetFloat("_SrcBlend", 1f);
+            duplicatedMaterial.SetFloat("_DstBlend", 10f);
+            duplicatedMaterial.SetFloat("_AlphaSrcBlend", 1f);
+            duplicatedMaterial.SetFloat("_AlphaDstBlend", 10f);
+            duplicatedMaterial.SetFloat("_ZTestDepthEqualForOpaque", 4f);
+            duplicatedMaterial.renderQueue = (int)RenderQueue.Transparent;
+
+            duplicatedMaterial.color = new Color(duplicatedMaterial.color.r, duplicatedMaterial.color.g, duplicatedMaterial.color.b, setDefaultTransparency ? 0.8f : duplicatedMaterial.color.a);
         }
     }
 }
