@@ -14,19 +14,16 @@ namespace DCL.Multiplayer.Movement
         private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
         private bool disposed;
 
-        public readonly string PlayerWalletId;
-
         public NetworkMovementMessage PastMessage;
 
         public bool Initialized;
         public bool WasTeleported;
-        public bool RequireAnimationsUpdate;
+        public bool WasPassedThisFrame;
 
         public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
 
-        public RemotePlayerMovementComponent(string playerWalletId, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
-            PlayerWalletId = playerWalletId;
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
             disposed = false;
@@ -35,7 +32,7 @@ namespace DCL.Multiplayer.Movement
             Initialized = false;
             WasTeleported = false;
 
-            RequireAnimationsUpdate = false;
+            WasPassedThisFrame = false;
         }
 
         public void AddPassed(NetworkMovementMessage message, bool wasTeleported = false)
@@ -43,7 +40,7 @@ namespace DCL.Multiplayer.Movement
             PastMessage = message;
             WasTeleported = wasTeleported;
 
-            RequireAnimationsUpdate = true;
+            WasPassedThisFrame = true;
         }
 
         public void Dispose()

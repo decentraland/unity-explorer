@@ -39,9 +39,9 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
-            if (remotePlayerMovement.RequireAnimationsUpdate)
+            if (remotePlayerMovement.WasPassedThisFrame)
             {
-                remotePlayerMovement.RequireAnimationsUpdate = false;
+                remotePlayerMovement.WasPassedThisFrame = false;
                 UpdateAnimations(view, ref anim, remotePlayerMovement.PastMessage.animState, remotePlayerMovement.PastMessage.isStunned);
             }
 
