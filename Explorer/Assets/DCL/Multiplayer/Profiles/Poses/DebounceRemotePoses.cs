@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Profiles.Poses
@@ -6,6 +8,8 @@ namespace DCL.Multiplayer.Profiles.Poses
     {
         private readonly IRemotePoses origin;
         private Vector2Int? previous;
+
+        public int Count => origin.Count;
 
         public DebounceRemotePoses(IRemotePoses origin)
         {
@@ -23,5 +27,11 @@ namespace DCL.Multiplayer.Profiles.Poses
             origin.BroadcastSelfPose(pose);
             previous = pose;
         }
+
+        public IEnumerator<KeyValuePair<string, Vector2Int>> GetEnumerator() =>
+            origin.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() =>
+            GetEnumerator();
     }
 }

@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Systems.Debug;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 
@@ -21,6 +22,7 @@ namespace DCL.Multiplayer.Connections.Systems
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
+            IRemotePoses remotePoses,
             IDebugContainerBuilder debugBuilder
         ) : base(world)
         {
@@ -36,15 +38,23 @@ namespace DCL.Multiplayer.Connections.Systems
                 debugBuilder
             );
 
+            var infoWidget = debugBuilder.AddWidget("Room: Info")!;
+
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
-                debugBuilder
+                infoWidget
+            );
+
+            var remotePosesRoomDisplay = new RemotePosesRoomDisplay(
+                remotePoses,
+                infoWidget
             );
 
             roomDisplay = new SeveralRoomDisplay(
                 gateKeeperRoomDisplay,
                 archipelagoRoomDisplay,
-                avatarsRoomDisplay
+                avatarsRoomDisplay,
+                remotePosesRoomDisplay
             );
         }
 

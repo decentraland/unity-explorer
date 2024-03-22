@@ -3,7 +3,9 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Rooms.Participants;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Profiles.Poses
@@ -13,6 +15,8 @@ namespace DCL.Multiplayer.Profiles.Poses
         private readonly IRoomHub roomHub;
         private readonly ConcurrentDictionary<string, Vector2Int> poses = new ();
         private readonly Action<string> log;
+
+        public int Count => poses.Count;
 
         public RemotePoses(IRoomHub roomHub) : this(roomHub, ReportHub.WithReport(ReportCategory.MULTIPLAYER_MOVEMENT).Log)
         {
@@ -26,10 +30,16 @@ namespace DCL.Multiplayer.Profiles.Poses
             roomHub.IslandRoom().Participants.UpdatesFromParticipant += ParticipantsOnUpdatesFromParticipant;
         }
 
+        public IEnumerator<KeyValuePair<string, Vector2Int>> GetEnumerator() =>
+            poses.GetEnumerator();
+
         ~RemotePoses()
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= ParticipantsOnUpdatesFromParticipant;
         }
+
+        IEnumerator IEnumerable.GetEnumerator() =>
+            GetEnumerator();
 
         private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
@@ -60,6 +70,7 @@ namespace DCL.Multiplayer.Profiles.Poses
         }
 
         //TODO later transfer to Proto
+
         [Serializable]
         private struct Message
         {

@@ -1,11 +1,12 @@
 using DCL.Character;
-using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.Profiles.Poses
 {
-    public interface IRemotePoses
+    public interface IRemotePoses : IReadOnlyCollection<KeyValuePair<string, Vector2Int>>
     {
         Vector2Int ParcelPose(string walletId);
 
@@ -13,6 +14,8 @@ namespace DCL.Multiplayer.Profiles.Poses
 
         class Fake : IRemotePoses
         {
+            public int Count => 0;
+
             public Vector2Int ParcelPose(string walletId) =>
                 Vector2Int.zero;
 
@@ -20,6 +23,14 @@ namespace DCL.Multiplayer.Profiles.Poses
             {
                 //ignore
             }
+
+            public IEnumerator<KeyValuePair<string, Vector2Int>> GetEnumerator()
+            {
+                yield break;
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() =>
+                GetEnumerator();
         }
     }
 
