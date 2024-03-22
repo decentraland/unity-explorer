@@ -44,6 +44,8 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
+            messageBus.InjectWorld(World);
+
             ConsumeEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             CancelEmotesByMovementQuery(World);
@@ -150,7 +152,6 @@ namespace DCL.CharacterMotion.Systems
                 if (emotes[i] != animationComponent.EmoteUrn) continue;
 
                 messageBus.Send((uint)i);
-
                 messageBus.SelfSendWithDelayAsync(new RfcEmote
                            {
                                EmoteId = (uint)i,

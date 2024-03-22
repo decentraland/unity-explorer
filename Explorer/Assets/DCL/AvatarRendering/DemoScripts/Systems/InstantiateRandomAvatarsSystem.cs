@@ -356,6 +356,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var entity = World.Create(avatarShape,
                 transformComp,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(
                     RemotePlayerMovementComponent.TEST_ID,
                     new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(() => new SimplePriorityQueue<FullMovementMessage>())
