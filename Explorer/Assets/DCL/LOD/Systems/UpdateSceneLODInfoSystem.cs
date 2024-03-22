@@ -23,6 +23,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using Utility;
@@ -172,26 +173,23 @@ namespace DCL.LOD.Systems
             }
             else
             {
-                //TODO: TEMP, for some reason genesis plaza asset is crashing in mac
-                if ((Application.platform.Equals(RuntimePlatform.OSXPlayer) ||
-                     Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
-                    sceneDefinitionComponent.Definition.id.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                {
-                    return;
-                }
-
-                //TODO: TEMP, infinite floor sceene
-                if (sceneDefinitionComponent.Definition.id.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
-                {
-                    return;
-                }
-
+                var assetBundleIntention =  GetAssetBundleIntention.FromHash(newLODKey + PlatformUtils.GetPlatform(),
+                    permittedSources: AssetSource.WEB,
+                    customEmbeddedSubDirectory: URLSubdirectory.FromString("lods"));
+                //TODO: (ASK MISHA) Is there some way to avoid this allocation?
+                assetBundleIntention.Manifest =  new SceneAssetBundleManifest(URLDomain.FromString("https://ab-cdn-decentraland-org-contentbucket-4e8caab.s3.amazonaws.com/LOD/"),
+                    new SceneAbDto
+                    {
+                        files = new[]
+                        {
+                            newLODKey + PlatformUtils.GetPlatform()
+                        },
+                        version = newLODKey.Level.ToString(), ignoreValidation = true
+                    });
+                
+                
                 sceneLODInfo.CurrentLODPromise =
-                    Promise.Create(World,
-                        GetAssetBundleIntention.FromHash(newLODKey.ToString(),
-                            permittedSources: AssetSource.EMBEDDED,
-                            customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
-                        partitionComponent);
+                    Promise.Create(World, assetBundleIntention, partitionComponent);
 
                 sceneLODInfo.IsDirty = true;
             }
