@@ -123,6 +123,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return new Color3
                     { R = randomColor.r, G = randomColor.g, B = randomColor.b };
             }
+
+            public static Color3 GetRandomEyesColor3()
+            {
+                Color randomColor = GetRandomEyesColor();
+
+                return new Color3
+                    { R = randomColor.r, G = randomColor.g, B = randomColor.b };
+            }
         }
 
         public static class DefaultWearables

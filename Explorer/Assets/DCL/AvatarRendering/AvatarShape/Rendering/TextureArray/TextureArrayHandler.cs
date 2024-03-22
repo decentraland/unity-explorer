@@ -10,6 +10,8 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     /// </summary>
     public class TextureArrayHandler
     {
+        internal const int DEFAULT_SLOT_INDEX = 0;
+
         internal readonly int arrayID;
         internal readonly int textureID;
 
@@ -57,7 +59,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return slotHandler;
         }
 
-        private TextureArraySlotHandler GetOrCreateSlotHandler(int resolution) =>
+        internal TextureArraySlotHandler GetOrCreateSlotHandler(int resolution) =>
             handlersByResolution.TryGetValue(resolution, out var slotHandler) ? slotHandler : CreateHandler(resolution);
 
         public TextureArraySlot SetTexture(Material material, Texture2D texture, int resolution)
@@ -84,13 +86,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             material.SetTexture(textureID, Texture2D.whiteTexture);
         }
 
+        internal Texture2DArray GetDefaultTextureArray(int resolution) => GetOrCreateSlotHandler(resolution).arrays[DEFAULT_SLOT_INDEX];
+
         public void SetDefaultTexture(Material material, int resolution)
         {
             // Default slot is always zero
 
-            var defaultSlotArray = GetOrCreateSlotHandler(resolution).arrays[0];
+            var defaultSlotArray = GetDefaultTextureArray(resolution);
 
-            material.SetInteger(arrayID, 0);
+            material.SetInteger(arrayID, DEFAULT_SLOT_INDEX);
             material.SetTexture(textureID, defaultSlotArray);
         }
     }

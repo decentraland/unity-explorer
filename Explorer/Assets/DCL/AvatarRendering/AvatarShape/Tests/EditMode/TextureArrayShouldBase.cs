@@ -8,8 +8,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public abstract class TextureArrayShouldBase
     {
-        
-        private const int TEST_RESOLUTION = 256;
+        private const int TEST_RESOLUTION = TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
+
+        private static readonly int[] DEFAULT_RESOLUTIONS = { TEST_RESOLUTION };
 
         private TextureArrayContainer textureArrayContainer;
         private Material testSourceMaterial;
@@ -23,27 +24,19 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             var targetShader = Shader.Find(targetShaderName);
             Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
-            TextureArrayContainerFactory.ARRAY_TYPES_COUNT = 3;
-            var defaultTextures = new Dictionary<string, Texture>
+
+            var defaultTextures = new Dictionary<TextureArrayKey, Texture>
             {
-                {
-                    $"Main_{TEST_RESOLUTION}", texture
-                },
-                {
-                    $"Normal_{TEST_RESOLUTION}", texture
-                },
-                {
-                    $"Emmisive_{TEST_RESOLUTION}", texture
-                }
+                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture,
+                [new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
+                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
+                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture
             };
-            textureArrayContainer = TextureArrayContainerFactory.Create(targetShader, TEST_RESOLUTION, defaultTextures);
+            textureArrayContainer = TextureArrayContainerFactory.Create(targetShader, DEFAULT_RESOLUTIONS, defaultTextures);
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
 
             foreach (TextureArrayMapping textureArrayMapping in textureArrayContainer.mappings)
-            {
-                testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID,
-                    texture);
-            }
+                testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID, texture);
 
             testTargetMaterial = new Material(targetShader);
         }
@@ -51,9 +44,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void SetDefaultTexture()
         {
-            //We recreate the material with no texture so the default one is applied
+            // We recreate the material with no texture so the default one is applied
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
-            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
+            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             for (int i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -65,15 +58,15 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             foreach (var textureArrayMapping in textureArrayContainer.mappings)
             {
-                Assert.AreEqual(textureArrayMapping.Handler.defaultSlot.UsedSlotIndex, testTargetMaterial.GetInteger(textureArrayMapping.Handler.arrayID));
-                Assert.AreEqual(textureArrayMapping.Handler.defaultSlot.TextureArray, testTargetMaterial.GetTexture(textureArrayMapping.Handler.textureID));
+                Assert.AreEqual(TextureArrayHandler.DEFAULT_SLOT_INDEX, testTargetMaterial.GetInteger(textureArrayMapping.Handler.arrayID));
+                Assert.AreEqual(textureArrayMapping.Handler.GetDefaultTextureArray(TEST_RESOLUTION), testTargetMaterial.GetTexture(textureArrayMapping.Handler.textureID));
             }
         }
 
         [Test]
         public void SetTexture()
         {
-            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
+            var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             for (var i = 0; i < textureArraySlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -84,14 +77,14 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 TextureArraySlot slotVal = slot.Value;
 
                 Assert.AreEqual(slotVal.UsedSlotIndex, 1);
-                Assert.AreEqual(slotVal.TextureArray, textureArrayContainer.mappings[i].Handler.slotHandler.arrays[0]);
+                Assert.AreEqual(slotVal.TextureArray, textureArrayContainer.mappings[i].Handler.GetOrCreateSlotHandler(TEST_RESOLUTION).arrays[0]);
             }
         }
 
         [Test]
         public void ReleaseAndReuseTexture()
         {
-            var originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
+            var originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
             {
@@ -101,16 +94,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
                 slot.Value.FreeSlot();
 
-                Assert.AreEqual(textureArrayContainer.mappings[i].Handler.slotHandler.freeSlots.Count, 1);
+                Assert.AreEqual(textureArrayContainer.mappings[i].Handler.GetOrCreateSlotHandler(TEST_RESOLUTION).freeSlots.Count, 1);
             }
 
-            var replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial, TODO);
+            var replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
 
             // Check the slots are the same as the original ones
             for (var i = 0; i < originalSlots.Length && i < textureArrayContainer.count; i++)
                 Assert.AreEqual(originalSlots[i], replacedSlots[i]);
         }
-         
+
     }
-   
+
 }

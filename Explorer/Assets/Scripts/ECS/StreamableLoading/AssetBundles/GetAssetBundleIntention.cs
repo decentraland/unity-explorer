@@ -55,6 +55,12 @@ namespace ECS.StreamableLoading.AssetBundles
             Manifest = assetBundleManifest;
         }
 
+        internal GetAssetBundleIntention(CommonLoadingArguments commonArguments, Type expectedObjectType) : this()
+        {
+            ExpectedObjectType = expectedObjectType;
+            CommonArguments = commonArguments;
+        }
+
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL, URLSubdirectory customEmbeddedSubDirectory = default) =>

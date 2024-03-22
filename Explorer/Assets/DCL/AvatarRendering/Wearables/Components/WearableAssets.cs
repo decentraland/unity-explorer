@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
+using UnityEngine.Assertions;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -23,6 +24,15 @@ namespace DCL.AvatarRendering.Wearables.Components
         {
             for (var i = 0; i < Results.Length; i++)
                 Results[i]?.Asset?.AddReference();
+        }
+
+        /// <summary>
+        /// Compatibility with the previous code to create the result with a single asset
+        /// </summary>
+        public static implicit operator WearableAssets(StreamableLoadingResult<WearableAssetBase> result)
+        {
+            Assert.IsTrue(!result.Succeeded || result.Asset is WearableRegularAsset);
+            return new WearableAssets { Results = new StreamableLoadingResult<WearableAssetBase>?[] { result } };
         }
     }
 }

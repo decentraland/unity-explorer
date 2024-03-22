@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public struct FacialFeaturesTextures
+    public readonly struct FacialFeaturesTextures
     {
         public readonly IReadOnlyDictionary<string, Dictionary<int, Texture>> Value;
 
@@ -11,5 +11,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             Value = value;
         }
+
+        public Texture this[string category, int originalTextureId] => Value[category][originalTextureId];
     }
 }

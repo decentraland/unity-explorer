@@ -67,6 +67,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 metadata = new WearableDTO.WearableMetadataDto
                 {
                     id = WearablesConstants.EMPTY_DEFAULT_WEARABLE,
+                    data = new WearableDTO.WearableMetadataDto.DataDto
+                    {
+                        category = WearablesConstants.Categories.HELMET
+                    }
                 },
             };
 

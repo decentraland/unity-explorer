@@ -46,7 +46,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             foreach (var bodyShape in BodyShape.VALUES)
             {
-                var mainTexForThisBodyShape = this.defaultMainTextures[bodyShape];
+                var mainTexForThisBodyShape = new Dictionary<string, Texture>();
+                this.defaultMainTextures[bodyShape] = mainTexForThisBodyShape;
                 var facialFeatureDict = new Dictionary<string, Dictionary<int, Texture>>();
                 defaultFacialFeaturesDictionary[bodyShape] = new FacialFeaturesTextures(facialFeatureDict);
 
@@ -55,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     // TODO it's quite dangerous to call it like this without any checks
                     var result = (WearableTextureAsset) wearableCatalog.GetDefaultWearable(bodyShape, facialFeature, out bool _)
                                                 .WearableAssetResults[bodyShape]
-                                                .Results[WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE]!
+                                                .Results[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!
                                                 .Value.Asset;
 
                     mainTexForThisBodyShape[facialFeature] = result.Texture;

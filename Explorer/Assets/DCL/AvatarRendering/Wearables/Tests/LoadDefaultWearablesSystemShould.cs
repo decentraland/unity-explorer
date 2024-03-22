@@ -35,13 +35,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
             system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList),
                 emptyDefaultWearable,
                 wearableCatalog);
+
+            system.Initialize();
         }
 
         [Test]
         public void CreatePromisesForDefaultWearables()
         {
-            system.Initialize();
-
             AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] promises = world.CacheDefaultWearablesState().GetDefaultWearablesState(world).PromisePerBodyShape;
             Assert.That(promises.Length, Is.EqualTo(BodyShape.COUNT));
 
@@ -56,8 +56,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ConsumePromises()
         {
-            system.Initialize();
-
             ref readonly DefaultWearablesComponent state = ref world.CacheDefaultWearablesState().GetDefaultWearablesState(world);
 
             // resolve
@@ -82,8 +80,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void LoadEmptyDefaultWearable()
         {
-            system.Initialize();
-
             //Look for an empty and a non-empty default wearable
             IWearable tiaraDefaultWearable =
                 wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA,
@@ -93,15 +89,16 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY,
                     out bool shouldntBeEmpty);
 
-            Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GetMainAsset<GameObject>(),
+            Assert.AreEqual(((WearableRegularAsset)tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Results[0].Value.Asset).MainAsset,
                 emptyDefaultWearable);
 
             Assert.AreEqual(tiaraDefaultWearable.GetUrn().ToString(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
             Assert.IsTrue(shouldBeEmpty);
 
-            //In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
-            //So, to confirm that the default wearable is not loaded, we check that the asset is null and that the urn is not from the empty default wearable
-            Assert.AreEqual(upperBodyDefaultWearable.WearableAssetResults[BodyShape.MALE], null);
+            // In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
+            // So, to confirm that the default wearable is not loaded, we check that the asset is null and that the urn is not from the empty default wearable
+            // Results are not created as it's not run through the system
+            Assert.AreEqual(upperBodyDefaultWearable.WearableAssetResults[BodyShape.MALE].Results, null);
             Assert.AreNotEqual(upperBodyDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
             Assert.IsFalse(shouldntBeEmpty);
         }
@@ -109,8 +106,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void HasUnloadPolicySet()
         {
-            system.Initialize();
-
             int defaultWearableCount = wearableCatalog.wearablesCache.Keys.Count;
             wearableCatalog.AddEmptyWearable("Wearable_To_Be_Unloaded");
             Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount + 1);

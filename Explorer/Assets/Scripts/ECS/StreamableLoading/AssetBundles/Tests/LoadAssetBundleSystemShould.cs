@@ -24,13 +24,13 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         protected override GetAssetBundleIntention CreateSuccessIntention() =>
 
             // omit cacheHash so it won't be cached
-            new () { CommonArguments = new CommonLoadingArguments(successPath) };
+            new (new CommonLoadingArguments(successPath), typeof(GameObject));
 
         protected override GetAssetBundleIntention CreateNotFoundIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(failPath) };
+            new (new CommonLoadingArguments(failPath), typeof(GameObject));
 
         protected override GetAssetBundleIntention CreateWrongTypeIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
+            new (new CommonLoadingArguments(wrongTypePath), typeof(GameObject));
 
         protected override LoadAssetBundleSystem CreateSystem() =>
             new (world, cache, new MutexSync(), new AssetBundleLoadingMutex());

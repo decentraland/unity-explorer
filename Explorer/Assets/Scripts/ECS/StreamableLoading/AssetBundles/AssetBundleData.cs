@@ -36,6 +36,11 @@ namespace ECS.StreamableLoading.AssetBundles
             ProfilingCounters.ABDataAmount.Value++;
         }
 
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
+        : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies)
+        {
+        }
+
         public void Dispose()
         {
             if (!CanBeDisposed()) return;

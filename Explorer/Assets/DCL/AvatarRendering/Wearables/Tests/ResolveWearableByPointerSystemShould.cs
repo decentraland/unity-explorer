@@ -28,16 +28,18 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void Setup()
         {
-            wearableCatalog = new WearableCatalog();
-            IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
-            wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
-
-            mockedAB = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(null, null, null));
-            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableAssetBase(null, null, null));
-
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));
 
+            wearableCatalog = new WearableCatalog();
+
+            mockedAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+
+            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+
+            IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
+
+            wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
             world.Create(new DefaultWearablesComponent
             {
                 ResolvedState = DefaultWearablesComponent.State.Success,
@@ -62,14 +64,18 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearable.IsUnisex().Returns(isUnisex);
             wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
 
-            var assetBundleData
-                = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
+            var wearableAssets = new WearableAssets[BodyShape.COUNT];
 
             if (isDefaultWearable)
-                assetBundleData[BodyShape.MALE] = mockedDefaultAB;
+                wearableAssets[BodyShape.MALE] = mockedDefaultAB;
 
-            wearable.WearableAssetResults.Returns(assetBundleData);
+            wearable.WearableAssetResults.Returns(wearableAssets);
             wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
+            wearable.TryGetMainFileHash(Arg.Any<BodyShape>(), out Arg.Any<string>()).Returns(x =>
+            {
+                x[1] = "mockedHash";
+                return true;
+            });
             return wearable;
         }
 
