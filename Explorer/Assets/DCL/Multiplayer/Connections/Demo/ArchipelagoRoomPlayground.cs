@@ -70,7 +70,7 @@ namespace DCL.Multiplayer.Connections.Demo
             ).WithLog();
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, loonCharacterObject, aboutUrl);
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, loonCharacterObject, aboutUrl);
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
             realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);

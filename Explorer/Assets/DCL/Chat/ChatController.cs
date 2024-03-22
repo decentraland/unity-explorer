@@ -225,7 +225,7 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            if (chatMessage.SentByOwnUser == false)
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
             {
                 var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
