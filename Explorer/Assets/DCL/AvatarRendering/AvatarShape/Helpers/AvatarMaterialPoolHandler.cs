@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.AvatarShape
                                  {
                                      TextureArrayConstants.TOON_SHADER => TextureArrayConstants.SHADERID_DCL_TOON,
                                      TextureArrayConstants.FACIAL_SHADER => TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES,
-                                     _ => 0,
+                                     _ => TextureArrayConstants.SHADERID_DCL_PBR,
                                  };
 
                 materialDictionary.Add(materialID, materialSetup);

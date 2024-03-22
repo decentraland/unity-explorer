@@ -41,8 +41,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             if (!isFacialFeature)
             {
-                var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE) as Texture2D;
-
                 shaderId = TextureArrayConstants.SHADERID_DCL_TOON;
                 var poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
                 avatarMaterial = poolMaterialSetup.Pool.Get();

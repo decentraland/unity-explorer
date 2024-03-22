@@ -1,17 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public static class TextureArrayContainerFactory
     {
-        // public static int ARRAY_TYPES_COUNT = 0;
-        //
-        // public static readonly ObjectPool<TextureArraySlot?[]> TOON_SLOTS_POOL = new (
-        //     () => new TextureArraySlot?[ARRAY_TYPES_COUNT], actionOnGet: array => Array.Clear(array, 0, array.Length), defaultCapacity: 500);
-
         internal static TextureArrayContainer CreatePBR(IReadOnlyList<int> defaultResolutions, IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures)
         {
             return new TextureArrayContainer(
