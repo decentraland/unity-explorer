@@ -14,12 +14,12 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> selfMetadata;
         private readonly ElementBinding<string> roomSid;
         private readonly ElementBinding<string> connectionQuality;
+        private readonly ElementBinding<string> connectiveState;
 
         public DebugWidgetRoomDisplay(
             string roomName,
             IConnectiveRoom connectiveRoom,
-            IDebugContainerBuilder debugBuilder,
-            Action<DebugWidgetBuilder>? postBuildAction = null
+            IDebugContainerBuilder debugBuilder, Action<DebugWidgetBuilder>? postBuildAction = null
         ) : this(
             connectiveRoom, debugBuilder.AddWidget(roomName)!, postBuildAction
         ) { }
@@ -33,10 +33,12 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             stateScene = new ElementBinding<string>(string.Empty);
             remoteParticipantsScene = new ElementBinding<string>(string.Empty);
             selfMetadata = new ElementBinding<string>(string.Empty);
+            connectiveState = new ElementBinding<string>(string.Empty);
 
             widgetBuilder
                .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
-               .AddCustomMarker("Connecting State", stateScene)!
+               .AddCustomMarker("Room State", stateScene)!
+               .AddCustomMarker("Connecting State", connectiveState)!
                .AddCustomMarker("Connection Quality", connectionQuality)!
                .AddCustomMarker("Remote Participants", remoteParticipantsScene)!
                .AddCustomMarker("Room Sid", roomSid)!
@@ -53,7 +55,8 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             ElementBinding<string> selfSid,
             ElementBinding<string> connectionQuality,
             ElementBinding<string> roomSid,
-            ElementBinding<string> selfMetadata
+            ElementBinding<string> selfMetadata,
+            ElementBinding<string> connectiveState
         )
         {
             this.room = room;
@@ -63,11 +66,13 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             this.connectionQuality = connectionQuality;
             this.roomSid = roomSid;
             this.selfMetadata = selfMetadata;
+            this.connectiveState = connectiveState;
         }
 
         public void Update()
         {
             connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
+            connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
             stateScene.SetAndUpdate(room.CurrentState().ToString());
             selfSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Sid : "Not connected");
             selfMetadata.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Metadata : "Not connected");

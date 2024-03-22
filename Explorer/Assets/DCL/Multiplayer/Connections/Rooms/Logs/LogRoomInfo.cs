@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using LiveKit.Proto;
 using LiveKit.Rooms.Info;
 using System;
 
@@ -8,6 +9,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
     {
         private readonly IRoomInfo origin;
         private readonly Action<string> log;
+
+        public ConnectionState ConnectionState
+        {
+            get
+            {
+                ConnectionState connectionState = origin.ConnectionState;
+                log($"LogRoomInfo: ConnectionState: {connectionState}");
+                return connectionState;
+            }
+        }
 
         public string Sid
         {
