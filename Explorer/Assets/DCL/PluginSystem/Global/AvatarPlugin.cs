@@ -184,6 +184,9 @@ namespace DCL.PluginSystem.Global
             defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive256, ct: ct)).Value);
             defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive512, ct: ct)).Value);
 
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMask256, ct: ct)).Value);
+            defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMask512, ct: ct)).Value);
+
             // Compatibility for PBR shader
             defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);
             defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 512) , mainTex512);
@@ -241,6 +244,12 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceTexture DefaultEmmisive512 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultMask256 { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultMask512 { get; set; }
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;

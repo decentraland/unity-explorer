@@ -8,7 +8,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         private readonly IWearableCatalog wearableCatalog;
 
-        private readonly FacialFeaturesTextures[] defaultFacialFeaturesDictionary = new FacialFeaturesTextures[BodyShape.COUNT];
+        private readonly FacialFeaturesTextures[] sharedFacialFeatures = new FacialFeaturesTextures[BodyShape.COUNT];
 
         private readonly Dictionary<string, Texture>[] defaultMainTextures = new Dictionary<string, Texture>[BodyShape.COUNT];
 
@@ -26,12 +26,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             ResetDictionary(bodyShape);
 
-            return defaultFacialFeaturesDictionary[bodyShape];
+            return sharedFacialFeatures[bodyShape];
         }
 
         private void ResetDictionary(BodyShape bodyShape)
         {
-            var dict = defaultFacialFeaturesDictionary[bodyShape].Value;
+            var dict = sharedFacialFeatures[bodyShape].Value;
 
             foreach (Dictionary<int,Texture> innerDict in dict.Values)
                 innerDict.Clear();
@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 var mainTexForThisBodyShape = new Dictionary<string, Texture>();
                 this.defaultMainTextures[bodyShape] = mainTexForThisBodyShape;
                 var facialFeatureDict = new Dictionary<string, Dictionary<int, Texture>>();
-                defaultFacialFeaturesDictionary[bodyShape] = new FacialFeaturesTextures(facialFeatureDict);
+                sharedFacialFeatures[bodyShape] = new FacialFeaturesTextures(facialFeatureDict);
 
                 foreach (string facialFeature in WearablesConstants.FACIAL_FEATURES)
                 {

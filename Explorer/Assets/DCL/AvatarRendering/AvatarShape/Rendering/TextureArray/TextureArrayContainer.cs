@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 if (tex)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, tex.width);
                 else
-                   mapping.Handler.SetDefaultTexture(targetMaterial, TextureArrayConstants.MAIN_TEXTURE_RESOLUTION);
+                   mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
 
             return results;
@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 if (textures.TryGetValue(mapping.OriginalTextureID, out var texture))
                     results[i] = mapping.Handler.SetTexture(targetMaterial, texture as Texture2D, texture.width);
                 else
-                    mapping.Handler.ResetTexture(targetMaterial);
+                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
 
             return results;

@@ -38,8 +38,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             SceneAssetBundleManifest manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : wearable.ManifestResult?.Asset;
 
             var bodyShape = intention.BodyShape;
-            WearableAssets[] results = wearable.WearableAssetResults;
-            ref WearableAssets resultForBody = ref results[bodyShape];
 
             switch (wearable.Type)
             {
@@ -50,7 +48,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         customStreamingSubdirectory,
                         wearable,
                         partitionComponent,
-                        ref resultForBody,
                         bodyShape,
                         world);
                 default:
@@ -60,7 +57,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         customStreamingSubdirectory,
                         wearable,
                         partitionComponent,
-                        ref resultForBody,
                         bodyShape,
                         world);
             }
@@ -72,13 +68,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             URLSubdirectory customStreamingSubdirectory,
             IWearable wearable,
             IPartitionComponent partitionComponent,
-            ref WearableAssets wearableAssets,
             BodyShape bodyShape,
             World world)
         {
-            wearableAssets.Results ??= new StreamableLoadingResult<WearableAssetBase>?[1];
+            ref var wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 1);
 
-            return TryCreateMainFilePromise(typeof(GameObject), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, wearableAssets, bodyShape, world);
+            return TryCreateMainFilePromise(typeof(GameObject), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world);
         }
 
         /// <summary>
@@ -90,21 +85,39 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             URLSubdirectory customStreamingSubdirectory,
             IWearable wearable,
             IPartitionComponent partitionComponent,
-            ref WearableAssets wearableAssets,
             BodyShape bodyShape,
             World world)
         {
-            wearableAssets.Results ??= new StreamableLoadingResult<WearableAssetBase>?[2];
+            ref var wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 2);
 
             // 0 stands for the main texture
             // 1 stands for the mask
-            return TryCreateMainFilePromise(typeof(Texture), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, wearableAssets, bodyShape, world)
-                   | TryCreateMaskPromise(sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, wearableAssets, bodyShape, world);
+            return TryCreateMainFilePromise(typeof(Texture), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world)
+                   | TryCreateMaskPromise(sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world);
+        }
+
+        private static ref WearableAssets InitializeResultsArray(IWearable wearable, BodyShape bodyShape, int size)
+        {
+            if (wearable.IsUnisex())
+            {
+                SetByRef(BodyShape.MALE);
+                SetByRef(BodyShape.FEMALE);
+            }
+            else
+                SetByRef(bodyShape);
+
+            return ref wearable.WearableAssetResults[bodyShape];
+
+            void SetByRef(BodyShape bs)
+            {
+                ref WearableAssets resultForBody = ref wearable.WearableAssetResults[bs];
+                resultForBody.Results ??= new StreamableLoadingResult<WearableAssetBase>?[size];
+            }
         }
 
         private static bool TryCreateMaskPromise(SceneAssetBundleManifest sceneAssetBundleManifest,
             GetWearablesByPointersIntention intention, URLSubdirectory customStreamingSubdirectory, IWearable wearable,
-            IPartitionComponent partitionComponent, WearableAssets wearableAssets, BodyShape bodyShape, World world)
+            IPartitionComponent partitionComponent, ref WearableAssets wearableAssets, BodyShape bodyShape, World world)
         {
             if (wearableAssets.Results[MASK_ASSET_INDEX] != null)
                 return false;
@@ -136,7 +149,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             Type expectedObjectType,
             SceneAssetBundleManifest sceneAssetBundleManifest,
             GetWearablesByPointersIntention intention, URLSubdirectory customStreamingSubdirectory, IWearable wearable,
-            IPartitionComponent partitionComponent, WearableAssets wearableAssets, BodyShape bodyShape, World world)
+            IPartitionComponent partitionComponent, ref WearableAssets wearableAssets, BodyShape bodyShape, World world)
         {
             if (wearableAssets.Results[MAIN_ASSET_INDEX] != null)
                 return false;

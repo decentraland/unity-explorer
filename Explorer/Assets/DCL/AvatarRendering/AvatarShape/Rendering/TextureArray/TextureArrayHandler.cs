@@ -77,15 +77,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return slot;
         }
 
-        /// <summary>
-        /// Used when no default texture is needed
-        /// </summary>
-        public void ResetTexture(Material material)
-        {
-            material.SetInteger(arrayID, -1);
-            material.SetTexture(textureID, Texture2D.whiteTexture);
-        }
-
         internal Texture2DArray GetDefaultTextureArray(int resolution) => GetOrCreateSlotHandler(resolution).arrays[DEFAULT_SLOT_INDEX];
 
         public void SetDefaultTexture(Material material, int resolution)

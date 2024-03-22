@@ -301,6 +301,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <DefaultMask256>k__BackingField:
+          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultMask512>k__BackingField:
+          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
