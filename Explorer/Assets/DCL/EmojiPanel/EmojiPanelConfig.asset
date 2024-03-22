@@ -53,7 +53,7 @@ MonoBehaviour:
     - key: 1F3D4
       value: 1F3F0
     - key: 1F6E3
-      value: 1F6FC
+      value: 1F6E5
     - key: 1F68A
       value: 1F69F
   - title: Objects
@@ -81,3 +81,4 @@ MonoBehaviour:
     ranges:
     - key: 1F3F3
       value: 1F3F4
+  SpriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
