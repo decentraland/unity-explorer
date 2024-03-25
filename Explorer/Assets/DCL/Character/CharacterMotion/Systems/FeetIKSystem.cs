@@ -22,10 +22,6 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class FeetIKSystem : BaseUnityLoopSystem
     {
-        // The feet bone never touches the ground at Idle position, this is the average height of the idle animation and we use it to decide whether the bone is on the ground or not
-        private const float FEET_HEIGHT_CORRECTION = 0.08f;
-        private const float FEET_HEIGHT_DISABLE_IK = 0.10f;
-
         private bool feetIkIsEnabled = true;
         private readonly ElementBinding<float> ikWeightChangeSpeed;
         private readonly ElementBinding<float> ikPositionChangeSpeed;
@@ -143,12 +139,13 @@ namespace DCL.CharacterMotion.Systems
             ICharacterControllerSettings settings,
             float dt)
         {
+            // The feet bone never touches the ground at Idle position, this is the average height of the idle animation and we use it to decide whether the bone is on the ground or not
             // FEET_HEIGHT_CORRECTION is the distance between the ground and the foot bone when "standing still"
             // FEET_HEIGHT_DISABLE_IK is the height when we dont want the foot to have IK enabled
             // Games configure this weight trough Animation Curves on each animation, but since we cant do that here, we just do magic math
-            float ikWeightRight = !feetComponent.IsGrounded ? 0 : 1f - ((rightLegPosition.y - FEET_HEIGHT_CORRECTION) / FEET_HEIGHT_DISABLE_IK);
-            ikWeightRight = feetComponent.IsInsideMesh ? 1 : ikWeightRight;
-            float targetWeight = Mathf.RoundToInt(ikWeightRight) * (isEnabled ? 1 : 0);
+            float ikWeightBasedOnAnimation = !feetComponent.IsGrounded ? 0 : 1f - ((rightLegPosition.y - settings.FeetHeightCorrection) / settings.FeetHeightDisableIkDistance);
+            ikWeightBasedOnAnimation = feetComponent.IsInsideMesh ? 1 : ikWeightBasedOnAnimation;
+            float targetWeight = Mathf.RoundToInt(ikWeightBasedOnAnimation) * (isEnabled ? 1 : 0);
 
             // We apply ik weight speed only if its increasing, decreasing it is instant, this avoids being partially snapped into the ground when suddenly jumping
             if (ik.weight < targetWeight)
@@ -192,7 +189,7 @@ namespace DCL.CharacterMotion.Systems
 
                 feetComponent.IsGrounded = true;
                 feetComponent.IsInsideMesh = hitInfo.point.y > origin.y;
-                feetComponent.Distance = FEET_HEIGHT_CORRECTION + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
+                feetComponent.Distance = settings.FeetHeightCorrection + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
                 return;
             }
 
@@ -227,7 +224,7 @@ namespace DCL.CharacterMotion.Systems
             ICharacterControllerSettings settings)
         {
             // Get the most stretched feet distance
-            float highestDist = Mathf.Max(feetIKComponent.Right.Distance, feetIKComponent.Left.Distance);
+            float highestDist = Mathf.Max(feetIKComponent.Right.Distance, feetIKComponent.Left.Distance) - settings.HipsHeightCorrection;
 
             // Calculate the target weight based ond both feet weight
             float weight = (avatarBase.RightLegIK.weight + avatarBase.LeftLegIK.weight) / 2;

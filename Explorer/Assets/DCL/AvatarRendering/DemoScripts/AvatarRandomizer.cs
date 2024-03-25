@@ -9,71 +9,37 @@ namespace DCL.AvatarRendering.DemoScripts
     public class AvatarRandomizer
     {
         public string BodyShape;
-        public List<URN> upper_body;
-        public List<URN> lower_body;
-        public List<URN> feet;
-        public List<URN> hair;
-        public List<URN> mouth;
-        public List<URN> eyes;
-        public List<URN> eyebros;
+        public Dictionary<string, List<URN>> wearablesDictionary; 
 
         public AvatarRandomizer(string bodyShape)
         {
             BodyShape = bodyShape;
-            upper_body = new List<URN>();
-            lower_body = new List<URN>();
-            feet = new List<URN>();
-            hair = new List<URN>();
-            mouth = new List<URN>();
-            eyes = new List<URN>();
-            eyebros = new List<URN>();
+            wearablesDictionary = new Dictionary<string, List<URN>>(); 
         }
 
         public URN[] GetRandomAvatarWearables()
         {
-            return new[]
+            URN[] randomWearables = new URN[wearablesDictionary.Count];
+            int i = 0;
+            foreach (var wearableByCategory in wearablesDictionary.Values)
             {
-                upper_body[Random.Range(0, upper_body.Count)],
-                lower_body[Random.Range(0, lower_body.Count)],
-                feet[Random.Range(0, feet.Count)],
-                hair[Random.Range(0, hair.Count)],
-
-                //TODO Facial features.
-                //mouth[Random.Range(0, mouth.Count)].metadata.id,
-                //eyes[Random.Range(0, eyes.Count)].metadata.id,
-                //eyebros[Random.Range(0, eyebros.Count)].metadata.id,
-            };
+                randomWearables[i] = wearableByCategory[Random.Range(0, wearableByCategory.Count)];
+                i++;
+            }
+            return randomWearables;
         }
 
         public void AddWearable(IWearable wearable)
         {
+            if (wearable.GetCategory().Equals(WearablesConstants.Categories.BODY_SHAPE))
+                return;
+            
             if (!wearable.IsCompatibleWithBodyShape(BodyShape))
                 return;
 
-            switch (wearable.GetCategory())
-            {
-                case WearablesConstants.Categories.UPPER_BODY:
-                    upper_body.Add(wearable.GetUrn());
-                    break;
-                case WearablesConstants.Categories.LOWER_BODY:
-                    lower_body.Add(wearable.GetUrn());
-                    break;
-                case WearablesConstants.Categories.FEET:
-                    feet.Add(wearable.GetUrn());
-                    break;
-                case WearablesConstants.Categories.HAIR:
-                    hair.Add(wearable.GetUrn());
-                    break;
-                case WearablesConstants.Categories.MOUTH:
-                    mouth.Add(wearable.GetUrn());
-                    break;
-                case WearablesConstants.Categories.EYES:
-                    eyes.Add(wearable.GetUrn());
-                    break;
-                case WearablesConstants.Categories.EYEBROWS:
-                    eyebros.Add(wearable.GetUrn());
-                    break;
-            }
+            if (!wearablesDictionary.ContainsKey(wearable.GetCategory()))
+                wearablesDictionary[wearable.GetCategory()] = new List<URN>();
+            wearablesDictionary[wearable.GetCategory()].Add(wearable.GetUrn());
         }
     }
 }

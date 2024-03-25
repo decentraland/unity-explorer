@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -27,13 +26,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public partial class LoadWearablesByParamSystem : LoadSystemBase<WearablesResponse, GetWearableByParamIntention>
     {
         private readonly URLSubdirectory lambdaSubdirectory;
-
         private readonly IRealmData realmData;
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly IWearableCatalog wearableCatalog;
         private readonly IWebRequestController webRequestController;
-
         private readonly Func<bool> isRealmDataReady;
+
         internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
@@ -59,10 +57,27 @@ namespace DCL.AvatarRendering.Wearables.Systems
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             intention.TotalAmount = lambdaResponse.totalAmount;
+
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
-                WearableDTO wearableDto = lambdaResponse.elements[i].entity;
+                WearableDTO.LambdaResponseElementDto element = lambdaResponse.elements[i];
+                WearableDTO wearableDto = element.entity;
+
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
+
+                foreach (WearableDTO.LambdaResponseIndividualDataDto individualData in element.individualData)
+                {
+                    // Probably a base wearable, wrongly return individual data. Skip it
+                    if (wearableDto.metadata.id == individualData.id) continue;
+
+                    long.TryParse(individualData.transferredAt, out long transferredAt);
+                    decimal.TryParse(individualData.price, out decimal price);
+
+                    wearableCatalog.SetOwnedNft(wearableDto.metadata.id,
+                        new NftBlockchainOperationEntry(individualData.id,
+                            individualData.tokenId, DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                            price));
+                }
 
                 WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);
@@ -88,6 +103,4 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return urlBuilder.Build();
         }
     }
-
-
 }

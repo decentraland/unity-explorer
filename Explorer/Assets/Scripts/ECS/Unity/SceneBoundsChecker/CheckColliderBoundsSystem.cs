@@ -25,7 +25,7 @@ namespace ECS.Unity.SceneBoundsChecker
         ///     We should take care only about asset which are close enough.
         ///     No assets farther than this bucket will be checked
         /// </summary>
-        internal const byte BUCKET_THRESHOLD = 0;
+        internal const byte BUCKET_THRESHOLD = 1;
 
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
@@ -103,7 +103,12 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
-                    sdkCollider.IsActiveBySceneBounds = sceneGeometry.CircumscribedPlanes.Intersects(sdkCollider.Collider.bounds);
+                    Bounds colliderBounds = sdkCollider.Collider.bounds;
+
+                    // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
+                    // Therefore, it is necessary to force the collider to be activated at least once
+                    sdkCollider.IsActiveBySceneBounds = colliderBounds.extents == Vector3.zero
+                                                        || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds);
 
                     // write the structure back
                     colliders[i] = sdkCollider;

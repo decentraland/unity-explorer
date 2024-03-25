@@ -1,0 +1,21 @@
+{
+    "name": "DCL.Multiplayer.Movement",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:007bff6000804d90ac597452fb69a4ee",
+        "GUID:c80c82a8f4e04453b85fbab973d6774a",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

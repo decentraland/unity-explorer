@@ -3,6 +3,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
@@ -14,32 +15,47 @@ namespace DCL.Multiplayer.Connections.Rooms
 {
     public class InteriorRoom : IRoom, IInterior<IRoom>
     {
-        private IRoom? assigned;
-
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
+        private IRoom assigned = NullRoom.INSTANCE;
+
+        public IActiveSpeakers ActiveSpeakers => activeSpeakers;
+        public IParticipantsHub Participants => participants;
+        public IDataPipe DataPipe => dataPipe;
+        public IRoomInfo Info => assigned.Info;
+
+        public event Room.MetaDelegate? RoomMetadataChanged;
+        public event LocalPublishDelegate? LocalTrackPublished;
+        public event LocalPublishDelegate? LocalTrackUnpublished;
+        public event PublishDelegate? TrackPublished;
+        public event PublishDelegate? TrackUnpublished;
+        public event SubscribeDelegate? TrackSubscribed;
+        public event SubscribeDelegate? TrackUnsubscribed;
+        public event MuteDelegate? TrackMuted;
+        public event MuteDelegate? TrackUnmuted;
+        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
+        public event ConnectionStateChangeDelegate? ConnectionStateChanged;
+        public event ConnectionDelegate? ConnectionUpdated;
 
         public void Assign(IRoom room, out IRoom? previous)
         {
             previous = assigned;
-            if (previous != null)
-            {
-                previous.Disconnect();
 
-                previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
-                previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
-                previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
-                previous.TrackPublished -= RoomOnTrackPublished;
-                previous.TrackUnpublished -= RoomOnTrackUnpublished;
-                previous.TrackSubscribed -= RoomOnTrackSubscribed;
-                previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
-                previous.TrackMuted -= RoomOnTrackMuted;
-                previous.TrackUnmuted -= RoomOnTrackUnmuted;
-                previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
-                previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
-                previous.ConnectionUpdated -= RoomOnConnectionUpdated;
-            }
+            previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
+            previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
+            previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
+            previous.TrackPublished -= RoomOnTrackPublished;
+            previous.TrackUnpublished -= RoomOnTrackUnpublished;
+            previous.TrackSubscribed -= RoomOnTrackSubscribed;
+            previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
+            previous.TrackMuted -= RoomOnTrackMuted;
+            previous.TrackUnmuted -= RoomOnTrackUnmuted;
+            previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
+            previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
+            previous.ConnectionUpdated -= RoomOnConnectionUpdated;
+
+            previous = previous is NullRoom ? null : previous;
 
             assigned = room;
 
@@ -121,27 +137,13 @@ namespace DCL.Multiplayer.Connections.Rooms
             RoomMetadataChanged?.Invoke(metadata);
         }
 
-        public event Room.MetaDelegate? RoomMetadataChanged;
-        public event LocalPublishDelegate? LocalTrackPublished;
-        public event LocalPublishDelegate? LocalTrackUnpublished;
-        public event PublishDelegate? TrackPublished;
-        public event PublishDelegate? TrackUnpublished;
-        public event SubscribeDelegate? TrackSubscribed;
-        public event SubscribeDelegate? TrackUnsubscribed;
-        public event MuteDelegate? TrackMuted;
-        public event MuteDelegate? TrackUnmuted;
-        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
-        public event ConnectionStateChangeDelegate? ConnectionStateChanged;
-        public event ConnectionDelegate? ConnectionUpdated;
+        public void UpdateLocalMetadata(string metadata) =>
+            assigned.UpdateLocalMetadata(metadata);
 
-        public Task<bool> Connect(string url, string authToken, CancellationToken cancelToken) =>
-            assigned.EnsureAssigned().Connect(url, authToken, cancelToken);
+        public Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            assigned.EnsureAssigned().ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
-        public void Disconnect() =>
-            assigned.EnsureAssigned().Disconnect();
-
-        public IActiveSpeakers ActiveSpeakers => activeSpeakers;
-        public IParticipantsHub Participants => participants;
-        public IDataPipe DataPipe => dataPipe;
+        public Task DisconnectAsync(CancellationToken token) =>
+            assigned.EnsureAssigned().DisconnectAsync(token);
     }
 }

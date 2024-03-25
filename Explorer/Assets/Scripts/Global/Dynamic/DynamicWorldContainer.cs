@@ -3,23 +3,21 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Chat.MessageBus;
+using DCL.Chat.MessageBus.Deduplication;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens;
-using DCL.SkyBox;
 using DCL.UserInAppInitializationFlow;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
@@ -30,13 +28,25 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Roads.Systems;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Systems;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.Nametags;
+using DCL.NftInfoAPIService;
+using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
-using Unity.Mathematics;
+using LiveKit.Internal.FFIClients.Pools.Memory;
+using System.Buffers;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -63,9 +73,18 @@ namespace Global.Dynamic
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
+        public IChatMessagesBus MessagesBus { get; private set; } = null!;
+
+        public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
+
+        public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
+
         public void Dispose()
         {
             MvcManager.Dispose();
+            MessagesBus.Dispose();
+            ProfileBroadcast.Dispose();
+            MultiplayerMovementMessageBus.Dispose();
         }
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
@@ -103,7 +122,7 @@ namespace Global.Dynamic
             if (!result)
                 return (null, false);
 
-            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder;
+            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
@@ -124,33 +143,101 @@ namespace Global.Dynamic
 
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
-            var chatMessagesBus = new ChatMessagesBus(debugBuilder);
             var webBrowser = new UnityAppWebBrowser();
             ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            NametagsData? nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
-                profileCache);
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
 
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
+            var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
+            var realFlowLoadingStatus = new RealFlowLoadingStatus();
 
-            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(parcelServiceContainer.TeleportController,
-                container.MvcManager, identityCache, container.ProfileRepository, dynamicWorldParams.StartParcel, dynamicWorldParams.EnableLandscape, landscapePlugin);
+            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
+                realFlowLoadingStatus,
+                parcelServiceContainer.TeleportController,
+                container.MvcManager,
+                identityCache,
+                container.ProfileRepository, dynamicWorldParams.StartParcel,
+                staticContainer.MainPlayerAvatarBaseProxy,
+                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                exposedGlobalDataContainer.CameraSamplingData,
+                dynamicWorldParams.EnableLandscape, landscapePlugin);
+
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
+
+            var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
+
+            container.RealmController = new RealmController(
+                identityCache,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                parcelServiceContainer.TeleportController,
+                parcelServiceContainer.RetrieveSceneFromFixedRealm,
+                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
+                dynamicWorldParams.StaticLoadPositions,
+                realmData,
+                staticContainer.ScenesCache);
+
+            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            var messagePipesHub = new MessagePipesHub(roomHub, multiPool, memoryPool);
+
+            var entityParticipantTable = new EntityParticipantTable();
+
+            container.MessagesBus = new DebugPanelChatMessageBus(
+                new SelfResendChatMessageBus(
+                    new MultiplayerChatMessagesBus(messagePipesHub, container.ProfileRepository, new MessageDeduplication()),
+                    identityCache,
+                    container.ProfileRepository
+                ),
+                debugBuilder
+            );
+
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(
+                () => new SimplePriorityQueue<FullMovementMessage>(),
+                actionOnRelease: x => x.Clear()
+            );
+
+            container.ProfileBroadcast = new DebounceProfileBroadcast(
+                new ProfileBroadcast(messagePipesHub)
+            );
+
+            container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);
+
+            var remotePoses = new DebounceRemotePoses(
+                new RemotePoses(roomHub)
+            );
 
             var visualSceneStateResolver = new VisualSceneStateResolver();
             
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool)),
+                new MultiplayerPlugin(
+                    archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    roomHub,
+                    container.ProfileRepository,
+                    container.ProfileBroadcast,
+                    debugBuilder,
+                    realFlowLoadingStatus,
+                    entityParticipantTable,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    messagePipesHub,
+                    remotePoses,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    queuePoolFullMovementMessage
+                ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
-                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
+                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(
@@ -162,11 +249,15 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    chatEntryConfiguration),
+                    chatEntryConfiguration,
+                    new DefaultFaceFeaturesHandler(wearableCatalog),
+                    entityParticipantTable,
+                    nametagsData
+                ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, chatMessagesBus),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -191,9 +282,17 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue, visualSceneStateResolver),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
+                new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService),
+                new ChangeRealmPromptPlugin(
+                    staticContainer.AssetsProvisioner,
+                    container.MvcManager,
+                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
+                new NftPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
-                landscapePlugin, new RoadPlugin(staticContainer.CacheCleaner,
+                landscapePlugin,
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, container.MultiplayerMovementMessageBus),
+                new RoadPlugin(staticContainer.CacheCleaner,
                     staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
@@ -201,17 +300,6 @@ namespace Global.Dynamic
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
-
-            container.RealmController = new RealmController(
-                identityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
-                parcelServiceContainer.TeleportController,
-                parcelServiceContainer.RetrieveSceneFromFixedRealm,
-                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                dynamicWorldParams.SceneLoadRadius,
-                dynamicWorldParams.StaticLoadPositions,
-                realmData,
-                staticContainer.ScenesCache);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

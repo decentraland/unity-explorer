@@ -7,5 +7,7 @@ namespace DCL.Ipfs
     public class ServerConfiguration
     {
         public List<string> scenesUrn;
+        public string realmName;
+        public int networkId;
     }
 }

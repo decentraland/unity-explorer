@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
@@ -25,6 +24,8 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
+        private bool playerHasJustTeleported;
+
         private InterpolateCharacterSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -36,6 +37,8 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
         {
+            playerHasJustTeleported = true;
+
             // Teleport the character
             controller.transform.position = teleportIntent.Position;
 
@@ -57,6 +60,14 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
+            if (playerHasJustTeleported)
+            {
+                // We need to skip the first frame after a teleport to avoid getting conflicts with the interpolation.
+                // This sometimes provoked the teleport to be ignored and the character to be stuck in the previous position.
+                playerHasJustTeleported = false;
+                return;
+            }
+
             Transform transform = characterController.transform;
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 

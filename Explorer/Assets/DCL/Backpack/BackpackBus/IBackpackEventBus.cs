@@ -13,6 +13,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
+        event Action PublishProfileEvent;
 
         public void SendSelect(IWearable equipWearable);
 
@@ -25,5 +26,7 @@ namespace DCL.Backpack.BackpackBus
         public void SendFilterCategory(string category, AvatarWearableCategoryEnum categoryEnum);
 
         public void SendSearch(string searchText);
+
+        void SendPublishProfile();
     }
 }

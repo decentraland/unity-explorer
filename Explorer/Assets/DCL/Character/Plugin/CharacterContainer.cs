@@ -4,11 +4,11 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -55,7 +55,14 @@ namespace DCL.Character.Plugin
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            characterObject = await assetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct);
+            characterObject = await assetsProvisioner.ProvideInstanceAsync(
+                settings.CharacterObject,
+                new Vector3(0f, settings.StartYPosition, 0f),
+                Quaternion.identity,
+                ct: ct,
+                error: nameof(characterObject)
+            );
+
             bucketPropagationLimit = settings.sceneBucketPropagationLimit;
         }
 
@@ -72,7 +79,8 @@ namespace DCL.Character.Plugin
             world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.Value.CameraFocus),
-                new CharacterTransform(characterObject.Value.Transform));
+                new CharacterTransform(characterObject.Value.Transform),
+                new PlayerMovementNetworkComponent(characterObject.Value.Controller));
 
         public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {

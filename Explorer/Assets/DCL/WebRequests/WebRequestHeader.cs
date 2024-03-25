@@ -10,5 +10,8 @@ namespace DCL.WebRequests
             Name = name;
             Value = value;
         }
+
+        public override string ToString() =>
+            $"WebRequestHeader({Name}: {Value})";
     }
 }

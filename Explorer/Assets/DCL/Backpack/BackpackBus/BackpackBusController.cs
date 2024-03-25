@@ -1,6 +1,8 @@
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using System;
 
 namespace DCL.Backpack.BackpackBus
@@ -29,6 +31,12 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.OnSelectMessageReceived += HandleSelectCommand;
             this.backpackCommandBus.OnFilterCategoryMessageReceived += HandleFilterCategoryCommand;
             this.backpackCommandBus.OnSearchMessageReceived += HandleSearchCommand;
+            this.backpackCommandBus.OnPublishProfileReceived += HandlePublishProfile;
+        }
+
+        private void HandlePublishProfile(BackpackPublishProfileCommand command)
+        {
+            backpackEventBus.SendPublishProfile();
         }
 
         private void HandleSearchCommand(BackpackSearchCommand command)
@@ -53,22 +61,36 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleEquipCommand(BackpackEquipCommand command)
         {
-            wearableCatalog.TryGetWearable(command.Id, out IWearable wearable);
-            string category = wearable?.GetCategory();
+            wearableCatalog.TryGetWearable(command.Id, out IWearable? wearable);
+
+            if (wearable == null)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, not found: {command.Id}");
+                return;
+            }
+
+            string? category = wearable.GetCategory();
 
             if (category == null)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot equip wearable, category is invalid: {command.Id}");
                 return;
+            }
 
-            if (backpackEquipStatusController.GetEquippedWearableForCategory(category) != null)
-                backpackEventBus.SendUnEquip(backpackEquipStatusController.GetEquippedWearableForCategory(category));
+            IWearable? wearableToUnequip = backpackEquipStatusController.GetEquippedWearableForCategory(category);
+
+            if (wearableToUnequip != null)
+                backpackEventBus.SendUnEquip(wearableToUnequip);
 
             backpackEventBus.SendEquip(wearable);
         }
 
         private void HandleUnEquipCommand(BackpackUnEquipCommand command)
         {
-            if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
-                backpackEventBus.SendUnEquip(wearable);
+            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
+                wearableCatalog.TryGetWearable(new URN(command.Id).Shorten(), out wearable);
+
+            backpackEventBus.SendUnEquip(wearable);
         }
 
         private void HandleHideCommand(BackpackHideCommand command)

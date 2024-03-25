@@ -7,8 +7,11 @@ using DCL.CharacterTriggerArea.Components;
 using DCL.CharacterTriggerArea.Systems;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
@@ -16,7 +19,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
     [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
     [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
-    public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem
+    public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private static CameraMode cameraModeBeforeLastAreaEnter; // There's only 1 camera at a time
 
@@ -35,14 +38,20 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             UpdateCameraModeAreaQuery(World);
             SetupCameraModeAreaQuery(World);
+
+            HandleComponentRemovalQuery(World);
+            HandleEntityDestructionQuery(World);
+
+            World.Remove<CameraModeAreaComponent>(HandleComponentRemoval_QueryDescription);
+            World.Remove<CameraModeAreaComponent, PBCameraModeArea>(HandleEntityDestruction_QueryDescription);
         }
 
         [Query]
-        [None(typeof(CharacterTriggerAreaComponent))]
+        [None(typeof(CharacterTriggerAreaComponent), typeof(CameraModeAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
-            World.Add(entity, new CharacterTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true));
+            World.Add(entity, new CameraModeAreaComponent(), new CharacterTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true));
         }
 
         [Query]
@@ -57,6 +66,21 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
                 characterTriggerAreaComponent.AreaSize = pbCameraModeArea.Area;
                 characterTriggerAreaComponent.IsDirty = true;
             }
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(CameraModeAreaComponent))]
+        private void HandleEntityDestruction()
+        {
+            OnExitedCameraModeArea();
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea))]
+        [All(typeof(CameraModeAreaComponent))]
+        private void HandleComponentRemoval()
+        {
+            OnExitedCameraModeArea();
         }
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
@@ -76,6 +100,19 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputLocks == 0)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
+        }
+
+        [Query]
+        [All(typeof(CameraModeAreaComponent))]
+        private void FinalizeComponents(in Entity entity)
+        {
+            OnExitedCameraModeArea();
+            World.Remove<CameraModeAreaComponent>(entity);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeComponentsQuery(World);
         }
     }
 }

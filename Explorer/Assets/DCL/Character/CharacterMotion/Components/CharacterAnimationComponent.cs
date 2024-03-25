@@ -1,11 +1,11 @@
-﻿using DCL.CharacterMotion.Animation;
-using UnityEngine;
+﻿using System;
 
 namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {
         // buffer values for animation states
+        [Serializable]
         public struct AnimationStates
         {
             public float MovementBlendValue;

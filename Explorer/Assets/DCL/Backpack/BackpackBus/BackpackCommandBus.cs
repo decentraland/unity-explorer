@@ -12,6 +12,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackHideCommand> OnHideMessageReceived;
         public event Action<BackpackFilterCategoryCommand> OnFilterCategoryMessageReceived;
         public event Action<BackpackSearchCommand> OnSearchMessageReceived;
+        public event Action<BackpackPublishProfileCommand> OnPublishProfileReceived;
 
         public void SendCommand(BackpackEquipCommand command)
         {
@@ -41,6 +42,11 @@ namespace DCL.Backpack.BackpackBus
         public void SendCommand(BackpackSearchCommand command)
         {
             OnSearchMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackPublishProfileCommand command)
+        {
+            OnPublishProfileReceived?.Invoke(command);
         }
     }
 }

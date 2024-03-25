@@ -1,11 +1,22 @@
 module.exports.getRealm = async function(message) {
-    console.log('JSMODULE: getRealm')
-    return {};
+
+    const { baseURL, realmName, networkId, commsAdapter, isPreview } = await UnityRuntime.GetRealm()    
+
+    if (commsAdapter === undefined) {
+        commsAdapter = "";
+    } 
+
+    return { baseURL, realmName, networkId, commsAdapter, isPreview };
 }
 
 module.exports.getWorldTime = async function(message) {
-    console.log('JSMODULE: getWorldTime')
-    return {};
+    const { time } = await UnityRuntime.GetWorldTime()
+    if (time === undefined) {
+        console.log('JSMODULE: An error ocurred when getting World Time')
+        return {};
+    } else {
+        return { time };
+    }
 }
 
 module.exports.readFile = async function(message) {
@@ -17,6 +28,13 @@ module.exports.readFile = async function(message) {
 }
 
 module.exports.getSceneInformation = async function(message) {
-    console.log('JSMODULE: getSceneInformation')
-    return {};
+
+    const { urn, baseUrl, content, metadataJson } = UnityRuntime.GetSceneInformation()    
+
+    return { 
+        urn, 
+        baseUrl, 
+        content, 
+        metadataJson 
+    };
 }

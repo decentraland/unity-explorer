@@ -2,10 +2,10 @@ using System;
 
 namespace DCL.Chat
 {
-    public interface IChatMessagesBus
+    public interface IChatMessagesBus : IDisposable
     {
         public event Action<ChatMessage> OnMessageAdded;
 
-        public void AddMessage();
+        public void Send(string message);
     }
 }

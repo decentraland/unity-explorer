@@ -28,10 +28,11 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 11400000, guid: b657b0bf94dcd69409655b68574b520e, type: 2}
   treeAssets:
-  - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
-  - {fileID: 11400000, guid: 6359eb473a83b5242a3626151eff94e4, type: 2}
-  - {fileID: 11400000, guid: 9956eed88c3da1140a63203ad3e7e00b, type: 2}
+  - {fileID: 11400000, guid: 47e8c4aa60743104db4ce5c5b07abd4b, type: 2}
+  - {fileID: 11400000, guid: dfd2ac73057ffc3429ea3fe5da3285af, type: 2}
+  - {fileID: 11400000, guid: 758e977e623f3b44cbaac9b14179fdb6, type: 2}
   - {fileID: 11400000, guid: b2b6204bf7bc3f642ab69b0abfb41215, type: 2}
+  - {fileID: 11400000, guid: 833cac5c0dfa9d841b6d3906ee5b9ab0, type: 2}
   - {fileID: 11400000, guid: 4040beb28607f7a4ba895a7b0bd80cab, type: 2}
   - {fileID: 11400000, guid: 329348e9c1dbd7441b0fba18b52e84bd, type: 2}
   - {fileID: 11400000, guid: 3758af9869c39854c9de69bb3f75279c, type: 2}
@@ -41,10 +42,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b2f25ceffa3921e41931611c7dd08a18, type: 2}
   - {fileID: 11400000, guid: 4362537cefadf584c8a7ea303794690c, type: 2}
   - {fileID: 11400000, guid: 86b29852bc6b6aa4ab76c26e069e5c8b, type: 2}
-  - {fileID: 11400000, guid: 3d26b9b86d046ce4da3e824b5c7e0630, type: 2}
-  - {fileID: 11400000, guid: 6a157539381d5e6448873190ac732d1f, type: 2}
-  - {fileID: 11400000, guid: 94cc20bd7b07499479cde28f9c375233, type: 2}
   cliffSide: {fileID: 919132149155446097, guid: c771be5f50b31304fa9980668f783ee3, type: 3}
   cliffCorner: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
   ocean: {fileID: 5279076375242104403, guid: 55904b3465b0bbb4c9f09ea3c835df3c, type: 3}
   wind: {fileID: 4984400270765111023, guid: 4ced4aac10a193c41ba708f28429b518, type: 3}
+  grassRenderer: {fileID: 6741635715941149560, guid: 8ae2a797632ad94409ca29f2f2b754ba, type: 3}

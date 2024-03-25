@@ -39,9 +39,9 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        private ProvidedInstance<CharacterObject> characterObject;
         public readonly ObjectProxy<World> GlobalWorldProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
+        private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -101,9 +101,14 @@ namespace Global
 
             (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct),
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct),
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
+#if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsDevelopment, ct, nameof(ReportHandlingSettings)),
+#else
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsProduction, ct, nameof(ReportHandlingSettings)),
+#endif
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
+                );
         }
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
@@ -134,7 +139,9 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            var addressablesProvisioner = new AddressablesProvisioner();
+            var addressablesProvisioner = new AddressablesProvisioner()
+                                         .WithErrorTrace();
+
             container.AssetsProvisioner = addressablesProvisioner;
             container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
 
@@ -193,9 +200,9 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
-
-                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
+                new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

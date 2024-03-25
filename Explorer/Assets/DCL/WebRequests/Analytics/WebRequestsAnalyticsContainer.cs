@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
+    public class WebRequestsAnalyticsContainer : IMutableWebRequestsAnalyticsContainer
     {
         private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
         private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();

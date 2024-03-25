@@ -8,14 +8,14 @@ namespace DCL.Multiplayer.Connections.Messaging
     public readonly struct ReceivedMessage<T> : IDisposable where T: class, IMessage, new()
     {
         public readonly T Payload;
-        public readonly string FromSid;
+        public readonly string FromWalletId;
         private readonly Packet packet;
         private readonly IMultiPool multiPool;
 
-        public ReceivedMessage(T payload, Packet packet, string fromSid, IMultiPool multiPool)
+        public ReceivedMessage(T payload, Packet packet, string fromWalletId, IMultiPool multiPool)
         {
-            this.Payload = payload;
-            this.FromSid = fromSid;
+            Payload = payload;
+            FromWalletId = fromWalletId;
             this.multiPool = multiPool;
             this.packet = packet;
         }

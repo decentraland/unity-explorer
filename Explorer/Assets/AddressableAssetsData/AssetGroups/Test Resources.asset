@@ -48,7 +48,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 374b47588f593124fa043c20ba8cd91c
-    m_Address: Avatar_CelShading_TestAsset
+    m_Address: Avatar_Toon_TestAsset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

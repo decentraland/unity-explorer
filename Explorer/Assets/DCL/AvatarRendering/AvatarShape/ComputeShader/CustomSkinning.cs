@@ -1,7 +1,8 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -12,15 +13,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class CustomSkinning
     {
-        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
-            SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer,
-            AvatarShapeComponent avatarShapeComponent);
+        private static readonly int baseColor = Shader.PropertyToID("_BaseColor");
+
+        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
+            UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterial,
+            AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facialFeatureTexture);
 
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
 
-        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial,
-            AvatarShapeComponent shapeComponent);
+        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
+            AvatarShapeComponent shapeComponent, Dictionary<string, Texture> facialFeatureTexture);
 
         public abstract void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent);
 
@@ -47,6 +49,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.SkinColor);
             else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME))
                 avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.HairColor);
+
+            avatarMaterial.SetInt("_CullMode", (int)originalMaterial.GetFloat("_Cull"));
         }
     }
 }

@@ -76,6 +76,11 @@
         public const string NFT_SHAPE_WEB_REQUEST = nameof(NFT_SHAPE_WEB_REQUEST);
 
         /// <summary>
+        ///     Nft info related web request
+        /// </summary>
+        public const string NFT_INFO_WEB_REQUEST = nameof(NFT_INFO_WEB_REQUEST);
+
+        /// <summary>
         ///     Audio clip related web request
         /// </summary>
         public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);
@@ -181,14 +186,19 @@
         public const string RESTRICTED_ACTIONS = nameof(RESTRICTED_ACTIONS);
 
         /// <summary>
+        ///     Avatars Trigger Area for SDK components (e.g. CameraModeArea, AvatarModifierArea)
+        /// </summary>
+        public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
+
+        /// <summary>
         ///     CameraModeArea SDK component
         /// </summary>
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
-        ///     Avatars Trigger Area for SDK components (e.g. CameraModeArea, AvatarModifierArea)
+        ///     AvatarModifierArea SDK component
         /// </summary>
-        public const string CHARACTER_TRIGGER_AREA = nameof(CHARACTER_TRIGGER_AREA);
+        public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
 
         /// <summary>
         ///     Roads related systems
@@ -199,5 +209,9 @@
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
+
+        public const string LIVEKIT = nameof(LIVEKIT);
+
+        public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
     }
 }

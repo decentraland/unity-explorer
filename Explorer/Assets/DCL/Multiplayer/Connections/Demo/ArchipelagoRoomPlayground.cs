@@ -1,24 +1,22 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Character;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.FfiClients;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
-using DCL.Web3.Authenticators;
+using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Net.WebSockets;
-using System.Threading;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
@@ -26,6 +24,7 @@ namespace DCL.Multiplayer.Connections.Demo
     public class ArchipelagoRoomPlayground : MonoBehaviour
     {
         [SerializeField] private string aboutUrl = string.Empty;
+        [SerializeField] private LoonCharacterObject loonCharacterObject = new ();
 
         private BaseUnityLoopSystem system = null!;
 
@@ -43,28 +42,14 @@ namespace DCL.Multiplayer.Connections.Demo
 
             var adapterAddresses = new LogAdapterAddresses(
                 new RefinedAdapterAddresses(
-                    new WebRequestsAdapterAddresses()
+                    new WebRequestsAdapterAddresses(
+                        new LogWebRequestController(
+                            IWebRequestController.DEFAULT
+                        )
+                    )
                 ),
                 Debug.Log
             );
-
-            IWeb3IdentityCache identityCache = new ProxyIdentityCache(
-                new MemoryWeb3IdentityCache(),
-                new PlayerPrefsIdentityProvider(
-                    new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(),
-                    "ArchipelagoTestIdentity"
-                )
-            );
-
-            if (identityCache.Identity is null)
-            {
-                var identity = await new DappWeb3Authenticator.Default(identityCache)
-                   .LoginAsync(CancellationToken.None);
-
-                identityCache.Identity = identity;
-            }
-
-            identityCache.Identity = new LogWeb3Identity(identityCache.Identity);
 
             var memoryPool = new ArrayMemoryPool();
 
@@ -73,33 +58,22 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            var signFlow = new LiveConnectionArchipelagoSignFlow(
+            IArchipelagoSignFlow signFlow = new LiveConnectionArchipelagoSignFlow(
                 new LogArchipelagoLiveConnection(
                     new WebSocketArchipelagoLiveConnection(
                         new ClientWebSocket(),
                         memoryPool
                     )
-                ),
+                ).WithLog(),
                 memoryPool,
                 multiPool
-            );
+            ).WithLog();
 
-            var messagePipeHub = new MessagePipesHub();
-
-            //TODO message pipe with new approach, in PR with scene room
-            var roomHub = new LogMutableRoomHub(
-                new MessagePipedMutableRoomHub(
-                    new MutableRoomHub(multiPool),
-                    messagePipeHub,
-                    multiPool,
-                    memoryPool
-                ),
-                Debug.Log
-            );
-
-            var character = new ICharacterObject.Fake(null!, null!, null!, Vector3.zero);
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, character, aboutUrl);
-            system = new ConnectionRoomsSystem(world, archipelagoIslandRoom);
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, loonCharacterObject, aboutUrl);
+            var realFlowLoadingStatus = new RealFlowLoadingStatus();
+            realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
+            system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);
 
             while (this)
             {

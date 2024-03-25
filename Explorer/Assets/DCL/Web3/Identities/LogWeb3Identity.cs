@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Web3.Accounts;
 using DCL.Web3.Chains;
 using System;
@@ -10,7 +11,7 @@ namespace DCL.Web3.Identities
         private readonly IWeb3Identity origin;
         private readonly Action<string> log;
 
-        public LogWeb3Identity(IWeb3Identity origin) : this(origin, Debug.Log) { }
+        public LogWeb3Identity(IWeb3Identity origin) : this(origin, ReportHub.WithReport(ReportCategory.PROFILE).Log) { }
 
         public LogWeb3Identity(IWeb3Identity origin, Action<string> log)
         {

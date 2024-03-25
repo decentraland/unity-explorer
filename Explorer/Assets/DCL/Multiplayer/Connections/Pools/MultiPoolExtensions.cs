@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
@@ -11,8 +12,15 @@ namespace DCL.Multiplayer.Connections.Pools
 
         public static void TryRelease(this IMultiPool multiPool, IRoom? room)
         {
-            if (room is Room r)
-                multiPool.Release(r);
+            switch (room)
+            {
+                case Room r:
+                    multiPool.Release(r);
+                    break;
+                case LogRoom l:
+                    multiPool.Release(l);
+                    break;
+            }
         }
     }
 }

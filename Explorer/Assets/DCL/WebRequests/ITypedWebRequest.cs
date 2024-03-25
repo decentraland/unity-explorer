@@ -1,4 +1,6 @@
-﻿using UnityEngine.Networking;
+﻿using Cysharp.Threading.Tasks;
+using System.Threading;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
@@ -8,5 +10,11 @@ namespace DCL.WebRequests
     public interface ITypedWebRequest
     {
         UnityWebRequest UnityWebRequest { get; }
+    }
+
+    public static class TypedWebRequestExtensions
+    {
+        public static UniTask SendRequest(this ITypedWebRequest typedWebRequest, CancellationToken token) =>
+            typedWebRequest.UnityWebRequest.SendWebRequest()!.WithCancellation(token);
     }
 }

@@ -17,6 +17,10 @@ namespace DCL.Diagnostics
             { ReportCategory.ASSETS_PROVISION, ColorUtility.ToHtmlStringRGB(new Color(0.616f, 0.875f, 0.89f)) },
             { ReportCategory.GENERIC_WEB_REQUEST, ColorUtility.ToHtmlStringRGB(new Color(0.902f, 0.886f, 0.082f)) },
 
+            // Rooms
+            { ReportCategory.ARCHIPELAGO_REQUEST, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.182f)) },
+            { ReportCategory.LIVEKIT, ColorUtility.ToHtmlStringRGB(new Color(0.982f, 0.996f, 0.282f)) },
+
             // Engine uses whitish tones
             { ReportCategory.ENGINE, ColorUtility.ToHtmlStringRGB(new Color(219f / 255, 214f / 255, 200f / 255)) },
             { ReportCategory.CRDT, ColorUtility.ToHtmlStringRGB(new Color(130f / 255, 148f / 255, 135f / 255)) },

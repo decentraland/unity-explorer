@@ -66,4 +66,6 @@ namespace DCL.Backpack.BackpackBus
             SearchText = searchText;
         }
     }
+
+    public readonly struct BackpackPublishProfileCommand { }
 }

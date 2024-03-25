@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using Nethereum.Signer;
 using System;
 using UnityEngine;
@@ -9,7 +10,7 @@ namespace DCL.Web3.Accounts
         private readonly IWeb3Account origin;
         private readonly Action<string> log;
 
-        public LogWeb3Account(IWeb3Account origin) : this(origin, Debug.Log) { }
+        public LogWeb3Account(IWeb3Account origin) : this(origin, ReportHub.WithReport(ReportCategory.PROFILE).Log) { }
 
         public LogWeb3Account(IWeb3Account origin, Action<string> log)
         {

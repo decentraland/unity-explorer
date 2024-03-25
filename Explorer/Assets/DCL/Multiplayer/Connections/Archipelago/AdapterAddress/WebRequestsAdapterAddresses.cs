@@ -22,19 +22,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
         {
             try
             {
-                var result = await webRequestController.GetAsync(
+                GenericGetRequest result = await webRequestController.GetAsync(
                     new CommonArguments(URLAddress.FromString(aboutUrl)),
                     token,
                     ReportCategory.ARCHIPELAGO_REQUEST
                 );
 
-                var parsed = await result.CreateFromJson<FullBody>(WRJsonParser.Unity);
+                FullBody? parsed = await result.CreateFromJson<FullBody>(WRJsonParser.Unity);
                 return parsed.AdapterUrl();
             }
-            catch (Exception e)
-            {
-                throw new Exception("Error getting adapter url", e);
-            }
+            catch (Exception e) { throw new Exception("Error getting adapter url", e); }
         }
 
         [Serializable]

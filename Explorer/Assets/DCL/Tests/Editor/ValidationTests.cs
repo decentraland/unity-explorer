@@ -1,15 +1,22 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Utilities.Extensions;
+using Global.Dynamic;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.TestTools;
 using static Utility.Tests.TestsCategories;
+using Object = UnityEngine.Object;
 
 namespace DCL.Tests.Editor
 {
@@ -104,6 +111,15 @@ namespace DCL.Tests.Editor
 
                 Assert.Fail($"Missing references found in the following ScriptableObjects:\n{string.Join("\n", scriptableObject)}, {report}");
             }
+        }
+
+        [UnityTest]
+        public IEnumerator SettingsAreValid()
+        {
+            const string MAIN_SCENE = "Assets/Scenes/Main.unity";
+            EditorSceneManager.OpenScene(MAIN_SCENE);
+            var boot = Object.FindObjectOfType<MainSceneLoader>().EnsureNotNull("Boot not found!")!;
+            yield return boot.ValidateSettingsAsync().ToCoroutine();
         }
 
         private static string MissingClassFullName(ManagedReferenceMissingType missingType)

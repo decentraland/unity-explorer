@@ -84,12 +84,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
             bodyBuilder.Append("]}");
 
             using PoolExtensions.Scope<List<WearableDTO>> dtoPooledList = DTO_POOL.AutoScope();
+            List<WearableDTO> dtoTempBuffer = dtoPooledList.Value;
 
             await (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
-               .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+               .OverwriteFromJsonAsync(dtoTempBuffer, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             // List is not concurrent
-            lock (results) { results.AddRange(dtoPooledList.Value); }
+            lock (results) { results.AddRange(dtoTempBuffer); }
         }
     }
 }

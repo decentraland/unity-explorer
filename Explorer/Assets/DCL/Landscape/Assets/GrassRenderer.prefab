@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6741635715941149560
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4743957636192363251}
+  - component: {fileID: 425830686160039515}
+  m_Layer: 0
+  m_Name: GrassRenderer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4743957636192363251
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6741635715941149560}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -200.40157, y: 89.97148, z: -308.5257}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &425830686160039515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6741635715941149560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b2de55126dda534cac6d505fc89f393, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  colorMap: {fileID: 0}
+  terrainObjects: []
+  resIdx: 0
+  resolution: 1024
+  cullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  textureDetail: 0
+  useOriginalMaterials: 0
+  layerScaleSettings: []
+  terrainAlbedoShader: {fileID: 4800000, guid: 28d453dc10844f4418372200603a88e5, type: 3}
+  terrainAlbedoAddPassShader: {fileID: 4800000, guid: 1d1870faec500c446a59e746823c3838, type: 3}
+  terrainSplatMaskShader: {fileID: 4800000, guid: 97d1632355d56c14fb963d128feac8d8, type: 3}

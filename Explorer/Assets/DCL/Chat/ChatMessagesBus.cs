@@ -16,24 +16,25 @@ namespace DCL.Chat
 
         private void CreateTestChatEntry()
         {
+            string sender = "User" + Random.Range(0, 10);
+
             OnMessageAdded?.Invoke(
                 new ChatMessage(
                     StringUtils.GenerateRandomString(Random.Range(1,250)),
-                    "User" + Random.Range(0, 3),
-                    Random.Range(0, 2) == 0 ? "" : "#asd38",
+                    sender,
+                    Random.Range(0, 2) == 0 ? "" : sender,
                     Random.Range(0, 10) <= 2));
         }
 
         //Add message will be called from the message handling system of the livekit integration
-        public void AddMessage()
+
+        public void Send(string message)
         {
-            OnMessageAdded?.Invoke(ProcessChatMessage());
+            OnMessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true));
         }
 
-        //This function will get the message from the livekit integration and convert it to a ChatMessage
-        private ChatMessage ProcessChatMessage()
+        public void Dispose()
         {
-            return new ChatMessage();
         }
     }
 }

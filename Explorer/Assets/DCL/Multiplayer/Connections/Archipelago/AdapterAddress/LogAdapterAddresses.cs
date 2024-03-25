@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
         public async UniTask<string> AdapterUrlAsync(string aboutUrl, CancellationToken token)
         {
             log($"AdapterUrlAsync started with url: {aboutUrl}");
-            var result = await origin.AdapterUrlAsync(aboutUrl, token);
+            string? result = await origin.AdapterUrlAsync(aboutUrl, token);
             log($"AdapterUrlAsync finished with url: {aboutUrl} and with result: {result}");
             return result;
         }

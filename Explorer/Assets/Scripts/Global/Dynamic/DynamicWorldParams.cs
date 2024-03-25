@@ -22,10 +22,9 @@ namespace Global.Dynamic
 
     public struct DynamicWorldParams
     {
-        public IReadOnlyList<int2> StaticLoadPositions;
-        [Obsolete] public int SceneLoadRadius;
-        public List<string> Realms;
-        public Vector2Int StartParcel;
-        public bool EnableLandscape;
+        public IReadOnlyList<int2> StaticLoadPositions { get; init; }
+        public List<string> Realms { get; init; }
+        public Vector2Int StartParcel { get; init; }
+        public bool EnableLandscape { get; init; }
     }
 }

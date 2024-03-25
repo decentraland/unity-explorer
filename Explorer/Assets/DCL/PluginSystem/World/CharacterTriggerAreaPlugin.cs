@@ -48,10 +48,9 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            var characterTriggerAreaHandlerSystem = CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
-            finalizeWorldSystems.Add(characterTriggerAreaHandlerSystem);
-
-            CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder);
+            CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
+            var cleanupSystem = CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry);
+            finalizeWorldSystems.Add(cleanupSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
@@ -59,7 +58,7 @@ namespace DCL.PluginSystem.World
         private async UniTask CreateCharacterTriggerAreaPoolAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
         {
             CharacterTriggerArea.CharacterTriggerArea characterTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterTriggerAreaPrefab, ct: ct)).Value.GetComponent<CharacterTriggerArea.CharacterTriggerArea>();
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease);
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
             characterTriggerAreaPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterTriggerArea.CharacterTriggerArea>();
 
             cacheCleaner.Register(characterTriggerAreaPoolRegistry);
@@ -67,5 +66,8 @@ namespace DCL.PluginSystem.World
 
         private void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
             area.Dispose();
+
+        private void OnTriggerAreaPoolGet(CharacterTriggerArea.CharacterTriggerArea area) =>
+            area.Clear();
     }
 }

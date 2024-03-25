@@ -1,4 +1,6 @@
-﻿using DCL.Diagnostics;
+﻿#nullable enable
+
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

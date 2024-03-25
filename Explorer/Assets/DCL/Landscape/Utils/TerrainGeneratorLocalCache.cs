@@ -68,9 +68,9 @@ namespace DCL.Landscape.Utils
 
         private TerrainLocalCache() { }
 
-        public void SaveToFile(int seed, int chunkSize)
+        public void SaveToFile(int seed, int chunkSize, int version)
         {
-            string path = GetPath(seed, chunkSize);
+            string path = GetPath(seed, chunkSize, version);
 
             if (File.Exists(path))
                 File.Delete(path);
@@ -81,14 +81,14 @@ namespace DCL.Landscape.Utils
             formatter.Serialize(fileStream, this);
         }
 
-        private static string GetPath(int seed, int chunkSize) =>
-            Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}.data";
+        private static string GetPath(int seed, int chunkSize, int version) =>
+            Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
 
-        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, bool force)
+        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, bool force)
         {
             var localCache = new TerrainLocalCache();
 
-            string path = GetPath(seed, chunkSize);
+            string path = GetPath(seed, chunkSize, version);
 
             if (force && File.Exists(path))
                 File.Delete(path);
@@ -118,21 +118,23 @@ namespace DCL.Landscape.Utils
         private readonly bool isValid;
         private readonly int seed;
         private readonly int chunkSize;
+        private readonly int version;
 
-        public TerrainGeneratorLocalCache(int seed, int chunkSize)
+        public TerrainGeneratorLocalCache(int seed, int chunkSize, int version)
         {
             this.seed = seed;
             this.chunkSize = chunkSize;
+            this.version = version;
         }
 
         public async UniTask LoadAsync(bool force)
         {
-            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, force);
+            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, version, force);
         }
 
         public void Save()
         {
-            localCache.SaveToFile(seed, chunkSize);
+            localCache.SaveToFile(seed, chunkSize, version);
         }
 
         public bool IsValid() =>

@@ -5,12 +5,9 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
-using ECS.LifeCycle;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -20,7 +17,7 @@ namespace DCL.CharacterTriggerArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
-    public partial class CharacterTriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class CharacterTriggerAreaHandlerSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<CharacterTriggerArea> poolRegistry;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -38,11 +35,6 @@ namespace DCL.CharacterTriggerArea.Systems
         protected override void Update(float t)
         {
             if (!mainPlayerAvatarBaseProxy.Configured) return;
-
-            HandleEntityDestructionQuery(World);
-            HandleComponentRemovalQuery(World);
-            World.Remove<CharacterTriggerAreaComponent>(in HandleEntityDestruction_QueryDescription);
-            World.Remove<CharacterTriggerAreaComponent>(in HandleComponentRemoval_QueryDescription);
 
             UpdateCharacterTriggerAreaQuery(World);
         }
@@ -85,32 +77,6 @@ namespace DCL.CharacterTriggerArea.Systems
 
             if (!triggerAreaMonoBehaviour.BoxCollider.enabled)
                 triggerAreaMonoBehaviour.BoxCollider.enabled = true;
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref CharacterTriggerAreaComponent component)
-        {
-            poolRegistry.Release(component.MonoBehaviour);
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(ref CharacterTriggerAreaComponent component)
-        {
-            poolRegistry.Release(component.MonoBehaviour);
-        }
-
-        [Query]
-        private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent component)
-        {
-            poolRegistry.Release(component.MonoBehaviour);
-            World.Remove<CharacterTriggerAreaComponent>(entity);
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World);
         }
     }
 }

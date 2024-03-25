@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
@@ -22,6 +22,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Helpers;
+using Google.Protobuf.WellKnownTypes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -60,10 +62,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IObjectPool<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPool<UnityEngine.ComputeShader>>();
             computeShaderPool.Get().Returns(Object.Instantiate(computeShader));
 
-            Material celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_CelShading_TestAsset");
-            IObjectPool<Material> materialPool = Substitute.For<IObjectPool<Material>>();
-            materialPool.Get().Returns(new Material(celShadingMaterial), new Material(celShadingMaterial), new Material(celShadingMaterial));
-
             var promise = Promise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>
                     { "skin", "hair" }, Array.Empty<string>()),
@@ -79,8 +77,50 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
                 randomSkinColor, randomHairColor);
 
-            system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPool, computeShaderPool,
-                new TextureArrayContainer(TextureFormat.BC7), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4), new ObjectProxy<AvatarBase>());
+            var celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");
+            var materialPool = Substitute.For<IExtendedObjectPool<Material>>();
+            materialPool.Get().Returns(new Material(celShadingMaterial), new Material(celShadingMaterial), new Material(celShadingMaterial));
+
+            int TEST_RESOLUTION = 256;
+            Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
+            TextureArrayContainerFactory.ARRAY_TYPES_COUNT = 3;
+            var defaultTextures = new Dictionary<string, Texture>
+            {
+                {
+                    $"Main_{TEST_RESOLUTION}", texture
+                },
+                {
+                    $"Normal_{TEST_RESOLUTION}", texture
+                },
+                {
+                    $"Emmisive_{TEST_RESOLUTION}", texture
+                }
+            };
+            var poolMaterialSetup = new PoolMaterialSetup
+            {
+                Pool = materialPool, TextureArrayContainer = TextureArrayContainerFactory.Create(celShadingMaterial.shader, TEST_RESOLUTION,  defaultTextures)
+            };
+
+            var materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
+            materialPoolHandler.GetMaterialPool(Arg.Any<int>()).Returns(poolMaterialSetup);
+
+            var defaultFaceFeaturesHandler = Substitute.For<IDefaultFaceFeaturesHandler>();
+            defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(Arg.Any<BodyShape>()).Returns(new Dictionary<string, Texture>
+            {
+                {
+                    WearablesConstants.Categories.EYES, new Texture2D(1, 1)
+                },
+                {
+                    WearablesConstants.Categories.MOUTH, new Texture2D(1, 1)
+                },
+                {
+                    WearablesConstants.Categories.EYEBROWS, new Texture2D(1, 1)
+                }
+            });
+
+            system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
+                Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
+                new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler);
         }
 
         private IWearable GetMockWearable(string materialName, string category)
@@ -101,7 +141,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BONE_COUNT];
 
             //Creating a fake standard material
-            var fakeABMaterial = new Material(Shader.Find("Standard"))
+            var fakeABMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"))
             {
                 name = materialName,
             };
@@ -184,5 +224,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             //Assert
             Assert.AreEqual(world.Get<AvatarShapeComponent>(entity).InstantiatedWearables.Count, 0);
         }
+        
     }
 }

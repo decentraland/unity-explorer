@@ -8,7 +8,7 @@ namespace Utility
     public static class CancellationTokenExtensions
     {
         [Pure]
-        public static CancellationTokenSource SafeRestart(this CancellationTokenSource cancellationToken)
+        public static CancellationTokenSource SafeRestart(this CancellationTokenSource? cancellationToken)
         {
             try
             {
@@ -24,7 +24,7 @@ namespace Utility
         }
 
         [Pure]
-        public static CancellationTokenSource SafeRestartLinked(this CancellationTokenSource cancellationToken,
+        public static CancellationTokenSource SafeRestartLinked(this CancellationTokenSource? cancellationToken,
             params CancellationToken[] cancellationTokens)
         {
             try
@@ -40,7 +40,7 @@ namespace Utility
             return CancellationTokenSource.CreateLinkedTokenSource(cancellationTokens);
         }
 
-        public static void SafeCancelAndDispose(this CancellationTokenSource cancellationToken)
+        public static void SafeCancelAndDispose(this CancellationTokenSource? cancellationToken)
         {
             try
             {

@@ -167,53 +167,6 @@ namespace DCL.PlacesAPIService
             await client.SetPlaceVoteAsync(isUpvote, placeUUID, ct);
         }
 
-        public async UniTask SetPlaceFavoriteAsync(Vector2Int coords, bool isFavorite, CancellationToken ct)
-        {
-            PlacesData.PlaceInfo place = await GetPlaceAsync(coords, ct);
-            await SetPlaceFavoriteAsync(place.id, isFavorite, ct);
-        }
-
-        public async UniTask<bool> IsFavoritePlaceAsync(PlacesData.PlaceInfo placeInfo, CancellationToken ct, bool renewCache = false)
-        {
-            IReadOnlyList<PlacesData.PlaceInfo> favorites = await GetFavoritesAsync(-1, -1, ct, renewCache);
-
-            foreach (PlacesData.PlaceInfo favorite in favorites)
-            {
-                if (favorite.id == placeInfo.id)
-                    return true;
-            }
-
-            return false;
-        }
-
-        public async UniTask<bool> IsFavoritePlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
-        {
-            // We could call IsFavoritePlace with the placeInfo and avoid code repetition, but this way we can have the calls in parallel
-            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(GetPlaceAsync(coords, ct, renewCache), GetFavoritesAsync(0, 1000, ct, renewCache));
-
-            foreach (PlacesData.PlaceInfo favorite in favorites)
-            {
-                if (favorite.id == placeInfo.id)
-                    return true;
-            }
-
-            return false;
-        }
-
-        public async UniTask<bool> IsFavoritePlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false)
-        {
-            // We could call IsFavoritePlace with the placeInfo and avoid code repetition, but this way we can have the calls in parallel
-            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(GetPlaceAsync(placeUUID, ct, renewCache), GetFavoritesAsync(0, 1000, ct, renewCache));
-
-            foreach (PlacesData.PlaceInfo favorite in favorites)
-            {
-                if (favorite.id == placeInfo.id)
-                    return true;
-            }
-
-            return false;
-        }
-
         internal void CachePlace(PlacesData.PlaceInfo placeInfo)
         {
             placesById[placeInfo.id] = placeInfo;

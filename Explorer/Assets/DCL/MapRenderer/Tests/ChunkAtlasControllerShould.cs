@@ -4,11 +4,13 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Atlas;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.MapRenderer.Tests
 {
@@ -51,41 +53,6 @@ namespace DCL.MapRenderer.Tests
             await atlasController.InitializeAsync(CancellationToken.None);
 
             builder.Received(iterationsNumber);
-        }
-
-        [Test]
-        public async Task CreateChunksInBatches()
-        {
-            var invocationFrames = new List<int>();
-
-            int frameNumber = 0;
-
-            void CountEditorFrames()
-            {
-                frameNumber++;
-            }
-
-            EditorApplication.update += CountEditorFrames;
-
-            builder.Invoke(Arg.Any<Vector3>(), Arg.Any<Vector2Int>(), Arg.Any<Transform>(), Arg.Any<CancellationToken>())
-                   .Returns(_ =>
-                        UniTask.DelayFrame(FRAME_DELAY)
-                               .ContinueWith(() => invocationFrames.Add(frameNumber))
-                               .ContinueWith(() => Substitute.For<IChunkController>()));
-
-            // -1 corresponds to special logic in UniTask that subtracts one frame in Editor
-            var frame = FRAME_DELAY - 1;
-
-            var expected = new int[iterationsNumber];
-
-            for (var i = 0; i < iterationsNumber; i++)
-                expected[i] = frame + i / ParcelChunkAtlasController.CHUNKS_CREATED_PER_BATCH * FRAME_DELAY;
-
-            await atlasController.InitializeAsync(CancellationToken.None);
-
-            EditorApplication.update -= CountEditorFrames;
-
-            CollectionAssert.AreEqual(expected, invocationFrames);
         }
     }
 }

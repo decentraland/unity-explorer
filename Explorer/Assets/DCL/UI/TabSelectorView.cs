@@ -5,9 +5,6 @@ namespace DCL.UI
 {
     public class TabSelectorView : MonoBehaviour
     {
-        //[field: SerializeField]
-        //public ExploreSections section;
-
         [field: SerializeField]
         public Toggle TabSelectorToggle { get; private set; }
 

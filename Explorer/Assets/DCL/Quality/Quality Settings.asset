@@ -67,16 +67,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c01700fd266d6914ababb731e09af2eb, type: 3}
   m_Name: DepthOfField
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   mode:
     m_OverrideState: 1
     m_Value: 1
   gaussianStart:
-    m_OverrideState: 0
-    m_Value: 10
+    m_OverrideState: 1
+    m_Value: 800
   gaussianEnd:
-    m_OverrideState: 0
-    m_Value: 30
+    m_OverrideState: 1
+    m_Value: 1000
   gaussianMaxRadius:
     m_OverrideState: 0
     m_Value: 1
@@ -145,12 +145,10 @@ MonoBehaviour:
     lensFlareEnabled: 0
     lensFlareComponent: {fileID: 2726953631672280614, guid: 91fed6d77ceea8246b3d136a8e67a12c, type: 3}
   allRendererFeatures:
-  - {fileID: 6679116756635411162, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: -2846649767180898789, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
-  - {fileID: 6679116756635411162, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: -7778234019364369118, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
-  - {fileID: 3744200642740411402, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -5135254060917694649, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
+  - {fileID: -2287974757364210156, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   updateInEditor: 1
 --- !u!114 &627882838885633079
 MonoBehaviour:
@@ -164,7 +162,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb60a22f311433c4c962b888d1393f88, type: 3}
   m_Name: PaniniProjection
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   distance:
     m_OverrideState: 1
     m_Value: 0.1362

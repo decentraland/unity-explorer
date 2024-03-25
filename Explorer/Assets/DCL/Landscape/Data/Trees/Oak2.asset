@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Oak2
   m_EditorClassIdentifier: 
-  asset: {fileID: 5302872941072421502, guid: 25f88f21df341e946a5da5e744b8609e, type: 3}
+  asset: {fileID: 757561452486300604, guid: f03a5d1da28bc6e4098274181dec6ed6, type: 3}
   noiseData: {fileID: 11400000, guid: 4b5bbd9f44aa16040bbf02fd016b21cc, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}

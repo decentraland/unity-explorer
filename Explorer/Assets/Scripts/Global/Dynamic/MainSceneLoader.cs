@@ -7,9 +7,6 @@ using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
-using DCL.SceneLoadingScreens;
-using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -19,7 +16,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
 
@@ -83,14 +79,15 @@ namespace Global.Dynamic
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
 #if !UNITY_EDITOR
-    #if !DEVELOPMENT_BUILD
-        // To avoid configuration issues, force full flow on build
-        showSplash = true;
-        showAuthentication = true;
-        showLoading = true;
-    #endif
+#if !DEVELOPMENT_BUILD
 
-    enableLandscape = true;
+            // To avoid configuration issues, force full flow on build
+            showSplash = true;
+            showAuthentication = true;
+            showLoading = true;
+#endif
+
+            enableLandscape = true;
 #endif
 
             try
@@ -134,7 +131,6 @@ namespace Global.Dynamic
                     new DynamicWorldParams
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
-                        SceneLoadRadius = settings.SceneLoadRadius,
                         Realms = settings.Realms,
                         StartParcel = settings.StartPosition,
                         EnableLandscape = enableLandscape,
@@ -142,7 +138,7 @@ namespace Global.Dynamic
                 );
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository);
+                    identityCache, dynamicWorldContainer.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
 
                 if (!isLoaded)
                 {
@@ -151,7 +147,7 @@ namespace Global.Dynamic
                 }
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
-                    dynamicWorldContainer!.ProfileRepository);
+                    dynamicWorldContainer!.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -221,6 +217,35 @@ namespace Global.Dynamic
 
             IRealmController realmController = dynamicWorldContainer!.RealmController;
             await realmController.SetRealmAsync(URLDomain.FromString(realm), ct);
+        }
+
+        [ContextMenu(nameof(ValidateSettingsAsync))]
+        public async UniTask ValidateSettingsAsync()
+        {
+            using var scope = new CheckingScope(ReportData.UNSPECIFIED);
+
+            await UniTask.WhenAll(
+                globalPluginSettingsContainer.EnsureValidAsync(),
+                scenePluginSettingsContainer.EnsureValidAsync()
+            );
+
+            ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
+        }
+
+        private readonly struct CheckingScope : IDisposable
+        {
+            private readonly ReportData data;
+
+            public CheckingScope(ReportData data)
+            {
+                this.data = data;
+                ReportHub.Log(data, "Start checking");
+            }
+
+            public void Dispose()
+            {
+                ReportHub.Log(data, "Finish checking");
+            }
         }
     }
 }

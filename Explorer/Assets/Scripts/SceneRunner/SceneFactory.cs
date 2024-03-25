@@ -18,8 +18,10 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.Prioritization.Components;
 using Microsoft.ClearScript;
 using MVC;
@@ -51,6 +53,8 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
+        private readonly IRealmData realmData;
+        private IGlobalWorldActions globalWorldActions;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -63,7 +67,8 @@ namespace SceneRunner
             IEthereumApi ethereumApi,
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            IRealmData realmData)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -76,6 +81,7 @@ namespace SceneRunner
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
+            this.realmData = realmData;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -126,6 +132,11 @@ namespace SceneRunner
         public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
             CreateSceneAsync(sceneData, partitionProvider, ct);
 
+        public void SetGlobalWorldActions(IGlobalWorldActions actions)
+        {
+            globalWorldActions = actions;
+        }
+
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
@@ -142,9 +153,10 @@ namespace SceneRunner
             var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
             var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
+            var worldTimeProvider = new WorldTimeProvider();
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync, worldTimeProvider);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
@@ -199,11 +211,15 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
-            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider);
+            var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
 
-            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
+            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
+
+            var sceneApiImplementation = new SceneApiImplementation(sceneData);
+            sceneRuntime.RegisterSceneApi(sceneApiImplementation);
+
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 

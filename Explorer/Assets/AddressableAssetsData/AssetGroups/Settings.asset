@@ -28,12 +28,22 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6c1c35a66af59874a8373ebcd51572a4
-    m_Address: Reports Settings
+    m_Address: Reports Settings (Production)
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: df2e68b45160aee4eaaf2475e21525e4
     m_Address: Character Controller Settings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0dd75559898ca8d4db9fc8ab99ac2269
+    m_Address: Reports Settings (Development)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 495d936d8dfe78444abfd5ff3e260159
+    m_Address: Multiplayer SpatialState Settings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

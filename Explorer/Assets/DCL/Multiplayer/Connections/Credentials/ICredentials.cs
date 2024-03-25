@@ -14,14 +14,14 @@ namespace DCL.Multiplayer.Connections.Credentials
 
         class Const : ICredentials
         {
+            public string Url { get; }
+            public string AuthToken { get; }
+
             public Const(string url, string authToken)
             {
                 Url = url;
                 AuthToken = authToken;
             }
-
-            public string Url { get; }
-            public string AuthToken { get; }
         }
     }
 
@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Credentials
             $"Url: {credentials.Url}, AuthToken: {credentials.AuthToken}";
 
         public static Task<bool> ConnectAsync<T>(this IRoom room, T credentials, CancellationToken token) where T: ICredentials =>
-            room.Connect(credentials.Url, credentials.AuthToken, token);
+            room.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 
         public static async Task EnsuredConnectAsync<T>(this IRoom room, T credentials, IMultiPool multiPool, CancellationToken token) where T: ICredentials
         {

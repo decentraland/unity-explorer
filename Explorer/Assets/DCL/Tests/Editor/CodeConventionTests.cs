@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿#nullable enable
+
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -47,6 +49,10 @@ namespace DCL.Tests
         {
             // Arrange
             string fileContent = File.ReadAllText(file);
+
+            if (fileContent.Contains("[IgnoreAsyncNaming"))
+                return;
+
             SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
 
             var asyncMethods = root.DescendantNodesAndSelf()

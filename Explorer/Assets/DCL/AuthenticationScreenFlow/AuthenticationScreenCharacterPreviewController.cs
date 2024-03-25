@@ -8,12 +8,20 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenCharacterPreviewController : CharacterPreviewControllerBase
     {
+        private readonly List<URN> shortenedWearables = new ();
+
         public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
             : base(view, previewFactory, world) { }
 
         public override void Initialize(Avatar avatar)
         {
-            previewAvatarModel.Wearables = new List<URN>(avatar.SharedWearables);
+            shortenedWearables.Clear();
+
+            foreach (URN urn in avatar.Wearables)
+                shortenedWearables.Add(urn.Shorten());
+
+            previewAvatarModel.Wearables = shortenedWearables;
+
             base.Initialize(avatar);
         }
     }

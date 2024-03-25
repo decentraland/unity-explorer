@@ -7,6 +7,7 @@ using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
+using DCL.AvatarRendering;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -17,7 +18,10 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
         [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettings { get; private set; }
+        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
 
         [field: SerializeField]
         public PartitionSettingsRef PartitionSettings { get; private set; }
@@ -64,6 +68,12 @@ namespace DCL.PluginSystem.Global
         public class LODSettingsRef : AssetReferenceT<LODSettingsAsset>
         {
             public LODSettingsRef(string guid) : base(guid) { }
+        }
+        
+        [Serializable]
+        public class AvatarRandomizerSettingsRef : AssetReferenceT<AvatarRandomizerAsset>
+        {
+            public AvatarRandomizerSettingsRef(string guid) : base(guid) { }
         }
 
         [Serializable]

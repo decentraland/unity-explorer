@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
@@ -8,19 +9,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
     public class InteriorDataPipe : IDataPipe, IInterior<IDataPipe>
     {
-        private IDataPipe? assigned;
+        private IDataPipe assigned = NullDataPipe.INSTANCE;
 
         public event ReceivedDataDelegate? DataReceived;
 
         public void Assign(IDataPipe value, out IDataPipe? previous)
         {
             previous = assigned;
-
-            if (previous != null)
-                previous.DataReceived -= OnDataReceived;
-
+            previous.DataReceived -= OnDataReceived;
             assigned = value;
             value.DataReceived += OnDataReceived;
+
+            previous = previous is NullDataPipe ? null : previous;
         }
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind) =>

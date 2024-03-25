@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,8 @@ namespace SceneRunner.EmptyScene
         /// </summary>
         public SceneShortInfo SceneShortInfo { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
+        public ISceneContent SceneContent { get; }
+        public SceneEntityDefinition SceneEntityDefinition { get; }
 
         public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;
 

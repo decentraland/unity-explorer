@@ -50,8 +50,13 @@ MonoBehaviour:
     - rid: 6784895265395441664
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ReportHandlingSettings>k__BackingField:
-          m_AssetGUID: c9893189605d84349b03f89a01d6abca
+        <ReportHandlingSettingsDevelopment>k__BackingField:
+          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ReportHandlingSettingsProduction>k__BackingField:
+          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

@@ -9,6 +9,7 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine.Assertions;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
 
@@ -32,12 +33,12 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
 
-        private AuthenticationScreenCharacterPreviewController characterPreviewController;
+        private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
-        private World world;
+        private World? world;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -62,7 +63,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
-            characterPreviewController.Dispose();
+            characterPreviewController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -92,7 +93,8 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.LoginInProgress);
             });
 
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world);
+            Assert.IsNotNull(world);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
         }
 
         protected override void OnBeforeViewShow()
@@ -166,7 +168,8 @@ namespace DCL.AuthenticationScreenFlow
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
             profileNameLabel!.Value = profile?.Name;
 
-            if (profile != null) { characterPreviewController.Initialize(profile.Avatar); }
+            if (profile != null)
+                characterPreviewController!.Initialize(profile.Avatar);
         }
 
         private void ChangeAccount()
@@ -177,7 +180,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
             }
 
-            characterPreviewController.OnHide();
+            characterPreviewController!.OnHide();
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
@@ -185,9 +188,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            characterPreviewController!.OnHide();
             lifeCycleTask!.TrySetResult();
             lifeCycleTask = null;
-            characterPreviewController.OnHide();
         }
 
         private void SwitchState(ViewState state)
