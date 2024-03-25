@@ -41,5 +41,10 @@ namespace DCL.Emoji
 
         public void OnPointerExit(PointerEventData eventData) =>
             Tooltip.SetActive(false);
+
+        private void OnDisable()
+        {
+            Tooltip.gameObject.SetActive(false);
+        }
     }
 }

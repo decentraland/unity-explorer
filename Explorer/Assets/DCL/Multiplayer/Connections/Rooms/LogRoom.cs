@@ -4,6 +4,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
@@ -11,8 +12,6 @@ using LiveKit.Rooms.Tracks.Hub;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
-using Utility.CodeConventions;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -26,6 +25,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IActiveSpeakers ActiveSpeakers { get; }
         public IParticipantsHub Participants { get; }
         public IDataPipe DataPipe { get; }
+        public IRoomInfo Info { get; }
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -50,9 +50,10 @@ namespace DCL.Multiplayer.Connections.Rooms
             this.origin = origin;
             this.log = log;
 
-            ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers);
-            Participants = new LogParticipantsHub(origin.Participants);
-            DataPipe = new LogDataPipe(origin.DataPipe);
+            ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers, log);
+            Participants = new LogParticipantsHub(origin.Participants, log);
+            DataPipe = new LogDataPipe(origin.DataPipe, log);
+            Info = new LogRoomInfo(origin.Info, log);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
@@ -140,19 +141,24 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackPublished?.Invoke(publication, participant);
         }
 
-        [IgnoreAsyncNaming("Depends on the contract that is without async suffix")]
-        public async Task<bool> Connect(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
+        public void UpdateLocalMetadata(string metadata)
+        {
+            log($"{PREFIX} update local metadata: '{metadata}'");
+            origin.UpdateLocalMetadata(metadata);
+        }
+
+        public async Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
             log($"{PREFIX} connect start {url} with token {authToken}");
-            bool result = await origin.Connect(url, authToken, cancelToken, autoSubscribe);
+            bool result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
             log($"{PREFIX} connect start {url} with token {authToken} with result {result}");
             return result;
         }
 
-        public void Disconnect()
+        public async Task DisconnectAsync(CancellationToken token)
         {
             log($"{PREFIX} disconnect start");
-            origin.Disconnect();
+            await origin.DisconnectAsync(token);
             log($"{PREFIX} disconnect end");
         }
     }
