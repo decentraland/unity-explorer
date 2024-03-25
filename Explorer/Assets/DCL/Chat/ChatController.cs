@@ -204,10 +204,7 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
-            const int MINIMAL_LENGHT = 2;
-
-            if (inputText.Length > MINIMAL_LENGHT)
-                currentMessage = inputText;
+            currentMessage = inputText;
         }
 
         private void HandleEmojiSearch(string inputText)
@@ -247,9 +244,11 @@ namespace DCL.Chat
             }
 
             viewInstance.ResetChatEntriesFadeout();
+            chatMessages.Reverse();
             chatMessages.Add(chatMessage);
+            chatMessages.Reverse();
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
-            viewInstance.LoopList.MovePanelToItemIndex(chatMessages.Count - 1, 0);
+            viewInstance.LoopList.MovePanelToItemIndex(0, 0);
         }
 
         public override void Dispose()
