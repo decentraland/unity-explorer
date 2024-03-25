@@ -99,7 +99,6 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             Entity entity = world.Create(
                 profile.Profile,
-                PartitionComponent.TOP_PRIORITY,
                 transformComp,
                 new CharacterAnimationComponent(),
                 new RemotePlayerMovementComponent(profile.WalletId, queuePool),
