@@ -64,7 +64,12 @@ namespace DCL.DebugUtilities.UIBindings
         public void Update()
         {
             if (tempValueIsDirty)
+            {
+                if (element == null)
+                    throw new Exception("Element is not attached, did you forget to add it to the builder?");
+
                 element.value = tempValue;
+            }
 
             tempValueIsDirty = false;
         }

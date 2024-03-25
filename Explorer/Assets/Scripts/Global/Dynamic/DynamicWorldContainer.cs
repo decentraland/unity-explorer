@@ -44,6 +44,7 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -175,7 +176,7 @@ namespace Global.Dynamic
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, multiPool);
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
             container.RealmController = new RealmController(
                 identityCache,
@@ -215,12 +216,29 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, container.ProfileRepository);
 
+            var remotePoses = new DebounceRemotePoses(
+                new RemotePoses(roomHub)
+            );
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
+                new MultiplayerPlugin(
+                    archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    roomHub,
+                    container.ProfileRepository,
+                    container.ProfileBroadcast,
+                    debugBuilder,
+                    realFlowLoadingStatus,
+                    entityParticipantTable,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    messagePipesHub,
+                    remotePoses,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    queuePoolFullMovementMessage
+                ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesCache, multiplayerEmotesMessageBus),
-                new InputPlugin(dclInput, emotesCache, multiplayerEmotesMessageBus),
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub, queuePoolFullMovementMessage),
-                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
+                new InputPlugin(dclInput, emotesCache, multiplayerEmotesMessageBus),                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData, multiplayerEmotesMessageBus, debugBuilder),
