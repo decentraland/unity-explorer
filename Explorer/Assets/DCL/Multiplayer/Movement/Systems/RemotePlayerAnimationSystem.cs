@@ -20,7 +20,11 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         private const float BLEND_EPSILON = 0.01f;
         private const float JUMP_EPSILON = 0.01f;
-        private const float MOVEMENT_EPSILON = 0.1f;
+        private const float MOVEMENT_EPSILON = 0.01f;
+
+        // Found empirically and diverges a bit from the character settings (where speeds are RUN = 10, JOG = 8, WALK = 1.5)
+        private const float RUN_SPEED_THRESHOLD = 9.5f;
+        private const float JOG_SPEED_THRESHOLD = 4f;
 
         private readonly RemotePlayerExtrapolationSettings settings;
 
@@ -117,8 +121,9 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             float speed = Vector3.Distance(intComp.Start.position, intComp.End.position) / intComp.TotalDuration;
 
-            float midPointBlendValue = speed > 9.5f ? 3f :
-                speed > 4 ? 2f : 1f;
+            // 3 - run, 2 - jog, 1 - walk.
+            float midPointBlendValue = speed > RUN_SPEED_THRESHOLD ? 3 :
+                speed > JOG_SPEED_THRESHOLD ? 2 : 1;
 
             float lerpValue = intComp.Time / intComp.TotalDuration;
 

@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private static void HandleFirstMessage(ref CharacterTransform transComp, NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
+        private static void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             transComp.Transform.position = firstRemote.position;
 
