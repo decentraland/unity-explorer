@@ -72,8 +72,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetBool(hash, value);
         }
 
-        public bool GetAnimatorBool(int hash) =>
-            avatarAnimator.GetBool(hash);
+        public float GetAnimatorFloat(int hash) =>
+            avatarAnimator.GetFloat(hash);
     }
 
     public interface IAvatarView
@@ -84,6 +84,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void SetAnimatorBool(int hash, bool value);
 
-        bool GetAnimatorBool(int hash);
+        float GetAnimatorFloat(int hash);
     }
 }

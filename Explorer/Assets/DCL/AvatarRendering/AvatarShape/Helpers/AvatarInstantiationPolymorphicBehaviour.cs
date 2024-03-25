@@ -43,14 +43,6 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                 {
                     var regularAsset = (WearableRegularAsset)mainAsset;
 
-                    if (regularAsset.MainAsset == null)
-                    {
-                        ReportHub.LogError(reportCategory,
-                            $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
-
-                        return null;
-                    }
-
                     CachedWearable instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(regularAsset, parent);
 
