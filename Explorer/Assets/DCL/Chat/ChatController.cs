@@ -7,6 +7,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -76,6 +77,8 @@ namespace DCL.Chat
 
         protected override void OnViewInstantiated()
         {
+            viewInstance.OnChatViewPointerEnter += OnChatViewPointerEnter;
+            viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
@@ -96,6 +99,18 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
+        }
+
+        private void OnChatViewPointerExit()
+        {
+            Debug.Log("CBLOCK destroy camera block");
+            world.Remove<CameraBlockerComponent>(playerEntity);
+        }
+
+        private void OnChatViewPointerEnter()
+        {
+            Debug.Log("CBLOCK create camera block");
+            world.AddOrGet(playerEntity, new CameraBlockerComponent());
         }
 
         private void AddEmojiFromSuggestion(string emojiCode)

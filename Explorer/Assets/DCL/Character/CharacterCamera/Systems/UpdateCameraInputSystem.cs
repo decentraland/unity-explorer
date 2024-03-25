@@ -27,7 +27,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(MovementBlockerComponent))]
+        [None(typeof(CameraBlockerComponent))]
         private void UpdateInput(ref CameraInput cameraInput, ref CameraComponent cameraComponent, in CursorComponent cursorComponent)
         {
             cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
