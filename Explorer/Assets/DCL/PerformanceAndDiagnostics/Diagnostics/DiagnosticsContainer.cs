@@ -21,6 +21,7 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings)
         {
+            settings.NotifyErrorDebugLogDisabled();
             List<(ReportHandler, IReportHandler)> handlers = new (2);
 
             if (settings.IsEnabled(ReportHandler.DebugLog))

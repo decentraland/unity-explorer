@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using System;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
@@ -23,6 +22,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                 return;
 
             previousNotify = DateTime.UtcNow;
+            origin.NotifyRemotes();
         }
 
         public void Dispose()
