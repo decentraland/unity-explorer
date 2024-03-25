@@ -13,8 +13,6 @@ namespace SceneRunner.Scene
         public const int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
         [SerializeField]
-        internal bool ignoreValidation;
-        [SerializeField]
         internal string version;
         [SerializeField]
         internal string[] files;
@@ -26,9 +24,6 @@ namespace SceneRunner.Scene
 
         public bool ValidateVersion()
         {
-            if (ignoreValidation)
-                return true;
-            
             if (string.IsNullOrEmpty(version))
                 return true;
 

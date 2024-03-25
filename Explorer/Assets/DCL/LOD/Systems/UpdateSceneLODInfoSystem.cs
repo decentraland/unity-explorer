@@ -174,19 +174,17 @@ namespace DCL.LOD.Systems
             else
             {
                 var assetBundleIntention =  GetAssetBundleIntention.FromHash(newLODKey + PlatformUtils.GetPlatform(),
-                    permittedSources: AssetSource.WEB,
-                    customEmbeddedSubDirectory: URLSubdirectory.FromString("lods"));
+                    permittedSources: AssetSource.EMBEDDED,
+                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES[newLODKey.Level]);
                 //TODO: (ASK MISHA) Is there some way to avoid this allocation?
-                assetBundleIntention.Manifest =  new SceneAssetBundleManifest(URLDomain.FromString("https://ab-cdn-decentraland-org-contentbucket-4e8caab.s3.amazonaws.com/LOD/"),
+                assetBundleIntention.Manifest =  new SceneAssetBundleManifest(LODUtils.LOD_WEB_URL,
                     new SceneAbDto
                     {
                         files = new[]
                         {
                             newLODKey + PlatformUtils.GetPlatform()
                         },
-                        version = newLODKey.Level.ToString(), ignoreValidation = true
                     });
-                
                 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World, assetBundleIntention, partitionComponent);
