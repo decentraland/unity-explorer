@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
-            IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;

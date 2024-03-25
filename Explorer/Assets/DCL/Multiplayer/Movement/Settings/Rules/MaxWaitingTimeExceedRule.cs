@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage _,
+            in NetworkMovementMessage _,
             in CharacterAnimationComponent __,
             in StunComponent ___,
             in MovementInputComponent ____,
