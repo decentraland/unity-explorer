@@ -88,8 +88,7 @@ namespace DCL.UserInAppInitializationFlow
 
             await LoadPlayerAvatar(world, ownPlayerEntity, ownProfile, ct);
 
-            if (enableLandscape)
-                await LoadLandscapeAsync(ct);
+            await LoadLandscapeAsync(ct);
 
             await TeleportToSpawnPointAsync(ct);
 
@@ -103,13 +102,16 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask LoadLandscapeAsync(CancellationToken ct)
         {
-            var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+            if (enableLandscape)
+            {
+                var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            await UniTask.WhenAny(
-                landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]),
-                landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
+                await UniTask.WhenAny(
+                    landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]),
+                    landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
+            }
 
-            loadingStatus.SetStage(LandscapeLoaded);
+            loadReport!.ProgressCounter.Value = loadingStatus.SetStage(LandscapeLoaded);
         }
 
         /// <summary>
