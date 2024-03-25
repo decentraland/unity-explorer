@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
@@ -50,9 +52,19 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
-            var name = packet.MessageCase.ToString()!;
-            NotifySubscribersAsync(name, packet, participant).Forget();
+            try
+            {
+                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
+                var name = packet.MessageCase.ToString()!;
+                NotifySubscribersAsync(name, packet, participant).Forget();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(
+                    ReportCategory.LIVEKIT,
+                    $"Invalid data arrived from participant {participant.Identity}: {e.Message} : {data.HexReadableString()}"
+                );
+            }
         }
 
         private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant)
@@ -70,7 +82,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             var currentType = ofCase.ToString()!;
 
-            SubscribersList(currentType)
+            var list = SubscribersList(currentType);
+
+            if (list.Count > 0)
+                throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {currentType}");
+
+            list
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;

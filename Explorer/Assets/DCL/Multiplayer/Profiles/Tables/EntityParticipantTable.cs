@@ -13,6 +13,8 @@ namespace DCL.Multiplayer.Profiles.Tables
         private readonly Dictionary<string, Entity> walletIdToEntity = new ();
         private readonly Dictionary<Entity, string> entityToWalletId = new ();
 
+        public int Count => walletIdToEntity.Count;
+
         public Entity Entity(string walletId)
         {
             try { return walletIdToEntity[walletId]; }
