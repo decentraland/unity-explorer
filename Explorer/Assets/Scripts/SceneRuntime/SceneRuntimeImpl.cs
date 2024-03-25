@@ -26,8 +26,8 @@ namespace SceneRuntime
         private readonly SceneModuleLoader moduleLoader;
         private readonly UnityOpsApi unityOpsApi; // TODO: This is only needed for the LifeCycle
         private readonly ScriptObject sceneCode;
-        private readonly ScriptObject updateFunc;
-        private readonly ScriptObject startFunc;
+        private ScriptObject updateFunc;
+        private ScriptObject startFunc;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
@@ -66,7 +66,10 @@ namespace SceneRuntime
 
             // Load and Compile Js Modules
             moduleLoader.LoadAndCompileJsModules(engine, jsModules);
+        }
 
+        public void ExecuteSceneJson()
+        {
             engine.Execute(@"
             const __internalScene = require('~scene.js')
             const __internalOnStart = async function () {

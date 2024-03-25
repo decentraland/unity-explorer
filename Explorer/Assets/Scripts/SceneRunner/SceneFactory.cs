@@ -236,6 +236,8 @@ namespace SceneRunner
             var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
 
+            sceneRuntime.ExecuteSceneJson();
+
             return new SceneFacade(
                 sceneRuntime,
                 ecsWorldFacade,
