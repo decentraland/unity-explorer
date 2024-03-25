@@ -10,35 +10,37 @@ namespace DCL.Multiplayer.Movement
     {
         public const string TEST_ID = "SelfReplica";
 
-        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
-        private readonly SimplePriorityQueue<FullMovementMessage> queue;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
+        private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
         private bool disposed;
 
-        public readonly string PlayerWalletId;
-
-        public FullMovementMessage PastMessage;
+        public NetworkMovementMessage PastMessage;
 
         public bool Initialized;
         public bool WasTeleported;
+        public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<FullMovementMessage>? Queue => disposed ? null : queue;
+        public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
 
-        public RemotePlayerMovementComponent(string playerWalletId, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
-            PlayerWalletId = playerWalletId;
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
             disposed = false;
 
-            PastMessage = new FullMovementMessage();
+            PastMessage = new NetworkMovementMessage();
             Initialized = false;
             WasTeleported = false;
+
+            WasPassedThisFrame = false;
         }
 
-        public void AddPassed(FullMovementMessage message, bool wasTeleported = false)
+        public void AddPassed(NetworkMovementMessage message, bool wasTeleported = false)
         {
             PastMessage = message;
             WasTeleported = wasTeleported;
+
+            WasPassedThisFrame = true;
         }
 
         public void Dispose()
