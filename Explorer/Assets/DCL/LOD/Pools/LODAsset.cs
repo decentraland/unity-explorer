@@ -21,10 +21,10 @@ namespace DCL.LOD
         public AssetBundleData AssetBundleReference;
         public readonly bool LoadingFailed;
         private readonly ILODAssetsPool Pool;
-        private readonly TextureArraySlot[] Slots;
+        private readonly TextureArraySlot_ToDelete[] Slots;
         private readonly IExtendedObjectPool<Material> MaterialPool;
 
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot[] slots, IExtendedObjectPool<Material> materialPool)
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot_ToDelete[] slots, IExtendedObjectPool<Material> materialPool)
         {
             LodKey = lodKey;
             Root = root;
@@ -46,7 +46,7 @@ namespace DCL.LOD
             AssetBundleReference = assetBundleReference;
             LoadingFailed = false;
             Pool = pool;
-            Slots = Array.Empty<TextureArraySlot>();
+            Slots = Array.Empty<TextureArraySlot_ToDelete>();
             ;
             MaterialPool = null;
             
@@ -59,7 +59,7 @@ namespace DCL.LOD
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.Failling_LOD_Amount.Value++;
             LodKey = lodKey;
-            Slots = Array.Empty<TextureArraySlot>();
+            Slots = Array.Empty<TextureArraySlot_ToDelete>();
             LoadingFailed = true;
             Root = null;
             AssetBundleReference = null;

@@ -46,7 +46,7 @@ namespace DCL.LOD.Systems
         private readonly Transform lodsTransformParent;
 
         private readonly IExtendedObjectPool<Material> materialPool;
-        private readonly Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary;
+        private readonly Dictionary<TextureFormat, TextureArrayContainer_ToDelete> textureArrayContainerDictionary;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent, IExtendedObjectPool<Material> materialPool) : base(world)
@@ -59,16 +59,16 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
             this.materialPool = materialPool;
-            textureArrayContainerDictionary = new Dictionary<TextureFormat, TextureArrayContainer>
+            textureArrayContainerDictionary = new Dictionary<TextureFormat, TextureArrayContainer_ToDelete>
             {
                 {
-                    TextureFormat.BC7, new TextureArrayContainer(TextureFormat.BC7)
+                    TextureFormat.BC7, new TextureArrayContainer_ToDelete(TextureFormat.BC7)
                 },
                 {
-                    TextureFormat.DXT1, new TextureArrayContainer(TextureFormat.DXT1)
+                    TextureFormat.DXT1, new TextureArrayContainer_ToDelete(TextureFormat.DXT1)
                 },
                 {
-                    TextureFormat.DXT5, new TextureArrayContainer(TextureFormat.DXT5)
+                    TextureFormat.DXT5, new TextureArrayContainer_ToDelete(TextureFormat.DXT5)
                 }
             };
         }

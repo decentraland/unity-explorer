@@ -2,13 +2,13 @@
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 {
-    public struct TextureArraySlot
+    public struct TextureArraySlot_ToDelete
     {
         public int UsedSlotIndex;
         public Texture2DArray TextureArray;
-        public TextureArrayResolution TextureArrayResolution;
+        public TextureArrayResolution_ToDelete TextureArrayResolution;
 
-        public TextureArraySlot(int usedSlotIndex, Texture2DArray textureArray, TextureArrayResolution textureArrayResolution)
+        public TextureArraySlot_ToDelete(int usedSlotIndex, Texture2DArray textureArray, TextureArrayResolution_ToDelete textureArrayResolution)
         {
             UsedSlotIndex = usedSlotIndex;
             TextureArray = textureArray;

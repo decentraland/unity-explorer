@@ -3,17 +3,17 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 {
-    public class TextureArrayResolution
+    public class TextureArrayResolution_ToDelete
     {
         internal readonly List<Texture2DArray> arrays;
 
-        internal readonly Stack<TextureArraySlot> freeSlots;
+        internal readonly Stack<TextureArraySlot_ToDelete> freeSlots;
         private readonly int minArraySize;
         private readonly int resolution;
         private int nextFreeIndex;
         private readonly TextureFormat textureFormat;
 
-        public TextureArrayResolution(int resolution, int minArraySize, TextureFormat textureFormat)
+        public TextureArrayResolution_ToDelete(int resolution, int minArraySize, TextureFormat textureFormat)
         {
             this.minArraySize = minArraySize;
             this.resolution = resolution;
@@ -23,21 +23,21 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
             arrays = new List<Texture2DArray>(100);
             arrays.Add(CreateTexture2DArray(textureFormat));
             nextFreeIndex = 0;
-            freeSlots = new Stack<TextureArraySlot>();
+            freeSlots = new Stack<TextureArraySlot_ToDelete>();
         }
 
-        public TextureArraySlot GetNextFreeSlot()
+        public TextureArraySlot_ToDelete GetNextFreeSlot()
         {
-            if (freeSlots.TryPop(out TextureArraySlot freeSlot)) { return freeSlot; }
+            if (freeSlots.TryPop(out var freeSlot)) { return freeSlot; }
 
             int arrayIndex = nextFreeIndex / minArraySize;
-            int slotIndex = nextFreeIndex - (minArraySize * arrayIndex);
+            int slotIndex = nextFreeIndex - minArraySize * arrayIndex;
 
             if (arrays.Count <= arrayIndex)
                 arrays.Add(CreateTexture2DArray(textureFormat));
 
             nextFreeIndex++;
-            return new TextureArraySlot(slotIndex, arrays[arrayIndex], this);
+            return new TextureArraySlot_ToDelete(slotIndex, arrays[arrayIndex], this);
         }
 
         private Texture2DArray CreateTexture2DArray(TextureFormat textureFormat)
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
             return texture2DArray;
         }
 
-        public void FreeSlot(TextureArraySlot textureArraySlot)
+        public void FreeSlot(TextureArraySlot_ToDelete textureArraySlot)
         {
             freeSlots.Push(textureArraySlot);
         }

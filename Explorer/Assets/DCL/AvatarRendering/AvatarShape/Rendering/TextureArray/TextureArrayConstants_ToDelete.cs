@@ -2,7 +2,7 @@
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 {
-    public static class TextureArrayConstants
+    public static class TextureArrayConstants_ToDelete
     {
         public static TextureFormat DEFAULT_TEXTURE_FORMAT = TextureFormat.BC7;
         public static TextureFormat TEXTURE_FORMAT_BC7 = TextureFormat.BC7;
