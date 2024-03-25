@@ -101,17 +101,11 @@ namespace DCL.Chat
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
         }
 
-        private void OnChatViewPointerExit()
-        {
-            Debug.Log("CBLOCK destroy camera block");
+        private void OnChatViewPointerExit() =>
             world.Remove<CameraBlockerComponent>(playerEntity);
-        }
 
-        private void OnChatViewPointerEnter()
-        {
-            Debug.Log("CBLOCK create camera block");
+        private void OnChatViewPointerEnter() =>
             world.AddOrGet(playerEntity, new CameraBlockerComponent());
-        }
 
         private void AddEmojiFromSuggestion(string emojiCode)
         {
