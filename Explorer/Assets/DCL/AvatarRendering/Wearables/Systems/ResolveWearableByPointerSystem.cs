@@ -328,9 +328,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
 
-            IWearable defaultWearable = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory(),
-                out bool hasEmptyDefaultWearableAB);
-
             if (wearable.IsUnisex())
             {
                 CopyDefaultResults(BodyShape.MALE);
@@ -339,12 +336,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             else
                 CopyDefaultResults(bodyShape);
 
-            wearable.WearableDTO.Asset.Sanitize(hasEmptyDefaultWearableAB);
-
             return;
 
             void CopyDefaultResults(BodyShape bs)
             {
+                IWearable defaultWearable = wearableCatalog.GetDefaultWearable(bs, wearable.GetCategory());
                 var defaultWearableResults = defaultWearable.WearableAssetResults[bs];
 
                 // the destination array might be not created if DTO itself has failed to load

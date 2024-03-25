@@ -45,11 +45,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category, out bool hasEmptyDefaultWearableAB)
+        public IWearable GetDefaultWearable(  BodyShape bodyShape, string category)
         {
             var wearableURN =
-                WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category,
-                    out hasEmptyDefaultWearableAB);
+                WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
 
             UpdateListedCachePriority(@for: wearableURN);
             return wearablesCache[wearableURN];

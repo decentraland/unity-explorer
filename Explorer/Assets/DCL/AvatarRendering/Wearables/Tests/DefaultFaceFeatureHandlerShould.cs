@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             mock.WearableAssetResults.Returns(array);
 
-            wearableCatalog.GetDefaultWearable(Arg.Any<BodyShape>(), category, out Arg.Any<bool>()).Returns(mock);
+            wearableCatalog.GetDefaultWearable(Arg.Any<BodyShape>(), category).Returns(mock);
 
             return tex;
         }

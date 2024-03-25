@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 foreach (string facialFeature in WearablesConstants.FACIAL_FEATURES)
                 {
                     // TODO it's quite dangerous to call it like this without any checks
-                    var result = (WearableTextureAsset) wearableCatalog.GetDefaultWearable(bodyShape, facialFeature, out bool _)
+                    var result = (WearableTextureAsset) wearableCatalog.GetDefaultWearable(bodyShape, facialFeature)
                                                 .WearableAssetResults[bodyShape]
                                                 .Results[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!
                                                 .Value.Asset;
