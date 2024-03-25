@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.Diagnostics;
@@ -12,6 +13,14 @@ namespace DCL.LOD
 {
     public static class LODUtils
     {
+        public static readonly URLDomain LOD_WEB_URL = URLDomain.FromString("https://ab-cdn-decentraland-org-contentbucket-4e8caab.s3.amazonaws.com/LOD/");
+
+        public static readonly URLSubdirectory[] LOD_EMBEDDED_SUBDIRECTORIES =
+        {
+            URLSubdirectory.FromString("lods/0"), URLSubdirectory.FromString("lods/1"), URLSubdirectory.FromString("lods/2"), URLSubdirectory.FromString("lods/3")
+        };
+        
+        
         private static readonly ListObjectPool<Material> MATERIALS_LIST_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         private static readonly ListObjectPool<TextureArraySlot> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
