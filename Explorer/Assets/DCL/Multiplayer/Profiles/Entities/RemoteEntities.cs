@@ -22,11 +22,11 @@ namespace DCL.Multiplayer.Profiles.Entities
     {
         private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
-        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
+        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
@@ -102,7 +102,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 PartitionComponent.TOP_PRIORITY,
                 transformComp,
                 new CharacterAnimationComponent(),
-                new RemotePlayerMovementComponent(profile.WalletId, queuePool),
+                new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );
