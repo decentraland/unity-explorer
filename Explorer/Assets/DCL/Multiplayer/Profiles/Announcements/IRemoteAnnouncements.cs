@@ -4,6 +4,6 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 {
     public interface IRemoteAnnouncements
     {
-        OwnedBunch<RemoteAnnouncement> Bunch();
+        Bunch<RemoteAnnouncement> Bunch();
     }
 }

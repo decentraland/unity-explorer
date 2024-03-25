@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c44f6e33ed6ec4479915a3d97a47faff, type: 3}
+  m_Name: EmojiPanelConfig
+  m_EditorClassIdentifier: 
+  EmojiSections:
+  - title: Smileys and People
+    sectionName: 0
+    ranges:
+    - key: 1F600
+      value: 1F64F
+    - key: 1F9CC
+      value: 1F9DF
+    - key: 1F910
+      value: 1F917
+  - title: Animals and Nature
+    sectionName: 1
+    ranges:
+    - key: 1F40A
+      value: 1F43F
+    - key: 1F9A0
+      value: 1F9AE
+  - title: Foods and Drinks
+    sectionName: 2
+    ranges:
+    - key: 1F95A
+      value: 1F96F
+    - key: 1F9C0
+      value: 1F9CB
+    - key: 1F32D
+      value: 1F37F
+  - title: Activities
+    sectionName: 3
+    ranges:
+    - key: 1F3A0
+      value: 1F3D3
+    - key: 1F3F8
+      value: 1F3F9
+    - key: 1F6B4
+      value: 1F6B6
+  - title: Travel and Places
+    sectionName: 4
+    ranges:
+    - key: 1F3D4
+      value: 1F3F0
+    - key: 1F6E3
+      value: 1F6E5
+    - key: 1F68A
+      value: 1F69F
+  - title: Objects
+    sectionName: 5
+    ranges:
+    - key: 1F4AB
+      value: 1F5F3
+    - key: 1F6A4
+      value: 1F6AA
+    - key: 1F9E0
+      value: 1F9E2
+  - title: Symbols and Signs
+    sectionName: 6
+    ranges:
+    - key: 1F1E6
+      value: 1F1FF
+    - key: 1F6AB
+      value: 1F6B3
+    - key: 1F6B7
+      value: 1F6BE
+    - key: 1F6C2
+      value: 1F6C5
+  - title: Flags
+    sectionName: 7
+    ranges:
+    - key: 1F3F3
+      value: 1F3F4
+  SpriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}

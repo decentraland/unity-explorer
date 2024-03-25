@@ -20,13 +20,13 @@ namespace SceneRuntime.Apis.Modules
 
         [UsedImplicitly]
         public bool OpenExternalUrl(string url) =>
-            api.OpenExternalUrl(url);
+            api.TryOpenExternalUrl(url);
 
         [UsedImplicitly]
         public void MovePlayerTo(
             int newRelativePositionX, int newRelativePositionY, int newRelativePositionZ)
         {
-            api.MovePlayerTo(
+            api.TryMovePlayerTo(
                 new Vector3(newRelativePositionX, newRelativePositionY, newRelativePositionZ),
                 null);
         }
@@ -36,25 +36,29 @@ namespace SceneRuntime.Apis.Modules
             int newRelativePositionX, int newRelativePositionY, int newRelativePositionZ,
             int cameraTargetX, int cameraTargetY, int cameraTargetZ)
         {
-            api.MovePlayerTo(
+            api.TryMovePlayerTo(
                 new Vector3(newRelativePositionX, newRelativePositionY, newRelativePositionZ),
                 new Vector3(cameraTargetX, cameraTargetY, cameraTargetZ));
         }
 
         [UsedImplicitly]
         public void TeleportTo(int x, int y) =>
-            api.TeleportTo(new Vector2Int(x, y));
+            api.TryTeleportTo(new Vector2Int(x, y));
 
         [UsedImplicitly]
         public bool ChangeRealm(string message, string realm) =>
-            api.ChangeRealm(message, realm);
+            api.TryChangeRealm(message, realm);
 
         [UsedImplicitly]
         public void TriggerEmote(string predefinedEmote) =>
-            api.TriggerEmote(predefinedEmote);
+            api.TryTriggerEmote(predefinedEmote);
 
         [UsedImplicitly]
         public bool TriggerSceneEmote(string src, bool loop) =>
-            api.TriggerSceneEmote(src, loop);
+            api.TryTriggerSceneEmote(src, loop);
+
+        [UsedImplicitly]
+        public bool OpenNftDialog(string urn) =>
+            api.TryOpenNftDialog(urn);
     }
 }

@@ -13,6 +13,8 @@ namespace SceneRunner.Scene
         private readonly Dictionary<string, string> fileToHash;
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
+        public URLDomain ContentBaseUrl => contentBaseUrl;
+
         public SceneHashedContent(IReadOnlyList<ContentDefinition> contentDefinitions, URLDomain contentBaseUrl)
         {
             fileToHash = new Dictionary<string, string>(contentDefinitions.Count, StringComparer.OrdinalIgnoreCase);

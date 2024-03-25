@@ -2,7 +2,7 @@ using System;
 
 namespace DCL.Chat
 {
-    public interface IChatMessagesBus
+    public interface IChatMessagesBus : IDisposable
     {
         public event Action<ChatMessage> OnMessageAdded;
 

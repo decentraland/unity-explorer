@@ -9,12 +9,8 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
-using Realm;
 using SceneRunner.Scene;
 using System.Threading;
-using SceneRunner;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -22,7 +18,6 @@ namespace ECS.SceneLifeCycle.Systems
     ///     Starts the scene or changes fps of its execution
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveSceneStateByRadiusSystem))]
     [UpdateAfter(typeof(ResolveStaticPointersSystem))]
     public partial class ControlSceneUpdateLoopSystem : BaseUnityLoopSystem
     {

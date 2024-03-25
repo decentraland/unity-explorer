@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using System;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
@@ -17,13 +16,18 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             this.debounce = debounce;
         }
 
-        public UniTaskVoid NotifyRemotesAsync()
+        public void NotifyRemotes()
         {
             if (DateTime.UtcNow - previousNotify < debounce)
-                return new UniTaskVoid();
+                return;
 
             previousNotify = DateTime.UtcNow;
-            return origin.NotifyRemotesAsync();
+            origin.NotifyRemotes();
+        }
+
+        public void Dispose()
+        {
+            origin.Dispose();
         }
     }
 }

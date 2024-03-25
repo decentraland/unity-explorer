@@ -9,7 +9,16 @@ on:
       - ready_for_review
   merge_group: {}
   push: { branches: [main] }
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Set to true, profiling will be enabled auto-connect profiler will be set to on'
+        required: true
+        default: 'false'
+      deep_profile:
+        description: 'Set to true, deep profiling will also be enabled'
+        required: false
+        default: 'false'
 
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
@@ -126,6 +135,26 @@ jobs:
           # Set proper permissions on the known_hosts file
           attrib.exe +R +H $knownHostsPath
           
+      - name: Manage custom input parameters
+        run: |
+          $profileEnabled = "${{ github.event.inputs.profile }}"
+          $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
+          
+          if ($profileEnabled -eq 'true') {
+            $profilingParam = '-profile'
+          } else {
+            $profilingParam = ''
+          }
+
+          if ($deepProfileEnabled -eq 'true') {
+            $deepProfilingParam = '-deepProfile'
+          } else {
+            $deepProfilingParam = ''
+          }
+
+          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
+          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
+          
       - name: Clone Packages To Use Locally
         run: |
               # Clone the repository
@@ -150,18 +179,18 @@ jobs:
               ls
 
 
-      - uses: decentraland/unity-builder@0.9
+      - uses: decentraland/unity-builder@chore/timeout-for-shader
         id: build
         timeout-minutes: 120
         with:
+          buildMethod: Editor.BuildScript.Build
           projectPath: Explorer
           buildTimeout: 120
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
-          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
-          no_output_timeout: 1h
 
       # Upload artifact
       - name: Upload windows artifact
@@ -172,4 +201,13 @@ jobs:
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+          
+      # Upload build report
+      - name: Uploading build report (test)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build Report
+          path: |
+            Explorer/Library/LastBuild.buildreport
           if-no-files-found: error

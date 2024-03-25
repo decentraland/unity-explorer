@@ -9,10 +9,11 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using SceneRunner.Scene;
-using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
+using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -104,5 +105,14 @@ namespace CrdtEcsBridge.Engine
                 seconds = seconds,
             };
         }
+
+        public IRuntime.CurrentSceneEntityResponse GetSceneInformation() =>
+            new ()
+            {
+                baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
+                contentMapping = sceneData.SceneEntityDefinition.content,
+                urn = sceneData.SceneEntityDefinition.id,
+                metadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
+            };
     }
 }
