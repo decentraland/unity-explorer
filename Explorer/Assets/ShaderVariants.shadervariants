@@ -13,18 +13,25 @@ ShaderVariantCollection:
       variants:
       - keywords: SHADOWS_DEPTH
         passType: 8
-  - first: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  - first: {fileID: 10505, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
       - keywords: 
-        passType: 0
-  - first: {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
-    second:
-      variants:
+        passType: 1
       - keywords: 
-        passType: 0
-      - keywords: UNITY_UI_ALPHACLIP
-        passType: 0
+        passType: 2
+      - keywords: 
+        passType: 4
+      - keywords: 
+        passType: 5
+      - keywords: 
+        passType: 8
+      - keywords: 
+        passType: 10
+      - keywords: 
+        passType: 11
+      - keywords: 
+        passType: 13
   - first: {fileID: 10623, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -44,13 +51,18 @@ ShaderVariantCollection:
         passType: 11
       - keywords: 
         passType: 13
-  - first: {fileID: 14001, guid: 0000000000000000f000000000000000, type: 0}
+  - first: {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
-      - keywords: DIRECTIONAL
-        passType: 4
-      - keywords: SHADOWS_DEPTH
-        passType: 8
+      - keywords: 
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+  - first: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
   - first: {fileID: 66, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -64,6 +76,28 @@ ShaderVariantCollection:
       - keywords: 
         passType: 2
       - keywords: 
+        passType: 8
+  - first: {fileID: 7, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 1
+      - keywords: 
+        passType: 2
+      - keywords: 
+        passType: 4
+      - keywords: 
+        passType: 5
+      - keywords: 
+        passType: 8
+      - keywords: 
+        passType: 10
+      - keywords: 
+        passType: 11
+  - first: {fileID: 50, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: SHADOWS_DEPTH
         passType: 8
   - first: {fileID: 106, guid: 0000000000000000f000000000000000, type: 0}
     second:
@@ -139,6 +173,15 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: 14001, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: DIRECTIONAL
+        passType: 4
+      - keywords: DIRECTIONAL
+        passType: 5
+      - keywords: SHADOWS_DEPTH
+        passType: 8
   - first: {fileID: 16000, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -338,6 +381,24 @@ ShaderVariantCollection:
         passType: 13
       - keywords: _NORMALMAP
         passType: 13
+  - first: {fileID: 4800000, guid: c66b10f85c3065c47bae66386821456a, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: 
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON
+          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: _ALPHATEST_ON
+        passType: 13
   - first: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
     second:
       variants:
@@ -447,6 +508,8 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: 
+        passType: 0
+      - keywords: 
         passType: 13
       - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS
           _ADVANCED_LIGHTING _FADING _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _SPECULARHIGHLIGHTS_OFF
@@ -455,6 +518,10 @@ ShaderVariantCollection:
           _ADVANCED_LIGHTING _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
         passType: 13
       - keywords: FOG_EXP INSTANCING_ON _ADDITIONAL_LIGHTS _ADVANCED_LIGHTING _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: INSTANCING_ON
+        passType: 13
+      - keywords: INSTANCING_ON _FADING
         passType: 13
   - first: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
     second:
@@ -505,10 +572,14 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: 
+        passType: 0
+      - keywords: 
         passType: 13
   - first: {fileID: 4800000, guid: 97d1632355d56c14fb963d128feac8d8, type: 3}
     second:
       variants:
+      - keywords: 
+        passType: 0
       - keywords: 
         passType: 13
   - first: {fileID: 4800000, guid: 36e335017ad71d54fbb10842863188ae, type: 3}
@@ -575,27 +646,13 @@ ShaderVariantCollection:
       - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _IS_CLIPPING_TRANSMODE
           _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
         passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _IS_CLIPPING_MODE _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _IS_CLIPPING_TRANSMODE _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
       - keywords: INSTANCING_ON
         passType: 13
       - keywords: _IS_CLIPPING_OFF
         passType: 13
       - keywords: _IS_OUTLINE_CLIPPING_NO _OUTLINE_NML
-        passType: 13
-  - first: {fileID: 4800000, guid: c66b10f85c3065c47bae66386821456a, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-      - keywords: 
-        passType: 8
-      - keywords: _ALPHATEST_ON
-        passType: 8
-      - keywords: 
-        passType: 13
-      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON
-          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
-        passType: 13
-      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
-        passType: 13
-      - keywords: _ALPHATEST_ON
         passType: 13
