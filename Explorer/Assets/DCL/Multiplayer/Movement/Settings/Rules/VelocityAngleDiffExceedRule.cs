@@ -12,14 +12,14 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage lastFullMovementMessage,
+            in NetworkMovementMessage lastNetworkMovementMessage,
             in CharacterAnimationComponent playerAnimationComponent,
             in StunComponent playerStunComponent,
             in MovementInputComponent move,
             in JumpInputComponent jump,
             CharacterController playerCharacter,
             IMultiplayerMovementSettings settings) =>
-            lastFullMovementMessage.velocity != Vector3.zero && playerCharacter.velocity != Vector3.zero &&
-            Vector3.Dot(lastFullMovementMessage.velocity, playerCharacter.velocity) < VelocityCosAngleDiffInverseThreshold;
+            lastNetworkMovementMessage.velocity != Vector3.zero && playerCharacter.velocity != Vector3.zero &&
+            Vector3.Dot(lastNetworkMovementMessage.velocity, playerCharacter.velocity) < VelocityCosAngleDiffInverseThreshold;
     }
 }

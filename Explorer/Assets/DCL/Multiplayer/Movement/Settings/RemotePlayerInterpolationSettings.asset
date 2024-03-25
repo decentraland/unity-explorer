@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RemotePlayerInterpolationSettings
   m_EditorClassIdentifier: 
   <InterpolationType>k__BackingField: 1
-  <LookAtTimeDelta>k__BackingField: 0.005
+  <LookAtTimeDelta>k__BackingField: 0.001
   <UseSpeedUp>k__BackingField: 1
   <MaxSpeedUpTimeDivider>k__BackingField: 2
   <CatchUpMessagesMin>k__BackingField: 3
