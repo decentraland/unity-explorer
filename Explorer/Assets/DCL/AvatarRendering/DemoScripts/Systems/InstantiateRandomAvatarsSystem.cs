@@ -278,6 +278,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 Wearables = { wearables },
                 SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
                 HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
+                EyeColor = WearablesConstants.DefaultColors.GetRandomEyesColor3()
             };
 
             World.Create(avatarShape,

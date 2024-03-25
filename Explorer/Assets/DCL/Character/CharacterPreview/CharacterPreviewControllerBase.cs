@@ -39,6 +39,7 @@ namespace DCL.CharacterPreview
             previewAvatarModel.BodyShape = avatar.BodyShape;
             previewAvatarModel.HairColor = avatar.HairColor;
             previewAvatarModel.SkinColor = avatar.SkinColor;
+            previewAvatarModel.EyesColor = avatar.EyesColor;
             previewAvatarModel.ForceRenderCategories = new HashSet<string>(avatar.ForceRender);
             previewAvatarModel.Initialized = true;
 
