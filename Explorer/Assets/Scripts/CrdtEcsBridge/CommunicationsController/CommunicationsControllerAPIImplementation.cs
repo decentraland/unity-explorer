@@ -46,7 +46,7 @@ namespace CrdtEcsBridge.CommunicationsController
 
                 byte[] encodedMessage = EncodeMessage(message, MsgType.Uint8Array);
 
-                SendMessage(encodedMessage, messagePipesHub.IslandPipe());
+                //SendMessage(encodedMessage, messagePipesHub.IslandPipe());
                 SendMessage(encodedMessage, messagePipesHub.ScenePipe());
             }
 
