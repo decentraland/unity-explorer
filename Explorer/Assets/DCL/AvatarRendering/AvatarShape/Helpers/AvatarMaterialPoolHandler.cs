@@ -24,20 +24,19 @@ namespace DCL.AvatarRendering.AvatarShape
 
             foreach (Material material in materials)
             {
-                Material? activatedMaterial = ActivateMaterial(material);
-                TextureArrayContainer textureArrayContainer = TextureArrayContainerFactory.Create(activatedMaterial.shader, DEFAULT_RESOLUTIONS, defaultTextures);
+                TextureArrayContainer textureArrayContainer = TextureArrayContainerFactory.Create(material.shader, DEFAULT_RESOLUTIONS, defaultTextures);
 
                 //Create the pool
                 IExtendedObjectPool<Material> pool = new ExtendedObjectPool<Material>(
                     () =>
                     {
-                        var mat = new Material(activatedMaterial);
+                        var mat = new Material(material);
                         return mat;
                     },
                     actionOnRelease: mat =>
                     {
                         // reset material so it does not contain any old properties
-                        mat.CopyPropertiesFromMaterial(activatedMaterial);
+                        mat.CopyPropertiesFromMaterial(material);
                     },
                     actionOnDestroy: UnityObjectUtils.SafeDestroy,
                     defaultCapacity: defaultMaterialCapacity);
@@ -53,7 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
                 var materialSetup = new PoolMaterialSetup(pool, textureArrayContainer);
 
-                int materialID = activatedMaterial.shader.name switch
+                int materialID = material.shader.name switch
                                  {
                                      TextureArrayConstants.TOON_SHADER => TextureArrayConstants.SHADERID_DCL_TOON,
                                      TextureArrayConstants.FACIAL_SHADER => TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES,
@@ -69,25 +68,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
         public PoolMaterialSetup GetMaterialPool(int shaderName) =>
             materialDictionary[shaderName];
-
-        private Material ActivateMaterial(Material material)
-        {
-            var activatedMaterial = new Material(material);
-
-            switch (material.shader.name)
-            {
-                case TextureArrayConstants.TOON_SHADER:
-                    activatedMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-                    activatedMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-                    return activatedMaterial;
-                case TextureArrayConstants.FACIAL_SHADER:
-                    activatedMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-                    activatedMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-                    return activatedMaterial;
-                default:
-                    return material;
-            }
-        }
 
         public void Release(AvatarCustomSkinningComponent.MaterialSetup materialSetup)
         {
