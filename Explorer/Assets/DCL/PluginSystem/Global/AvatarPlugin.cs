@@ -27,6 +27,7 @@ using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private ChatBubbleConfigurationSO chatBubbleConfiguration;
 
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
+        private readonly IEntityParticipantTable entityParticipantTable;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -80,6 +82,7 @@ namespace DCL.PluginSystem.Global
             CacheCleaner cacheCleaner,
             ChatEntryConfigurationSO chatEntryConfiguration,
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
+            IEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -90,6 +93,7 @@ namespace DCL.PluginSystem.Global
             this.cacheCleaner = cacheCleaner;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
+            this.entityParticipantTable = entityParticipantTable;
             this.memoryBudget = memoryBudget;
             this.nametagsData = nametagsData;
             componentPoolsRegistry = poolsRegistry;
@@ -141,7 +145,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry, avatarRandomizerAsset);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, entityParticipantTable, AVATARS_QUERY, transformPoolRegistry, avatarRandomizerAsset);
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
         }
 

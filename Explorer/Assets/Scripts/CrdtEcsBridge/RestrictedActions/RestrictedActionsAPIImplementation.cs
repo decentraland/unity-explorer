@@ -32,7 +32,7 @@ namespace CrdtEcsBridge.RestrictedActions
             this.sceneData = sceneData;
         }
 
-        public bool OpenExternalUrl(string url)
+        public bool TryOpenExternalUrl(string url)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;
@@ -41,7 +41,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void MovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget)
+        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
@@ -59,7 +59,7 @@ namespace CrdtEcsBridge.RestrictedActions
             globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 
-        public void TeleportTo(Vector2Int coords)
+        public void TryTeleportTo(Vector2Int coords)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
@@ -67,7 +67,7 @@ namespace CrdtEcsBridge.RestrictedActions
             TeleportAsync(coords).Forget();
         }
 
-        public bool ChangeRealm(string message, string realm)
+        public bool TryChangeRealm(string message, string realm)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;
@@ -76,7 +76,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TriggerEmote(string predefinedEmote)
+        public void TryTriggerEmote(string predefinedEmote)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
@@ -84,7 +84,7 @@ namespace CrdtEcsBridge.RestrictedActions
             // TODO: Implement emote triggering (blocked until emotes are implemented)...
         }
 
-        public bool TriggerSceneEmote(string src, bool loop)
+        public bool TryTriggerSceneEmote(string src, bool loop)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;
@@ -94,7 +94,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public bool OpenNftDialog(string urn)
+        public bool TryOpenNftDialog(string urn)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;

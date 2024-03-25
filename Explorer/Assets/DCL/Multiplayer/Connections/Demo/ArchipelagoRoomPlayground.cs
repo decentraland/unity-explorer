@@ -7,9 +7,7 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
@@ -71,21 +69,8 @@ namespace DCL.Multiplayer.Connections.Demo
                 multiPool
             ).WithLog();
 
-            var messagePipeHub = new MessagePipesHub();
-
-            //TODO message pipe with new approach, in PR with scene room
-            var roomHub = new LogMutableRoomHub(
-                new MessagePipedMutableRoomHub(
-                    new MutableRoomHub(multiPool),
-                    messagePipeHub,
-                    multiPool,
-                    memoryPool
-                ),
-                Debug.Log
-            );
-
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, multiPool, loonCharacterObject, aboutUrl);
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, loonCharacterObject, aboutUrl);
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
             realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);

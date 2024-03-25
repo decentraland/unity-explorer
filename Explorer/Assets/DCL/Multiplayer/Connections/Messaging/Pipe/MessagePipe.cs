@@ -1,3 +1,6 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
@@ -13,16 +16,6 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
     public class MessagePipe : IMessagePipe
     {
-        private static readonly ISet<string> SUPPORTED_TYPES = new HashSet<string>
-        {
-            nameof(Position),
-            nameof(AnnounceProfileVersion),
-            nameof(ProfileRequest),
-            nameof(ProfileResponse),
-            nameof(Chat),
-            nameof(Scene),
-            nameof(Voice),
-        };
         private readonly IDataPipe dataPipe;
         private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
@@ -34,7 +27,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             dataPipe,
             multiPool,
             memoryPool,
-            new MessageParser<Packet>(multiPool.Get<Packet>)
+            new MessageParser<Packet>(() =>
+            {
+                var packet = multiPool.Get<Packet>();
+                packet.ClearMessage();
+                return packet;
+            })
         ) { }
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser)
@@ -54,8 +52,24 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
         {
-            Packet? packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
-            var name = packet.MessageCase.ToString()!;
+            try
+            {
+                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
+                var name = packet.MessageCase.ToString()!;
+                NotifySubscribersAsync(name, packet, participant).Forget();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(
+                    ReportCategory.LIVEKIT,
+                    $"Invalid data arrived from participant {participant.Identity}: {e.Message} : {data.HexReadableString()}"
+                );
+            }
+        }
+
+        private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant)
+        {
+            await UniTask.SwitchToMainThread();
 
             foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
                 action((packet, participant));
@@ -64,14 +78,16 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
             new (dataPipe, multiPool, memoryPool);
 
-        public void Subscribe<T>(Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
-            const string CURRENT_TYPE = nameof(T);
+            var currentType = ofCase.ToString()!;
 
-            if (SUPPORTED_TYPES.Contains(CURRENT_TYPE) == false)
-                throw new NotSupportedException($"Type {CURRENT_TYPE} is not supported");
+            var list = SubscribersList(currentType);
 
-            SubscribersList(CURRENT_TYPE)
+            if (list.Count > 0)
+                throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {currentType}");
+
+            list
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
@@ -80,7 +96,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         var receivedMessage = new ReceivedMessage<T>(
                             Payload<T>(packet),
                             packet,
-                            participant.Sid,
+                            participant.Identity,
                             multiPool
                         );
 
@@ -107,6 +123,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.Chat => (packet.Chat as T).EnsureNotNull(),
                 Packet.MessageOneofCase.Scene => (packet.Scene as T).EnsureNotNull(),
                 Packet.MessageOneofCase.Voice => (packet.Voice as T).EnsureNotNull(),
+                Packet.MessageOneofCase.Movement => (packet.Movement as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => throw new ArgumentOutOfRangeException(),
                 _ => throw new ArgumentOutOfRangeException(),
             };

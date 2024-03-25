@@ -1,21 +1,29 @@
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
+using System.Threading;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
 
 namespace DCL.PluginSystem.Global
 {
@@ -23,22 +31,57 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IRoomHub roomHub;
+        private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
-        private readonly IMemoryPool memoryPool;
-        private readonly IMultiPool multiPool;
+        private readonly IProfileBroadcast profileBroadcast;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly RealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IRemoteEntities remoteEntities;
+        private readonly IRemotePoses remotePoses;
+        private readonly ICharacterObject characterObject;
 
-        public MultiplayerPlugin(IArchipelagoIslandRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IProfileRepository profileRepository, IMemoryPool memoryPool, IMultiPool multiPool,
-            IDebugContainerBuilder debugContainerBuilder, RealFlowLoadingStatus realFlowLoadingStatus)
+        public MultiplayerPlugin(
+            IArchipelagoIslandRoom archipelagoIslandRoom,
+            IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IRoomHub roomHub,
+            IProfileRepository profileRepository,
+            IProfileBroadcast profileBroadcast,
+            IDebugContainerBuilder debugContainerBuilder,
+            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
+            IEntityParticipantTable entityParticipantTable,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IMessagePipesHub messagePipesHub,
+            IRemotePoses remotePoses,
+            ICharacterObject characterObject,
+            IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool
+        )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.roomHub = roomHub;
             this.profileRepository = profileRepository;
-            this.memoryPool = memoryPool;
-            this.multiPool = multiPool;
+            this.profileBroadcast = profileBroadcast;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
+            this.entityParticipantTable = entityParticipantTable;
+            this.messagePipesHub = messagePipesHub;
+            this.remotePoses = remotePoses;
+            this.characterObject = characterObject;
+
+            remoteEntities = new RemoteEntities(
+                roomHub,
+                entityParticipantTable,
+                componentPoolsRegistry,
+                queuePool
+            );
+        }
+
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
+        {
+            remoteEntities.Initialize();
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
@@ -46,20 +89,20 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-
-            DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, debugContainerBuilder);
+            DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remotePoses, debugContainerBuilder);
             ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                new ThreadSafeRemoteAnnouncements(roomHub, multiPool),
-                new RemoteProfiles(profileRepository),
-                new DebounceProfileBroadcast(
-                    new ProfileBroadcast(roomHub, memoryPool, multiPool)
+                new RemoteAnnouncements(messagePipesHub),
+                new LogRemoveIntentions(
+                    new ThreadSafeRemoveIntentions(roomHub)
                 ),
-                new RemoteEntities(
-                    new EntityParticipantTable()
-                )
+                new RemoteProfiles(profileRepository),
+                profileBroadcast,
+                remoteEntities,
+                remotePoses,
+                characterObject,
+                realFlowLoadingStatus
             );
 #endif
         }
