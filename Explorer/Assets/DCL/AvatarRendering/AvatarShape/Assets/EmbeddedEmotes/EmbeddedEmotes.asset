@@ -77,7 +77,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: disco
     name: disco
     audioClip: {fileID: 0}
@@ -90,7 +90,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: dontsee
     name: dontsee
     audioClip: {fileID: 0}
@@ -129,7 +129,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: hands_in_the_air
     name: hands_in_the_air
     audioClip: {fileID: 0}
@@ -233,7 +233,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: shrug
     name: shrug
     audioClip: {fileID: 0}
@@ -272,7 +272,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: tik
     name: tik
     audioClip: {fileID: 0}
@@ -285,7 +285,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: Victory
     name: Victory
     audioClip: {fileID: 0}
