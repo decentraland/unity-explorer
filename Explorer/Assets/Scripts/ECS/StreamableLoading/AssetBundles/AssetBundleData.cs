@@ -13,8 +13,8 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : IDisposable
     {
-        private readonly Object mainAsset;
-        private readonly Type assetType;
+        private readonly Object? mainAsset;
+        private readonly Type? assetType;
 
         public readonly AssetBundle AssetBundle;
         public readonly AssetBundleData[] Dependencies;
@@ -32,6 +32,18 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
+
+            ProfilingCounters.ABDataAmount.Value++;
+        }
+
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies)
+        {
+            AssetBundle = assetBundle;
+            Metrics = metrics;
+
+            this.mainAsset = null;
+            this.assetType = null;
+            Dependencies = dependencies;
 
             ProfilingCounters.ABDataAmount.Value++;
         }
@@ -54,12 +66,14 @@ namespace ECS.StreamableLoading.AssetBundles
             ProfilingCounters.ABDataAmount.Value--;
         }
 
-        public T? GetMainAsset<T>() where T : Object
+        public T GetMainAsset<T>() where T : Object
         {
+            Assert.IsNotNull(assetType, "GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified");
+
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
 
-            return (T)mainAsset;
+            return (T)mainAsset!;
         }
 
         public bool CanBeDisposed() =>

@@ -61,14 +61,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            AssetBundleData assetBundleData = assetBundleResult.Asset;
-
-            // if asset bundle has no game object we can't process it further but the promise should be resolved
-            if (assetBundleData.GetMainAsset<GameObject>() == null)
-            {
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(new MissingGltfAssetsException(assetBundleData.AssetBundle.name))));
-                return;
-            }
+            AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
             // Create a new container root. It will be cached and pooled
             GltfContainerAsset result = CreateGltfObject(assetBundleData);

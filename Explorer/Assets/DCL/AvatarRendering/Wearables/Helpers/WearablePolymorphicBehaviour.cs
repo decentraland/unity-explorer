@@ -213,7 +213,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     // collect all renderers
                     List<WearableRegularAsset.RendererInfo> rendererInfos = WearableRegularAsset.RENDERER_INFO_POOL.Get();
 
-                    using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = result.Asset.GetMainAsset<GameObject>().GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+                    using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
                     foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                         rendererInfos.Add(new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));

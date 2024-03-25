@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
                 var expectedObjectType = parentIntent.ExpectedObjectType;
 
-                return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, expectedObjectType, hash, customEmbeddedSubdirectory, partition, ct)));
+                return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
             }
 
             return Array.Empty<AssetBundleData>();
@@ -112,6 +112,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
                 ct.ThrowIfCancellationRequested();
 
+                // if the type was not specified don't load any assets
+                if (intention.ExpectedObjectType == null)
+                    return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+
                 var asset = await LoadAllAssetsAsync(assetBundle, intention.ExpectedObjectType, ct);
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, intention.ExpectedObjectType, dependencies));
             }
@@ -129,7 +133,7 @@ namespace ECS.StreamableLoading.AssetBundles
         protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
             asset.AddReference();
 
-        private async UniTask<Object?> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, CancellationToken ct) {
+        private async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             // we are only interested in game objects
@@ -138,22 +142,26 @@ namespace ECS.StreamableLoading.AssetBundles
 
             var assets = asyncOp.allAssets;
 
-            if (assets.Length > 1)
-                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
+            switch (assets.Length)
+            {
+                case 0:
+                    throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
+                case > 1:
+                    ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
+                    break;
+            }
 
-            Object? rootAsset = assets.Length > 0 ? assets[0] : null;
-
-            return rootAsset;
+            return assets[0];
         }
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
             SceneAssetBundleManifest? manifest,
-            Type expectedObjectType,
             string hash, URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(expectedObjectType, hash, manifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
+            // we don't know the type of the dependency
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, manifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
 
             try
             {
