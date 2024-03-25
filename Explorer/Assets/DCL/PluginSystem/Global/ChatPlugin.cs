@@ -62,7 +62,8 @@ namespace DCL.PluginSystem.Global
                     emojiSectionPrefab,
                     emojiButtonPrefab,
                     emojiSuggestionPrefab,
-                    builder.World
+                    builder.World,
+                    arguments.PlayerEntity
                 );
 
                 mvcManager.RegisterController(chatController);

@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.CharacterCamera.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Systems;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
+        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput(ref CameraInput cameraInput, ref CameraComponent cameraComponent, in CursorComponent cursorComponent)
         {
             cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0

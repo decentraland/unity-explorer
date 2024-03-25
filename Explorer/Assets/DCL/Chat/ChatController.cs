@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.CharacterMotion.Components;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -39,6 +40,7 @@ namespace DCL.Chat
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
+        private readonly Entity playerEntity;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -53,7 +55,8 @@ namespace DCL.Chat
             EmojiSectionView emojiSectionViewPrefab,
             EmojiButton emojiButtonPrefab,
             EmojiSuggestionView emojiSuggestionViewPrefab,
-            World world
+            World world,
+            Entity playerEntity
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -66,6 +69,7 @@ namespace DCL.Chat
             this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
             this.world = world;
+            this.playerEntity = playerEntity;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
@@ -175,12 +179,14 @@ namespace DCL.Chat
         {
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
+            world.Remove<MovementBlockerComponent>(playerEntity);
         }
 
         private void OnInputSelected(string inputText)
         {
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
+            world.AddOrGet(playerEntity, new MovementBlockerComponent());
         }
 
         private void OnInputChanged(string inputText)
