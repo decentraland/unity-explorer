@@ -61,7 +61,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 var manifest = parentIntent.Manifest;
                 var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
-                var expectedObjectType = parentIntent.ExpectedObjectType;
 
                 return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
             }

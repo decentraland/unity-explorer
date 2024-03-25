@@ -326,7 +326,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
             }
 
-            ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
+            ReportHub.Log(GetReportCategory(), $"Request for wearable with hash {wearable.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
 
             if (wearable.IsUnisex())
             {
