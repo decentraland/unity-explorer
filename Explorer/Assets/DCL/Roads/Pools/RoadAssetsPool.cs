@@ -49,7 +49,6 @@ namespace DCL.LOD
                 roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Release(asset);
         }
 
-        //TODO: (ASK MISHA) : What do you think of this unload?
         public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
         {
             var unloadedAmount = 0;
