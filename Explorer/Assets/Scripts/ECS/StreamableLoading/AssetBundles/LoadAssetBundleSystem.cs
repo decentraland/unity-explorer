@@ -112,11 +112,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ct.ThrowIfCancellationRequested();
 
                 // if the type was not specified don't load any assets
-                if (intention.ExpectedObjectType == null)
-                    return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
-
-                var asset = await LoadAllAssetsAsync(assetBundle, intention.ExpectedObjectType, ct);
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, intention.ExpectedObjectType, dependencies));
+                return await CreateAssetBundleData(assetBundle, metrics, intention.ExpectedObjectType, loadingMutex, dependencies, GetReportCategory(), ct);
             }
             catch (Exception)
             {
@@ -129,10 +125,25 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
+        public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleData(
+            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType,
+            AssetBundleLoadingMutex loadingMutex,
+            AssetBundleData[] dependencies,
+            string reportCategory,
+            CancellationToken ct)
+        {
+            // if the type was not specified don't load any assets
+            if (expectedObjType == null)
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+
+            var asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, loadingMutex, reportCategory, ct);
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies));
+        }
+
         protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
             asset.AddReference();
 
-        private async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, CancellationToken ct) {
+        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             // we are only interested in game objects
@@ -146,7 +157,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 case 0:
                     throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
                 case > 1:
-                    ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
+                    ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
                     break;
             }
 

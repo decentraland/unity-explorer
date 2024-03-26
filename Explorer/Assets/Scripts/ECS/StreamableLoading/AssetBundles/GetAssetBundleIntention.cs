@@ -57,9 +57,8 @@ namespace ECS.StreamableLoading.AssetBundles
             Manifest = assetBundleManifest;
         }
 
-        internal GetAssetBundleIntention(CommonLoadingArguments commonArguments, Type expectedObjectType) : this()
+        internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
         {
-            ExpectedObjectType = expectedObjectType;
             CommonArguments = commonArguments;
         }
 
