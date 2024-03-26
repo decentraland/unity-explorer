@@ -69,7 +69,7 @@ namespace ECS.StreamableLoading.Tests
             promise = await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
             Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
-            Assert.That(result.Succeeded, Is.True);
+            Assert.That(result.Succeeded, Is.True, result.Exception?.ToString());
             Assert.That(result.Asset, Is.Not.Null);
 
             AssertSuccess(result.Asset);

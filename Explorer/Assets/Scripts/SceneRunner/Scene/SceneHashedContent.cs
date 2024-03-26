@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using Google.Protobuf;
 using Ipfs;
 using System;
 using System.Collections.Generic;

@@ -289,6 +289,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 Wearables = { wearables },
                 SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
                 HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
+                EyeColor = WearablesConstants.DefaultColors.GetRandomEyesColor3()
             };
 
             World.Create(avatarShape,
@@ -356,8 +357,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 transformComp,
                 new CharacterAnimationComponent(),
                 new RemotePlayerMovementComponent(
-                    RemotePlayerMovementComponent.TEST_ID,
-                    new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(() => new SimplePriorityQueue<FullMovementMessage>())
+                    new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(() => new SimplePriorityQueue<NetworkMovementMessage>())
                 ),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),

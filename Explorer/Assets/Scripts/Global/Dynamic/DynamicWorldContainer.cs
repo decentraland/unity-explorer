@@ -201,8 +201,8 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(
-                () => new SimplePriorityQueue<FullMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: x => x.Clear()
             );
 

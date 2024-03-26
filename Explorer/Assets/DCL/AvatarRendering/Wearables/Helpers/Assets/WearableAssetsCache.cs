@@ -23,11 +23,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         // string is hash here which is retrieved via IWearable.GetMainFileHash
         private readonly ListObjectPool<CachedWearable> listPool;
         private readonly Transform parentContainer;
-        private readonly SimplePriorityQueue<WearableAsset, long> unloadQueue = new ();
+        private readonly SimplePriorityQueue<WearableAssetBase, long> unloadQueue = new ();
 
         public int WearablesAssesCount => cache.Count;
 
-        internal Dictionary<WearableAsset, List<CachedWearable>> cache { get; }
+        internal Dictionary<WearableAssetBase, List<CachedWearable>> cache { get; }
 
         public WearableAssetsCache(int initialCapacity)
         {
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
 
-            cache = new Dictionary<WearableAsset, List<CachedWearable>>(initialCapacity);
+            cache = new Dictionary<WearableAssetBase, List<CachedWearable>>(initialCapacity);
 
             // instantiate a couple of lists to prevent runtime allocations
             listPool = new ListObjectPool<CachedWearable>(defaultCapacity: initialCapacity);
@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             UnityObjectUtils.SafeDestroyGameObject(parentContainer);
         }
 
-        public bool TryGet(WearableAsset asset, out CachedWearable instance)
+        public bool TryGet(WearableAssetBase asset, out CachedWearable instance)
         {
             if (cache.TryGetValue(asset, out List<CachedWearable> list) && list.Count > 0)
             {
@@ -72,7 +72,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void Release(CachedWearable cachedWearable)
         {
-            WearableAsset asset = cachedWearable.OriginalAsset;
+            WearableAssetBase asset = cachedWearable.OriginalAsset;
 
             if (!cache.TryGetValue(asset, out List<CachedWearable> list))
             {
@@ -100,7 +100,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             while (frameTimeBudget.TrySpendBudget()
                    && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
-                   && unloadQueue.TryDequeue(out WearableAsset key) && cache.TryGetValue(key, out List<CachedWearable> assets))
+                   && unloadQueue.TryDequeue(out WearableAssetBase key) && cache.TryGetValue(key, out List<CachedWearable> assets))
             {
                 unloadedAmount += assets.Count;
 
