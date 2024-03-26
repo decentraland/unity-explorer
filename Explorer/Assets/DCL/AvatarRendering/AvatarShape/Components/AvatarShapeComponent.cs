@@ -14,6 +14,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Color SkinColor;
         public Color HairColor;
+        public Color EyesColor;
         public BodyShape BodyShape;
 
         public Promise WearablePromise;
@@ -32,7 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, Promise wearablePromise, Color skinColor,
-            Color hairColor)
+            Color hairColor, Color eyesColor)
         {
             ID = id;
             Name = name;
@@ -42,6 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             InstantiatedWearables = new List<CachedWearable>();
             SkinColor = skinColor;
             HairColor = hairColor;
+            EyesColor = eyesColor;
             IsVisible = true;
             HiddenByModifierArea = false;
         }

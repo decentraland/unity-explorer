@@ -22,6 +22,6 @@ namespace ECS.StreamableLoading.Common.Components
             Exception = exception;
         }
 
-        public bool IsInitialized => Exception != null || Asset != null;
+        public bool IsInitialized => Exception != null || Asset != null || Succeeded;
     }
 }

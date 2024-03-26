@@ -25,12 +25,14 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
         private Color3 FAKE_HAIR_COLOR;
         private Color3 FAKE_SKIN_COLOR;
+        private Color3 FAKE_EYE_COLOR;
 
         [SetUp]
         public void Setup()
         {
             FAKE_HAIR_COLOR = WearablesConstants.DefaultColors.GetRandomHairColor3();
             FAKE_SKIN_COLOR = WearablesConstants.DefaultColors.GetRandomSkinColor3();
+            FAKE_EYE_COLOR = WearablesConstants.DefaultColors.GetRandomEyesColor3();
 
             pbAvatarShape = new PBAvatarShape
             {
@@ -40,6 +42,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 Wearables = { FAKE_WEARABLES },
                 SkinColor = FAKE_SKIN_COLOR,
                 HairColor = FAKE_HAIR_COLOR,
+                EyeColor = FAKE_EYE_COLOR
             };
 
             system = new AvatarLoaderSystem(world);

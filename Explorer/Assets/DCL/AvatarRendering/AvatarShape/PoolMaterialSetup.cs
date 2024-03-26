@@ -4,9 +4,15 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
-    public struct PoolMaterialSetup
+    public readonly struct PoolMaterialSetup
     {
-        public IExtendedObjectPool<Material> Pool;
-        public TextureArrayContainer TextureArrayContainer;
+        public readonly IExtendedObjectPool<Material> Pool;
+        public readonly TextureArrayContainer TextureArrayContainer;
+
+        public PoolMaterialSetup(IExtendedObjectPool<Material> pool, TextureArrayContainer textureArrayContainer)
+        {
+            Pool = pool;
+            TextureArrayContainer = textureArrayContainer;
+        }
     }
 }

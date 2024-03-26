@@ -14,6 +14,8 @@ namespace ECS.StreamableLoading.Common
     public struct AssetPromise<TAsset, TLoadingIntention> : IEquatable<AssetPromise<TAsset, TLoadingIntention>>
         where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
     {
+        private static readonly string ASSERTION_MESSAGE = $"{nameof(AssetPromise<TAsset, TLoadingIntention>)} <{typeof(TAsset)}, {typeof(TLoadingIntention)}> is already consumed";
+
         public static readonly AssetPromise<TAsset, TLoadingIntention> NULL = new () { Entity = EntityReference.Null };
 
         /// <summary>
@@ -78,7 +80,7 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
-            Assert.IsFalse(Result.HasValue);
+            Assert.IsFalse(Result.HasValue, ASSERTION_MESSAGE);
 
             result = default(StreamableLoadingResult<TAsset>);
 

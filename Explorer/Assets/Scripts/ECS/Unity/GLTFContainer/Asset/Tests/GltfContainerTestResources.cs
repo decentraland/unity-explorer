@@ -1,6 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -29,8 +32,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             await wr.SendWebRequest();
             assetBundle = DownloadHandlerAssetBundle.GetContent(wr);
 
-            GameObject gameObject = assetBundle.LoadAllAssets<GameObject>().Length > 0 ? assetBundle.LoadAllAssets<GameObject>()[0] : null;
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, null, gameObject, null));
+            try
+            {
+                return await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
+                    ReportCategory.ASSET_BUNDLES, CancellationToken.None);
+            }
+            catch (Exception e)
+            {
+                return new StreamableLoadingResult<AssetBundleData>(e);
+            }
         }
 
         public void UnloadBundle()
