@@ -3,6 +3,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
@@ -155,7 +156,7 @@ namespace DCL.LOD.Systems
             else
             {
                 string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-                var manifest = new SceneAssetBundleManifest(LODUtils.LOD_WEB_URL,
+                var manifest = new SceneAssetBundleManifest(URLDomain.FromString($"{LODUtils.LOD_WEB_URL}{newLODKey.Level}/"),
                     new SceneAbDto
                     {
                         files = new[]

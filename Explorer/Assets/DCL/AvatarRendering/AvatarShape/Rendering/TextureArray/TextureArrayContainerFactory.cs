@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return new TextureArrayContainer( new TextureArrayMapping[]
             {
                 new (new TextureArrayHandler(minArraySize, BASE_MAP_TEX_ARR_INDEX, BASE_MAP_TEX_ARR,
-                        defaultResolution, textureFormat, defaultTextures),
+                        defaultResolution, textureFormat, new Dictionary<TextureArrayKey, Texture>()),
                     MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION)
             });
         }
