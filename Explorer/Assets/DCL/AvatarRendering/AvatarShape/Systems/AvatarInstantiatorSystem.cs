@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 avatarTransform.SetParent(transformComponent.Transform, false);
 
-                PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+                using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
                 for (var index = 0; index < children.Value.Count; index++)
                 {

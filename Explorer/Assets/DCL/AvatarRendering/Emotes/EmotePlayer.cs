@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.Emotes
             // In that case, the hierarchy will keep the wrong layer in the future usages
             emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
 
-            PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+            using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
             foreach (Transform? child in children.Value)
                 if (child != null)
