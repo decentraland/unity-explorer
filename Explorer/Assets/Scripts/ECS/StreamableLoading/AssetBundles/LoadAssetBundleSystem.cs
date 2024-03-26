@@ -112,7 +112,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ct.ThrowIfCancellationRequested();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleData(assetBundle, metrics, intention.ExpectedObjectType, loadingMutex, dependencies, GetReportCategory(), ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, loadingMutex, dependencies, GetReportCategory(), ct);
             }
             catch (Exception)
             {
@@ -125,7 +125,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleData(
+        public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
             AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
