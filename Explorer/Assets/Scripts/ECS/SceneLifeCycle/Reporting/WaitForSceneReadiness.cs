@@ -10,7 +10,7 @@ namespace ECS.SceneLifeCycle.Reporting
     public static class WaitForSceneReadinessExtensions
     {
         public static UniTask ToUniTask([CanBeNull] this WaitForSceneReadiness waitForSceneReadiness, CancellationToken ct) =>
-            waitForSceneReadiness?.Execute(ct) ?? UniTask.CompletedTask;
+            waitForSceneReadiness?.ExecuteAsync(ct) ?? UniTask.CompletedTask;
     }
 
     public class WaitForSceneReadiness
@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Reporting
         ///     Add the scene readiness report to the queue and wait for its resolution
         /// </summary>
         /// <returns></returns>
-        internal async UniTask Execute(CancellationToken ct)
+        internal async UniTask ExecuteAsync(CancellationToken ct)
         {
             if (executed)
                 throw new Exception(nameof(WaitForSceneReadiness) + " can be executed only once");

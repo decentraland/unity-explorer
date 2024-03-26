@@ -150,11 +150,11 @@ namespace DCL.UserInAppInitializationFlow
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
             await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
-                WaitForTeleportAndStartPartitioning());
+                WaitForTeleportAndStartPartitioningAsync());
 
             loadingStatus.SetStage(PlayerTeleported);
 
-            async UniTask WaitForTeleportAndStartPartitioning()
+            async UniTask WaitForTeleportAndStartPartitioningAsync()
             {
                 var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(startParcel, teleportLoadReport, ct);
 
