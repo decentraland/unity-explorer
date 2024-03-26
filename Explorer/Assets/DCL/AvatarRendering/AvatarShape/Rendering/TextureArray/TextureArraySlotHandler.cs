@@ -1,31 +1,8 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
-<<<<<<<< HEAD:Explorer/Assets/DCL/AvatarRendering/AvatarShape/Rendering/TextureArray/TextureArrayResolution_ToDelete.cs
-    public class TextureArrayResolution_ToDelete
-    {
-        internal readonly List<Texture2DArray> arrays;
-
-        internal readonly Stack<TextureArraySlot_ToDelete> freeSlots;
-        private readonly int minArraySize;
-        private readonly int resolution;
-        private int nextFreeIndex;
-        private readonly TextureFormat textureFormat;
-
-        public TextureArrayResolution_ToDelete(int resolution, int minArraySize, TextureFormat textureFormat)
-        {
-            this.minArraySize = minArraySize;
-            this.resolution = resolution;
-            this.textureFormat = textureFormat;
-
-            //Initial capacity for (100 * minArraySize) texutres
-            arrays = new List<Texture2DArray>(100);
-            arrays.Add(CreateTexture2DArray(textureFormat));
-            nextFreeIndex = 0;
-            freeSlots = new Stack<TextureArraySlot_ToDelete>();
-========
     public class TextureArraySlotHandler
     {
         internal readonly List<Texture2DArray> arrays;
@@ -45,10 +22,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             arrays = new List<Texture2DArray>(initialCapacity);
             arrays.Add(CreateTexture2DArray());
             freeSlots = new Stack<TextureArraySlot>();
->>>>>>>> origin/main:Explorer/Assets/DCL/AvatarRendering/AvatarShape/Rendering/TextureArray/TextureArraySlotHandler.cs
         }
 
-        public TextureArraySlot_ToDelete GetNextFreeSlot()
+        public TextureArraySlot GetNextFreeSlot()
         {
             if (freeSlots.TryPop(out var freeSlot)) { return freeSlot; }
 
@@ -56,13 +32,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             int slotIndex = nextFreeIndex - minArraySize * arrayIndex;
 
             if (arrays.Count <= arrayIndex)
-                arrays.Add(CreateTexture2DArray(textureFormat));
+                arrays.Add(CreateTexture2DArray());
 
             nextFreeIndex++;
-            return new TextureArraySlot_ToDelete(slotIndex, arrays[arrayIndex], this);
+            return new TextureArraySlot(slotIndex, arrays[arrayIndex], this);
         }
 
-        private Texture2DArray CreateTexture2DArray(TextureFormat textureFormat)
+        private Texture2DArray CreateTexture2DArray()
         {
             var texture2DArray = new Texture2DArray(resolution, resolution, minArraySize, textureFormat, false, false);
             texture2DArray.filterMode = FilterMode.Bilinear;
@@ -71,7 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return texture2DArray;
         }
 
-        public void FreeSlot(TextureArraySlot_ToDelete textureArraySlot)
+        public void FreeSlot(TextureArraySlot textureArraySlot)
         {
             freeSlots.Push(textureArraySlot);
         }

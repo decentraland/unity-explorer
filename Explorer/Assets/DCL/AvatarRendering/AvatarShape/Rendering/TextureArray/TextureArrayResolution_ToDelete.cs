@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
-<<<<<<<< HEAD:Explorer/Assets/DCL/AvatarRendering/AvatarShape/Rendering/TextureArray/TextureArrayResolution_ToDelete.cs
     public class TextureArrayResolution_ToDelete
     {
         internal readonly List<Texture2DArray> arrays;
@@ -25,27 +25,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             arrays.Add(CreateTexture2DArray(textureFormat));
             nextFreeIndex = 0;
             freeSlots = new Stack<TextureArraySlot_ToDelete>();
-========
-    public class TextureArraySlotHandler
-    {
-        internal readonly List<Texture2DArray> arrays;
-        internal readonly Stack<TextureArraySlot> freeSlots;
-        private readonly int minArraySize;
-        private readonly int resolution;
-        private int nextFreeIndex;
-        private TextureFormat textureFormat;
-
-        public TextureArraySlotHandler(int resolution, int minArraySize, int initialCapacity, TextureFormat _textureFormat)
-        {
-            this.minArraySize = minArraySize;
-            this.resolution = resolution;
-            this.textureFormat = _textureFormat;
-
-            //Initial capacity for (100 * minArraySize) textures
-            arrays = new List<Texture2DArray>(initialCapacity);
-            arrays.Add(CreateTexture2DArray());
-            freeSlots = new Stack<TextureArraySlot>();
->>>>>>>> origin/main:Explorer/Assets/DCL/AvatarRendering/AvatarShape/Rendering/TextureArray/TextureArraySlotHandler.cs
         }
 
         public TextureArraySlot_ToDelete GetNextFreeSlot()

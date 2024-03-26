@@ -37,6 +37,7 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
+  - rid: 4582970650587561984
   references:
     version: 2
     RefIds:
@@ -269,6 +270,14 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 4582970650587561984
+      type: {class: RoadSettings, ns: DCL.Roads.Systems, asm: DCL.Plugins}
+      data:
+        <RoadData>k__BackingField:
+          m_AssetGUID: d7baa85a7da60ef4b8b5252d78fa1b3d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -428,11 +437,16 @@ MonoBehaviour:
     - rid: 7249412338407702528
       type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
       data:
-        <LodSettingAsset>k__BackingField:
+        <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <lodMaterial>k__BackingField:
+          m_AssetGUID: ee038e77440a71e4c8e8bae23ad62c01
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
     - rid: 8147919132522971138
       type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
       data:

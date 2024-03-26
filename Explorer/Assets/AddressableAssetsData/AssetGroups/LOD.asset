@@ -22,11 +22,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
-    m_Address: LODSettings.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ee038e77440a71e4c8e8bae23ad62c01
     m_Address: LOD_Material.mat
     m_ReadOnly: 0

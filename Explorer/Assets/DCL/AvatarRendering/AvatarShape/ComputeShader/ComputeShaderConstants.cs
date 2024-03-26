@@ -4,6 +4,19 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderConstants
     {
+        public enum TextureArrayType
+        {
+            ALBEDO = 0,
+            ALPHA = 1,
+            METALLIC = 2,
+            BUMP = 3,
+            EMMISSION = 4
+        }
+
+        public static readonly int _BaseMapArr_ShaderID = Shader.PropertyToID("_BaseMapArr_ID");
+        public static readonly int _BaseMapArrTex_ShaderID = Shader.PropertyToID("_BaseMapArr");
+        
+        
         public const string TOON_KEYWORD = "_DCL_COMPUTE_SKINNING";
 
         public const string HAIR_MATERIAL_NAME = "hair";

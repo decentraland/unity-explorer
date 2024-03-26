@@ -33,18 +33,14 @@ namespace DCL.LOD.Systems
             lodSettingsAsset.IsColorDebuging = false;
             debugBuilder.AddWidget("LOD")
                 .AddSingleButton("LOD Debugging", ToggleLODColor)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold", SetLOD1)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold", SetLOD2);
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold",  newValue => SetLOD(newValue, 0))
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold",  newValue => SetLOD(newValue, 1))
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[2], "LOD 3 Threshold",  newValue => SetLOD(newValue, 2));
         }
 
-        private void SetLOD1(int value)
+        private void SetLOD(int newValue, int i)
         {
-            lodSettingsAsset.LodPartitionBucketThresholds[0] = value;
-        }
-
-        private void SetLOD2(int value)
-        {
-            lodSettingsAsset.LodPartitionBucketThresholds[1] = value;
+            lodSettingsAsset.LodPartitionBucketThresholds[i] = newValue;
         }
 
         private void ToggleLODColor()

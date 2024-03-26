@@ -52,6 +52,8 @@ namespace DCL.Roads.Systems
         {
             if (!roadInfo.IsDirty) return;
 
+            if (partitionComponent.IsBehind) return;
+
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
             if (roadDescriptions.TryGetValue(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, out var roadDescription))
