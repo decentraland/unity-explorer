@@ -104,64 +104,62 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 'Add GitHub to the SSH known hosts file'
+      - name: Add GitHub to the SSH known hosts file
         run: |
-          $sshPath = "$env:USERPROFILE\.ssh"
-          if (-not (Test-Path -Path $sshPath)) {
-            New-Item -Path $sshPath -ItemType Directory
-          }
-          
-          $knownHostsPath = Join-Path $sshPath 'known_hosts'
-          
-          # Download GitHub public keys and append them to the known_hosts file
-          (Invoke-WebRequest -Uri 'https://api.github.com/meta' | ConvertFrom-Json).ssh_keys | ForEach-Object {
-            Add-Content -Path $knownHostsPath -Value ("github.com " + $_)
-          }
-          
-          # Set proper permissions on the known_hosts file
-          attrib.exe +R +H $knownHostsPath
+          sshPath="$HOME/.ssh"
+          if [ ! -d "$sshPath" ]; then
+            mkdir -p "$sshPath"
+          fi
 
+          knownHostsPath="$sshPath/known_hosts"
+
+          curl -s 'https://api.github.com/meta' | jq -r '.ssh_keys[]' | while read key; do
+            echo "github.com $key" >> "$knownHostsPath"
+          done
+
+          chmod 600 "$knownHostsPath"
+          
       - name: Manage custom input parameters
         run: |
-          $profileEnabled = "${{ github.event.inputs.profile }}"
-          $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
-          
-          if ($profileEnabled -eq 'true') {
-            $profilingParam = '-profile'
-          } else {
-            $profilingParam = ''
-          }
+          # Initialize profiling parameters
+          profilingParam=""
+          deepProfilingParam=""
 
-          if ($deepProfileEnabled -eq 'true') {
-            $deepProfilingParam = '-deepProfile'
-          } else {
-            $deepProfilingParam = ''
-          }
+          # Parse input parameters
+          profileEnabled="${{ github.event.inputs.profile }}"
+          deepProfileEnabled="${{ github.event.inputs.deep_profile }}"
 
-          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
-          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
+          # Set profiling parameters based on input
+          if [ "$profileEnabled" == 'true' ]; then
+            profilingParam='-profile'
+          fi
 
-      - name: Clone Packages To Use Locally
+          if [ "$deepProfileEnabled" == 'true' ]; then
+            deepProfilingParam='-deepProfile'
+          fi
+
+          # Set environment variable UNITY_CUSTOM_PARAMS
+          echo "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" >> $GITHUB_ENV
+
+          # Output profiling parameters
+          echo "Profiling parameters: $profilingParam $deepProfilingParam"
+
+      - name: Clone repository with packages
         run: |
           # Clone the repository
           git clone git@github.com:decentraland/unity-explorer-packages.git
           
-          # Display message
-          Write-Host "Editing package manifest"
-          
           # Specify the path to the manifest.json file
-          $jsonFilePath = "Explorer\Packages\manifest.json"
-          
-          # Replace the first string in manifest.json
-          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' | Set-Content -Path $jsonFilePath
-          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
-          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' | Set-Content -Path $jsonFilePath
-          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' | Set-Content -Path $jsonFilePath
-          
-          # Display the content of manifest.json
-          Get-Content -Path $jsonFilePath
-          
-          # Display list of files
+          jsonFilePath="Explorer/Packages/manifest.json"
+
+          # Replace the strings in manifest.json
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
+
+          cat "Explorer/Packages/manifest.json"
+
           ls
           
       - uses: decentraland/unity-builder@chore/timeout-for-shader
