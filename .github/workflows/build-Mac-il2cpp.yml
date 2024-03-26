@@ -164,7 +164,6 @@ jobs:
           
       - uses: decentraland/unity-builder@chore/timeout-for-shader
         id: build
-        timeout-minutes: 120
         env:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
