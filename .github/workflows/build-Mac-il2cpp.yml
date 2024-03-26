@@ -153,10 +153,10 @@ jobs:
           jsonFilePath="Explorer/Packages/manifest.json"
 
           # Replace the strings in manifest.json
-          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
-          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
-          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
-          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
 
           cat "Explorer/Packages/manifest.json"
 
