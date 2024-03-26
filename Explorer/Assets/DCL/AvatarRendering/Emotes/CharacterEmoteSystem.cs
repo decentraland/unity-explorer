@@ -25,8 +25,10 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
-        private readonly IEmoteCache emoteCache;
+        // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
+
+        private readonly IEmoteCache emoteCache;
         private readonly string reportCategory;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
@@ -51,12 +53,14 @@ namespace DCL.AvatarRendering.Emotes
             UpdateEmoteTagsQuery(World);
         }
 
+        // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
         }
 
+        // emotes that do not loop need to trigger some kind of cancellation so we can take care of the emote props and sounds
         [Query]
         private void CancelEmotesByTag(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
@@ -72,6 +76,7 @@ namespace DCL.AvatarRendering.Emotes
                 StopEmote(ref emoteComponent, emoteReference);
         }
 
+        // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
         [Query]
         private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
         {
@@ -97,6 +102,7 @@ namespace DCL.AvatarRendering.Emotes
             emotePlayer.Stop(emoteReference);
         }
 
+        // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
         {
