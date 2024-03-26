@@ -12,11 +12,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         private int nextFreeIndex;
         private TextureFormat textureFormat;
 
-        public TextureArraySlotHandler(int resolution, int minArraySize, int initialCapacity, TextureFormat _textureFormat)
+        public TextureArraySlotHandler(int resolution, int minArraySize, int initialCapacity, TextureFormat textureFormat)
         {
             this.minArraySize = minArraySize;
             this.resolution = resolution;
-            this.textureFormat = _textureFormat;
+            this.textureFormat = textureFormat;
 
             //Initial capacity for (100 * minArraySize) textures
             arrays = new List<Texture2DArray>(initialCapacity);
@@ -51,6 +51,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         {
             freeSlots.Push(textureArraySlot);
         }
-        
+
     }
 }
