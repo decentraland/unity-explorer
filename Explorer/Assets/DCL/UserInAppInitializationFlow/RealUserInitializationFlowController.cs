@@ -12,6 +12,7 @@ using DCL.SceneLoadingScreens;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Threading;
@@ -90,11 +91,7 @@ namespace DCL.UserInAppInitializationFlow
 
             await LoadLandscapeAsync(ct);
 
-            await TeleportToSpawnPointAsync(ct);
-
-            // add camera sampling data to the camera entity to start partitioning
-            Assert.IsTrue(cameraEntity.Configured);
-            world.Add(cameraEntity.Object, cameraSamplingData);
+            await TeleportToSpawnPointAsync(world, ct);
 
             loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
             loadReport.CompletionSource.TrySetResult();
@@ -148,15 +145,26 @@ namespace DCL.UserInAppInitializationFlow
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
-        private async UniTask TeleportToSpawnPointAsync(CancellationToken ct)
+        private async UniTask TeleportToSpawnPointAsync(World world, CancellationToken ct)
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
             await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
-                teleportController.TeleportToSceneSpawnPointAsync(
-                    startParcel, teleportLoadReport, ct));
+                WaitForTeleportAndStartPartitioning());
 
             loadingStatus.SetStage(PlayerTeleported);
+
+            async UniTask WaitForTeleportAndStartPartitioning()
+            {
+                var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(startParcel, teleportLoadReport, ct);
+
+                // add camera sampling data to the camera entity to start partitioning
+                Assert.IsTrue(cameraEntity.Configured);
+                world.Add(cameraEntity.Object, cameraSamplingData);
+
+                // Wait for the scene to fire scene readiness
+                await waitForSceneReadiness.ToUniTask(ct);
+            }
         }
 
         private async UniTask ShowLoadingScreenAsync(CancellationToken ct)

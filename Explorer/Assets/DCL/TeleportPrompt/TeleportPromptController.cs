@@ -6,6 +6,7 @@ using DCL.PlacesAPIService;
 using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Threading;
@@ -90,7 +91,7 @@ namespace DCL.TeleportPrompt
 
             await UniTask.WhenAll(
                 mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, timeout))),
-                teleportController.TeleportToSceneSpawnPointAsync(inputData.Coords, loadReport, CancellationToken.None));
+                teleportController.TeleportToSceneSpawnPointAsync(inputData.Coords, loadReport, CancellationToken.None).ContinueWith(w => w.ToUniTask(CancellationToken.None)));
         }
 
         private async UniTaskVoid GetPlaceInfoAsync(Vector2Int parcel, CancellationToken ct)

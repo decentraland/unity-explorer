@@ -19,6 +19,7 @@ using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -87,7 +88,7 @@ namespace Global.Dynamic
             try
             {
                 await UniTask.WhenAll(sceneLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
-                    teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct));
+                    teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct).ContinueWith(w => w.ToUniTask(ct)));
             }
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
