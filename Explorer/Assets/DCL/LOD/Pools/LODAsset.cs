@@ -1,13 +1,9 @@
-using DCL.AssetsProvision;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using System;
-using System.Collections.Generic;
-using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using Utility;
 
 namespace DCL.LOD
@@ -21,10 +17,10 @@ namespace DCL.LOD
         public AssetBundleData AssetBundleReference;
         public readonly bool LoadingFailed;
         private readonly ILODAssetsPool Pool;
-        private readonly TextureArraySlot_ToDelete[] Slots;
+        private readonly TextureArraySlot?[] Slots;
         private readonly IExtendedObjectPool<Material> MaterialPool;
 
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot_ToDelete[] slots, IExtendedObjectPool<Material> materialPool)
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot?[] slots, IExtendedObjectPool<Material> materialPool)
         {
             LodKey = lodKey;
             Root = root;
@@ -46,8 +42,7 @@ namespace DCL.LOD
             AssetBundleReference = assetBundleReference;
             LoadingFailed = false;
             Pool = pool;
-            Slots = Array.Empty<TextureArraySlot_ToDelete>();
-            ;
+            Slots = Array.Empty<TextureArraySlot?>();
             MaterialPool = null;
             
             ProfilingCounters.LODAssetAmount.Value++;
@@ -59,7 +54,7 @@ namespace DCL.LOD
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.Failling_LOD_Amount.Value++;
             LodKey = lodKey;
-            Slots = Array.Empty<TextureArraySlot_ToDelete>();
+            Slots = Array.Empty<TextureArraySlot?>();
             LoadingFailed = true;
             Root = null;
             AssetBundleReference = null;
@@ -76,7 +71,6 @@ namespace DCL.LOD
 
             if (!LodKey.Level.Equals(0))
             {
-                //TODO: (ASK MISHA) Is this release of the material pool ok?
                 using (var pooledList = Root.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
                     foreach (var renderer in pooledList.Value)
@@ -90,7 +84,7 @@ namespace DCL.LOD
                 }
 
                 for (int i = 0; i < Slots.Length; i++)
-                    Slots[i].FreeSlot();
+                    Slots[i]?.FreeSlot();
             }
 
 

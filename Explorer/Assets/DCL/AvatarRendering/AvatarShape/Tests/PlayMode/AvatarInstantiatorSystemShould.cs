@@ -96,7 +96,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
             };
 
-            var poolMaterialSetup = new PoolMaterialSetup(materialPool, TextureArrayContainerFactory.Create(celShadingMaterial.shader, DEFAULT_RESOLUTIONS, defaultTextures));
+            var textureArrayContainerFactory = new TextureArrayContainerFactory();
+            textureArrayContainerFactory.SetDefaultTextures(defaultTextures);
+
+            var poolMaterialSetup = new PoolMaterialSetup(materialPool, textureArrayContainerFactory.Create(celShadingMaterial.shader, DEFAULT_RESOLUTIONS));
 
             IAvatarMaterialPoolHandler? materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
             materialPoolHandler.GetMaterialPool(Arg.Any<int>()).Returns(poolMaterialSetup);

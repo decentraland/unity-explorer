@@ -4,9 +4,28 @@ using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArray
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
-    public static class TextureArrayContainerFactory
+    public class TextureArrayContainerFactory
     {
-        internal static TextureArrayContainer CreatePBR(IReadOnlyList<int> defaultResolutions, IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures)
+        private IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures;
+
+
+        public void SetDefaultTextures(Dictionary<TextureArrayKey, Texture> dictionary)
+        {
+            defaultTextures = dictionary;
+        }
+
+
+        private TextureArrayContainer CreateSceneLOD(int minArraySize, TextureFormat textureFormat, IReadOnlyList<int> defaultResolution)
+        {
+            return new TextureArrayContainer( new TextureArrayMapping[]
+            {
+                new (new TextureArrayHandler(minArraySize, BASE_MAP_TEX_ARR_INDEX, BASE_MAP_TEX_ARR,
+                        defaultResolution, textureFormat, defaultTextures),
+                    MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION)
+            });
+        }
+
+        private TextureArrayContainer CreatePBR(IReadOnlyList<int> defaultResolutions)
         {
             return new TextureArrayContainer(
                 new TextureArrayMapping[]
@@ -15,7 +34,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 });
         }
 
-        internal static TextureArrayContainer CreateToon(IReadOnlyList<int> defaultResolutions, IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures)
+        private TextureArrayContainer CreateToon(IReadOnlyList<int> defaultResolutions)
         {
             return new TextureArrayContainer(
                 new TextureArrayMapping[]
@@ -32,7 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 });
         }
 
-        internal static TextureArrayContainer CreateFacial(IReadOnlyList<int> defaultResolutions, IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures)
+        private TextureArrayContainer CreateFacial(IReadOnlyList<int> defaultResolutions)
         {
             return new TextureArrayContainer(
                 new TextureArrayMapping[]
@@ -42,14 +61,25 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 });
         }
 
-        public static TextureArrayContainer Create(Shader shader, IReadOnlyList<int> defaultResolutions, IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures)
+        public TextureArrayContainer Create(Shader shader, IReadOnlyList<int> defaultResolutions)
         {
             return shader.name switch
                    {
-                       TOON_SHADER => CreateToon(defaultResolutions, defaultTextures),
-                       FACIAL_SHADER => CreateFacial(defaultResolutions, defaultTextures),
-                       _ => CreatePBR(defaultResolutions, defaultTextures),
-                   };
+                TOON_SHADER => CreateToon(defaultResolutions),
+                FACIAL_SHADER => CreateFacial(defaultResolutions),
+                _ => CreatePBR(defaultResolutions)
+            };
         }
+
+        public TextureArrayContainer Create(string shaderName, IReadOnlyList<int> defaultResolutions, TextureFormat format, int minArraySize)
+        {
+            return shaderName switch
+            {
+                SCENE_TEX_ARRAY_SHADER => CreateSceneLOD(minArraySize, format, defaultResolutions),
+                _ => CreatePBR(defaultResolutions)
+            };
+        }
+
+
     }
 }

@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: LODSettings
   m_EditorClassIdentifier: 
   <LodPartitionBucketThresholds>k__BackingField: 040000000500000006000000
+  <DefaultLODMaterial>k__BackingField:
+    m_AssetGUID: ee038e77440a71e4c8e8bae23ad62c01
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
   <IsColorDebuging>k__BackingField: 1
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}

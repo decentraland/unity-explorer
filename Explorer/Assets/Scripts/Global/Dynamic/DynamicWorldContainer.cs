@@ -44,6 +44,7 @@ using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Roads.Systems;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -217,6 +218,7 @@ namespace Global.Dynamic
             );
 
             var visualSceneStateResolver = new VisualSceneStateResolver();
+            var textureArrayContainerFactory = new TextureArrayContainerFactory();
             
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -253,7 +255,8 @@ namespace Global.Dynamic
                     chatEntryConfiguration,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     entityParticipantTable,
-                    nametagsData
+                    nametagsData,
+                    textureArrayContainerFactory
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -281,7 +284,7 @@ namespace Global.Dynamic
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue, visualSceneStateResolver),
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue, visualSceneStateResolver, textureArrayContainerFactory),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService),
                 new ChangeRealmPromptPlugin(

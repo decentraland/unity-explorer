@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -22,10 +22,11 @@ namespace DCL.LOD
         
         
         private static readonly ListObjectPool<Material> MATERIALS_LIST_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
-        private static readonly ListObjectPool<TextureArraySlot_ToDelete> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
+        private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
-        public static TextureArraySlot_ToDelete[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD,
-            IExtendedObjectPool<Material> materialPool, Dictionary<TextureFormat, TextureArrayContainer_ToDelete> textureArrayContainerDictionary, int lodValue)
+        //TODO: (Juani) Integrate the scene shader into the asset bundle converter to avoid all the hastle of changing materials
+        public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD,
+            IExtendedObjectPool<Material> materialPool, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary)
         {
             var newSlots = TEXTURE_ARRAY_SLOTS.Get();
             using (PoolExtensions.Scope<List<Renderer>> pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
@@ -46,23 +47,20 @@ namespace DCL.LOD
 
                             switch (pooledList.Value[i].materials[j].mainTexture.graphicsFormat)
                             {
-                                case GraphicsFormat.RGBA_BC7_UNorm:
-                                case GraphicsFormat.RGBA_BC7_SRGB:
-                                    newSlots.Add(textureArrayContainerDictionary[TextureFormat.BC7].SetTexture(newMaterial, (Texture2D)pooledList.Value[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO));
+                                case GraphicsFormat.RGBA_BC7_UNorm or GraphicsFormat.RGBA_BC7_SRGB:
+                                    newSlots.AddRange(textureArrayContainerDictionary[TextureFormat.BC7].SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], newMaterial));
                                     break;
-                                case GraphicsFormat.RGBA_DXT1_UNorm:
-                                case GraphicsFormat.RGBA_DXT1_SRGB:
-                                    newSlots.Add(textureArrayContainerDictionary[TextureFormat.DXT1].SetTexture(newMaterial, (Texture2D)pooledList.Value[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO));
+                                case GraphicsFormat.RGBA_DXT1_UNorm or GraphicsFormat.RGBA_DXT1_SRGB:
+                                    newSlots.AddRange(textureArrayContainerDictionary[TextureFormat.DXT1].SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], newMaterial));
                                     break;
-                                case GraphicsFormat.RGBA_DXT5_SRGB:
-                                case GraphicsFormat.RGBA_DXT5_UNorm:
-                                    newSlots.Add(textureArrayContainerDictionary[TextureFormat.DXT5].SetTexture(newMaterial, (Texture2D)pooledList.Value[i].materials[j].mainTexture, ComputeShaderConstants.TextureArrayType.ALBEDO));
+                                case GraphicsFormat.RGBA_DXT5_SRGB or GraphicsFormat.RGBA_DXT5_UNorm:
+                                    newSlots.AddRange(textureArrayContainerDictionary[TextureFormat.DXT5].SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], newMaterial));
                                     break;
                             }
                         }
 
                         newMaterial.DisableKeyword("_NORMALMAP");
-                        newMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, pooledList.Value[i].materials[j].color);
+                        newMaterial.SetColor(ComputeShaderConstants.BASE_COLOUR_SHADER_ID, pooledList.Value[i].materials[j].color);
                         if (pooledList.Value[i].materials[j].name.Contains("FORCED_TRANSPARENT"))
                         {
                             ApplyTransparency(newMaterial, true);

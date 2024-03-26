@@ -32,7 +32,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
                 [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture
             };
-            textureArrayContainer = TextureArrayContainerFactory.Create(targetShader, DEFAULT_RESOLUTIONS, defaultTextures);
+            var factory = new TextureArrayContainerFactory();
+            factory.SetDefaultTextures(defaultTextures);
+            textureArrayContainer = factory.Create(targetShader, DEFAULT_RESOLUTIONS);
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
 
             foreach (TextureArrayMapping textureArrayMapping in textureArrayContainer.mappings)

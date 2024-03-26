@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Arch.Core;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
@@ -72,7 +74,14 @@ namespace DCL.LOD.Tests
 
             var pool = Substitute.For<IExtendedObjectPool<Material>>();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform, pool);
+            var textureArrayContainerFactory = new TextureArrayContainerFactory();
+            var textureArrayDictionary = new Dictionary<TextureFormat, TextureArrayContainer>();
+            textureArrayDictionary.Add(TextureFormat.BC7,
+                textureArrayContainerFactory.Create(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
+                {
+                    256
+                }, TextureFormat.BC7, 20));
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform, pool, textureArrayDictionary);
         }
 
 

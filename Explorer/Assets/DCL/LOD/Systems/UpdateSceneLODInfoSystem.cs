@@ -3,11 +3,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
-using CommunicationData.URLHelpers;
-using DCL.AssetsProvision;
-using DCL.AsyncLoadReporting;
-using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
@@ -25,10 +21,10 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
 
 namespace DCL.LOD.Systems
 {
@@ -46,10 +42,11 @@ namespace DCL.LOD.Systems
         private readonly Transform lodsTransformParent;
 
         private readonly IExtendedObjectPool<Material> materialPool;
-        private readonly Dictionary<TextureFormat, TextureArrayContainer_ToDelete> textureArrayContainerDictionary;
+        private readonly Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent, IExtendedObjectPool<Material> materialPool) : base(world)
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
+            Transform lodsTransformParent, IExtendedObjectPool<Material> materialPool, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
@@ -59,18 +56,7 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
             this.materialPool = materialPool;
-            textureArrayContainerDictionary = new Dictionary<TextureFormat, TextureArrayContainer_ToDelete>
-            {
-                {
-                    TextureFormat.BC7, new TextureArrayContainer_ToDelete(TextureFormat.BC7)
-                },
-                {
-                    TextureFormat.DXT1, new TextureArrayContainer_ToDelete(TextureFormat.DXT1)
-                },
-                {
-                    TextureFormat.DXT5, new TextureArrayContainer_ToDelete(TextureFormat.DXT5)
-                }
-            };
+            this.textureArrayContainerDictionary = textureArrayContainerDictionary;
         }
 
         protected override void Update(float t)
@@ -98,21 +84,17 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 sceneLODInfo.CurrentLOD?.Release();
-
                 if (result.Succeeded)
                 {
-                    GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
-                        Quaternion.identity, lodsTransformParent);
+                    var instantiatedLOD = Object.Instantiate(result.Asset?.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
+                        Quaternion.identity, lodsTransformParent)!;
+                   
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
-                    {
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary, sceneLODInfo.CurrentLODLevel), materialPool);
-                    }
+                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary), materialPool);
                     else
-                    {
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache);
-                    }
 
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
@@ -172,18 +154,21 @@ namespace DCL.LOD.Systems
             }
             else
             {
-                var assetBundleIntention =  GetAssetBundleIntention.FromHash(newLODKey + PlatformUtils.GetPlatform(),
-                    permittedSources: AssetSource.EMBEDDED,
-                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES[newLODKey.Level]);
-                //TODO: (ASK MISHA) Is there some way to avoid this allocation?
-                assetBundleIntention.Manifest =  new SceneAssetBundleManifest(LODUtils.LOD_WEB_URL,
+                string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+                var manifest = new SceneAssetBundleManifest(LODUtils.LOD_WEB_URL,
                     new SceneAbDto
                     {
                         files = new[]
                         {
-                            newLODKey + PlatformUtils.GetPlatform()
+                            platformLODKey
                         },
                     });
+
+                var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
+                    platformLODKey,
+                    permittedSources: AssetSource.ALL,
+                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES[newLODKey.Level],
+                    manifest: manifest);
                 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World, assetBundleIntention, partitionComponent);

@@ -11,7 +11,7 @@ namespace DCL.LOD
     {
         private HashSet<Vector2Int> roadCoordinates;
 
-        public void Init(HashSet<Vector2Int> roadCoordinates)
+        public void SetRoadCoordinates(HashSet<Vector2Int> roadCoordinates)
         {
             this.roadCoordinates = roadCoordinates;
         }

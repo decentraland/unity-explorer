@@ -1,16 +1,25 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using DCL.AssetsProvision;
+using UnityEngine;
 
 namespace DCL.LOD
 {
     public interface ILODSettingsAsset
     {
-        public bool IsColorDebuging { get; set; }
-
-        //TODO: Clean this up, remove it from settings and create LODDebugSettings
+        //Threshold for bucket partition (inclusive) 
         public int[] LodPartitionBucketThresholds { get; set; }
+        public AssetReferenceMaterial DefaultLODMaterial { get; }
 
+        //Texture array settings
+        public int TextureArrayMinSize { get; }
+        int[] DefaultTextureArrayResolutions { get;  }
+        TextureFormat[] FormatsToCreate { get;  }
+
+        //Debug features        
+        public bool IsColorDebuging { get; set; }
         public Color[] LODDebugColors { get; set; }
-
         public GameObject FaillingCube { get; set; }
+        
+        
     }
 }

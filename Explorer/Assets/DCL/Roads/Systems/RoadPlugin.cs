@@ -51,7 +51,7 @@ namespace DCL.Roads.Systems
             roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
             foreach (var roadDescription in roadSettingsAsset.RoadDescriptions)
                 roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
-            visualSceneStateResolver.Init(roadDataDictionary.Keys.ToHashSet());
+            visualSceneStateResolver.SetRoadCoordinates(roadDataDictionary.Keys.ToHashSet());
 
             var roadAssetsPrefabList = new List<GameObject>();
             foreach (var assetReferenceGameObject in roadSettingsAsset.RoadAssetsReference)
