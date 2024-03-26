@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using Utility;
 
@@ -9,6 +10,7 @@ namespace DCL.Emoji
     public class EmojiPanelConfigurationSO : ScriptableObject
     {
         [SerializeField] public List<EmojiSection> EmojiSections;
+        [SerializeField] public TMP_SpriteAsset SpriteAsset;
     }
 
     [Serializable]

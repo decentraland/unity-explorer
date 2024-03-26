@@ -14,13 +14,13 @@ namespace DCL.Multiplayer.Connections.Systems
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly IReadOnlyRealFlowLoadingStatus loadingStatus;
 
         public ConnectionRoomsSystem(
             World world,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
-            RealFlowLoadingStatus loadingStatus) : base(world)
+            IReadOnlyRealFlowLoadingStatus loadingStatus) : base(world)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;

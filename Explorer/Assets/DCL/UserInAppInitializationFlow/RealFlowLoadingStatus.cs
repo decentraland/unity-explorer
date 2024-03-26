@@ -3,7 +3,7 @@ using Utility;
 
 namespace DCL.UserInAppInitializationFlow
 {
-    public class RealFlowLoadingStatus
+    public class RealFlowLoadingStatus : IReadOnlyRealFlowLoadingStatus
     {
         public enum Stage : byte
         {
