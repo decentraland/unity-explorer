@@ -105,9 +105,8 @@ namespace DCL.LOD.Systems
                         Quaternion.identity, lodsTransformParent);
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                     {
-                        var newSlots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary, sceneLODInfo.CurrentLODLevel);
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, newSlots, materialPool);
+                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary, sceneLODInfo.CurrentLODLevel), materialPool);
                     }
                     else
                     {
