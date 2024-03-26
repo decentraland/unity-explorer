@@ -171,8 +171,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             //Assert
             Assert.IsFalse(world.Get<AvatarShapeComponent>(avatarEntity).IsDirty);
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables.Count, 3);
-            Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[1].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants._BaseColour_ShaderID), randomSkinColor);
-            Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[2].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants._BaseColour_ShaderID), randomHairColor);
+            Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[1].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants.BASE_COLOUR_SHADER_ID), randomSkinColor);
+            Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[2].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants.BASE_COLOUR_SHADER_ID), randomHairColor);
         }
 
         [Test]
