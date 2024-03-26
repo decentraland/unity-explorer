@@ -5,6 +5,7 @@
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
+    "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",
     "com.decentraland.unity-shared-dependencies": "https://github.com/decentraland/unity-shared-dependencies.git",
@@ -78,7 +79,8 @@
         "com.demigiant",
         "com.coffee.ui-particle",
         "com.atteneder.draco",
-        "com.madsbangh.easybuttons"
+        "com.madsbangh.easybuttons",
+        "com.brunomikoski"
       ]
     }
   ]
