@@ -99,7 +99,72 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
           
-      - uses: decentraland/unity-builder@0.9
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          $sshPath = "$env:USERPROFILE\.ssh"
+          if (-not (Test-Path -Path $sshPath)) {
+            New-Item -Path $sshPath -ItemType Directory
+          }
+          
+          $knownHostsPath = Join-Path $sshPath 'known_hosts'
+          
+          # Download GitHub public keys and append them to the known_hosts file
+          (Invoke-WebRequest -Uri 'https://api.github.com/meta' | ConvertFrom-Json).ssh_keys | ForEach-Object {
+            Add-Content -Path $knownHostsPath -Value ("github.com " + $_)
+          }
+          
+          # Set proper permissions on the known_hosts file
+          attrib.exe +R +H $knownHostsPath
+
+      - name: Manage custom input parameters
+        run: |
+          $profileEnabled = "${{ github.event.inputs.profile }}"
+          $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
+          
+          if ($profileEnabled -eq 'true') {
+            $profilingParam = '-profile'
+          } else {
+            $profilingParam = ''
+          }
+
+          if ($deepProfileEnabled -eq 'true') {
+            $deepProfilingParam = '-deepProfile'
+          } else {
+            $deepProfilingParam = ''
+          }
+
+          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
+          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
+
+      - name: Clone Packages To Use Locally
+        run: |
+          # Clone the repository
+          git clone git@github.com:decentraland/unity-explorer-packages.git
+          
+          # Display message
+          Write-Host "Editing package manifest"
+          
+          # Specify the path to the manifest.json file
+          $jsonFilePath = "Explorer\Packages\manifest.json"
+          
+          # Replace the first string in manifest.json
+          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' | Set-Content -Path $jsonFilePath
+          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
+          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' | Set-Content -Path $jsonFilePath
+          (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' | Set-Content -Path $jsonFilePath
+          
+          # Display the content of manifest.json
+          Get-Content -Path $jsonFilePath
+          
+          # Display list of files
+          ls
+          
+      - uses: decentraland/unity-builder@chore/timeout-for-shader
         id: build
         timeout-minutes: 120
         env:
