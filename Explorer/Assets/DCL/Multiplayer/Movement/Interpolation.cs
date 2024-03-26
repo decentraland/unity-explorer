@@ -5,6 +5,8 @@ namespace DCL.Multiplayer.Movement
 {
     public static class Interpolation
     {
+        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.0001f;
+
         public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp, float lookAtTimeDelta)
         {
             var remainedDeltaTime = 0f;
@@ -15,15 +17,17 @@ namespace DCL.Multiplayer.Movement
             if (intComp.Time < intComp.TotalDuration)
             {
                 transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
-                lookDirection = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType) - transComp.Transform.position; // look into future step
+                var nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
+                lookDirection = nextStep - transComp.Transform.position; // look into future step
             }
             else
             {
                 remainedDeltaTime = intComp.Time - intComp.TotalDuration;
-
                 intComp.Time = intComp.TotalDuration;
+
+                lookDirection = intComp.End.velocity.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
+
                 transComp.Transform.position = intComp.End.position;
-                lookDirection = intComp.End.velocity;
             }
 
             LookAt(ref transComp, lookDirection);
@@ -31,19 +35,20 @@ namespace DCL.Multiplayer.Movement
             return remainedDeltaTime;
         }
 
-        public static void LookAt(ref CharacterTransform transComp, Vector3 direction)
+        private static void LookAt(ref CharacterTransform transComp, Vector3 direction)
         {
             // Flattened to have ground plane direction only (XZ)
             direction.y = 0;
 
-            if (direction != Vector3.zero)
+            // Avoid flickering for small direction changes
+            if (direction.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE)
             {
                 var lookRotation = Quaternion.LookRotation(direction, Vector3.up);
                 transComp.Transform.rotation = lookRotation;
             }
         }
 
-        private static Vector3 DoTransition(FullMovementMessage start, FullMovementMessage end, float time, float totalDuration, InterpolationType blendType)
+        private static Vector3 DoTransition(NetworkMovementMessage start, NetworkMovementMessage end, float time, float totalDuration, InterpolationType blendType)
         {
             return blendType switch
                    {

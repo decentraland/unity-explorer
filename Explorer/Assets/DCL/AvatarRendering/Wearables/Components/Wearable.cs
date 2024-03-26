@@ -6,61 +6,57 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 //Removed all references to EmoteData in WearableItem
 namespace DCL.AvatarRendering.Wearables.Components
 {
+    public enum WearableType : byte
+    {
+        Regular,
+        BodyShape,
+        FacialFeature
+    }
+
     [Serializable]
     public class Wearable : IWearable
     {
-        private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         private const string DEFAULT_RARITY = "base";
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
-        public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+        // public StreamableLoadingResult<WearableAssetBase>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
 
+        public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
+
+        public StreamableLoadingResult<WearableDTO> WearableDTO { get; private set; }
         public StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
+
+        public WearableType Type { get; private set; }
+
         public bool IsLoading { get; set; } = true;
 
-        public URLPath GetThumbnail()
+        public Wearable()
         {
-            string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
-
-            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)
-                thumbnailHash = GetContentHashByKey(THUMBNAIL_DEFAULT_KEY);
-
-            return new URLPath(thumbnailHash);
         }
 
-        private string GetContentHashByKey(string key)
+        public Wearable(StreamableLoadingResult<WearableDTO> dto)
         {
-            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
-            {
-                if (WearableDTO.Asset.content[i].file == key)
-                    return WearableDTO.Asset.content[i].hash;
-            }
-
-            return "";
+            ResolveDTO(dto);
+            IsLoading = false;
         }
 
-        public string GetMainFileHash(BodyShape bodyShape)
+        public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            var mainFileKey = "";
+            Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+            WearableDTO = result;
 
-            // The length of arrays is small, so O(N) complexity is fine
-            // Avoid iterator allocations with "for" loop
-            for (var i = 0; i < WearableDTO.Asset.metadata.data.representations.Length; i++)
-            {
-                WearableDTO.WearableMetadataDto.Representation representation = WearableDTO.Asset.metadata.data.representations[i];
+            if (!result.Succeeded) return;
 
-                if (representation.bodyShapes.Contains(bodyShape))
-                {
-                    mainFileKey = representation.mainFile;
-                    break;
-                }
-            }
-
-            return GetContentHashByKey(mainFileKey);
+            if (IsFacialFeature())
+                Type = WearableType.FacialFeature;
+            else if (IsBodyShape())
+                Type = WearableType.BodyShape;
+            else
+                Type = WearableType.Regular;
         }
 
         public string GetHash() =>
@@ -122,7 +118,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public WearableDTO.WearableMetadataDto.DataDto GetData() =>
             WearableDTO.Asset.metadata.data;
 
-        public bool isFacialFeature() =>
+        internal bool IsFacialFeature() =>
             WearablesConstants.FACIAL_FEATURES.Contains(GetCategory());
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
@@ -136,7 +132,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             return false;
         }
 
-        public bool IsBodyShape() =>
+        internal bool IsBodyShape() =>
             GetCategory().Equals(WearablesConstants.Categories.BODY_SHAPE);
 
         private bool IsSkin() =>

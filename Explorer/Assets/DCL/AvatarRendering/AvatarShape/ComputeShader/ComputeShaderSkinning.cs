@@ -1,20 +1,14 @@
-// Uncomment DCL_MATERIAL_DEBUGGING for Debug Log output on material keywords and shader variables
-//#define DCL_MATERIAL_DEBUGGING
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.Pools;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using ECS.Unity.Textures.Components;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Profiling;
-using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
@@ -23,7 +17,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
-            Dictionary<string, Texture> facialFeatureTexture)
+            in FacialFeaturesTextures facialFeatureTexture)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
 
@@ -134,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects,
-            IAvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, Dictionary<string, Texture> facilFeatureTexture)
+            IAvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facilFeatureTexture)
         {
             var auxVertCounter = 0;
 
@@ -204,141 +198,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (meshRenderer, filter);
         }
 
-        private (Material, TextureArraySlot?[], int) DoFacialFeature(IAvatarMaterialPoolHandler poolHandler, Texture replacementTexture, Renderer meshRenderer, AvatarShapeComponent avatarShapeComponent)
-        {
-            int resolution = replacementTexture.width;
-            int materialIndexInPool = TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES * resolution;
-            var poolMaterialSetup = poolHandler.GetMaterialPool(materialIndexInPool);
-            var avatarMaterial = poolMaterialSetup.Pool.Get();
-            var slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE, (Texture2D)replacementTexture, avatarMaterial);
-            return (avatarMaterial, slots, materialIndexInPool);
-        }
-
-        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler, AvatarShapeComponent avatarShapeComponent,
-            Dictionary<string, Texture> facialFeatures)
-        {
-            var slots = Array.Empty<TextureArraySlot?>();
-            Material avatarMaterial = null;
-            int materialIndexInPool = -1;
-
-
-
-            if (meshRenderer.gameObject.name.Contains("eyes", StringComparison.OrdinalIgnoreCase))
-            {
-                (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.EYES], meshRenderer, avatarShapeComponent);
-                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-                avatarMaterial.SetInt("_ZWriteMode", 0);
-            }
-            else if (meshRenderer.gameObject.name.Contains("eyebrows", StringComparison.OrdinalIgnoreCase))
-            {
-                (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.EYEBROWS], meshRenderer, avatarShapeComponent);
-                avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.HairColor);
-                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-                avatarMaterial.SetInt("_ZWriteMode", 0);
-            }
-            else if (meshRenderer.gameObject.name.Contains("mouth", StringComparison.OrdinalIgnoreCase))
-            {
-                (avatarMaterial, slots, materialIndexInPool) = DoFacialFeature(poolHandler, facialFeatures[WearablesConstants.Categories.MOUTH], meshRenderer, avatarShapeComponent);
-                avatarMaterial.SetColor("_BaseColor", avatarShapeComponent.SkinColor);
-                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-                avatarMaterial.SetInt("_ZWriteMode", 0);
-            }
-            else
-            {
-                var tex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE) as Texture2D;
-                int resolution = tex != null ? tex.width : TextureArrayConstants.MAIN_TEXTURE_RESOLUTION;
-
-                materialIndexInPool = TextureArrayConstants.SHADERID_DCL_TOON * resolution;
-                var poolMaterialSetup = poolHandler.GetMaterialPool(materialIndexInPool);
-                avatarMaterial = poolMaterialSetup.Pool.Get();
-
-                avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, originalMaterial.GetColor(ComputeShaderConstants._BaseColour_ShaderID));
-                avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
-
-                if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON") && originalMaterial.GetFloat("_AlphaClip") > 0)
-                {
-                    avatarMaterial.EnableKeyword("_IS_CLIPPING_MODE");
-                    avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");
-                    Color baseColour = originalMaterial.GetColor("_BaseColor");
-                    avatarMaterial.SetFloat("_Tweak_transparency", 0.0f - (1.0f - baseColour.a));
-                    avatarMaterial.SetFloat("_Clipping_Level", originalMaterial.GetFloat("_Cutoff"));
-                    avatarMaterial.SetInt("_ZWriteMode", 1);
-                    avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-                }
-
-                if (originalMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT") || originalMaterial.GetFloat("_Surface") > 0)
-                {
-                    avatarMaterial.DisableKeyword("_IS_CLIPPING_MODE");
-                    avatarMaterial.EnableKeyword("_IS_CLIPPING_TRANSMODE");
-                    Color baseColour = originalMaterial.GetColor("_BaseColor");
-                    avatarMaterial.SetFloat("_Tweak_transparency", 0.0f - (1.0f - baseColour.a));
-                    avatarMaterial.SetFloat("_Clipping_Level", originalMaterial.GetFloat("_Cutoff"));
-                    avatarMaterial.SetInt("_ZWriteMode", (int)originalMaterial.GetFloat("_ZWrite"));
-                    avatarMaterial.SetFloat("_SrcBlend", originalMaterial.GetFloat("_SrcBlend"));
-                    avatarMaterial.SetFloat("_DstBlend", originalMaterial.GetFloat("_DstBlend"));
-                    avatarMaterial.SetFloat("_AlphaSrcBlend", originalMaterial.GetFloat("_SrcBlendAlpha"));
-                    avatarMaterial.SetFloat("_AlphaDstBlend", originalMaterial.GetFloat("_DstBlendAlpha"));
-                    avatarMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                }
-
-                slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
-            }
-
-            avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
-            SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
-            meshRenderer.material = avatarMaterial;
-            
-            #if DCL_MATERIAL_DEBUGGING
-                const bool bLocalKeyword_OriginalMat_Logging = true;
-                const bool bLocalKeyword_AvatarMat_Logging = true;
-                const bool bGlobalKeyword_Logging = true;
-                const bool bShaderVariable_OriginalMat_Logging = true;
-
-                if (bLocalKeyword_OriginalMat_Logging)
-                {
-                    string outputShaderLocalKeywords_OriginalMaterial = "";
-                    foreach (LocalKeyword avatarMaterialShaderKeyword in originalMaterial.enabledKeywords)
-                    {
-                        if (avatarMaterialShaderKeyword.isValid)
-                            outputShaderLocalKeywords_OriginalMaterial += avatarMaterialShaderKeyword + " ";
-                    }
-                    Debug.Log($"For renderer {meshRenderer.name} the original material local keywords are {outputShaderLocalKeywords_OriginalMaterial}");
-                }
-
-                if (bLocalKeyword_AvatarMat_Logging)
-                {
-                    string outputShaderLocalKeywords_AvatarMaterial = "";
-                    foreach (LocalKeyword avatarMaterialShaderKeyword in avatarMaterial.enabledKeywords)
-                    {
-                        if (avatarMaterialShaderKeyword.isValid)
-                            outputShaderLocalKeywords_AvatarMaterial += avatarMaterialShaderKeyword + " ";
-                    }
-                    Debug.Log($"For renderer {meshRenderer.name} the avatar material local keywords are {outputShaderLocalKeywords_AvatarMaterial}");
-                }
-
-                if (bGlobalKeyword_Logging)
-                {
-                    string outputShaderGlobalKeywords = "";
-                    foreach (GlobalKeyword avatarMaterialShaderKeyword in Shader.globalKeywords)
-                    {
-                        outputShaderGlobalKeywords += avatarMaterialShaderKeyword + " ";
-                    }
-                    Debug.Log($"For renderer {meshRenderer.name} the global keywords are {outputShaderGlobalKeywords}");
-                }
-
-                if (bShaderVariable_OriginalMat_Logging)
-                {
-                    string outputShaderVariables_OriginalMaterial = "";
-                    outputShaderVariables_OriginalMaterial += "_QueueOffset: " + originalMaterial.GetFloat("_QueueOffset") + " ";
-                    outputShaderVariables_OriginalMaterial += "_SrcBlend: " + originalMaterial.GetFloat("_SrcBlend") + " ";
-                    outputShaderVariables_OriginalMaterial += "_DstBlend: " + originalMaterial.GetFloat("_DstBlend") + " ";
-                    outputShaderVariables_OriginalMaterial += "_Blend: " + originalMaterial.GetFloat("_Blend") + " ";
-                    Debug.Log($"For renderer {meshRenderer.name} the shader variables for the original material are {outputShaderVariables_OriginalMaterial}");
-                }
-            #endif
-
-            return new AvatarCustomSkinningComponent.MaterialSetup(slots, avatarMaterial, materialIndexInPool);
-        }
+        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures) =>
+            AvatarMaterialConfiguration.SetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures);
 
         public override void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent)
         {

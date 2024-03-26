@@ -34,11 +34,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarInstantiatorSystemShould : UnitySystemTestBase<AvatarInstantiatorSystem>
     {
+        private const int TEST_RESOLUTION = 256;
+
+        private static readonly int[] DEFAULT_RESOLUTIONS = { TEST_RESOLUTION };
+
         private Entity avatarEntity;
         private AvatarShapeComponent avatarShapeComponent;
 
         private Color randomSkinColor;
         private Color randomHairColor;
+        private Color randomEyesColor;
         private Mesh avatarMesh;
 
         [SetUp]
@@ -56,6 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             randomSkinColor = new Color(0.5f, 0.5f, 0.5f, 1);
             randomHairColor = new Color(0.75f, 0.75f, 0.75f, 1);
+            randomEyesColor = new Color(0.25f, 0.25f, 0.25f, 1);
 
             UnityEngine.ComputeShader computeShader = await Addressables.LoadAssetAsync<UnityEngine.ComputeShader>("ComputeShaderSkinning_TestAsset");
 
@@ -75,48 +81,35 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             })));
 
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
-                randomSkinColor, randomHairColor);
+                randomSkinColor, randomHairColor, randomEyesColor);
 
-            var celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");
-            var materialPool = Substitute.For<IExtendedObjectPool<Material>>();
+            Material? celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");
+            IExtendedObjectPool<Material>? materialPool = Substitute.For<IExtendedObjectPool<Material>>();
             materialPool.Get().Returns(new Material(celShadingMaterial), new Material(celShadingMaterial), new Material(celShadingMaterial));
 
-            int TEST_RESOLUTION = 256;
             Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
-            TextureArrayContainerFactory.ARRAY_TYPES_COUNT = 3;
-            var defaultTextures = new Dictionary<string, Texture>
+
+            var defaultTextures = new Dictionary<TextureArrayKey, Texture>
             {
-                {
-                    $"Main_{TEST_RESOLUTION}", texture
-                },
-                {
-                    $"Normal_{TEST_RESOLUTION}", texture
-                },
-                {
-                    $"Emmisive_{TEST_RESOLUTION}", texture
-                }
-            };
-            var poolMaterialSetup = new PoolMaterialSetup
-            {
-                Pool = materialPool, TextureArrayContainer = TextureArrayContainerFactory.Create(celShadingMaterial.shader, TEST_RESOLUTION,  defaultTextures)
+                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture,
+                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
+                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
             };
 
-            var materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
+            var poolMaterialSetup = new PoolMaterialSetup(materialPool, TextureArrayContainerFactory.Create(celShadingMaterial.shader, DEFAULT_RESOLUTIONS, defaultTextures));
+
+            IAvatarMaterialPoolHandler? materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
             materialPoolHandler.GetMaterialPool(Arg.Any<int>()).Returns(poolMaterialSetup);
 
-            var defaultFaceFeaturesHandler = Substitute.For<IDefaultFaceFeaturesHandler>();
-            defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(Arg.Any<BodyShape>()).Returns(new Dictionary<string, Texture>
-            {
-                {
-                    WearablesConstants.Categories.EYES, new Texture2D(1, 1)
-                },
-                {
-                    WearablesConstants.Categories.MOUTH, new Texture2D(1, 1)
-                },
-                {
-                    WearablesConstants.Categories.EYEBROWS, new Texture2D(1, 1)
-                }
-            });
+            IDefaultFaceFeaturesHandler? defaultFaceFeaturesHandler = Substitute.For<IDefaultFaceFeaturesHandler>();
+
+            defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(Arg.Any<BodyShape>())
+                                      .Returns(new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>
+                                       {
+                                           [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                                           [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                                           [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) }
+                                       }));
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
                 Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
@@ -128,7 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IWearable mockWearable = Substitute.For<IWearable>();
 
             var assetBundleData
-                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
+                = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
 
             //Creating a hierarchy
             var avatarGameObject = new GameObject();
@@ -148,15 +141,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             skinnedMeshRenderer.material = fakeABMaterial;
 
-            var rendererInfo = new WearableAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
+            var rendererInfo = new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
-            var wearableAsset = new WearableAsset(avatarGameObject, new List<WearableAsset.RendererInfo> { rendererInfo }, null);
+            var wearableAsset = new WearableRegularAsset(avatarGameObject, new List<WearableRegularAsset.RendererInfo> { rendererInfo }, null);
             wearableAsset.AddReference();
 
-            assetBundleData[BodyShape.MALE]
-                = new StreamableLoadingResult<WearableAsset>(wearableAsset);
+            mockWearable.WearableAssetResults.Returns(new WearableAssets[]
+            {
+                new StreamableLoadingResult<WearableAssetBase>(wearableAsset)
+            });
 
-            mockWearable.WearableAssetResults.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);
 
             return mockWearable;
@@ -224,6 +218,5 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             //Assert
             Assert.AreEqual(world.Get<AvatarShapeComponent>(entity).InstantiatedWearables.Count, 0);
         }
-        
     }
 }

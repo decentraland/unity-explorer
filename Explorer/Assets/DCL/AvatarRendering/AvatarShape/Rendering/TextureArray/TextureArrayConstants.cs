@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.AvatarRendering.Wearables.Helpers;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
@@ -6,8 +7,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     {
         public const string TOON_SHADER = "DCL/DCL_Toon";
         public const string FACIAL_SHADER = "DCL/DCL_Avatar_Facial_Features";
-        
-        public const string TOON_KEYWORD = "_DCL_TEXTURE_ARRAYS";
 
         /// <summary>
         ///     This format is applicable to both Regular and Normal textures
@@ -32,7 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const int SHADERID_DCL_TOON = 2;
         public const int SHADERID_DCL_FACIAL_FEATURES = 3;
 
-        public static readonly int MAINTEX_ORIGINAL_TEXTURE = Shader.PropertyToID("_BaseMap");
+        public static readonly int MAINTEX_ORIGINAL_TEXTURE = WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE;
         public static readonly int MAINTEX_ARR_SHADER_INDEX = Shader.PropertyToID("_MainTexArr_ID");
         public static readonly int MAINTEX_ARR_TEX_SHADER = Shader.PropertyToID("_MainTexArr");
 
@@ -63,5 +62,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public static readonly int OCCLUSION_MAP_ORIGINAL_TEXTURE_ID = Shader.PropertyToID("_OcclusionMap");
         public static readonly int OCCLUSION_MAP_ARR_SHADER_ID = Shader.PropertyToID("_OcclusionMapArr_ID");
         public static readonly int OCCLUSION_MAP_ARR_TEX_SHADER_ID = Shader.PropertyToID("_OcclusionMapArr");
+
+        public static readonly int MASK_ORIGINAL_TEXTURE_ID = WearableTextureConstants.MASK_ORIGINAL_TEXTURE_ID;
+        public static readonly int MASK_ARR_SHADER_ID = Shader.PropertyToID("_MaskTexArr_ID");
+        public static readonly int MASK_ARR_TEX_SHADER_ID = Shader.PropertyToID("_MaskTexArr");
     }
 }

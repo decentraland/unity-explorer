@@ -8,11 +8,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         ///     Texture name from the original material
         /// </summary>
         public readonly int OriginalTextureID;
+        public readonly int DefaultFallbackResolution;
 
-        public TextureArrayMapping(TextureArrayHandler handler, int originalTextureID)
+        public TextureArrayMapping(TextureArrayHandler handler, int originalTextureID, int defaultFallbackResolution)
         {
             Handler = handler;
             OriginalTextureID = originalTextureID;
+            DefaultFallbackResolution = defaultFallbackResolution;
         }
     }
 }

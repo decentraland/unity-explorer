@@ -106,12 +106,12 @@ namespace DCL.ResourcesUnloading.Tests
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, null);
+            var assetBundleData = new AssetBundleData(null, null, null, typeof(GameObject), null);
 
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
 
-            var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(5), assetBundleData);
+            var wearableAsset = new WearableRegularAsset(new GameObject(), new List<WearableRegularAsset.RendererInfo>(5), assetBundleData);
             assetBundleData.AddReference();
 
             var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
@@ -156,16 +156,16 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache.Add(audioClipIntention, AudioClip.Create(hashID, 1, 1, 2000, false));
             audioClipsCache.Dereference(audioClipIntention, null);
 
-            var assetBundleData = new AssetBundleData(null, null, new GameObject(), Array.Empty<AssetBundleData>());
+            var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
             gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset); // add to cache
 
-            var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(10), assetBundleData);
+            var wearableAsset = new WearableRegularAsset(new GameObject(), new List<WearableRegularAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
-            var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAsset>(wearableAsset) } };
+            var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAssetBase>(wearableAsset) } };
             wearableCatalog.AddWearable(hashID, wearable, true); // add to cache
 
             var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
