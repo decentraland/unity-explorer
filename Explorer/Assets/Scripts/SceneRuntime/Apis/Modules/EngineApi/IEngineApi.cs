@@ -1,7 +1,7 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using System;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.EngineApi
 {
     /// <summary>
     ///     The contracts correspond directly to the JS-SDK-Toolchain and its transport API.
