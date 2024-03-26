@@ -55,7 +55,9 @@ namespace DCL.SDKComponents.MediaStream
             if(!frameTimeBudget.TrySpendBudget()) return;
 
             var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
-            component.MediaPlayer.SetPlaybackProperties(sdkComponent);
+
+            if (component.State != VideoState.VsError)
+                component.MediaPlayer.SetPlaybackProperties(sdkComponent);
             World.Add(entity, component);
         }
 

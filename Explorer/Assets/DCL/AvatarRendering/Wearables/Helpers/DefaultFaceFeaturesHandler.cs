@@ -7,53 +7,64 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public class DefaultFaceFeaturesHandler : IDefaultFaceFeaturesHandler
     {
         private readonly IWearableCatalog wearableCatalog;
-        private readonly Dictionary<string, Texture>[] defaultFacialFeaturesDictionary = new Dictionary<string, Texture>[2];
 
-        private readonly Texture[] defaultEyes;
-        private readonly Texture[] defaultMouths;
-        private readonly Texture[] defaultEyebrows;
+        private readonly FacialFeaturesTextures[] sharedFacialFeatures = new FacialFeaturesTextures[BodyShape.COUNT];
+
+        private readonly Dictionary<string, Texture>[] defaultMainTextures = new Dictionary<string, Texture>[BodyShape.COUNT];
 
         private readonly bool isInitialized = false;
 
         public DefaultFaceFeaturesHandler(IWearableCatalog wearableCatalog)
         {
             this.wearableCatalog = wearableCatalog;
-            defaultFacialFeaturesDictionary = new Dictionary<string, Texture>[2];
-            defaultEyes = new Texture[2];
-            defaultMouths = new Texture[2];
-            defaultEyebrows = new Texture[2];
         }
 
-        public Dictionary<string, Texture> GetDefaultFacialFeaturesDictionary(BodyShape bodyShape)
+        public FacialFeaturesTextures GetDefaultFacialFeaturesDictionary(BodyShape bodyShape)
         {
             if (!isInitialized)
                 Initialize();
 
             ResetDictionary(bodyShape);
 
-            return defaultFacialFeaturesDictionary[bodyShape];
+            return sharedFacialFeatures[bodyShape];
         }
 
         private void ResetDictionary(BodyShape bodyShape)
         {
-            defaultFacialFeaturesDictionary[bodyShape][WearablesConstants.Categories.EYES] = defaultEyes[bodyShape];
-            defaultFacialFeaturesDictionary[bodyShape][WearablesConstants.Categories.MOUTH] = defaultMouths[bodyShape];
-            defaultFacialFeaturesDictionary[bodyShape][WearablesConstants.Categories.EYEBROWS] = defaultEyebrows[bodyShape];
+            var dict = sharedFacialFeatures[bodyShape].Value;
+
+            foreach (Dictionary<int,Texture> innerDict in dict.Values)
+                innerDict.Clear();
+
+            var defTextures = defaultMainTextures[bodyShape];
+
+            foreach (string facialFeature in WearablesConstants.FACIAL_FEATURES)
+                dict[facialFeature][WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = defTextures[facialFeature];
         }
 
         private void Initialize()
         {
             foreach (var bodyShape in BodyShape.VALUES)
             {
-                defaultEyes[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, WearablesConstants.Categories.EYES, out bool hasEmptyDefaultWearableAB_1).WearableAssetResults[bodyShape].Value.Asset.GetMainAsset<Texture>();
-                defaultMouths[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, WearablesConstants.Categories.MOUTH, out bool hasEmptyDefaultWearableAB_2).WearableAssetResults[bodyShape].Value.Asset.GetMainAsset<Texture>();
-                defaultEyebrows[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, WearablesConstants.Categories.EYEBROWS, out bool hasEmptyDefaultWearableAB_3).WearableAssetResults[bodyShape].Value.Asset.GetMainAsset<Texture>();
+                var mainTexForThisBodyShape = new Dictionary<string, Texture>();
+                this.defaultMainTextures[bodyShape] = mainTexForThisBodyShape;
+                var facialFeatureDict = new Dictionary<string, Dictionary<int, Texture>>();
+                sharedFacialFeatures[bodyShape] = new FacialFeaturesTextures(facialFeatureDict);
 
-                var facialFeatureTexture = new Dictionary<string, Texture>();
-                facialFeatureTexture.Add(WearablesConstants.Categories.EYES, defaultEyes[bodyShape]);
-                facialFeatureTexture.Add(WearablesConstants.Categories.MOUTH, defaultMouths[bodyShape]);
-                facialFeatureTexture.Add(WearablesConstants.Categories.EYEBROWS, defaultEyebrows[bodyShape]);
-                defaultFacialFeaturesDictionary[bodyShape] = facialFeatureTexture;
+                foreach (string facialFeature in WearablesConstants.FACIAL_FEATURES)
+                {
+                    // TODO it's quite dangerous to call it like this without any checks
+                    var result = (WearableTextureAsset) wearableCatalog.GetDefaultWearable(bodyShape, facialFeature)
+                                                .WearableAssetResults[bodyShape]
+                                                .Results[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!
+                                                .Value.Asset;
+
+                    mainTexForThisBodyShape[facialFeature] = result.Texture;
+
+                    var innerDict = new Dictionary<int, Texture>();
+                    innerDict[WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = result.Texture;
+                    facialFeatureDict.Add(facialFeature, innerDict);
+                }
             }
         }
     }

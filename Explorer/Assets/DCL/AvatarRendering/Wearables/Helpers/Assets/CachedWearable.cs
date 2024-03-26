@@ -11,11 +11,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public readonly struct CachedWearable : IDisposable
     {
-        public readonly WearableAsset OriginalAsset;
+        public readonly WearableRegularAsset OriginalAsset;
         public readonly GameObject Instance;
         public readonly List<Renderer> Renderers;
 
-        public CachedWearable(WearableAsset originalAsset, GameObject instance)
+        public CachedWearable(WearableRegularAsset originalAsset, GameObject instance)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
