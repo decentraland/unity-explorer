@@ -41,6 +41,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         //TODO Avatar Material. Add this textures arrays to the material
 
         //Material properties
-        public static int _BaseColour_ShaderID = Shader.PropertyToID("_BaseColor");
+        public static readonly int BASE_COLOUR_SHADER_ID = Shader.PropertyToID("_BaseColor");
     }
 }
