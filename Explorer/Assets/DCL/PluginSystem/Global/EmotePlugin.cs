@@ -3,9 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Components;
-using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
-using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.WebRequests;
 using ECS;
@@ -27,6 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
         private readonly DebugContainerBuilder debugBuilder;
+        private AudioSource audioSourceReference;
 
         public EmotePlugin(IWebRequestController webRequestController, MemoryEmotesCache emoteCache, RealmData realmData, IEmotesMessageBus messageBus, DebugContainerBuilder debugBuilder)
         {
@@ -53,13 +52,13 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteCache, mutexSync);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, debugBuilder);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
             IEnumerable<IEmote> embeddedEmotes = settings.EmbeddedEmotes.editorAsset.GenerateEmotes();
-            AudioSource? audioSourceReference = settings.EmoteAudioSource.editorAsset;
+            audioSourceReference = settings.EmoteAudioSource.editorAsset.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
@@ -78,7 +77,7 @@ namespace DCL.PluginSystem.Global
             }
 
             [Serializable]
-            public class EmoteAudioSourceReference : AssetReferenceT<AudioSource>
+            public class EmoteAudioSourceReference : AssetReferenceGameObject
             {
                 public EmoteAudioSourceReference(string guid) : base(guid) { }
             }

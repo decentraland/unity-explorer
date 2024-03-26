@@ -12,16 +12,19 @@ namespace DCL.AvatarRendering.Emotes
 {
     public class EmotePlayer
     {
+        private readonly GameObjectPool<AudioSource> audioSourcePool;
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
 
-        public EmotePlayer()
+        public EmotePlayer(AudioSource audioSourcePrefab)
         {
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER").transform;
+
+            audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
         }
 
-        public bool Play(GameObject mainAsset, bool isLooping, in IAvatarView view, ref CharacterEmoteComponent emoteComponent)
+        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, in IAvatarView view, ref CharacterEmoteComponent emoteComponent)
         {
             Animator animator = mainAsset.GetComponent<Animator>();
 
@@ -66,6 +69,14 @@ namespace DCL.AvatarRendering.Emotes
 
             if (emoteReferences.propClip != null)
                 emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
+
+            if (audioAsset != null)
+            {
+                AudioSource? audioSource = audioSourcePool.Get();
+                audioSource.clip = audioAsset;
+                audioSource.Play();
+                emoteReferences.audioSource = audioSource;
+            }
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
@@ -114,9 +125,14 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Stop(EmoteReferences emoteReference)
         {
-            if (!emotesInUse.TryGetValue(emoteReference, out GameObjectPool<EmoteReferences>? pool)) return;
+            if (!emotesInUse.TryGetValue(emoteReference, out GameObjectPool<EmoteReferences>? pool))
+                return;
+
             pool.Release(emoteReference);
             emotesInUse.Remove(emoteReference);
+
+            if (emoteReference.audioSource != null)
+                audioSourcePool.Release(emoteReference.audioSource);
         }
     }
 }

@@ -14,6 +14,7 @@ using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -33,13 +34,13 @@ namespace DCL.AvatarRendering.Emotes
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
 
-        public CharacterEmoteSystem(World world, IEmoteCache emoteCache, IEmotesMessageBus messageBus, IDebugContainerBuilder debugContainerBuilder) : base(world)
+        public CharacterEmoteSystem(World world, IEmoteCache emoteCache, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteCache = emoteCache;
             this.debugContainerBuilder = debugContainerBuilder;
             reportCategory = GetReportCategory();
-            emotePlayer = new EmotePlayer();
+            emotePlayer = new EmotePlayer(audioSource);
         }
 
         protected override void Update(float t)
@@ -62,6 +63,7 @@ namespace DCL.AvatarRendering.Emotes
 
         // emotes that do not loop need to trigger some kind of cancellation so we can take care of the emote props and sounds
         [Query]
+        [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTag(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             bool wasPlayingEmote = emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE || emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
@@ -78,6 +80,7 @@ namespace DCL.AvatarRendering.Emotes
 
         // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
         [Query]
+        [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
         {
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
@@ -108,31 +111,46 @@ namespace DCL.AvatarRendering.Emotes
         {
             URN emoteId = emoteIntent.EmoteId;
 
-            if (emoteCache.TryGetEmote(emoteId.Shorten(), out IEmote emote))
+            // its very important to catch any exception here to avoid not consuming the emote intent, so we dont infinitely create props
+            try
             {
-                // emote failed to load? remove intent
-                if (emote.ManifestResult is { IsInitialized: true, Exception: not null })
-                {
-                    ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
-                    World.Remove<CharacterEmoteIntent>(entity);
+                // we wait until the avatar finishes moving to trigger the emote,
+                // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
+                if (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
+
+                if (emoteCache.TryGetEmote(emoteId.Shorten(), out IEmote emote))
+                {
+                    // emote failed to load? remove intent
+                    if (emote.ManifestResult is { IsInitialized: true, Exception: not null })
+                    {
+                        ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
+                    StreamableLoadingResult<WearableAsset>? streamableAsset = emote.WearableAssetResults[0];
+
+                    // the emote is still loading? dont remove the intent yet, wait for it
+                    if (streamableAsset == null) return;
+                    if (!streamableAsset.Value.Succeeded) return;
+                    if (streamableAsset.Value.Exception != null) return;
+
+                    GameObject? mainAsset = streamableAsset.Value.Asset?.GetMainAsset<GameObject>();
+
+                    if (mainAsset == null) return;
+
+                    AudioClip? audioAsset = emote.AudioAssetResult?.Asset;
+
+                    if (!emotePlayer.Play(mainAsset, audioAsset, emote.IsLooping(), in avatarView, ref emoteComponent))
+                        ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+
+                    emoteComponent.EmoteUrn = emoteId;
                 }
-
-                StreamableLoadingResult<WearableAsset>? streamableAsset = emote.WearableAssetResults[0];
-
-                // the emote is still loading? dont remove the intent yet, wait for it
-                if (streamableAsset == null) return;
-                if (!streamableAsset.Value.Succeeded) return;
-                if (streamableAsset.Value.Exception != null) return;
-
-                GameObject? mainAsset = streamableAsset.Value.Asset?.GetMainAsset<GameObject>();
-
-                if (mainAsset == null) return;
-
-                if (!emotePlayer.Play(mainAsset, emote.IsLooping(), in avatarView, ref emoteComponent))
-                    ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
-
-                emoteComponent.EmoteUrn = emoteId;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, reportCategory);
             }
 
             World.Remove<CharacterEmoteIntent>(entity);
@@ -141,6 +159,7 @@ namespace DCL.AvatarRendering.Emotes
         // Every time that the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
         // TODO (Kinerius): This does not support scene emotes yet
         [Query]
+        [None(typeof(CharacterEmoteIntent))]
         private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView, in Profile profile)
         {
             int prevTag = animationComponent.CurrentAnimationTag;

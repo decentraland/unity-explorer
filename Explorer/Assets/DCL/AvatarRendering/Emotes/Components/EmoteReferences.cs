@@ -8,5 +8,6 @@ namespace DCL.AvatarRendering.Emotes.Components
         public AnimationClip avatarClip;
         public AnimationClip propClip;
         public Animator animator;
+        public AudioSource audioSource;
     }
 }
