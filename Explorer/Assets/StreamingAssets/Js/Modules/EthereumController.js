@@ -17,6 +17,10 @@ module.exports.sendAsync = async function (message) {
     return result;
 }
 
+module.exports.getUserAccount = async function (message) {
+    return UnityEthereumApi.UserAddress()
+}
+
 module.exports.convertMessageToObject = async function (message) {
     let parsedMessage = message
 

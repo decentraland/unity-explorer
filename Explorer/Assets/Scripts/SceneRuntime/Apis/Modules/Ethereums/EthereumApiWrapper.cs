@@ -35,6 +35,10 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
+        public object? UserAddress() =>
+            web3IdentityCache.Identity?.Address.ToString() ?? null;
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SignMessage(string message)
         {
             using AuthChain chain = web3IdentityCache.Identity.EnsureNotNull().Sign(message);
