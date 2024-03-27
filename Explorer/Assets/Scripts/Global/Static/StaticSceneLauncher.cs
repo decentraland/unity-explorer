@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using SceneRunner.Scene;
 using System;
@@ -83,6 +84,7 @@ namespace Global.Static
                 SceneSharedContainer sceneSharedContainer;
 
                 var memoryProfileRepository = new MemoryProfileRepository(new DefaultProfileCache());
+                var webRequests = IWebRequestController.DEFAULT;
 
                 if (!string.IsNullOrEmpty(ownProfileJson))
                 {
@@ -92,7 +94,7 @@ namespace Global.Static
                 }
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, ct);
+                    identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, webRequests, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
@@ -112,6 +114,7 @@ namespace Global.Static
             IEthereumApi ethereumApi,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
+            IWebRequestController webRequestController,
             CancellationToken ct)
         {
             // First load the common global plugin
@@ -124,7 +127,7 @@ namespace Global.Static
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
                 new MVCManager(new WindowStackManager(), new CancellationTokenSource(), null),
-                identityCache, profileRepository, null);
+                identityCache, profileRepository, webRequestController, null);
 
             return (staticContainer, sceneSharedContainer);
         }

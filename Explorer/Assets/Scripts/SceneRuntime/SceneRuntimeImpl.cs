@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -14,6 +15,7 @@ using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
+using SceneRuntime.Apis.Modules.SignedFetch;
 using SceneRuntime.Apis.Modules.UserActions;
 using SceneRuntime.Apis.Modules.UserIdentityApi;
 using System;
@@ -45,6 +47,7 @@ namespace SceneRuntime
         private UserActionsWrap? userActionsApi;
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
+        private SignedFetchWrap? signedFetchWrap;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -107,6 +110,7 @@ namespace SceneRuntime
             restrictedActionsApi?.Dispose();
             sceneApiWrapper?.Dispose();
             userActionsApi?.Dispose();
+            signedFetchWrap?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -122,6 +126,11 @@ namespace SceneRuntime
         public void RegisterSceneApi(ISceneApi api)
         {
             engine.AddHostObject("UnitySceneApi", sceneApiWrapper = new SceneApiWrapper(api));
+        }
+
+        public void RegisterSignedFetch(IWebRequestController webRequestController)
+        {
+            engine.AddHostObject("UnitySignedFetch", signedFetchWrap = new SignedFetchWrap(webRequestController));
         }
 
         public void RegisterEthereumApi(IEthereumApi ethereumApi)
