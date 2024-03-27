@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             Categories.HANDS,
         };
 
-        public static readonly IList<string> FACIAL_FEATURES = new List<string>
+        public static readonly IReadOnlyList<string> FACIAL_FEATURES = new List<string>
         {
             Categories.EYEBROWS,
             Categories.EYES,
@@ -123,6 +123,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return new Color3
                     { R = randomColor.r, G = randomColor.g, B = randomColor.b };
             }
+
+            public static Color3 GetRandomEyesColor3()
+            {
+                Color randomColor = GetRandomEyesColor();
+
+                return new Color3
+                    { R = randomColor.r, G = randomColor.g, B = randomColor.b };
+            }
         }
 
         public static class DefaultWearables
@@ -152,16 +160,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public static HashSet<URN> GetDefaultWearablesForBodyShape(string bodyShapeId) =>
                 DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => new URN(x.Value)).ToHashSet();
 
-            public static string GetDefaultWearable(BodyShape bodyShapeId, string category,
-                out bool hasEmptyDefaultWearableAB)
+            public static string GetDefaultWearable(BodyShape bodyShapeId, string category)
             {
                 if (!DEFAULT_WEARABLES.ContainsKey((bodyShapeId, category)))
-                {
-                    hasEmptyDefaultWearableAB = true;
                     return EMPTY_DEFAULT_WEARABLE;
-                }
-
-                hasEmptyDefaultWearableAB = false;
                 return DEFAULT_WEARABLES[(bodyShapeId, category)];
             }
         }

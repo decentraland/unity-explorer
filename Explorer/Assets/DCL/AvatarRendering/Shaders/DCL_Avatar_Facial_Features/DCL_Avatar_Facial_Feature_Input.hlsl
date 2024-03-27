@@ -88,7 +88,7 @@ half4 SampleMaskMap(float2 uv)
 {
     int nMaskTexArrID = _MaskTexArr_ID;
     half4 maskColour = half4(SAMPLE_MASKTEX(uv, nMaskTexArrID));
-    half4 invertedColour = half4(half3(1.0, 1.0, 1.0) - maskColour.rgb, maskColour.a);
+    half4 invertedColour = half4(half3(1.0, 1.0, 1.0) - maskColour.rgb, 1.0 - maskColour.r);
     return invertedColour;
 }
 
@@ -102,7 +102,7 @@ inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurface
     outSurfaceData.alpha = AlphaDiscard(outSurfaceData.alpha, _Cutoff);
 
     half4 maskColour = SampleMaskMap(uv);
-    outSurfaceData.albedo = albedoAlpha.rgb * (maskColour.rgb * _BaseColor.rgb);
+    outSurfaceData.albedo = albedoAlpha.rgb * lerp(half3(1.0, 1.0, 1.0), maskColour.rgb * _BaseColor.rgb, maskColour.a);
     outSurfaceData.albedo = AlphaModulate(outSurfaceData.albedo, outSurfaceData.alpha);
 
     half4 specularSmoothness = SampleSpecularSmoothness(uv, outSurfaceData.alpha, _SpecColor, TEXTURE2D_ARGS(_SpecGlossMap, sampler_SpecGlossMap));
