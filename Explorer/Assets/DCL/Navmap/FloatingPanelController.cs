@@ -6,6 +6,7 @@ using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
+using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -120,8 +121,11 @@ namespace DCL.Navmap
                 var timeout = TimeSpan.FromSeconds(30);
                 var loadReport = AsyncLoadProcessReport.Create();
 
-                async UniTask TeleportAsync() =>
-                    await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+                async UniTask TeleportAsync()
+                {
+                    var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+                    await waitForSceneReadiness.ToUniTask(ct);
+                }
 
                 await UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
                                                 .AttachExternalCancellation(ct),
