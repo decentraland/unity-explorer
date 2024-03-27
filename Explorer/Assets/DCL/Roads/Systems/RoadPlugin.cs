@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace DCL.Roads.Systems
 {
-    public class RoadPlugin : IDCLGlobalPluginWithoutSettings
+    public class RoadPlugin : IDCLGlobalPlugin
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
@@ -41,7 +41,7 @@ namespace DCL.Roads.Systems
             this.roadDataDictionary = roadDataDictionary;
         }
 
-        async UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct)
+        public async UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
             var roadAssetsPrefabList = new List<GameObject>(roadSettings.RoadAssetsReference.Count);
             foreach (var assetReferenceGameObject in this.roadSettings.RoadAssetsReference)
