@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -9,7 +8,6 @@ using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -154,6 +152,12 @@ namespace DCL.Chat
         {
             ct.ThrowIfCancellationRequested();
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
+
+            if (viewInstance.EmojiPanel.EmojiContainer.gameObject.activeInHierarchy)
+                world.AddOrGet(playerEntity, new MovementBlockerComponent());
+            else
+                world.Remove<MovementBlockerComponent>(playerEntity);
+
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
         }
