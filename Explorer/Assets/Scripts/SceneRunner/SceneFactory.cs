@@ -231,7 +231,7 @@ namespace SceneRunner
             sceneRuntime.RegisterSceneApi(sceneApiImplementation);
 
             sceneRuntime.RegisterSignedFetch(webRequestController);
-            sceneRuntime.RegisterEthereumApi(ethereumApi);
+            sceneRuntime.RegisterEthereumApi(ethereumApi, identityCache);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository);
 
