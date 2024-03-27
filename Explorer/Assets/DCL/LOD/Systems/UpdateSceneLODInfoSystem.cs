@@ -89,7 +89,7 @@ namespace DCL.LOD.Systems
                 {
                     var instantiatedLOD = Object.Instantiate(result.Asset?.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity, lodsTransformParent)!;
-                   
+
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary), materialPool);
@@ -113,7 +113,7 @@ namespace DCL.LOD.Systems
             }
         }
 
-        
+
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -156,21 +156,14 @@ namespace DCL.LOD.Systems
             else
             {
                 string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-                var manifest = new SceneAssetBundleManifest(URLDomain.FromString($"{LODUtils.LOD_WEB_URL}{newLODKey.Level}/"),
-                    new SceneAbDto
-                    {
-                        files = new[]
-                        {
-                            platformLODKey
-                        },
-                    });
+                var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
                 var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
                     platformLODKey,
                     permittedSources: AssetSource.ALL,
                     customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES[newLODKey.Level],
                     manifest: manifest);
-                
+
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World, assetBundleIntention, partitionComponent);
 

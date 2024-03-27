@@ -5,6 +5,8 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
+using SceneRunner.Scene;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -17,10 +19,15 @@ namespace DCL.LOD
 
         public static readonly URLSubdirectory[] LOD_EMBEDDED_SUBDIRECTORIES =
         {
-            URLSubdirectory.FromString("lods/0"), URLSubdirectory.FromString("lods/1"), URLSubdirectory.FromString("lods/2"), URLSubdirectory.FromString("lods/3")
+            URLSubdirectory.FromString("lods/0"),
+            URLSubdirectory.FromString("lods/1"),
+            URLSubdirectory.FromString("lods/2"),
+            URLSubdirectory.FromString("lods/3")
         };
-        
-        
+
+        public static readonly SceneAssetBundleManifest[] LOD_MANIFESTS =
+            Enumerable.Range(0, LOD_EMBEDDED_SUBDIRECTORIES.Length).Select(level => new SceneAssetBundleManifest(URLDomain.FromString($"{LOD_WEB_URL}{level}/"))).ToArray();
+
         private static readonly ListObjectPool<Material> MATERIALS_LIST_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
