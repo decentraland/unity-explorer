@@ -41,6 +41,7 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
                 SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, sceneExceptionsHandler, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                sceneRuntime.ExecuteSceneJson();
 
                 // Assert
                 Assert.NotNull(sceneRuntime);
@@ -63,6 +64,7 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
                 SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, sceneExceptionsHandler, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                sceneRuntime.ExecuteSceneJson();
                 sceneRuntime.RegisterEngineApi(engineApi);
 
                 // Assert
