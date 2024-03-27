@@ -36,6 +36,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
@@ -173,7 +174,7 @@ namespace Global.Dynamic
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, multiPool);
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
             container.RealmController = new RealmController(
                 identityCache,
@@ -199,8 +200,8 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(
-                () => new SimplePriorityQueue<FullMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: x => x.Clear()
             );
 
@@ -210,9 +211,27 @@ namespace Global.Dynamic
 
             container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);
 
+            var remotePoses = new DebounceRemotePoses(
+                new RemotePoses(roomHub)
+            );
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new MultiplayerPlugin(archipelagoIslandRoom, gateKeeperSceneRoom, roomHub, container.ProfileRepository, container.ProfileBroadcast, debugBuilder, realFlowLoadingStatus, entityParticipantTable, staticContainer.ComponentsContainer.ComponentPoolsRegistry, messagePipesHub, queuePoolFullMovementMessage),
+                new MultiplayerPlugin(
+                    archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    roomHub,
+                    container.ProfileRepository,
+                    container.ProfileBroadcast,
+                    debugBuilder,
+                    realFlowLoadingStatus,
+                    entityParticipantTable,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    messagePipesHub,
+                    remotePoses,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    queuePoolFullMovementMessage
+                ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),

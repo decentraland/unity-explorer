@@ -12,6 +12,7 @@ using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine.Assertions;
 
 namespace SceneRuntime

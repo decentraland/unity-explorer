@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             Promise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
             pbAvatarShape.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor()));
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor(), pbAvatarShape.EyeColor.ToUnityColor()));
         }
 
         [Query]
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             Promise wearablePromise = CreateWearablePromise(profile, partition);
             profile.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor));
+            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
         }
 
         [Query]

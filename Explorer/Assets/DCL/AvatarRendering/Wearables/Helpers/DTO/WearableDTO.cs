@@ -101,22 +101,5 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public string transferredAt;
             public string price;
         }
-
-        public void Sanitize(bool hasEmptyDefaultWearableAB)
-        {
-            // If the default wearable is empty, we need to remove all the hiding/replacing/removing data
-            if (hasEmptyDefaultWearableAB)
-            {
-                metadata.data.hides = Array.Empty<string>();
-                metadata.data.replaces = Array.Empty<string>();
-                metadata.data.removesDefaultHiding = Array.Empty<string>();
-
-                for (var i = 0; i < metadata.data.representations.Length; i++)
-                {
-                    metadata.data.representations[i].overrideHides = Array.Empty<string>();
-                    metadata.data.representations[i].overrideReplaces = Array.Empty<string>();
-                }
-            }
-        }
     }
 }
