@@ -8,6 +8,7 @@ using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -68,11 +69,13 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly CharacterContainer characterContainer;
+        private readonly IMessagePipesHub messagePipesHub;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
-            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache,
+            IMessagePipesHub messagePipesHub)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -90,6 +93,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
+            this.messagePipesHub = messagePipesHub;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -173,6 +177,7 @@ namespace Global.Dynamic
             staticContainer.GlobalWorldProxy.SetObject(world);
 
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
+            sceneFactory.SetMultiplayerReferences(messagePipesHub);
 
             return (globalWorld, playerEntity);
             ;

@@ -302,7 +302,8 @@ namespace Global.Dynamic
                 realmData,
                 globalPlugins,
                 debugBuilder,
-                staticContainer.ScenesCache);
+                staticContainer.ScenesCache,
+                messagePipesHub);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);

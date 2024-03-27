@@ -5,6 +5,7 @@ using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
+using CrdtEcsBridge.CommunicationsController;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
@@ -16,6 +17,8 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Time;
@@ -55,6 +58,8 @@ namespace SceneRunner
         private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
         private IGlobalWorldActions globalWorldActions;
+        private IMessagePipesHub messagePipesHub;
+        private IRoomHub roomHub;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -135,6 +140,11 @@ namespace SceneRunner
         public void SetGlobalWorldActions(IGlobalWorldActions actions)
         {
             globalWorldActions = actions;
+        }
+
+        public void SetMultiplayerReferences(IMessagePipesHub messagePipes)
+        {
+            this.messagePipesHub = messagePipes;
         }
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -222,6 +232,11 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
+
+            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
+            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
+
+            sceneRuntime.ExecuteSceneJson();
 
             return new SceneFacade(
                 sceneRuntime,
