@@ -88,6 +88,8 @@ namespace Global.Dynamic
             MessagesBus.Dispose();
             ProfileBroadcast.Dispose();
             MultiplayerMovementMessageBus.Dispose();
+            LODContainer.Dispose();
+            DefaultTexturesContainer.Dispose();
         }
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
