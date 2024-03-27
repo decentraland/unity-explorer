@@ -10,10 +10,11 @@ namespace DCL.Roads.Components
         public bool IsDirty;
         public string CurrentKey;
         public Transform CurrentAsset;
+
         public static RoadInfo Create() =>
-            new()
+            new ()
             {
-                IsDirty = true
+                IsDirty = true,
             };
 
         public void Dispose(IRoadAssetPool roadAssetPool)

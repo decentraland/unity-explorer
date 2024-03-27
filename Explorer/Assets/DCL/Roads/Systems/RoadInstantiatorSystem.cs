@@ -2,8 +2,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using AssetManagement;
-using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
@@ -14,11 +12,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
-    ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.Roads.Systems
 {
@@ -26,14 +20,12 @@ namespace DCL.Roads.Systems
     [LogCategory(ReportCategory.ROADS)]
     public partial class RoadInstantiatorSystem : BaseUnityLoopSystem
     {
-        
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
-        private readonly Dictionary<Vector2Int, RoadDescription> roadDescriptions;
+        private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions;
         private readonly IRoadAssetPool roadAssetPool;
 
-
-        public RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, Dictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool) : base(world)
+        internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -45,10 +37,10 @@ namespace DCL.Roads.Systems
         {
             InstantiateRoadQuery(World);
         }
-        
+
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        public void InstantiateRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
+        private void InstantiateRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
         {
             if (!roadInfo.IsDirty) return;
 
@@ -80,6 +72,6 @@ namespace DCL.Roads.Systems
             roadInfo.IsDirty = false;
         }
 
-       
+
     }
 }

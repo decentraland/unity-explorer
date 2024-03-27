@@ -7,26 +7,22 @@ using UnityEngine;
 
 public static class RoadParser
 {
-    
     [MenuItem("Decentraland/Roads/ParseRoadsFiles")]
     private static void ParseParcelFiles()
     {
         ParseAndSave();
     }
-    
+
     public static Quaternion StringToQuaternion(string sQuaternion)
     {
         // Remove the parentheses
-        if (sQuaternion.StartsWith("(") && sQuaternion.EndsWith(")"))
-        {
-            sQuaternion = sQuaternion.Substring(1, sQuaternion.Length - 2);
-        }
+        if (sQuaternion.StartsWith("(") && sQuaternion.EndsWith(")")) { sQuaternion = sQuaternion.Substring(1, sQuaternion.Length - 2); }
 
         // split the items
         string[] sArray = sQuaternion.Split(',');
 
         // store as a Vector3
-        Quaternion result = new Quaternion(
+        var result = new Quaternion(
             float.Parse(sArray[0]),
             float.Parse(sArray[1]),
             float.Parse(sArray[2]),
@@ -34,14 +30,14 @@ public static class RoadParser
 
         return result;
     }
-    
+
     public static Vector2Int StringToVector2Int(string vector2Int)
     {
         // split the items
         string[] sArray = vector2Int.Split(',');
 
         // store as a Vector3
-        Vector2Int result = new Vector2Int(
+        var result = new Vector2Int(
             int.Parse(sArray[0]),
             int.Parse(sArray[1]));
 
@@ -52,18 +48,19 @@ public static class RoadParser
     {
         var path = "Assets/DCL/Roads/Data/";
         TextAsset roadsData = AssetDatabase.LoadAssetAtPath<TextAsset>($"{path}SingleParcelRoadInfo.json");
-        
-        var modelDictionary = JsonConvert.DeserializeObject<Dictionary<string, RoadRawInfo>>(roadsData.text);
-        var roadsDescription =  new List<RoadDescription>();
-        foreach (var entry in modelDictionary)
+
+        Dictionary<string, RoadRawInfo> modelDictionary = JsonConvert.DeserializeObject<Dictionary<string, RoadRawInfo>>(roadsData.text);
+        var roadsDescription = new List<RoadDescription>();
+
+        foreach (KeyValuePair<string, RoadRawInfo> entry in modelDictionary)
         {
             RoadRawInfo roadRawInfo = entry.Value;
             roadsDescription.Add(new RoadDescription(StringToVector2Int(entry.Key), Path.GetFileNameWithoutExtension(roadRawInfo.Model), StringToQuaternion(roadRawInfo.Rotation)));
         }
-        
+
         RoadSettingsAsset roadSettingsAsset = ScriptableObject.CreateInstance<RoadSettingsAsset>();
         roadSettingsAsset.RoadDescriptions = roadsDescription;
-        
+
         AssetDatabase.CreateAsset(roadSettingsAsset, path + "RoadData.asset");
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();

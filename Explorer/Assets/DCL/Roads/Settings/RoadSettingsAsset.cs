@@ -11,5 +11,8 @@ namespace DCL.Roads.Settings
     {
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
+
+        IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
+        IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
     }
 }

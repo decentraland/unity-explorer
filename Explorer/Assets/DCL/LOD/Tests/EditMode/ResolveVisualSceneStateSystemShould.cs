@@ -24,7 +24,7 @@ namespace DCL.LOD.Tests
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
             var realmData = Substitute.For<IRealmData>();
-            system = new ResolveVisualSceneStateSystem(world, lodSettings, new VisualSceneStateResolver(), realmData);
+            system = new ResolveVisualSceneStateSystem(world, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>()), realmData);
         }
 
         [Test]

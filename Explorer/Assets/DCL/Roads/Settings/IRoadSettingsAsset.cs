@@ -6,7 +6,7 @@ namespace DCL.Roads.Settings
 {
     public interface IRoadSettingsAsset
     {
-        public List<RoadDescription> RoadDescriptions { get; set; }
-        public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
+        public IReadOnlyList<RoadDescription> RoadDescriptions { get; }
+        public IReadOnlyList<AssetReferenceGameObject> RoadAssetsReference { get; }
     }
 }

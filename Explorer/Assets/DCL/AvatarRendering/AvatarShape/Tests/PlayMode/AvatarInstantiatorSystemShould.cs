@@ -96,8 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
             };
 
-            var textureArrayContainerFactory = new TextureArrayContainerFactory();
-            textureArrayContainerFactory.SetDefaultTextures(defaultTextures);
+            var textureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures);
 
             var poolMaterialSetup = new PoolMaterialSetup(materialPool, textureArrayContainerFactory.Create(celShadingMaterial.shader, DEFAULT_RESOLUTIONS));
 

@@ -6,14 +6,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public class TextureArrayContainerFactory
     {
-        private IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures;
+        private readonly IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures;
 
-
-        public void SetDefaultTextures(Dictionary<TextureArrayKey, Texture> dictionary)
+        public TextureArrayContainerFactory(IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures)
         {
-            defaultTextures = dictionary;
+            this.defaultTextures = defaultTextures;
         }
-
 
         private TextureArrayContainer CreateSceneLOD(int minArraySize, TextureFormat textureFormat, IReadOnlyList<int> defaultResolution)
         {

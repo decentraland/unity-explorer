@@ -13,29 +13,42 @@ using DCL.PluginSystem.Global;
 using DCL.ResourcesUnloading;
 using DCL.Roads.Settings;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace DCL.Roads.Systems
 {
-    public class RoadPlugin : IDCLGlobalPlugin<RoadSettings>
+    public class RoadPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
 
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
+        private readonly IRoadSettingsAsset roadSettings;
 
-        private Dictionary<Vector2Int, RoadDescription> roadDataDictionary;
-        private RoadAssetsPool roadAssetPool;
-        private readonly VisualSceneStateResolver visualSceneStateResolver;
+        private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary;
 
-        public RoadPlugin(CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, VisualSceneStateResolver visualSceneStateResolver)
+        private RoadAssetsPool? roadAssetPool;
+
+        public RoadPlugin(CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner,
+            IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget,
+            IRoadSettingsAsset roadSettings, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary)
         {
             this.cacheCleaner = cacheCleaner;
             this.assetsProvisioner = assetsProvisioner;
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
-            this.visualSceneStateResolver = visualSceneStateResolver;
+            this.roadSettings = roadSettings;
+            this.roadDataDictionary = roadDataDictionary;
+        }
+
+        async UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct)
+        {
+            var roadAssetsPrefabList = new List<GameObject>(roadSettings.RoadAssetsReference.Count);
+            foreach (var assetReferenceGameObject in this.roadSettings.RoadAssetsReference)
+                roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(assetReferenceGameObject, ct: ct)).Value);
+
+            roadAssetPool = new RoadAssetsPool(roadAssetsPrefabList);
+            cacheCleaner.Register(roadAssetPool);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -44,35 +57,9 @@ namespace DCL.Roads.Systems
             UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool);
         }
 
-        public async UniTask InitializeAsync(RoadSettings settings, CancellationToken ct)
-        {
-            IRoadSettingsAsset roadSettingsAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.RoadData, ct: ct)).Value;
-
-            roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
-            foreach (var roadDescription in roadSettingsAsset.RoadDescriptions)
-                roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
-            visualSceneStateResolver.SetRoadCoordinates(roadDataDictionary.Keys.ToHashSet());
-
-            var roadAssetsPrefabList = new List<GameObject>();
-            foreach (var assetReferenceGameObject in roadSettingsAsset.RoadAssetsReference)
-                roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(assetReferenceGameObject, ct: ct)).Value);
-            roadAssetPool = new RoadAssetsPool(roadAssetsPrefabList);
-            cacheCleaner.Register(roadAssetPool);
-        }
-
         public void Dispose()
         {
-            roadAssetPool.Dispose();
+            roadAssetPool?.Dispose();
         }
-    }
-
-
-    [Serializable]
-    public class RoadSettings : IDCLPluginSettings
-    {
-        [field: Header(nameof(RoadPlugin) + "." + nameof(RoadSettingsAsset))]
-        [field: Space]
-        [field: SerializeField]
-        public StaticSettings.RoadDataRef RoadData { get; set; }
     }
 }

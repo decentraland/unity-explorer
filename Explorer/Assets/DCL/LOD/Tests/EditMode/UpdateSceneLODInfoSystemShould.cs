@@ -74,7 +74,8 @@ namespace DCL.LOD.Tests
 
             var pool = Substitute.For<IExtendedObjectPool<Material>>();
 
-            var textureArrayContainerFactory = new TextureArrayContainerFactory();
+            var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
+
             var textureArrayDictionary = new Dictionary<TextureFormat, TextureArrayContainer>();
             textureArrayDictionary.Add(TextureFormat.BC7,
                 textureArrayContainerFactory.Create(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []

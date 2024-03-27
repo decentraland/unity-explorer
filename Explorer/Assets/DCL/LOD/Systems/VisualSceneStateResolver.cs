@@ -9,9 +9,9 @@ namespace DCL.LOD
 {
     public class VisualSceneStateResolver
     {
-        private HashSet<Vector2Int> roadCoordinates;
+        private readonly HashSet<Vector2Int> roadCoordinates;
 
-        public void SetRoadCoordinates(HashSet<Vector2Int> roadCoordinates)
+        public VisualSceneStateResolver(HashSet<Vector2Int> roadCoordinates)
         {
             this.roadCoordinates = roadCoordinates;
         }
@@ -20,18 +20,17 @@ namespace DCL.LOD
             SceneDefinitionComponent sceneDefinitionComponent, ILODSettingsAsset lodSettingsAsset, IRealmData realmData)
         {
             //If we are in a world, dont show lods
-            if (realmData.ScenesAreFixed)
-            {
-                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-            }
+            if (realmData.ScenesAreFixed) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+
             //If the scene is empty, no lods are possible
-            else if (sceneDefinitionComponent.IsEmpty) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE; }
-            else if(roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)){ visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;  }
+            else if (sceneDefinitionComponent.IsEmpty) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+            else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase)) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
+
             //For SDK6 scenes, we just show lod0
-            else if (!sceneDefinitionComponent.IsSDK7) { visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD; }
+            else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
-                var candidateState = partition.Bucket < lodSettingsAsset.LodPartitionBucketThresholds[0]
+                VisualSceneStateEnum candidateState = partition.Bucket < lodSettingsAsset.LodPartitionBucketThresholds[0]
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
 
