@@ -1,3 +1,7 @@
+module.exports.getUserPublicKey = async function(message) {
+    return UnityUserIdentityApi.UserPublicKey;
+}
+
 module.exports.getUserData = async function(message) {
     const result = await UnityUserIdentityApi.GetOwnUserData();
     const data = result.data;

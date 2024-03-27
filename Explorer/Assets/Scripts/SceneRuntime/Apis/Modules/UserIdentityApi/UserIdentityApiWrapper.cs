@@ -36,6 +36,12 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
             lifeCycleCts.SafeCancelAndDispose();
         }
 
+        public object UserPublicKey() =>
+            new GetUserPublicKeyResponse
+            {
+                address = identityCache.Identity?.Address,
+            };
+
         [PublicAPI("Used by StreamingAssets/Js/Modules/UserIdentity.js")]
         public object GetOwnUserData()
         {

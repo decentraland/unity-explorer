@@ -6,6 +6,12 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
     public partial class UserIdentityApiWrapper
     {
         [Serializable]
+        public struct GetUserPublicKeyResponse
+        {
+            public string? address;
+        }
+
+        [Serializable]
         public struct GetUserDataResponse
         {
             public Data? data;
