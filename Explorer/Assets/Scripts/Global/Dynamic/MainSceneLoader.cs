@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Minimap;
@@ -203,6 +204,7 @@ namespace Global.Dynamic
         {
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
+            mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
         }
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)

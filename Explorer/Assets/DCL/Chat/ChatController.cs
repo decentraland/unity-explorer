@@ -1,10 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using ECS.Abstract;
 using MVC;
 using SuperScrollView;
 using System;
@@ -42,6 +44,7 @@ namespace DCL.Chat
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
         private readonly Entity playerEntity;
+        private SingleInstanceEntity cameraEntity;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -77,6 +80,7 @@ namespace DCL.Chat
 
         protected override void OnViewInstantiated()
         {
+            cameraEntity = world.CacheCamera();
             viewInstance.OnChatViewPointerEnter += OnChatViewPointerEnter;
             viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
@@ -102,10 +106,10 @@ namespace DCL.Chat
         }
 
         private void OnChatViewPointerExit() =>
-            world.Remove<CameraBlockerComponent>(playerEntity);
+            world.Remove<CameraBlockerComponent>(cameraEntity);
 
         private void OnChatViewPointerEnter() =>
-            world.AddOrGet(playerEntity, new CameraBlockerComponent());
+            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
 
         private void AddEmojiFromSuggestion(string emojiCode)
         {

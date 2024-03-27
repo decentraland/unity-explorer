@@ -67,7 +67,6 @@ namespace DCL.PluginSystem.Global
                 );
 
                 mvcManager.RegisterController(chatController);
-                mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             };
         }
 
