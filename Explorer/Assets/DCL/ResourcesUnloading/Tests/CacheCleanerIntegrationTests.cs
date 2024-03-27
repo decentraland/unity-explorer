@@ -33,6 +33,7 @@ namespace DCL.ResourcesUnloading.Tests
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODAssetsPool lodAssets;
+        private RoadAssetsPool roadAssets;
 
 
         private AssetBundleCache assetBundleCache;
@@ -51,6 +52,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableAssetsCache = new WearableAssetsCache(100);
             wearableCatalog = new WearableCatalog();
             lodAssets = new LODAssetsPool();
+            roadAssets = new RoadAssetsPool(new List<GameObject>());
 
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
@@ -61,6 +63,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(wearableAssetsCache);
             cacheCleaner.Register(wearableCatalog);
             cacheCleaner.Register(lodAssets);
+            cacheCleaner.Register(roadAssets);
         }
 
         [TearDown]
@@ -75,6 +78,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableAssetsCache.Dispose();
             wearableCatalog.Unload(releasablePerformanceBudget);
             lodAssets.Unload(releasablePerformanceBudget, 3);
+            roadAssets.Unload(releasablePerformanceBudget, 3);
         }
 
         [Performance]

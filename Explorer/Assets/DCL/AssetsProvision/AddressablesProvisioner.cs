@@ -10,6 +10,10 @@ namespace DCL.AssetsProvision
     {
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(AssetReferenceT<T> assetReferenceT, CancellationToken ct) where T: Object
         {
+            // if the main asset was already loaded just return it
+            if (assetReferenceT.OperationHandle.IsValid())
+                return new ProvidedAsset<T>(assetReferenceT.OperationHandle.Convert<T>());
+
             AsyncOperationHandle<T> asyncOp = assetReferenceT.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);
             return new ProvidedAsset<T>(asyncOp);
@@ -17,6 +21,10 @@ namespace DCL.AssetsProvision
 
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(ComponentReference<T> componentReference, CancellationToken ct) where T: Object
         {
+            // if the main asset was already loaded just return it
+            if (componentReference.OperationHandle.IsValid())
+                return new ProvidedAsset<T>(componentReference.OperationHandle.Convert<T>());
+
             AsyncOperationHandle<T> asyncOp = componentReference.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);
             return new ProvidedAsset<T>(asyncOp);

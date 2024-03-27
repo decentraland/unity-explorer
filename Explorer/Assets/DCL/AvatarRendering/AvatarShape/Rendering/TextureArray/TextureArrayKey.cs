@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {

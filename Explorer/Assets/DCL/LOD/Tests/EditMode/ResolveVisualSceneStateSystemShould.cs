@@ -1,4 +1,6 @@
-﻿using DCL.Ipfs;
+﻿using System.Collections.Generic;
+using DCL.Ipfs;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -21,11 +23,11 @@ namespace DCL.LOD.Tests
                 2, 4
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
-            system = new ResolveVisualSceneStateSystem(world, lodSettings);
+            var realmData = Substitute.For<IRealmData>();
+            system = new ResolveVisualSceneStateSystem(world, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>()), realmData);
         }
 
-        /*[Test]
-         TODO: Commented until we decide what we do with SDK6 scenes
+        [Test]
         public void AddDefaultSceneVisualState()
         {
             var entity = world.Create( new PartitionComponent(), new SceneDefinitionComponent());
@@ -36,7 +38,7 @@ namespace DCL.LOD.Tests
 
             Assert.IsFalse(visualSceneState.IsDirty);
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD);
-        }*/
+        }
 
         [Test]
         [TestCase(0, VisualSceneStateEnum.SHOWING_SCENE)]

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
@@ -26,10 +26,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         public TextureArraySlot GetNextFreeSlot()
         {
-            if (freeSlots.TryPop(out TextureArraySlot freeSlot)) { return freeSlot; }
+            if (freeSlots.TryPop(out var freeSlot)) { return freeSlot; }
 
             int arrayIndex = nextFreeIndex / minArraySize;
-            int slotIndex = nextFreeIndex - (minArraySize * arrayIndex);
+            int slotIndex = nextFreeIndex - minArraySize * arrayIndex;
 
             if (arrays.Count <= arrayIndex)
                 arrays.Add(CreateTexture2DArray());

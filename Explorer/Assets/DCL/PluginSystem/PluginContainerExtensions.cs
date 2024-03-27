@@ -18,5 +18,34 @@ namespace DCL.PluginSystem
 
             return (plugin, true);
         }
+
+        public static UniTask<TPlugin> ThrowOnFail<TPlugin>(this UniTask<(TPlugin? plugin, bool success)> parentTask) where TPlugin: class, IDCLPlugin
+        {
+            return parentTask.ContinueWith(t =>
+            {
+                if (!t.success)
+                    throw new PluginNotInitializedException(typeof(TPlugin));
+
+                return t.plugin!;
+            });
+        }
+
+        public static async UniTask<(TContainer? container, bool success)> InitializeContainerAsync<TContainer, TSettings>(
+            this TContainer container,
+            IPluginSettingsContainer pluginSettingsContainer,
+            CancellationToken ct,
+            Func<TContainer, UniTask> createDependencies)
+            where TContainer: DCLContainer<TSettings>
+            where TSettings: IDCLPluginSettings, new()
+        {
+            (_, bool result) = await pluginSettingsContainer.InitializePluginAsync(container, ct);
+
+            if (!result)
+                return (null, false);
+
+            await createDependencies(container);
+
+            return (container, true);
+        }
     }
 }

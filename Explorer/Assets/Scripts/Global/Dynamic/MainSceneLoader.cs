@@ -107,44 +107,37 @@ namespace Global.Dynamic
                     web3VerifiedAuthenticator,
                     identityCache);
 
-                // First load the common global plugin
-                bool isLoaded;
+                try
+                {
+                    staticContainer = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct).ThrowOnFail();
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
-
-                if (!isLoaded)
+                    dynamicWorldContainer = await DynamicWorldContainer.CreateAsync(
+                        new DynamicWorldDependencies
+                        {
+                            StaticContainer = staticContainer!,
+                            SettingsContainer = globalPluginSettingsContainer,
+                            RootUIDocument = uiToolkitRoot,
+                            DynamicSettings = dynamicSettings,
+                            Web3Authenticator = web3Authenticator,
+                            Web3IdentityCache = identityCache,
+                        },
+                        new DynamicWorldParams
+                        {
+                            StaticLoadPositions = settings.StaticLoadPositions,
+                            Realms = settings.Realms,
+                            StartParcel = settings.StartPosition,
+                            EnableLandscape = enableLandscape,
+                        }, ct
+                    );
+                }
+                catch (PluginNotInitializedException)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
-                    new DynamicWorldDependencies
-                    {
-                        StaticContainer = staticContainer!,
-                        SettingsContainer = scenePluginSettingsContainer,
-                        RootUIDocument = uiToolkitRoot,
-                        DynamicSettings = dynamicSettings,
-                        Web3Authenticator = web3Authenticator,
-                        Web3IdentityCache = identityCache,
-                    },
-                    new DynamicWorldParams
-                    {
-                        StaticLoadPositions = settings.StaticLoadPositions,
-                        Realms = settings.Realms,
-                        StartParcel = settings.StartPosition,
-                        EnableLandscape = enableLandscape,
-                    }, ct
-                );
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
                     identityCache, dynamicWorldContainer.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
-
-                if (!isLoaded)
-                {
-                    GameReports.PrintIsDead();
-                    return;
-                }
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
                     dynamicWorldContainer!.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());

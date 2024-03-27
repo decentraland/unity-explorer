@@ -14,7 +14,8 @@ namespace ECS.SceneLifeCycle.Components
     {
         UNINITIALIZED,
         SHOWING_SCENE,
-        SHOWING_LOD
+        SHOWING_LOD,
+        ROAD
     }
     
 }

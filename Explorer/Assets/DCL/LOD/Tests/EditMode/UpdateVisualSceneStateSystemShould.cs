@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
@@ -55,7 +56,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
         visualSceneState = new VisualSceneState();
 
-        system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings);
+        system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>()));
     }
 
     [Test]

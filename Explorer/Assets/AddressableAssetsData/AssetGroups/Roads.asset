@@ -1,0 +1,230 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Roads
+  m_EditorClassIdentifier: 
+  m_GroupName: Roads
+  m_Data:
+    m_SerializedData: []
+  m_GUID: c44e51e507351484f907f9d369b3a0e9
+  m_SerializeEntries:
+  - m_GUID: d7baa85a7da60ef4b8b5252d78fa1b3d
+    m_Address: Assets/DCL/Roads/Settings/RoadData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d6ac3b70dd761a428bae0e655a93ebc
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Corner_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1cc7fa7a97a53834ca685e98204017f0
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Corner_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2ec12611ae979d842a0da486452aee81
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Corner_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b1111217e52b900449b9e717f0c0959c
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Corner_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3e3fab16f70f44a499223a11cc7321cc
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Corner_D.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8656fee7f6c6a234eac9ff6886c06a44
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Crossroads_00.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a409448912535d644afca060d485b59c
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Crossroads_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54b5d6841e4a266459c580ddc5340e49
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Crossroads_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 235c07e9ecefb4747bc3582357e678e2
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Crossroads_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c6fa6bf89b77c614ba05887a523db006
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/DeadEnd_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 185efa3be2bbba34fb934c80626f562f
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/EmptyFork_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d19aabb5dfdafa14b98585f5cf96d9cd
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/EmptyFork_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c356871960f60544b93de30ed5af26b
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/EmptyFork_D.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9bcbc0468eb6d34291dc19dc757cbdb
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Fork_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c45d7279c9840b40bf9cf08795bcb8f
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Fork_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 40d2a9f466cd185478b0581a9b3311ab
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Fork_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 327b853b79746cf48ab308998970d8ae
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Fork_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e72feb04f15ad354cb1fe3dac88f1fdd
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Fork_D.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c592ea722133eda4e888b85108194228
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenCorner_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5b2de4cf20688c4e8cab8a40bf859dd
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenCorner_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 22fb05afac49d134bb9638a78264d8b0
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenCorner_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 95ab8260763c08d4f9282352181b5eb0
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenFork_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e186f378805b23429b0c811c04ddc23
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenFork_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a56b7fb5910e3cd489779465e96723f1
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenFork_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cc76a078ba07d974d99ed1e3cd2191a3
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenFork_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 487b320a807d36a4885a1440c90addd8
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenRoad_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dd1552dbc977a604c83b76f9bc804ef6
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenRoad_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 633db5f6fb74e1b4088e248f6683c623
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenRoad_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d1d142683f699648822f384cca7cc1d
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenRoad_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3fe9e7ef4e33db9469d39396a05b8d61
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OpenRoad_D.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ace2ad8136cf7954eab022cc4b3c5d05
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Road_0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 398da217c8ff1794bbf8d04e948defea
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Road_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f5096a82bdf411f4090abaf4631ef228
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Road_B.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88b307ae361d8aa41adff65ae5c76f12
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Road_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2dc7da2b01ec6374bb864c6ffa3479b7
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Road_D.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bae53e49e94b0cb4a8879657830367a6
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/Road_E.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 034505001d7fc99419a8eefba5c708c7
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OriginalAssets/_MissingOriginals/DeadEnd_A/DeadEnd_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ecd3b5e941b880d4382093688c559bd6
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OriginalAssets/_MissingOriginals/DeadEnd_C/DeadEnd_C.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e551a7c901b71d741aa802fad61848c6
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OriginalAssets/_MissingOriginals/DeadEnd_E/DeadEnd_E.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 239163e03a3740d4996a2d35587b2ff6
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/OriginalAssets/_MissingOriginals/OpenCorner_A/OpenCorner_A.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: c1be53927cad5324d80f7cd0222e04d2, type: 2}
+    - {fileID: 11400000, guid: 6b36a4e8ce68fe249a119bd8554a8401, type: 2}
