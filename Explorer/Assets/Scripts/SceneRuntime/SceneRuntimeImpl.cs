@@ -1,6 +1,7 @@
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -12,6 +13,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.Ethereums;
+using SceneRuntime.Apis.Modules.Players;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
@@ -48,6 +50,7 @@ namespace SceneRuntime
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
         private SignedFetchWrap? signedFetchWrap;
+        private PlayersWrap? playersWrap;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -111,11 +114,17 @@ namespace SceneRuntime
             sceneApiWrapper?.Dispose();
             userActionsApi?.Dispose();
             signedFetchWrap?.Dispose();
+            playersWrap?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
         {
             engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
+        }
+
+        public void RegisterPlayers(IRoomHub roomHub, IProfileRepository profileRepository)
+        {
+            engine.AddHostObject("UnityPlayers", playersWrap = new PlayersWrap(roomHub, profileRepository));
         }
 
         public void RegisterRuntime(IRuntime api)

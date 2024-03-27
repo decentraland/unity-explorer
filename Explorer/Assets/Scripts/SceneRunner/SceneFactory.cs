@@ -16,6 +16,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Time;
@@ -51,6 +52,7 @@ namespace SceneRunner
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebRequestController webRequestController;
+        private readonly IRoomHub roomHub;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
@@ -71,6 +73,7 @@ namespace SceneRunner
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
             IWebRequestController webRequestController,
+            IRoomHub roomHub,
             IRealmData? realmData
         )
         {
@@ -86,6 +89,7 @@ namespace SceneRunner
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
             this.webRequestController = webRequestController;
+            this.roomHub = roomHub;
             this.realmData = realmData;
         }
 
@@ -229,6 +233,7 @@ namespace SceneRunner
             sceneRuntime.RegisterSignedFetch(webRequestController);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
+            sceneRuntime.RegisterPlayers(roomHub, profileRepository);
 
             return new SceneFacade(
                 sceneRuntime,
