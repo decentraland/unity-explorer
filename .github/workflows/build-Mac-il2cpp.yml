@@ -17,7 +17,7 @@ jobs:
       matrix:
         include:
           - targetPlatform: StandaloneOSX
-            dockerImage: macos-latest-xl
+            dockerImage: macos-latest-xlarge
 
 
     name: Build
@@ -99,18 +99,85 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
           
-      - uses: decentraland/unity-builder@0.9
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add GitHub to the SSH known hosts file
+        run: |
+          sshPath="$HOME/.ssh"
+          if [ ! -d "$sshPath" ]; then
+            mkdir -p "$sshPath"
+          fi
+
+          knownHostsPath="$sshPath/known_hosts"
+
+          curl -s 'https://api.github.com/meta' | jq -r '.ssh_keys[]' | while read key; do
+            echo "github.com $key" >> "$knownHostsPath"
+          done
+
+          chmod 600 "$knownHostsPath"
+          
+      - name: Manage custom input parameters
+        run: |
+          # Initialize profiling parameters
+          profilingParam=""
+          deepProfilingParam=""
+
+          # Parse input parameters
+          profileEnabled="${{ github.event.inputs.profile }}"
+          deepProfileEnabled="${{ github.event.inputs.deep_profile }}"
+
+          # Set profiling parameters based on input
+          if [ "$profileEnabled" == 'true' ]; then
+            profilingParam='-profile'
+          fi
+
+          if [ "$deepProfileEnabled" == 'true' ]; then
+            deepProfilingParam='-deepProfile'
+          fi
+
+          # Set environment variable UNITY_CUSTOM_PARAMS
+          echo "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" >> $GITHUB_ENV
+
+          # Output profiling parameters
+          echo "Profiling parameters: $profilingParam $deepProfilingParam"
+
+      - name: Clone repository with packages
+        run: |
+          # Clone the repository
+          git clone git@github.com:decentraland/unity-explorer-packages.git
+          
+          # Specify the path to the manifest.json file
+          jsonFilePath="Explorer/Packages/manifest.json"
+
+          # Replace the strings in manifest.json
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
+          sed -i'' -e 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
+
+          cat "Explorer/Packages/manifest.json"
+
+          ls
+          
+      - uses: decentraland/unity-builder@chore/timeout-for-shader
         id: build
-        timeout-minutes: 120
         env:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
+          cacheUnityInstallationOnMac: true
+          buildMethod: Editor.BuildScript.Build
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
-          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
+          sshAgent: ${{ env.SSH_AUTH_SOCK }}
+          allowDirtyBuild: true
+          enableGpu: true
           
       # Tar build files to maintain file permissions
       - name: Tar MacOSX/Linux build files
