@@ -11,9 +11,9 @@ namespace DCL.LOD
     public struct LODAsset : IDisposable
     {
         private static readonly ListObjectPool<Material> MATERIALS_LIST_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
-        
-        public LODKey LodKey;
-        public GameObject Root;
+
+        public readonly LODKey LodKey;
+        public readonly GameObject Root;
         public AssetBundleData AssetBundleReference;
         public readonly bool LoadingFailed;
         private readonly ILODAssetsPool Pool;
@@ -44,7 +44,7 @@ namespace DCL.LOD
             Pool = pool;
             Slots = Array.Empty<TextureArraySlot?>();
             MaterialPool = null;
-            
+
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }

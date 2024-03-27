@@ -298,6 +298,8 @@ namespace Global.Dynamic
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, container.MultiplayerMovementMessageBus),
+                container.LODContainer.LODPlugin,
+                container.LODContainer.RoadPlugin
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
