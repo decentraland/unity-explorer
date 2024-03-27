@@ -113,6 +113,7 @@ namespace DCL.Chat
                 return;
 
             viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
+            viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
         }
 
@@ -128,8 +129,11 @@ namespace DCL.Chat
             if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
-            int caretPosition = viewInstance.InputField.caretPosition;
-            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, emoji);
+            int caretPosition = viewInstance.InputField.stringPosition;
+            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, "[emoji]");
+            viewInstance.InputField.text = viewInstance.InputField.text.Replace("[emoji]", emoji);
+            viewInstance.InputField.stringPosition += emoji.Length;
+
             viewInstance.InputField.ActivateInputField();
         }
 
