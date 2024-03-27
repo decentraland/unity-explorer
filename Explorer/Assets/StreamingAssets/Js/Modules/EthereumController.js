@@ -21,6 +21,10 @@ module.exports.getUserAccount = async function (message) {
     return UnityEthereumApi.UserAddress()
 }
 
+module.exports.requirePayment = async function (message) {
+    return UnityEthereumApi.TryPay(message.amount, message.currency, message.toAddress);
+}
+
 module.exports.convertMessageToObject = async function (message) {
     let parsedMessage = message
 

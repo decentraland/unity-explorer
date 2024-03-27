@@ -35,6 +35,14 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
+        public object TryPay(decimal amount, string currency, string toAddress)
+        {
+            //TODO no payments yet
+            return new SendEthereumMessageResponse
+                { jsonAnyResponse = "{}" };
+        }
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object? UserAddress() =>
             web3IdentityCache.Identity?.Address.ToString() ?? null;
 
