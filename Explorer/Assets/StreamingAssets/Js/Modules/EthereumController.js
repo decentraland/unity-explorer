@@ -16,3 +16,20 @@ module.exports.sendAsync = async function (message) {
     const result = await UnityEthereumApi.SendAsync(message.id, message.method, message.jsonParams)
     return result;
 }
+
+module.exports.convertMessageToObject = async function (message) {
+    let parsedMessage = message
+
+    // Remove `# DCL Signed message` header
+    if (message.indexOf('# DCL Signed message') === 0) {
+        parsedMessage = message.slice(21)
+    }
+    // First, split the string parts into nested array
+    const arr = parsedMessage
+        .split('\n')
+        .map((m) => m.split(':'))
+        .map(([key, value]) => [key, value.trim()])
+
+    // convert the array into object of type MessageDict
+    return arr.reduce((o, [key, value]) => ({...o, [key]: value}), {})
+}
