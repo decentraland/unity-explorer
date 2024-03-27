@@ -1,5 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using Newtonsoft.Json;
@@ -14,18 +17,29 @@ namespace SceneRuntime.Apis.Modules.Ethereums
     {
         private readonly IEthereumApi ethereumApi;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource sendCancellationToken;
 
-        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler)
+        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache, CancellationTokenSource sendCancellationToken)
         {
             this.ethereumApi = ethereumApi;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
+            this.web3IdentityCache = web3IdentityCache;
+            this.sendCancellationToken = sendCancellationToken;
         }
 
         public void Dispose()
         {
-            sendCancellationToken?.SafeCancelAndDispose();
+            sendCancellationToken.SafeCancelAndDispose();
+        }
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
+        public object SignMessage(string message)
+        {
+            using AuthChain chain = web3IdentityCache.Identity.EnsureNotNull().Sign(message);
+            var entity = chain.Get(AuthLinkType.ECDSA_SIGNED_ENTITY);
+            return new SignMessageResponse(entity);
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]

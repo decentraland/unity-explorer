@@ -22,6 +22,7 @@ using SceneRuntime.Apis.Modules.UserActions;
 using SceneRuntime.Apis.Modules.UserIdentityApi;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Assertions;
 
 namespace SceneRuntime
@@ -142,9 +143,17 @@ namespace SceneRuntime
             engine.AddHostObject("UnitySignedFetch", signedFetchWrap = new SignedFetchWrap(webRequestController));
         }
 
-        public void RegisterEthereumApi(IEthereumApi ethereumApi)
+        public void RegisterEthereumApi(IEthereumApi ethereumApi, IWeb3IdentityCache web3IdentityCache)
         {
-            engine.AddHostObject("UnityEthereumApi", this.ethereumApi = new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler));
+            engine.AddHostObject(
+                "UnityEthereumApi",
+                this.ethereumApi = new EthereumApiWrapper(
+                    ethereumApi,
+                    sceneExceptionsHandler,
+                    web3IdentityCache,
+                    new CancellationTokenSource()
+                )
+            );
         }
 
         public void RegisterRestrictedActionsApi(IRestrictedActionsAPI api)
