@@ -33,6 +33,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput([Data] int tickValue, ref JumpInputComponent inputToUpdate)
         {
             if (inputAction.WasPressedThisFrame())

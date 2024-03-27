@@ -1665,7 +1665,7 @@ MonoBehaviour:
     mPadding: 4
     mInitCreateCount: 3
     mStartPosOffset: 0
-  mArrangeType: 0
+  mArrangeType: 1
   mSupportScrollBar: 1
   mItemSnapEnable: 1
   mViewPortSnapPivot: {x: 0, y: 0}

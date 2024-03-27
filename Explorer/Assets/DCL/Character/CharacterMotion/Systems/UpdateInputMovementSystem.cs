@@ -32,6 +32,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput(ref MovementInputComponent inputToUpdate)
         {
             inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
