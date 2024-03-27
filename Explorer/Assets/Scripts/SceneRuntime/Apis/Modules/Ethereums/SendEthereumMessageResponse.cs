@@ -1,6 +1,6 @@
 using System;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.Ethereums
 {
     [Serializable]
     public struct SendEthereumMessageResponse

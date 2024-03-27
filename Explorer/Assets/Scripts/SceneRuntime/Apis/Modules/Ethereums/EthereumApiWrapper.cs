@@ -8,7 +8,7 @@ using System;
 using System.Threading;
 using Utility;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.Ethereums
 {
     public class EthereumApiWrapper : IDisposable
     {

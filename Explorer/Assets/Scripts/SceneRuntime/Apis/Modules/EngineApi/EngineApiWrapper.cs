@@ -5,7 +5,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using UnityEngine.Profiling;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.EngineApi
 {
     public class EngineApiWrapper : IDisposable
     {

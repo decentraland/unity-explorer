@@ -4,7 +4,6 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
-using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -13,7 +12,7 @@ using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.UserIdentityApi
 {
     public partial class UserIdentityApiWrapper : IDisposable
     {

@@ -8,6 +8,7 @@ using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using UnityEngine;
 using Utility;
 

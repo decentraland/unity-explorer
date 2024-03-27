@@ -9,6 +9,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

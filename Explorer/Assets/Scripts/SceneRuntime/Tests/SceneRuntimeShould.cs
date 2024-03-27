@@ -8,6 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
 using System;
 using System.Collections;

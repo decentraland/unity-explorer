@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 using System;
 using UnityEngine;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 {
     public class RestrictedActionsAPIWrapper : IDisposable
     {

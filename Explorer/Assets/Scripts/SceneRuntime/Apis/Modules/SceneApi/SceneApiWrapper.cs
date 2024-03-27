@@ -1,12 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
-using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
-using SceneRunner.Scene.ExceptionsHandling;
+﻿using JetBrains.Annotations;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.SceneApi
 {
     public class SceneApiWrapper : IDisposable
     {
