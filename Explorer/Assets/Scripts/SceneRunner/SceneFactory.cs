@@ -233,7 +233,7 @@ namespace SceneRunner
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 
-            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub);
+            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
 
             sceneRuntime.ExecuteSceneJson();

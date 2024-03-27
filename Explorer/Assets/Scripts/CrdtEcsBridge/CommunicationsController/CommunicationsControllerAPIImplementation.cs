@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using SceneRunner.Scene;
+using SceneRuntime;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace CrdtEcsBridge.CommunicationsController
     {
         private readonly ISceneData sceneData;
         private readonly IMessagePipesHub messagePipesHub;
+        private readonly IJsOperations jsOperations;
         private readonly List<byte[]> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
@@ -25,19 +27,22 @@ namespace CrdtEcsBridge.CommunicationsController
             Uint8Array = 2,
         }
 
-        public CommunicationsControllerAPIImplementation(ISceneData sceneData, IMessagePipesHub messagePipesHub)
+        public CommunicationsControllerAPIImplementation(
+            ISceneData sceneData,
+            IMessagePipesHub messagePipesHub,
+            IJsOperations jsOperations)
         {
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
+            this.jsOperations = jsOperations;
 
             if (messagePipesHub == null)
                 return;
 
-            messagePipesHub.IslandPipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
         }
 
-        public byte[][] SendBinary(byte[][] data)
+        public object SendBinary(byte[][] data)
         {
             foreach (byte[] message in data)
             {
@@ -45,14 +50,12 @@ namespace CrdtEcsBridge.CommunicationsController
                     continue;
 
                 byte[] encodedMessage = EncodeMessage(message, MsgType.Uint8Array);
-
-                //SendMessage(encodedMessage, messagePipesHub.IslandPipe());
                 SendMessage(encodedMessage, messagePipesHub.ScenePipe());
             }
 
             byte[][] resultData = eventsToProcess.ToArray();
             eventsToProcess.Clear();
-            return resultData;
+            return jsOperations.ConvertToScriptTypedArrays(resultData);
         }
 
         public void Dispose()

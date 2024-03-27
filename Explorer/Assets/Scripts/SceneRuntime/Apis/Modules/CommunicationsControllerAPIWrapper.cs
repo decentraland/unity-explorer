@@ -20,7 +20,7 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public byte[][] SendBinary(IList<object> dataList)
+        public object SendBinary(IList<object> dataList)
         {
             List<byte[]> data = new List<byte[]>();
             foreach (ITypedArray<byte> message in dataList)

@@ -4,6 +4,6 @@ namespace SceneRuntime.Apis.Modules
 {
     public interface ICommunicationsControllerAPI : IDisposable
     {
-        byte[][] SendBinary(byte[][] data);
+        object SendBinary(byte[][] data);
     }
 }
