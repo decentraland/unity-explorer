@@ -76,14 +76,15 @@ class WebSocket {
           const receiveData = () => {
             UnityWebSocketApi.ReceiveAsync(this.webSocketId).then(data => {
                   if (typeof this.onmessage === 'function') {
+                    let messageType, parsedData;
                     if (data.type === 'Binary'){
-                        data = new Uint8Array(data.data);
-                        type = "binary";
+                        parsedData = new Uint8Array(data.data);
+                        messageType = "binary";
                     } else {
-                        data = data.data;
-                        type = "text";
+                        parsedData = data.data;
+                        messageType = "text";
                      }
-                      this.onmessage(type, data);
+                      this.onmessage({type: messageType, data: parsedData});
                   }
                   receiveData();
               }).catch(error => {
@@ -105,7 +106,7 @@ class WebSocket {
             return UnityWebSocketApi.CloseAsync(this.webSocketId).then(() => {
                 if (typeof this.onclose === 'function') {
                     this.readyState = WebSocket.CLOSED;
-                    this.onclose({ type: "close" });
+                    this.onclose({ type: "close", code: 0, reason: "", wasClean: true });
                 }
             }).catch(error => {
                 if (typeof this.onerror === 'function') {

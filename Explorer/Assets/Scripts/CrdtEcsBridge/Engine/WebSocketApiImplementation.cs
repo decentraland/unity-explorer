@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
-using Microsoft.ClearScript.V8;
 using SceneRuntime.Apis.Modules;
 using SocketIOClient;
 using SocketIOClient.Messages;
@@ -8,7 +7,6 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.WebSockets;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine.Pool;
@@ -22,7 +20,7 @@ namespace CrdtEcsBridge.Engine
 
         private readonly TransportOptions transportOptions = new ()
         {
-            EIO = EngineIO.V4,
+            EIO = EngineIO.WebSocketDefault,
             ConnectionTimeout = TimeSpan.FromSeconds(20),
         };
         private int nextId;
@@ -56,17 +54,17 @@ namespace CrdtEcsBridge.Engine
         {
             if (!webSockets.TryGetValue(websocketId, out WebSocketTransport webSocket)) { throw new ArgumentException($"WebSocket with id {websocketId} does not exist."); }
 
-            if (data is not IScriptObject scriptObject || scriptObject.GetProperty("type") == null) {throw new ArgumentException("Invalid data format");}
+            if (data is not IScriptObject scriptObject || scriptObject.GetProperty("type") == null) { throw new ArgumentException("Invalid data format"); }
 
             object messageData = scriptObject.GetProperty("data");
 
             if (messageData != null)
             {
                 var type = scriptObject.GetProperty("type").ToString();
+
                 if (type == "Text")
                 {
-                    var payload = new Payload
-                            { Text = messageData.ToString() };
+                    var payload = new Payload { Text = messageData.ToString() };
 
                     await webSocket.SendAsync(payload, ct);
                 }
@@ -76,8 +74,7 @@ namespace CrdtEcsBridge.Engine
 
                     var payload = new Payload
                     {
-                        Bytes = new List<byte[]>
-                            { byteArray },
+                        Bytes = new List<byte[]> { byteArray },
                     };
 
                     await webSocket.SendAsync(payload, ct);
@@ -103,30 +100,30 @@ namespace CrdtEcsBridge.Engine
 
             void ReceivedHandler(IMessage message)
             {
-                if (message is BinaryMessage binaryMessage)
+                try
                 {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        for (var i = 0; i < binaryMessage.IncomingBytes.Count; i++)
-                        {
-                            byte[] byteArray = binaryMessage.IncomingBytes[i];
-                            memoryStream.Write(byteArray, 0, byteArray.Length);
-                        }
+                    object result;
 
-                        byte[] bytes = memoryStream.ToArray();
-                        tcs.TrySetResult(new { type = "Binary", data = bytes });
+                    if (message is BinaryMessage binaryMessage)
+                    {
+                        byte[] bytes = binaryMessage.IncomingBytes.SelectMany(x => x).ToArray();
+                        result = new { type = "Binary", data = bytes };
                     }
+                    else if (message is DefaultTextMessage defaultMessage) { result = new { type = "Text", data = defaultMessage.Message }; }
+                    else { throw new NotSupportedException($"Unsupported message type: {message.GetType().Name}"); }
+
+                    tcs.TrySetResult(result);
                 }
-                else
-                {
-                    string text = message.Write();
-                    tcs.TrySetResult(new { type = "Text", data = text });
-                }
+                catch (Exception ex) { tcs.TrySetException(ex); }
             }
 
             webSocket.OnReceived += ReceivedHandler;
 
-            await using (ct.Register(() => tcs.TrySetCanceled())) { return await tcs.Task; }
+            await using (ct.Register(() => tcs.TrySetCanceled()))
+            {
+                try { return await tcs.Task; }
+                finally { webSocket.OnReceived -= ReceivedHandler; }
+            }
         }
     }
 }
