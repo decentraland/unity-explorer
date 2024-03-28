@@ -8,6 +8,7 @@ using DCL.Interaction.Utility;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -45,7 +46,7 @@ namespace SceneRunner.Tests
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
                 new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), Substitute.For<IRealmData>());
+                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT, Substitute.For<IRealmData>());
         }
 
         [TearDown]

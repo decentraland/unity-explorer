@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 {
     public interface IRestrictedActionsAPI : IDisposable
     {
