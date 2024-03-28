@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Emotes.Interfaces
 
         void Send(uint emoteIndex);
 
-        UniTaskVoid SelfSendWithDelayAsync(Emote emote, float f);
+        UniTaskVoid SelfSendWithDelayAsync(Emote emote);
 
         void SetOwnProfile(Entity playerEntity);
     }

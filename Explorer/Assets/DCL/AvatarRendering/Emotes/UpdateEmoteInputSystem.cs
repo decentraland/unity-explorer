@@ -88,7 +88,7 @@ namespace DCL.CharacterMotion.Systems
             {
                 EmoteId = (uint)emoteIndex,
                 Timestamp = Time.unscaledTime,
-            }, 0.1f).Forget();
+            }).Forget();
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;

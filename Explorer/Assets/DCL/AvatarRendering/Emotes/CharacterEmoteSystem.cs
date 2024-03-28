@@ -179,7 +179,7 @@ namespace DCL.AvatarRendering.Emotes
                            {
                                EmoteId = (uint)i,
                                Timestamp = -1,
-                           }, 0.1f)
+                           })
                           .Forget();
 
                 break;

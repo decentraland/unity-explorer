@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes.Components;
+using DCL.Chat.MessageBus.Deduplication;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -21,12 +22,14 @@ namespace DCL.Multiplayer.Emotes
 {
     public class MultiplayerEmotesMessageBus : IDisposable, IEmotesMessageBus
     {
+        private const float LATENCY = 0.1f;
+
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IProfileRepository profileRepository;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-
+        private IMessageDeduplication messageDeduplication;
         private World globalWorld = null!;
 
         private Profile? selfProfile;
@@ -37,6 +40,8 @@ namespace DCL.Multiplayer.Emotes
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
             this.profileRepository = profileRepository;
+
+            messageDeduplication = new MessageDeduplication();
 
             this.messagePipesHub.IslandPipe().Subscribe<Emote>(Packet.MessageOneofCase.Emote, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Emote>(Packet.MessageOneofCase.Emote, OnMessageReceived);
@@ -73,9 +78,9 @@ namespace DCL.Multiplayer.Emotes
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        public async UniTaskVoid SelfSendWithDelayAsync(Emote message, float delay)
+        public async UniTaskVoid SelfSendWithDelayAsync(Emote message)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
+            await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
             Inbox(message, walletId: RemotePlayerMovementComponent.TEST_ID).Forget();
         }
 
@@ -92,8 +97,8 @@ namespace DCL.Multiplayer.Emotes
 
         private async UniTaskVoid Inbox(Emote emoteMessage, string walletId)
         {
-            // if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
-            //     return;
+            if (messageDeduplication.TryPass(walletId, emoteMessage.Timestamp) == false)
+                return;
 
             Profile? profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
 
@@ -108,11 +113,9 @@ namespace DCL.Multiplayer.Emotes
         private void TriggerEmote(int emoteIndex, in Entity entity, in Profile profile)
         {
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
+            if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
-            if (emoteIndex < 0 || emoteIndex >= emotes.Count)
-                return;
-
-            URN emoteId = emotes[emoteIndex].Shorten();
+            URN emoteId = emotes[emoteIndex];
 
             if (!string.IsNullOrEmpty(emoteId))
                 globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
