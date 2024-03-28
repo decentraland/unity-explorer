@@ -25,15 +25,15 @@ module.exports.requirePayment = async function (message) {
     return UnityEthereumApi.TryPay(message.amount, message.currency, message.toAddress);
 }
 
-module.exports.convertMessageToObject = async function (message) {
-    let parsedMessage = message
+module.exports.convertMessageToObject = async function (request) {
+    var parsingMessageToObject = request.message
 
     // Remove `# DCL Signed message` header
-    if (message.indexOf('# DCL Signed message') === 0) {
-        parsedMessage = message.slice(21)
+    if (parsingMessageToObject.indexOf('# DCL Signed message') === 0) {
+        parsingMessageToObject = parsingMessageToObject.slice(21)
     }
     // First, split the string parts into nested array
-    const arr = parsedMessage
+    const arr = parsingMessageToObject
         .split('\n')
         .map((m) => m.split(':'))
         .map(([key, value]) => [key, value.trim()])
