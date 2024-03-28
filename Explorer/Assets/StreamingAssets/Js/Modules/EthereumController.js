@@ -33,11 +33,13 @@ module.exports.convertMessageToObject = async function (request) {
         parsingMessageToObject = parsingMessageToObject.slice(21)
     }
     // First, split the string parts into nested array
-    const arr = parsingMessageToObject
-        .split('\n')
-        .map((m) => m.split(':'))
-        .map(([key, value]) => [key, value.trim()])
+    const arr = parsingMessageToObject.split('\n')
+    const result = {}
 
-    // convert the array into object of type MessageDict
-    return arr.reduce((o, [key, value]) => ({...o, [key]: value}), {})
+    for (const element of arr) {
+        const [key, value] = element.split(':')
+        result[key] = value.trim()
+    }
+
+    return result
 }
