@@ -27,13 +27,13 @@ namespace SceneRuntime.Apis.Modules.Players
         [UsedImplicitly]
         public object PlayerData(string walletId)
         {
-            async UniTask<PlayersGetUserDataResponse> Execute()
+            async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
                 var profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
                 return new PlayersGetUserDataResponse(profile);
             }
 
-            return Execute().ToPromise();
+            return ExecuteAsync().ToPromise();
         }
 
         [UsedImplicitly]
