@@ -42,6 +42,8 @@ namespace DCL.PluginSystem.Global
         {
             var mutexSync = new MutexSync();
 
+            messageBus.SetOwnProfile(arguments.PlayerEntity);
+
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 mutexSync,
@@ -55,13 +57,15 @@ namespace DCL.PluginSystem.Global
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
         }
 
-        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
             IEnumerable<IEmote> embeddedEmotes = settings.EmbeddedEmotes.editorAsset.GenerateEmotes();
             audioSourceReference = settings.EmoteAudioSource.editorAsset.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
+
+            return UniTask.CompletedTask;
         }
 
         [Serializable]

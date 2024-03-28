@@ -138,7 +138,7 @@ namespace DCL.UserInAppInitializationFlow
         }
 
         private Profile CreateRandomProfile() =>
-            new (web3IdentityCache.Identity?.Address ?? "fakeUserId", "Player",
+            new (web3IdentityCache.Identity?.Address ?? IProfileRepository.GUEST_RANDOM_ID,  IProfileRepository.PLAYER_RANDOM_ID,
                 new Avatar(
                     BodyShape.MALE,
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),

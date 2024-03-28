@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Components;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -30,9 +29,8 @@ namespace DCL.Multiplayer.Emotes
 
         private World globalWorld = null!;
 
-        // private readonly IMessagePipesHub messagePipesHub;
-        // private readonly IProfileRepository profileRepository;
-        // private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private Profile? selfProfile;
+        private Entity playerEntity;
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IProfileRepository profileRepository)
         {
@@ -44,14 +42,15 @@ namespace DCL.Multiplayer.Emotes
             this.messagePipesHub.ScenePipe().Subscribe<Emote>(Packet.MessageOneofCase.Emote, OnMessageReceived);
         }
 
-        public void InjectWorld(World world)
-        {
-            this.globalWorld = world;
-        }
         public void Dispose()
         {
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
+        }
+
+        public void InjectWorld(World world)
+        {
+            globalWorld = world;
         }
 
         public void Send(uint emote)
@@ -67,7 +66,7 @@ namespace DCL.Multiplayer.Emotes
 
         private void SendTo(uint emoteId, float timestamp, IMessagePipe messagePipe)
         {
-            var emote = messagePipe.NewMessage<Emote>();
+            MessageWrap<Emote> emote = messagePipe.NewMessage<Emote>();
 
             emote.Payload.EmoteId = emoteId;
             emote.Payload.Timestamp = timestamp;
@@ -80,6 +79,9 @@ namespace DCL.Multiplayer.Emotes
             Inbox(message, walletId: RemotePlayerMovementComponent.TEST_ID).Forget();
         }
 
+        public void SetOwnProfile(Entity playerEntity) =>
+            this.playerEntity = playerEntity;
+
         private void OnMessageReceived(ReceivedMessage<Emote> obj)
         {
             if (cancellationTokenSource.Token.IsCancellationRequested)
@@ -90,43 +92,30 @@ namespace DCL.Multiplayer.Emotes
 
         private async UniTaskVoid Inbox(Emote emoteMessage, string walletId)
         {
-            if (entityParticipantTable.Has(walletId) == false)
-            {
-                // ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
-                return;
-            }
             // if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
             //     return;
 
-            var entity = entityParticipantTable.Entity(walletId);
             Profile? profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
+
+            if (profile == null)
+                profile = selfProfile ?? globalWorld.Get<Profile>(playerEntity);
+
+            Entity entity = entityParticipantTable.Entity(walletId);
             TriggerEmote((int)emoteMessage.EmoteId, entity, profile!);
-            // ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
 
         // Copy-Paste from UpdateEmoteInputSystem.cs
         private void TriggerEmote(int emoteIndex, in Entity entity, in Profile profile)
         {
-            URN emoteId;
+            IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
 
-            if(profile != null)
-            {
-                IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
+            if (emoteIndex < 0 || emoteIndex >= emotes.Count)
+                return;
 
-                if (emoteIndex < 0 || emoteIndex >= emotes.Count)
-                    return;
-
-                emoteId = emotes[emoteIndex].Shorten();
-            }
-            else
-            {
-                emoteId = new URN("cry");
-            }
+            URN emoteId = emotes[emoteIndex].Shorten();
 
             if (!string.IsNullOrEmpty(emoteId))
-            {
                 globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
-            }
         }
     }
 }
