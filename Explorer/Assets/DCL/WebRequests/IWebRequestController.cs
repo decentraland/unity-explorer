@@ -57,6 +57,14 @@ namespace DCL.WebRequests
                 )
             );
 
+        public static WebRequestHeadersInfo Headers(string jsonMetaData) =>
+            Headers(jsonMetaData, DateTime.UtcNow.UnixTimeAsMilliseconds());
+
+        public static WebRequestHeadersInfo Headers(string jsonMetaData, ulong unixTimestamp) =>
+            new WebRequestHeadersInfo()
+               .Add("x-identity-timestamp", unixTimestamp.ToString()!)
+               .Add("x-identity-metadata", jsonMetaData);
+
         public static UniTask<GenericPostRequest> SignedFetchAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
@@ -73,9 +81,7 @@ namespace DCL.WebRequests
                 GenericPostArguments.Empty,
                 ct,
                 signInfo: new WebRequestSignInfo(payload),
-                headersInfo: new WebRequestHeadersInfo()
-                            .Add("x-identity-timestamp", unixTimestamp.ToString()!)
-                            .Add("x-identity-metadata", jsonMetaData)
+                headersInfo: Headers(jsonMetaData, unixTimestamp)
             );
         }
 

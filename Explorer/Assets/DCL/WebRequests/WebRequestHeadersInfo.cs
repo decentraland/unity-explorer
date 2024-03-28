@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace DCL.WebRequests
@@ -24,6 +25,12 @@ namespace DCL.WebRequests
 
         public WebRequestHeadersInfo Add(string key, string value) =>
             Add(new WebRequestHeader(key, value));
+
+        public readonly IReadOnlyDictionary<string, string> AsDictionary() =>
+            value.ToDictionary(e => e.Name, e => e.Value);
+
+        public readonly Dictionary<string, string> AsMutableDictionary() =>
+            value.ToDictionary(e => e.Name, e => e.Value);
 
         public override readonly string ToString()
         {
