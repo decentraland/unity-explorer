@@ -1,4 +1,4 @@
-async function messageToString(dict: MessageDict) {
+async function messageToString(dict) {
     const header = `# DCL Signed message\n`
     const payload = Object.entries(dict)
         .map(([key, value]) => `${key}: ${value}`)
