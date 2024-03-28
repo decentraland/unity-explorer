@@ -42,7 +42,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             public string baseURL;
             public string realmName;
             public int networkId;
-            public string commsAdapter;
+            public string? commsAdapter;
             public bool isPreview;
         }
 

@@ -91,6 +91,8 @@ namespace CrdtEcsBridge.Engine
                 realmInfo.baseURL = realmData.Ipfs.CatalystBaseUrl.Value;
             }
 
+            realmInfo.commsAdapter ??= string.Empty;
+
             return new IRuntime.GetRealmResponse
             {
                 realmInfo = realmInfo,
