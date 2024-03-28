@@ -98,26 +98,30 @@ class WebSocket {
       });
     }
 
-    close(code = undefined, reason = undefined) {
+    async close(code = undefined, reason = undefined) {
         if (this.#readyState === WebSocket.OPEN || this.#readyState === WebSocket.CONNECTING) {
-
             this.#readyState = WebSocket.CLOSING;
-
-            return UnityWebSocketApi.CloseAsync(this.webSocketId).then(() => {
-                if (typeof this.onclose === 'function') {
-                    this.readyState = WebSocket.CLOSED;
-                    this.onclose({ type: "close", code: 0, reason: "", wasClean: true });
-                }
-            }).catch(error => {
-                if (typeof this.onerror === 'function') {
-                    this.onerror(error);
-                }
-            });
+    
+            UnityWebSocketApi.CloseAsync(this.webSocketId)
+                .then(() => {
+                    console.log("WebSocket connection closed");
+                    this.#readyState = WebSocket.CLOSED;
+                    if (typeof this.onclose === 'function') {
+                        this.onclose({ type: "close"});
+                    }
+                })
+                .catch(error => {
+                    console.error("Error closing WebSocket connection:", error);
+                });
+    
+            return Promise.resolve();
         } else {
             const errorMessage = `WebSocket state is ${this.#readyState}, cannot close`;
             console.error(errorMessage);
+            return Promise.reject(new Error(errorMessage));
         }
     }
+        
 
     get readyState() {
         return this.#readyState
