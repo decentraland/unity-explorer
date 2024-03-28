@@ -10,6 +10,7 @@ using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
