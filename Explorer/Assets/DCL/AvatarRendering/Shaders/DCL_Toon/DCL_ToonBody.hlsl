@@ -251,27 +251,25 @@ half AdditionalLightRealtimeShadowUTS(int lightIndex, float3 positionWS, float4 
     #endif // UTS_USE_RAYTRACING_SHADOW
 
     #if defined(ADDITIONAL_LIGHT_CALCULATE_SHADOWS)
+        # if (SHADER_LIBRARY_VERSION_MAJOR >= 13 && UNITY_VERSION >= 202220 )
+            ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData(lightIndex);
+        # else
+            ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData();
+        # endif
 
+        #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+            lightIndex = _AdditionalShadowsIndices[lightIndex];
 
-    # if (SHADER_LIBRARY_VERSION_MAJOR >= 13 && UNITY_VERSION >= 202220 )
-        ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData(lightIndex);
-    # else
-        ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData();
-    # endif
+            // We have to branch here as otherwise we would sample buffer with lightIndex == -1.
+            // However this should be ok for platforms that store light in SSBO.
+            UNITY_BRANCH
+                if (lightIndex < 0)
+                    return 1.0;
 
-    #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-        lightIndex = _AdditionalShadowsIndices[lightIndex];
-
-        // We have to branch here as otherwise we would sample buffer with lightIndex == -1.
-        // However this should be ok for platforms that store light in SSBO.
-        UNITY_BRANCH
-            if (lightIndex < 0)
-                return 1.0;
-
-        float4 shadowCoord = mul(_AdditionalShadowsBuffer[lightIndex].worldToShadowMatrix, float4(positionWS, 1.0));
-    #else
-        float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
-    #endif
+            float4 shadowCoord = mul(_AdditionalShadowsBuffer[lightIndex].worldToShadowMatrix, float4(positionWS, 1.0));
+        #else
+            float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
+        #endif
 
         half4 shadowParams = GetAdditionalLightShadowParams(lightIndex);
         return SampleShadowmap(TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_AdditionalLightsShadowmapTexture), shadowCoord, shadowSamplingData, shadowParams, true);
@@ -307,10 +305,80 @@ UtsLight GetUrpMainUtsLight()
     return light;
 }
 
+ShadowSamplingData GetMainLightShadowSamplingData_UTS()
+{
+    ShadowSamplingData shadowSamplingData;
+
+    // shadowOffsets are used in SampleShadowmapFiltered for low quality soft shadows.
+    shadowSamplingData.shadowOffset0 = _MainLightShadowOffset0;
+    shadowSamplingData.shadowOffset1 = _MainLightShadowOffset1;
+
+    // shadowmapSize is used in SampleShadowmapFiltered otherwise
+    shadowSamplingData.shadowmapSize = _MainLightShadowmapSize;
+    shadowSamplingData.softShadowQuality = _MainLightShadowParams.y;
+
+    return shadowSamplingData;
+}
+
+half4 GetMainLightShadowParams_UTS()
+{
+    return _MainLightShadowParams;
+}
+
+half MainLightRealtimeShadow_UTS(float4 shadowCoord)
+{
+    #if !defined(MAIN_LIGHT_CALCULATE_SHADOWS)
+    return half(0.0);
+    #elif defined(_MAIN_LIGHT_SHADOWS_SCREEN) && !defined(_SURFACE_TYPE_TRANSPARENT)
+    return half(0.0);//return SampleScreenSpaceShadowmap(shadowCoord);
+    #else
+    ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData_UTS();
+    half4 shadowParams = GetMainLightShadowParams_UTS();
+    return SampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_LinearClampCompare), shadowCoord, shadowSamplingData, shadowParams, false);
+    #endif
+}
+
+half MixRealtimeAndBakedShadows_UTS(half realtimeShadow, half bakedShadow, half shadowFade)
+{
+    #if defined(LIGHTMAP_SHADOW_MIXING)
+    return min(lerp(realtimeShadow, 1, shadowFade), bakedShadow);
+    #else
+    return lerp(realtimeShadow, bakedShadow, shadowFade);
+    #endif
+}
+
+half GetMainLightShadowFade_UTS(float3 positionWS)
+{
+    float3 camToPixel = positionWS - _WorldSpaceCameraPos;
+    float distanceCamToPixel2 = dot(camToPixel, camToPixel);
+
+    float fade = saturate(distanceCamToPixel2 * float(_MainLightShadowParams.z) + float(_MainLightShadowParams.w));
+    return half(fade);
+}
+
+half MainLightShadow_UTS(float4 shadowCoord, float3 positionWS, half4 shadowMask, half4 occlusionProbeChannels)
+{
+    half realtimeShadow = MainLightRealtimeShadow_UTS(shadowCoord);
+    return realtimeShadow;
+
+    half bakedShadow = half(0.0);
+
+
+    #ifdef MAIN_LIGHT_CALCULATE_SHADOWS
+    half shadowFade = GetMainLightShadowFade(positionWS);
+    #else
+    half shadowFade = half(1.0);
+    #endif
+    shadowFade = half(0.0);
+
+    return MixRealtimeAndBakedShadows_UTS(realtimeShadow, bakedShadow, shadowFade);
+}
+
 UtsLight GetUrpMainUtsLight(float4 shadowCoord, float4 positionCS)
 {
     UtsLight light = GetUrpMainUtsLight();
-    light.shadowAttenuation = MainLightRealtimeShadowUTS(shadowCoord, positionCS);
+    light.shadowAttenuation = MainLightShadow_UTS( shadowCoord, positionCS.xyz, 0, 0);
+    //light.shadowAttenuation = MainLightRealtimeShadowUTS(shadowCoord, positionCS);
     return light;
 }
 
@@ -429,7 +497,8 @@ UtsLight GetMainUtsLightByID(int index,float3 posW, float4 shadowCoord, float4 p
     }
     if (index == MAINLIGHT_IS_MAINLIGHT)
     {
-        return GetUrpMainUtsLight(shadowCoord, positionCS);
+        UtsLight mainLight = GetUrpMainUtsLight(shadowCoord, positionCS);
+        return mainLight;
     }
     return GetAdditionalUtsLight(index, posW, positionCS);
 }
@@ -495,7 +564,7 @@ VertexOutput vert (VertexInput v)
     #endif 
     
     o.positionCS = positionCS;
-    #if defined(_MAIN_LIGHT_SHADOWS) && !defined(_RECEIVE_SHADOWS_OFF)
+    #if defined(_MAIN_LIGHT_SHADOWS)// && !defined(_RECEIVE_SHADOWS_OFF)
         #if SHADOWS_SCREEN
             o.shadowCoord = ComputeScreenPos(positionCS);
         #else
