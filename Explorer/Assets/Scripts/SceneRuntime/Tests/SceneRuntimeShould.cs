@@ -47,8 +47,8 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.ExecuteSceneJson();
                 sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
 
                 engineApi.Received().CrdtGetState();
@@ -73,8 +73,8 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.ExecuteSceneJson();
                 sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.ExecuteSceneJson();
 
                 var testOk = new TestUtilCheckOk();
                 sceneRuntime.engine.AddHostObject("test", testOk);
@@ -138,8 +138,8 @@ namespace SceneRuntime.Tests
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.ExecuteSceneJson();
                 sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.ExecuteSceneJson();
 
                 await sceneRuntime.StartScene();
 
