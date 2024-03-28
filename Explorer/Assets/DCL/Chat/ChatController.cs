@@ -74,6 +74,9 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
+            //Adding two elements to count as top and bottom padding
+            chatMessages.Add(new ChatMessage(true));
+            chatMessages.Add(new ChatMessage(true));
         }
 
         protected override void OnViewInstantiated()
@@ -181,12 +184,16 @@ namespace DCL.Chat
                 return null;
 
             ChatMessage itemData = chatMessages[index];
-
-            LoopListViewItem2 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
-
-            ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-            itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
-            itemScript.SetItemData(itemData);
+            LoopListViewItem2 item;
+            if(itemData.IsPaddingElement)
+                item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
+            else
+            {
+                item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
+                ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
+                itemScript.SetItemData(itemData);
+            }
 
             return item;
         }
@@ -256,9 +263,14 @@ namespace DCL.Chat
             }
 
             viewInstance.ResetChatEntriesFadeout();
+
+            //Removing padding element and reversing list due to infinite scroll view behaviour
+            chatMessages.Remove(chatMessages[^1]);
             chatMessages.Reverse();
             chatMessages.Add(chatMessage);
+            chatMessages.Add(new ChatMessage(true));
             chatMessages.Reverse();
+            
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
             viewInstance.LoopList.MovePanelToItemIndex(0, 0);
         }
