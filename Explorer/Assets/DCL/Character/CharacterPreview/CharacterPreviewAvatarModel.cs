@@ -10,6 +10,7 @@ namespace DCL.CharacterPreview
 
         public Color SkinColor;
         public Color HairColor;
+        public Color EyesColor;
 
         public List<URN> Wearables;
         public HashSet<string> ForceRenderCategories;

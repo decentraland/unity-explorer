@@ -19,59 +19,54 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveWearableThumbnailSystem>
     {
-        private StreamableLoadingResult<WearableAsset> mockedDefaultAB;
+        [SetUp]
+        public void Setup()
+        {
+            wearableCatalog = new WearableCatalog();
+            mockedDefaultAB = new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(null, null, null));
+
+            IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false);
+            wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
+            realmData = new RealmData(new TestIpfsRealm());
+            system = new ResolveWearableThumbnailSystem(world);
+        }
+
+        private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private WearableCatalog wearableCatalog;
         private RealmData realmData;
 
-        [SetUp]
-        public void Setup()
-        {
-            wearableCatalog = new WearableCatalog();
-            IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
-            wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
-            mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
-            realmData = new RealmData(new TestIpfsRealm());
-            system = new ResolveWearableThumbnailSystem(world);
-        }
-
-        private IWearable CreateMockWearable(URN urn, bool isUnisex, bool isDefaultWearable)
+        private IWearable CreateMockWearable(URN urn, bool isUnisex)
         {
             IWearable wearable = Substitute.For<IWearable>();
             wearable.GetUrn().Returns(urn);
             wearable.IsUnisex().Returns(isUnisex);
             wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
             wearable.GetThumbnail().Returns(new URLPath("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku"));
-
-            var assetBundleData
-                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
-
-            if (isDefaultWearable)
-                assetBundleData[BodyShape.MALE] = mockedDefaultAB;
-
-            wearable.WearableAssetResults.Returns(assetBundleData);
+            wearable.WearableDTO.Returns(new StreamableLoadingResult<WearableDTO>(new WearableDTO { id = urn }));
             return wearable;
         }
-
 
         [Test]
         public void ResolveWearableThumbnail()
         {
             //Arrange
-            IWearable mockedWearable = CreateMockWearable(unisexTestUrn, false, true);
+            IWearable mockedWearable = CreateMockWearable(unisexTestUrn, false);
             wearableCatalog.wearablesCache.Add(mockedWearable.GetUrn(), mockedWearable);
-            URLBuilder urlBuilder = new URLBuilder();
+            var urlBuilder = new URLBuilder();
             urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(mockedWearable.GetThumbnail());
 
-            Promise promise = Promise.Create(world,
+            var promise = Promise.Create(world,
                 new GetTextureIntention
                 {
-                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build())
+                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build()),
                 }
               , PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-        }
 
+            system.Update(0);
+
+            // TODO no assertion
+        }
     }
 }

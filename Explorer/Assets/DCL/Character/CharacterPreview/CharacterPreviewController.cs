@@ -57,6 +57,7 @@ namespace DCL.CharacterPreview
 
             avatarShape.SkinColor = avatarModel.SkinColor;
             avatarShape.HairColor = avatarModel.HairColor;
+            avatarShape.EyesColor = avatarModel.EyesColor;
             avatarShape.BodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
 
             avatarShape.WearablePromise.ForgetLoading(globalWorld);

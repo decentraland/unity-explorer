@@ -55,7 +55,7 @@ namespace DCL.ParcelsService
                                           var loadReport = AsyncLoadProcessReport.Create();
 
                                           UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                                                      teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
+                                                      teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None).ContinueWith(w => w.ToUniTask(CancellationToken.None)))
                                                  .Forget();
                                       }));
         }
