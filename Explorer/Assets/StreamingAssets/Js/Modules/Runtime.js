@@ -1,6 +1,7 @@
 module.exports.getRealm = async function(message) {
 
-    const { baseURL, realmName, networkId, commsAdapter, isPreview } = await UnityRuntime.GetRealm()    
+    const response = await UnityRuntime.GetRealm();
+    const { baseURL, realmName, networkId, commsAdapter, isPreview } = response.realmInfo;    
 
     if (commsAdapter === undefined) {
         commsAdapter = "";

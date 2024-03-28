@@ -48,14 +48,14 @@ namespace SceneRuntime.Apis.Modules.Runtime
         [UsedImplicitly]
         public object GetRealm()
         {
-            try { return api.GetRealmAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.GetRealmAsync(cancellationTokenSource.Token).ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [UsedImplicitly]
         public object GetWorldTime()
         {
-            try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).ToPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 

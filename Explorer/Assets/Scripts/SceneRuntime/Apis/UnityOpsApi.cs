@@ -34,7 +34,10 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Error(object message)
         {
-            ReportHub.LogError(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message + " stackTrace: " + engine.GetStackTrace());
+            ReportHub.LogError(
+                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo),
+                message + " stackTrace: " + engine.GetStackTrace()
+            );
         }
 
         [UsedImplicitly]

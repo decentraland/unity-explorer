@@ -12,7 +12,8 @@ module.exports.getBootstrapData = async function() {
 
 module.exports.getCurrentRealm = async function() {
 	showDeprecated();
-    const runtimeResponse = module.exports.getRealm().realmInfo;
+    const realm = await UnityRuntime.GetRealm();
+    const runtimeResponse = realm.realmInfo;
     return { currentRealm : {
             displayName : runtimeResponse.realmName,
             serverName : runtimeResponse.realmName,
