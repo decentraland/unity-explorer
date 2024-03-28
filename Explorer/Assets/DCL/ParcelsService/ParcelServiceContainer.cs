@@ -37,27 +37,44 @@ namespace DCL.ParcelsService
 
         private static void BuildDebugWidget(ITeleportController teleportController, MVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
         {
-            var binding = new ElementBinding<Vector2Int>(Vector2Int.zero);
+            var binding = new Vector2IntPlayerPrefsElementBinding("teleportCoordinates");
 
-            debugContainerBuilder.AddWidget("Teleport")
-                                 .AddControl(new DebugVector2IntFieldDef(binding), null)
-                                 .AddControl(
-                                      new DebugButtonDef("To Parcel", () =>
-                                      {
-                                          var loadReport = AsyncLoadProcessReport.Create();
+            UniTask ShowLoadingScreenAsync(AsyncLoadProcessReport loadReport) =>
+                mvcManager.ShowAsync(
+                    SceneLoadingScreenController.IssueCommand(
+                        new SceneLoadingScreenController.Params(
+                            loadReport,
+                            TimeSpan.FromSeconds(30)
+                        )
+                    )
+                );
 
-                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                                                      teleportController.TeleportToParcelAsync(binding.Value, loadReport, CancellationToken.None))
-                                                 .Forget();
-                                      }),
-                                      new DebugButtonDef("To Spawn Point", () =>
-                                      {
-                                          var loadReport = AsyncLoadProcessReport.Create();
+            debugContainerBuilder
+               .AddWidget("Teleport")!
+               .AddControl(new DebugVector2IntFieldDef(binding), null)
+               .AddControl(
+                    new DebugButtonDef("To Parcel", () =>
+                        {
+                            var loadReport = AsyncLoadProcessReport.Create()!;
 
-                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                                                      teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
-                                                 .Forget();
-                                      }));
+                            UniTask.WhenAll(
+                                        ShowLoadingScreenAsync(loadReport),
+                                        teleportController.TeleportToParcelAsync(binding.Value, loadReport, CancellationToken.None)
+                                    )
+                                   .Forget();
+                        }
+                    ),
+                    new DebugButtonDef("To Spawn Point", () =>
+                        {
+                            var loadReport = AsyncLoadProcessReport.Create()!;
+
+                            UniTask.WhenAll(
+                                        ShowLoadingScreenAsync(loadReport),
+                                        teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
+                                   .Forget();
+                        }
+                    )
+                );
         }
     }
 }
