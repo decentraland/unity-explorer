@@ -1,7 +1,4 @@
 namespace DCL.CharacterMotion.Components
 {
-    public class CameraBlockerComponent
-    {
-        
-    }
+    public struct CameraBlockerComponent { }
 }
