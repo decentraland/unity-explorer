@@ -18,6 +18,8 @@ function require(moduleName) {
         moduleName.substring(0, 1)   // __dirname
     );
 
+    Validates.registerBundle(module.exports, console.log)
+    
     return module.exports;
 }
 

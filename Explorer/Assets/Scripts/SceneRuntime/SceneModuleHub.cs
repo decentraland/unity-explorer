@@ -20,17 +20,10 @@ namespace SceneRuntime
             {
                 // Compile the module using the V8ScriptEngine
                 V8Script script = engine.Compile(sources[filename]);
-                engine.Evaluate(script!);
 
                 // Add the compiled script to a dictionary with the module name as the key
                 jsNodulesCompiledScripts.Add($"system/{filename}", script);
             }
-        }
-
-        public void ApplyStrictChecks(string validatesCode)
-        {
-            engine.Execute(validatesCode);
-            engine.Execute("Validates.registerBundle(module.exports, console.log)");
         }
 
         /// <summary>

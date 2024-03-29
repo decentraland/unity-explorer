@@ -56,7 +56,6 @@ namespace SceneRuntime
 
             // Load and Compile Js Modules
             moduleHub.LoadAndCompileJsModules(jsModules);
-            moduleHub.ApplyStrictChecks(initCode.validateCode!);
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')

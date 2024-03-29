@@ -83,6 +83,8 @@ function checkerStorage(log: (message: string) => void): ICheckerStorage {
     return cachedChecker
 }
 
+const alreadyRegistered: Set<string> = new Set();
+
 function table(log: (message: string) => void): INameToCheckerTable {
     const storage = checkerStorage(log)
     const map = new Map<string, Checker>()
@@ -94,6 +96,10 @@ function table(log: (message: string) => void): INameToCheckerTable {
 export function registerBundle(mutableBundle: any, log: (message: string) => void) {
     const nameTable = table(log)
     for (const k in mutableBundle) {
+        if (alreadyRegistered.has(k)) {
+            continue
+        }
+
         const checker = nameTable.checker(k)
         if (checker === undefined) {
             log(`Checker for ${k} not found`)
@@ -105,5 +111,6 @@ export function registerBundle(mutableBundle: any, log: (message: string) => voi
             checker.strictCheck(result)
             return result
         }
+        alreadyRegistered.add(k)
     }
 }
