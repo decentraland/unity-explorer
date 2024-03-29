@@ -22,21 +22,23 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private ChatController chatController;
 
+        private readonly Func<string, CancellationToken, UniTask> changeRealmAsync;
+
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            NametagsData nametagsData)
+            NametagsData nametagsData,
+            Func<string, CancellationToken, UniTask> changeRealmAsync)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
+            this.changeRealmAsync = changeRealmAsync;
         }
-
-        public void Dispose() { }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
@@ -49,7 +51,7 @@ namespace DCL.PluginSystem.Global
             EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
             ChatView chatView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>();
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _) =>
             {
                 chatController = new ChatController(
                     ChatController.CreateLazily(chatView, null),
@@ -62,11 +64,12 @@ namespace DCL.PluginSystem.Global
                     emojiSectionPrefab,
                     emojiButtonPrefab,
                     emojiSuggestionPrefab,
+                    changeRealmAsync,
                     builder.World
                 );
 
                 mvcManager.RegisterController(chatController);
-                mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
+                mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
             };
         }
 

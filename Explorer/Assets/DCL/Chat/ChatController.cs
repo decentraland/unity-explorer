@@ -1,11 +1,12 @@
 using Arch.Core;
-using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -14,18 +15,18 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public partial class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView>
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const int MAX_MESSAGE_LENGTH = 250;
 
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
 
+        private static readonly Regex CHANGE_REALM_REGEX = new (@"\/(world|goto) (\S+\.dcl\.eth)");
+
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private EmojiPanelController emojiPanelController;
-        private EmojiSuggestionPanel emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
@@ -34,7 +35,10 @@ namespace DCL.Chat
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
-        private World world;
+        private readonly Func<string, CancellationToken, UniTask> changeRealmAsync;
+        private EmojiPanelController emojiPanelController;
+        private EmojiSuggestionPanel emojiSuggestionPanelController;
+        private readonly World world;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
@@ -53,6 +57,7 @@ namespace DCL.Chat
             EmojiSectionView emojiSectionViewPrefab,
             EmojiButton emojiButtonPrefab,
             EmojiSuggestionView emojiSuggestionViewPrefab,
+            Func<string, CancellationToken, UniTask> changeRealmAsync,
             World world
         ) : base(viewFactory)
         {
@@ -65,6 +70,7 @@ namespace DCL.Chat
             this.emojiSectionViewPrefab = emojiSectionViewPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
+            this.changeRealmAsync = changeRealmAsync;
             this.world = world;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
@@ -96,7 +102,7 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode)
         {
-            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
             viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
@@ -112,7 +118,7 @@ namespace DCL.Chat
 
         private void AddEmojiToInput(string emoji)
         {
-            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
             int caretPosition = viewInstance.InputField.caretPosition;
@@ -142,12 +148,33 @@ namespace DCL.Chat
             if (string.IsNullOrWhiteSpace(currentMessage))
                 return;
 
-            chatMessagesBus.Send(currentMessage);
+            if (!TryExecuteChatCommand(in currentMessage))
+                chatMessagesBus.Send(currentMessage);
+
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
             emojiPanelController.SetPanelVisibility(false);
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
+        }
+
+        private readonly URLDomain worldDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world");
+
+        private bool TryExecuteChatCommand(in string message)
+        {
+            Match match = CHANGE_REALM_REGEX.Match(message);
+
+            if (match.Success)
+            {
+                string command = match.Groups[1].Value; // "world" or "goto"
+                URLPath path = URLPath.FromString(match.Groups[2].Value);
+                URLAddress address = worldDomain.Append(path);
+
+                changeRealmAsync(address.Value, CancellationToken.None).Forget();
+                return true;
+            }
+
+            return false;
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -168,7 +195,7 @@ namespace DCL.Chat
 
         private void CloseChat()
         {
-            //TODO: will add logic for the panel closing once it's defined
+            //TODO (David): will add logic for the panel closing once it's defined
         }
 
         private void OnInputDeselected(string inputText)
@@ -189,9 +216,9 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
-            const int MINIMAL_LENGHT = 2;
+            const int MINIMAL_LENGTH = 2;
 
-            if (inputText.Length > MINIMAL_LENGHT)
+            if (inputText.Length > MINIMAL_LENGTH)
                 currentMessage = inputText;
         }
 
@@ -227,7 +254,7 @@ namespace DCL.Chat
         {
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
             {
-                var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             }
 

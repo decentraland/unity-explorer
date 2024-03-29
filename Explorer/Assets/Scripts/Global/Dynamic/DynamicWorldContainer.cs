@@ -93,22 +93,13 @@ namespace Global.Dynamic
             return UniTask.CompletedTask;
         }
 
-        private static void BuildTeleportWidget(IRealmController realmController, MVCManager mvcManager,
+        private static void BuildTeleportWidget(Func<string, CancellationToken, UniTask> changeRealmAsync,
             IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
-            async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
-            {
-                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-                await UniTask.WhenAll(mvcManager.ShowAsync(
-                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                    realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct));
-            }
-
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
-                                      evt => { ChangeRealmAsync(evt.newValue, CancellationToken.None).Forget(); }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { ChangeRealmAsync(realm, CancellationToken.None).Forget(); });
+                                      evt => { changeRealmAsync(evt.newValue, CancellationToken.None).Forget(); }), string.Empty), null)
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { changeRealmAsync(realm, CancellationToken.None).Forget(); });
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -255,7 +246,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, ChangeRealmAsync),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -307,9 +298,19 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
-            BuildTeleportWidget(container.RealmController, container.MvcManager, debugBuilder, dynamicWorldParams.Realms);
+            BuildTeleportWidget(ChangeRealmAsync, debugBuilder, dynamicWorldParams.Realms);
 
             return (container, true);
+
+            async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
+            {
+                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+                await UniTask.WhenAll(
+                    container.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30))), ct),
+                    container.RealmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct)
+                );
+            }
         }
     }
 }
