@@ -9,19 +9,17 @@ module.exports = {
         libraryTarget: 'umd',
         umdNamedDefine: true
     },
-    resolve: {
-        extensions: ['.ts', '.js'],
-    },
     module: {
         rules: [
             {
                 test: /\.js$/,
+                use: 'ts-loader',
                 exclude: /node_modules/,
-                use: {
-                    loader: 'babel-loader'
-                }
             }
         ]
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
     },
     externals: {
         lodash: {

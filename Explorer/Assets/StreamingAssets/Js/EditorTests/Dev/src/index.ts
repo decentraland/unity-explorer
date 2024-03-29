@@ -1,5 +1,8 @@
 //to compile: npx webpack --config webpack.config.js
 
-import * as validates from './gen/apis.d-ti'
+import { typeSuites } from './gen/apis.d-ti'
+import { createCheckers } from "ts-interface-checker"
 
-export default validates;
+const checkerSuite = createCheckers(typeSuites())
+
+export default checkerSuite
