@@ -14,6 +14,7 @@ module.exports.crdtGetState = async function() {
     const data = new Uint8Array(UnityEngineApi.CrdtGetState())
     return {
         data: [data]
+        hasEntities: true //TODO replace with actual value
     };
 }
 
