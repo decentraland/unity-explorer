@@ -56,7 +56,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             /// <summary>
             ///     A list containing the contents of the deployed entities.
             /// </summary>
-            public List<ContentDefinition> contentMapping;
+            public List<ContentDefinition> content;
 
             /// <summary>
             ///     JSON serialization of the entity.metadata field.

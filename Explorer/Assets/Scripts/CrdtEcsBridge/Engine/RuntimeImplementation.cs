@@ -113,7 +113,7 @@ namespace CrdtEcsBridge.Engine
             new ()
             {
                 baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
-                contentMapping = sceneData.SceneEntityDefinition.content,
+                content = sceneData.SceneEntityDefinition.content,
                 urn = sceneData.SceneEntityDefinition.id,
                 metadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
             };
