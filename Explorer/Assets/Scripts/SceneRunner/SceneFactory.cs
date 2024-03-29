@@ -24,6 +24,7 @@ using DCL.Profiles;
 using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using Microsoft.ClearScript;
@@ -52,12 +53,13 @@ namespace SceneRunner
         private readonly IEthereumApi ethereumApi;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IWebRequestController webRequestController;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IRealmData realmData;
-        private IGlobalWorldActions globalWorldActions;
+        private readonly IRealmData? realmData;
+        private IGlobalWorldActions globalWorldActions = null!;
         private IMessagePipesHub messagePipesHub;
         private IRoomHub roomHub;
 
@@ -73,7 +75,9 @@ namespace SceneRunner
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
-            IRealmData realmData)
+            IWebRequestController webRequestController,
+            IRealmData? realmData
+        )
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -86,6 +90,7 @@ namespace SceneRunner
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
+            this.webRequestController = webRequestController;
             this.realmData = realmData;
         }
 
@@ -223,6 +228,7 @@ namespace SceneRunner
 
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
+            sceneRuntime.RegisterUserActions(restrictedActionsAPI);
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
@@ -230,6 +236,7 @@ namespace SceneRunner
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             sceneRuntime.RegisterSceneApi(sceneApiImplementation);
 
+            sceneRuntime.RegisterSignedFetch(webRequestController);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 

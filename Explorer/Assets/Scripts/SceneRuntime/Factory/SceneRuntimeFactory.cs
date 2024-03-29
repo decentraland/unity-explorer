@@ -101,6 +101,7 @@ namespace SceneRuntime.Factory
             await AddModuleAsync("UserIdentity.js", moduleDictionary, ct);
             await AddModuleAsync("CommunicationsController.js", moduleDictionary, ct);
             await AddModuleAsync("EnvironmentApi.js", moduleDictionary, ct);
+            await AddModuleAsync("UserActionModule.js", moduleDictionary, ct);
 
             return moduleDictionary;
         }
