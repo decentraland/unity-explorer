@@ -105,7 +105,7 @@ namespace DCL.Chat
             cts.Token.ThrowIfCancellationRequested();
             ChatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(CHAT_ENTRIES_WAIT_BEFORE_FADE_MS, cancellationToken: ct);
-            await ChatEntriesCanvasGroup.DOFade(0, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
+            await ChatEntriesCanvasGroup.DOFade(0.4f, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
         }
     }
 }
