@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.Runtime
 {
     /// <summary>
     ///     The contracts correspond directly to the JS-SDK-Toolchain and its transport API.

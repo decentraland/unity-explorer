@@ -1,10 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Ipfs;
+﻿using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.SceneApi
 {
     public interface ISceneApi : IDisposable
     {

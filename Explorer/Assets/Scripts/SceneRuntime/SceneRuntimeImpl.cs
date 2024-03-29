@@ -4,15 +4,22 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
-using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.Ethereums;
+using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using SceneRuntime.Apis.Modules.Runtime;
+using SceneRuntime.Apis.Modules.SceneApi;
+using SceneRuntime.Apis.Modules.SignedFetch;
+using SceneRuntime.Apis.Modules.UserActions;
+using SceneRuntime.Apis.Modules.UserIdentityApi;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine.Assertions;
 
 namespace SceneRuntime
@@ -36,10 +43,12 @@ namespace SceneRuntime
         private EngineApiWrapper? engineApi;
         private EthereumApiWrapper? ethereumApi;
         private RuntimeWrapper? runtimeWrapper;
-        private RestrictedActionsAPIWrapper restrictedActionsApi;
+        private RestrictedActionsAPIWrapper? restrictedActionsApi;
+        private UserActionsWrap? userActionsApi;
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
         private WebSocketApiWrapper? webSocketApiWrapper;
+        private SignedFetchWrap? signedFetchWrap;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -102,6 +111,8 @@ namespace SceneRuntime
             restrictedActionsApi?.Dispose();
             sceneApiWrapper?.Dispose();
             webSocketApiWrapper?.Dispose();
+            userActionsApi?.Dispose();
+            signedFetchWrap?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -119,6 +130,11 @@ namespace SceneRuntime
             engine.AddHostObject("UnitySceneApi", sceneApiWrapper = new SceneApiWrapper(api));
         }
 
+        public void RegisterSignedFetch(IWebRequestController webRequestController)
+        {
+            engine.AddHostObject("UnitySignedFetch", signedFetchWrap = new SignedFetchWrap(webRequestController));
+        }
+
         public void RegisterEthereumApi(IEthereumApi ethereumApi)
         {
             engine.AddHostObject("UnityEthereumApi", this.ethereumApi = new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler));
@@ -127,6 +143,11 @@ namespace SceneRuntime
         public void RegisterRestrictedActionsApi(IRestrictedActionsAPI api)
         {
             engine.AddHostObject("UnityRestrictedActionsApi", restrictedActionsApi = new RestrictedActionsAPIWrapper(api));
+        }
+
+        public void RegisterUserActions(IRestrictedActionsAPI api)
+        {
+            engine.AddHostObject("UnityUserActions", userActionsApi = new UserActionsWrap(api));
         }
 
         public void RegisterUserIdentityApi(IProfileRepository profileRepository, IWeb3IdentityCache identityCache)
