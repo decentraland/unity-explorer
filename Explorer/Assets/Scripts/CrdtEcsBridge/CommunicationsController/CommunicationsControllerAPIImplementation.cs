@@ -5,7 +5,7 @@ using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using SceneRunner.Scene;
 using SceneRuntime;
-using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
 using System.Collections.Generic;
 using System.Text;

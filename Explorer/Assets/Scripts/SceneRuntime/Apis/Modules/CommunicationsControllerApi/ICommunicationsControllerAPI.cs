@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
     public interface ICommunicationsControllerAPI : IDisposable
     {
