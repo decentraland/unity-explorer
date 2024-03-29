@@ -9,6 +9,9 @@ module.exports = {
         libraryTarget: 'umd',
         umdNamedDefine: true
     },
+    resolve: {
+        extensions: ['.ts', '.js'],
+    },
     module: {
         rules: [
             {
