@@ -20,14 +20,6 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Apis.Modules.SignedFetch;
 using SceneRuntime.Apis.Modules.UserActions;
 using SceneRuntime.Apis.Modules.UserIdentityApi;
-using SceneRuntime.Apis.Modules.EngineApi;
-using SceneRuntime.Apis.Modules.Ethereums;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
-using SceneRuntime.Apis.Modules.Runtime;
-using SceneRuntime.Apis.Modules.SceneApi;
-using SceneRuntime.Apis.Modules.SignedFetch;
-using SceneRuntime.Apis.Modules.UserActions;
-using SceneRuntime.Apis.Modules.UserIdentityApi;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -47,19 +39,12 @@ namespace SceneRuntime
         private readonly ScriptObject sceneCode;
         private readonly ScriptObject updateFunc;
         private readonly ScriptObject startFunc;
+        private readonly WrapBunch wrapBunch;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
 
         private EngineApiWrapper? engineApi;
-        private EthereumApiWrapper? ethereumApi;
-        private RuntimeWrapper? runtimeWrapper;
-        private RestrictedActionsAPIWrapper? restrictedActionsApi;
-        private UserActionsWrap? userActionsApi;
-        private UserIdentityApiWrapper? userIdentity;
-        private SceneApiWrapper? sceneApiWrapper;
-        private SignedFetchWrap? signedFetchWrap;
-        private PlayersWrap? playersWrap;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -73,6 +58,7 @@ namespace SceneRuntime
             resetableSource = new JSTaskResolverResetable();
             moduleLoader = new SceneModuleLoader();
             engine = V8EngineFactory.Create();
+            wrapBunch = new WrapBunch(engine);
 
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode);
@@ -115,47 +101,41 @@ namespace SceneRuntime
         public void Dispose()
         {
             engineApi?.Dispose();
-            ethereumApi?.Dispose();
-            userIdentity?.Dispose();
             engine.Dispose();
-            runtimeWrapper?.Dispose();
-            restrictedActionsApi?.Dispose();
-            sceneApiWrapper?.Dispose();
-            userActionsApi?.Dispose();
-            signedFetchWrap?.Dispose();
-            playersWrap?.Dispose();
+
+            wrapBunch.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
         {
-            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
+            wrapBunch.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
         public void RegisterPlayers(IRoomHub roomHub, IProfileRepository profileRepository)
         {
-            engine.AddHostObject("UnityPlayers", playersWrap = new PlayersWrap(roomHub, profileRepository));
+            wrapBunch.AddHostObject("UnityPlayers", new PlayersWrap(roomHub, profileRepository));
         }
 
         public void RegisterRuntime(IRuntime api)
         {
-            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, sceneExceptionsHandler));
+            wrapBunch.AddHostObject("UnityRuntime", new RuntimeWrapper(api, sceneExceptionsHandler));
         }
 
         public void RegisterSceneApi(ISceneApi api)
         {
-            engine.AddHostObject("UnitySceneApi", sceneApiWrapper = new SceneApiWrapper(api));
+            wrapBunch.AddHostObject("UnitySceneApi", new SceneApiWrapper(api));
         }
 
         public void RegisterSignedFetch(IWebRequestController webRequestController)
         {
-            engine.AddHostObject("UnitySignedFetch", signedFetchWrap = new SignedFetchWrap(webRequestController));
+            wrapBunch.AddHostObject("UnitySignedFetch", new SignedFetchWrap(webRequestController));
         }
 
         public void RegisterEthereumApi(IEthereumApi ethereumApi, IWeb3IdentityCache web3IdentityCache)
         {
-            engine.AddHostObject(
+            wrapBunch.AddHostObject(
                 "UnityEthereumApi",
-                this.ethereumApi = new EthereumApiWrapper(
+                new EthereumApiWrapper(
                     ethereumApi,
                     sceneExceptionsHandler,
                     web3IdentityCache,
@@ -166,17 +146,17 @@ namespace SceneRuntime
 
         public void RegisterRestrictedActionsApi(IRestrictedActionsAPI api)
         {
-            engine.AddHostObject("UnityRestrictedActionsApi", restrictedActionsApi = new RestrictedActionsAPIWrapper(api));
+            wrapBunch.AddHostObject("UnityRestrictedActionsApi", new RestrictedActionsAPIWrapper(api));
         }
 
         public void RegisterUserActions(IRestrictedActionsAPI api)
         {
-            engine.AddHostObject("UnityUserActions", userActionsApi = new UserActionsWrap(api));
+            wrapBunch.AddHostObject("UnityUserActions", new UserActionsWrap(api));
         }
 
         public void RegisterUserIdentityApi(IProfileRepository profileRepository, IWeb3IdentityCache identityCache)
         {
-            engine.AddHostObject("UnityUserIdentityApi", userIdentity = new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
+            wrapBunch.AddHostObject("UnityUserIdentityApi", new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()
