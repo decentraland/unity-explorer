@@ -40,7 +40,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            (string initSourceCode, Dictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(ct));
+            (string initSourceCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -82,26 +82,32 @@ namespace SceneRuntime.Factory
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
 
-        private async UniTask<Dictionary<string, string>> GetJsModuleDictionaryAsync(CancellationToken ct)
+        private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
         {
             var moduleDictionary = new Dictionary<string, string>();
-
-            await AddModuleAsync("EngineApi.js", moduleDictionary, ct);
-            await AddModuleAsync("EthereumController.js", moduleDictionary, ct);
-            await AddModuleAsync("Players.js", moduleDictionary, ct);
-            await AddModuleAsync("PortableExperiences.js", moduleDictionary, ct);
-            await AddModuleAsync("RestrictedActions.js", moduleDictionary, ct);
-            await AddModuleAsync("Runtime.js", moduleDictionary, ct);
-            await AddModuleAsync("Scene.js", moduleDictionary, ct);
-            await AddModuleAsync("SignedFetch.js", moduleDictionary, ct);
-            await AddModuleAsync("Testing.js", moduleDictionary, ct);
-            await AddModuleAsync("UserIdentity.js", moduleDictionary, ct);
-            await AddModuleAsync("EnvironmentApi.js", moduleDictionary, ct);
-            await AddModuleAsync("UserActionModule.js", moduleDictionary, ct);
-            await AddModuleAsync("CommsApi.js", moduleDictionary, ct);
-
+            foreach (string name in names) await AddModuleAsync(name, moduleDictionary, ct);
             return moduleDictionary;
         }
+
+        private UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(CancellationToken ct) =>
+            GetJsModuleDictionaryAsync(new[]
+                {
+                    "EngineApi.js",
+                    "EthereumController.js",
+                    "Players.js",
+                    "PortableExperiences.js",
+                    "RestrictedActions.js",
+                    "Runtime.js",
+                    "Scene.js",
+                    "SignedFetch.js",
+                    "Testing.js",
+                    "UserIdentity.js",
+                    "EnvironmentApi.js",
+                    "UserActionModule.js",
+                    "CommsApi.js",
+                },
+                ct
+            );
 
         private async UniTask<string> LoadJavaScriptSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
