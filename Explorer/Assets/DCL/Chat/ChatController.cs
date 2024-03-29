@@ -1,5 +1,4 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
@@ -22,8 +21,6 @@ namespace DCL.Chat
 
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
 
-        private static readonly Regex CHANGE_REALM_REGEX = new (@"\/(world|goto) (\S+\.dcl\.eth)");
-
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -35,10 +32,10 @@ namespace DCL.Chat
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
-        private readonly Func<string, CancellationToken, UniTask> changeRealmAsync;
         private EmojiPanelController emojiPanelController;
         private EmojiSuggestionPanel emojiSuggestionPanelController;
         private readonly World world;
+        private readonly ChatCommandsHandler commandsHandler;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
@@ -70,8 +67,9 @@ namespace DCL.Chat
             this.emojiSectionViewPrefab = emojiSectionViewPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
-            this.changeRealmAsync = changeRealmAsync;
             this.world = world;
+
+            commandsHandler = new ChatCommandsHandler(changeRealmAsync);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
         }
@@ -148,7 +146,7 @@ namespace DCL.Chat
             if (string.IsNullOrWhiteSpace(currentMessage))
                 return;
 
-            if (!TryExecuteChatCommand(in currentMessage))
+            if (!commandsHandler.TryExecuteCommand(in currentMessage)) // we don't send command messages over network
                 chatMessagesBus.Send(currentMessage);
 
             currentMessage = string.Empty;
@@ -158,24 +156,6 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(false);
         }
 
-        private readonly URLDomain worldDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world");
-
-        private bool TryExecuteChatCommand(in string message)
-        {
-            Match match = CHANGE_REALM_REGEX.Match(message);
-
-            if (match.Success)
-            {
-                string command = match.Groups[1].Value; // "world" or "goto"
-                URLPath path = URLPath.FromString(match.Groups[2].Value);
-                URLAddress address = worldDomain.Append(path);
-
-                changeRealmAsync(address.Value, CancellationToken.None).Forget();
-                return true;
-            }
-
-            return false;
-        }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {

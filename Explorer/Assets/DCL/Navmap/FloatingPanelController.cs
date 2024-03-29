@@ -24,14 +24,14 @@ namespace DCL.Navmap
         private readonly IMVCManager mvcManager;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
+        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
+        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
+        private readonly ImageController placeImageController;
+
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
-
-        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
-        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
-        private readonly ImageController placeImageController;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             ITeleportController teleportController, IWebRequestController webRequestController,
@@ -53,6 +53,13 @@ namespace DCL.Navmap
 
             ResetCategories();
             InitButtons();
+        }
+
+        public void Dispose()
+        {
+            likeButtonController.OnButtonClicked -= OnLike;
+            dislikeButtonController.OnButtonClicked -= OnDislike;
+            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
 
         private void InitButtons()
@@ -111,34 +118,38 @@ namespace DCL.Navmap
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
-            catch (Exception ex) { SetEmptyParcelInfo(parcel); }
+            catch (Exception) { SetEmptyParcelInfo(parcel); }
         }
 
         private void TeleportToParcel(Vector2Int parcel)
         {
+            ShowLoadingAndTeleportAsync(cts.Token).Forget();
+            return;
+
             async UniTaskVoid ShowLoadingAndTeleportAsync(CancellationToken ct)
             {
                 var timeout = TimeSpan.FromSeconds(30);
                 var loadReport = AsyncLoadProcessReport.Create();
 
+                await UniTask.WhenAll(
+                    mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)), ct).AttachExternalCancellation(ct),
+                    TeleportAsync()
+                );
+
+                return;
+
                 async UniTask TeleportAsync()
                 {
-                    var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+                    WaitForSceneReadiness waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                     await waitForSceneReadiness.ToUniTask(ct);
                 }
-
-                await UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
-                                                .AttachExternalCancellation(ct),
-                    TeleportAsync());
             }
-
-            ShowLoadingAndTeleportAsync(cts.Token).Forget();
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
         {
             view.placeName.text = "Empty parcel";
-            view.placeCreator.text = $"created by <b>Unknown</b>";
+            view.placeCreator.text = "created by <b>Unknown</b>";
             view.placeDescription.text = "This place doesn't have a description set";
             view.location.text = parcel.ToString();
             view.visits.text = "-";
@@ -216,13 +227,6 @@ namespace DCL.Navmap
         {
             view.rectTransform.localScale = Vector3.one;
             view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(() => view.gameObject.SetActive(false));
-        }
-
-        public void Dispose()
-        {
-            likeButtonController.OnButtonClicked -= OnLike;
-            dislikeButtonController.OnButtonClicked -= OnDislike;
-            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
     }
 }
