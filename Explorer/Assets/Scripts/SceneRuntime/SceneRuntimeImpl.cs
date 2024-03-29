@@ -1,28 +1,14 @@
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
-using DCL.Web3;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
-using SceneRuntime.Apis.Modules.Ethereums;
-using SceneRuntime.Apis.Modules.Players;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
-using SceneRuntime.Apis.Modules.Runtime;
-using SceneRuntime.Apis.Modules.SceneApi;
-using SceneRuntime.Apis.Modules.SignedFetch;
-using SceneRuntime.Apis.Modules.UserActions;
-using SceneRuntime.Apis.Modules.UserIdentityApi;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine.Assertions;
 
 namespace SceneRuntime
@@ -31,7 +17,6 @@ namespace SceneRuntime
     public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         internal readonly V8ScriptEngine engine;
-        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
         private readonly SceneModuleLoader moduleLoader;
@@ -46,13 +31,11 @@ namespace SceneRuntime
         private EngineApiWrapper? engineApi;
 
         public SceneRuntimeImpl(
-            ISceneExceptionsHandler sceneExceptionsHandler,
             string sourceCode, string jsInitCode,
             Dictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
         {
-            this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.instancePoolsProvider = instancePoolsProvider;
             resetableSource = new JSTaskResolverResetable();
             moduleLoader = new SceneModuleLoader();
@@ -104,49 +87,14 @@ namespace SceneRuntime
             wrapBunch.Dispose();
         }
 
-        public void RegisterEngineApi(IEngineApi api)
+        public void Register<T>(string itemName, T target) where T : IDisposable
         {
-            wrapBunch.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
+            wrapBunch.AddHostObject(itemName, target);
         }
 
-        public void RegisterPlayers(IRoomHub roomHub, IProfileRepository profileRepository)
+        public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            wrapBunch.AddHostObject("UnityPlayers", new PlayersWrap(roomHub, profileRepository));
-        }
-
-        public void RegisterRuntime(IRuntime api)
-        {
-            wrapBunch.AddHostObject("UnityRuntime", new RuntimeWrapper(api, sceneExceptionsHandler));
-        }
-
-        public void RegisterSceneApi(ISceneApi api)
-        {
-            wrapBunch.AddHostObject("UnitySceneApi", new SceneApiWrapper(api));
-        }
-
-        public void RegisterSignedFetch(IWebRequestController webRequestController)
-        {
-            wrapBunch.AddHostObject("UnitySignedFetch", new SignedFetchWrap(webRequestController));
-        }
-
-        public void RegisterEthereumApi(IEthereumApi ethereumApi, IWeb3IdentityCache web3IdentityCache)
-        {
-            wrapBunch.AddHostObject("UnityEthereumApi", new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler, web3IdentityCache));
-        }
-
-        public void RegisterRestrictedActionsApi(IRestrictedActionsAPI api)
-        {
-            wrapBunch.AddHostObject("UnityRestrictedActionsApi", new RestrictedActionsAPIWrapper(api));
-        }
-
-        public void RegisterUserActions(IRestrictedActionsAPI api)
-        {
-            wrapBunch.AddHostObject("UnityUserActions", new UserActionsWrap(api));
-        }
-
-        public void RegisterUserIdentityApi(IProfileRepository profileRepository, IWeb3IdentityCache identityCache)
-        {
-            wrapBunch.AddHostObject("UnityUserIdentityApi", new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
+            Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()

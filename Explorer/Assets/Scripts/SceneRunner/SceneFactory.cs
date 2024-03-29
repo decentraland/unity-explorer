@@ -20,6 +20,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Time;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -153,15 +154,15 @@ namespace SceneRunner
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
-            var instancePoolsProvider = InstancePoolsProvider.Create();
-            var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
+            var instancePoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
+            var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var outgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, crdtProtocol, crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(outgoingCRDTMessagesProvider);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
             var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
-            var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
+            var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var worldTimeProvider = new WorldTimeProvider();
 
             /* Pass dependencies here if they are needed by the systems */
@@ -184,7 +185,7 @@ namespace SceneRunner
 
             SceneRuntimeImpl sceneRuntime;
 
-            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, exceptionsHandler, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (ScriptEngineException e)
             {
                 // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
@@ -218,22 +219,11 @@ namespace SceneRunner
                 exceptionsHandler,
                 ecsMutexSync);
 
-            sceneRuntime.RegisterEngineApi(engineAPI);
-
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
-            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
-            sceneRuntime.RegisterUserActions(restrictedActionsAPI);
-
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
-            sceneRuntime.RegisterRuntime(runtimeImplementation);
-
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
-            sceneRuntime.RegisterSceneApi(sceneApiImplementation);
-
-            sceneRuntime.RegisterSignedFetch(webRequestController);
-            sceneRuntime.RegisterEthereumApi(ethereumApi, identityCache);
-            sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
-            sceneRuntime.RegisterPlayers(roomHub, profileRepository);
+            sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
+            sceneRuntime.RegisterAll(exceptionsHandler, roomHub, profileRepository, sceneApiImplementation, webRequestController, restrictedActionsAPI, runtimeImplementation, ethereumApi, identityCache);
 
             return new SceneFacade(
                 sceneRuntime,
