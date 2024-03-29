@@ -67,7 +67,7 @@ namespace DCL.Chat
 
             contentSizeFitter.SetLayoutVertical();
             backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + 40, 58);
+            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + 56);
 
             backgroundRectTransform.sizeDelta = backgroundSize;
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, backgroundSize.y);
