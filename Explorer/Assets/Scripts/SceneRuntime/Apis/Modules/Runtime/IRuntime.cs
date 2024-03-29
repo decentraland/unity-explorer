@@ -46,6 +46,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             public bool isPreview;
         }
 
+        [Serializable]
         public struct CurrentSceneEntityResponse
         {
             /// <summary>
