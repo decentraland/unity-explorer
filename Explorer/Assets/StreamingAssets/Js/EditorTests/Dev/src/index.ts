@@ -10,7 +10,7 @@ const checkerSuite = createCheckers(typeSuites())
 
 let cachedChecker: ICheckerStorage | undefined = undefined
 
-export function checker(log: (message: string) => void) {
+export function checkerStorage(log: (message: string) => void) {
     if (cachedChecker === undefined) {
         cachedChecker = logCheckerStorage(
             wrapCheckerStorage(checkerSuite),
