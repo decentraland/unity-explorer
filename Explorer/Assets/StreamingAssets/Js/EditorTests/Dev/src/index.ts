@@ -99,6 +99,16 @@ function reportString(checker: Checker, methodName: string, result: any): string
     return errorMessage
 }
 
+function messageFromError(error: unknown): string {
+    if (typeof error === "string") {
+        return error
+    }
+    if (error instanceof Error) {
+        return error.message
+    }
+    return JSON.stringify(error)
+}
+
 //To be called from jsSide
 export function registerBundle(
     mutableBundle: any,
@@ -122,7 +132,13 @@ export function registerBundle(
             if (checker.strictTest(result) === false) {
                 const report = reportString(checker, k, result)
                 logError(report)
-                checker.strictCheck(result)
+                try {
+                    checker.strictCheck(result)
+                }
+                catch (e: unknown) {
+                    throw new Error(`Cannot get result from ${k}: ${messageFromError(e)}`)
+                }
+
             }
             return result
         }
