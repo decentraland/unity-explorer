@@ -3,25 +3,23 @@ const path = require('path');
 module.exports = {
     mode: 'production',
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'joi-validates.min.js',
+        path: path.join(__dirname, '../../Modules'),
+        filename: 'ValidatesMin.js',
         library: 'Validates',
         libraryTarget: 'umd',
         umdNamedDefine: true
     },
-    resolve: {
-        extensions: ['.ts', '.js'],
-    },
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /\.tsx?$/,
+                use: 'ts-loader',
                 exclude: /node_modules/,
-                use: {
-                    loader: 'babel-loader'
-                }
-            }
-        ]
+            },
+        ],
+    },
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js'],
     },
     externals: {
         lodash: {

@@ -8,7 +8,7 @@ namespace SceneRuntime
     {
         private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new ();
 
-        public void LoadAndCompileJsModules(V8ScriptEngine engine, Dictionary<string, string> sources)
+        public void LoadAndCompileJsModules(V8ScriptEngine engine, IReadOnlyDictionary<string, string> sources)
         {
             foreach (string filename in sources.Keys)
             {

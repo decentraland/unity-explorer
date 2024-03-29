@@ -32,7 +32,7 @@ namespace SceneRuntime
 
         public SceneRuntimeImpl(
             string sourceCode, string jsInitCode,
-            Dictionary<string, string> jsModules,
+            IReadOnlyDictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
         {

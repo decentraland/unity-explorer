@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "ESNext",
     "strict": true,
     "declarationDir": "dist",
     "outDir": "dist",
@@ -18,7 +16,12 @@
     "emitDecoratorMetadata": false,
     "downlevelIteration": true,
     "noUnusedLocals": true,
-    "lib": ["ES2020"],
-    "types": []
+    "lib": [
+      "ES2020"
+    ],
+    "types": [],
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es5"
   }
 }
