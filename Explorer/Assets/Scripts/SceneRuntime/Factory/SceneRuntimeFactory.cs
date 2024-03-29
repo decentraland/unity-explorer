@@ -55,7 +55,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            (string initSourceCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
+            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -64,7 +64,7 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
+            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
         /// <summary>
@@ -89,17 +89,19 @@ namespace SceneRuntime.Factory
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
         }
 
-        private async UniTask<string> GetJsInitSourceCode(CancellationToken ct)
+        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCode(CancellationToken ct)
         {
-            // await LoadJavaScriptSourceCodeAsync(
-            //     URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
-            //     ct
-            // );
+            string validateCode = await LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
+                ct
+            );
 
-            return await LoadJavaScriptSourceCodeAsync(
+            string initCode = await LoadJavaScriptSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
                 ct
             );
+
+            return (validateCode, initCode);
         }
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>

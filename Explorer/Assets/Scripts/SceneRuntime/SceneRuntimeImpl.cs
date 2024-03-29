@@ -31,7 +31,7 @@ namespace SceneRuntime
         private EngineApiWrapper? engineApi;
 
         public SceneRuntimeImpl(
-            string sourceCode, string jsInitCode,
+            string sourceCode, (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
@@ -48,7 +48,8 @@ namespace SceneRuntime
             // Initialize init API
             unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
-            engine.Execute(jsInitCode);
+            engine.Execute(initCode.validateCode!);
+            engine.Execute(initCode.jsInitCode!);
 
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);

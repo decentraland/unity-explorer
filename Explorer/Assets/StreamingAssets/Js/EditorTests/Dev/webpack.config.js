@@ -7,6 +7,7 @@ module.exports = {
         filename: 'ValidatesMin.js',
         library: 'Validates',
         libraryTarget: 'umd',
+        globalObject: 'this',
         umdNamedDefine: true
     },
     module: {
