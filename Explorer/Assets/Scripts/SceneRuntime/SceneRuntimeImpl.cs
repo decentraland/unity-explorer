@@ -36,7 +36,6 @@ namespace SceneRuntime
 
         private readonly SceneModuleLoader moduleLoader;
         private readonly UnityOpsApi unityOpsApi; // TODO: This is only needed for the LifeCycle
-        private readonly ScriptObject sceneCode;
         private readonly ScriptObject updateFunc;
         private readonly ScriptObject startFunc;
         private readonly WrapBunch wrapBunch;
