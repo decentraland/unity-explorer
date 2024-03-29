@@ -1,7 +1,5 @@
 //to compile: npx webpack --config webpack.config.js
 
-import joi from 'joi';
+import * as validates from './gen/apis.d-ti'
 
-export function Joi() {
-    return joi;
-}
+export default validates;
