@@ -92,9 +92,18 @@ namespace SceneRuntime.Factory
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
         }
 
-        private UniTask<string> GetJsInitSourceCode(CancellationToken ct) =>
-            LoadJavaScriptSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"), ct);
+        private async UniTask<string> GetJsInitSourceCode(CancellationToken ct)
+        {
+            await LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
+                ct
+            );
+
+            return await LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
+                ct
+            );
+        }
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCodeAsync(

@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
     mode: 'production',
     output: {
-        path: path.join(__dirname, '../../Modules'),
+        path: path.join(__dirname, '../..'),
         filename: 'ValidatesMin.js',
         library: 'Validates',
         libraryTarget: 'umd',
