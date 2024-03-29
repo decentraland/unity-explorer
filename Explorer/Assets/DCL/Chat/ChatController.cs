@@ -10,12 +10,10 @@ using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -226,6 +224,13 @@ namespace DCL.Chat
                 }
                 itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender);
                 itemScript.SetItemData(itemData);
+
+                //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
+                if (itemData.HasToAnimate)
+                {
+                    itemScript.AnimateChatEntry();
+                    chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
+                }
             }
 
             return item;
