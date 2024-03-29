@@ -93,7 +93,11 @@ function table(log: (message: string) => void): INameToCheckerTable {
 }
 
 //To be called from jsSide
-export function registerBundle(mutableBundle: any, log: (message: string) => void) {
+export function registerBundle(
+    mutableBundle: any,
+    log: (message: string) => void,
+    logError: (message: string) => void
+) {
     const nameTable = table(log)
     for (const k in mutableBundle) {
         if (alreadyRegistered.has(k)) {
@@ -108,7 +112,10 @@ export function registerBundle(mutableBundle: any, log: (message: string) => voi
         const method = mutableBundle[k] as (message: any) => Promise<any>
         mutableBundle[k] = async (message: any) => {
             const result = await method(message)
-            checker.strictCheck(result)
+            if (checker.strictTest(result) === false) {
+                logError(`Value from ${k} is not valid: ${result}`)
+                checker.strictCheck(result)
+            }
             return result
         }
         alreadyRegistered.add(k)
