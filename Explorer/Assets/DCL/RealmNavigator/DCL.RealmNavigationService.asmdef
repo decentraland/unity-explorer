@@ -1,0 +1,18 @@
+{
+    "name": "DCL.RealmNavigationService",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:fc4fd35fb877e904d8cedee73b2256f6"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

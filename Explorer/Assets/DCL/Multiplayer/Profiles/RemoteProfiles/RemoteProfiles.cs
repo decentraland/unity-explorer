@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
             if (profile is null)
             {
-                //TODO for some reason log error is not working
+                //TODO (Nick): for some reason log error is not working
                 ReportHub.LogError(ReportCategory.PROFILE, $"Profile not found {remoteAnnouncement}");
                 return;
             }
