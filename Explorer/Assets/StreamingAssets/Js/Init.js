@@ -54,6 +54,5 @@ globalThis.WebAssembly.Instance = function () {
 globalThis.WebAssembly.Module = function () {
     throw new Error('Wasm is not allowed in scene runtimes')
 }
-globalThis.CheckerStorage = Validates.checkerStorage(console.log)
 
 console.log("UnityOpsApi initialized")

@@ -19,8 +19,6 @@ namespace SceneRuntime
         internal readonly V8ScriptEngine engine;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
-        private readonly SceneModuleLoader moduleLoader;
-        private readonly UnityOpsApi unityOpsApi; // TODO: This is only needed for the LifeCycle
         private readonly ScriptObject updateFunc;
         private readonly ScriptObject startFunc;
         private readonly WrapBunch wrapBunch;
@@ -31,31 +29,34 @@ namespace SceneRuntime
         private EngineApiWrapper? engineApi;
 
         public SceneRuntimeImpl(
-            string sourceCode, (string validateCode, string jsInitCode) initCode,
+            string sourceCode,
+            (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             resetableSource = new JSTaskResolverResetable();
-            moduleLoader = new SceneModuleLoader();
             engine = V8EngineFactory.Create();
+            var moduleHub = new SceneModuleHub(engine);
             wrapBunch = new WrapBunch(engine);
 
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode);
 
             // Initialize init API
-            unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
+            // TODO: This is only needed for the LifeCycle
+            var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
-            engine.Execute(initCode.validateCode!);
+
             engine.Execute(initCode.jsInitCode!);
 
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
 
             // Load and Compile Js Modules
-            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
+            moduleHub.LoadAndCompileJsModules(jsModules);
+            moduleHub.ApplyStrictChecks(initCode.validateCode!);
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')
@@ -88,7 +89,7 @@ namespace SceneRuntime
             wrapBunch.Dispose();
         }
 
-        public void Register<T>(string itemName, T target) where T : IDisposable
+        public void Register<T>(string itemName, T target) where T: IDisposable
         {
             wrapBunch.AddHostObject(itemName, target);
         }

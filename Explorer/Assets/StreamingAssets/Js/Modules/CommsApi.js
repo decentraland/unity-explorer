@@ -6,6 +6,5 @@ module.exports.getActiveVideoStreams = async function () {
     const result = {
         streams: []
     }
-    globalThis.CheckerStorage.checker('VideoTracksActiveStreamsResponse').strictCheck(result)
     return result
 }
