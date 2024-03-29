@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -45,7 +44,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
         [PublicAPI("Used by StreamingAssets/Js/Modules/UserIdentity.js")]
         public object GetOwnUserData()
         {
-            async UniTask<GetUserDataResponse.Data?> GetOwnUserDataAsync(CancellationToken ct)
+            async UniTask<GetUserDataResponse.Data> GetOwnUserDataAsync(CancellationToken ct)
             {
                 try
                 {
@@ -53,7 +52,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     Profile? profile = await profileRepository.GetAsync(identity.Address, 0, ct);
 
                     if (profile == null)
-                        return null;
+                        return new GetUserDataResponse.Data();
 
                     Avatar avatar = profile.Avatar;
 
@@ -91,17 +90,16 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 {
                     sceneExceptionsHandler.OnEngineException(e);
 
-                    return null;
+                    return new GetUserDataResponse.Data();
                 }
             }
 
             return GetOwnUserDataAsync(lifeCycleCts.Token)
                   .ContinueWith(ToUserDataResponse)
-                  .AsTask()
                   .ToPromise();
         }
 
-        private static GetUserDataResponse ToUserDataResponse(GetUserDataResponse.Data? data)
+        private static GetUserDataResponse ToUserDataResponse(GetUserDataResponse.Data data)
         {
             var response = new GetUserDataResponse { data = data };
             return response;

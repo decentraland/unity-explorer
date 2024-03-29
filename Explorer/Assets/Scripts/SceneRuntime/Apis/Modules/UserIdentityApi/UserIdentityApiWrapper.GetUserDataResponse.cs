@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
         [Serializable]
         public struct GetUserDataResponse
         {
-            public Data? data;
+            public Data data;
 
             [Serializable]
             public struct Data
