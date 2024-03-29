@@ -49,6 +49,7 @@ namespace SceneRuntime
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
+            engine.Execute(initCode.validateCode!);
             engine.Execute(initCode.jsInitCode!);
 
             // Setup unitask resolver
