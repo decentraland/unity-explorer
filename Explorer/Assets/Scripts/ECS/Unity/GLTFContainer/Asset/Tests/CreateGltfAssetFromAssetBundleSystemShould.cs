@@ -114,7 +114,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
-            Assert.That(result.Exception, Is.TypeOf<MissingGltfAssetsException>().Or.TypeOf<EcsSystemException>().And.InnerException.TypeOf<MissingGltfAssetsException>());
+            Assert.That(result.Exception, Is.TypeOf<AssetBundleMissingMainAssetException>().Or.TypeOf<EcsSystemException>().And.InnerException.TypeOf<AssetBundleMissingMainAssetException>());
         }
 
         [Test]

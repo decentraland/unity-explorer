@@ -38,9 +38,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// </summary>
         /// <param name="bodyShape">The body shape.</param>
         /// <param name="category">The category.</param>
-        /// <param name="hasEmptyDefaultWearableAB">Specifies if the default wearable has an empty AB</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        IWearable GetDefaultWearable(BodyShape bodyShape, string category, out bool hasEmptyDefaultWearableAB);
+        IWearable GetDefaultWearable(BodyShape bodyShape, string category);
 
         /// <summary>
         ///     Unloads the wearable from the catalog by a frame time budget provider.

@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using DCL.AvatarRendering.AvatarShape.Components;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
 {
     public interface IAvatarMaterialPoolHandler
     {
         PoolMaterialSetup GetMaterialPool(int shaderName);
-        Dictionary<int, PoolMaterialSetup>.ValueCollection GetAllMaterialsPools();
-        void Release(Material usedMaterial, int poolIndex);
+        IReadOnlyCollection<PoolMaterialSetup> GetAllMaterialsPools();
+        void Release(AvatarCustomSkinningComponent.MaterialSetup materialSetup);
     }
 }

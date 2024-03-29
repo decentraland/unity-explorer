@@ -42,6 +42,13 @@
       },
       "hash": "af15ee7336fa1759dc24953a21e253944180dfc7"
     },
+    "com.brunomikoski.animationsequencer": {
+      "version": "0.5.4",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,

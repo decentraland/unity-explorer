@@ -54,7 +54,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromEmbeddedFirst()
         {
-            var intent = GetAssetBundleIntention.FromHash("TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
 
             Entity e = world.Create(intent, new StreamableLoadingState());
 
@@ -72,7 +72,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
 
-            var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
             system.Update(0);
 
@@ -89,7 +89,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = Array.Empty<string>() }));
 
-            var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
 
             system.Update(0);
