@@ -4,7 +4,7 @@ module.exports = {
     mode: 'production',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'joi-validates.min.js',
+        filename: 'validates.min.js',
         library: 'Validates',
         libraryTarget: 'umd',
         umdNamedDefine: true
