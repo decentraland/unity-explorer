@@ -5,6 +5,8 @@ using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
@@ -22,23 +24,18 @@ namespace SceneRuntime.Factory
         private readonly JsCodeResolver codeContentResolver;
         private readonly Dictionary<string, string> sourceCodeCache;
 
-        private readonly IReadOnlyCollection<string> jsModuleNames = new[]
+        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES;
+
+        static SceneRuntimeFactory()
         {
-            "EngineApi.js",
-            "EthereumController.js",
-            "Players.js",
-            "PortableExperiences.js",
-            "RestrictedActions.js",
-            "Runtime.js",
-            "Scene.js",
-            "SignedFetch.js",
-            "Testing.js",
-            "UserIdentity.js",
-            "EnvironmentApi.js",
-            "UserActionModule.js",
-            "CommsApi.js",
-            "ValidatesMin.js",
-        };
+            JS_MODULE_NAMES = Directory
+                             .GetFiles(
+                                  Path.Join(Application.streamingAssetsPath, "/Js/Modules/")!
+                              )
+                             .Select(Path.GetFileName)
+                             .Where(e => Path.GetExtension(e) == ".js")
+                             .ToList();
+        }
 
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
@@ -49,7 +46,7 @@ namespace SceneRuntime.Factory
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
+        internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
             string sourceCode,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
@@ -58,7 +55,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            (string initSourceCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(jsModuleNames, ct));
+            (string initSourceCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -94,10 +91,10 @@ namespace SceneRuntime.Factory
 
         private async UniTask<string> GetJsInitSourceCode(CancellationToken ct)
         {
-            await LoadJavaScriptSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
-                ct
-            );
+            // await LoadJavaScriptSourceCodeAsync(
+            //     URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
+            //     ct
+            // );
 
             return await LoadJavaScriptSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
