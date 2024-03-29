@@ -11,6 +11,7 @@ using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -138,8 +139,10 @@ namespace Global.Dynamic
                     }, ct
                 );
 
+                var webRequestController = IWebRequestController.DEFAULT;
+
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
+                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, dynamicWorldContainer.RealmController.GetRealm());
 
                 if (!isLoaded)
                 {
@@ -148,7 +151,7 @@ namespace Global.Dynamic
                 }
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
-                    dynamicWorldContainer!.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
+                    dynamicWorldContainer!.ProfileRepository, webRequestController, dynamicWorldContainer.RealmController.GetRealm());
 
                 // Initialize global plugins
                 var anyFailure = false;

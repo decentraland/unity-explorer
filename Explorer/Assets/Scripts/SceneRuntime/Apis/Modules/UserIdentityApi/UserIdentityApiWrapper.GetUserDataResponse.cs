@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.UserIdentityApi
 {
     public partial class UserIdentityApiWrapper
     {
