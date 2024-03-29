@@ -3,7 +3,7 @@
 import ICheckerStorage from './checkers/checkerStorage'
 import wrapCheckerStorage from './checkers/wrapCheckerStorage'
 import { typeSuites } from './gen/apis.d-ti'
-import { Checker, createCheckers } from "ts-interface-checker"
+import { Checker, createCheckers, IErrorDetail } from "ts-interface-checker"
 import { constNameCheckerTable, INameToCheckerTable } from './table/nameCheckerTable'
 
 const checkerSuite = createCheckers(typeSuites())
@@ -74,7 +74,7 @@ const nameToResponses: Map<string, string> = new Map([
 
 function checkerStorage(): ICheckerStorage {
     if (cachedChecker === undefined) {
-        cachedChecker =wrapCheckerStorage(checkerSuite)
+        cachedChecker = wrapCheckerStorage(checkerSuite)
     }
     return cachedChecker
 }
@@ -86,6 +86,17 @@ function table(): INameToCheckerTable {
     const map = new Map<string, Checker>()
     nameToResponses.forEach((value, key) => map.set(key, storage.checker(value)))
     return constNameCheckerTable(map)
+}
+
+function reportString(checker: Checker, methodName: string, result: any): string {
+    const jsonifyResult = JSON.stringify(result)
+    const errors: IErrorDetail[] = checker.strictValidate(result) as IErrorDetail[]
+    let errorMessage = `Errors on ${methodName}:\n`
+    errors.forEach((value) => {
+        errorMessage += `message: ${value.message} nested: ${value.nested} in path: ${value.path}\n`
+    })
+    errorMessage += `Value from ${methodName} is not valid: ${jsonifyResult}`
+    return errorMessage
 }
 
 //To be called from jsSide
@@ -109,9 +120,8 @@ export function registerBundle(
         mutableBundle[k] = async (message: any) => {
             const result = await method(message)
             if (checker.strictTest(result) === false) {
-                const jsonifyResult = JSON.stringify(result)
-                logError(`Value from ${k} is not valid: ${jsonifyResult}`)
-                checker.strictCheck(result)
+                const report = reportString(checker, k, result)
+                logError(report)
             }
             return result
         }
