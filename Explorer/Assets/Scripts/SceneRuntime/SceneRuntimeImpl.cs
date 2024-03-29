@@ -131,15 +131,7 @@ namespace SceneRuntime
 
         public void RegisterEthereumApi(IEthereumApi ethereumApi, IWeb3IdentityCache web3IdentityCache)
         {
-            wrapBunch.AddHostObject(
-                "UnityEthereumApi",
-                new EthereumApiWrapper(
-                    ethereumApi,
-                    sceneExceptionsHandler,
-                    web3IdentityCache,
-                    new CancellationTokenSource()
-                )
-            );
+            wrapBunch.AddHostObject("UnityEthereumApi", new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler, web3IdentityCache));
         }
 
         public void RegisterRestrictedActionsApi(IRestrictedActionsAPI api)

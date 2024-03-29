@@ -21,6 +21,10 @@ namespace SceneRuntime.Apis.Modules.Ethereums
 
         private CancellationTokenSource sendCancellationToken;
 
+        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache) : this(
+            ethereumApi, sceneExceptionsHandler, web3IdentityCache, new CancellationTokenSource()
+        ) { }
+
         public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache, CancellationTokenSource sendCancellationToken)
         {
             this.ethereumApi = ethereumApi;
