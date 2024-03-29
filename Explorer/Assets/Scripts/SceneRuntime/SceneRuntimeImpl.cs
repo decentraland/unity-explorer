@@ -101,7 +101,6 @@ namespace SceneRuntime
         {
             engineApi?.Dispose();
             engine.Dispose();
-
             wrapBunch.Dispose();
         }
 
