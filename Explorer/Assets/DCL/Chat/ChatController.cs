@@ -5,6 +5,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
@@ -208,6 +209,14 @@ namespace DCL.Chat
             {
                 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+
+                if (entityParticipantTable.Has(itemData.WalletAddress))
+                {
+                    var entity = entityParticipantTable.Entity(itemData.WalletAddress);
+                    Profile profile = world.Get<Profile>(entity);
+                    if(profile.ProfilePicture != null)
+                        itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
+                }
                 itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
                 itemScript.SetItemData(itemData);
             }

@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,10 +42,11 @@ namespace DCL.Chat
 
         public void SetUsername(string username, string walletId)
         {
-            playerName.text =
-                string.IsNullOrEmpty(walletId) ?
-                    username : $"{username}#<color=#76717E>{walletId.Substring(0,5)}</color>";
-            verifiedIcon.gameObject.SetActive(string.IsNullOrEmpty(walletId));
+            playerName.text = username.Contains("#")
+                ? $"{username.Substring(0, username.IndexOf("#", StringComparison.Ordinal))}<color=#76717E>#{walletId.Substring(0,5)}</color>"
+                : username;
+
+            verifiedIcon.gameObject.SetActive(!username.Contains("#"));
         }
 
         public void AnimateChatEntry()
