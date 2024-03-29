@@ -8,6 +8,7 @@ using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -17,7 +18,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public partial class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView>
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const int MAX_MESSAGE_LENGTH = 250;
@@ -45,6 +46,7 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
         private DCLInput dclInput;
+        private readonly ChatCommandsHandler commandsHandler;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -61,7 +63,8 @@ namespace DCL.Chat
             EmojiSuggestionView emojiSuggestionViewPrefab,
             World world,
             Entity playerEntity,
-            DCLInput dclInput
+            DCLInput dclInput,
+            Func<string, CancellationToken, UniTask> changeRealmAsync
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -76,6 +79,8 @@ namespace DCL.Chat
             this.world = world;
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
+
+            commandsHandler = new ChatCommandsHandler(changeRealmAsync);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             //Adding two elements to count as top and bottom padding
@@ -187,7 +192,9 @@ namespace DCL.Chat
                 return;
             }
 
-            chatMessagesBus.Send(currentMessage);
+            if (!commandsHandler.TryExecuteCommand(in currentMessage)) // we don't send command messages over network
+                chatMessagesBus.Send(currentMessage);
+
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
             emojiPanelController.SetPanelVisibility(false);

@@ -1,13 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
-using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
-using ECS.SceneLifeCycle.Reporting;
-using MVC;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,8 +15,8 @@ namespace DCL.Navmap
     {
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ITeleportController teleportController;
-        private readonly IMVCManager mvcManager;
+        private readonly Func<Vector2Int, CancellationToken, UniTask> teleportToParcel;
+
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
         private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
@@ -33,14 +28,13 @@ namespace DCL.Navmap
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
 
+
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-            ITeleportController teleportController, IWebRequestController webRequestController,
-            IMVCManager mvcManager)
+           IWebRequestController webRequestController, Func<Vector2Int, CancellationToken, UniTask> teleportToParcel)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
-            this.teleportController = teleportController;
-            this.mvcManager = mvcManager;
+            this.teleportToParcel = teleportToParcel;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -113,37 +107,12 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => TeleportToParcel(parcel));
+                view.jumpInButton.onClick.AddListener(() => teleportToParcel(parcel, cts.Token).Forget());
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
             catch (Exception) { SetEmptyParcelInfo(parcel); }
-        }
-
-        private void TeleportToParcel(Vector2Int parcel)
-        {
-            ShowLoadingAndTeleportAsync(cts.Token).Forget();
-            return;
-
-            async UniTaskVoid ShowLoadingAndTeleportAsync(CancellationToken ct)
-            {
-                var timeout = TimeSpan.FromSeconds(30);
-                var loadReport = AsyncLoadProcessReport.Create();
-
-                await UniTask.WhenAll(
-                    mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)), ct).AttachExternalCancellation(ct),
-                    TeleportAsync()
-                );
-
-                return;
-
-                async UniTask TeleportAsync()
-                {
-                    WaitForSceneReadiness waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-                    await waitForSceneReadiness.ToUniTask(ct);
-                }
-            }
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)

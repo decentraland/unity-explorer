@@ -22,6 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private ChatController chatController;
         private DCLInput dclInput;
+        private Func<string, CancellationToken, UniTask> changeRealmAsync;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -29,7 +30,8 @@ namespace DCL.PluginSystem.Global
             IChatMessagesBus chatMessagesBus,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            Func<string, CancellationToken, UniTask> changeRealmAsync)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -37,6 +39,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
+            this.changeRealmAsync = changeRealmAsync;
         }
 
         public void Dispose() { }
@@ -67,7 +70,8 @@ namespace DCL.PluginSystem.Global
                     emojiSuggestionPrefab,
                     builder.World,
                     arguments.PlayerEntity,
-                    dclInput
+                    dclInput,
+                    changeRealmAsync
                 );
 
                 mvcManager.RegisterController(chatController);
