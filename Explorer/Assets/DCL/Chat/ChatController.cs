@@ -3,16 +3,19 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Emoji;
+using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -38,6 +41,7 @@ namespace DCL.Chat
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
+        private readonly IEventSystem eventSystem;
         private World world;
 
         private string currentMessage = string.Empty;
@@ -62,7 +66,8 @@ namespace DCL.Chat
             EmojiSuggestionView emojiSuggestionViewPrefab,
             World world,
             Entity playerEntity,
-            DCLInput dclInput
+            DCLInput dclInput,
+            IEventSystem eventSystem
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -77,6 +82,7 @@ namespace DCL.Chat
             this.world = world;
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
+            this.eventSystem = eventSystem;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             //Adding two elements to count as top and bottom padding
@@ -109,6 +115,7 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             dclInput.UI.Submit.performed += OnSubmitAction;
+            dclInput.Camera.Lock.performed += CloseAllEmojiPanels;
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
         }
 
@@ -280,6 +287,18 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 
+        private void CloseAllEmojiPanels(InputAction.CallbackContext obj)
+        {
+            eventSystem.RaycastAll(Mouse.current.position.value);
+
+            if (eventSystem.RaycastAll(Mouse.current.position.value).Count == 0)
+            {
+                emojiSuggestionPanelController.SetPanelVisibility(false);
+                emojiPanelController.SetPanelVisibility(false);
+                viewInstance.InputField.text = string.Empty;
+            }
+        }
+
         private void CreateChatEntry(ChatMessage chatMessage)
         {
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
@@ -307,6 +326,7 @@ namespace DCL.Chat
             emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
             emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
             dclInput.UI.Submit.performed -= OnSubmitAction;
+            dclInput.Camera.Lock.performed -= CloseAllEmojiPanels;
             emojiPanelController.Dispose();
             cts.SafeCancelAndDispose();
         }
