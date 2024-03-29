@@ -1,7 +1,6 @@
 //to compile: npx webpack --config webpack.config.js
 
 import ICheckerStorage from './checkers/checkerStorage'
-import logCheckerStorage from './checkers/logCheckerStorage'
 import wrapCheckerStorage from './checkers/wrapCheckerStorage'
 import { typeSuites } from './gen/apis.d-ti'
 import { Checker, createCheckers } from "ts-interface-checker"
@@ -73,20 +72,17 @@ const nameToResponses: Map<string, string> = new Map([
     ["getUserData", "GetUserDataResponse"],
 ]);
 
-function checkerStorage(log: (message: string) => void): ICheckerStorage {
+function checkerStorage(): ICheckerStorage {
     if (cachedChecker === undefined) {
-        cachedChecker = logCheckerStorage(
-            wrapCheckerStorage(checkerSuite),
-            log
-        )
+        cachedChecker =wrapCheckerStorage(checkerSuite)
     }
     return cachedChecker
 }
 
 const alreadyRegistered: Set<string> = new Set();
 
-function table(log: (message: string) => void): INameToCheckerTable {
-    const storage = checkerStorage(log)
+function table(): INameToCheckerTable {
+    const storage = checkerStorage()
     const map = new Map<string, Checker>()
     nameToResponses.forEach((value, key) => map.set(key, storage.checker(value)))
     return constNameCheckerTable(map)
@@ -95,10 +91,10 @@ function table(log: (message: string) => void): INameToCheckerTable {
 //To be called from jsSide
 export function registerBundle(
     mutableBundle: any,
-    log: (message: string) => void,
+    logWarning: (message: string) => void,
     logError: (message: string) => void
 ) {
-    const nameTable = table(log)
+    const nameTable = table()
     for (const k in mutableBundle) {
         if (alreadyRegistered.has(k)) {
             continue
@@ -106,7 +102,7 @@ export function registerBundle(
 
         const checker = nameTable.checker(k)
         if (checker === undefined) {
-            log(`Checker for ${k} not found`)
+            logWarning(`Checker for ${k} not found`)
             continue;
         }
         const method = mutableBundle[k] as (message: any) => Promise<any>
