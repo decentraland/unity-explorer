@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Chat
@@ -43,6 +44,7 @@ namespace DCL.Chat
         private CancellationTokenSource emojiPanelCts;
         private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
+        private DCLInput dclInput;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -58,7 +60,8 @@ namespace DCL.Chat
             EmojiButton emojiButtonPrefab,
             EmojiSuggestionView emojiSuggestionViewPrefab,
             World world,
-            Entity playerEntity
+            Entity playerEntity,
+            DCLInput dclInput
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -72,6 +75,7 @@ namespace DCL.Chat
             this.emojiSuggestionViewPrefab = emojiSuggestionViewPrefab;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.dclInput = dclInput;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             //Adding two elements to count as top and bottom padding
@@ -103,6 +107,7 @@ namespace DCL.Chat
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
+            dclInput.UI.Submit.performed += OnSubmitAction;
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
         }
 
@@ -165,10 +170,22 @@ namespace DCL.Chat
             return UniTask.CompletedTask;
         }
 
+        private void OnSubmitAction(InputAction.CallbackContext obj)
+        {
+            if (viewInstance.InputField.isFocused) return;
+
+            viewInstance.InputField.ActivateInputField();
+            viewInstance.InputField.OnSelect(null);
+        }
+
         private void OnSubmit(string _)
         {
             if (string.IsNullOrWhiteSpace(currentMessage))
+            {
+                viewInstance.InputField.DeactivateInputField();
+                viewInstance.InputField.OnDeselect(null);
                 return;
+            }
 
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
@@ -270,7 +287,7 @@ namespace DCL.Chat
             chatMessages.Add(chatMessage);
             chatMessages.Add(new ChatMessage(true));
             chatMessages.Reverse();
-            
+
             viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
             viewInstance.LoopList.MovePanelToItemIndex(0, 0);
         }
@@ -280,6 +297,7 @@ namespace DCL.Chat
             chatMessagesBus.OnMessageAdded -= CreateChatEntry;
             emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
             emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
+            dclInput.UI.Submit.performed -= OnSubmitAction;
             emojiPanelController.Dispose();
             cts.SafeCancelAndDispose();
         }
