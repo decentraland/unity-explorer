@@ -112,7 +112,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5595807579709547194
 RectTransform:
   m_ObjectHideFlags: 0
@@ -215,7 +215,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2680055985081135439}
   m_HandleRect: {fileID: 7426884741399343867}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -743,8 +743,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.86050415, y: 54.5002}
-  m_SizeDelta: {x: 338.28, y: 20}
+  m_AnchoredPosition: {x: 0, y: 54}
+  m_SizeDelta: {x: 340, y: 8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4358110840215783082
 CanvasRenderer:
@@ -894,7 +894,7 @@ RectTransform:
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2356,6 +2356,22 @@ PrefabInstance:
       propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
+    - target: {fileID: 5226727715205557746, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5226727715205557746, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5226727715205557746, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5226727715205557746, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7150997360720473103, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
       propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
@@ -2614,6 +2630,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5385241120894144987, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
       propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5963718805197376923, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5963718805197376923, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5963718805197376923, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5963718805197376923, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7174249845669506457, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
