@@ -113,7 +113,8 @@ export function registerBundle(
         mutableBundle[k] = async (message: any) => {
             const result = await method(message)
             if (checker.strictTest(result) === false) {
-                logError(`Value from ${k} is not valid: ${result}`)
+                const jsonifyResult = JSON.stringify(result)
+                logError(`Value from ${k} is not valid: ${jsonifyResult}`)
                 checker.strictCheck(result)
             }
             return result
