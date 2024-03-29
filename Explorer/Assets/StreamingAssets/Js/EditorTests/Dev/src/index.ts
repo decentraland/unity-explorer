@@ -1,8 +1,21 @@
 //to compile: npx webpack --config webpack.config.js
 
+import ICheckerStorage from './checkers/checkerStorage'
+import logCheckerStorage from './checkers/logCheckerStorage'
+import wrapCheckerStorage from './checkers/wrapCheckerStorage'
 import { typeSuites } from './gen/apis.d-ti'
 import { createCheckers } from "ts-interface-checker"
 
 const checkerSuite = createCheckers(typeSuites())
 
-export default checkerSuite
+let cachedChecker: ICheckerStorage | undefined = undefined
+
+export function checker(log: (message: string) => void) {
+    if (cachedChecker === undefined) {
+        cachedChecker = logCheckerStorage(
+            wrapCheckerStorage(checkerSuite),
+            log
+        )
+    }
+    return cachedChecker
+}

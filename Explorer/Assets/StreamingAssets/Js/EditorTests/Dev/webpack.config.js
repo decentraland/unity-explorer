@@ -3,8 +3,8 @@ const path = require('path');
 module.exports = {
     mode: 'production',
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'validates.min.js',
+        path: path.join(__dirname, '../../Modules'),
+        filename: 'ValidatesMin.js',
         library: 'Validates',
         libraryTarget: 'umd',
         umdNamedDefine: true

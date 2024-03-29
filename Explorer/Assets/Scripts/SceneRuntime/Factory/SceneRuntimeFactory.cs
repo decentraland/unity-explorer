@@ -22,6 +22,24 @@ namespace SceneRuntime.Factory
         private readonly JsCodeResolver codeContentResolver;
         private readonly Dictionary<string, string> sourceCodeCache;
 
+        private readonly IReadOnlyCollection<string> jsModuleNames = new[]
+        {
+            "EngineApi.js",
+            "EthereumController.js",
+            "Players.js",
+            "PortableExperiences.js",
+            "RestrictedActions.js",
+            "Runtime.js",
+            "Scene.js",
+            "SignedFetch.js",
+            "Testing.js",
+            "UserIdentity.js",
+            "EnvironmentApi.js",
+            "UserActionModule.js",
+            "CommsApi.js",
+            "ValidatesMin.js",
+        };
+
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
             codeContentResolver = new JsCodeResolver(webRequestController);
@@ -40,7 +58,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            (string initSourceCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(ct));
+            (string initSourceCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(jsModuleNames, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -88,26 +106,6 @@ namespace SceneRuntime.Factory
             foreach (string name in names) await AddModuleAsync(name, moduleDictionary, ct);
             return moduleDictionary;
         }
-
-        private UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(CancellationToken ct) =>
-            GetJsModuleDictionaryAsync(new[]
-                {
-                    "EngineApi.js",
-                    "EthereumController.js",
-                    "Players.js",
-                    "PortableExperiences.js",
-                    "RestrictedActions.js",
-                    "Runtime.js",
-                    "Scene.js",
-                    "SignedFetch.js",
-                    "Testing.js",
-                    "UserIdentity.js",
-                    "EnvironmentApi.js",
-                    "UserActionModule.js",
-                    "CommsApi.js",
-                },
-                ct
-            );
 
         private async UniTask<string> LoadJavaScriptSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
