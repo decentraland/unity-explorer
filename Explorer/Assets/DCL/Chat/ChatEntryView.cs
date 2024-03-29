@@ -24,6 +24,9 @@ namespace DCL.Chat
         internal TMP_Text playerName { get; private set; }
 
         [field: SerializeField]
+        internal TMP_Text walletIdText { get; private set; }
+
+        [field: SerializeField]
         internal Image playerIcon { get; private set; }
 
         [field: SerializeField]
@@ -43,9 +46,11 @@ namespace DCL.Chat
         public void SetUsername(string username, string walletId)
         {
             playerName.text = username.Contains("#")
-                ? $"{username.Substring(0, username.IndexOf("#", StringComparison.Ordinal))}<color=#76717E>#{walletId.Substring(0,5)}</color>"
+                ? $"{username.Substring(0, username.IndexOf("#", StringComparison.Ordinal))}"
                 : username;
+            walletIdText.text = $"#{walletId.Substring(0,5)}";
 
+            walletIdText.gameObject.SetActive(username.Contains("#"));
             verifiedIcon.gameObject.SetActive(!username.Contains("#"));
         }
 

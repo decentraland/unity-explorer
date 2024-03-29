@@ -224,7 +224,7 @@ namespace DCL.Chat
                     if(profile.ProfilePicture != null)
                         itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
                 }
-                itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
+                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender);
                 itemScript.SetItemData(itemData);
             }
 
