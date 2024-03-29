@@ -6,7 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.Runtime
 {
     public class RuntimeWrapper : IDisposable
     {
