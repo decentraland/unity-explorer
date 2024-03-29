@@ -4,7 +4,11 @@ import ICheckerStorage from "./checkerStorage";
 export default function wrapCheckerStorage(suite: ICheckerSuite): ICheckerStorage {
     return {
         checker: (name) => {
-            return suite[name]
+            const result = suite[name]
+            if (result === null || result === undefined) {
+                throw Error(`No suitable checker for type ${name}`)
+            }
+            return result
         }
     }
 }
