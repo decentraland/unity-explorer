@@ -122,6 +122,7 @@ export function registerBundle(
             if (checker.strictTest(result) === false) {
                 const report = reportString(checker, k, result)
                 logError(report)
+                checker.strictCheck(result)
             }
             return result
         }
