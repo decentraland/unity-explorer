@@ -16,3 +16,17 @@ module.exports.crdtGetState = async function() {
         data: [data]
     };
 }
+
+module.exports.subscribe = async function(message) {
+    console.log(`JSMODULE: EngineApi.subscribe(${message.eventId}): deprecated`)
+}
+
+module.exports.unsubscribe = async function(message) {
+    console.log(`JSMODULE: EngineApi.unsubscribe(${message.eventId}): deprecated`)
+}
+
+module.exports.isServer = async function () {
+    return {
+        isServer: false
+    }
+}
