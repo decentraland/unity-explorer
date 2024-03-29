@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
+using DCL.Utilities;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
 using System;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace SceneRuntime.Apis.Modules.Players
@@ -46,8 +48,7 @@ namespace SceneRuntime.Apis.Modules.Players
 
         public void Dispose()
         {
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         [Serializable]
