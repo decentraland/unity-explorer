@@ -12,14 +12,14 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /\.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/,
-            }
-        ]
+            },
+        ],
     },
     resolve: {
-        extensions: ['.ts', '.js'],
+        extensions: ['.tsx', '.ts', '.js'],
     },
     externals: {
         lodash: {
