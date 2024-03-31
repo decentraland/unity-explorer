@@ -47,6 +47,7 @@ globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
 globalThis.require = require;
 globalThis.console = console;
 globalThis.WebSocket = require('~system/WebSocketApi').WebSocket;
+globalThis.fetch = require('~system/FetchApi').fetch;
 
 // disable WebAssembly
 globalThis.WebAssembly.Instance = function () {

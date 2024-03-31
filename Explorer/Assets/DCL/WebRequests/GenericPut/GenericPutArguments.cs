@@ -23,6 +23,9 @@ namespace DCL.WebRequests
             ContentType = contentType;
         }
 
+        public static GenericPutArguments Create(string putData, string contentType) =>
+            new (putData, contentType);
+
         public static GenericPutArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
             new (multipartFormSections);
 

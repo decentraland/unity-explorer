@@ -102,6 +102,7 @@ namespace SceneRuntime.Factory
             await AddModuleAsync("WebSocketApi.js", moduleDictionary, ct);
             await AddModuleAsync("EnvironmentApi.js", moduleDictionary, ct);
             await AddModuleAsync("UserActionModule.js", moduleDictionary, ct);
+            await AddModuleAsync("FetchApi.js", moduleDictionary, ct);
             return moduleDictionary;
         }
 

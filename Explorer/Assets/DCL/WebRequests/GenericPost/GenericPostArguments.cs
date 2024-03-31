@@ -43,6 +43,9 @@ namespace DCL.WebRequests
         public static GenericPostArguments CreateWWWForm(WWWForm form) =>
             new (form);
 
+        public static GenericPostArguments Create(string postData, string contentType) =>
+            new (postData, contentType);
+
         public static GenericPostArguments CreateJson(string postData) =>
             new (postData, "application/json");
     }

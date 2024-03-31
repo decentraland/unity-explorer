@@ -10,6 +10,7 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
+using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -49,6 +50,7 @@ namespace SceneRuntime
         private SceneApiWrapper? sceneApiWrapper;
         private WebSocketApiWrapper? webSocketApiWrapper;
         private SignedFetchWrap? signedFetchWrap;
+        private SimpleFetchApiWrapper? simpleFetchApiWrapper;
 
         public SceneRuntimeImpl(
             ISceneExceptionsHandler sceneExceptionsHandler,
@@ -160,6 +162,10 @@ namespace SceneRuntime
             engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
 
+        public void RegisterSimpleFetchApi(ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController)
+        {
+            engine.AddHostObject("UnitySimpleFetchApi", simpleFetchApiWrapper = new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
+        }
 
         public void SetIsDisposing()
         {
