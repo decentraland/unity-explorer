@@ -20,36 +20,45 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
+using Utility;
 
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
+        [Header("Startup Config")]
+        [SerializeField] private InitialRealm initialRealm;
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
+        private Vector2Int targetScene;
+        [SerializeField] private bool showSplash;
+        [SerializeField] private bool showAuthentication;
+        [SerializeField] private bool showLoading;
+        [SerializeField] private bool enableLandscape;
+
+        [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
-        [SerializeField] private string realmUrl = "https://peer.decentraland.org";
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
-        [SerializeField] private bool showSplash;
-        [SerializeField] private bool showAuthentication;
-        [SerializeField] private bool showLoading;
-        [SerializeField] private bool enableLandscape;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private IWeb3IdentityCache? identityCache;
-
         private SceneSharedContainer? sceneSharedContainer;
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
+        private string startingRealm = "https://peer.decentraland.org";
+        private Vector2Int startingParcel;
 
         private void Awake()
         {
+            SetupInitialConfig();
+
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -91,6 +100,7 @@ namespace Global.Dynamic
 
             enableLandscape = true;
 #endif
+
 
             try
             {
@@ -134,7 +144,7 @@ namespace Global.Dynamic
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
-                        StartParcel = settings.StartPosition,
+                        StartParcel = startingParcel,
                         EnableLandscape = enableLandscape,
                     }, ct
                 );
@@ -203,6 +213,12 @@ namespace Global.Dynamic
             }
         }
 
+        private void SetupInitialConfig()
+        {
+            startingRealm = initialRealm == InitialRealm.GenesisCity ? "https://peer.decentraland.org" : "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
+            startingParcel = initialRealm == InitialRealm.SDK ? targetScene : settings.StartPosition;
+        }
+
         private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
@@ -218,10 +234,8 @@ namespace Global.Dynamic
 
         private async UniTask ChangeRealmAsync(CancellationToken ct)
         {
-            string realm = realmUrl;
-
             IRealmController realmController = dynamicWorldContainer!.RealmController;
-            await realmController.SetRealmAsync(URLDomain.FromString(realm), ct);
+            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
