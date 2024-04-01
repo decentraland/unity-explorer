@@ -13,7 +13,7 @@ namespace DCL.WebRequests
         }
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception, int attemptLeft) =>
-            attemptLeft <= 0 || ((exception.IsAborted() || exception.IsServerError()) && !exception.IsUnableToCompleteSSLConnection());
+            attemptLeft <= 0 || ((exception.IsAborted() || exception.IsServerError() || exception.IsMethodNotAllowed()) && !exception.IsUnableToCompleteSSLConnection());
 
         public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception)
         {
@@ -24,6 +24,9 @@ namespace DCL.WebRequests
             return false;
 #endif
         }
+
+        public static bool IsMethodNotAllowed(this UnityWebRequestException exception) =>
+            exception is { ResponseCode: 405 };
 
         public static bool IsServerError(this UnityWebRequestException exception) =>
             exception is { ResponseCode: >= 500 and < 600 };

@@ -25,7 +25,7 @@ namespace DCL.WebRequests
         public WebRequestHeadersInfo Add(string key, string value) =>
             Add(new WebRequestHeader(key, value));
 
-        public override readonly string ToString()
+        public readonly override string ToString()
         {
             if (value == null) return "WebRequestHeadersInfo: EMPTY";
 
