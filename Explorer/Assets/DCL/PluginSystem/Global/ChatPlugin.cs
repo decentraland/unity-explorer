@@ -5,6 +5,7 @@ using DCL.Chat;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
@@ -22,7 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private ChatController chatController;
         private DCLInput dclInput;
-        private Func<string, CancellationToken, UniTask> changeRealmAsync;
+        private readonly IRealmNavigator realmNavigator;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -31,7 +32,7 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
-            Func<string, CancellationToken, UniTask> changeRealmAsync)
+            IRealmNavigator realmNavigator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -39,7 +40,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
-            this.changeRealmAsync = changeRealmAsync;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose() { }
@@ -71,7 +72,7 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
-                    changeRealmAsync
+                    realmNavigator
                 );
 
                 mvcManager.RegisterController(chatController);

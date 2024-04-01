@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using Decentraland.Kernel.Apis;
 using ECS;
 using System.Threading;
 using UnityEngine;

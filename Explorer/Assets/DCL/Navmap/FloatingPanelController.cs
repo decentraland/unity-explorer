@@ -3,6 +3,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,7 +16,7 @@ namespace DCL.Navmap
     {
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly Func<Vector2Int, CancellationToken, UniTask> teleportToParcel;
+        private readonly IRealmNavigator realmNavigator;
 
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
@@ -30,11 +31,11 @@ namespace DCL.Navmap
 
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-           IWebRequestController webRequestController, Func<Vector2Int, CancellationToken, UniTask> teleportToParcel)
+           IWebRequestController webRequestController, IRealmNavigator realmNavigator)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
-            this.teleportToParcel = teleportToParcel;
+            this.realmNavigator = realmNavigator;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -107,7 +108,7 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => teleportToParcel(parcel, cts.Token).Forget());
+                view.jumpInButton.onClick.AddListener(() => realmNavigator.TeleportToParcel(parcel, cts.Token).Forget());
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);

@@ -6,6 +6,7 @@ using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using SuperScrollView;
 using System;
@@ -64,7 +65,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
-            Func<string, CancellationToken, UniTask> changeRealmAsync
+            IRealmNavigator realmNavigator
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -80,7 +81,7 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
 
-            commandsHandler = new ChatCommandsHandler(changeRealmAsync);
+            commandsHandler = new ChatCommandsHandler(realmNavigator);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             //Adding two elements to count as top and bottom padding

@@ -40,8 +40,8 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
-using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
+using ECS.SceneLifeCycle.Realm;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;
@@ -94,7 +94,7 @@ namespace Global.Dynamic
             return UniTask.CompletedTask;
         }
 
-        private static void BuildTeleportWidget(RealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
+        private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
@@ -212,7 +212,7 @@ namespace Global.Dynamic
                 new RemotePoses(roomHub)
             );
 
-            RealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, container.RealmController, parcelServiceContainer.TeleportController);
+            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, container.RealmController, parcelServiceContainer.TeleportController);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -254,7 +254,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, dclInput, realmNavigator.ChangeRealmAsync),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, dclInput, realmNavigator),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -269,7 +269,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
                     webBrowser,
-                    realmNavigator.TeleportToParcel),
+                    realmNavigator),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, identityCache, characterPreviewFactory),

@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -8,6 +9,7 @@ namespace DCL.Chat
 {
     internal class ChatCommandsHandler
     {
+        private readonly IRealmNavigator realmNavigator;
         private const char CHAT_COMMAND_CHAR = '/';
 
         private const string GOTO_COMMAND = "/goto";
@@ -16,9 +18,6 @@ namespace DCL.Chat
         private const string WORLDS_SUFFIX = ".dcl.eth";
 
         private readonly URLDomain worldDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world");
-
-        private readonly Func<string, CancellationToken, UniTask> changeRealmAsync;
-
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
 
@@ -36,9 +35,9 @@ namespace DCL.Chat
 
             return address.Value;
         }
-        public ChatCommandsHandler(Func<string, CancellationToken, UniTask> changeRealmAsync)
+        public ChatCommandsHandler(IRealmNavigator realmNavigator)
         {
-            this.changeRealmAsync = changeRealmAsync;
+            this.realmNavigator = realmNavigator;
         }
 
         public bool TryExecuteCommand(in string message)
@@ -47,7 +46,7 @@ namespace DCL.Chat
 
             if (IsWorldCommand(message))
             {
-                changeRealmAsync(GetWorldAddress(message), CancellationToken.None).Forget();
+                realmNavigator.ChangeRealmAsync(GetWorldAddress(message), CancellationToken.None).Forget();
                 return true;
             }
 
