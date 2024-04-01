@@ -18,6 +18,8 @@ namespace Global.Dynamic
 
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
 
+        UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
+
         IRealmData GetRealm();
 
         /// <summary>

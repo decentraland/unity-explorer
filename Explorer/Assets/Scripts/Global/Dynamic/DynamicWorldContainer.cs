@@ -100,11 +100,11 @@ namespace Global.Dynamic
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
                                       evt =>
                                       {
-                                          realmNavigator.ChangeRealmAsync(evt.newValue, CancellationToken.None).Forget();
+                                          realmNavigator.TryChangeRealmAsync(evt.newValue, CancellationToken.None).Forget();
                                       }), string.Empty), null)
                                  .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm =>
                                   {
-                                      realmNavigator.ChangeRealmAsync(realm, CancellationToken.None).Forget();
+                                      realmNavigator.TryChangeRealmAsync(realm, CancellationToken.None).Forget();
                                   });
         }
 

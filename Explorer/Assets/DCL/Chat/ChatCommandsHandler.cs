@@ -47,7 +47,7 @@ namespace DCL.Chat
                 Match match = CHANGE_REALM_REGEX.Match(message);
                 string realmOrHome = match.Groups[2].Value == GENESIS_KEY ? "https://peer.decentraland.org" : GetWorldAddress(match.Groups[2].Value);
 
-                realmNavigator.ChangeRealmAsync(realmOrHome, CancellationToken.None).Forget();
+                realmNavigator.TryChangeRealmAsync(realmOrHome, CancellationToken.None).Forget();
                 return true;
             }
 

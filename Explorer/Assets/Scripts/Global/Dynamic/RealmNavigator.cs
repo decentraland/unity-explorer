@@ -27,10 +27,20 @@ namespace Global.Dynamic
             this.teleportController = teleportController;
         }
 
-        public async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
+        public async UniTask<bool> TryChangeRealmAsync(string realm, CancellationToken ct)
         {
+            var domain = URLDomain.FromString(realm);
+
+            if (!await realmController.IsReachableAsync(domain, ct))
+            {
+                Debug.Log("VVV NOT REACHABLE!");
+                return false;
+            }
+
             await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
-                realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct), ct);
+                realmController.SetRealmAsync(domain, Vector2Int.zero, loadReport, ct), ct);
+
+            return true;
         }
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
@@ -40,7 +50,7 @@ namespace Global.Dynamic
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
 
-                var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+                WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
         }
