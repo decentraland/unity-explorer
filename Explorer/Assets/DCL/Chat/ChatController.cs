@@ -9,7 +9,6 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -24,7 +23,7 @@ namespace DCL.Chat
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const int MAX_MESSAGE_LENGTH = 250;
 
-        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
+        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;

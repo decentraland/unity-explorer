@@ -1,32 +1,33 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using ECS.SceneLifeCycle.Realm;
-using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Chat
 {
     internal class ChatCommandsHandler
     {
-        private readonly IRealmNavigator realmNavigator;
         private const char CHAT_COMMAND_CHAR = '/';
 
-        private const string GOTO_COMMAND = "/goto";
-        private const string WORLD_COMMAND = "/world";
+        private static readonly Regex CHANGE_REALM_REGEX = new (@"^/(world|goto)\s+(\S+\.dcl\.eth|home)$", RegexOptions.Compiled);
+        private static readonly Regex TELEPORT_REGEX = new (@"^/goto\s+(-?\d+),(-?\d+)$", RegexOptions.Compiled);
 
-        private const string WORLDS_SUFFIX = ".dcl.eth";
+        private readonly IRealmNavigator realmNavigator;
 
         private readonly URLDomain worldDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world");
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
 
-        private string GetWorldAddress(string message)
+        public ChatCommandsHandler(IRealmNavigator realmNavigator)
         {
-            string worldPath = message.StartsWith(WORLD_COMMAND)
-                ? message[(WORLD_COMMAND.Length + 1)..]
-                : message[(GOTO_COMMAND.Length + 1)..];
+            this.realmNavigator = realmNavigator;
+        }
 
+        private string GetWorldAddress(string worldPath)
+        {
             if (!worldAddressesCaches.TryGetValue(worldPath, out URLAddress address))
             {
                 address = worldDomain.Append(URLPath.FromString(worldPath));
@@ -35,25 +36,31 @@ namespace DCL.Chat
 
             return address.Value;
         }
-        public ChatCommandsHandler(IRealmNavigator realmNavigator)
-        {
-            this.realmNavigator = realmNavigator;
-        }
 
         public bool TryExecuteCommand(in string message)
         {
             if (!message.StartsWith(CHAT_COMMAND_CHAR)) return false;
 
-            if (IsWorldCommand(message))
+            if (CHANGE_REALM_REGEX.IsMatch(message))
             {
-                realmNavigator.ChangeRealmAsync(GetWorldAddress(message), CancellationToken.None).Forget();
+                Match match = CHANGE_REALM_REGEX.Match(message);
+                string realmOrHome = match.Groups[2].Value == "home" ? "https://peer.decentraland.org" : GetWorldAddress(match.Groups[2].Value);
+
+                realmNavigator.ChangeRealmAsync(realmOrHome, CancellationToken.None).Forget();
+                return true;
+            }
+
+            if (TELEPORT_REGEX.IsMatch(message))
+            {
+                Match match = TELEPORT_REGEX.Match(message);
+                var x = int.Parse(match.Groups[1].Value);
+                var y = int.Parse(match.Groups[2].Value);
+
+                realmNavigator.TeleportToParcel(new Vector2Int(x, y), CancellationToken.None).Forget();
                 return true;
             }
 
             return false;
         }
-
-        private static bool IsWorldCommand(in string message) =>
-            (message.StartsWith(WORLD_COMMAND) || message.StartsWith(GOTO_COMMAND)) && message.EndsWith(WORLDS_SUFFIX);
     }
 }
