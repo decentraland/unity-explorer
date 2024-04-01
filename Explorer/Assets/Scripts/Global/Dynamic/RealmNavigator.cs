@@ -14,10 +14,11 @@ namespace Global.Dynamic
 {
     public class RealmNavigator : IRealmNavigator
     {
+        private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
+
         private readonly MVCManager mvcManager;
         private readonly IRealmController realmController;
         private readonly ITeleportController teleportController;
-        private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
 
         public RealmNavigator(MVCManager mvcManager, IRealmController realmController, ITeleportController teleportController)
         {
@@ -34,14 +35,11 @@ namespace Global.Dynamic
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
-            if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
-            {
-                AsyncLoadProcessReport loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-                await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
-            }
-
             await ShowLoadingScreenAndExecuteTaskAsync(async loadReport =>
             {
+                if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
+                    await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
+
                 var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
