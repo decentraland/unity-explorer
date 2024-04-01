@@ -56,7 +56,7 @@ namespace DCL.Chat
                 var x = int.Parse(match.Groups[1].Value);
                 var y = int.Parse(match.Groups[2].Value);
 
-                realmNavigator.TeleportToParcel(new Vector2Int(x, y), CancellationToken.None).Forget();
+                realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), CancellationToken.None).Forget();
                 return true;
             }
 

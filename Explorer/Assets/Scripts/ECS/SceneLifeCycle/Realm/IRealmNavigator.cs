@@ -8,6 +8,6 @@ namespace ECS.SceneLifeCycle.Realm
     {
         UniTask ChangeRealmAsync(string realm, CancellationToken ct);
 
-        UniTask TeleportToParcel(Vector2Int parcel, CancellationToken ct);
+        UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct);
     }
 }

@@ -27,20 +27,20 @@ namespace Global.Dynamic
 
         public async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
         {
-            await ShowLoadingScreenAndExecuteTask(loadReport =>
+            await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
                 realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct), ct);
         }
 
-        public async UniTask TeleportToParcel(Vector2Int parcel, CancellationToken ct)
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
-            await ShowLoadingScreenAndExecuteTask(async loadReport =>
+            await ShowLoadingScreenAndExecuteTaskAsync(async loadReport =>
             {
                 var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
         }
 
-        private async UniTask ShowLoadingScreenAndExecuteTask(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+        private async UniTask ShowLoadingScreenAndExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
         {
             var timeout = TimeSpan.FromSeconds(30);
             var loadReport = AsyncLoadProcessReport.Create();
