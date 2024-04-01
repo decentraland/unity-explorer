@@ -27,32 +27,32 @@ namespace Global.Dynamic
 
         public async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
         {
-            var timeout = TimeSpan.FromSeconds(30);
-            var loadReport = AsyncLoadProcessReport.Create();
-
-            await UniTask.WhenAll(
-                mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, timeout)), ct).AttachExternalCancellation(ct),
-                realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct)
-            );
+            await ShowLoadingScreenAndExecuteTask(loadReport =>
+                realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct), ct);
         }
 
         public async UniTask TeleportToParcel(Vector2Int parcel, CancellationToken ct)
         {
+            await ShowLoadingScreenAndExecuteTask(async loadReport =>
+            {
+                var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+                await waitForSceneReadiness.ToUniTask(ct);
+            }, ct);
+        }
+
+        private async UniTask ShowLoadingScreenAndExecuteTask(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+        {
             var timeout = TimeSpan.FromSeconds(30);
             var loadReport = AsyncLoadProcessReport.Create();
 
-            await UniTask.WhenAll(
-                mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)), ct).AttachExternalCancellation(ct),
-                TeleportAsync()
-            );
+            UniTask showLoadingScreenTask = mvcManager.ShowAsync(
+                                                           SceneLoadingScreenController.IssueCommand(
+                                                               new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
+                                                      .AttachExternalCancellation(ct);
 
-            return;
+            UniTask operationTask = operation(loadReport);
 
-            async UniTask TeleportAsync()
-            {
-                WaitForSceneReadiness waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-                await waitForSceneReadiness.ToUniTask(ct);
-            }
+            await UniTask.WhenAll(showLoadingScreenTask, operationTask);
         }
     }
 }
