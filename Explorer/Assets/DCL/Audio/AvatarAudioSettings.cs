@@ -11,7 +11,7 @@ namespace DCL.Audio
     {
         //This threshold indicates at what point in the movement blend we stop producing sounds. This avoids unwanted sounds from "ghost" steps produced by the animation blending.
         [SerializeField] private float movementBlendThreshold = 0.05f;
-        [SerializeField] private List<AudioClipKeyValuePair> audioClipList = new List<AudioClipKeyValuePair>();
+        [SerializeField] private List<AvatarAudioClipKeyValuePair> audioClipList = new List<AvatarAudioClipKeyValuePair>();
         [SerializeField] private AudioClip defaultAudioClip;
         [SerializeField] private float avatarAudioVolume = 1;
         [SerializeField] private int avatarAudioPriority = 125;
@@ -20,15 +20,19 @@ namespace DCL.Audio
         public float AvatarAudioVolume => avatarAudioVolume;
         public int AvatarAudioPriority => avatarAudioPriority;
 
+
         [Serializable]
-        public class AudioClipKeyValuePair
+        public class AvatarAudioClipKeyValuePair
         {
             public AvatarAudioSourceManager.AvatarAudioClipTypes key;
             public AudioClip value;
         }
 
-        [CustomPropertyDrawer(typeof(AudioClipKeyValuePair))]
-        public class AudioClipKeyValuePairDrawer : PropertyDrawer
+        [CustomPropertyDrawer(typeof(AvatarAudioClipKeyValuePair))]
+        public class AudioClipKeyValuePairDrawer : KeyValuePairDrawer
+        { }
+
+        public class KeyValuePairDrawer : PropertyDrawer
         {
             public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
             {
