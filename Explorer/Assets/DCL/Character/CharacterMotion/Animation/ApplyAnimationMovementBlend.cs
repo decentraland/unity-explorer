@@ -21,7 +21,7 @@ namespace DCL.CharacterMotion.Animation
             in MovementInputComponent movementInput,
             in IAvatarView view)
         {
-            var velocity = rigidTransform.MoveVelocity.Velocity;
+            Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
             float maxVelocity = SpeedLimit.Get(settings, movementInput.Kind);
 
             int movementBlendId = GetMovementBlendId(velocity, movementInput.Kind);
@@ -46,6 +46,17 @@ namespace DCL.CharacterMotion.Animation
             if (velocity.sqrMagnitude <= 0)
                 return 0;
 
+            return speedState switch
+                   {
+                       MovementKind.Walk => 1,
+                       MovementKind.Jog => 2,
+                       MovementKind.Run => 3,
+                       _ => 0,
+                   };
+        }
+
+        public static int GetMovementBlendId(MovementKind speedState)
+        {
             return speedState switch
                    {
                        MovementKind.Walk => 1,
