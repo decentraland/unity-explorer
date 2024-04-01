@@ -4,5 +4,7 @@ namespace Global.Dynamic
     {
         GenesisCity,
         SDK,
+        World,
+        Localhost,
     }
 }

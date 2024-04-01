@@ -30,6 +30,7 @@ namespace Global.Dynamic
         [SerializeField] private InitialRealm initialRealm;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
         private Vector2Int targetScene;
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -215,7 +216,15 @@ namespace Global.Dynamic
 
         private void SetupInitialConfig()
         {
-            startingRealm = initialRealm == InitialRealm.GenesisCity ? "https://peer.decentraland.org" : "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
+            startingRealm = initialRealm switch
+                            {
+                                InitialRealm.GenesisCity => "https://peer.decentraland.org",
+                                InitialRealm.SDK => "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest",
+                                InitialRealm.World => "https://worlds-content-server.decentraland.org/world/" + targetWorld,
+                                InitialRealm.Localhost => "http://127.0.0.1:8000",
+                                _ => startingRealm,
+                            };
+
             startingParcel = initialRealm == InitialRealm.SDK ? targetScene : settings.StartPosition;
         }
 
