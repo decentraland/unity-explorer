@@ -12,12 +12,14 @@ namespace DCL.Chat
     {
         private const char CHAT_COMMAND_CHAR = '/';
 
+        private const string GENESIS = "genesis";
+
         private static readonly Regex CHANGE_REALM_REGEX = new (@"^/(world|goto)\s+(\S+\.dcl\.eth|home)$", RegexOptions.Compiled);
         private static readonly Regex TELEPORT_REGEX = new (@"^/goto\s+(-?\d+),(-?\d+)$", RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
 
-        private readonly URLDomain worldDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world");
+        private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
 
@@ -44,7 +46,7 @@ namespace DCL.Chat
             if (CHANGE_REALM_REGEX.IsMatch(message))
             {
                 Match match = CHANGE_REALM_REGEX.Match(message);
-                string realmOrHome = match.Groups[2].Value == "home" ? "https://peer.decentraland.org" : GetWorldAddress(match.Groups[2].Value);
+                string realmOrHome = match.Groups[2].Value == GENESIS ? "https://peer.decentraland.org" : GetWorldAddress(match.Groups[2].Value);
 
                 realmNavigator.ChangeRealmAsync(realmOrHome, CancellationToken.None).Forget();
                 return true;
