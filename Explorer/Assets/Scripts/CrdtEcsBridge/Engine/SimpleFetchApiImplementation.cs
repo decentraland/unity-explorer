@@ -40,7 +40,7 @@ namespace CrdtEcsBridge.Engine
 
             if (parsedRequestMethod == RequestMethod.INVALID) { throw new ArgumentException("Invalid request method."); }
 
-            var commonArguments = new CommonArguments(URLAddress.FromString(url), null, 3, timeout);
+            var commonArguments = new CommonArguments(URLAddress.FromString(url), timeout: timeout);
             var webRequestHeaders = new WebRequestHeadersInfo();
             headersDictionary.Clear();
 
