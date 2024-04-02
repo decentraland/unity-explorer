@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Navmap
@@ -13,6 +14,7 @@ namespace DCL.Navmap
         private const float MOUSE_WHEEL_THRESHOLD = 0.04f;
 
         private readonly NavmapZoomView view;
+        private readonly DCLInput dclInput;
 
         private AnimationCurve normalizedCurve;
         private int zoomSteps;
@@ -27,9 +29,10 @@ namespace DCL.Navmap
 
         private IMapCameraController cameraController;
 
-        public NavmapZoomController(NavmapZoomView view)
+        public NavmapZoomController(NavmapZoomView view, DCLInput dclInput)
         {
             this.view = view;
+            this.dclInput = dclInput;
             Initialize();
 
             normalizedCurve = view.normalizedZoomCurve;
@@ -38,6 +41,14 @@ namespace DCL.Navmap
             CurveClamp01();
         }
 
+        private void MouseWheel(InputAction.CallbackContext obj)
+        {
+            if (obj.ReadValue<Vector2>().y == 0 || Mathf.Abs(obj.ReadValue<Vector2>().y) < MOUSE_WHEEL_THRESHOLD)
+                return;
+
+            bool zoomAction = obj.ReadValue<Vector2>().y > 0;
+            Zoom(zoomAction);
+        }
 
         private void Initialize()
         {
@@ -99,6 +110,7 @@ namespace DCL.Navmap
 
                 Deactivate();
             }
+            dclInput.UI.ScrollWheel.performed += MouseWheel;
 
             cts = new CancellationTokenSource();
 
@@ -115,6 +127,7 @@ namespace DCL.Navmap
         {
             if (!active) return;
 
+            dclInput.UI.ScrollWheel.performed -= MouseWheel;
             cts.Cancel();
             cts.Dispose();
             cts = null;
