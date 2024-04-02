@@ -7,7 +7,9 @@ module.exports.getUserData = async function(message) {
     const data = result.data;
     
     if (!data) {
-        return {};
+        return {
+            data: undefined
+        };
     }
     
     const avatar = data.avatar;
