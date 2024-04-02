@@ -129,14 +129,14 @@ namespace DCL.AvatarRendering.Emotes
                         return;
                     }
 
-                    StreamableLoadingResult<WearableAsset>? streamableAsset = emote.WearableAssetResults[0];
+                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[0];
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null) return;
                     if (!streamableAsset.Value.Succeeded) return;
                     if (streamableAsset.Value.Exception != null) return;
 
-                    GameObject? mainAsset = streamableAsset.Value.Asset?.GetMainAsset<GameObject>();
+                    GameObject? mainAsset = streamableAsset.Value.Asset!.MainAsset;
 
                     if (mainAsset == null) return;
 

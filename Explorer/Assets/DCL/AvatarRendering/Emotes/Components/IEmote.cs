@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 
@@ -8,6 +9,8 @@ namespace DCL.AvatarRendering.Emotes.Components
     {
         StreamableLoadingResult<EmoteDTO> Model { get; set; }
         StreamableLoadingResult<AudioClip>? AudioAssetResult { get; set; }
+
+        StreamableLoadingResult<WearableRegularAsset>?[] WearableAssetResults { get; }
 
         bool IsLooping();
     }

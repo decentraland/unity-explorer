@@ -86,7 +86,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 GetMockWearable("hair", WearablesConstants.Categories.HAIR),
             })));
 
-            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise, emotePromiseб
+            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise, emotePromise,
                 randomSkinColor, randomHairColor, randomEyesColor);
 
             Material? celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");

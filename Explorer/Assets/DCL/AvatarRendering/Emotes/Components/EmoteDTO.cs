@@ -1,82 +1,22 @@
+using DCL.AvatarRendering.Wearables;
 using System;
-using UnityEngine.Serialization;
 
 namespace DCL.AvatarRendering.Emotes
 {
     [Serializable]
-    public struct EmoteDTO
+    public class EmoteDTO : AvatarAttachmentDTO<EmoteDTO.Metadata>
     {
-        //hash
-        public string id;
-        public string type;
-        public string[] pointers;
-        public long timestamp;
-        public string version;
-        public Metadata metadata;
-        public Content[] content;
-
         [Serializable]
-        public struct Content
-        {
-            public string file;
-            public string hash;
-        }
-
-        [Serializable]
-        public struct Metadata
+        public class Metadata : MetadataBase
         {
             public Data emoteDataADR74;
 
-            //urn
-            public string id;
-            public string name;
-
-            public I18n[] i18n;
-            public string thumbnail;
-
-            public string rarity;
-            public string description;
+            public override DataBase AbstractData => emoteDataADR74;
 
             [Serializable]
-            public struct I18n
+            public class Data : DataBase
             {
-                public string code;
-                public string text;
-            }
-
-            [Serializable]
-            public struct Representation
-            {
-                public string[] bodyShapes;
-                public string mainFile;
-                public string[] contents;
-                public string[] overrideHides;
-                public string[] overrideReplaces;
-            }
-
-            [Serializable]
-            public struct Data
-            {
-                public Representation[] representations;
-                public string category;
-                public string[] tags;
-                public string[] replaces;
-                public string[] hides;
-                public string[] removesDefaultHiding;
                 public bool loop;
-            }
-        }
-
-        public void Sanitize()
-        {
-            metadata.emoteDataADR74.hides = Array.Empty<string>();
-            metadata.emoteDataADR74.replaces = Array.Empty<string>();
-            metadata.emoteDataADR74.removesDefaultHiding = Array.Empty<string>();
-
-            for (var i = 0; i < metadata.emoteDataADR74.representations.Length; i++)
-            {
-                metadata.emoteDataADR74.representations[i].overrideHides = Array.Empty<string>();
-                metadata.emoteDataADR74.representations[i].overrideReplaces = Array.Empty<string>();
             }
         }
     }

@@ -14,6 +14,8 @@ namespace DCL.AvatarRendering.Emotes.Components
         public CancellationTokenSource CancellationTokenSource { get; }
 
         public IReadOnlyCollection<URN> Pointers { get; }
+
+        // TODO why so many allocations?
         public HashSet<URN> ProcessedPointers { get; }
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }

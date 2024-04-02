@@ -2,46 +2,47 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IAvatarAttachment
+    public partial interface IAvatarAttachment
     {
+        private const string DEFAULT_RARITY = "base";
+
         bool IsLoading { get; set; }
 
         /// <summary>
         ///     Might be never resolved if Wearable is loaded from the Embedded Source
         /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; }
+
         StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
 
-        string GetMainFileHash(BodyShape bodyShape);
+        string GetHash() =>
+            GetDTO().id;
 
-        string GetHash();
+        URN GetUrn() =>
+            GetDTO().Metadata.id;
 
-        URN GetUrn();
+        string GetName() =>
+            GetDTO().Metadata.name;
 
-        string GetName();
+        string GetCategory() =>
+            GetDTO().Metadata.AbstractData.category;
 
-        string? GetCategory();
+        string GetDescription() =>
+            GetDTO().Metadata.description;
 
-        string GetDescription();
+        string GetRarity() =>
+            GetDTO().Metadata.rarity ?? DEFAULT_RARITY;
 
-        string GetRarity();
+        bool IsUnisex() =>
+            GetDTO().Metadata.AbstractData.representations.Length > 1;
 
-        URLPath GetThumbnail();
+        AvatarAttachmentDTO GetDTO();
 
-        bool IsUnisex();
-
-        bool IsCompatibleWithBodyShape(string bodyShape);
-
-        bool IsBodyShape();
-
-        void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
-
-        bool IsFacialFeature();
+        public string ToString() =>
+            $"Emote({GetHash()} | {GetUrn()})";
     }
 }

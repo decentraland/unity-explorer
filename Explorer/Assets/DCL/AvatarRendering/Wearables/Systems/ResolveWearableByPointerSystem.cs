@@ -267,16 +267,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             // Manifest is required for Web loading only
             if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
-            {
-                var promise = AssetBundleManifestPromise.Create(World,
-                    new GetWearableAssetBundleManifestIntention(component.GetHash(), new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: intention.CancellationTokenSource)),
-                    partitionComponent);
-
-                component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
-                component.IsLoading = true;
-                World.Create(promise, component, intention.BodyShape);
-                return true;
-            }
+                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (component.TryCreateAssetBundlePromise(in intention, customStreamingSubdirectory, partitionComponent, World))
             {

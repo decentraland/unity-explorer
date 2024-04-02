@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -39,6 +40,9 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 
 namespace DCL.AvatarRendering.Emotes
 {
+    /// <summary>
+    ///     TODO this system should be generalized with <see cref="ResolveWearableByPointerSystem" />
+    /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadEmotesByPointersSystem : LoadSystemBase<EmotesDTOList, GetEmotesByPointersFromRealmIntention>
@@ -312,7 +316,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (result.Succeeded)
                 {
-                    StreamableLoadingResult<WearableAsset> asset = result.ToWearableAsset();
+                    var asset = new StreamableLoadingResult<WearableRegularAsset>(result.ToRegularAsset());
 
                     if (emote.IsUnisex())
                     {
@@ -335,26 +339,18 @@ namespace DCL.AvatarRendering.Emotes
                 && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
 
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
-                && component.GetUrn().IsValid())
-            {
-                var promise = AssetBundleManifestPromise.Create(World,
-                    new GetWearableAssetBundleManifestIntention(component.GetHash(),
-                        new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: intention.CancellationTokenSource)),
-                    partitionComponent);
+                && component.GetUrn().IsValid()) { return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent); }
 
-                component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
-
-                component.IsLoading = true;
-                World.Create(promise, component, intention.BodyShape);
-                return true;
-            }
+            if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
+                return false;
 
             if (component.WearableAssetResults[intention.BodyShape] == null)
             {
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
                 var promise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(component.GetMainFileHash(intention.BodyShape) + PlatformUtils.GetPlatform(),
+                    GetAssetBundleIntention.FromHash(typeof(GameObject),
+                        hash! + PlatformUtils.GetPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),

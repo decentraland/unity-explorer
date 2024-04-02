@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -95,8 +94,8 @@ namespace DCL.AvatarRendering.Emotes
 
             for (var i = 0; i < emote.WearableAssetResults.Length; i++)
             {
-                StreamableLoadingResult<WearableAsset>? result = emote.WearableAssetResults[i];
-                WearableAsset? wearableAsset = emote.WearableAssetResults[i]?.Asset;
+                StreamableLoadingResult<WearableRegularAsset>? result = emote.WearableAssetResults[i];
+                WearableRegularAsset? wearableAsset = emote.WearableAssetResults[i]?.Asset;
 
                 if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
                 {

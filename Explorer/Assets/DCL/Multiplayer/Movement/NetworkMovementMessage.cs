@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement
         public Vector3 position;
         public Vector3 velocity;
 
-        public CharacterAnimationComponent.AnimationStates animState;
+        public AnimationStates animState;
         public bool isStunned;
 
         public override string ToString() =>

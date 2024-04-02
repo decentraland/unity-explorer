@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 model.metadata.i18n = new[]
                 {
-                    new EmoteDTO.Metadata.I18n
+                    new AvatarAttachmentDTO.I18n
                     {
                         code = "en",
                         text = embeddedEmote.name,
@@ -67,9 +67,9 @@ namespace DCL.AvatarRendering.Emotes
                 emote.IsLoading = false;
                 emote.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(embeddedEmote.thumbnail);
 
-                WearableAsset asset = CreateWearableAsset(embeddedEmote.prefab);
+                WearableRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);
                 asset.AddReference();
-                var assetLoadResult = new StreamableLoadingResult<WearableAsset>(asset);
+                var assetLoadResult = new StreamableLoadingResult<WearableRegularAsset>(asset);
                 emote.WearableAssetResults[BodyShape.MALE] = assetLoadResult;
                 emote.WearableAssetResults[BodyShape.FEMALE] = assetLoadResult;
 
@@ -84,14 +84,14 @@ namespace DCL.AvatarRendering.Emotes
             return generatedEmotes;
         }
 
-        private static WearableAsset CreateWearableAsset(GameObject glb)
+        private static WearableRegularAsset CreateWearableAsset(GameObject glb)
         {
-            var rendererInfos = new List<WearableAsset.RendererInfo>();
+            var rendererInfos = new List<WearableRegularAsset.RendererInfo>();
 
             foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
-                rendererInfos.Add(new WearableAsset.RendererInfo(renderer, renderer.sharedMaterial));
+                rendererInfos.Add(new WearableRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
 
-            return new WearableAsset(glb, rendererInfos, null);
+            return new WearableRegularAsset(glb, rendererInfos, null);
         }
 
 #if UNITY_EDITOR
