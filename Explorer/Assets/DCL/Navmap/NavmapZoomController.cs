@@ -33,7 +33,6 @@ namespace DCL.Navmap
         {
             this.view = view;
             this.dclInput = dclInput;
-            Initialize();
 
             normalizedCurve = view.normalizedZoomCurve;
             zoomSteps = normalizedCurve.length;
@@ -48,19 +47,6 @@ namespace DCL.Navmap
 
             bool zoomAction = obj.ReadValue<Vector2>().y > 0;
             Zoom(zoomAction);
-        }
-
-        private void Initialize()
-        {
-            view.zoomVerticalRange = new Vector2Int(view.zoomVerticalRange.x, 40);
-
-            normalizedCurve = new AnimationCurve();
-            normalizedCurve.AddKey(0, 0);
-            normalizedCurve.AddKey(1, 0.25f);
-            normalizedCurve.AddKey(2, 0.5f);
-            normalizedCurve.AddKey(3, 0.75f);
-            normalizedCurve.AddKey(4, 1);
-            zoomSteps = normalizedCurve.length;
         }
 
         public void Dispose()
