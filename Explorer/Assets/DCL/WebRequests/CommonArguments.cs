@@ -22,6 +22,9 @@ namespace DCL.WebRequests
 
         public readonly DownloadHandler? CustomDownloadHandler;
 
+        public CommonArguments(string url) : this(URLAddress.FromString(url)) {
+        }
+
         public CommonArguments(URLAddress url, DownloadHandler? customDownloadHandler = null, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT)
         {
             URL = url;

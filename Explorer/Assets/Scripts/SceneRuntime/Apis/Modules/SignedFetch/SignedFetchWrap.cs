@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using JetBrains.Annotations;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Threading;
-using UnityEngine.Networking;
+using Utility;
+using Utility.Times;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch
 {
@@ -22,29 +24,74 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         public object Headers(SignedFetchRequest signedFetchRequest)
         {
             string jsonMetaData = signedFetchRequest.init?.body ?? string.Empty;
-            return WebRequestControllerExtensions.Headers(jsonMetaData).AsMutableDictionary();
+
+            return new WebRequestHeadersInfo()
+                  .WithSign(jsonMetaData, DateTime.UtcNow.UnixTimeAsMilliseconds())
+                  .AsMutableDictionary();
         }
 
         [UsedImplicitly]
-        public object SignedFetch(string url, string? jsonMetaData)
+        public object SignedFetch(SignedFetchRequest request)
         {
-            async UniTask<GenericPostRequest> ExecuteAsync()
+            UniTask<FlatFetchResponse> ExecuteAsync()
             {
-                var result = await webController
-                   .SignedFetchAsync(url, jsonMetaData ?? string.Empty, cancellationTokenSource.Token);
+                string? method = request.init?.method?.ToLower();
+                ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-                if (result.UnityWebRequest.result is not UnityWebRequest.Result.Success)
-                    throw new Exception($"Failed to fetch {url} with status code {result.UnityWebRequest.responseCode}");
+                var commonArgs = new CommonArguments(request.url);
 
-                return result;
+                var headers = new WebRequestHeadersInfo(request.init?.headers)
+                   .WithSign(request.init?.body ?? string.Empty, unixTimestamp);
+
+                var signInfo = WebRequestSignInfo.NewFromRaw(
+                    request.init?.body,
+                    request.url,
+                    unixTimestamp,
+                    method ?? string.Empty
+                );
+
+                async UniTask<ITypedWebRequest> RequestAsync() =>
+                    method switch
+                    {
+                        null => await webController.SignedFetchAsync(
+                            request.url,
+                            request.init?.body ?? string.Empty,
+                            cancellationTokenSource.Token
+                        ),
+                        "post" => await webController.PostAsync(
+                            commonArgs,
+                            GenericPostArguments.CreateJsonOrDefault(request.init?.body),
+                            cancellationTokenSource.Token,
+                            headersInfo: headers,
+                            signInfo: signInfo
+                        ),
+                        "get" => await webController.GetAsync(
+                            commonArgs,
+                            cancellationTokenSource.Token,
+                            headersInfo: headers,
+                            signInfo: signInfo
+                        ),
+                        "put" => await webController.PutAsync(
+                            commonArgs,
+                            GenericPutArguments.CreateJsonOrDefault(request.init?.body),
+                            cancellationTokenSource.Token,
+                            headersInfo: headers,
+                            signInfo: signInfo
+                        ),
+                        _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
+                    };
+
+                return FlatFetchResponse.NewAsync(RequestAsync());
             }
+
+            ReportHub.Log(ReportCategory.JAVASCRIPT, $"Signed request received {request}");
 
             return ExecuteAsync().ToPromise();
         }
 
         public void Dispose()
         {
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
         }
     }
 }

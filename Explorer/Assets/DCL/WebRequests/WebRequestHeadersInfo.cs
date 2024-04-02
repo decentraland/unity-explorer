@@ -9,37 +9,53 @@ namespace DCL.WebRequests
     public struct WebRequestHeadersInfo : IDisposable
     {
         internal static readonly WebRequestHeadersInfo EMPTY = new ();
+        private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
 
         private static readonly ListObjectPool<WebRequestHeader> POOL = new (listInstanceDefaultCapacity: 4);
 
-        private List<WebRequestHeader> value;
+        private List<WebRequestHeader>? values;
 
-        public IReadOnlyList<WebRequestHeader> Value => value;
+        public readonly IReadOnlyList<WebRequestHeader> Value => values!;
+
+        public WebRequestHeadersInfo(IReadOnlyDictionary<string, string>? headers)
+        {
+            values = POOL.Get()!;
+
+            foreach ((string key, string s) in headers ?? EMPTY_HEADERS)
+                Add(key, s);
+        }
 
         public WebRequestHeadersInfo Add(WebRequestHeader header)
         {
-            value ??= POOL.Get();
-            value.Add(header);
+            values ??= POOL.Get()!;
+            values.Add(header);
             return this;
         }
 
         public WebRequestHeadersInfo Add(string key, string value) =>
             Add(new WebRequestHeader(key, value));
 
+        public WebRequestHeadersInfo WithSign(string jsonMetaData, ulong unixTimestamp)
+        {
+            Add("x-identity-timestamp", unixTimestamp.ToString()!);
+            Add("x-identity-metadata", jsonMetaData);
+            return this;
+        }
+
         public readonly IReadOnlyDictionary<string, string> AsDictionary() =>
-            value.ToDictionary(e => e.Name, e => e.Value);
+            values?.ToDictionary(e => e.Name, e => e.Value) ?? EMPTY_HEADERS;
 
         public readonly Dictionary<string, string> AsMutableDictionary() =>
-            value.ToDictionary(e => e.Name, e => e.Value);
+            values?.ToDictionary(e => e.Name, e => e.Value) ?? new Dictionary<string, string>();
 
         public override readonly string ToString()
         {
-            if (value == null) return "WebRequestHeadersInfo: EMPTY";
+            if (values == null) return "WebRequestHeadersInfo: EMPTY";
 
             var sb = new StringBuilder();
             sb.Append("WebRequestHeadersInfo: ");
 
-            foreach (var webRequestHeader in value)
+            foreach (var webRequestHeader in values)
             {
                 sb.Append(webRequestHeader.ToString());
                 sb.Append(", ");
@@ -50,10 +66,10 @@ namespace DCL.WebRequests
 
         public void Dispose()
         {
-            if (value != null)
+            if (values != null)
             {
-                POOL.Release(value);
-                value = null;
+                POOL.Release(values);
+                values = null;
             }
         }
     }
