@@ -12,13 +12,13 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage lastFullMovementMessage,
+            in NetworkMovementMessage lastNetworkMovementMessage,
             in CharacterAnimationComponent playerAnimationComponent,
             in StunComponent playerStunComponent,
             in MovementInputComponent move,
             in JumpInputComponent jump,
             CharacterController playerCharacter,
             IMultiplayerMovementSettings settings) =>
-            Vector3.SqrMagnitude(lastFullMovementMessage.position - playerCharacter.transform.position) > PositionChangeThreshold;
+            Vector3.SqrMagnitude(lastNetworkMovementMessage.position - playerCharacter.transform.position) > PositionChangeThreshold;
     }
 }

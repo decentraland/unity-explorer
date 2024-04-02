@@ -54,7 +54,8 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoStream(ref MediaPlayerComponent component, ref PBVideoPlayer sdkComponent)
         {
-            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            if (component.State != VideoState.VsError)
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
 
             if (sdkComponent.IsDirty && sdkComponent.Src.IsValidUrl() && frameTimeBudget.TrySpendBudget())
             {

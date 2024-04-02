@@ -85,9 +85,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetFloat(hash, value);
         }
 
-        public float GetAnimatorFloat(int hash) =>
-            avatarAnimator.GetFloat(hash);
-
         public void SetAnimatorTrigger(int hash)
         {
             avatarAnimator.SetTrigger(hash);
@@ -105,6 +102,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void SetAnimatorBool(int hash, bool value) =>
             avatarAnimator.SetBool(hash, value);
 
+        public float GetAnimatorFloat(int hash) =>
+            avatarAnimator.GetFloat(hash);
+
         public void ReplaceEmoteAnimation(AnimationClip animationClip)
         {
             if (lastEmote == animationClip) return;
@@ -121,8 +121,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         Transform GetTransform();
         void SetAnimatorFloat(int hash, float value);
 
-        float GetAnimatorFloat(int hash);
-
         void SetAnimatorTrigger(int hash);
 
         void SetAnimatorBool(int hash, bool value);
@@ -130,6 +128,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         bool GetAnimatorBool(int hash);
 
         void ReplaceEmoteAnimation(AnimationClip animationClip);
+
+        float GetAnimatorFloat(int hash);
 
         bool IsAnimatorInTag(int hashTag);
 

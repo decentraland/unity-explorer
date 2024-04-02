@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
             EmotePromise emotePromise = CreateEmotePromise(pbAvatarShape, partition);
             pbAvatarShape.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor(), emotePromise));
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, emotePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor(), pbAvatarShape.EyeColor.ToUnityColor()));
         }
 
         [Query]
@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             EmotePromise emotePromise = CreateEmotePromise(profile, partition);
             profile.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, emotePromise));
+            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, emotePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
         }
 
         [Query]

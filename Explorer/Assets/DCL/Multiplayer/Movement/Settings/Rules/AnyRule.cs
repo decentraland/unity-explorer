@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement.Settings.Rules
 
         public override bool IsSendConditionMet(
             in float t,
-            in FullMovementMessage lastFullMovementMessage,
+            in NetworkMovementMessage lastNetworkMovementMessage,
             in CharacterAnimationComponent playerAnimationComponent,
             in StunComponent playerStunComponent,
             in MovementInputComponent move,
@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Movement.Settings.Rules
             IMultiplayerMovementSettings settings)
         {
             foreach (var rule in rules)
-                if (rule.IsSendConditionMet(t, in lastFullMovementMessage, in playerAnimationComponent, in playerStunComponent, in move, in jump, playerCharacter, settings))
+                if (rule.IsSendConditionMet(t, in lastNetworkMovementMessage, in playerAnimationComponent, in playerStunComponent, in move, in jump, playerCharacter, settings))
                     return true;
 
             return false;

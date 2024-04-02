@@ -205,8 +205,8 @@ namespace Global.Dynamic
             var emotesCache = new MemoryEmotesCache();
             staticContainer.CacheCleaner.Register(emotesCache);
 
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<FullMovementMessage>>(
-                () => new SimplePriorityQueue<FullMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: x => x.Clear()
             );
 
@@ -261,7 +261,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, dclInput),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,

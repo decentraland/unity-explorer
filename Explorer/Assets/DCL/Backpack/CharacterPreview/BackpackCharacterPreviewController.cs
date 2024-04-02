@@ -62,7 +62,7 @@ namespace DCL.Backpack.CharacterPreview
         {
             previewAvatarModel.Wearables ??= new List<URN>();
 
-            if (i.IsBodyShape())
+            if (i.Type == WearableType.BodyShape)
                 previewAvatarModel.BodyShape = i.GetUrn();
             else previewAvatarModel.Wearables.Add(i.GetUrn());
 

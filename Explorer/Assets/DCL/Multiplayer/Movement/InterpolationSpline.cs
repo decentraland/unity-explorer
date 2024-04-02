@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Movement
         /// <summary>
         ///     Linear Interpolation. Just wrapper around built-in Vector3.Lerp
         /// </summary>
-        public static Vector3 Linear(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration) =>
+        public static Vector3 Linear(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration) =>
             Vector3.Lerp(start.position, end.position, t / totalDuration);
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement
         /// <param name="t"> time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 ProjectiveVelocityBlending(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration)
+        public static Vector3 ProjectiveVelocityBlending(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
             Vector3 fakeStartPosition = end.position - (end.velocity * totalDuration);
 
@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Movement
         /// <param name="t"> time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 ProjectivePositionBlending(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration)
+        public static Vector3 ProjectivePositionBlending(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
             Vector3 fakeStartPosition = end.position - (end.velocity * totalDuration);
 
@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.Movement
         /// <param name="t">time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 Hermite(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration)
+        public static Vector3 Hermite(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
             // Interpolating
             float lerpValue = t / totalDuration;
@@ -103,7 +103,7 @@ namespace DCL.Multiplayer.Movement
         /// <param name="t">time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 MonotoneYHermite(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration)
+        public static Vector3 MonotoneYHermite(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
             (start.velocity.y, end.velocity.y) = Monotonize(start.position.y, end.position.y, start.velocity.y, end.velocity.y, end.timestamp - start.timestamp);
             return Hermite(start, end, t, totalDuration);
@@ -118,7 +118,7 @@ namespace DCL.Multiplayer.Movement
         /// <param name="t">time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 FullMonotonicHermite(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration)
+        public static Vector3 FullMonotonicHermite(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
             float timeDiff = end.timestamp - start.timestamp;
 
@@ -164,7 +164,7 @@ namespace DCL.Multiplayer.Movement
         /// <param name="t">time passed from the start of the interpolation process</param>
         /// <param name="totalDuration"> total duration of the interpolation </param>
         /// <returns></returns>
-        public static Vector3 Bezier(FullMovementMessage start, FullMovementMessage end, float t, float totalDuration)
+        public static Vector3 Bezier(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
             float lerpValue = t / totalDuration;
 

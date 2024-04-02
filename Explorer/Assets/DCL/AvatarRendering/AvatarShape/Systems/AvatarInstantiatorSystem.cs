@@ -41,7 +41,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IWearableAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private readonly Dictionary<string, Texture> facialFeaturesDefaultTexture;
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
@@ -179,44 +178,23 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             var facialFeatureTexture = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(avatarShapeComponent.BodyShape);
 
+            var attachPoint = avatarBase.transform;
+
             for (var i = 0; i < visibleWearables.Count; i++)
             {
                 IWearable resultWearable = visibleWearables[i];
-                WearableAsset? originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
-                if (resultWearable.IsFacialFeature())
-                {
-                    facialFeatureTexture[resultWearable.GetCategory()] = originalAsset?.GetMainAsset<Texture>();
-                }
-                else
-                {
-                    if (originalAsset?.GetMainAsset<GameObject>() == null)
-                    {
-                        ReportHub.LogError(GetReportCategory(),
-                            $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
+                var instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint, GetReportCategory());
 
-                        continue;
-                    }
-
-                    CachedWearable instantiatedWearable =
-                        wearableAssetsCache.InstantiateWearable(originalAsset, avatarBase.transform);
-
-                    avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
-
-                    usedCategories.Add(resultWearable.GetCategory());
-
-                    if (resultWearable.IsBodyShape())
-                    {
-                        bodyShape = instantiatedWearable;
-                    }
-                }
+                if (resultWearable.Type == WearableType.BodyShape)
+                    bodyShape = instance;
             }
 
             AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent,  facialFeatureTexture);
+                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTexture);
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
@@ -256,9 +234,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
-            else if (avatarShapeComponent.WearablePromise.Result.HasValue)
-                foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset.Wearables)
-                    wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
+            else
+                avatarShapeComponent.Dereference();
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,

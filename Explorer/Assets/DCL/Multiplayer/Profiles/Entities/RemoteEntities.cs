@@ -10,7 +10,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,11 +22,11 @@ namespace DCL.Multiplayer.Profiles.Entities
     {
         private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
-        private readonly IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<FullMovementMessage>> queuePool)
+        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
@@ -100,11 +99,10 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             Entity entity = world.Create(
                 profile.Profile,
-                PartitionComponent.TOP_PRIORITY,
                 transformComp,
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent(),
-                new RemotePlayerMovementComponent(profile.WalletId, queuePool),
+                new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );

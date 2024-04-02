@@ -40,14 +40,14 @@ namespace DCL.ParcelsService
             retrieveScene = null;
         }
 
-        public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        public async UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             if (retrieveScene == null)
             {
                 AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel));
                 loadReport.ProgressCounter.Value = 1f;
                 loadReport.CompletionSource.TrySetResult();
-                return;
+                return null;
             }
 
             SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
@@ -99,18 +99,10 @@ namespace DCL.ParcelsService
                 loadReport.ProgressCounter.Value = 1;
                 loadReport.CompletionSource.TrySetResult();
 
-                return;
+                return null;
             }
 
-            // Add report to the queue so it will be grabbed by the actual scene
-            sceneReadinessReportQueue.Enqueue(parcel, loadReport);
-
-            try
-            {
-                // add timeout in case of a trouble
-                await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
-            }
-            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
+            return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
         }
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
