@@ -10,7 +10,7 @@ using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetEmotesByPointersIntention : IAssetIntention, IEquatable<GetEmotesByPointersIntention>
+    public struct GetEmotesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetEmotesByPointersIntention>
     {
         public CancellationTokenSource CancellationTokenSource { get; }
 

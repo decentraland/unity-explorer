@@ -25,6 +25,6 @@ namespace DCL.AvatarRendering.Emotes
             int? pageNum = null, int? pageSize = null, URN? collectionId = null,
             OrderOperation? orderOperation = null, string? name = null);
 
-        UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, BodyShape bodyShape, CancellationToken ct);
+        UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct);
     }
 }

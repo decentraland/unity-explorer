@@ -75,27 +75,19 @@ namespace DCL.AvatarRendering.Emotes
             return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
         }
 
-        public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IEnumerable<URN> emoteIds, BodyShape bodyShape, CancellationToken ct)
+        public async UniTask<IReadOnlyList<IEmote>> GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct)
         {
-            List<URN> pointers = ListPool<URN>.Get();
+            using GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
+            var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            try
-            {
-                pointers.AddRange(emoteIds);
+            if (!promise.Result.HasValue)
+                return Array.Empty<IEmote>();
 
-                var intention = new GetEmotesByPointersIntention(pointers, bodyShape);
-                var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            if (!promise.Result.Value.Succeeded)
+                throw promise.Result.Value.Exception!;
 
-                if (!promise.Result.HasValue)
-                    return Array.Empty<IEmote>();
-
-                if (!promise.Result.Value.Succeeded)
-                    throw promise.Result.Value.Exception!;
-
-                return promise.Result.Value.Asset.Emotes;
-            }
-            finally { ListPool<URN>.Release(pointers); }
+            return promise.Result.Value.Asset.Emotes;
         }
     }
 }
