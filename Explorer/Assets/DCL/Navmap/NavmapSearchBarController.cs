@@ -2,9 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.WebRequests;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -20,13 +20,18 @@ namespace DCL.Navmap
 
         private CancellationTokenSource cts;
 
-        public NavmapSearchBarController(SearchBarView view, SearchResultPanelView searchResultPanelView, IPlacesAPIService placesAPIService, FloatingPanelView floatingPanelView)
+        public NavmapSearchBarController(
+            SearchBarView view,
+            SearchResultPanelView searchResultPanelView,
+            IPlacesAPIService placesAPIService,
+            FloatingPanelView floatingPanelView,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.floatingPanelView = floatingPanelView;
 
-            searchResultPanelController = new SearchResultPanelController(searchResultPanelView);
+            searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
             searchResultPanelController.OnResultClicked += ClickedResult;
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);

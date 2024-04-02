@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.PlacesAPIService;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,12 +15,14 @@ namespace DCL.Navmap
         public event Action<string> OnResultClicked;
 
         private readonly SearchResultPanelView view;
+        private readonly IWebRequestController webRequestController;
         private ObjectPool<FullSearchResultsView> resultsPool;
         private readonly List<FullSearchResultsView> usedPoolElements;
 
-        public SearchResultPanelController(SearchResultPanelView view)
+        public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
         {
             this.view = view;
+            this.webRequestController = webRequestController;
             usedPoolElements = new List<FullSearchResultsView>();
         }
 
@@ -28,10 +31,17 @@ namespace DCL.Navmap
             FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
 
             resultsPool = new ObjectPool<FullSearchResultsView>(
-                () => Object.Instantiate(asset, view.searchResultsContainer),
+                () => CreatePoolElements(asset),
                 _ => { },
                 defaultCapacity: 8
             );
+        }
+
+        private FullSearchResultsView CreatePoolElements(FullSearchResultsView asset)
+        {
+            FullSearchResultsView fullSearchResultsView = Object.Instantiate(asset, view.searchResultsContainer);
+            fullSearchResultsView.ConfigurePlaceImageController(webRequestController);
+            return fullSearchResultsView;
         }
 
         public void ShowLoading()
@@ -57,6 +67,7 @@ namespace DCL.Navmap
                 fullSearchResultsView.placeName.text = placeInfo.title;
                 fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
+                fullSearchResultsView.SetPlaceImage(placeInfo.image);
                 fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
             }
 

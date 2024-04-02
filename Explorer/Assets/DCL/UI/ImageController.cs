@@ -20,8 +20,11 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri)
+        public void RequestImage(string uri, bool removePrevious = false)
         {
+            if(removePrevious)
+                view.Image.sprite = null;
+
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RequestImageAsync(uri, cts.Token).Forget();

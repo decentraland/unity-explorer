@@ -1,3 +1,5 @@
+using DCL.UI;
+using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,7 +10,7 @@ namespace DCL.Navmap
     public class FullSearchResultsView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField]
-        public Image placeImage;
+        public ImageView placeImage;
 
         [field: SerializeField]
         public TMP_Text placeName;
@@ -24,6 +26,14 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Image arrowImage;
+
+        private ImageController imageController;
+
+        public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
+            imageController = new ImageController(placeImage, webRequestController);
+
+        public void SetPlaceImage(string imageUrl) =>
+            imageController.RequestImage(imageUrl, true);
 
         public void OnPointerEnter(PointerEventData eventData)
         {

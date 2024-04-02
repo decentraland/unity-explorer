@@ -55,7 +55,7 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView);
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController, webRequestController, mvcManager);
             filterController = new NavmapFilterController(this.navmapView.filterView);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, navmapView.floatingPanelView);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, navmapView.floatingPanelView, webRequestController);
             searchBarController.OnResultClicked += OnResultClicked;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
