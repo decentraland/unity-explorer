@@ -862,6 +862,7 @@ MonoBehaviour:
   floatingPanelView: {fileID: 6116657360967466757}
   filterView: {fileID: 7028833074500842829}
   zoomView: {fileID: 5363161542596086617}
+  <LocationView>k__BackingField: {fileID: 6833875152015106317}
   <TabSelectorMappedViews>k__BackingField:
   - <TabSelectorViews>k__BackingField: {fileID: 3289875574004561177}
     <Section>k__BackingField: 0
@@ -2405,6 +2406,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2f1b8b4576b44a5a9a465b3539bd870, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6833875152015106317 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7036058024288519435, guid: dd1758cb97efe456cbe43d2c482a46f2, type: 3}
+  m_PrefabInstance: {fileID: 4572231421811991558}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c281d18508474b6e87e7efe3ca8f535e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &6233412524606333160

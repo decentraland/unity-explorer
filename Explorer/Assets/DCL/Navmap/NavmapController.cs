@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.MapRenderer;
@@ -38,6 +39,7 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
+        private readonly NavmapLocationController navmapLocationController;
 
         public NavmapController(
             NavmapView navmapView,
@@ -46,7 +48,9 @@ namespace DCL.Navmap
             ITeleportController teleportController,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            World world,
+            Entity playerEntity)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -60,6 +64,7 @@ namespace DCL.Navmap
             searchBarController.OnResultClicked += OnResultClicked;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
 
             mapSections = new ()
             {
@@ -113,6 +118,7 @@ namespace DCL.Navmap
                 ));
             satelliteController.InjectCameraController(cameraController);
             streetViewController.InjectCameraController(cameraController);
+            navmapLocationController.InjectCameraController(cameraController);
             mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);
         }

@@ -23,6 +23,9 @@ namespace DCL.Navmap
         public NavmapZoomView zoomView;
 
         [field: SerializeField]
+        public NavmapLocationView LocationView { get; private set; }
+
+        [field: SerializeField]
         public NavmapPanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; }
 
         [field: SerializeField]
