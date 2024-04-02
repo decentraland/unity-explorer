@@ -4,6 +4,7 @@ using DCL.UI;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -15,6 +16,9 @@ namespace DCL.Chat
 {
     public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler
     {
+        public event Action OnChatViewPointerEnter;
+        public event Action OnChatViewPointerExit;
+
         private const float BACKGROUND_FADE_TIME = 0.2f;
         private const float CHAT_ENTRIES_FADE_TIME = 3f;
         private const int CHAT_ENTRIES_WAIT_BEFORE_FADE_MS = 10000;
@@ -62,6 +66,7 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            OnChatViewPointerEnter?.Invoke();
             PanelBackgroundCanvasGroup.DOFade(1, BACKGROUND_FADE_TIME);
             ScrollbarCanvasGroup.DOFade(1, BACKGROUND_FADE_TIME);
             StopChatEntriesFadeout();
@@ -69,6 +74,7 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            OnChatViewPointerExit?.Invoke();
             PanelBackgroundCanvasGroup.DOFade(0, BACKGROUND_FADE_TIME);
             ScrollbarCanvasGroup.DOFade(0, BACKGROUND_FADE_TIME);
             StartChatEntriesFadeout();
@@ -99,7 +105,7 @@ namespace DCL.Chat
             cts.Token.ThrowIfCancellationRequested();
             ChatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(CHAT_ENTRIES_WAIT_BEFORE_FADE_MS, cancellationToken: ct);
-            await ChatEntriesCanvasGroup.DOFade(0, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
+            await ChatEntriesCanvasGroup.DOFade(0.4f, CHAT_ENTRIES_FADE_TIME).ToUniTask(cancellationToken: ct);
         }
     }
 }

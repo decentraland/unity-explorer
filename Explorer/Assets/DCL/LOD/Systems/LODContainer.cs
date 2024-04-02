@@ -20,10 +20,10 @@ namespace DCL.LOD.Systems
     /// <summary>
     /// LOD Container unites LOD and Road Plugins and their common dependencies
     /// </summary>
-    public class LODContainer : DCLContainer<LODContainer.Settings>
+    public class LODContainer : DCLContainer<LODContainer.RoadSettings>
     {
         [Serializable]
-        public class Settings : IDCLPluginSettings
+        public class RoadSettings : IDCLPluginSettings
         {
             [field: SerializeField]
             public StaticSettings.RoadDataRef RoadData { get; set; }
@@ -53,7 +53,7 @@ namespace DCL.LOD.Systems
         {
             var container = new LODContainer(staticContainer.AssetsProvisioner);
 
-            return await container.InitializeContainerAsync<LODContainer, Settings>(settingsContainer, ct, c =>
+            return await container.InitializeContainerAsync<LODContainer, RoadSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
 
@@ -82,9 +82,9 @@ namespace DCL.LOD.Systems
             roadSettingsAsset.Dispose();
         }
 
-        protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
+        protected override async UniTask InitializeInternalAsync(RoadSettings roadSettings, CancellationToken ct)
         {
-            roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.RoadData, ct: ct);
+            roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(roadSettings.RoadData, ct: ct);
             roadAssetsPrefabList = new List<GameObject>();
             foreach (var t in roadSettingsAsset.Value.RoadAssetsReference)
                 roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);

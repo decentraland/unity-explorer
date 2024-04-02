@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
+using DCL.LOD;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -21,9 +22,9 @@ using UnityEngine;
 using Utility;
 using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
 
-namespace DCL.LOD
+namespace DCL.PluginSystem.Global
 {
-    public class LODPlugin : IDCLGlobalPlugin<LODSettings>
+    public class LODPlugin : IDCLGlobalPlugin<LODPlugin.LODSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly LODAssetsPool lodAssetsPool;
@@ -89,7 +90,7 @@ namespace DCL.LOD
                 lodMaterialPool.Release(prewarmedMaterials[i]);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var lodContainer = new GameObject("POOL_CONTAINER_LODS");
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
@@ -112,15 +113,15 @@ namespace DCL.LOD
         {
             lodAssetsPool.Unload(frameCapBudget, 3);
         }
-    }
 
-    [Serializable]
-    public class LODSettings : IDCLPluginSettings
-    {
-        [field: Header(nameof(LODPlugin) + "." + nameof(LODSettings))]
-        [field: Space]
-        [field: SerializeField]
-        public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
-        
+
+        [Serializable]
+        public class LODSettings : IDCLPluginSettings
+        {
+            [field: Header(nameof(LODPlugin) + "." + nameof(LODSettings))]
+            [field: Space]
+            [field: SerializeField]
+            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
+        }
     }
 }

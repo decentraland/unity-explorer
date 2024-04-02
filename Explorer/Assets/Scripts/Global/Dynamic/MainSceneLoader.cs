@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Minimap;
@@ -10,6 +11,7 @@ using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -18,36 +20,46 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
+using Utility;
 
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
+        [Header("Startup Config")]
+        [SerializeField] private InitialRealm initialRealm;
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
+        private Vector2Int targetScene;
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] private bool showSplash;
+        [SerializeField] private bool showAuthentication;
+        [SerializeField] private bool showLoading;
+        [SerializeField] private bool enableLandscape;
+
+        [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
-        [SerializeField] private string realmUrl = "https://peer.decentraland.org";
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
-        [SerializeField] private bool showSplash;
-        [SerializeField] private bool showAuthentication;
-        [SerializeField] private bool showLoading;
-        [SerializeField] private bool enableLandscape;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private IWeb3IdentityCache? identityCache;
-
         private SceneSharedContainer? sceneSharedContainer;
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
+        private string startingRealm = "https://peer.decentraland.org";
+        private Vector2Int startingParcel;
 
         private void Awake()
         {
+            SetupInitialConfig();
+
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -90,6 +102,7 @@ namespace Global.Dynamic
             enableLandscape = true;
 #endif
 
+
             try
             {
                 splashRoot.SetActive(showSplash);
@@ -107,40 +120,49 @@ namespace Global.Dynamic
                     web3VerifiedAuthenticator,
                     identityCache);
 
-                try
-                {
-                    staticContainer = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct).ThrowOnFail();
+                // First load the common global plugin
+                bool isLoaded;
 
-                    dynamicWorldContainer = await DynamicWorldContainer.CreateAsync(
-                        new DynamicWorldDependencies
-                        {
-                            StaticContainer = staticContainer!,
-                            SettingsContainer = globalPluginSettingsContainer,
-                            RootUIDocument = uiToolkitRoot,
-                            DynamicSettings = dynamicSettings,
-                            Web3Authenticator = web3Authenticator,
-                            Web3IdentityCache = identityCache,
-                        },
-                        new DynamicWorldParams
-                        {
-                            StaticLoadPositions = settings.StaticLoadPositions,
-                            Realms = settings.Realms,
-                            StartParcel = settings.StartPosition,
-                            EnableLandscape = enableLandscape,
-                        }, ct
-                    );
-                }
-                catch (PluginNotInitializedException)
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+
+                if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
+                (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
+                    new DynamicWorldDependencies
+                    {
+                        StaticContainer = staticContainer!,
+                        SettingsContainer = scenePluginSettingsContainer,
+                        RootUIDocument = uiToolkitRoot,
+                        DynamicSettings = dynamicSettings,
+                        Web3Authenticator = web3Authenticator,
+                        Web3IdentityCache = identityCache,
+                    },
+                    new DynamicWorldParams
+                    {
+                        StaticLoadPositions = settings.StaticLoadPositions,
+                        Realms = settings.Realms,
+                        StartParcel = startingParcel,
+                        EnableLandscape = enableLandscape,
+                    }, ct
+                );
+
+                var webRequestController = IWebRequestController.DEFAULT;
+
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
+                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, dynamicWorldContainer.RealmController.GetRealm());
+
+                if (!isLoaded)
+                {
+                    GameReports.PrintIsDead();
+                    return;
+                }
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
-                    dynamicWorldContainer!.ProfileRepository, dynamicWorldContainer.RealmController.GetRealm());
+                    dynamicWorldContainer!.ProfileRepository, webRequestController, dynamicWorldContainer.RealmController.GetRealm());
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -192,10 +214,25 @@ namespace Global.Dynamic
             }
         }
 
+        private void SetupInitialConfig()
+        {
+            startingRealm = initialRealm switch
+                            {
+                                InitialRealm.GenesisCity => "https://peer.decentraland.org",
+                                InitialRealm.SDK => "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest",
+                                InitialRealm.World => "https://worlds-content-server.decentraland.org/world/" + targetWorld,
+                                InitialRealm.Localhost => "http://127.0.0.1:8000",
+                                _ => startingRealm,
+                            };
+
+            startingParcel = initialRealm == InitialRealm.SDK ? targetScene : settings.StartPosition;
+        }
+
         private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
+            mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
         }
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
@@ -206,10 +243,8 @@ namespace Global.Dynamic
 
         private async UniTask ChangeRealmAsync(CancellationToken ct)
         {
-            string realm = realmUrl;
-
             IRealmController realmController = dynamicWorldContainer!.RealmController;
-            await realmController.SetRealmAsync(URLDomain.FromString(realm), ct);
+            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
