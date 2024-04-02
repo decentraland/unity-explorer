@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
-namespace DCL.Landscape.Config.Editor
+namespace DCL.AvatarRendering.Emotes
 {
     public static class EmbeddedEmotesEditor
     {

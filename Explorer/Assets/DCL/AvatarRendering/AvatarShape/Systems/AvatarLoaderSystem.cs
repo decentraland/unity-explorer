@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Emotes.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -16,8 +16,8 @@ using System;
 using System.Collections.Generic;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution,
-    DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -115,32 +115,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
 
-        private EmotePromise CreateEmotePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
-        {
-            var urns = new List<URN>();
+        private EmotePromise CreateEmotePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
+            EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(pbAvatarShape, pbAvatarShape.Emotes), partition);
 
-            foreach (URN emote in pbAvatarShape.Emotes)
-            {
-                if (emote.IsNullOrEmpty()) continue;
-                urns.Add(emote);
-            }
-
-            var intention = new GetEmotesByPointersIntention(urns, pbAvatarShape);
-            return EmotePromise.Create(World, intention, partition);
-        }
-
-        private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition)
-        {
-            var urns = new List<URN>();
-
-            foreach (URN emote in profile.Avatar.Emotes)
-            {
-                if (emote.IsNullOrEmpty()) continue;
-                urns.Add(emote);
-            }
-
-            var intention = new GetEmotesByPointersIntention(urns, profile.Avatar.BodyShape);
-            return EmotePromise.Create(World, intention, partition);
-        }
+        private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition) =>
+            EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Emotes), partition);
     }
 }

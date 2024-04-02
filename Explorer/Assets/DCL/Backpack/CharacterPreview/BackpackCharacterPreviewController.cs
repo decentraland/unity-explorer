@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Emotes.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;

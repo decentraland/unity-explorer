@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Emotes.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Input;
@@ -11,12 +10,10 @@ using DCL.Profiles;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.InputSystem;
-using Emote = Decentraland.Kernel.Comms.Rfc4.Emote;
 using InputAction = UnityEngine.InputSystem.InputAction;
 
-namespace DCL.CharacterMotion.Systems
+namespace DCL.AvatarRendering.Emotes
 {
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateInGroup(typeof(InputGroup))]
@@ -84,10 +81,10 @@ namespace DCL.CharacterMotion.Systems
         private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
         {
             messageBus.Send((uint)emoteIndex);
-            messageBus.SelfSendWithDelayAsync(new Emote
+            messageBus.SelfSendWithDelayAsync(new Decentraland.Kernel.Comms.Rfc4.Emote
             {
                 EmoteId = (uint)emoteIndex,
-                Timestamp = Time.unscaledTime,
+                Timestamp = UnityEngine.Time.unscaledTime,
             }).Forget();
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;

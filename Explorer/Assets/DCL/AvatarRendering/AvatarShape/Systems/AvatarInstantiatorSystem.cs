@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -17,12 +18,13 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
-using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.Components.EmotesResolution>;
+using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -151,8 +153,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
-            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out WearablesLoadResult wearablesResult)) return;
-            if (!avatarShapeComponent.EmotePromise.TryConsume(World, out EmotesLoadResult emotesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return;
+            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return;
 
             CommonAvatarRelease(avatarShapeComponent, skinningComponent);
 
@@ -167,12 +169,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             in EmotesLoadResult streamableLoadingResult,
             AvatarBase avatarBase)
         {
-            GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
+            GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
+            GetEmotesByPointersIntention emoteIntention = avatarShapeComponent.EmotePromise.LoadingIntention;
 
             HashSet<string> wearablesToHide = wearablesResult.Asset.HiddenCategories;
             HashSet<string> usedCategories = HashSetPool<string>.Get();
 
-            GameObject bodyShape = null;
+            GameObject? bodyShape = null;
 
             List<IWearable> visibleWearables = wearablesResult.Asset.Wearables;
 
@@ -199,7 +202,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
 
-            intention.Dispose();
+            wearableIntention.Dispose();
+            emoteIntention.Dispose();
             wearablesResult.Asset.Dispose();
             avatarShapeComponent.IsDirty = false;
 

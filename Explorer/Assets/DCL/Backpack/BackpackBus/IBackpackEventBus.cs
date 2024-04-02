@@ -1,5 +1,4 @@
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.CharacterPreview;
 using System;

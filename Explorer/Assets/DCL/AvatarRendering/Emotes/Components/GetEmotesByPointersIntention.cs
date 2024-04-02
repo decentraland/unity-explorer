@@ -6,14 +6,15 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
-namespace DCL.AvatarRendering.Emotes.Components
+namespace DCL.AvatarRendering.Emotes
 {
     public struct GetEmotesByPointersIntention : IAssetIntention, IEquatable<GetEmotesByPointersIntention>
     {
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        public IReadOnlyCollection<URN> Pointers { get; }
+        public IReadOnlyCollection<URN> Pointers => pointers;
 
         // TODO why so many allocations?
         public HashSet<URN> ProcessedPointers { get; }
@@ -22,14 +23,16 @@ namespace DCL.AvatarRendering.Emotes.Components
         public BodyShape BodyShape { get; }
         public int Timeout { get; }
 
-        public float elapsedTime;
+        public float ElapsedTime;
 
-        public GetEmotesByPointersIntention(IReadOnlyCollection<URN> pointers,
+        private readonly List<URN> pointers;
+
+        public GetEmotesByPointersIntention(List<URN> pointers,
             BodyShape bodyShape,
             AssetSource permittedSources = AssetSource.ALL,
             int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
         {
-            Pointers = pointers;
+            this.pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
             ProcessedPointers = new HashSet<URN>();
             SuccessfulPointers = new HashSet<URN>();
@@ -46,5 +49,10 @@ namespace DCL.AvatarRendering.Emotes.Components
 
         public override int GetHashCode() =>
             Pointers != null ? Pointers.GetHashCode() : 0;
+
+        public void Dispose()
+        {
+            POINTERS_POOL.Release(pointers);
+        }
     }
 }

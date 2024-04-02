@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearableComponentsUtils
     {
-        internal static readonly ListObjectPool<string> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
+        internal static readonly ListObjectPool<URN> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
         internal static readonly ListObjectPool<IWearable> WEARABLES_POOL =
             new (listInstanceDefaultCapacity: PoolConstants.WEARABLES_PER_AVATAR_COUNT, defaultCapacity: PoolConstants.AVATARS_COUNT);
@@ -29,19 +29,20 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
-            List<string> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);
-            pointers.AddRange(wearables);
+
+            foreach (string wearable in wearables)
+                pointers.Add(wearable);
+
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
         {
-            List<string> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);
-
-            foreach (URN urn in wearables)
-                pointers.Add(urn);
+            pointers.AddRange(wearables);
 
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }

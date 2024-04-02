@@ -24,13 +24,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.Emotes.Components;
+using DCL.AvatarRendering.Emotes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution, DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                     { "skin", "hair" }, Array.Empty<string>()),
                 partitionComponent);
 
-            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new URN[] { "clap" }, BodyShape.MALE), partitionComponent);
+            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new List<URN> { "clap" }, BodyShape.MALE), partitionComponent);
 
             world.Add(wearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {

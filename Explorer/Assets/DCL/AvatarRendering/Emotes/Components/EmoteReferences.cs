@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.AvatarRendering.Emotes.Components
+namespace DCL.AvatarRendering.Emotes
 {
     public class EmoteReferences : MonoBehaviour
     {

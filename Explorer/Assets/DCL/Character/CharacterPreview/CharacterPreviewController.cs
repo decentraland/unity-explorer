@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Emotes.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -13,8 +13,8 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution,
-    DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.CharacterPreview
 {
@@ -75,7 +75,7 @@ namespace DCL.CharacterPreview
             );
 
             avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
-                new GetEmotesByPointersIntention((IReadOnlyCollection<URN>?)avatarModel.Emotes ?? Array.Empty<URN>(), avatarShape.BodyShape),
+                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape, ((IReadOnlyCollection<URN>) avatarModel.Emotes) ?? Array.Empty<URN>()),
                 PartitionComponent.TOP_PRIORITY);
 
             avatarShape.IsDirty = true;

@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.Components;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.WebRequests;

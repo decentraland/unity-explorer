@@ -7,6 +7,7 @@ using DCL.Input.Component;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Emotes;
 using UnityEngine.EventSystems;
+using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
 namespace DCL.PluginSystem.Global
 {

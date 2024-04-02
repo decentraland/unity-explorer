@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.Components;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Threading;

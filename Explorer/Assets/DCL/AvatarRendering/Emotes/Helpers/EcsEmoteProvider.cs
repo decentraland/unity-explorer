@@ -1,7 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Web3;
 using ECS;
@@ -12,9 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
-using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution,
-    DCL.AvatarRendering.Emotes.Components.GetEmotesByPointersIntention>;
-using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.Components.EmotesResolution,
+using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetOwnedEmotesFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes
@@ -92,7 +91,7 @@ namespace DCL.AvatarRendering.Emotes
                     return Array.Empty<IEmote>();
 
                 if (!promise.Result.Value.Succeeded)
-                    throw promise.Result.Value.Exception;
+                    throw promise.Result.Value.Exception!;
 
                 return promise.Result.Value.Asset.Emotes;
             }

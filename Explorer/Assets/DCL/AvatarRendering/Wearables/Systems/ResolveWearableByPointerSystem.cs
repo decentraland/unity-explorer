@@ -81,7 +81,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (wearablesByPointersIntention.FallbackToDefaultWearables && !defaultWearablesResolved)
                 return; // Wait for default wearables to be resolved
 
-            List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
+            List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get();
 
             var successfulResults = 0;
@@ -89,9 +89,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
-                string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
+                URN loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
 
-                if (loadingIntentionPointer == null)
+                if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
                         GetReportCategory(),
@@ -278,7 +278,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return false;
         }
 
-        private void CreateMissingPointersPromise(List<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private void CreateMissingPointersPromise(List<URN> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,

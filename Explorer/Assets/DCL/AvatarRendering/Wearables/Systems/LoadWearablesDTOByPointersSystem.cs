@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         private async UniTask DoPartialRequestAsync(URLAddress url,
-            IReadOnlyList<string> wearablesToRequest, int startIndex, int endIndex, List<WearableDTO> results, CancellationToken ct)
+            IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex, List<WearableDTO> results, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
