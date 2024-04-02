@@ -27,17 +27,17 @@ namespace Global.Dynamic
             this.teleportController = teleportController;
         }
 
-        public async UniTask<string> TryChangeRealmAsync(string realm, CancellationToken ct)
+        public async UniTask<bool> TryChangeRealmAsync(string realm, CancellationToken ct)
         {
             var domain = URLDomain.FromString(realm);
 
             if (!await realmController.IsReachableAsync(domain, ct))
-                return "this world doesn't exist!";
+                return false;
 
             await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
                 realmController.SetRealmAsync(domain, Vector2Int.zero, loadReport, ct), ct);
 
-            return $"world is {realm}";
+            return true;
         }
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)

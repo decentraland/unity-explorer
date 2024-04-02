@@ -200,15 +200,15 @@ namespace DCL.Chat
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
-            if (ChatCommandsHandler.IsChatCommand(messageToSend))
-                TryExecuteCommandAsync(messageToSend).Forget();
+            if (ChatCommandsHandler.IsChatCommand(messageToSend, out var commandType))
+                TryExecuteCommandAsync(messageToSend, commandType).Forget();
             else
                 chatMessagesBus.Send(messageToSend);
         }
 
-        private async UniTask TryExecuteCommandAsync(string command)
+        private async UniTask TryExecuteCommandAsync(string command, ChatCommandType commandType)
         {
-            string? response = await commandsHandler.TryExecuteCommand(command);
+            string? response = await commandsHandler.TryExecuteCommand(command, commandType);
             CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
         }
 

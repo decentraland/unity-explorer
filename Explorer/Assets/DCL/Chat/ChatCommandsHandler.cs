@@ -8,6 +8,13 @@ using UnityEngine;
 
 namespace DCL.Chat
 {
+    public enum ChatCommandType
+    {
+        None,
+        ChangeRealm,
+        Teleport,
+    }
+
     internal class ChatCommandsHandler
     {
         private const char CHAT_COMMAND_CHAR = '/';
@@ -27,34 +34,50 @@ namespace DCL.Chat
             this.realmNavigator = realmNavigator;
         }
 
-        public static bool IsChatCommand(string message)
+        public static bool IsChatCommand(string message, out ChatCommandType commandType)
         {
+            commandType = ChatCommandType.None;
+
             if (!message.StartsWith(CHAT_COMMAND_CHAR)) return false;
 
-            if (CHANGE_REALM_REGEX.IsMatch(message)) return true;
-            if (TELEPORT_REGEX.IsMatch(message)) return true;
+            if (CHANGE_REALM_REGEX.IsMatch(message))
+            {
+                commandType = ChatCommandType.ChangeRealm;
+                return true;
+            }
+
+            if (TELEPORT_REGEX.IsMatch(message))
+            {
+                commandType = ChatCommandType.Teleport;
+                return true;
+            }
 
             return false;
         }
 
-        public async UniTask<string> TryExecuteCommand(string message)
+        public async UniTask<string> TryExecuteCommand(string message, ChatCommandType commandType)
         {
-            if (CHANGE_REALM_REGEX.IsMatch(message))
+            if (commandType == ChatCommandType.ChangeRealm)
             {
                 Match match = CHANGE_REALM_REGEX.Match(message);
-                string realmOrHome = match.Groups[2].Value == GENESIS_KEY ? "https://peer.decentraland.org" : GetWorldAddress(match.Groups[2].Value);
+                string worldName = match.Groups[2].Value;
+                string realmUrl = worldName == GENESIS_KEY ? "https://peer.decentraland.org" : GetWorldAddress(worldName);
 
-                return await realmNavigator.TryChangeRealmAsync(realmOrHome, CancellationToken.None);
+                bool isSuccess = await realmNavigator.TryChangeRealmAsync(realmUrl, CancellationToken.None);
+
+                return isSuccess
+                    ? $"🟢 Welcome to the {worldName} world!"
+                    : $"🔴 Error. The world {worldName} doesn't exist!";
             }
 
-            if (TELEPORT_REGEX.IsMatch(message))
+            if (commandType == ChatCommandType.Teleport)
             {
                 Match match = TELEPORT_REGEX.Match(message);
                 var x = int.Parse(match.Groups[1].Value);
                 var y = int.Parse(match.Groups[2].Value);
 
                 await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), CancellationToken.None);
-                return $"teleported to {x},{y} in Genesis City";
+                return $"🟢 You teleported to {x},{y} in Genesis City";
             }
 
             return string.Empty;
