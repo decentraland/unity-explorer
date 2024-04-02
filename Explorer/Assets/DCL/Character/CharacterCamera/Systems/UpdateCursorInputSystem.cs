@@ -39,7 +39,7 @@ namespace DCL.CharacterCamera.Systems
             Vector2 mousePos = Mouse.current.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
 
-            UpdateCursorPositionForControllers(ref cursorComponent, controllerDelta, mousePos);
+            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
 
             bool inputWantsToLock = cameraActions.Lock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasPressedThisFrame();
             bool inputWantsToUnlock = cameraActions.Unlock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasReleasedThisFrame();
@@ -71,19 +71,25 @@ namespace DCL.CharacterCamera.Systems
             }
         }
 
-        private void UpdateCursorPositionForControllers(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
+        private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
         {
-            if (!(controllerDelta.sqrMagnitude > 0) || cursorComponent.CursorIsLocked) return;
+            if (cursorComponent.CursorIsLocked)
+                return;
 
-            // If we unlock for the first time we update the mouse position
-            if (Mathf.Approximately(cursorComponent.Position.x, 0) &&
-                Mathf.Approximately(cursorComponent.Position.y, 0))
+            if (controllerDelta.sqrMagnitude > 0)
+            {
+                // If we unlock for the first time we update the mouse position
+                if (Mathf.Approximately(cursorComponent.Position.x, 0) &&
+                    Mathf.Approximately(cursorComponent.Position.y, 0))
+                    cursorComponent.Position = mousePos;
+
+                // Todo: extract the +1 to sensitivity settings for controllers
+                float fastCursor = uiActions.ControllerFastCursor.ReadValue<float>() + 1;
+                cursorComponent.Position += controllerDelta * fastCursor;
+                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+            }
+            else
                 cursorComponent.Position = mousePos;
-
-            // Todo: extract the +1 to sensitivity settings for controllers
-            float fastCursor = uiActions.ControllerFastCursor.ReadValue<float>() + 1;
-            cursorComponent.Position += controllerDelta * fastCursor;
-            Mouse.current.WarpCursorPosition(cursorComponent.Position);
         }
     }
 }

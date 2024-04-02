@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera.Components;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
@@ -17,8 +18,8 @@ namespace DCL.Interaction.HoverCanvas.Systems
     public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
-
         private readonly Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
+        private Vector2Int relativeCursorPosition;
 
         internal ShowHoverFeedbackSystem(World world, UI.HoverCanvas hoverCanvasInstance,
             IReadOnlyList<HoverCanvasSettings.InputButtonSettings> settings) : base(world)
@@ -33,7 +34,21 @@ namespace DCL.Interaction.HoverCanvas.Systems
 
         protected override void Update(float t)
         {
+            GetCursorStateQuery(World);
             SetTooltipsQuery(World);
+        }
+
+        [Query]
+        private void GetCursorState(in CursorComponent cursorComponent)
+        {
+            if (!cursorComponent.CursorIsLocked)
+            {
+                // 0,0 is the center of the screen
+                relativeCursorPosition.x = Mathf.RoundToInt(cursorComponent.Position.x - (Screen.width * 0.5f));
+                relativeCursorPosition.y = Mathf.RoundToInt(cursorComponent.Position.y - (Screen.height * 0.5f));
+            }
+            else
+                relativeCursorPosition = Vector2Int.zero;
         }
 
         [Query]
@@ -60,6 +75,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
                 }
 
                 hoverCanvasInstance.SetTooltipsCount(hoverFeedbackComponent.Tooltips.Count);
+                hoverCanvasInstance.SetPosition(relativeCursorPosition);
             }
         }
     }

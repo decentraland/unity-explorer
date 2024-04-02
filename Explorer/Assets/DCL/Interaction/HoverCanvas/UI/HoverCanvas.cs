@@ -21,6 +21,12 @@ namespace DCL.Interaction.HoverCanvas.UI
             initialized = true;
         }
 
+        public void SetPosition(Vector2Int newPosition)
+        {
+            style.top = -newPosition.y;
+            style.left = newPosition.x;
+        }
+
         public void SetTooltip([CanBeNull] string hintText, [CanBeNull] string actionKeyText, [CanBeNull] Sprite icon, int index)
         {
             if (index >= tooltips.Count)
