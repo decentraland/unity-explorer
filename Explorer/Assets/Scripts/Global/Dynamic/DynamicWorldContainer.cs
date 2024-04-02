@@ -212,7 +212,7 @@ namespace Global.Dynamic
                 new RemotePoses(roomHub)
             );
 
-            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, container.RealmController, parcelServiceContainer.TeleportController);
+            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
