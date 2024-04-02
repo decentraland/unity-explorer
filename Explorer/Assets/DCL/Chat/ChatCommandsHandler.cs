@@ -18,7 +18,7 @@ namespace DCL.Chat
         private const string RANDOM_KEY = "random";
 
         private static readonly Regex CHANGE_REALM_REGEX = new ("^/(" + WORLD_KEY + "|" + GOTO_KEY + @")\s+(\S+\.dcl\.eth|" + GENESIS_KEY + ")$", RegexOptions.Compiled);
-        private static readonly Regex TELEPORT_REGEX = new ("^/" + GOTO_KEY + @"\s+((?:-?\d+),(-?\d+)|" + RANDOM_KEY + ")$", RegexOptions.Compiled);
+        private static readonly Regex TELEPORT_REGEX = new ("^/" + GOTO_KEY + @"\s+(?:(-?\d+),(-?\d+)|" + RANDOM_KEY + ")$", RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
 
@@ -54,10 +54,17 @@ namespace DCL.Chat
         {
             Match match = TELEPORT_REGEX.Match(message);
 
-            bool isRandom = match.Groups[1].Value == RANDOM_KEY;
-
-            int x = isRandom ? Random.Range(-150, 150) : int.Parse(match.Groups[1].Value);
-            int y = isRandom ? Random.Range(-150, 150) : int.Parse(match.Groups[2].Value);
+            int x, y;
+            if (match.Groups[1].Success && match.Groups[2].Success)
+            {
+                x = int.Parse(match.Groups[1].Value);
+                y = int.Parse(match.Groups[2].Value);
+            }
+            else
+            {
+                x = Random.Range(-150, 150);
+                y = Random.Range(-150, 150);
+            }
 
             await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), CancellationToken.None);
             return $"🟢 You teleported to {x},{y} in Genesis City";
