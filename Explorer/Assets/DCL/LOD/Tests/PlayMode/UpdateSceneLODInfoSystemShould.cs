@@ -59,7 +59,7 @@ namespace DCL.LOD.Tests
                 {
                     scene = new SceneMetadataScene
                     {
-                        DecodedParcels = new Vector2Int[]
+                        DecodedBase = new Vector2Int(0, 0), DecodedParcels = new Vector2Int[]
                         {
                             new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1)
                         }
@@ -73,6 +73,7 @@ namespace DCL.LOD.Tests
             lodAssetsPool = new LODAssetsPool();
 
             var pool = Substitute.For<IExtendedObjectPool<Material>>();
+            pool.Get().Returns(new Material(Shader.Find("DCL/Universal Render Pipeline/Lit")));
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
 
@@ -84,7 +85,6 @@ namespace DCL.LOD.Tests
                 }, TextureFormat.BC7, 20));
             system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform, pool, textureArrayDictionary);
         }
-
 
 
         [Test]
@@ -164,12 +164,13 @@ namespace DCL.LOD.Tests
                 new PartitionComponent());
 
             var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
-                new AssetBundleData[] { });
+                new AssetBundleData[]
+                {
+                });
 
             world.Add(promise.Entity,
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
             return (fakeAssetBundleData, promise);
         }
-
     }
 }

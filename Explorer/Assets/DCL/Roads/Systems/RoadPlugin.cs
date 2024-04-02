@@ -23,7 +23,7 @@ namespace DCL.Roads.Systems
 
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
-        private readonly IRoadSettingsAsset roadSettings;
+        private readonly IReadOnlyList<GameObject> roadPrefabs;
 
         private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary;
 
@@ -31,24 +31,21 @@ namespace DCL.Roads.Systems
 
         public RoadPlugin(CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner,
             IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget,
-            IRoadSettingsAsset roadSettings, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary)
+            IReadOnlyList<GameObject> roadPrefabs, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary)
         {
             this.cacheCleaner = cacheCleaner;
             this.assetsProvisioner = assetsProvisioner;
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
-            this.roadSettings = roadSettings;
+            this.roadPrefabs = roadPrefabs;
             this.roadDataDictionary = roadDataDictionary;
         }
 
-        public async UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            var roadAssetsPrefabList = new List<GameObject>(roadSettings.RoadAssetsReference.Count);
-            foreach (var assetReferenceGameObject in this.roadSettings.RoadAssetsReference)
-                roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(assetReferenceGameObject, ct: ct)).Value);
-
-            roadAssetPool = new RoadAssetsPool(roadAssetsPrefabList);
+            roadAssetPool = new RoadAssetsPool(roadPrefabs);
             cacheCleaner.Register(roadAssetPool);
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)

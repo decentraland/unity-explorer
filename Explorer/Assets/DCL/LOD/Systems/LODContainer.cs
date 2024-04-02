@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.LOD.Systems
 {
@@ -31,6 +32,7 @@ namespace DCL.LOD.Systems
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
+        private List<GameObject> roadAssetsPrefabList;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
 
@@ -59,12 +61,12 @@ namespace DCL.LOD.Systems
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
                 var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
-
+                
                 // Create plugins
                 c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
                     staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadSettingsAsset.Value, roadDataDictionary);
+                    staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList.AsReadOnly(), roadDataDictionary);
 
                 c.LODPlugin = new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
@@ -83,6 +85,9 @@ namespace DCL.LOD.Systems
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
             roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.RoadData, ct: ct);
+            roadAssetsPrefabList = new List<GameObject>();
+            foreach (var t in roadSettingsAsset.Value.RoadAssetsReference)
+                roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);
         }
     }
 }

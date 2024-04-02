@@ -16,7 +16,7 @@ namespace DCL.LOD
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
-        public RoadAssetsPool(List<GameObject> roadPrefabs)
+        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs)
         {
             roadAssetParent = new GameObject("ROAD_ASSET_POOL").transform;
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
