@@ -25,6 +25,7 @@ namespace DCL.Nametags
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {
         private const float NAMETAG_HEIGHT_MULTIPLIER = 2.1f;
+        private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
 
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -124,7 +125,7 @@ namespace DCL.Nametags
             }
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
-            UpdateTagTransparency(nametagView, camera.Camera, characterTransform.Position);
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,9 +136,11 @@ namespace DCL.Nametags
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTagTransparency(NametagView view, Camera camera, Vector3 characterPosition)
+        private void UpdateTagTransparencyAndScale(NametagView view, Camera camera, Vector3 characterPosition)
         {
             distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
+            view.gameObject.transform.localScale
+                = Vector3.one * (Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * distanceFromCamera * NAMETAG_SCALE_MULTIPLIER);
             view.SetTransparency(distanceFromCamera, nametagsData.maxDistance);
         }
 
