@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 654f183b95e4465dadf9464f953b92d5, type: 3}
+  m_Name: SettingsModulesMapping
+  m_EditorClassIdentifier: 
+  <SettingsModules>k__BackingField:
+  - moduleType: 0
+    moduleView: {fileID: 1460759278914240053, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+  - moduleType: 1
+    moduleView: {fileID: 4735297324857938338, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+  - moduleType: 2
+    moduleView: {fileID: 3071474972717511390, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
