@@ -27,11 +27,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         public object SignedFetch(string url, string? jsonMetaData) =>
             webController
                .SignedFetchAsync(url, jsonMetaData ?? string.Empty, cancellationTokenSource.Token)
-               .ToPromise(); //TODO headers support
-
-        [UsedImplicitly]
-        public object SignedFetch(SignedFetchRequest signedFetchRequest) =>
-            SignedFetch(signedFetchRequest.url, signedFetchRequest.init?.body ?? string.Empty);
+               .ToPromise();
 
         public void Dispose()
         {
