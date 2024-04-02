@@ -33,20 +33,20 @@ namespace DCL.Chat
 
             if (CHANGE_REALM_REGEX.IsMatch(message))
             {
-                command = ChangeRealmCommand(message);
+                command = ChangeRealmCommandAsync(message);
                 return true;
             }
 
             if (TELEPORT_REGEX.IsMatch(message))
             {
-                command = TeleportToCommand(message);
+                command = TeleportToCommandAsync(message);
                 return true;
             }
 
             return false;
         }
 
-        private async UniTask<string> TeleportToCommand(string message)
+        private async UniTask<string> TeleportToCommandAsync(string message)
         {
             Match match = TELEPORT_REGEX.Match(message);
             var x = int.Parse(match.Groups[1].Value);
@@ -56,7 +56,7 @@ namespace DCL.Chat
             return $"🟢 You teleported to {x},{y} in Genesis City";
         }
 
-        private async UniTask<string> ChangeRealmCommand(string message)
+        private async UniTask<string> ChangeRealmCommandAsync(string message)
         {
             Match match = CHANGE_REALM_REGEX.Match(message);
             string worldName = match.Groups[2].Value;
