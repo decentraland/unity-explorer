@@ -46,7 +46,9 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
         private DCLInput dclInput;
+
         private readonly ChatCommandsHandler commandsHandler;
+        private UniTask<string> chatCommand;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -200,15 +202,15 @@ namespace DCL.Chat
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
-            if (ChatCommandsHandler.IsChatCommand(messageToSend, out var commandType))
-                TryExecuteCommandAsync(messageToSend, commandType).Forget();
+            if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
+                ExecuteChatCommandAsync().Forget();
             else
                 chatMessagesBus.Send(messageToSend);
         }
 
-        private async UniTask TryExecuteCommandAsync(string command, ChatCommandType commandType)
+        private async UniTask ExecuteChatCommandAsync()
         {
-            string? response = await commandsHandler.TryExecuteCommand(command, commandType);
+            string? response = await chatCommand;
             CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
         }
 
