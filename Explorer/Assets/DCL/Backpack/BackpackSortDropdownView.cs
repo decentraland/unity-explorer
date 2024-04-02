@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,10 @@ namespace DCL.Backpack
     public class BackpackSortDropdownView : MonoBehaviour
     {
         private const float ANIMATION_TIME = 0.2f;
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public UIAudioType OpenDropDownAudio = UIAudioType.GENERIC_DROPDOWN;
 
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
@@ -47,17 +52,15 @@ namespace DCL.Backpack
 
         private void OnSortDropdownClick()
         {
-            if (SortContentDeselectable.gameObject.activeInHierarchy)
-            {
-                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false));
-            }
+            UIAudioEventsBus.Instance.SendAudioEvent(OpenDropDownAudio);
+
+            if (SortContentDeselectable.gameObject.activeInHierarchy) { CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false)); }
             else
             {
                 SortContentDeselectable.gameObject.SetActive(true);
                 SortContentDeselectable.SelectElement();
                 CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
-
         }
     }
 }

@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Emoji;
@@ -17,7 +18,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public partial class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView>
     {
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const int MAX_MESSAGE_LENGTH = 250;
@@ -27,8 +28,6 @@ namespace DCL.Chat
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private EmojiPanelController emojiPanelController;
-        private EmojiSuggestionPanel emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
@@ -37,14 +36,16 @@ namespace DCL.Chat
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
-        private World world;
+        private readonly Entity playerEntity;
+        private readonly World world;
+        private readonly DCLInput dclInput;
+        private EmojiPanelController emojiPanelController;
+        private EmojiSuggestionPanel emojiSuggestionPanelController;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
-        private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
-        private DCLInput dclInput;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -78,6 +79,7 @@ namespace DCL.Chat
             this.dclInput = dclInput;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
+
             //Adding two elements to count as top and bottom padding
             chatMessages.Add(new ChatMessage(true));
             chatMessages.Add(new ChatMessage(true));
@@ -119,9 +121,10 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode)
         {
-            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_ADD_EMOJI);
             viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
@@ -136,7 +139,9 @@ namespace DCL.Chat
 
         private void AddEmojiToInput(string emoji)
         {
-            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_ADD_EMOJI);
+
+            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
             int caretPosition = viewInstance.InputField.stringPosition;
@@ -149,6 +154,7 @@ namespace DCL.Chat
 
         private void ToggleEmojiPanel()
         {
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_OPEN_EMOJI_PANEL);
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
@@ -187,6 +193,7 @@ namespace DCL.Chat
                 return;
             }
 
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_SEND_MESSAGE);
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
@@ -202,7 +209,8 @@ namespace DCL.Chat
 
             ChatMessage itemData = chatMessages[index];
             LoopListViewItem2 item;
-            if(itemData.IsPaddingElement)
+
+            if (itemData.IsPaddingElement)
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
             else
             {
@@ -217,11 +225,14 @@ namespace DCL.Chat
 
         private void CloseChat()
         {
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_CLOSE);
+
             //TODO: will add logic for the panel closing once it's defined
         }
 
         private void OnInputDeselected(string inputText)
         {
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_INPUT_DESELECTED);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
             world.Remove<MovementBlockerComponent>(playerEntity);
@@ -229,6 +240,7 @@ namespace DCL.Chat
 
         private void OnInputSelected(string inputText)
         {
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_INPUT_SELECTED);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
             world.AddOrGet(playerEntity, new MovementBlockerComponent());
@@ -237,6 +249,7 @@ namespace DCL.Chat
         private void OnInputChanged(string inputText)
         {
             HandleEmojiSearch(inputText);
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.GENERIC_INPUT_TEXT);
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
@@ -275,8 +288,9 @@ namespace DCL.Chat
         {
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
             {
-                var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.CHAT_RECEIVE_MESSAGE);
             }
 
             viewInstance.ResetChatEntriesFadeout();

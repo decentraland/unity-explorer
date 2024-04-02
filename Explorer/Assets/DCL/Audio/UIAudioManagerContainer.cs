@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Audio
 {
-    public class UIAudioManagerContainer: MonoBehaviour, IDisposable
+    public class UIAudioManagerContainer : MonoBehaviour, IDisposable
     {
         [SerializeField]
         private AudioSource audioSource;
@@ -11,24 +11,20 @@ namespace DCL.Audio
         [SerializeField]
         private UIAudioSettings UIAudioSettings;
 
-        private IUIAudioEventsBus uiAudioEventsBus;
-
-
-        public void Setup(IUIAudioEventsBus uiAudioEventsBus)
+        public void Dispose()
         {
-            this.uiAudioEventsBus = uiAudioEventsBus;
-            uiAudioEventsBus.AudioEvent += OnAudioEvent;
+            UIAudioEventsBus.Instance.AudioEvent -= OnAudioEvent;
+            audioSource.Stop();
+        }
+
+        public void Initialize()
+        {
+            UIAudioEventsBus.Instance.AudioEvent += OnAudioEvent;
         }
 
         private void OnAudioEvent(UIAudioType audioType)
         {
-            audioSource.PlayOneShot(UIAudioSettings.GetAudioClipForType(audioType));
-        }
-
-        public void Dispose()
-        {
-            uiAudioEventsBus.AudioEvent -= OnAudioEvent;
-            audioSource.Stop();
+            if (UIAudioSettings.UIAudioVolume > 0) { audioSource.PlayOneShot(UIAudioSettings.GetAudioClipForType(audioType), UIAudioSettings.UIAudioVolume); }
         }
     }
 }

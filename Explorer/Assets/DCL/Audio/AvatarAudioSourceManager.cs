@@ -38,47 +38,67 @@ namespace DCL.Audio
         [UsedImplicitly]
         public void OnJumpStart()
         {
-            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_START));
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_START), audioSettings.AvatarAudioVolume);
         }
+
         [UsedImplicitly]
         public void OnJogJumpStart()
         {
-            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_JOG_START));
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_JOG_START), audioSettings.AvatarAudioVolume);
         }
+
         [UsedImplicitly]
         public void OnRunJumpStart()
         {
-            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_RUN_START));
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_RUN_START), audioSettings.AvatarAudioVolume);
         }
+
         [UsedImplicitly]
         public void OnRunFootHitGround()
         {
-            if (animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) && animator.GetBool(AnimationHashes.GROUNDED)) { audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.STEP_RUN)); }
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+
+            if (animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) && animator.GetBool(AnimationHashes.GROUNDED)) { audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.STEP_RUN), audioSettings.AvatarAudioVolume); }
         }
+
         [UsedImplicitly]
         public void OnWalkFootHitGround()
         {
-            if (animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold && animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk) && animator.GetBool(AnimationHashes.GROUNDED)) { audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.STEP_WALK)); }
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+
+            if (animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold && animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk) && animator.GetBool(AnimationHashes.GROUNDED)) { audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.STEP_WALK), audioSettings.AvatarAudioVolume); }
         }
+
         [UsedImplicitly]
         public void OnJogFootHitGround()
         {
-            if (animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk) && animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) && animator.GetBool(AnimationHashes.GROUNDED)) { audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.STEP_JOG)); }
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+
+            if (animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk) && animator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) && animator.GetBool(AnimationHashes.GROUNDED)) { audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.STEP_JOG), audioSettings.AvatarAudioVolume); }
         }
+
         [UsedImplicitly]
         public void OnJogJumpFootHitGround()
         {
-            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_JOG_LAND));
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_JOG_LAND), audioSettings.AvatarAudioVolume);
         }
+
         [UsedImplicitly]
         public void OnRunJumpFootHitGround()
         {
-            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_RUN_LAND));
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_RUN_LAND), audioSettings.AvatarAudioVolume);
         }
+
         [UsedImplicitly]
         public void OnJumpFootHitGround()
         {
-            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_LAND));
+            if (audioSettings.AvatarAudioVolume <= 0) return;
+            audioSource.PlayOneShot(audioSettings.GetAudioClipForType(AvatarAudioClipTypes.JUMP_LAND), audioSettings.AvatarAudioVolume);
         }
     }
 }

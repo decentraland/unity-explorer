@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
@@ -20,8 +21,8 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
+        private readonly DCLInput dclInput;
         private ChatController chatController;
-        private DCLInput dclInput;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,

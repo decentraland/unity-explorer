@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -148,8 +149,8 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)));
-                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId)));
+                backpackItemView.EquipButton.onClick.AddListener(() => OnEquipButtonClicked(backpackItemView));
+                backpackItemView.UnEquipButton.onClick.AddListener(() => OnUnEquipButtonClicked(backpackItemView));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
@@ -160,6 +161,18 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
+        }
+
+        private void OnEquipButtonClicked(BackpackItemView backpackItemView)
+        {
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.BACKPACK_EQUIP_WEARABLE);
+            commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId));
+        }
+
+        private void OnUnEquipButtonClicked(BackpackItemView backpackItemView)
+        {
+            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.BACKPACK_UNEQUIP_WEARABLE);
+            commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId));
         }
 
         public void RequestTotalNumber()
