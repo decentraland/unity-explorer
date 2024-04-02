@@ -27,7 +27,7 @@ namespace DCL.Chat
             this.realmNavigator = realmNavigator;
         }
 
-        public bool TryGetChatCommand(string message, ref UniTask<string> command)
+        public bool TryGetChatCommand(in string message, ref UniTask<string> command)
         {
             if (!message.StartsWith(CHAT_COMMAND_CHAR)) return false;
 
