@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Audio;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
@@ -78,6 +79,8 @@ namespace Global.Dynamic
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
+
+        public IUIAudioEventsBus UIAudioEventsBus { get; private set; }
 
         public void Dispose()
         {
@@ -200,6 +203,8 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
+            container.UIAudioEventsBus = new UIAudioEventsBus();
+
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: x => x.Clear()
@@ -256,6 +261,7 @@ namespace Global.Dynamic
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
                 new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, dclInput),
+                new UIAudioPlugin(staticContainer.AssetsProvisioner, container.UIAudioEventsBus),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
