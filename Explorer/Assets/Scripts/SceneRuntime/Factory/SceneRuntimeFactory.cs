@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
 using DCL.Diagnostics;
+using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,6 +26,13 @@ namespace SceneRuntime.Factory
         private readonly Dictionary<string, string> sourceCodeCache;
 
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES;
+        private readonly IJsSceneSourceCode jsSceneSourceCode =
+            Application.isEditor
+                ? new LogJsSceneSourceCode(
+                    new StreamingAssetsJsSceneSourceCode(),
+                    ReportHub.WithReport(ReportCategory.SCENE_FACTORY).Log
+                )
+                : new IJsSceneSourceCode.Null();
 
         static SceneRuntimeFactory()
         {
@@ -64,7 +72,12 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
+            string wrappedSource = WrapInModuleCommonJs(sourceCode);
+
+            if (jsSceneSourceCode.CodeForScene(sceneShortInfo.BaseParcel) is { } code)
+                wrappedSource = code;
+
+            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
         /// <summary>
