@@ -1,5 +1,5 @@
 module.exports.signedFetch = async function(message) {    
-    return UnitySignedFetch.SignedFetch(message.url, message.init.body) //TODO compare and try other signature
+    return UnitySignedFetch.SignedFetch(message)
 }
 
 module.exports.getHeaders = async function(message) {
