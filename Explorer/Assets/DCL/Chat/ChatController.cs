@@ -192,14 +192,24 @@ namespace DCL.Chat
                 return;
             }
 
-            if (!commandsHandler.TryExecuteCommand(in currentMessage)) // we don't send command messages over network
-                chatMessagesBus.Send(currentMessage);
+            string messageToSend = currentMessage;
 
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
             emojiPanelController.SetPanelVisibility(false);
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
+
+            if (ChatCommandsHandler.IsChatCommand(messageToSend))
+                TryExecuteCommandAsync(messageToSend).Forget();
+            else
+                chatMessagesBus.Send(messageToSend);
+        }
+
+        private async UniTask TryExecuteCommandAsync(string command)
+        {
+            string? response = await commandsHandler.TryExecuteCommand(command);
+            CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
