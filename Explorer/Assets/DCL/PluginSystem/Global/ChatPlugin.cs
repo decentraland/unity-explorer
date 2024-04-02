@@ -21,19 +21,22 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private ChatController chatController;
+        private DCLInput dclInput;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            NametagsData nametagsData)
+            NametagsData nametagsData,
+            DCLInput dclInput)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
+            this.dclInput = dclInput;
         }
 
         public void Dispose() { }
@@ -62,11 +65,12 @@ namespace DCL.PluginSystem.Global
                     emojiSectionPrefab,
                     emojiButtonPrefab,
                     emojiSuggestionPrefab,
-                    builder.World
+                    builder.World,
+                    arguments.PlayerEntity,
+                    dclInput
                 );
 
                 mvcManager.RegisterController(chatController);
-                mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             };
         }
 
