@@ -20,10 +20,12 @@ module.exports.crdtGetState = async function() {
 
 module.exports.subscribe = async function(message) {
     console.log(`JSMODULE: EngineApi.subscribe(${message.eventId}): deprecated`)
+    return {}
 }
 
 module.exports.unsubscribe = async function(message) {
     console.log(`JSMODULE: EngineApi.unsubscribe(${message.eventId}): deprecated`)
+    return {}
 }
 
 module.exports.isServer = async function () {

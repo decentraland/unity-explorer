@@ -71,12 +71,7 @@ namespace SceneRuntime.Factory
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-
-            string wrappedSource = WrapInModuleCommonJs(sourceCode);
-
-            if (jsSceneSourceCode.CodeForScene(sceneShortInfo.BaseParcel) is { } code)
-                wrappedSource = code;
-
+            string wrappedSource = jsSceneSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? WrapInModuleCommonJs(sourceCode);
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
