@@ -29,6 +29,8 @@ namespace DCL.PluginSystem.Global
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
+        private Material hoverMaterial;
+        private Material hoverOorMaterial;
 
         public GlobalInteractionPlugin(DCLInput dclInput,
             UIDocument canvas,
@@ -57,6 +59,9 @@ namespace DCL.PluginSystem.Global
 
             canvas.rootVisualElement.Add(hoverCanvas);
             hoverCanvas.SetDisplayed(false);
+
+            hoverMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverMaterial, ct)).Value;
+            hoverOorMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverOutOfRangeMaterial, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -87,7 +92,7 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaAction6, playerInput.ActionButton6 },
             };
 
-            ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache);
+            ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, hoverMaterial, hoverOorMaterial);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
@@ -98,6 +103,8 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(GlobalInteractionPlugin))]
             [field: Space]
             [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
+            [field: SerializeField] internal AssetReferenceMaterial hoverMaterial { get; private set; }
+            [field: SerializeField] internal AssetReferenceMaterial hoverOutOfRangeMaterial { get; private set; }
         }
     }
 }

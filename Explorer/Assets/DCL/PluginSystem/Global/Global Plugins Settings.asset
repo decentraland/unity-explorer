@@ -100,6 +100,16 @@ MonoBehaviour:
           - InputAction: 13
             Key: 4
             Icon: {fileID: 0}
+        <hoverMaterial>k__BackingField:
+          m_AssetGUID: 31f3cd961c052c84baf27b3938e5b0f4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <hoverOutOfRangeMaterial>k__BackingField:
+          m_AssetGUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
