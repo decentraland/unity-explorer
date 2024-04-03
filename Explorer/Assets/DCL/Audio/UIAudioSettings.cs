@@ -1,11 +1,19 @@
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Audio
 {
+    [CreateAssetMenu(fileName = "AudioSettings", menuName = "SO/Audio/AudioSettings")]
+    public class AudioSettings : ScriptableObject
+    {
+
+    }
+
+
     [CreateAssetMenu(fileName = "UIAudioSettings", menuName = "SO/Audio/UIAudioSettings")]
     public class UIAudioSettings : ScriptableObject
     {

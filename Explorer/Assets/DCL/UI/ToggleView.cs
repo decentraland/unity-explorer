@@ -7,11 +7,6 @@ namespace DCL.UI
 {
     public class ToggleView : MonoBehaviour
     {
-        [Header("Audio")]
-        [field: SerializeField]
-        public UIAudioType OnAudioType = UIAudioType.GENERIC_TOGGLE_ON;
-        [field: SerializeField]
-        public UIAudioType OffAudioType = UIAudioType.GENERIC_TOGGLE_OFF;
         [field: SerializeField]
         public Toggle Toggle { get; private set; }
 
@@ -20,6 +15,12 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject OffImage { get; private set; }
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public UIAudioType OnAudioType = UIAudioType.GENERIC_TOGGLE_ON;
+        [field: SerializeField]
+        public UIAudioType OffAudioType = UIAudioType.GENERIC_TOGGLE_OFF;
 
         private void OnEnable()
         {
