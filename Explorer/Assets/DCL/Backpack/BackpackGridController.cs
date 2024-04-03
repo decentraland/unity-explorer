@@ -165,13 +165,13 @@ namespace DCL.Backpack
 
         private void OnEquipButtonClicked(BackpackItemView backpackItemView)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.BACKPACK_EQUIP_WEARABLE);
+            UIAudioEventsBus.Instance.SendAudioEvent(backpackItemView.EquipWearableAudioClipConfig);
             commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId));
         }
 
         private void OnUnEquipButtonClicked(BackpackItemView backpackItemView)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(UIAudioType.BACKPACK_UNEQUIP_WEARABLE);
+            UIAudioEventsBus.Instance.SendAudioEvent(backpackItemView.UnEquipWearableAudioClipConfig);
             commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId));
         }
 

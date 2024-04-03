@@ -18,9 +18,9 @@ namespace DCL.UI
 
         [Header("Audio")]
         [field: SerializeField]
-        public UIAudioType OnAudioType = UIAudioType.GENERIC_TOGGLE_ON;
+        public AudioClipConfig ToggleOnAudio;
         [field: SerializeField]
-        public UIAudioType OffAudioType = UIAudioType.GENERIC_TOGGLE_OFF;
+        public AudioClipConfig ToggleOffAudio;
 
         private void OnEnable()
         {
@@ -34,7 +34,7 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(toggle ? OnAudioType : OffAudioType);
+            UIAudioEventsBus.Instance.SendAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
         }
     }
 }

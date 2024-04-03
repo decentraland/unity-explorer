@@ -24,6 +24,10 @@ namespace DCL.Audio
 
         private void OnGUI()
         {
+            float margin = 10f;
+
+            GUILayout.BeginArea(new Rect(margin, margin, position.width - (margin * 2), position.height - (margin * 2)));
+
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Update Audio Configs"))
@@ -32,12 +36,11 @@ namespace DCL.Audio
                 EditorUtility.SetDirty(this);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                Debug.Log("UI Audio Configs updated successfully.");
             }
 
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("Create New UIAudioConfig"))
+            if (GUILayout.Button("Create New AudioClipConfig"))
             {
                 CreateNewUIAudioConfig();
             }
@@ -46,7 +49,7 @@ namespace DCL.Audio
 
             var groupedAudioConfigs = GroupByCategory(audioConfigs);
 
-            EditorGUILayout.LabelField("Audio Configs:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Audio Clip Configs:", EditorStyles.boldLabel);
             foreach (var group in groupedAudioConfigs)
             {
                 EditorGUILayout.Space();
@@ -62,11 +65,30 @@ namespace DCL.Audio
                     {
                         ShowUIAudioConfig(audioConfig);
                         EditorGUILayout.Space();
+                        EditorGUILayout.Space();
                     }
                 }
             }
 
             EditorGUILayout.EndScrollView();
+
+            GUILayout.EndArea();
+        }
+
+        private AudioClipConfig audioConfigRenamed = null;
+        private string newName = "";
+
+        void RenameAsset(AudioClipConfig audioConfig, string newName)
+        {
+            if (newName != audioConfig.name)
+            {
+                Undo.RecordObject(audioConfig, "Rename");
+                string assetPath = AssetDatabase.GetAssetPath(audioConfig);
+                AssetDatabase.RenameAsset(assetPath, newName);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+            audioConfigRenamed = null;
         }
 
         private void ShowUIAudioConfig(AudioClipConfig audioConfig)
@@ -74,29 +96,59 @@ namespace DCL.Audio
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.BeginHorizontal();
-                GUILayout.Label("Object", GUILayout.Width(EditorGUIUtility.labelWidth * 0.3f));
-                EditorGUILayout.ObjectField("", audioConfig, typeof(AudioClipConfig), false, GUILayout.Width(position.width * 0.35f));
-                GUILayout.Label("Rename", GUILayout.Width(EditorGUIUtility.labelWidth * 0.45f));
-                string newName = EditorGUILayout.TextField("", audioConfig.name);
+            {
+                if (audioConfigRenamed != audioConfig)
+                {
+                    GUILayout.Label("Object", GUILayout.Width(EditorGUIUtility.labelWidth * 0.3f));
+                    audioConfig = (AudioClipConfig)EditorGUILayout.ObjectField("", audioConfig, typeof(AudioClipConfig), false, GUILayout.Width(position.width * 0.35f));
+
+                    if (GUILayout.Button("Rename"))
+                    {
+                        audioConfigRenamed = audioConfig;
+                        newName = audioConfig.name;
+                    }
+                }
+                else
+                {
+                    newName = EditorGUILayout.TextField(newName);
+                    if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
+                    {
+                        RenameAsset(audioConfig, newName);
+                    }
+                    if (GUILayout.Button("Save", GUILayout.Width(80)))
+                    {
+                        RenameAsset(audioConfig, newName);
+                    }
+                    if (GUILayout.Button("Cancel", GUILayout.Width(80)))
+                    {
+                        audioConfigRenamed = null;
+                    }
+                }
+            }
             EditorGUILayout.EndHorizontal();
 
-            if (newName != audioConfig.name)
-            {
-                Undo.RecordObject(audioConfig, "Rename");
-                audioConfig.name = newName;
-            }
 
             EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Audio Clips:", GUILayout.Width(position.width * 0.7f));
-                if (GUILayout.Button("Add AudioClip"))
-                {
-                    Array.Resize(ref audioConfig.audioClips, audioConfig.audioClips.Length + 1);
-                }
+            {
+                GUILayout.Label("Volume", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
+                audioConfig.volume = EditorGUILayout.Slider(audioConfig.volume, 0f, 1f, GUILayout.Width(position.width * 0.4f));
+
+                GUILayout.Label("Category", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
+                audioConfig.audioCategory = (AudioCategory)EditorGUILayout.EnumPopup(audioConfig.audioCategory);
+            }
             EditorGUILayout.EndHorizontal();
 
-            EditorGUI.indentLevel++;
+            EditorGUILayout.BeginHorizontal();
+            {
+                EditorGUILayout.LabelField("Audio Clips:", GUILayout.Width(position.width * 0.5f));
+
+                if (GUILayout.Button("Add AudioClip")) { Array.Resize(ref audioConfig.audioClips, audioConfig.audioClips.Length + 1); }
+            }
+            EditorGUILayout.EndHorizontal();
+
             if (audioConfig.audioClips != null)
             {
+                EditorGUI.indentLevel++;
                 for (int i = 0; i < audioConfig.audioClips.Length; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
@@ -109,24 +161,8 @@ namespace DCL.Audio
                     }
                     EditorGUILayout.EndHorizontal();
                 }
-
+                EditorGUI.indentLevel--;
             }
-
-
-            EditorGUI.indentLevel--;
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label("Volume", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
-            audioConfig.volume = EditorGUILayout.Slider(audioConfig.volume, 0f, 1f, GUILayout.Width(position.width * 0.2f));
-
-            GUILayout.Label("Priority", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
-            audioConfig.priority = EditorGUILayout.Slider(audioConfig.priority, 0f, 1f, GUILayout.Width(position.width * 0.2f));
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.Label("Category", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
-            audioConfig.audioCategory = (AudioCategory)EditorGUILayout.EnumPopup(audioConfig.audioCategory);
-
-            EditorGUILayout.EndHorizontal();
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -151,6 +187,7 @@ namespace DCL.Audio
             AudioClipConfig newAudioConfig = ScriptableObject.CreateInstance<AudioClipConfig>();
             string assetPath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(folderPath, "NewUIAudioConfig.asset"));
             AssetDatabase.CreateAsset(newAudioConfig, assetPath);
+            newAudioConfig.audioCategory = AudioCategory.OTHER;
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

@@ -344,8 +344,8 @@ MonoBehaviour:
   <Toggle>k__BackingField: {fileID: 7625753975028379600}
   <OnImage>k__BackingField: {fileID: 8806659310530846726}
   <OffImage>k__BackingField: {fileID: 9008524825783389075}
-  OnAudioType: 2
-  OffAudioType: 3
+  ToggleOnAudio: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
+  ToggleOffAudio: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
 --- !u!1 &8806659310530846726
 GameObject:
   m_ObjectHideFlags: 0

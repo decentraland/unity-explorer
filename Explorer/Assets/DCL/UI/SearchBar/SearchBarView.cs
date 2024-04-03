@@ -14,11 +14,13 @@ namespace DCL.UI
         [field: SerializeField]
         public Button clearSearchButton;
 
+
+        [Header("Audio")]
         [field: SerializeField]
-        public UIAudioType EnterTextAudioType = UIAudioType.GENERIC_INPUT_TEXT;
+        public AudioClipConfig EnterTextAudioClipConfig;
 
         [field: SerializeField]
-        public UIAudioType ClearTextAudioType = UIAudioType.GENERIC_INPUT_CLEAR_TEXT;
+        public AudioClipConfig ClearTextAudioClipConfig;
 
         private void Awake()
         {
@@ -34,12 +36,12 @@ namespace DCL.UI
 
         private void OnClearText()
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(ClearTextAudioType);
+            UIAudioEventsBus.Instance.SendAudioEvent(ClearTextAudioClipConfig);
         }
 
         private void OnValueChanged(string value)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(EnterTextAudioType);
+            UIAudioEventsBus.Instance.SendAudioEvent(EnterTextAudioClipConfig);
         }
     }
 }

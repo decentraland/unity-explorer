@@ -9,10 +9,6 @@ namespace DCL.Backpack
     {
         private const float ANIMATION_TIME = 0.2f;
 
-        [Header("Audio")]
-        [field: SerializeField]
-        public UIAudioType OpenDropDownAudio = UIAudioType.GENERIC_DROPDOWN;
-
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
 
@@ -43,6 +39,10 @@ namespace DCL.Backpack
         [field: SerializeField]
         internal Button sortDropdownButton { get; private set; }
 
+        [Header("Audio")]
+        [field: SerializeField]
+        internal AudioClipConfig openDropDownAudio;
+
         private void Start()
         {
             sortDropdownButton.onClick.AddListener(OnSortDropdownClick);
@@ -52,7 +52,7 @@ namespace DCL.Backpack
 
         private void OnSortDropdownClick()
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(OpenDropDownAudio);
+            UIAudioEventsBus.Instance.SendAudioEvent(openDropDownAudio);
 
             if (SortContentDeselectable.gameObject.activeInHierarchy) { CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false)); }
             else

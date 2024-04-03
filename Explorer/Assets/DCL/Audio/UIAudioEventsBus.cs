@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 
 namespace DCL.Audio
@@ -35,13 +36,13 @@ namespace DCL.Audio
             }
         }
 
-        public event Action<UIAudioType> AudioEvent;
+        public event Action<AudioClipConfig> AudioEvent;
 
         public void Dispose() { }
 
-        public void SendAudioEvent(UIAudioType type)
+        public void SendAudioEvent(AudioClipConfig audioClipConfig)
         {
-            AudioEvent?.Invoke(type);
+            if (audioClipConfig != null) { AudioEvent?.Invoke(audioClipConfig); }
         }
     }
 }

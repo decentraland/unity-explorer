@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Audio
 {
@@ -22,9 +23,17 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.AudioEvent += OnAudioEvent;
         }
 
-        private void OnAudioEvent(UIAudioType audioType)
+        private void OnAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (UIAudioSettings.UIAudioVolume > 0) { audioSource.PlayOneShot(UIAudioSettings.GetAudioClipForType(audioType), UIAudioSettings.UIAudioVolume); }
+            if (UIAudioSettings.UIAudioVolume > 0) //Here we will use proper Settings for the type of audio clip
+            {
+                if (audioClipConfig.audioClips.Length > 1)
+                {
+                    int randomIndex = Random.Range(0, audioClipConfig.audioClips.Length);
+                    AudioClip randomClip = audioClipConfig.audioClips[randomIndex];
+                    audioSource.PlayOneShot(randomClip, UIAudioSettings.UIAudioVolume);
+                }
+            }
         }
     }
 }

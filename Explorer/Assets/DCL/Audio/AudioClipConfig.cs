@@ -9,7 +9,6 @@ namespace DCL.Audio
     {
         [SerializeField] public AudioClip[] audioClips = Array.Empty<AudioClip>();
         [SerializeField] public float volume = 1;
-        [SerializeField] public float priority = 1;
         [SerializeField] public AudioCategory audioCategory;
     }
 

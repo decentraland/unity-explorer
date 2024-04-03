@@ -7,11 +7,6 @@ using UnityEngine;
 
 namespace DCL.Audio
 {
-    [CreateAssetMenu(fileName = "AudioSettings", menuName = "SO/Audio/AudioSettings")]
-    public class AudioSettings : ScriptableObject
-    {
-
-    }
 
 
     [CreateAssetMenu(fileName = "UIAudioSettings", menuName = "SO/Audio/UIAudioSettings")]

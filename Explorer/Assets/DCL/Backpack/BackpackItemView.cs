@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -55,6 +56,13 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public bool IsEquipped { get; set; }
+
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig EquipWearableAudioClipConfig;
+        [field: SerializeField]
+        public AudioClipConfig UnEquipWearableAudioClipConfig;
 
         private CancellationTokenSource cts;
 

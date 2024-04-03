@@ -7,9 +7,6 @@ namespace DCL.UI
 {
     public class TabSelectorView : MonoBehaviour
     {
-        [Header("Audio")]
-        [field: SerializeField]
-        public UIAudioType AudioType = UIAudioType.GENERIC_TAB_SELECTED;
         [field: SerializeField]
         public Toggle TabSelectorToggle { get; private set; }
 
@@ -28,6 +25,11 @@ namespace DCL.UI
         [field: SerializeField]
         public GameObject SelectedText { get; private set; }
 
+        [Header("Audio")]
+        [field: SerializeField]
+        private AudioClipConfig TabClickAudio;
+
+
         private void OnEnable()
         {
             TabSelectorToggle.onValueChanged.AddListener(OnToggle);
@@ -40,7 +42,7 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(AudioType);
+            UIAudioEventsBus.Instance.SendAudioEvent(TabClickAudio);
         }
     }
 }
