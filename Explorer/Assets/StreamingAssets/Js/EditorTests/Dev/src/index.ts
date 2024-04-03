@@ -112,10 +112,30 @@ function messageFromError(error: unknown): string {
 const extraCsharpProperties = new Set<string>([
     'Equals',
     'GetHashCode',
-    'GetType'
+    'GetType',
+    'ToString',
+    'toJSON'
 ])
 
 function withCutExtraCSharpProperties<T>(object: T): T {
+    if (object instanceof Uint8Array) {
+        return object
+    }
+
+    if (Array.isArray(object)) {
+        const newArray: any[] = []
+        for (const element of object) {
+            if (element instanceof Object) {
+                newArray.push(withCutExtraCSharpProperties(element))
+            }
+            else {
+                newArray.push(element)
+            }
+        }
+        return newArray as any
+    }
+
+
     const newObject = {} as any
 
     for (const key in object) {
@@ -131,7 +151,7 @@ function withCutExtraCSharpProperties<T>(object: T): T {
 
         newObject[key] = candidate
     }
-    return object
+    return newObject
 }
 
 //To be called from jsSide
