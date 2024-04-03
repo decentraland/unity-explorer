@@ -115,15 +115,22 @@ const extraCsharpProperties = new Set<string>([
     'GetType'
 ])
 
-function cutExtraCSharpProperties(object: any) {
+function withCutExtraCSharpProperties<T>(object: T): T {
+
     for (const key in object) {
         if (extraCsharpProperties.has(key)) {
-            delete object[key]
+            try {
+                delete object[key]
+            }
+            catch (e: unknown) {
+                throw new Error(`Cannot remove extra csharp "${key}" properties from ${JSON.stringify(object)}: ${messageFromError(e)}`)
+            }
         }
         if (object[key] instanceof Object) {
-            cutExtraCSharpProperties(object[key])
+            withCutExtraCSharpProperties(object[key])
         }
     }
+    return object
 }
 
 //To be called from jsSide
@@ -145,8 +152,8 @@ export function registerBundle(
         }
         const method = mutableBundle[k] as (message: any) => Promise<any>
         mutableBundle[k] = async (message: any) => {
-            const result = await method(message)
-            cutExtraCSharpProperties(result)
+            const raw = await method(message)
+            const result = withCutExtraCSharpProperties(raw)
             if (checker.strictTest(result) === false) {
                 const report = reportString(checker, k, result)
                 logError(report)
