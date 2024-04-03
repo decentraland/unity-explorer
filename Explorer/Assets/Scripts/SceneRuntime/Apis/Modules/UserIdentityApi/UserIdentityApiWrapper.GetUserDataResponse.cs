@@ -2,7 +2,6 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.UserIdentityApi
@@ -25,7 +24,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
         {
             public Data? data;
 
-            public GetUserDataResponse(Profile profile, IWeb3Identity identity, IReadOnlyCollection<string> wearablesCache) : this(
+            public GetUserDataResponse(Profile profile, IWeb3Identity identity, List<string> wearablesCache) : this(
                 new Data(profile, identity, wearablesCache)
             ) { }
 
@@ -44,7 +43,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 public int version;
                 public Avatar? avatar;
 
-                public Data(Profile profile, IWeb3Identity identity, IReadOnlyCollection<string> wearablesCache) : this(
+                public Data(Profile profile, IWeb3Identity identity, List<string> wearablesCache) : this(
                     profile.DisplayName,
                     identity.Address,
                     profile.HasConnectedWeb3,
@@ -71,10 +70,10 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     public string eyeColor;
                     public string hairColor;
                     public string skinColor;
-                    public object[] wearables;
+                    public List<string> wearables;
                     public Snapshot? snapshots;
 
-                    public Avatar(DCL.Profiles.Avatar avatar, IReadOnlyCollection<string> wearablesCache) : this(
+                    public Avatar(DCL.Profiles.Avatar avatar, List<string> wearablesCache) : this(
                         avatar.BodyShape,
                         eyeColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.EyesColor)}",
                         hairColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.HairColor)}",
@@ -83,15 +82,14 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                         new Snapshot(avatar.BodySnapshotUrl, avatar.FaceSnapshotUrl)
                     ) { }
 
-                    public Avatar(string bodyShape, string eyeColor, string hairColor, string skinColor, IReadOnlyCollection<string> wearables,
+                    public Avatar(string bodyShape, string eyeColor, string hairColor, string skinColor, List<string> wearables,
                         Snapshot snapshots)
                     {
                         this.bodyShape = bodyShape;
                         this.eyeColor = eyeColor;
                         this.hairColor = hairColor;
                         this.skinColor = skinColor;
-                        // ReSharper disable once CoVariantArrayConversion
-                        this.wearables = wearables.ToArray()!;
+                        this.wearables = wearables;
                         this.snapshots = snapshots;
                     }
 
