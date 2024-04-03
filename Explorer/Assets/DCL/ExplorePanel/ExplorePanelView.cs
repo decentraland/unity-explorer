@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
@@ -26,14 +27,23 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public SystemMenuView SystemMenu { get; private set; } = null!;
 
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig BackgroundMusic;
+        [field: SerializeField]
+        public float FadeDuration = 1;
+
+
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
+            AudioEventsBus.Instance.SendLoopingAudioEvent(BackgroundMusic, FadeDuration);
             AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
+            AudioEventsBus.Instance.SendStopLoopingAudioEvent(BackgroundMusic, FadeDuration);
             AnimationTransform.anchoredPosition = Vector2.zero;
             return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }

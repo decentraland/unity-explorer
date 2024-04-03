@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.CharacterPreview;
 using MVC;
 using System;
@@ -60,6 +61,14 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig BackgroundMusic;
+        [field: SerializeField]
+        public float FadeDuration = 1;
+
+
 
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {

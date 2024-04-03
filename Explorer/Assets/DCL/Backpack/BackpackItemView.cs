@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -58,11 +59,17 @@ namespace DCL.Backpack
         public bool IsEquipped { get; set; }
 
 
+        [FormerlySerializedAs("EquipWearableAudioClipConfig")]
         [Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig EquipWearableAudioClipConfig;
+        public AudioClipConfig EquipWearableAudio;
+        [FormerlySerializedAs("UnEquipWearableAudioClipConfig")]
         [field: SerializeField]
-        public AudioClipConfig UnEquipWearableAudioClipConfig;
+        public AudioClipConfig UnEquipWearableAudio;
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio;
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio;
 
         private CancellationTokenSource cts;
 
@@ -75,6 +82,7 @@ namespace DCL.Backpack
         public void OnPointerEnter(PointerEventData eventData)
         {
             AnimateHover();
+            AudioEventsBus.Instance.SendAudioEvent(HoverAudio);
             SetEquipButtonsState();
 
             if (IsEquipped)
@@ -111,6 +119,7 @@ namespace DCL.Backpack
             if (string.IsNullOrEmpty(ItemId))
                 return;
 
+            AudioEventsBus.Instance.SendAudioEvent(ClickAudio);
             OnSelectItem?.Invoke(ItemId);
         }
     }

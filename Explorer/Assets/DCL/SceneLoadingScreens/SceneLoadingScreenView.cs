@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DG.Tweening;
 using MVC;
 using System;
@@ -48,6 +49,13 @@ namespace DCL.SceneLoadingScreens
 
         [SerializeField]
         private Transform breadcrumbParent = null!;
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig BackgroundMusic;
+        [field: SerializeField]
+        public float FadeDuration = 1;
+
 
         public event Action<int>? OnBreadcrumbClicked;
 

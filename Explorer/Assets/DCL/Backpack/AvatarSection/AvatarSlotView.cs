@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
@@ -73,6 +74,13 @@ namespace DCL.Backpack
         [field: SerializeField]
         public AvatarWearableCategoryEnum CategoryEnum;
 
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio;
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio;
+
+
         public void Start()
         {
             AvatarWearableHide.CATEGORIES_TO_READABLE.TryGetValue(Category.ToLower(), out string readableCategoryHider);
@@ -82,12 +90,14 @@ namespace DCL.Backpack
 
         public void InvokeSlotButtonPressed()
         {
+            AudioEventsBus.Instance.SendAudioEvent(ClickAudio);
             OnSlotButtonPressed?.Invoke(this);
             ScaleUpAnimation(SelectedBackground.transform);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            AudioEventsBus.Instance.SendAudioEvent(HoverAudio);
             HoverTootlip.SetActive(true);
             focusedImage.enabled = true;
             UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn) && !BlockUnEquip);

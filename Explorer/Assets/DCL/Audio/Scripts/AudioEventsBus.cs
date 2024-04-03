@@ -24,19 +24,20 @@ namespace DCL.Audio
         BACKPACK_CHANGE_TAB = 202,
     }
 
-    public class UIAudioEventsBus : IDisposable
+    public class AudioEventsBus : IDisposable
     {
-        private static UIAudioEventsBus instance;
+        private static AudioEventsBus instance;
 
-        public static UIAudioEventsBus Instance
+        public static AudioEventsBus Instance
         {
             get
             {
-                return instance ??= new UIAudioEventsBus();
+                return instance ??= new AudioEventsBus();
             }
         }
 
         public event Action<AudioClipConfig> AudioEvent;
+        public event Action<AudioClipConfig, bool, float> LoopingAudioEvent;
 
         public void Dispose() { }
 
@@ -44,5 +45,15 @@ namespace DCL.Audio
         {
             if (audioClipConfig != null) { AudioEvent?.Invoke(audioClipConfig); }
         }
+
+        public void SendLoopingAudioEvent(AudioClipConfig audioClipConfig, float fadeDuration = 0)
+        {
+            if (audioClipConfig != null) { LoopingAudioEvent?.Invoke(audioClipConfig, true, fadeDuration); }
+        }
+        public void SendStopLoopingAudioEvent(AudioClipConfig audioClipConfig, float fadeDuration = 0)
+        {
+            if (audioClipConfig != null) { LoopingAudioEvent?.Invoke(audioClipConfig, false, fadeDuration); }
+        }
+
     }
 }

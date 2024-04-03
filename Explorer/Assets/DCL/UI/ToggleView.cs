@@ -34,7 +34,7 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
+            AudioEventsBus.Instance.SendAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
         }
     }
 }

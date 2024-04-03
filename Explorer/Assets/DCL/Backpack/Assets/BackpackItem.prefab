@@ -339,15 +339,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -996,6 +998,10 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 8252342816705450076}
   <FullBackpackItem>k__BackingField: {fileID: 8241648339715965561}
   <IsEquipped>k__BackingField: 0
+  EquipWearableAudio: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
+  UnEquipWearableAudio: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
+  HoverAudio: {fileID: 11400000, guid: 9f05f6f4feb860e40bc2e79e57f7e6bd, type: 2}
+  ClickAudio: {fileID: 11400000, guid: 10a360c99e97f3246bb8cb8d022720a9, type: 2}
 --- !u!1 &7257904519296327889
 GameObject:
   m_ObjectHideFlags: 0
@@ -1181,15 +1187,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0

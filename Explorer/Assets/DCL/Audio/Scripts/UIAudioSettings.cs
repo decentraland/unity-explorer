@@ -7,8 +7,6 @@ using UnityEngine;
 
 namespace DCL.Audio
 {
-
-
     [CreateAssetMenu(fileName = "UIAudioSettings", menuName = "SO/Audio/UIAudioSettings")]
     public class UIAudioSettings : ScriptableObject
     {
@@ -19,16 +17,6 @@ namespace DCL.Audio
 
         public float UIAudioVolume => uiAudioVolume;
 
-        public AudioClip GetAudioClipForType(UIAudioType type)
-        {
-            foreach (UIAudioClipKeyValuePair pair in audioClipList)
-            {
-                if (pair.key == type) { return pair.value; }
-            }
-
-            ReportHub.Log(ReportCategory.AUDIO, $"Audio Clip for type {type} not found, returning default audio clip {defaultAudioClip}");
-            return defaultAudioClip;
-        }
 
         [Serializable]
         public class UIAudioClipKeyValuePair

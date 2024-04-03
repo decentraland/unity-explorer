@@ -2,6 +2,7 @@ using DCL.Audio;
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.UI
@@ -15,12 +16,14 @@ namespace DCL.UI
         public Button clearSearchButton;
 
 
+        [FormerlySerializedAs("EnterTextAudioClipConfig")]
         [Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig EnterTextAudioClipConfig;
+        public AudioClipConfig InputTextAudio;
 
+        [FormerlySerializedAs("ClearTextAudioClipConfig")]
         [field: SerializeField]
-        public AudioClipConfig ClearTextAudioClipConfig;
+        public AudioClipConfig ClearTextAudio;
 
         private void Awake()
         {
@@ -36,12 +39,12 @@ namespace DCL.UI
 
         private void OnClearText()
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(ClearTextAudioClipConfig);
+            AudioEventsBus.Instance.SendAudioEvent(ClearTextAudio);
         }
 
         private void OnValueChanged(string value)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(EnterTextAudioClipConfig);
+            AudioEventsBus.Instance.SendAudioEvent(InputTextAudio);
         }
     }
 }

@@ -1,3 +1,4 @@
+using DCL.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,5 +14,25 @@ namespace DCL.UI
 
         [field: SerializeField]
         internal GameObject buttonImageOutline { get; private set; }
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig ButtonPressedAudio;
+
+        private void OnEnable()
+        {
+            button.onClick.AddListener(OnClick);
+        }
+
+        private void OnDisable()
+        {
+            button.onClick.RemoveListener(OnClick);
+        }
+
+        private void OnClick()
+        {
+            AudioEventsBus.Instance.SendAudioEvent(ButtonPressedAudio);
+        }
+
     }
 }

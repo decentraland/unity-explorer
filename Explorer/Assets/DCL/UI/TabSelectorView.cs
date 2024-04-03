@@ -42,7 +42,7 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendAudioEvent(TabClickAudio);
+            AudioEventsBus.Instance.SendAudioEvent(TabClickAudio);
         }
     }
 }

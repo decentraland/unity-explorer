@@ -33,5 +33,5 @@ MonoBehaviour:
   - key: 2
     value: {fileID: 8300000, guid: bd93a16f2d9589140847436ee9cd974e, type: 3}
   defaultAudioClip: {fileID: 8300000, guid: 2c053e492698c8848a8cc9a7bbd26564, type: 3}
-  avatarAudioVolume: 0.1
+  avatarAudioVolume: 0.5
   avatarAudioPriority: 125

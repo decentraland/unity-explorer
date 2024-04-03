@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -95,6 +96,8 @@ namespace DCL.AuthenticationScreenFlow
 
             Assert.IsNotNull(world);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
+
+            AudioEventsBus.Instance.SendLoopingAudioEvent(viewInstance.BackgroundMusic, viewInstance.FadeDuration);
         }
 
         protected override void OnBeforeViewShow()
@@ -110,6 +113,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
+            AudioEventsBus.Instance.SendStopLoopingAudioEvent(viewInstance.BackgroundMusic, viewInstance.FadeDuration);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()

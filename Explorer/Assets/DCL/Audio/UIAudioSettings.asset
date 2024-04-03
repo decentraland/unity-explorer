@@ -12,41 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b79a8387ef469ba0869bbc7376721f, type: 3}
   m_Name: UIAudioSettings
   m_EditorClassIdentifier: 
-  audioClipList:
-  - key: 0
-    value: {fileID: 8300000, guid: 5c7349f12b4680e4d95b0917bfc20964, type: 3}
-  - key: 1
-    value: {fileID: 8300000, guid: 097562e4bee8ddb4f8af722adc56ef07, type: 3}
-  - key: 2
-    value: {fileID: 8300000, guid: 9b7508b117a67a944a61594b38d8e8f2, type: 3}
-  - key: 3
-    value: {fileID: 8300000, guid: 17351ce041126dd4ca65b0d15117be67, type: 3}
-  - key: 4
-    value: {fileID: 8300000, guid: 1fdcf22681854bf48a8fd9e35ab6aec7, type: 3}
-  - key: 5
-    value: {fileID: 8300000, guid: 971148f08d7d8c94f9044faf4ac04245, type: 3}
-  - key: 6
-    value: {fileID: 8300000, guid: 8ee5429117c42f4488c21d9d5c3567a8, type: 3}
-  - key: 100
-    value: {fileID: 8300000, guid: 9b7508b117a67a944a61594b38d8e8f2, type: 3}
-  - key: 101
-    value: {fileID: 8300000, guid: 2c053e492698c8848a8cc9a7bbd26564, type: 3}
-  - key: 102
-    value: {fileID: 8300000, guid: 1c63e2fd753791247935472a95268e78, type: 3}
-  - key: 103
-    value: {fileID: 8300000, guid: 1c63e2fd753791247935472a95268e78, type: 3}
-  - key: 104
-    value: {fileID: 8300000, guid: 2f4918799ff23eb4c808fca936268009, type: 3}
-  - key: 105
-    value: {fileID: 8300000, guid: ea30ebbec1fa4e449af92faaa5abaa64, type: 3}
-  - key: 106
-    value: {fileID: 8300000, guid: 15e46c20e35f1314baff291e1e3296a1, type: 3}
-  - key: 200
-    value: {fileID: 8300000, guid: 5c7349f12b4680e4d95b0917bfc20964, type: 3}
-  - key: 201
-    value: {fileID: 8300000, guid: 5c7349f12b4680e4d95b0917bfc20964, type: 3}
-  - key: 202
-    value: {fileID: 8300000, guid: c854f59a064ee344686fb9643e30a854, type: 3}
+  audioClipList: []
   defaultAudioClip: {fileID: 8300000, guid: 15e46c20e35f1314baff291e1e3296a1, type: 3}
-  uiAudioVolume: 5
+  uiAudioVolume: 1
   uiAudioPriority: 10

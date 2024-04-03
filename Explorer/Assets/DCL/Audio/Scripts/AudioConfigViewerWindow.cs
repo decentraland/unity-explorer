@@ -13,10 +13,10 @@ namespace DCL.Audio
 
         private List<AudioClipConfig> audioConfigs = new List<AudioClipConfig>();
 
-        [MenuItem("Window/UI Audio Config Updater")]
+        [MenuItem("Tools/Audio Config Editor")]
         public static void ShowWindow()
         {
-            GetWindow<AudioConfigViewerWindow>("UI Audio Configs Viewer");
+            GetWindow<AudioConfigViewerWindow>("Audio Config Editor");
         }
 
         private Vector2 scrollPosition = Vector2.zero;
