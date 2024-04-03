@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using Microsoft.ClearScript;
 using SceneRuntime.Apis.Modules;
 using SocketIOClient;
@@ -15,6 +17,8 @@ namespace CrdtEcsBridge.Engine
 {
     public class WebSocketApiImplementation : IWebSocketApi
     {
+        private static readonly ThreadSafeListPool<byte[]> SEND_PAYLOAD_POOL = new (1, PoolConstants.SCENES_COUNT);
+
         private readonly Dictionary<int, WebSocketTransport> webSockets = new ();
         private readonly ObjectPool<WebSocketTransport> webSocketPool;
 
@@ -70,11 +74,16 @@ namespace CrdtEcsBridge.Engine
                 }
                 else if (type == "Binary" && messageData is List<object> binaryData)
                 {
-                    byte[] byteArray = binaryData.Select(Convert.ToByte).ToArray();
+                    using var payloadListScope = SEND_PAYLOAD_POOL.AutoScope();
+
+                    var byteArray = new byte[binaryData.Count];
+                    for (var i = 0; i < binaryData.Count; i++) byteArray[i] = Convert.ToByte(binaryData[i]);
+
+                    payloadListScope.Value.Add(byteArray);
 
                     var payload = new Payload
                     {
-                        Bytes = new List<byte[]> { byteArray },
+                        Bytes = payloadListScope.Value,
                     };
 
                     await webSocket.SendAsync(payload, ct);
