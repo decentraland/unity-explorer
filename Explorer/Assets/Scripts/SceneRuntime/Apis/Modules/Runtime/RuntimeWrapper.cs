@@ -4,7 +4,6 @@ using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Utility;
 
 namespace SceneRuntime.Apis.Modules.Runtime
@@ -46,18 +45,12 @@ namespace SceneRuntime.Apis.Modules.Runtime
         }
 
         [UsedImplicitly]
-        public object GetRealm()
-        {
-            try { return api.GetRealmAsync(cancellationTokenSource.Token).ToPromise(); }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
-        }
+        public object GetRealm() =>
+            api.GetRealmAsync(cancellationTokenSource.Token).ToPromise();
 
         [UsedImplicitly]
-        public object GetWorldTime()
-        {
-            try { return api.GetWorldTimeAsync(cancellationTokenSource.Token).ToPromise(); }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
-        }
+        public object GetWorldTime() =>
+            api.GetWorldTimeAsync(cancellationTokenSource.Token).ToPromise();
 
         [UsedImplicitly]
         public object GetSceneInformation() =>
