@@ -83,6 +83,8 @@ namespace DCL.Audio
         {
             if (UIAudioSettings.UIAudioVolume > 0) //Here we will use proper Settings for the type of audio clip
             {
+                audioSource.volume = 1;
+
                 if (audioClipConfig.audioClips.Length > 1)
                 {
                     int randomIndex = Random.Range(0, audioClipConfig.audioClips.Length);
