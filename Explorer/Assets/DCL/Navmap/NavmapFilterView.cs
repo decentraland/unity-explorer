@@ -1,4 +1,6 @@
+using DCL.MapRenderer.MapLayers;
 using DG.Tweening;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,15 +9,16 @@ namespace DCL.Navmap
     public class NavmapFilterView : MonoBehaviour
     {
         private const float ANIMATION_TIME = 0.2f;
+        public event Action<MapLayer, bool> OnFilterChanged;
 
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
 
         [field: SerializeField]
-        public RectTransform filterContentTransform;
+        public Button CloseButtonArea { get; private set; }
 
         [field: SerializeField]
-        public DeselectableUiElement FilterContentDeselectable { get; private set; }
+        public GameObject FilterContent { get; private set; }
 
         [field: SerializeField]
         public Button filterButton;
@@ -26,23 +29,47 @@ namespace DCL.Navmap
         [field: SerializeField]
         public GameObject infoContent;
 
+        [field: SerializeField]
+        private Toggle favoritesToggle;
+
+        [field: SerializeField]
+        private Toggle poisToggle;
+
+        [field: SerializeField]
+        private Toggle friendsToggle;
+
+        [field: SerializeField]
+        private Toggle peopleToggle;
+
         private void Start()
         {
             filterButton.onClick.AddListener(OnSortDropdownClick);
-            FilterContentDeselectable.gameObject.SetActive(false);
-            FilterContentDeselectable.OnDeselectEvent += OnSortDropdownClick;
+            CloseButtonArea.onClick.AddListener(OnSortDropdownClick);
+            FilterContent.SetActive(false);
+            CloseButtonArea.gameObject.SetActive(false);
+
+            poisToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.ScenesOfInterest, isOn));
+            /* TODO: add the rest of the toggles once the MapLayers are implemented
+            favoritesToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.Favorites, isOn));
+            friendsToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.Friends, isOn));
+            peopleToggle.onValueChanged.AddListener((isOn) =>
+            {
+                OnFilterChanged?.Invoke(MapLayer.ColdUsersMarkers, isOn);
+                OnFilterChanged?.Invoke(MapLayer.HotUsersMarkers, isOn);
+            });*/
         }
 
         private void OnSortDropdownClick()
         {
-            if (FilterContentDeselectable.gameObject.activeInHierarchy)
+            if (FilterContent.activeInHierarchy)
             {
-                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => FilterContentDeselectable.gameObject.SetActive(false));
+                CloseButtonArea.gameObject.SetActive(false);
+                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => FilterContent.SetActive(false));
             }
             else
             {
-                FilterContentDeselectable.gameObject.SetActive(true);
-                FilterContentDeselectable.SelectElement();
+                CloseButtonArea.gameObject.SetActive(true);
+                FilterContent.SetActive(true);
                 CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
         }

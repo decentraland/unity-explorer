@@ -8,6 +8,7 @@ using DCL.MapRenderer.MapLayers.Atlas;
 using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
+using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,19 +21,27 @@ namespace DCL.MapRenderer.ComponentsFactory
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
+        private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
 
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
         private readonly MapRendererTextureContainer textureContainer;
+        private readonly IPlacesAPIService placesAPIService;
         private readonly MapRendererSettings mapSettings;
 
-        public MapRendererChunkComponentsFactory(IAssetsProvisioner assetsProvisioner, MapRendererSettings settings, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer)
+        public MapRendererChunkComponentsFactory(
+            IAssetsProvisioner assetsProvisioner,
+            MapRendererSettings settings,
+            IWebRequestController webRequestController,
+            MapRendererTextureContainer textureContainer,
+            IPlacesAPIService placesAPIService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mapSettings = settings;
             this.webRequestController = webRequestController;
             this.textureContainer = textureContainer;
+            this.placesAPIService = placesAPIService;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -65,7 +74,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             await UniTask.WhenAll(
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken)
+                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
+                sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);

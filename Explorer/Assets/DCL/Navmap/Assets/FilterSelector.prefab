@@ -1188,6 +1188,127 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!1 &3492788732341060060
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2896301481183180445}
+  - component: {fileID: 7157674387572548793}
+  - component: {fileID: 2048854349382257570}
+  - component: {fileID: 2430200492952547162}
+  m_Layer: 5
+  m_Name: CloseButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2896301481183180445
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3492788732341060060}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3653306991017406586}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -542, y: -516}
+  m_SizeDelta: {x: 1920, y: 1080}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &7157674387572548793
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3492788732341060060}
+  m_CullTransparentMesh: 1
+--- !u!114 &2048854349382257570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3492788732341060060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.89411765}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2430200492952547162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3492788732341060060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 2048854349382257570}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &3511041705456984927
 GameObject:
   m_ObjectHideFlags: 0
@@ -1218,6 +1339,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2896301481183180445}
   - {fileID: 4863925862195717512}
   - {fileID: 6803524247356746468}
   - {fileID: 5881445584529925230}
@@ -1252,11 +1374,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <CanvasGroup>k__BackingField: {fileID: 710381112587431318}
-  filterContentTransform: {fileID: 5861108329526840786}
-  <FilterContentDeselectable>k__BackingField: {fileID: 3390818385341868323}
+  <CloseButtonArea>k__BackingField: {fileID: 2430200492952547162}
+  <FilterContent>k__BackingField: {fileID: 5005244299106609956}
   filterButton: {fileID: 1278919312715921938}
   infoButton: {fileID: 8026640392531521398}
   infoContent: {fileID: 2753175211535931739}
+  favoritesToggle: {fileID: 3245908565707678511}
+  poisToggle: {fileID: 7838039530944453050}
+  friendsToggle: {fileID: 2787713070818108595}
+  peopleToggle: {fileID: 1653067861134931513}
 --- !u!1 &4025075979653657280
 GameObject:
   m_ObjectHideFlags: 0
@@ -1540,7 +1666,6 @@ GameObject:
   - component: {fileID: 5861108329526840786}
   - component: {fileID: 8948156067589727629}
   - component: {fileID: 4018807803028592383}
-  - component: {fileID: 3390818385341868323}
   - component: {fileID: 710381112587431318}
   m_Layer: 5
   m_Name: FiltersContent
@@ -1613,37 +1738,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &3390818385341868323
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5005244299106609956}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3b122bc11d594de3908385febf441da, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  skipElements:
-  - {fileID: 2519241362008714456}
-  - {fileID: 8588117588119636993}
-  - {fileID: 849966082102954847}
-  - {fileID: 6267473088658403014}
-  - {fileID: 7117074770006358749}
-  - {fileID: 1951625050009416318}
-  - {fileID: 8247201647852452253}
-  - {fileID: 2137440691346605402}
-  - {fileID: 7893664476656813906}
-  - {fileID: 7179112107532369670}
-  - {fileID: 8169131810490200897}
-  - {fileID: 1318145770920451117}
-  - {fileID: 173168137413322002}
-  - {fileID: 9179136453971706973}
-  - {fileID: 6414683545321153656}
-  - {fileID: 6505922418221274240}
-  - {fileID: 4025075979653657280}
-  - {fileID: 5117461654237913256}
 --- !u!225 &710381112587431318
 CanvasGroup:
   m_ObjectHideFlags: 0

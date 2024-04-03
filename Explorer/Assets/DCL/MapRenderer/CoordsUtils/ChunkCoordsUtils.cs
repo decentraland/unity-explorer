@@ -70,5 +70,8 @@ namespace DCL.MapRenderer.CoordsUtils
 
         public Vector3 CoordsToPositionWithOffset(Vector2 coords) =>
             (coords * ParcelSize) - new Vector2(ParcelSize / 2f, ParcelSize / 2f);
+
+        public Vector2Int StringToCoords(string coords) =>
+            new (int.Parse(coords.Split(',')[0]), int.Parse(coords.Split(',')[1]));
     }
 }

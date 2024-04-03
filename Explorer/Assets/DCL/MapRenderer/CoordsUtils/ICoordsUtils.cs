@@ -28,5 +28,7 @@ namespace DCL.MapRenderer.CoordsUtils
         Vector3 CoordsToPosition(Vector2Int coords);
 
         Vector3 CoordsToPositionWithOffset(Vector2 coords);
+
+        Vector2Int StringToCoords(string coords);
     }
 }
