@@ -39,7 +39,9 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var objectsPool = new ObjectPool<SceneOfInterestMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT);
+                defaultCapacity: PREWARM_COUNT,
+                actionOnGet: (obj) => obj.gameObject.SetActive(true),
+                actionOnRelease: (obj) => obj.gameObject.SetActive(false));
 
             var controller = new ScenesOfInterestMarkersController(
                 placesAPIService,

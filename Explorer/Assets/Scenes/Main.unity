@@ -359,6 +359,11 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
+      <FavoriteMarker>k__BackingField:
+        m_AssetGUID: 5f2c1af519efc4b82b87b887f93077fc
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
     <BackpackSettings>k__BackingField:
       <CategoryIconsMapping>k__BackingField:
         m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
