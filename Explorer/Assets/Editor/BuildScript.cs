@@ -21,6 +21,10 @@ namespace Editor
         [UsedImplicitly]
         public static void Build()
         {
+            //Unity suggestion: 1793168
+            //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
+            EditorApplication.ExecuteMenuItem(“File/Save Project”);
+            
             // Gather values from args
             Dictionary<string, string> options = GetValidatedOptions();
 
