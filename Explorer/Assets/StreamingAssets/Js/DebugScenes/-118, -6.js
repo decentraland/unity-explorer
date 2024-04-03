@@ -16215,7 +16215,7 @@ No matching component was found for:
                     let o0 = K.position[0], m0 = K.position[1], $ = K.position[2], q = K.scale[0], b = K.scale[1],
                         O = K.scale[2];
                     n = Math.min(n, o0 - q / 2), l = Math.max(l, o0 + q / 2), a = Math.min(a, m0 - b / 2), v = Math.max(v, m0 + b / 2), m = Math.min(m, $ - O / 2), r = Math.max(r, $ + O / 2)
-                } else console.error("Data for object is incomplete:", K), a0.removeEntity(P0);
+                } else console.error("Data for object is incomplete:", JSON.stringify(K)), a0.removeEntity(P0);
                 N9.setPbrMaterial(P0, {
                     albedoColor: l9.Black(),
                     metallic: 0,
@@ -36595,7 +36595,7 @@ and hide avatar `, font: "sans-serif", fontSize: 11, uiTransform: {height: 15, m
             console.log("You are in the realm: ", e.currentRealm?.displayName), w7 = new WebSocket("wss://servemediadecentralland.onrender.com/" + e.currentRealm?.displayName), w7.onopen = () => {
                 console.log("Connected "), w7 && w7.readyState === WebSocket.OPEN && w7.send(JSON.stringify({
                     user: k0.userData?.userId,
-                    room: 0.toString()
+                    room: (0).toString()
                 }))
             }, w7.onmessage = function (i) {
             }
@@ -36604,7 +36604,7 @@ and hide avatar `, font: "sans-serif", fontSize: 11, uiTransform: {height: 15, m
         l8.add(() => {
             console.log("SCENE LOADED");
             let e = S.create(16, .87, 31.025), i = S.create(16.4, 1.22, 26.625);
-            Ge(e, i), k0.hideAllEntities(), k0.activateEntity(0.toString(), !0)
+            Ge(e, i), k0.hideAllEntities(), k0.activateEntity((0).toString(), !0)
         });
 
         function G4() {
