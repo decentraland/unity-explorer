@@ -11,7 +11,8 @@ namespace DCL.Settings
         [field: SerializeField] public SettingsGroupView SettingsGroupPrefab { get; private set; }
         [field: SerializeField] public SettingsSectionConfig GeneralSectionConfig { get; set; }
         [field: SerializeField] public SettingsSectionConfig GraphicsSectionConfig { get; set; }
-        [field: SerializeField] public SettingsSectionConfig AudioSectionConfig { get; set; }
+        [field: SerializeField] public SettingsSectionConfig SoundSectionConfig { get; set; }
+        [field: SerializeField] public SettingsSectionConfig ControlsSectionConfig { get; set; }
 
         public SettingsModuleView GetModuleView(SettingsModuleType moduleType)
         {

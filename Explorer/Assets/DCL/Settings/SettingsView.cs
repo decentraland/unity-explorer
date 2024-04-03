@@ -8,10 +8,12 @@ namespace DCL.Settings
         [field: SerializeField] public SettingsMenuConfiguration Configuration { get; private set; }
         [field: SerializeField] public Transform GeneralSectionContainer { get; private set; }
         [field: SerializeField] public Transform GraphicsSectionContainer { get; private set; }
-        [field: SerializeField] public Transform AudioSectionContainer { get; private set; }
+        [field: SerializeField] public Transform SoundSectionContainer { get; private set; }
+        [field: SerializeField] public Transform ControlsSectionContainer { get; private set; }
         [field: SerializeField] public Button GeneralSectionButton { get; private set; }
         [field: SerializeField] public Button GraphicsSectionButton { get; private set; }
-        [field: SerializeField] public Button AudioSectionButton { get; private set; }
+        [field: SerializeField] public Button SoundSectionButton { get; private set; }
+        [field: SerializeField] public Button ControlsSectionButton { get; private set; }
         [field: SerializeField] public ScrollRect ContentScrollRect { get; private set; }
     }
 }

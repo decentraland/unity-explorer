@@ -21,249 +21,35 @@ MonoBehaviour:
     moduleView: {fileID: 3071474972717511390, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
   <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
   <GeneralSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField:
-    - groupTitle: World
-      modules:
-      - moduleType: 0
-        moduleName: Dynamic skybox
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Skybox time
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Scenes load radius
-        moduleAlternativeName: 
-    - groupTitle: UI
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Other
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
+    <SettingsGroups>k__BackingField: []
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
-    - groupTitle: Display
-      modules:
-      - moduleType: 0
-        moduleName: Dynamic skybox
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Skybox time
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Scenes load radius
-        moduleAlternativeName: 
     - groupTitle: Graphics Quality
       modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
       - moduleType: 2
-        moduleName: Mini Map size
+        moduleName: Quality
         moduleAlternativeName: 
-  <AudioSectionConfig>k__BackingField:
+    - groupTitle: Display
+      modules:
+      - moduleType: 2
+        moduleName: Window
+        moduleAlternativeName: 
+  <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - groupTitle: Volume
       modules:
-      - moduleType: 0
-        moduleName: Dynamic skybox
-        moduleAlternativeName: 
       - moduleType: 1
-        moduleName: Skybox time
+        moduleName: Master volume
         moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Scenes load radius
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
+  <ControlsSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField:
+    - groupTitle: Mouse
       modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
       - moduleType: 1
-        moduleName: Player's name transparency
+        moduleName: Mouse sensitivy
         moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
+    - groupTitle: Camera
       modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
       - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
-        moduleAlternativeName: 
-    - groupTitle: Voice Chat
-      modules:
-      - moduleType: 0
-        moduleName: Hide UI
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Profanity filter
-        moduleAlternativeName: 
-      - moduleType: 0
-        moduleName: Show avatars names
-        moduleAlternativeName: 
-      - moduleType: 1
-        moduleName: Player's name transparency
-        moduleAlternativeName: 
-      - moduleType: 2
-        moduleName: Mini Map size
+        moduleName: Default camera
         moduleAlternativeName: 

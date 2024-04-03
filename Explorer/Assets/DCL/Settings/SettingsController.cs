@@ -15,29 +15,10 @@ namespace DCL.Settings
 
             GenerateSettings();
 
-            view.GeneralSectionButton.onClick.AddListener(() =>
-            {
-                view.GeneralSectionContainer.gameObject.SetActive(view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0);
-                view.GraphicsSectionContainer.gameObject.SetActive(false);
-                view.AudioSectionContainer.gameObject.SetActive(false);
-                view.ContentScrollRect.verticalNormalizedPosition = 1;
-            });
-
-            view.GraphicsSectionButton.onClick.AddListener(() =>
-            {
-                view.GeneralSectionContainer.gameObject.SetActive(false);
-                view.GraphicsSectionContainer.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
-                view.AudioSectionContainer.gameObject.SetActive(false);
-                view.ContentScrollRect.verticalNormalizedPosition = 1;
-            });
-
-            view.AudioSectionButton.onClick.AddListener(() =>
-            {
-                view.GeneralSectionContainer.gameObject.SetActive(false);
-                view.GraphicsSectionContainer.gameObject.SetActive(false);
-                view.AudioSectionContainer.gameObject.SetActive(view.Configuration.AudioSectionConfig.SettingsGroups.Count > 0);
-                view.ContentScrollRect.verticalNormalizedPosition = 1;
-            });
+            view.GeneralSectionButton.onClick.AddListener(OpenGeneralSection);
+            view.GraphicsSectionButton.onClick.AddListener(OpenGraphicsSection);
+            view.SoundSectionButton.onClick.AddListener(OpenSoundSection);
+            view.ControlsSectionButton.onClick.AddListener(OpenControlsSection);
         }
 
         public void Activate()
@@ -57,11 +38,9 @@ namespace DCL.Settings
         {
             GenerateSettingsSection(view.Configuration.GeneralSectionConfig, view.GeneralSectionContainer);
             GenerateSettingsSection(view.Configuration.GraphicsSectionConfig, view.GraphicsSectionContainer);
-            GenerateSettingsSection(view.Configuration.AudioSectionConfig, view.AudioSectionContainer);
-
-            view.GeneralSectionContainer.gameObject.SetActive(true);
-            view.GraphicsSectionContainer.gameObject.SetActive(false);
-            view.AudioSectionContainer.gameObject.SetActive(false);
+            GenerateSettingsSection(view.Configuration.SoundSectionConfig, view.SoundSectionContainer);
+            GenerateSettingsSection(view.Configuration.ControlsSectionConfig, view.ControlsSectionContainer);
+            OpenGeneralSection();
         }
 
         private void GenerateSettingsSection(SettingsSectionConfig sectionConfig, Transform sectionContainer)
@@ -77,6 +56,42 @@ namespace DCL.Settings
                     moduleView.ModuleTitle.text = module.moduleName;
                 }
             }
+        }
+
+        private void OpenGeneralSection()
+        {
+            view.GeneralSectionContainer.gameObject.SetActive(view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0);
+            view.GraphicsSectionContainer.gameObject.SetActive(false);
+            view.SoundSectionContainer.gameObject.SetActive(false);
+            view.ControlsSectionContainer.gameObject.SetActive(false);
+            view.ContentScrollRect.verticalNormalizedPosition = 1;
+        }
+
+        private void OpenGraphicsSection()
+        {
+            view.GeneralSectionContainer.gameObject.SetActive(false);
+            view.GraphicsSectionContainer.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
+            view.SoundSectionContainer.gameObject.SetActive(false);
+            view.ControlsSectionContainer.gameObject.SetActive(false);
+            view.ContentScrollRect.verticalNormalizedPosition = 1;
+        }
+
+        private void OpenSoundSection()
+        {
+            view.GeneralSectionContainer.gameObject.SetActive(false);
+            view.GraphicsSectionContainer.gameObject.SetActive(false);
+            view.SoundSectionContainer.gameObject.SetActive(view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0);
+            view.ControlsSectionContainer.gameObject.SetActive(false);
+            view.ContentScrollRect.verticalNormalizedPosition = 1;
+        }
+
+        private void OpenControlsSection()
+        {
+            view.GeneralSectionContainer.gameObject.SetActive(false);
+            view.GraphicsSectionContainer.gameObject.SetActive(false);
+            view.SoundSectionContainer.gameObject.SetActive(false);
+            view.ControlsSectionContainer.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
+            view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
     }
 }
