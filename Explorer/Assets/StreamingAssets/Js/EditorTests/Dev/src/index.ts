@@ -109,51 +109,6 @@ function messageFromError(error: unknown): string {
     return JSON.stringify(error)
 }
 
-const extraCsharpProperties = new Set<string>([
-    'Equals',
-    'GetHashCode',
-    'GetType',
-    'ToString',
-    'toJSON'
-])
-
-function withCutExtraCSharpProperties<T>(object: T): T {
-    if (object instanceof Uint8Array) {
-        return object
-    }
-
-    if (Array.isArray(object)) {
-        const newArray: any[] = []
-        for (const element of object) {
-            if (element instanceof Object) {
-                newArray.push(withCutExtraCSharpProperties(element))
-            }
-            else {
-                newArray.push(element)
-            }
-        }
-        return newArray as any
-    }
-
-
-    const newObject = {} as any
-
-    for (const key in object) {
-        if (extraCsharpProperties.has(key)) {
-            continue
-        }
-
-        let candidate = object[key]
-
-        if (candidate instanceof Object) {
-            candidate = withCutExtraCSharpProperties(candidate)
-        }
-
-        newObject[key] = candidate
-    }
-    return newObject
-}
-
 //To be called from jsSide
 export function registerBundle(
     mutableBundle: any,
@@ -173,13 +128,12 @@ export function registerBundle(
         }
         const method = mutableBundle[k] as (message: any) => Promise<any>
         mutableBundle[k] = async (message: any) => {
-            const raw = await method(message)
-            const result = withCutExtraCSharpProperties(raw)
-            if (checker.strictTest(result) === false) {
+            const result = await method(message)
+            if (checker.test(result) === false) {
                 const report = reportString(checker, k, result)
                 logError(report)
                 try {
-                    checker.strictCheck(result)
+                    checker.check(result)
                 }
                 catch (e: unknown) {
                     throw new Error(`Cannot get result from ${k}: ${messageFromError(e)}`)
