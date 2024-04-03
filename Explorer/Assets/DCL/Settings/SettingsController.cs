@@ -52,8 +52,21 @@ namespace DCL.Settings
 
                 foreach (SettingsModule module in group.modules)
                 {
-                    SettingsModuleView moduleView = Object.Instantiate(view.Configuration.GetModuleView(module.moduleType), generalGroupView.ModulesContainer).GetComponent<SettingsModuleView>();
+                    SettingsModuleView moduleView = Object.Instantiate(view.Configuration.GetModuleView(module.moduleFeature), generalGroupView.ModulesContainer).GetComponent<SettingsModuleView>();
                     moduleView.ModuleTitle.text = module.moduleName;
+
+                    switch (module.moduleFeature)
+                    {
+                        case SettingsModuleFeature.ExampleToggleSetting:
+                            new ExampleToggleSettingController(moduleView as SettingsToggleModuleView);
+                            break;
+                        case SettingsModuleFeature.ExampleSliderSetting:
+                            new ExampleSliderSettingController(moduleView as SettingsSliderModuleView);
+                            break;
+                        case SettingsModuleFeature.ExampleDropdownSetting:
+                            new ExampleDropdownSettingController(moduleView as SettingsDropdownModuleView);
+                            break;
+                    }
                 }
             }
         }

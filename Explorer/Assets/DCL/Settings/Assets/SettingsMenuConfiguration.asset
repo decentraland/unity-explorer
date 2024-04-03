@@ -12,44 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87ac801ee21e47668f593a1d5e2272ee, type: 3}
   m_Name: SettingsMenuConfiguration
   m_EditorClassIdentifier: 
-  <SettingsModulesMapping>k__BackingField:
-  - moduleType: 0
-    moduleView: {fileID: 1460759278914240053, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
-  - moduleType: 1
-    moduleView: {fileID: 4735297324857938338, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
-  - moduleType: 2
-    moduleView: {fileID: 3071474972717511390, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+  <SettingsFeaturesMapping>k__BackingField:
+  - moduleFeature: 0
+    moduleView: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+  - moduleFeature: 1
+    moduleView: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+  - moduleFeature: 2
+    moduleView: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
   <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
   <GeneralSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField: []
+    <SettingsGroups>k__BackingField:
+    - groupTitle: Test Group
+      modules:
+      - moduleFeature: 0
+        moduleName: Toggle Example
+        moduleAlternativeName: 
+      - moduleFeature: 1
+        moduleName: Slider Example
+        moduleAlternativeName: 
+      - moduleFeature: 2
+        moduleName: Dropdown Example
+        moduleAlternativeName: 
   <GraphicsSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField:
-    - groupTitle: Graphics Quality
-      modules:
-      - moduleType: 2
-        moduleName: Quality
-        moduleAlternativeName: 
-    - groupTitle: Display
-      modules:
-      - moduleType: 2
-        moduleName: Window
-        moduleAlternativeName: 
+    <SettingsGroups>k__BackingField: []
   <SoundSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField:
-    - groupTitle: Volume
-      modules:
-      - moduleType: 1
-        moduleName: Master volume
-        moduleAlternativeName: 
+    <SettingsGroups>k__BackingField: []
   <ControlsSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField:
-    - groupTitle: Mouse
-      modules:
-      - moduleType: 1
-        moduleName: Mouse sensitivy
-        moduleAlternativeName: 
-    - groupTitle: Camera
-      modules:
-      - moduleType: 2
-        moduleName: Default camera
-        moduleAlternativeName: 
+    <SettingsGroups>k__BackingField: []

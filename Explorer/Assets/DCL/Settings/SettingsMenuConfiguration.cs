@@ -4,22 +4,22 @@ using UnityEngine;
 
 namespace DCL.Settings
 {
-    [CreateAssetMenu(menuName = "Create Settings Menu Configuration", fileName = "Settings Menu Configuration", order = 0)]
+    [CreateAssetMenu(menuName = "Settings Menu/Create Settings Menu Configuration", fileName = "Settings Menu Configuration", order = 0)]
     public class SettingsMenuConfiguration : ScriptableObject
     {
-        [field: SerializeField] public List<SettingsModuleMap> SettingsModulesMapping { get; set; }
+        [field: SerializeField] public List<SettingsModuleFeatureMap> SettingsFeaturesMapping { get; set; }
         [field: SerializeField] public SettingsGroupView SettingsGroupPrefab { get; private set; }
         [field: SerializeField] public SettingsSectionConfig GeneralSectionConfig { get; set; }
         [field: SerializeField] public SettingsSectionConfig GraphicsSectionConfig { get; set; }
         [field: SerializeField] public SettingsSectionConfig SoundSectionConfig { get; set; }
         [field: SerializeField] public SettingsSectionConfig ControlsSectionConfig { get; set; }
 
-        public SettingsModuleView GetModuleView(SettingsModuleType moduleType)
+        public SettingsModuleView GetModuleView(SettingsModuleFeature feature)
         {
-            foreach (var settingsModule in SettingsModulesMapping)
+            foreach (var map in SettingsFeaturesMapping)
             {
-                if (settingsModule.moduleType == moduleType)
-                    return settingsModule.moduleView;
+                if (map.moduleFeature == feature)
+                    return map.moduleView;
             }
 
             return null;
@@ -27,10 +27,19 @@ namespace DCL.Settings
     }
 
     [Serializable]
-    public class SettingsModuleMap
+    public class SettingsModuleFeatureMap
     {
-        public SettingsModuleType moduleType;
+        public SettingsModuleFeature moduleFeature;
         public SettingsModuleView moduleView;
+    }
+
+    public enum SettingsModuleFeature
+    {
+        ExampleToggleSetting,
+        ExampleSliderSetting,
+        ExampleDropdownSetting,
+        // ...
+        // rest of the features!
     }
 
     [Serializable]
@@ -49,15 +58,8 @@ namespace DCL.Settings
     [Serializable]
     public class SettingsModule
     {
-        public SettingsModuleType moduleType;
+        public SettingsModuleFeature moduleFeature;
         public string moduleName;
         public string moduleAlternativeName;
-    }
-
-    public enum SettingsModuleType
-    {
-        Toggle,
-        Slider,
-        Dropdown,
     }
 }

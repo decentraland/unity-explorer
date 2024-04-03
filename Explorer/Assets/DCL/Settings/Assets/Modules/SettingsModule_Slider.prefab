@@ -147,7 +147,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5853700672979902523}
   - component: {fileID: 4346202621471895535}
-  - component: {fileID: 4735297324857938338}
+  - component: {fileID: 4706452128062998708}
   m_Layer: 5
   m_Name: SettingsModule_Slider
   m_TagString: Untagged
@@ -185,7 +185,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5356078269788372592}
   m_CullTransparentMesh: 1
---- !u!114 &4735297324857938338
+--- !u!114 &4706452128062998708
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -194,11 +194,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 5356078269788372592}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feea5b2271b14fd583d586c5c318e2ca, type: 3}
+  m_Script: {fileID: 11500000, guid: e4de70c6ae6f4656a34858020768227c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <ModuleType>k__BackingField: 1
   <ModuleTitle>k__BackingField: {fileID: 4583167106628717418}
-  <Control>k__BackingField: {fileID: 5004222816526983926}
+  <Slider>k__BackingField: {fileID: 5004222816526983926}
 --- !u!1001 &4684998233882030954
 PrefabInstance:
   m_ObjectHideFlags: 0

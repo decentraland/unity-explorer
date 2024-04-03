@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1476916289249721178}
   - component: {fileID: 8724416359614461070}
-  - component: {fileID: 3071474972717511390}
+  - component: {fileID: 743815267364520677}
   m_Layer: 5
   m_Name: SettingsModule_Dropdown
   m_TagString: Untagged
@@ -48,7 +48,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1087363099343037713}
   m_CullTransparentMesh: 1
---- !u!114 &3071474972717511390
+--- !u!114 &743815267364520677
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,11 +57,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1087363099343037713}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feea5b2271b14fd583d586c5c318e2ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 81c7566de1d04bfbb9138dbff2e72dce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <ModuleType>k__BackingField: 2
   <ModuleTitle>k__BackingField: {fileID: 8852146151382913035}
-  <Control>k__BackingField: {fileID: 3374213580848382174}
+  <Dropdown>k__BackingField: {fileID: 3374213580848382174}
 --- !u!1 &7072378744961823622
 GameObject:
   m_ObjectHideFlags: 0

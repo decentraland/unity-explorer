@@ -147,7 +147,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5942676776819982365}
   - component: {fileID: 4545527253899612105}
-  - component: {fileID: 1460759278914240053}
+  - component: {fileID: 1404863613082391807}
   m_Layer: 5
   m_Name: SettingsModule_Toggle
   m_TagString: Untagged
@@ -185,7 +185,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5264910800817200726}
   m_CullTransparentMesh: 1
---- !u!114 &1460759278914240053
+--- !u!114 &1404863613082391807
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -194,11 +194,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 5264910800817200726}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feea5b2271b14fd583d586c5c318e2ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 997babcd370e43c6ad2b9475f315f82b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <ModuleType>k__BackingField: 0
   <ModuleTitle>k__BackingField: {fileID: 4386095399059008332}
-  <Control>k__BackingField: {fileID: 7460116612797030569}
+  <Toggle>k__BackingField: {fileID: 7460116612797030569}
 --- !u!1001 &5031766917126564830
 PrefabInstance:
   m_ObjectHideFlags: 0
