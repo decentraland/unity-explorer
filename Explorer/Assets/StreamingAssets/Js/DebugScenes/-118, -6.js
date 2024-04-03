@@ -16050,7 +16050,7 @@ No matching component was found for:
                     killCollider: !1,
                     systems: [E.portalSystem],
                     children: [...E.portalRings, E.portalCircle, _, M.plane, k.plane, T.plane, I.plane],
-                    name: 5.toString()
+                    name: (5).toString()
                 };
             A.children.push(z), A.systems.push(e9(z, M4, A, .2)), A.systems.push(e9(_, yv, A));
             for (let z0 = 0; z0 < A.systems.length; z0++) a0.addSystem(A.systems[z0]);
@@ -16065,7 +16065,7 @@ No matching component was found for:
                     killCollider: !1,
                     systems: [],
                     children: [H, K, P0.plane, i0.plane, o0.plane, m0.plane],
-                    name: 7.toString()
+                    name: (7).toString()
                 };
             $.systems.push(e9(H, M4, $, .2)), $.systems.push(e9(K, hv, $));
             for (let z0 = 0; z0 < $.systems.length; z0++) a0.addSystem($.systems[z0]);
@@ -16085,7 +16085,7 @@ No matching component was found for:
                     killCollider: !1,
                     systems: [Y.portalSystem],
                     children: [u0.plane, h0.plane, R0.plane, L0.plane, q, Y.portalCircle, ...Y.portalRings, b, O],
-                    name: 6.toString()
+                    name: (6).toString()
                 };
             O0.systems.push(e9(q, M4, O0, .2)), O0.systems.push(e9(O, pv, O0, .2)), O0.systems.push(e9(b, dv, O0));
             for (let z0 = 0; z0 < O0.systems.length; z0++) a0.addSystem(O0.systems[z0]);
@@ -16133,7 +16133,7 @@ No matching component was found for:
                     killCollider: !1,
                     systems: [],
                     children: [T, E.plane, V.plane, M.plane, I],
-                    name: 8.toString()
+                    name: (8).toString()
                 };
             A.systems.push(e9(T, Sv, A)), A.systems.push(e9(I, Pv, A, .2));
             for (let R0 = 0; R0 < A.systems.length; R0++) a0.addSystem(A.systems[R0]);
@@ -16149,7 +16149,7 @@ No matching component was found for:
                     killCollider: !1,
                     systems: [],
                     children: [K.plane, P0.plane, i0.plane, o0],
-                    name: 10.toString()
+                    name: (10).toString()
                 };
             m0.systems.push(e9(o0, gv, m0));
             for (let R0 = 0; R0 < m0.systems.length; R0++) a0.addSystem(m0.systems[R0]);
@@ -16170,7 +16170,7 @@ No matching component was found for:
                 killCollider: !1,
                 systems: [n0.portalSystem],
                 children: [n0.portalCircle, ...n0.portalRings],
-                name: 9.toString()
+                name: (9).toString()
             };
             h0.children.push(Y, $.plane, q.plane, b.plane), h0.systems.push(e9(Y, xv, h0));
             for (let R0 = 0; R0 < h0.systems.length; R0++) a0.addSystem(h0.systems[R0]);
@@ -35402,7 +35402,7 @@ New York mornings.`;
                     killCollider: !1,
                     systems: [],
                     children: [l, a, v, r, a],
-                    name: 1.toString()
+                    name: (1).toString()
                 }, P = o8(i8, S.create(fe.x - 4.5, fe.y + 2, fe.z + 2.638), S.One(), () => {
                     HX(_)
                 }, l0.fromEulerDegrees(90, -60, 0)),
@@ -35776,14 +35776,14 @@ New York mornings.`;
                 killCollider: !1,
                 systems: [P.portalSystem],
                 children: [m],
-                name: 2.toString()
+                name: (2).toString()
             };
             E.children.push(_, ...P.portalRings, P.portalCircle, r.window), E.systems.push(e9(_, GX, E)), E.systems.push(e9(m, QX, E, .2));
             for (let T = 0; T < E.systems.length; T++) a0.addSystem(E.systems[T]);
             k0.addEntity(E);
             let V = Or(i, n, v), M = J9(S.create(v.x - 3, v.y - 1, v.z - .7399911880493164));
             N3.create(V.house, {url: l, playing: !1});
-            let k = {entity: V.house, visible: !1, killCollider: !1, systems: [], children: [], name: 3.toString()};
+            let k = {entity: V.house, visible: !1, killCollider: !1, systems: [], children: [], name: (3).toString()};
             return k.children.push(M, V.window), k.systems.push(e9(M, YX, k)), a0.addSystem(k.systems[0]), k0.addEntity(k), {morningHouseSue: r}
         };
 
@@ -35814,7 +35814,7 @@ New York mornings.`;
             let e = "models/Smokestructure-v3-2.glb", i = S.create(10.5, 0, 16.4),
                 s = je({glb: e, position: i, rotation: l0.Zero(), scale: S.create(.37, .37, .37)}),
                 n = J9(S.create(i.x + 5.2, 1, i.z + 8)),
-                l = {entity: s, visible: !1, killCollider: !1, systems: [], children: [n], name: 0.toString()};
+                l = {entity: s, visible: !1, killCollider: !1, systems: [], children: [n], name: (0).toString()};
             return l.systems.push(e9(n, ZX, l)), k0.addEntity(l), a0.addSystem(l.systems[0]), s
         };
 
