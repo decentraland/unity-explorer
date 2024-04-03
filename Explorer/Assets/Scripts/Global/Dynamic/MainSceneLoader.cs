@@ -99,9 +99,8 @@ namespace Global.Dynamic
             showLoading = true;
 #endif
 
-            enableLandscape = true;
+            //enableLandscape = true;
 #endif
-
 
             try
             {
@@ -131,6 +130,8 @@ namespace Global.Dynamic
                     return;
                 }
 
+                bool shouldEnableLandscape = initialRealm == InitialRealm.GenesisCity && enableLandscape;
+
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
                     {
@@ -146,7 +147,7 @@ namespace Global.Dynamic
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
-                        EnableLandscape = enableLandscape,
+                        EnableLandscape = shouldEnableLandscape,
                     }, ct
                 );
 
