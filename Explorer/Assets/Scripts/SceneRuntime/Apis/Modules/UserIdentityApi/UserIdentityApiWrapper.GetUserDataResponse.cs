@@ -70,7 +70,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     public string eyeColor;
                     public string hairColor;
                     public string skinColor;
-                    public List<string> wearables;
+                    public object[] wearables;
                     public Snapshot? snapshots;
 
                     public Avatar(DCL.Profiles.Avatar avatar, List<string> wearablesCache) : this(
@@ -89,7 +89,8 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                         this.eyeColor = eyeColor;
                         this.hairColor = hairColor;
                         this.skinColor = skinColor;
-                        this.wearables = wearables;
+                        // ReSharper disable once CoVariantArrayConversion
+                        this.wearables = wearables.ToArray()!;
                         this.snapshots = snapshots;
                     }
 
