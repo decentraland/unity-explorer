@@ -33,15 +33,6 @@ namespace DCL.Settings
         public SettingsModuleView moduleView;
     }
 
-    public enum SettingsModuleFeature
-    {
-        ExampleToggleSetting,
-        ExampleSliderSetting,
-        ExampleDropdownSetting,
-        // ...
-        // rest of the features!
-    }
-
     [Serializable]
     public class SettingsSectionConfig
     {
