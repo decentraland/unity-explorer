@@ -116,19 +116,20 @@ const extraCsharpProperties = new Set<string>([
 ])
 
 function withCutExtraCSharpProperties<T>(object: T): T {
+    const newObject = {} as any
 
     for (const key in object) {
         if (extraCsharpProperties.has(key)) {
-            try {
-                delete object[key]
-            }
-            catch (e: unknown) {
-                throw new Error(`Cannot remove extra csharp "${key}" properties from ${JSON.stringify(object)}: ${messageFromError(e)}`)
-            }
+            continue
         }
-        if (object[key] instanceof Object) {
-            withCutExtraCSharpProperties(object[key])
+
+        let candidate = object[key]
+
+        if (candidate instanceof Object) {
+            candidate = withCutExtraCSharpProperties(candidate)
         }
+
+        newObject[key] = candidate
     }
     return object
 }
