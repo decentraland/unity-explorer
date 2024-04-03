@@ -5,6 +5,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules.Runtime
 {
@@ -29,8 +30,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             // It will dispose its buffers
             api.Dispose();
 
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         [UsedImplicitly]
