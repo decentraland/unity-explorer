@@ -109,6 +109,23 @@ function messageFromError(error: unknown): string {
     return JSON.stringify(error)
 }
 
+const extraCsharpProperties = new Set<string>([
+    'Equals',
+    'GetHashCode',
+    'GetType'
+])
+
+function cutExtraCSharpProperties(object: any) {
+    for (const key in object) {
+        if (extraCsharpProperties.has(key)) {
+            delete object[key]
+        }
+        if (object[key] instanceof Object) {
+            cutExtraCSharpProperties(object[key])
+        }
+    }
+}
+
 //To be called from jsSide
 export function registerBundle(
     mutableBundle: any,
@@ -129,6 +146,7 @@ export function registerBundle(
         const method = mutableBundle[k] as (message: any) => Promise<any>
         mutableBundle[k] = async (message: any) => {
             const result = await method(message)
+            cutExtraCSharpProperties(result)
             if (checker.strictTest(result) === false) {
                 const report = reportString(checker, k, result)
                 logError(report)
