@@ -30,6 +30,8 @@ namespace SocketIOClient.Messages
                     return new BinaryMessage();
                 case MessageType.BinaryAckMessage:
                     return new ClientBinaryAckMessage();
+                case MessageType.DefaultTextMessage:
+                    return new DefaultTextMessage();
             }
 
             return null;
@@ -37,6 +39,18 @@ namespace SocketIOClient.Messages
 
         public static IMessage CreateMessage(EngineIO eio, string msg)
         {
+            if (eio == EngineIO.WebSocketDefault)
+            {
+                IMessage result = CreateMessage(MessageType.DefaultTextMessage);
+
+                if (result != null)
+                {
+                    result.EIO = eio;
+                    result.Read(msg);
+                    return result;
+                }
+            }
+
             Array enums = Enum.GetValues(typeof(MessageType));
 
             foreach (MessageType item in enums)
