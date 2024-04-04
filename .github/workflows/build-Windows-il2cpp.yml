@@ -179,7 +179,7 @@ jobs:
               ls
 
 
-      - uses: decentraland/unity-builder@chore/timeout-for-shader
+      - uses: game-ci/unity-builder@v4.2.3
         id: build
         timeout-minutes: 120
         with:
