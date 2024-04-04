@@ -25,13 +25,7 @@ namespace SceneRuntime.Factory
         private readonly Dictionary<string, string> sourceCodeCache;
 
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
-        private readonly IJsSceneSourceCode jsSceneSourceCode =
-            Application.isEditor
-                ? new LogJsSceneSourceCode(
-                    new StreamingAssetsJsSceneSourceCode(),
-                    ReportHub.WithReport(ReportCategory.SCENE_FACTORY).Log
-                )
-                : new IJsSceneSourceCode.Null();
+        private readonly IJsSceneSourceCode jsSceneSourceCode = new IJsSceneSourceCode.Default();
 
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
