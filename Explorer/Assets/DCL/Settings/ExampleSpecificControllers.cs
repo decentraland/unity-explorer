@@ -2,9 +2,9 @@
 {
     // TODO (Santi): DELETE IT!
     // This is only an example about a possible way to create specific controllers for each type of setting.
-    public class ExampleToggleSettingController
+    public class SettingFeature1Controller
     {
-        public ExampleToggleSettingController(SettingsToggleModuleView view)
+        public SettingFeature1Controller(SettingsToggleModuleView view)
         {
             // Here you can add the logic to handle the toggle changes...
         }
@@ -12,9 +12,9 @@
 
     // TODO (Santi): DELETE IT!
     // This is only an example about a possible way to create specific controllers for each type of setting.
-    public class ExampleSliderSettingController
+    public class SettingFeature2Controller
     {
-        public ExampleSliderSettingController(SettingsSliderModuleView view)
+        public SettingFeature2Controller(SettingsSliderModuleView view)
         {
             // Here you can add the logic to handle the slider changes...
         }
@@ -22,9 +22,9 @@
 
     // TODO (Santi): DELETE IT!
     // This is only an example about a possible way to create specific controllers for each type of setting.
-    public class ExampleDropdownSettingController
+    public class SettingFeature3Controller
     {
-        public ExampleDropdownSettingController(SettingsDropdownModuleView view)
+        public SettingFeature3Controller(SettingsDropdownModuleView view)
         {
             // Here you can add the logic to handle the dropdown changes...
         }

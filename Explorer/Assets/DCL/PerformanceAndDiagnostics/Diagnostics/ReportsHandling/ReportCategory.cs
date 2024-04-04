@@ -208,5 +208,7 @@
         public const string LIVEKIT = nameof(LIVEKIT);
 
         public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
+
+        public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
     }
 }

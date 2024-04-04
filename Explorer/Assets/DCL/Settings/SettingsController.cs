@@ -1,5 +1,7 @@
+using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
@@ -52,19 +54,26 @@ namespace DCL.Settings
 
                 foreach (SettingsModule module in group.modules)
                 {
-                    SettingsModuleView moduleView = Object.Instantiate(view.Configuration.GetModuleView(module.moduleFeature), generalGroupView.ModulesContainer).GetComponent<SettingsModuleView>();
+                    var moduleViewToInstantiate = view.Configuration.GetModuleView(module.moduleFeature);
+                    if (moduleViewToInstantiate == null)
+                    {
+                        ReportHub.LogError(ReportCategory.SETTINGS_MENU, $"Module view for feature '{module.moduleFeature}' not found! Please set its mapping in the SettingsMenuConfiguration asset.");
+                        continue;
+                    }
+
+                    SettingsModuleView moduleView = Object.Instantiate(moduleViewToInstantiate, generalGroupView.ModulesContainer).GetComponent<SettingsModuleView>();
                     moduleView.ModuleTitle.text = module.moduleName;
 
                     switch (module.moduleFeature)
                     {
-                        case SettingsModuleFeature.ExampleToggleSetting:
-                            new ExampleToggleSettingController(moduleView as SettingsToggleModuleView);
+                        case SettingsModuleFeature.SettingFeature1:
+                            new SettingFeature1Controller(moduleView as SettingsToggleModuleView);
                             break;
-                        case SettingsModuleFeature.ExampleSliderSetting:
-                            new ExampleSliderSettingController(moduleView as SettingsSliderModuleView);
+                        case SettingsModuleFeature.SettingFeature2:
+                            new SettingFeature2Controller(moduleView as SettingsSliderModuleView);
                             break;
-                        case SettingsModuleFeature.ExampleDropdownSetting:
-                            new ExampleDropdownSettingController(moduleView as SettingsDropdownModuleView);
+                        case SettingsModuleFeature.SettingFeature3:
+                            new SettingFeature3Controller(moduleView as SettingsDropdownModuleView);
                             break;
                     }
                 }

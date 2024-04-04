@@ -33,6 +33,9 @@ MonoBehaviour:
       - moduleFeature: 2
         moduleName: Dropdown Example
         moduleAlternativeName: 
+      - moduleFeature: 1
+        moduleName: Slider Example 2
+        moduleAlternativeName: 
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField: []
   <SoundSectionConfig>k__BackingField:

@@ -2,9 +2,9 @@
 {
     public enum SettingsModuleFeature
     {
-        ExampleToggleSetting,
-        ExampleSliderSetting,
-        ExampleDropdownSetting,
+        SettingFeature1,
+        SettingFeature2,
+        SettingFeature3,
         // ...
         // rest of the features!
     }
