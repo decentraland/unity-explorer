@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Settings.Configuration;
 using DCL.UI;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -50,33 +51,10 @@ namespace DCL.Settings
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
                 SettingsGroupView generalGroupView = Object.Instantiate(view.Configuration.SettingsGroupPrefab, sectionContainer);
-                generalGroupView.GroupTitle.text = group.groupTitle;
+                generalGroupView.GroupTitle.text = group.GroupTitle;
 
-                foreach (SettingsModule module in group.modules)
-                {
-                    var moduleViewToInstantiate = view.Configuration.GetModuleView(module.moduleFeature);
-                    if (moduleViewToInstantiate == null)
-                    {
-                        ReportHub.LogError(ReportCategory.SETTINGS_MENU, $"Module view for feature '{module.moduleFeature}' not found! Please set its mapping in the SettingsMenuConfiguration asset.");
-                        continue;
-                    }
-
-                    SettingsModuleView moduleView = Object.Instantiate(moduleViewToInstantiate, generalGroupView.ModulesContainer).GetComponent<SettingsModuleView>();
-                    moduleView.ModuleTitle.text = module.moduleName;
-
-                    switch (module.moduleFeature)
-                    {
-                        case SettingsModuleFeature.SettingFeature1:
-                            new SettingFeature1Controller(moduleView as SettingsToggleModuleView);
-                            break;
-                        case SettingsModuleFeature.SettingFeature2:
-                            new SettingFeature2Controller(moduleView as SettingsSliderModuleView);
-                            break;
-                        case SettingsModuleFeature.SettingFeature3:
-                            new SettingFeature3Controller(moduleView as SettingsDropdownModuleView);
-                            break;
-                    }
-                }
+                foreach (SettingsModuleBindingBase module in group.Modules)
+                    module?.CreateModule(generalGroupView.ModulesContainer);
             }
         }
 

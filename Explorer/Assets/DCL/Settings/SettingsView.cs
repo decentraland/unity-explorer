@@ -1,3 +1,4 @@
+using DCL.Settings.Configuration;
 using UnityEngine;
 using UnityEngine.UI;
 
