@@ -35,10 +35,16 @@ namespace DCL.Input
             eventSystem.RaycastAll(pointerEventData, raycastResults);
             return raycastResults;
         }
+
+        public bool IsPointerOverGameObject() =>
+            eventSystem.IsPointerOverGameObject();
     }
 
     public interface IEventSystem
     {
+        // Make sure that this is being called ONCE (disregard tests)
         IReadOnlyList<RaycastResult> RaycastAll(Vector2 position);
+
+        bool IsPointerOverGameObject();
     }
 }

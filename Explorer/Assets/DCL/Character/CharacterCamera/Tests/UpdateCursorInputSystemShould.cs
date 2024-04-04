@@ -2,6 +2,8 @@
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
 using DCL.Input;
+using DCL.Input.Crosshair;
+using DCL.Input.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -30,7 +32,7 @@ namespace DCL.CharacterCamera.Tests
             eventSystem = Substitute.For<IEventSystem>();
             cursor = Substitute.For<ICursor>();
 
-            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor);
+            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, new CrosshairCanvas());
             system.Initialize();
         }
 

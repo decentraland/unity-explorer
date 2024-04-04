@@ -27,6 +27,26 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf22911f490866b45b81ddea869255f2
+    m_Address: Assets/DCL/Interaction/Assets/Cursor.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23dcf75316411d344be316dc2cb0e41f
+    m_Address: Assets/DCL/Interaction/Assets/CursorInteractive.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98d75b092dc90bb49a14cf7e80096e01
+    m_Address: Assets/DCL/Interaction/Assets/Crosshair.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26fa4ad5e35df464b8cc4bd887c2a6d9
+    m_Address: Assets/DCL/Interaction/Assets/CrosshairInteractive.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:

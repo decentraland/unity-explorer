@@ -1,9 +1,28 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Input
 {
+    public enum CursorStyle
+    {
+        None,
+        Normal,
+        Interaction,
+    }
     public class DCLCursor : ICursor
     {
+        private readonly IEventSystem eventSystem;
+        private readonly Texture2D normalCursor;
+        private readonly Texture2D interactionCursor;
+        private CursorStyle cursorStyle = CursorStyle.None;
+
+        public DCLCursor(Texture2D normalCursor, Texture2D interactionCursor)
+        {
+            this.normalCursor = normalCursor;
+            this.interactionCursor = interactionCursor;
+            SetStyle(CursorStyle.Normal);
+        }
+
         public bool IsLocked() =>
             Cursor.lockState != CursorLockMode.None;
 
@@ -18,6 +37,25 @@ namespace DCL.Input
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
+
+        public void SetStyle(CursorStyle style)
+        {
+            if (cursorStyle == style) return;
+            cursorStyle = style;
+
+            switch (cursorStyle)
+            {
+                case CursorStyle.Normal:
+                    Cursor.SetCursor(normalCursor, Vector2.zero, CursorMode.Auto);
+                    return;
+                case CursorStyle.Interaction:
+                    Cursor.SetCursor(interactionCursor, Vector2.zero, CursorMode.Auto);
+                    return;
+                default:
+                    Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+                    break;
+            }
+        }
     }
 
     public interface ICursor
@@ -27,5 +65,7 @@ namespace DCL.Input
         void Lock();
 
         void Unlock();
+
+        void SetStyle(CursorStyle style);
     }
 }

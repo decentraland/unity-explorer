@@ -37,6 +37,7 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
+  - rid: 4132209991179042837
   references:
     version: 2
     RefIds:
@@ -219,6 +220,26 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
+    - rid: 4132209991179042837
+      type: {class: InputPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CrosshairCanvasAsset>k__BackingField:
+          m_AssetGUID: bf82184de91c3944b8de02d57d7dd151
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CrossHairNormal>k__BackingField:
+          m_AssetGUID: 98d75b092dc90bb49a14cf7e80096e01
+          m_SubObjectName: Crosshair
+          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+          m_EditorAssetChanged: 1
+        <CrossHairInteraction>k__BackingField:
+          m_AssetGUID: 26fa4ad5e35df464b8cc4bd887c2a6d9
+          m_SubObjectName: CrosshairInteractive
+          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+          m_EditorAssetChanged: 1
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

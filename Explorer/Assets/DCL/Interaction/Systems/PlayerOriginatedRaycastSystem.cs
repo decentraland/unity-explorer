@@ -3,8 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
@@ -26,7 +29,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public partial class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
+    public class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly float maxRaycastDistance;
@@ -64,6 +67,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             {
                 raycastResult.UnityRaycastHit = hitInfo;
                 raycastResult.EntityInfo = entityInfo;
+
+                raycastResult.Distance =
+                    camera.Mode == CameraMode.FirstPerson
+                        ? hitInfo.distance
+                        : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
             }
             else
             {

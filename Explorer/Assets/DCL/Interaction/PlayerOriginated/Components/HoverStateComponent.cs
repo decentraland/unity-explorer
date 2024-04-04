@@ -8,5 +8,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
         ///     Collider that was hit last frame
         /// </summary>
         public Collider LastHitCollider;
+        public bool IsAtDistance;
+        public bool IsHoverOver;
     }
 }

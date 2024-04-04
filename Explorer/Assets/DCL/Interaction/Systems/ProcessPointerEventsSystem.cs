@@ -4,28 +4,30 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DCL.Interaction.PlayerOriginated.Systems
+namespace DCL.Interaction.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerOriginatedRaycastSystem))]
     [LogCategory(ReportCategory.INPUT)]
-    public partial class ProcessPointerEventsSystem : BaseUnityLoopSystem
+    public class ProcessPointerEventsSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly Material hoverMaterial;
         private readonly Material hoverOorMaterial;
+        private readonly IEventSystem eventSystem;
         private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
         private readonly Dictionary<EntityReference, Dictionary<EntityReference, Material[]>> originalMaterialsByEntity = new ();
         private readonly Dictionary<EntityReference, Material> materialOnUseByEntity = new ();
@@ -34,12 +36,14 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             Material hoverMaterial,
-            Material hoverOorMaterial) : base(world)
+            Material hoverOorMaterial,
+            IEventSystem eventSystem) : base(world)
         {
             this.sdkInputActionsMap = sdkInputActionsMap;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.hoverMaterial = hoverMaterial;
             this.hoverOorMaterial = hoverOorMaterial;
+            this.eventSystem = eventSystem;
         }
 
         protected override void Update(float t)
@@ -67,8 +71,12 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderEntityInfo previousEntityInfo);
             hoverStateComponent.LastHitCollider = null;
+            hoverStateComponent.IsHoverOver = false;
+            hoverStateComponent.IsAtDistance = false;
 
-            if (raycastResult.IsValidHit)
+            bool canHover = !eventSystem.IsPointerOverGameObject();
+
+            if (raycastResult.IsValidHit && canHover)
             {
                 GlobalColliderEntityInfo entityInfo = raycastResult.EntityInfo.Value;
 
@@ -94,8 +102,10 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                         pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResult.UnityRaycastHit, raycastResult.OriginRay);
 
-                        bool isQualified = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
-                        Material materialToUse = isQualified ? hoverMaterial : hoverOorMaterial;
+                        bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
+
+                        hoverStateComponent.IsAtDistance = isAtDistance;
+                        Material materialToUse = isAtDistance ? hoverMaterial : hoverOorMaterial;
 
                         if (!materialOnUseByEntity.ContainsKey(entityRef))
                         {
@@ -118,6 +128,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
             if (candidateForHoverLeaveIsValid)
             {
+                hoverStateComponent.IsHoverOver = true;
+
                 TryRemoveHoverMaterials(previousEntityInfo);
 
                 HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousEntityInfo);
@@ -193,7 +205,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             ref HoverFeedbackComponent hoverFeedbackComponent, PBPointerEvents pbPointerEvents, InteractionInputUtils.AnyInputInfo anyInputInfo,
             bool newEntityWasHovered)
         {
-            var isQualified = false;
+            var isAtDistance = false;
 
             for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
             {
@@ -203,7 +215,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 info.PrepareDefaultValues();
 
                 if (!InteractionInputUtils.IsQualifiedByDistance(raycastResult, info)) continue;
-                isQualified = true;
+                isAtDistance = true;
 
                 // Check Input for validity
                 InteractionInputUtils.TryAppendButtonLikeInput(sdkInputActionsMap, pointerEvent, i,
@@ -218,7 +230,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     ref hoverFeedbackComponent, anyInputInfo.AnyButtonIsPressed);
             }
 
-            return isQualified;
+            return isAtDistance;
         }
     }
 }

@@ -3,16 +3,15 @@ using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
@@ -22,13 +21,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     /// <summary>
     ///     Writes the results of the pointer events in the scene world
     ///     <para>
-    ///         Must be executed after <see cref="ProcessPointerEventsSystem" />. As they exist in different worlds we must attach them to different
+    ///         Must be executed after <see cref="Interaction.Systems.ProcessPointerEventsSystem" />. As they exist in different worlds we must attach them to different
     ///         root system groups as we can't make dependencies between them directly
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
+    public class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;

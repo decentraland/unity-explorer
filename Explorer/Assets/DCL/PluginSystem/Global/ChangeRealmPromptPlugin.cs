@@ -15,16 +15,19 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
         private readonly Action<string> changeRealmCallback;
         private ChangeRealmPromptController changeRealmPromptController;
 
         public ChangeRealmPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
+            ICursor cursor,
             Action<string> changeRealmCallback)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.cursor = cursor;
             this.changeRealmCallback = changeRealmCallback;
         }
 
@@ -33,7 +36,7 @@ namespace DCL.PluginSystem.Global
             changeRealmPromptController = new ChangeRealmPromptController(
                 ChangeRealmPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.ChangeRealmPromptPrefab, ct: ct)).Value.GetComponent<ChangeRealmPromptView>(), null),
-                new DCLCursor(),
+                cursor,
                 changeRealmCallback);
 
             mvcManager.RegisterController(changeRealmPromptController);

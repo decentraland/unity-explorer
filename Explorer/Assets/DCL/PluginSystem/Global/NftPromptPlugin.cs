@@ -20,6 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly IWebRequestController webRequestController;
+        private readonly ICursor cursor;
         private NftPromptController nftPromptController;
 
         public NftPromptPlugin(
@@ -27,13 +28,15 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftMarketAPIClient nftInfoAPIClient,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.nftInfoAPIClient = nftInfoAPIClient;
             this.webRequestController = webRequestController;
+            this.cursor = cursor;
         }
 
         public async UniTask InitializeAsync(NftPromptSettings promptSettings, CancellationToken ct)
@@ -42,7 +45,7 @@ namespace DCL.PluginSystem.Global
                 NftPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.NftPromptPrefab, ct: ct)).Value.GetComponent<NftPromptView>(), null),
                 webBrowser,
-                new DCLCursor(),
+                cursor,
                 nftInfoAPIClient,
                 webRequestController);
 

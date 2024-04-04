@@ -10,16 +10,17 @@ using ECS.Abstract;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.UIToolkit;
+using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 
 namespace DCL.Interaction.HoverCanvas.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(ProcessPointerEventsSystem))]
-    public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
+    public class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
         private readonly Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
-        private Vector2Int relativeCursorPosition;
+        private Vector2 cursorPositionPercent;
 
         internal ShowHoverFeedbackSystem(World world, UI.HoverCanvas hoverCanvasInstance,
             IReadOnlyList<HoverCanvasSettings.InputButtonSettings> settings) : base(world)
@@ -44,11 +45,11 @@ namespace DCL.Interaction.HoverCanvas.Systems
             if (!cursorComponent.CursorIsLocked)
             {
                 // 0,0 is the center of the screen
-                relativeCursorPosition.x = Mathf.RoundToInt(cursorComponent.Position.x - (Screen.width * 0.5f));
-                relativeCursorPosition.y = Mathf.RoundToInt(cursorComponent.Position.y - (Screen.height * 0.5f));
+                cursorPositionPercent.x = (cursorComponent.Position.x - (Screen.width * 0.5f)) / Screen.width * 100f;
+                cursorPositionPercent.y = (cursorComponent.Position.y - (Screen.height * 0.5f)) / Screen.height * 100f;
             }
             else
-                relativeCursorPosition = Vector2Int.zero;
+                cursorPositionPercent = Vector2Int.zero;
         }
 
         [Query]
@@ -75,7 +76,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
                 }
 
                 hoverCanvasInstance.SetTooltipsCount(hoverFeedbackComponent.Tooltips.Count);
-                hoverCanvasInstance.SetPosition(relativeCursorPosition);
+                hoverCanvasInstance.SetPosition(cursorPositionPercent);
             }
         }
     }
