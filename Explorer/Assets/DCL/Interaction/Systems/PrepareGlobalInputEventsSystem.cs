@@ -10,7 +10,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public class PrepareGlobalInputEventsSystem : BaseUnityLoopSystem
+    public partial class PrepareGlobalInputEventsSystem : BaseUnityLoopSystem
     {
         private readonly GlobalInputEvents globalInputEvents;
         private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;

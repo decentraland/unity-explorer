@@ -15,166 +15,18 @@ MonoBehaviour:
   debugLogMatrix:
     entries:
     - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
-    - Category: UNSPECIFIED
       Severity: 0
     - Category: UNSPECIFIED
       Severity: 4
     - Category: UNSPECIFIED
       Severity: 1
     - Category: LANDSCAPE
-      Severity: 3
-    - Category: LANDSCAPE
-      Severity: 2
-    - Category: LANDSCAPE
       Severity: 0
     - Category: LANDSCAPE
       Severity: 4
     - Category: LANDSCAPE
       Severity: 1
     - Category: ASSETS_PROVISION
-      Severity: 3
-    - Category: ENGINE
-      Severity: 3
-    - Category: CRDT
-      Severity: 3
-    - Category: CRDT_ECS_BRIDGE
-      Severity: 3
-    - Category: REALM
-      Severity: 3
-    - Category: SCENE_FACTORY
-      Severity: 3
-    - Category: SCENE_LOADING
-      Severity: 3
-    - Category: SCENE_UI
-      Severity: 3
-    - Category: JAVASCRIPT
-      Severity: 3
-    - Category: ECS
-      Severity: 3
-    - Category: GENERIC_WEB_REQUEST
-      Severity: 3
-    - Category: TEXTURE_WEB_REQUEST
-      Severity: 3
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 3
-    - Category: AUDIO_CLIP_WEB_REQUEST
-      Severity: 3
-    - Category: STREAMABLE_LOADING
-      Severity: 3
-    - Category: ASSET_BUNDLES
-      Severity: 3
-    - Category: TEXTURES
-      Severity: 3
-    - Category: GLTF_CONTAINER
-      Severity: 3
-    - Category: MATERIALS
-      Severity: 3
-    - Category: PRIMITIVE_COLLIDERS
-      Severity: 3
-    - Category: PRIMITIVE_MESHES
-      Severity: 3
-    - Category: AUDIO_SOURCES
-      Severity: 3
-    - Category: MEDIA_STREAM
-      Severity: 3
-    - Category: PRIORITIZATION
-      Severity: 3
-    - Category: MOTION
-      Severity: 3
-    - Category: INPUT
-      Severity: 3
-    - Category: AVATAR
-      Severity: 3
-    - Category: PROFILE
-      Severity: 3
-    - Category: TWEEN
-      Severity: 3
-    - Category: WEARABLE
-      Severity: 3
-    - Category: AUTHENTICATION
-      Severity: 3
-    - Category: LOD
-      Severity: 3
-    - Category: AVATAR_ATTACH
-      Severity: 3
-    - Category: QUALITY
-      Severity: 3
-    - Category: RESTRICTED_ACTIONS
-      Severity: 3
-    - Category: ASSETS_PROVISION
-      Severity: 2
-    - Category: ENGINE
-      Severity: 2
-    - Category: CRDT
-      Severity: 2
-    - Category: CRDT_ECS_BRIDGE
-      Severity: 2
-    - Category: REALM
-      Severity: 2
-    - Category: SCENE_FACTORY
-      Severity: 2
-    - Category: SCENE_LOADING
-      Severity: 2
-    - Category: SCENE_UI
-      Severity: 2
-    - Category: JAVASCRIPT
-      Severity: 2
-    - Category: ECS
-      Severity: 2
-    - Category: GENERIC_WEB_REQUEST
-      Severity: 2
-    - Category: TEXTURE_WEB_REQUEST
-      Severity: 2
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 2
-    - Category: AUDIO_CLIP_WEB_REQUEST
-      Severity: 2
-    - Category: STREAMABLE_LOADING
-      Severity: 2
-    - Category: ASSET_BUNDLES
-      Severity: 2
-    - Category: TEXTURES
-      Severity: 2
-    - Category: GLTF_CONTAINER
-      Severity: 2
-    - Category: MATERIALS
-      Severity: 2
-    - Category: PRIMITIVE_COLLIDERS
-      Severity: 2
-    - Category: PRIMITIVE_MESHES
-      Severity: 2
-    - Category: AUDIO_SOURCES
-      Severity: 2
-    - Category: MEDIA_STREAM
-      Severity: 2
-    - Category: PRIORITIZATION
-      Severity: 2
-    - Category: MOTION
-      Severity: 2
-    - Category: INPUT
-      Severity: 2
-    - Category: AVATAR
-      Severity: 2
-    - Category: PROFILE
-      Severity: 2
-    - Category: TWEEN
-      Severity: 2
-    - Category: WEARABLE
-      Severity: 2
-    - Category: AUTHENTICATION
-      Severity: 2
-    - Category: LOD
-      Severity: 2
-    - Category: AVATAR_ATTACH
-      Severity: 2
-    - Category: QUALITY
-      Severity: 2
-    - Category: RESTRICTED_ACTIONS
-      Severity: 2
-    - Category: ASSETS_PROVISION
       Severity: 0
     - Category: ENGINE
       Severity: 0
@@ -385,20 +237,12 @@ MonoBehaviour:
     - Category: RESTRICTED_ACTIONS
       Severity: 1
     - Category: ARCHIPELAGO_REQUEST
-      Severity: 3
-    - Category: ARCHIPELAGO_REQUEST
-      Severity: 2
-    - Category: ARCHIPELAGO_REQUEST
       Severity: 0
     - Category: ARCHIPELAGO_REQUEST
       Severity: 4
     - Category: ARCHIPELAGO_REQUEST
       Severity: 1
     - Category: ANIMATOR
-      Severity: 3
-    - Category: ANIMATOR
-      Severity: 2
-    - Category: ANIMATOR
       Severity: 0
     - Category: ANIMATOR
       Severity: 4
@@ -416,28 +260,12 @@ MonoBehaviour:
       Severity: 0
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 0
-    - Category: CHARACTER_TRIGGER_AREA
-      Severity: 2
-    - Category: CAMERA_MODE_AREA
-      Severity: 2
-    - Category: CAMERA_MODE_AREA
-      Severity: 3
-    - Category: CHARACTER_TRIGGER_AREA
-      Severity: 3
-    - Category: LIVEKIT
-      Severity: 3
-    - Category: LIVEKIT
-      Severity: 2
     - Category: LIVEKIT
       Severity: 0
     - Category: LIVEKIT
       Severity: 4
     - Category: LIVEKIT
       Severity: 1
-    - Category: AVATAR_MODIFIER_AREA
-      Severity: 3
-    - Category: AVATAR_MODIFIER_AREA
-      Severity: 2
     - Category: AVATAR_MODIFIER_AREA
       Severity: 0
     - Category: AVATAR_MODIFIER_AREA
@@ -450,16 +278,8 @@ MonoBehaviour:
       Severity: 4
     - Category: NFT_INFO_WEB_REQUEST
       Severity: 0
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 3
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 2
     - Category: REMOTE_MOVEMENT
       Severity: 3
-    - Category: MULTIPLAYER_MOVEMENT
-      Severity: 3
-    - Category: MULTIPLAYER_MOVEMENT
-      Severity: 2
     - Category: REMOTE_MOVEMENT
       Severity: 2
     - Category: REMOTE_MOVEMENT

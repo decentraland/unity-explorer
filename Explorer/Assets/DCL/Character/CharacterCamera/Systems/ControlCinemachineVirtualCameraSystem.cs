@@ -104,8 +104,9 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(CameraBlockerComponent))]
-        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
+        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state, in CursorComponent cursorComponent)
         {
+            if (cursorComponent.IsOverUI) return;
             if (cameraComponent.CameraInputChangeEnabled)
             {
                 if (input.ZoomOut)

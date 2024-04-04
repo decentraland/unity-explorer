@@ -27,7 +27,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public class WritePointerEventResultsSystem : BaseUnityLoopSystem
+    public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;

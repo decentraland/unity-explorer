@@ -16,7 +16,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(ProcessPointerEventsSystem))]
-    public class ShowHoverFeedbackSystem : BaseUnityLoopSystem
+    public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
         private readonly Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;

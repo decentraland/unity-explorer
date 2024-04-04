@@ -22,7 +22,7 @@ namespace DCL.Interaction.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerOriginatedRaycastSystem))]
     [LogCategory(ReportCategory.INPUT)]
-    public class ProcessPointerEventsSystem : BaseUnityLoopSystem
+    public partial class ProcessPointerEventsSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly Material hoverMaterial;

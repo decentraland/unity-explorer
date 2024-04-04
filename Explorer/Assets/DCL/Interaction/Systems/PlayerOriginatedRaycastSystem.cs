@@ -29,7 +29,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
+    public partial class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly float maxRaycastDistance;

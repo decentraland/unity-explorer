@@ -7,6 +7,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -15,16 +16,17 @@ using Utility.UIToolkit;
 
 namespace DCL.PluginSystem.Global
 {
-    public class InputPluginSettings : IDCLPluginSettings
+    [Serializable]
+    public class InputSettings : IDCLPluginSettings
     {
         [field: Header(nameof(InputPlugin))]
         [field: Space]
-        [field: SerializeField] public AssetReferenceVisualTreeAsset CrosshairCanvasAsset { get; }
-        [field: SerializeField] public AssetReferenceSprite CrossHairNormal { get; }
-        [field: SerializeField] public AssetReferenceSprite CrossHairInteraction { get; }
+        [field: SerializeField] public AssetReferenceVisualTreeAsset CrosshairCanvasAsset { get; set; }
+        [field: SerializeField] public AssetReferenceSprite CrossHairNormal { get; set; }
+        [field: SerializeField] public AssetReferenceSprite CrossHairInteraction { get; set; }
     }
 
-    public class InputPlugin : IDCLGlobalPlugin<InputPluginSettings>
+    public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
         private readonly DCLInput dclInput;
         private readonly ICursor cursor;
@@ -48,7 +50,7 @@ namespace DCL.PluginSystem.Global
             dclInput.Enable();
         }
 
-        public async UniTask InitializeAsync(InputPluginSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(InputSettings settings, CancellationToken ct)
         {
             crosshairCanvas =
                 (await assetsProvisioner.ProvideMainAssetAsync(settings.CrosshairCanvasAsset, ct: ct))

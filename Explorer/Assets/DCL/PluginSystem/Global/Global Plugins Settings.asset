@@ -37,7 +37,7 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
-  - rid: 4132209991179042837
+  - rid: 4132209997426458630
   references:
     version: 2
     RefIds:
@@ -220,8 +220,8 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
-    - rid: 4132209991179042837
-      type: {class: InputPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 4132209997426458630
+      type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <CrosshairCanvasAsset>k__BackingField:
           m_AssetGUID: bf82184de91c3944b8de02d57d7dd151
