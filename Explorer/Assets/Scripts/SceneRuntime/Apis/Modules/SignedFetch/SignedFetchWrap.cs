@@ -52,7 +52,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 async UniTask<ITypedWebRequest> RequestAsync() =>
                     method switch
                     {
-                        null => await webController.SignedFetchAsync(
+                        null => await webController.SignedFetchPostAsync(
                             request.url,
                             request.init?.body ?? string.Empty,
                             cancellationTokenSource.Token
