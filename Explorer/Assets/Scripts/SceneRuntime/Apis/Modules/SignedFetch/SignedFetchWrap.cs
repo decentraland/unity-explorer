@@ -38,7 +38,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 string? method = request.init?.method?.ToLower();
                 ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-                var commonArgs = new CommonArguments(request.url);
 
                 var headers = new WebRequestHeadersInfo(request.init?.headers)
                    .WithSign(request.init?.body ?? string.Empty, unixTimestamp);
@@ -59,20 +58,20 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             cancellationTokenSource.Token
                         ),
                         "post" => await webController.PostAsync(
-                            commonArgs,
+                            request.url,
                             GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
                         ),
                         "get" => await webController.GetAsync(
-                            commonArgs,
+                            request.url,
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
                         ),
                         "put" => await webController.PutAsync(
-                            commonArgs,
+                            request.url,
                             GenericPutArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
