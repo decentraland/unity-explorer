@@ -9,6 +9,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Storage;
 
 namespace DCL.ParcelsService
 {
@@ -37,7 +38,7 @@ namespace DCL.ParcelsService
 
         private static void BuildDebugWidget(ITeleportController teleportController, MVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
         {
-            var binding = new Vector2IntPlayerPrefsElementBinding("teleportCoordinates");
+            var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
 
             UniTask ShowLoadingScreenAsync(AsyncLoadProcessReport loadReport) =>
                 mvcManager.ShowAsync(
