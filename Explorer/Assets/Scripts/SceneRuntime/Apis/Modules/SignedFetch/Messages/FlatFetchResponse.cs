@@ -36,9 +36,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
             this.headers = headers;
         }
 
-        public static async UniTask<FlatFetchResponse> NewAsync<T>(UniTask<T> task) where T: ITypedWebRequest
+        public static async UniTask<FlatFetchResponse> NewAsync(UniTask<UnityWebRequest> task)
         {
-            T result = await task;
+            var result = await task;
             return new FlatFetchResponse(result);
         }
     }

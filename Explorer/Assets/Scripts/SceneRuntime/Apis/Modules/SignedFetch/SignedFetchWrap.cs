@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Threading;
+using UnityEngine.Networking;
 using Utility;
 using Utility.Times;
 
@@ -38,7 +39,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 string? method = request.init?.method?.ToLower();
                 ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-
                 var headers = new WebRequestHeadersInfo(request.init?.headers)
                    .WithSign(request.init?.body ?? string.Empty, unixTimestamp);
 
@@ -49,34 +49,34 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     method ?? string.Empty
                 );
 
-                async UniTask<ITypedWebRequest> RequestAsync() =>
+                async UniTask<UnityWebRequest> RequestAsync() =>
                     method switch
                     {
-                        null => await webController.SignedFetchPostAsync(
+                        null => (await webController.SignedFetchPostAsync(
                             request.url,
                             request.init?.body ?? string.Empty,
                             cancellationTokenSource.Token
-                        ),
-                        "post" => await webController.PostAsync(
+                        )).UnityWebRequest,
+                        "post" => (await webController.PostAsync(
                             request.url,
                             GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        ),
-                        "get" => await webController.GetAsync(
+                        )).UnityWebRequest,
+                        "get" => (await webController.GetAsync(
                             request.url,
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        ),
-                        "put" => await webController.PutAsync(
+                        )).UnityWebRequest,
+                        "put" => (await webController.PutAsync(
                             request.url,
                             GenericPutArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        ),
+                        )).UnityWebRequest,
                         _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
                     };
 
