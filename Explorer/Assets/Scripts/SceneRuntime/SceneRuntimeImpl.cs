@@ -22,7 +22,7 @@ namespace SceneRuntime
 
         private readonly ScriptObject updateFunc;
         private readonly ScriptObject startFunc;
-        private readonly WrapBunch wrapBunch;
+        private readonly JsApiBunch jsApiBunch;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
@@ -40,7 +40,7 @@ namespace SceneRuntime
             resetableSource = new JSTaskResolverResetable();
             engine = V8EngineFactory.Create();
             var moduleHub = new SceneModuleHub(engine);
-            wrapBunch = new WrapBunch(engine);
+            jsApiBunch = new JsApiBunch(engine);
 
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
@@ -87,12 +87,12 @@ namespace SceneRuntime
         {
             engineApi?.Dispose();
             engine.Dispose();
-            wrapBunch.Dispose();
+            jsApiBunch.Dispose();
         }
 
         public void Register<T>(string itemName, T target) where T: IDisposable
         {
-            wrapBunch.AddHostObject(itemName, target);
+            jsApiBunch.AddHostObject(itemName, target);
         }
 
         public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)

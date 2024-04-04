@@ -4,12 +4,12 @@ using System.Collections.Generic;
 
 namespace SceneRuntime
 {
-    public class WrapBunch : IDisposable
+    public class JsApiBunch : IDisposable
     {
         private readonly V8ScriptEngine engine;
         private readonly List<IDisposable> wraps = new ();
 
-        public WrapBunch(V8ScriptEngine engine)
+        public JsApiBunch(V8ScriptEngine engine)
         {
             this.engine = engine;
         }
