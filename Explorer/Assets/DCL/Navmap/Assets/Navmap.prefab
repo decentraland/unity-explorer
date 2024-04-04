@@ -775,7 +775,7 @@ RectTransform:
   - {fileID: 6761393586619027270}
   - {fileID: 4310957910290201615}
   m_Father: {fileID: 0}
-  m_RootOrder: -1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -2385,7 +2385,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8831469954509143486, guid: dd1758cb97efe456cbe43d2c482a46f2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -405
+      value: -431.3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
