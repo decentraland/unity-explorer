@@ -31,17 +31,17 @@ namespace Global.Dynamic
             this.teleportController = teleportController;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(string realm, CancellationToken ct)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
-            var domain = URLDomain.FromString(realm);
+            // var domain = URLDomain.FromString(realm);
 
-            if (!await realmController.IsReachableAsync(domain, ct))
+            if (!await realmController.IsReachableAsync(realm, ct))
                 return false;
 
-            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, domain == genesisDomain);
+            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, realm == genesisDomain);
 
             await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
-                realmController.SetRealmAsync(domain, Vector2Int.zero, loadReport, ct), ct);
+                realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct), ct);
 
             return true;
         }

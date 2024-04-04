@@ -48,7 +48,7 @@ namespace DCL.Chat.ChatCommands
 
         public async UniTask<string> ExecuteAsync()
         {
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realmUrl, CancellationToken.None);
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), CancellationToken.None);
 
             return isSuccess
                 ? $"🟢 Welcome to the {worldName} world!"
