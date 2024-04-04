@@ -1,0 +1,59 @@
+{
+    "name": "Unity.ProjectAuditor.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Unity.ProjectAuditor.Editor.Utils",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Mono.Cecil.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "2021.2",
+            "define": "PA_CAN_USE_COMPUTESHADER_KEYWORDSPACE"
+        },
+        {
+            "name": "Unity",
+            "expression": "2022.2",
+            "define": "PA_CAN_USE_COMPUTEMIPCHAINSIZE"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "PACKAGE_HDRP"
+        },
+        {
+            "name": "com.unity.rendering.hybrid",
+            "expression": "",
+            "define": "PACKAGE_HYBRID_RENDERER"
+        },
+        {
+            "name": "com.unity.entities",
+            "expression": "",
+            "define": "PACKAGE_ENTITIES"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "7.0",
+            "define": "PACKAGE_URP"
+        },
+        {
+            "name": "com.unity.entities.graphics",
+            "expression": "",
+            "define": "PACKAGE_ENTITIES_GRAPHICS"
+        }
+    ],
+    "noEngineReferences": false
+}

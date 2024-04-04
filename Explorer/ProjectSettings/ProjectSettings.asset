@@ -138,6 +138,7 @@ PlayerSettings:
   bundleVersion: 0.1.0-alpha
   preloadedAssets:
   - {fileID: 11400000, guid: 24ddc9d8b47e3438abc8aca7466f34b7, type: 2}
+  - {fileID: 11400000, guid: eb99c4c6693e9134e95646fb538654a7, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -876,7 +877,7 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP
+    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
