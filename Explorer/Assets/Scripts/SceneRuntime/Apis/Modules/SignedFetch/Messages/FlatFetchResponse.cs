@@ -17,8 +17,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         public string body;
         public Dictionary<string, string> headers;
 
-        public FlatFetchResponse(ITypedWebRequest webRequest) : this(webRequest.UnityWebRequest) { }
-
         public FlatFetchResponse(UnityWebRequest webRequest) : this(
             webRequest.result is UnityWebRequest.Result.Success,
             webRequest.responseCode,
