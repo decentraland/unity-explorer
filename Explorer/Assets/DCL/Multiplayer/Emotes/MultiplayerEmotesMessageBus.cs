@@ -81,7 +81,7 @@ namespace DCL.Multiplayer.Emotes
         public async UniTaskVoid SelfSendWithDelayAsync(Emote message)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(message, walletId: RemotePlayerMovementComponent.TEST_ID).Forget();
+            InboxAsync(message, walletId: RemotePlayerMovementComponent.TEST_ID).Forget();
         }
 
         public void SetOwnProfile(Entity playerEntity) =>
@@ -92,10 +92,10 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.Token.IsCancellationRequested)
                 return;
 
-            Inbox(obj.Payload, obj.FromWalletId).Forget();
+            InboxAsync(obj.Payload, obj.FromWalletId).Forget();
         }
 
-        private async UniTaskVoid Inbox(Emote emoteMessage, string walletId)
+        private async UniTaskVoid InboxAsync(Emote emoteMessage, string walletId)
         {
             if (messageDeduplication.TryPass(walletId, emoteMessage.Timestamp) == false)
                 return;

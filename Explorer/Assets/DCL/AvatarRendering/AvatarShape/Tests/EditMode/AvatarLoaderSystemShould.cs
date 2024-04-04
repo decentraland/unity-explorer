@@ -19,24 +19,25 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarLoaderSystemShould : UnitySystemTestBase<AvatarLoaderSystem>
     {
-        private readonly string BODY_SHAPE_MALE = BodyShape.MALE;
-        private readonly string BODY_SHAPE_FEMALE = BodyShape.FEMALE;
-        private readonly string FAKE_NAME = "FAKE_NAME_1";
-        private readonly string FAKE_ID = "1";
-        private readonly List<string> FAKE_WEARABLES = new () { "WEARABLE_1", "WEARABLE_2" };
-        private PBAvatarShape pbAvatarShape;
-        private List<string> FAKE_POINTERS;
+        private static readonly string BODY_SHAPE_MALE = BodyShape.MALE;
+        private static readonly string BODY_SHAPE_FEMALE = BodyShape.FEMALE;
+        private static readonly string FAKE_NAME = "FAKE_NAME_1";
+        private static readonly string FAKE_ID = "1";
+        private static readonly List<string> FAKE_WEARABLES = new () { "WEARABLE_1", "WEARABLE_2" };
 
-        private Color3 FAKE_HAIR_COLOR;
-        private Color3 FAKE_SKIN_COLOR;
-        private Color3 FAKE_EYE_COLOR;
+        private PBAvatarShape pbAvatarShape;
+        private List<URN> fakePointers;
+
+        private Color3 fakeHairColor;
+        private Color3 fakeSkinColor;
+        private Color3 fakeEyeColor;
 
         [SetUp]
         public void Setup()
         {
-            FAKE_HAIR_COLOR = WearablesConstants.DefaultColors.GetRandomHairColor3();
-            FAKE_SKIN_COLOR = WearablesConstants.DefaultColors.GetRandomSkinColor3();
-            FAKE_EYE_COLOR = WearablesConstants.DefaultColors.GetRandomEyesColor3();
+            fakeHairColor = WearablesConstants.DefaultColors.GetRandomHairColor3();
+            fakeSkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3();
+            fakeEyeColor = WearablesConstants.DefaultColors.GetRandomEyesColor3();
 
             pbAvatarShape = new PBAvatarShape
             {
@@ -44,9 +45,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 Name = FAKE_NAME,
                 Id = FAKE_ID,
                 Wearables = { FAKE_WEARABLES },
-                SkinColor = FAKE_SKIN_COLOR,
-                HairColor = FAKE_HAIR_COLOR,
-                EyeColor = FAKE_EYE_COLOR
+                SkinColor = fakeSkinColor,
+                HairColor = fakeHairColor,
+                EyeColor = fakeEyeColor
             };
 
             IRealmData realmData = Substitute.For<IRealmData>();
@@ -54,9 +55,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
             realmData.Ipfs.Returns(ipfsRealm);
             system = new AvatarLoaderSystem(world);
-            FAKE_POINTERS = new List<string>();
-            FAKE_POINTERS.Add(BODY_SHAPE_MALE);
-            FAKE_POINTERS.AddRange(FAKE_WEARABLES);
+
+            fakePointers = new List<URN>();
+            fakePointers.Add(BODY_SHAPE_MALE);
+
+            foreach (URN urn in FAKE_WEARABLES)
+                fakePointers.Add(urn);
         }
 
         [Test]
@@ -73,9 +77,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(avatarShapeComponent.BodyShape.Value, BODY_SHAPE_MALE);
             Assert.AreEqual(avatarShapeComponent.Name, FAKE_NAME);
             Assert.AreEqual(avatarShapeComponent.ID, FAKE_ID);
-            Assert.AreEqual(avatarShapeComponent.SkinColor, FAKE_SKIN_COLOR.ToUnityColor());
-            Assert.AreEqual(avatarShapeComponent.HairColor, FAKE_HAIR_COLOR.ToUnityColor());
-            Assert.AreEqual(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.ToArray(), FAKE_POINTERS);
+            Assert.AreEqual(avatarShapeComponent.SkinColor, fakeSkinColor.ToUnityColor());
+            Assert.AreEqual(avatarShapeComponent.HairColor, fakeHairColor.ToUnityColor());
+            Assert.AreEqual(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.ToArray(), fakePointers);
         }
 
         [Test]

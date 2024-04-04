@@ -2,7 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace DCL.CharacterMotion.Utils
+namespace DCL.Character.CharacterMotion
 {
     public class ExtractGLTFAnimations
     {
