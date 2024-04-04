@@ -90,6 +90,7 @@ namespace SceneRuntime.Factory
             var moduleDictionary = new Dictionary<string, string>();
 
             await AddModuleAsync("EngineApi.js", moduleDictionary, ct);
+            await AddModuleAsync("CommsApi.js", moduleDictionary, ct);
             await AddModuleAsync("EthereumController.js", moduleDictionary, ct);
             await AddModuleAsync("Players.js", moduleDictionary, ct);
             await AddModuleAsync("PortableExperiences.js", moduleDictionary, ct);
