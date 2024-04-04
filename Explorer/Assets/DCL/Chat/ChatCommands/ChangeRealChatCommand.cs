@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace DCL.Chat.ChatCommands
 {
-    internal class ChangeRealChatCommand : IChatCommand
+    internal class ChangeRealmChatCommand : IChatCommand
     {
         private const string GENESIS_KEY = "genesis";
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
@@ -15,26 +15,30 @@ namespace DCL.Chat.ChatCommands
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
         private readonly IRealmNavigator realmNavigator;
 
-        private readonly string worldName;
-        private readonly string realmUrl;
+        private string? worldName;
+        private string? realmUrl;
 
-        public ChangeRealChatCommand(Match match, IRealmNavigator realmNavigator)
+        public ChangeRealmChatCommand(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
-
-            worldName = match.Groups[2].Value;
-            realmUrl = worldName == GENESIS_KEY ? IRealmNavigator.GENESIS_URL : GetWorldAddress(worldName);
         }
 
-        private string GetWorldAddress(string worldPath)
+        public void Set(Match match)
         {
-            if (!worldAddressesCaches.TryGetValue(worldPath, out URLAddress address))
-            {
-                address = worldDomain.Append(URLPath.FromString(worldPath));
-                worldAddressesCaches.Add(worldPath, address);
-            }
+            worldName = match.Groups[2].Value;
+            realmUrl = worldName == GENESIS_KEY ? IRealmNavigator.GENESIS_URL : GetWorldAddress(worldName);
+            return;
 
-            return address.Value;
+            string GetWorldAddress(string worldPath)
+            {
+                if (!worldAddressesCaches.TryGetValue(worldPath, out URLAddress address))
+                {
+                    address = worldDomain.Append(URLPath.FromString(worldPath));
+                    worldAddressesCaches.Add(worldPath, address);
+                }
+
+                return address.Value;
+            }
         }
 
         public async UniTask<string> ExecuteAsync()

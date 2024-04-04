@@ -1,4 +1,6 @@
 ﻿using ECS.SceneLifeCycle.Realm;
+using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace DCL.Chat.ChatCommands
@@ -14,29 +16,40 @@ namespace DCL.Chat.ChatCommands
 
         private static readonly Regex CHANGE_REALM_REGEX = new ("^/(" + WORLD_KEY + "|" + GOTO_KEY + @")\s+(\S+\.dcl\.eth|" + GENESIS_KEY + ")$", RegexOptions.Compiled);
         private static readonly Regex TELEPORT_REGEX = new ("^/" + GOTO_KEY + @"\s+(?:(-?\d+),(-?\d+)|" + RANDOM_KEY + ")$", RegexOptions.Compiled);
+        private readonly Dictionary<Regex, Func<IChatCommand>> commandsFactory;
+        private readonly Dictionary<Regex, IChatCommand> commandsCache = new ();
 
-        private readonly IRealmNavigator realmNavigator;
+        private readonly List<Regex> commandsRegex = new ()
+        {
+            CHANGE_REALM_REGEX,
+            TELEPORT_REGEX,
+        };
 
         public ChatCommandsHandler(IRealmNavigator realmNavigator)
         {
-            this.realmNavigator = realmNavigator;
+            commandsFactory = new Dictionary<Regex, Func<IChatCommand>>
+            {
+                { CHANGE_REALM_REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
+                { TELEPORT_REGEX, () => new TeleportToChatCommand(realmNavigator) },
+            };
         }
 
         public bool TryGetChatCommand(in string message, ref IChatCommand command)
         {
             if (!message.StartsWith(CHAT_COMMAND_CHAR)) return false;
 
-            Match match = CHANGE_REALM_REGEX.Match(message);
-            if (match.Success)
+            foreach (Regex? commandRegex in commandsRegex)
             {
-                command = new ChangeRealChatCommand(match, realmNavigator);
-                return true;
-            }
+                Match match = commandRegex.Match(message);
+                if (!match.Success) continue;
 
-            match = TELEPORT_REGEX.Match(message);
-            if (match.Success)
-            {
-                command = new TeleportToChatCommand(match, realmNavigator);
+                if (!commandsCache.TryGetValue(commandRegex, out command))
+                {
+                    command = commandsFactory[commandRegex]();
+                    commandsCache[commandRegex] = command;
+                }
+
+                command.Set(match);
                 return true;
             }
 

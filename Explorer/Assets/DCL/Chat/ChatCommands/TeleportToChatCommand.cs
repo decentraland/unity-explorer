@@ -3,6 +3,7 @@ using ECS.SceneLifeCycle.Realm;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -10,13 +11,16 @@ namespace DCL.Chat.ChatCommands
     {
         private readonly IRealmNavigator realmNavigator;
 
-        private readonly int x;
-        private readonly int y;
+        private int x;
+        private int y;
 
-        public TeleportToChatCommand(Match match, IRealmNavigator realmNavigator)
+        public TeleportToChatCommand(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
+        }
 
+        public void Set(Match match)
+        {
             if (match.Groups[1].Success && match.Groups[2].Success)
             {
                 x = int.Parse(match.Groups[1].Value);
