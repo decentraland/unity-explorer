@@ -284,6 +284,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                emote.ManifestResult = null;
                 emote.IsLoading = false;
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
@@ -304,6 +305,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                ResetEmoteResultOnCancellation(emote, bodyShape);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
@@ -359,6 +361,14 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             return false;
+        }
+
+        private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
+        {
+            emote.IsLoading = false;
+
+            if (emote.WearableAssetResults[bodyShape] is { IsInitialized: false })
+                emote.WearableAssetResults[bodyShape] = null;
         }
     }
 }

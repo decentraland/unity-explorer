@@ -18,6 +18,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         internal static readonly ListObjectPool<URN> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
+        internal static readonly HashSetObjectPool<URN> POINTERS_HASHSET_POOL = new (hashsetInstanceDefaultCapacity: 10, defaultCapacity: 20);
+
         internal static readonly ListObjectPool<IWearable> WEARABLES_POOL =
             new (listInstanceDefaultCapacity: PoolConstants.WEARABLES_PER_AVATAR_COUNT, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
