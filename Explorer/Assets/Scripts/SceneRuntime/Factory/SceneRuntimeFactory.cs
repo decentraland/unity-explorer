@@ -6,7 +6,6 @@ using DCL.WebRequests;
 using DCL.Diagnostics;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -25,7 +24,7 @@ namespace SceneRuntime.Factory
         private readonly JsCodeResolver codeContentResolver;
         private readonly Dictionary<string, string> sourceCodeCache;
 
-        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES;
+        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneSourceCode jsSceneSourceCode =
             Application.isEditor
                 ? new LogJsSceneSourceCode(
@@ -33,17 +32,6 @@ namespace SceneRuntime.Factory
                     ReportHub.WithReport(ReportCategory.SCENE_FACTORY).Log
                 )
                 : new IJsSceneSourceCode.Null();
-
-        static SceneRuntimeFactory()
-        {
-            JS_MODULE_NAMES = Directory
-                             .GetFiles(
-                                  Path.Join(Application.streamingAssetsPath, "/Js/Modules/")!
-                              )
-                             .Select(Path.GetFileName)
-                             .Where(e => Path.GetExtension(e) == ".js")
-                             .ToList();
-        }
 
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
