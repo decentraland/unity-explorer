@@ -10,6 +10,7 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
+using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -47,6 +48,7 @@ namespace SceneRuntime
         private UserActionsWrap? userActionsApi;
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
+        private WebSocketApiWrapper? webSocketApiWrapper;
         private SignedFetchWrap? signedFetchWrap;
 
         public SceneRuntimeImpl(
@@ -65,6 +67,9 @@ namespace SceneRuntime
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode);
 
+            // Load and Compile Js Modules
+            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
+
             // Initialize init API
             unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
@@ -72,9 +77,6 @@ namespace SceneRuntime
 
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
-
-            // Load and Compile Js Modules
-            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')
@@ -109,6 +111,7 @@ namespace SceneRuntime
             runtimeWrapper?.Dispose();
             restrictedActionsApi?.Dispose();
             sceneApiWrapper?.Dispose();
+            webSocketApiWrapper?.Dispose();
             userActionsApi?.Dispose();
             signedFetchWrap?.Dispose();
         }
@@ -152,6 +155,12 @@ namespace SceneRuntime
         {
             engine.AddHostObject("UnityUserIdentityApi", userIdentity = new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }
+
+        public void RegisterWebSocketApi(IWebSocketApi webSocketApi)
+        {
+            engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
+        }
+
 
         public void SetIsDisposing()
         {
