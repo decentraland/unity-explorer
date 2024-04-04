@@ -48,7 +48,7 @@ namespace Global.Dynamic
                 return UniTask.FromResult(string.Empty);
             }
 
-            return UniTask.FromResult($"🔴 Error. Widget {param} not found.");
+            return UniTask.FromResult($"🔴 Error. Widget '{param}' not found.");
         }
 
         public void Set(Match match)
