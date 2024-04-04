@@ -1,5 +1,4 @@
-﻿using ECS.SceneLifeCycle.Realm;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -12,13 +11,9 @@ namespace DCL.Chat.ChatCommands
         private readonly Dictionary<Regex, IChatCommand> commandsCache = new ();
         private readonly Dictionary<Regex, Func<IChatCommand>> commandsFactory;
 
-        public ChatCommandsHandler(IRealmNavigator realmNavigator)
+        public ChatCommandsHandler(Dictionary<Regex, Func<IChatCommand>> commandsFactory)
         {
-            commandsFactory = new Dictionary<Regex, Func<IChatCommand>>
-            {
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
-            };
+            this.commandsFactory = commandsFactory;
         }
 
         public bool TryGetChatCommand(in string message, ref IChatCommand command)

@@ -8,11 +8,11 @@ using static DCL.Chat.ChatCommands.IChatCommand;
 
 namespace DCL.Chat.ChatCommands
 {
-    internal class TeleportToChatCommand : IChatCommand
+    public class TeleportToChatCommand : IChatCommand
     {
         private const string PARAMETER_RANDOM = "random";
 
-        internal static readonly Regex REGEX = new ("^/" + COMMAND_GOTO + @"\s+(?:(-?\d+),(-?\d+)|" + PARAMETER_RANDOM + ")$", RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ("^/" + COMMAND_GOTO + @"\s+(?:(-?\d+),(-?\d+)|" + PARAMETER_RANDOM + ")$", RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
 
@@ -31,7 +31,7 @@ namespace DCL.Chat.ChatCommands
                 x = int.Parse(match.Groups[1].Value);
                 y = int.Parse(match.Groups[2].Value);
             }
-            else
+            else // means that it was PARAMETER_RANDOM
             {
                 x = Random.Range(-150, 150);
                 y = Random.Range(-150, 150);

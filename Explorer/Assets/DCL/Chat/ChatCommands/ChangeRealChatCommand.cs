@@ -8,12 +8,12 @@ using static DCL.Chat.ChatCommands.IChatCommand;
 
 namespace DCL.Chat.ChatCommands
 {
-    internal class ChangeRealmChatCommand : IChatCommand
+    public class ChangeRealmChatCommand : IChatCommand
     {
         private const string COMMAND_WORLD = "world";
         private const string PARAMETER_GENESIS = "genesis";
 
-        internal static readonly Regex REGEX = new ("^/(" + COMMAND_WORLD + "|" + COMMAND_GOTO + @")\s+(\S+\.dcl\.eth|" + PARAMETER_GENESIS + ")$", RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ("^/(" + COMMAND_WORLD + "|" + COMMAND_GOTO + @")\s+(\S+\.dcl\.eth|" + PARAMETER_GENESIS + ")$", RegexOptions.Compiled);
 
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 

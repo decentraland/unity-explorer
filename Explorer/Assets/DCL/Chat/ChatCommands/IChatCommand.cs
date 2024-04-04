@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace DCL.Chat.ChatCommands
 {
-    internal interface IChatCommand
+    public interface IChatCommand
     {
         // Constants that shared between several ChatCommands
         const string COMMAND_GOTO = "goto";

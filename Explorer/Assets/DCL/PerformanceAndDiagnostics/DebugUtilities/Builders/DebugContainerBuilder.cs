@@ -13,6 +13,8 @@ namespace DCL.DebugUtilities
         private readonly Func<DebugControl> controlFactoryMethod;
         private readonly Dictionary<Type, IDebugElementFactory> factories;
 
+        public DebugContainer Container { get; private set; }
+
         public DebugContainerBuilder(
             Func<DebugWidget> widgetFactoryMethod,
             Func<DebugControl> controlFactoryMethod,
@@ -35,20 +37,21 @@ namespace DCL.DebugUtilities
             // Sort by name
             widgets.Sort(this);
 
-            DebugContainer container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
-            container.Initialize();
+            Container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
+            Container.Initialize();
 
-            debugRootCanvas.rootVisualElement.Add(container);
+            debugRootCanvas.rootVisualElement.Add(Container);
 
             // Instantiate widgets
             foreach (DebugWidgetBuilder widgetBuilder in widgets)
             {
                 DebugWidget widget = widgetBuilder.Build(widgetFactoryMethod, controlFactoryMethod, factories);
                 widget.name = widgetBuilder.name;
-                container.containerRoot.Add(widget);
+                Container.containerRoot.Add(widget);
             }
 
-            return container;
+            Container.visible = false;
+            return Container;
         }
 
         public int Compare(DebugWidgetBuilder x, DebugWidgetBuilder y)

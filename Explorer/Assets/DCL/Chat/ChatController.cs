@@ -7,9 +7,9 @@ using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -46,7 +46,7 @@ namespace DCL.Chat
         private CancellationTokenSource emojiPanelCts;
         private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
-        private DCLInput dclInput;
+        private readonly DCLInput dclInput;
 
         private readonly ChatCommandsHandler commandsHandler;
         private IChatCommand chatCommand;
@@ -67,7 +67,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
-            IRealmNavigator realmNavigator
+            Dictionary<Regex, Func<IChatCommand>> commandsFactory
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -83,7 +83,7 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
 
-            commandsHandler = new ChatCommandsHandler(realmNavigator);
+            commandsHandler = new ChatCommandsHandler(commandsFactory);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             //Adding two elements to count as top and bottom padding
@@ -204,15 +204,17 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
             if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
-                ExecuteChatCommandAsync().Forget();
+                ExecuteChatCommandAsync(chatCommand).Forget();
             else
                 chatMessagesBus.Send(messageToSend);
         }
 
-        private async UniTask ExecuteChatCommandAsync()
+        private async UniTask ExecuteChatCommandAsync(IChatCommand command)
         {
-            string? response = await chatCommand.ExecuteAsync();
-            CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
+            string? response = await command.ExecuteAsync();
+
+            if (!string.IsNullOrEmpty(response))
+                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
