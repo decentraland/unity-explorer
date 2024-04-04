@@ -67,11 +67,6 @@ Explorer/Assets/AddressableAssetsData/Windows.meta
 Explorer/Assets/AddressableAssetsData/ProfileDataSourceSettings.asset
 Explorer/Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
 
-# LODs
-
-Explorer/Assets/StreamingAssets/AssetBundles/lods
-Explorer/Assets/StreamingAssets/AssetBundles/lods.meta
-
 # OS generated
 .DS_Store
 .DS_Store?
