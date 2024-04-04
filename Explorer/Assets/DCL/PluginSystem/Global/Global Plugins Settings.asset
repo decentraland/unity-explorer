@@ -36,18 +36,9 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
-  - rid: 1045841226745774110
   references:
     version: 2
     RefIds:
-    - rid: 1045841226745774110
-      type: {class: LODPlugin/LODSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <LODSettingAsset>k__BackingField:
-          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

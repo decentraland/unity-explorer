@@ -19,7 +19,7 @@ MonoBehaviour:
   - rid: 4753057106328551424
   - rid: 847852733734322176
   - rid: 1045841226745774107
-  - rid: 1045841226745774108
+  - rid: 1045841258647388162
   references:
     version: 2
     RefIds:
@@ -74,11 +74,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 1045841226745774108
-      type: {class: LODContainer/RoadSettings, ns: DCL.LOD.Systems, asm: DCL.Plugins}
+    - rid: 1045841258647388162
+      type: {class: LODContainer/LODContainerSettings, ns: DCL.LOD.Systems, asm: DCL.Plugins}
       data:
         <RoadData>k__BackingField:
           m_AssetGUID: d7baa85a7da60ef4b8b5252d78fa1b3d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <LODSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

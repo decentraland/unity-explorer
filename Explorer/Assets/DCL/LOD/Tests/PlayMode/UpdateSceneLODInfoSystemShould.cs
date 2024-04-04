@@ -73,14 +73,11 @@ namespace DCL.LOD.Tests
             lodAssetsPool = new LODAssetsPool();
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
-
-            var textureArrayDictionary = new Dictionary<TextureFormat, TextureArrayContainer>();
-            textureArrayDictionary.Add(TextureFormat.BC7,
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform,
                 textureArrayContainerFactory.Create(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
                 {
                     256
                 }, TextureFormat.BC7, 20));
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform, textureArrayDictionary);
         }
 
 

@@ -43,11 +43,11 @@ namespace DCL.LOD.Systems
         private readonly Transform lodsTransformParent;
 
         private readonly IExtendedObjectPool<Material> materialPool;
-        private readonly Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary;
+        private readonly TextureArrayContainer lodTextureArrayContainer;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
-            Transform lodsTransformParent, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary) : base(world)
+            Transform lodsTransformParent, TextureArrayContainer lodTextureArrayContainer) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
@@ -56,7 +56,7 @@ namespace DCL.LOD.Systems
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
-            this.textureArrayContainerDictionary = textureArrayContainerDictionary;
+            this.lodTextureArrayContainer = lodTextureArrayContainer;
         }
 
         protected override void Update(float t)
@@ -91,7 +91,7 @@ namespace DCL.LOD.Systems
 
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, textureArrayContainerDictionary), materialPool);
+                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer), materialPool);
                     else
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache);

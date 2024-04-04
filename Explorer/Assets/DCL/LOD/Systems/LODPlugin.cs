@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
         
         private IExtendedObjectPool<Material> lodMaterialPool;
         private ILODSettingsAsset lodSettingsAsset;
-        private Dictionary<TextureFormat, TextureArrayContainer> textureArrayDictionary;
+        private TextureArrayContainer lodTextureArrayContainer;
 
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
@@ -74,15 +74,12 @@ namespace DCL.PluginSystem.Global
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
 
-            textureArrayDictionary = new Dictionary<TextureFormat, TextureArrayContainer>();
-            foreach (var textureFormat in lodSettingsAsset.FormatsToCreate)
-                textureArrayDictionary.Add(textureFormat,
-                    textureArrayContainerFactory.Create(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutions, textureFormat, lodSettingsAsset.TextureArrayMinSize));
+            lodTextureArrayContainer = textureArrayContainerFactory.Create(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutions, TextureFormat.BC7, lodSettingsAsset.TextureArrayMinSize);
             
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
             UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget,
-                frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, textureArrayDictionary);
+                frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, lodTextureArrayContainer);
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
             LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
         }

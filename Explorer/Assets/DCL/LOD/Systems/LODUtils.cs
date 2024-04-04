@@ -24,7 +24,7 @@ namespace DCL.LOD
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
-        public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary)
+        public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
             var newSlots = TEXTURE_ARRAY_SLOTS.Get();
             using (PoolExtensions.Scope<List<Renderer>> pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
@@ -41,7 +41,7 @@ namespace DCL.LOD
                                 continue;
                             }
 
-                            newSlots.AddRange(textureArrayContainerDictionary[TextureFormat.BC7].SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], pooledList.Value[i].materials[j]));
+                            newSlots.AddRange(lodTextureArrayContainer.SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], pooledList.Value[i].materials[j]));
                             pooledList.Value[i].materials[j].mainTexture = null;
                         }
                     }
