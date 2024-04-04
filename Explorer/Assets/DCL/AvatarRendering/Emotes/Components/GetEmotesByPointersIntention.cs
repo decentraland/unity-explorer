@@ -34,8 +34,8 @@ namespace DCL.AvatarRendering.Emotes
         {
             this.pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
-            ProcessedPointers = new HashSet<URN>();
-            SuccessfulPointers = new HashSet<URN>();
+            ProcessedPointers = POINTERS_HASHSET_POOL.Get();
+            SuccessfulPointers = POINTERS_HASHSET_POOL.Get();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
             Timeout = timeout;
@@ -53,6 +53,8 @@ namespace DCL.AvatarRendering.Emotes
         public void Dispose()
         {
             POINTERS_POOL.Release(pointers);
+            POINTERS_HASHSET_POOL.Release(ProcessedPointers);
+            POINTERS_HASHSET_POOL.Release(SuccessfulPointers);
         }
     }
 }
