@@ -1,12 +1,12 @@
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
@@ -28,14 +28,6 @@ namespace SceneRuntime
         private readonly JSTaskResolverResetable resetableSource;
 
         private EngineApiWrapper? engineApi;
-        private EthereumApiWrapper? ethereumApi;
-        private RuntimeWrapper? runtimeWrapper;
-        private RestrictedActionsAPIWrapper? restrictedActionsApi;
-        private UserActionsWrap? userActionsApi;
-        private UserIdentityApiWrapper? userIdentity;
-        private SceneApiWrapper? sceneApiWrapper;
-        private WebSocketApiWrapper? webSocketApiWrapper;
-        private SignedFetchWrap? signedFetchWrap;
 
         public SceneRuntimeImpl(
             string sourceCode,
@@ -51,7 +43,7 @@ namespace SceneRuntime
             wrapBunch = new WrapBunch(engine);
 
             // Compile Scene Code
-            V8Script sceneScript = engine.Compile(sourceCode);
+            V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
 
             // Initialize init API
             // TODO: This is only needed for the LifeCycle
@@ -87,8 +79,8 @@ namespace SceneRuntime
             }
         ");
 
-            updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate");
-            startFunc = (ScriptObject)engine.Evaluate("__internalOnStart");
+            updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate").EnsureNotNull();
+            startFunc = (ScriptObject)engine.Evaluate("__internalOnStart").EnsureNotNull();
         }
 
         public void Dispose()
@@ -106,12 +98,6 @@ namespace SceneRuntime
         public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
-        }
-
-        //TODO replace
-        public void RegisterWebSocketApi(IWebSocketApi webSocketApi)
-        {
-            engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()
@@ -135,13 +121,12 @@ namespace SceneRuntime
 
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
-            PoolableByteArray result = engineApi.api.CrdtSendToRenderer(data, false);
-
+            PoolableByteArray result = engineApi.EnsureNotNull().api.CrdtSendToRenderer(data, false);
             // Initial messages are not expected to return anything
             Assert.IsTrue(result.IsEmpty);
         }
 
         public ITypedArray<byte> CreateUint8Array(int length) =>
-            (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()");
+            (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()").EnsureNotNull();
     }
 }

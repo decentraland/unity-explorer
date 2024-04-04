@@ -225,16 +225,19 @@ namespace SceneRunner
             var webSocketAipImplementation = new WebSocketApiImplementation();
 
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
-            sceneRuntime.RegisterAll(exceptionsHandler, roomHub, profileRepository, sceneApiImplementation, webRequestController, restrictedActionsAPI, runtimeImplementation, ethereumApi, identityCache);
 
-            sceneRuntime.RegisterSceneApi(sceneApiImplementation);
-
-
-            sceneRuntime.RegisterWebSocketApi(webSocketAipImplementation);
-
-            sceneRuntime.RegisterSignedFetch(webRequestController);
-            sceneRuntime.RegisterEthereumApi(ethereumApi);
-            sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
+            sceneRuntime.RegisterAll(
+                exceptionsHandler,
+                roomHub,
+                profileRepository,
+                sceneApiImplementation,
+                webRequestController,
+                restrictedActionsAPI,
+                runtimeImplementation,
+                ethereumApi,
+                webSocketAipImplementation,
+                identityCache
+            );
 
             return new SceneFacade(
                 sceneRuntime,

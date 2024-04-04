@@ -5,6 +5,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.Players;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -42,6 +43,7 @@ namespace SceneRuntime
             IRestrictedActionsAPI restrictedActionsAPI,
             IRuntime runtime,
             IEthereumApi ethereumApi,
+            IWebSocketApi webSocketApi,
             IWeb3IdentityCache web3IdentityCache
         )
         {
@@ -53,6 +55,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
@@ -93,6 +96,11 @@ namespace SceneRuntime
         private static void RegisterUserIdentityApi(this ISceneRuntime sceneRuntime, IProfileRepository profileRepository, IWeb3IdentityCache identityCache, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             sceneRuntime.Register("UnityUserIdentityApi", new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
+        }
+
+        private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
+        {
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
     }
 }
