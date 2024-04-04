@@ -6,6 +6,7 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
+using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,14 @@ namespace SceneRuntime
         private readonly JSTaskResolverResetable resetableSource;
 
         private EngineApiWrapper? engineApi;
+        private EthereumApiWrapper? ethereumApi;
+        private RuntimeWrapper? runtimeWrapper;
+        private RestrictedActionsAPIWrapper? restrictedActionsApi;
+        private UserActionsWrap? userActionsApi;
+        private UserIdentityApiWrapper? userIdentity;
+        private SceneApiWrapper? sceneApiWrapper;
+        private WebSocketApiWrapper? webSocketApiWrapper;
+        private SignedFetchWrap? signedFetchWrap;
 
         public SceneRuntimeImpl(
             string sourceCode,
@@ -97,6 +106,12 @@ namespace SceneRuntime
         public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
+        }
+
+        //TODO replace
+        public void RegisterWebSocketApi(IWebSocketApi webSocketApi)
+        {
+            engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()

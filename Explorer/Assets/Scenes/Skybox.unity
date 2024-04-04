@@ -19,7 +19,7 @@ RenderSettings:
   m_FogMode: 1
   m_FogDensity: 0.5
   m_LinearFogStart: 0
-  m_LinearFogEnd: 0.01
+  m_LinearFogEnd: 0
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 976580770}
-  m_IndirectSpecularColor: {r: 0.02948869, g: 0.007901343, b: 0.061463073, a: 1}
+  m_IndirectSpecularColor: {r: 0.22660044, g: 0.5745744, b: 0.8872001, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2547,15 +2547,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key2.b
-      value: 1.3879476
+      value: 0.6939738
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key2.g
-      value: 1.8579681
+      value: 0.92898405
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key2.r
-      value: 2.4949498
+      value: 1.2474749
       objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalColorRamp.key3.b

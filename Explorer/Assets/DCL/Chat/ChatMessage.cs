@@ -2,6 +2,7 @@ namespace DCL.Chat
 {
     public struct ChatMessage
     {
+        public bool IsPaddingElement;
         public string Message;
         public string Sender;
         public string WalletAddress;
@@ -13,6 +14,16 @@ namespace DCL.Chat
             Sender = sender;
             WalletAddress = walletAddress;
             SentByOwnUser = sentByOwnUser;
+            IsPaddingElement = false;
+        }
+
+        public ChatMessage(bool isPaddingElement)
+        {
+            IsPaddingElement = isPaddingElement;
+            Message = string.Empty;
+            Sender = string.Empty;
+            WalletAddress = string.Empty;
+            SentByOwnUser = false;
         }
     }
 }

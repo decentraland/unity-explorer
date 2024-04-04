@@ -222,8 +222,19 @@ namespace SceneRunner
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
+            var webSocketAipImplementation = new WebSocketApiImplementation();
+
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
             sceneRuntime.RegisterAll(exceptionsHandler, roomHub, profileRepository, sceneApiImplementation, webRequestController, restrictedActionsAPI, runtimeImplementation, ethereumApi, identityCache);
+
+            sceneRuntime.RegisterSceneApi(sceneApiImplementation);
+
+
+            sceneRuntime.RegisterWebSocketApi(webSocketAipImplementation);
+
+            sceneRuntime.RegisterSignedFetch(webRequestController);
+            sceneRuntime.RegisterEthereumApi(ethereumApi);
+            sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
 
             return new SceneFacade(
                 sceneRuntime,
