@@ -4,11 +4,16 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using static DCL.Chat.ChatCommands.IChatCommand;
 
 namespace DCL.Chat.ChatCommands
 {
     internal class TeleportToChatCommand : IChatCommand
     {
+        private const string PARAMETER_RANDOM = "random";
+
+        internal static readonly Regex REGEX = new ("^/" + COMMAND_GOTO + @"\s+(?:(-?\d+),(-?\d+)|" + PARAMETER_RANDOM + ")$", RegexOptions.Compiled);
+
         private readonly IRealmNavigator realmNavigator;
 
         private int x;
