@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Chat.ChatCommands;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -48,7 +49,7 @@ namespace DCL.Chat
         private DCLInput dclInput;
 
         private readonly ChatCommandsHandler commandsHandler;
-        private UniTask<string> chatCommand;
+        private IChatCommand chatCommand;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -210,7 +211,7 @@ namespace DCL.Chat
 
         private async UniTask ExecuteChatCommandAsync()
         {
-            string? response = await chatCommand;
+            string? response = await chatCommand.ExecuteAsync();
             CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
         }
 
