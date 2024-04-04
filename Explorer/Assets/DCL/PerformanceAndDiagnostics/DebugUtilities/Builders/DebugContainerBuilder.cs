@@ -7,7 +7,8 @@ namespace DCL.DebugUtilities
 {
     public class DebugContainerBuilder : IDebugContainerBuilder, IComparer<DebugWidgetBuilder>
     {
-        private readonly List<DebugWidgetBuilder> widgets = new (100);
+        private readonly List<DebugWidgetBuilder> widgetBuilders = new (100);
+        public readonly Dictionary<string, DebugWidget> Widgets = new (100);
 
         private readonly Func<DebugWidget> widgetFactoryMethod;
         private readonly Func<DebugControl> controlFactoryMethod;
@@ -28,14 +29,14 @@ namespace DCL.DebugUtilities
         public DebugWidgetBuilder AddWidget(string name)
         {
             var w = new DebugWidgetBuilder(name.ToUpper());
-            widgets.Add(w);
+            widgetBuilders.Add(w);
             return w;
         }
 
         public DebugContainer Build(UIDocument debugRootCanvas)
         {
             // Sort by name
-            widgets.Sort(this);
+            widgetBuilders.Sort(this);
 
             Container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
             Container.Initialize();
@@ -43,10 +44,13 @@ namespace DCL.DebugUtilities
             debugRootCanvas.rootVisualElement.Add(Container);
 
             // Instantiate widgets
-            foreach (DebugWidgetBuilder widgetBuilder in widgets)
+            foreach (DebugWidgetBuilder widgetBuilder in widgetBuilders)
             {
                 DebugWidget widget = widgetBuilder.Build(widgetFactoryMethod, controlFactoryMethod, factories);
                 widget.name = widgetBuilder.name;
+                widget.visible = false;
+
+                Widgets.Add(widget.name, widget);
                 Container.containerRoot.Add(widget);
             }
 
