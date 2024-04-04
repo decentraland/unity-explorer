@@ -236,6 +236,9 @@ namespace SceneRunner
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             sceneRuntime.RegisterSceneApi(sceneApiImplementation);
 
+            var webSocketAipImplementation = new WebSocketApiImplementation();
+            sceneRuntime.RegisterWebSocketApi(webSocketAipImplementation);
+
             sceneRuntime.RegisterSignedFetch(webRequestController);
             sceneRuntime.RegisterEthereumApi(ethereumApi);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);

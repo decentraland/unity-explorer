@@ -50,6 +50,7 @@ namespace SceneRuntime
         private UserIdentityApiWrapper? userIdentity;
         private SceneApiWrapper? sceneApiWrapper;
         private CommunicationsControllerAPIWrapper? communicationsControllerApi;
+        private WebSocketApiWrapper? webSocketApiWrapper;
         private SignedFetchWrap? signedFetchWrap;
 
         public SceneRuntimeImpl(
@@ -68,6 +69,9 @@ namespace SceneRuntime
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode);
 
+            // Load and Compile Js Modules
+            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
+
             // Initialize init API
             unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
@@ -75,9 +79,6 @@ namespace SceneRuntime
 
             // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
-
-            // Load and Compile Js Modules
-            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
         }
 
         public void ExecuteSceneJson()
@@ -116,6 +117,7 @@ namespace SceneRuntime
             restrictedActionsApi?.Dispose();
             sceneApiWrapper?.Dispose();
             communicationsControllerApi?.Dispose();
+            webSocketApiWrapper?.Dispose();
             userActionsApi?.Dispose();
             signedFetchWrap?.Dispose();
         }
@@ -163,6 +165,11 @@ namespace SceneRuntime
         public void RegisterCommunicationsControllerApi(ICommunicationsControllerAPI api)
         {
             engine.AddHostObject("UnityCommunicationsControllerApi", communicationsControllerApi = new CommunicationsControllerAPIWrapper(api));
+        }
+
+        public void RegisterWebSocketApi(IWebSocketApi webSocketApi)
+        {
+            engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()

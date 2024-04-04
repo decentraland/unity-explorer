@@ -12,5 +12,6 @@
         ErrorMessage,
         BinaryMessage,
         BinaryAckMessage,
+        DefaultTextMessage,
     }
 }
