@@ -49,6 +49,10 @@ globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
 globalThis.require = require;
 globalThis.console = console;
 
+globalThis.fetch = () => { //TODO
+    throw new Error('fetch is not implemented yet, please add it to init.js')
+}
+
 // disable WebAssembly
 globalThis.WebAssembly.Instance = function () {
     throw new Error('Wasm is not allowed in scene runtimes')
