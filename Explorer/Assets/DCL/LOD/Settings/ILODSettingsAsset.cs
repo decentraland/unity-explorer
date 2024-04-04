@@ -8,7 +8,6 @@ namespace DCL.LOD
     {
         //Threshold for bucket partition (inclusive) 
         public int[] LodPartitionBucketThresholds { get; set; }
-        public AssetReferenceMaterial DefaultLODMaterial { get; }
 
         //Texture array settings
         public int TextureArrayMinSize { get; }

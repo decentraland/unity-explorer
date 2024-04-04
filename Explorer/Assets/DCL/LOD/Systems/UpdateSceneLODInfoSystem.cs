@@ -47,7 +47,7 @@ namespace DCL.LOD.Systems
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
-            Transform lodsTransformParent, IExtendedObjectPool<Material> materialPool, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary) : base(world)
+            Transform lodsTransformParent, Dictionary<TextureFormat, TextureArrayContainer> textureArrayContainerDictionary) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
@@ -56,7 +56,6 @@ namespace DCL.LOD.Systems
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
-            this.materialPool = materialPool;
             this.textureArrayContainerDictionary = textureArrayContainerDictionary;
         }
 
@@ -92,7 +91,7 @@ namespace DCL.LOD.Systems
 
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, materialPool, textureArrayContainerDictionary), materialPool);
+                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, textureArrayContainerDictionary), materialPool);
                     else
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache);
@@ -160,8 +159,8 @@ namespace DCL.LOD.Systems
 
                 var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
                     platformLODKey,
-                    permittedSources: AssetSource.ALL,
-                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES[newLODKey.Level],
+                    permittedSources: AssetSource.EMBEDDED,
+                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                     manifest: manifest);
 
                 sceneLODInfo.CurrentLODPromise =

@@ -24,7 +24,7 @@ using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArray
 
 namespace DCL.PluginSystem.Global
 {
-    public class LODPlugin : IDCLGlobalPlugin<LODPlugin.LODSettings>
+    public class LODPlugin : IDCLGlobalPlugin
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly LODAssetsPool lodAssetsPool;
@@ -45,7 +45,8 @@ namespace DCL.PluginSystem.Global
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder, IAssetsProvisioner assetsProvisioner,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory)
+            ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
+            ILODSettingsAsset lodSettingsAsset)
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
@@ -59,35 +60,12 @@ namespace DCL.PluginSystem.Global
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
+            this.lodSettingsAsset = lodSettingsAsset;
         }
 
-        public async UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            lodSettingsAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, ct: ct)).Value;
-            await CreateMaterialPoolPrewarmedAsync(lodSettingsAsset, ct);
-        }
-
-        //TODO: (Juani) All of this hastle can be removed if we put the material directly in the AB converter
-        private async UniTask CreateMaterialPoolPrewarmedAsync(ILODSettingsAsset settings, CancellationToken ct)
-        {
-            var providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultLODMaterial, ct: ct);
-
-            lodMaterialPool = new ExtendedObjectPool<Material>(
-                () => new Material(providedMaterial.Value),
-                actionOnRelease: mat =>
-                {
-                    // reset material so it does not contain any old properties
-                    mat.CopyPropertiesFromMaterial(providedMaterial.Value);
-                },
-                actionOnDestroy: UnityObjectUtils.SafeDestroy,
-                defaultCapacity: 250);
-
-            var prewarmedMaterials = new Material[250];
-            for (int i = 0; i < 250; i++)
-                prewarmedMaterials[i] = lodMaterialPool.Get();
-
-            for (int i = 0; i < 250; i++)
-                lodMaterialPool.Release(prewarmedMaterials[i]);
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -104,7 +82,7 @@ namespace DCL.PluginSystem.Global
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
             UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget,
-                frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, lodMaterialPool, textureArrayDictionary);
+                frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, textureArrayDictionary);
             UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
             LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
         }
@@ -113,15 +91,6 @@ namespace DCL.PluginSystem.Global
         {
             lodAssetsPool.Unload(frameCapBudget, 3);
         }
-
-
-        [Serializable]
-        public class LODSettings : IDCLPluginSettings
-        {
-            [field: Header(nameof(LODPlugin) + "." + nameof(LODSettings))]
-            [field: Space]
-            [field: SerializeField]
-            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
-        }
+      
     }
 }

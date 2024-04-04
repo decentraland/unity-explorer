@@ -72,9 +72,6 @@ namespace DCL.LOD.Tests
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
 
-            var pool = Substitute.For<IExtendedObjectPool<Material>>();
-            pool.Get().Returns(new Material(Shader.Find("DCL/Universal Render Pipeline/Lit")));
-
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
 
             var textureArrayDictionary = new Dictionary<TextureFormat, TextureArrayContainer>();
@@ -83,7 +80,7 @@ namespace DCL.LOD.Tests
                 {
                     256
                 }, TextureFormat.BC7, 20));
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform, pool, textureArrayDictionary);
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform, textureArrayDictionary);
         }
 
 

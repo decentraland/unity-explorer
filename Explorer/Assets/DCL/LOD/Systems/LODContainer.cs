@@ -20,19 +20,23 @@ namespace DCL.LOD.Systems
     /// <summary>
     /// LOD Container unites LOD and Road Plugins and their common dependencies
     /// </summary>
-    public class LODContainer : DCLContainer<LODContainer.RoadSettings>
+    public class LODContainer : DCLContainer<LODContainer.LODContainerSettings>
     {
         [Serializable]
-        public class RoadSettings : IDCLPluginSettings
+        public class LODContainerSettings : IDCLPluginSettings
         {
             [field: SerializeField]
             public StaticSettings.RoadDataRef RoadData { get; set; }
+
+            [field: SerializeField]
+            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
         }
 
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
+        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
 
@@ -53,7 +57,7 @@ namespace DCL.LOD.Systems
         {
             var container = new LODContainer(staticContainer.AssetsProvisioner);
 
-            return await container.InitializeContainerAsync<LODContainer, RoadSettings>(settingsContainer, ct, c =>
+            return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
 
@@ -71,7 +75,8 @@ namespace DCL.LOD.Systems
                 c.LODPlugin = new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue, visualSceneStateResolver, textureArrayContainerFactory);
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue,
+                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value);
 
                 return UniTask.CompletedTask;
             });
@@ -82,9 +87,10 @@ namespace DCL.LOD.Systems
             roadSettingsAsset.Dispose();
         }
 
-        protected override async UniTask InitializeInternalAsync(RoadSettings roadSettings, CancellationToken ct)
+        protected override async UniTask InitializeInternalAsync(LODContainerSettings lodContainerSettings, CancellationToken ct)
         {
-            roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(roadSettings.RoadData, ct: ct);
+            roadSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.RoadData, ct: ct);
+            lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.LODSettingAsset, ct: ct);
             roadAssetsPrefabList = new List<GameObject>();
             foreach (var t in roadSettingsAsset.Value.RoadAssetsReference)
                 roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);
