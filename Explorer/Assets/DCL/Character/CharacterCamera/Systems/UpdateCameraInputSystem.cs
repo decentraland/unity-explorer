@@ -28,7 +28,7 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(CameraBlockerComponent))]
-        private void UpdateInput(ref CameraInput cameraInput, ref CameraComponent cameraComponent, in CursorComponent cursorComponent)
+        private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent)
         {
             cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
                                  || cameraActions.ZoomIn.WasPressedThisFrame();
@@ -36,7 +36,12 @@ namespace DCL.CharacterCamera.Systems
             cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
                                   || cameraActions.ZoomOut.WasPressedThisFrame();
 
-            cameraInput.Delta = cursorComponent.CursorIsLocked ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
+            cameraInput.Delta = cursorComponent.CursorIsLocked || cursorComponent.AllowCameraMovement ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
+
+            if (cursorComponent.AllowCameraMovement) { Debug.Log(cameraInput.Delta.sqrMagnitude); }
+
+            if (cameraInput.Delta.sqrMagnitude > 2f)
+                cursorComponent.CancelCursorLock = true;
 
             cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
 

@@ -751,7 +751,7 @@
                 {
                     "name": "",
                     "id": "12a8cc85-ac90-425f-9120-421f75f08442",
-                    "path": "<Mouse>/leftButton",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -784,7 +784,7 @@
                 {
                     "name": "",
                     "id": "b3508dda-328c-4d7b-89dd-abcc86f65324",
-                    "path": "<Keyboard>/escape",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -905,6 +905,17 @@
                 {
                     "name": "",
                     "id": "1887f5bd-1bc4-4854-8445-052b432614c1",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TemporalLock",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "53325dbf-377f-4bcc-bbb9-6e4c59c8abd8",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",

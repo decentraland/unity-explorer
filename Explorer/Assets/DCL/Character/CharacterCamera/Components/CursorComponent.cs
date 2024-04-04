@@ -6,6 +6,8 @@ namespace DCL.CharacterCamera.Components
     {
         public bool IsOverUI;
         public bool CursorIsLocked;
+        public bool AllowCameraMovement;
+        public bool CancelCursorLock;
         public Vector2 Position;
     }
 }

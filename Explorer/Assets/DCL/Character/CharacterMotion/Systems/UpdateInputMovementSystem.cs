@@ -37,6 +37,9 @@ namespace DCL.CharacterMotion.Systems
         {
             inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
+            if (!movementAxis.enabled)
+                inputToUpdate.Axes = Vector2.zero;
+
             if (autoWalkAction.WasPerformedThisFrame()) { inputToUpdate.AutoWalk = !inputToUpdate.AutoWalk; }
 
             if (inputToUpdate.Axes.sqrMagnitude > 0.1f) { inputToUpdate.AutoWalk = false; }

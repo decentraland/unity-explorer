@@ -95,7 +95,6 @@ namespace DCL.Input.Systems
 
                 if (!isInteractable)
                     continue;
-
                 cursorStyle = CursorStyle.Interaction;
                 break;
             }
@@ -164,10 +163,11 @@ namespace DCL.Input.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults)
         {
-            bool inputWantsToLock = cameraActions.Lock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasPressedThisFrame();
-            bool inputWantsToUnlock = cameraActions.Unlock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasReleasedThisFrame();
+            bool inputWantsToLock = cameraActions.Lock.WasReleasedThisFrame();
+            bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
+            bool justStoppedTemporalLock = cameraActions.TemporalLock.WasReleasedThisFrame();
 
-            if (inputWantsToLock && !cursorComponent.CursorIsLocked)
+            if (inputWantsToLock && cursorComponent is { CursorIsLocked: false, CancelCursorLock: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {
@@ -181,6 +181,11 @@ namespace DCL.Input.Systems
             // in case the cursor was unlocked externally
             if (!cursor.IsLocked() && cursorComponent.CursorIsLocked)
                 UnlockCursor(ref cursorComponent);
+
+            cursorComponent.AllowCameraMovement = cameraActions.TemporalLock.IsPressed() || cursorComponent.CursorIsLocked;
+
+            if (justStoppedTemporalLock)
+                cursorComponent.CancelCursorLock = false;
 
             void UnlockCursor(ref CursorComponent cursorComponent)
             {
