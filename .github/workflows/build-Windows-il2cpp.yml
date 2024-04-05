@@ -192,6 +192,13 @@ jobs:
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
 
+      - name: Download and Extract Zip File
+        run: |
+          Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=18bnRXoxdWLLFrhix2cPYj1tD_MjML476&export=download&authuser=1&confirm=t&uuid=c72c406d-c934-4c98-ae80-effd145cd392&at=APZUnTXoBwtx3pxk1IsJNnwlCAO_%3A1712316386994" -OutFile "lods.zip"
+          Expand-Archive -Path "lods.zip" -DestinationPath "build/Explorer_Data/StreamingAssets/AssetBundles/lods"
+          Remove-Item "lods.zip"
+        shell: pwsh
+
       # Upload artifact
       - name: Upload windows artifact
         uses: actions/upload-artifact@v3
