@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#nullable enable
+
+using Arch.Core;
 using Arch.SystemGroups;
 using CRDT.Deserializer;
 using CRDT.Memory;
@@ -10,7 +12,9 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -46,7 +50,7 @@ namespace SceneRunner.Tests
 
             sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
 
-            ecsWorldFactory = Substitute.For<IECSWorldFactory>();
+            ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>())
                            .Returns(_ =>
@@ -59,19 +63,19 @@ namespace SceneRunner.Tests
                                 return new ECSWorldFacade(builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>());
                             });
 
-            sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
-            crdtSerializer = Substitute.For<ICRDTSerializer>();
-            componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
+            sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>().EnsureNotNull();
+            crdtSerializer = Substitute.For<ICRDTSerializer>().EnsureNotNull();
+            componentsRegistry = Substitute.For<ISDKComponentsRegistry>().EnsureNotNull();
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
                 new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT, Substitute.For<IRealmData>());
+                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT, new IRoomHub.Fake(), Substitute.For<IRealmData>());
         }
 
         [OneTimeTearDown]
         public async Task TearDown()
         {
-            foreach (SceneFacade sceneFacade in sceneFacades)
+            foreach (ISceneFacade sceneFacade in sceneFacades)
             {
                 try { await sceneFacade.DisposeAsync(); }
                 catch (Exception e) { Debug.LogException(e); }
@@ -80,22 +84,22 @@ namespace SceneRunner.Tests
             sceneFacades.Clear();
         }
 
-        private SceneRuntimeFactory sceneRuntimeFactory;
-        private IECSWorldFactory ecsWorldFactory;
-        private ISharedPoolsProvider sharedPoolsProvider;
-        private ICRDTDeserializer crdtDeserializer;
-        private ICRDTSerializer crdtSerializer;
-        private ISDKComponentsRegistry componentsRegistry;
-        private SceneFactory sceneFactory;
+        private SceneRuntimeFactory sceneRuntimeFactory = null!;
+        private IECSWorldFactory ecsWorldFactory = null!;
+        private ISharedPoolsProvider sharedPoolsProvider = null!;
+        private ICRDTDeserializer crdtDeserializer = null!;
+        private ICRDTSerializer crdtSerializer = null!;
+        private ISDKComponentsRegistry componentsRegistry = null!;
+        private SceneFactory sceneFactory = null!;
 
-        private readonly ConcurrentBag<SceneFacade> sceneFacades = new ();
+        private readonly ConcurrentBag<ISceneFacade> sceneFacades = new ();
 
         private string path;
 
         [Test]
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
         {
-            var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+            var sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>()!, CancellationToken.None);
             sceneFacades.Add(sceneFacade);
 
             var cancellationTokenSource = new CancellationTokenSource();
@@ -113,20 +117,20 @@ namespace SceneRunner.Tests
         {
             const int DURATION = 1000;
 
-            ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>();
+            ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>()!;
 
             var sceneFacade = new SceneFacade(
                 sceneRuntime,
                 TestSystemsWorld.Create(),
-                Substitute.For<ICRDTProtocol>(),
-                Substitute.For<IOutgoingCRDTMessagesProvider>(),
-                Substitute.For<ICRDTWorldSynchronizer>(),
-                Substitute.For<IInstancePoolsProvider>(),
-                Substitute.For<ICRDTMemoryAllocator>(),
-                Substitute.For<ISceneExceptionsHandler>(),
+                Substitute.For<ICRDTProtocol>()!,
+                Substitute.For<IOutgoingCRDTMessagesProvider>()!,
+                Substitute.For<ICRDTWorldSynchronizer>()!,
+                Substitute.For<IInstancePoolsProvider>()!,
+                Substitute.For<ICRDTMemoryAllocator>()!,
+                Substitute.For<ISceneExceptionsHandler>()!,
                 new SceneStateProvider(),
-                Substitute.For<IEntityCollidersSceneCache>(),
-                Substitute.For<ISceneData>()
+                Substitute.For<IEntityCollidersSceneCache>()!,
+                Substitute.For<ISceneData>()!
             );
 
             sceneFacades.Add(sceneFacade);

@@ -54,6 +54,8 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         [None(typeof(PrimitiveColliderComponent))]
         private void InstantiateNonExistingCollider(in Entity entity, ref CRDTEntity crdtEntity, ref PBMeshCollider sdkComponent, ref TransformComponent transform)
         {
+            if (sdkComponent.MeshCase == PBMeshCollider.MeshOneofCase.None) return;
+
             var component = new PrimitiveColliderComponent();
             Instantiate(entity, crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
             World.Add(entity, component);
