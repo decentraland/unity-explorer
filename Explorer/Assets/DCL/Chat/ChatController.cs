@@ -20,9 +20,9 @@ namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView>
     {
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const int MAX_MESSAGE_LENGTH = 250;
 
+        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -38,7 +38,7 @@ namespace DCL.Chat
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
-        private World world;
+        private readonly World world;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
@@ -49,6 +49,7 @@ namespace DCL.Chat
 
         private readonly ChatCommandsHandler commandsHandler;
         private IChatCommand chatCommand;
+        private CancellationTokenSource commandCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -85,7 +86,7 @@ namespace DCL.Chat
             commandsHandler = new ChatCommandsHandler(commandsFactory);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
-            //Adding two elements to count as top and bottom padding
+            // Adding two elements to count as top and bottom padding
             chatMessages.Add(new ChatMessage(true));
             chatMessages.Add(new ChatMessage(true));
         }
@@ -207,8 +208,6 @@ namespace DCL.Chat
             else
                 chatMessagesBus.Send(messageToSend);
         }
-
-        private CancellationTokenSource commandCts = new ();
 
         private async UniTask ExecuteChatCommandAsync(IChatCommand command)
         {
