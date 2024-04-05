@@ -58,7 +58,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)), new GetTextureArguments(false), linkedCts.Token))
-               .CreateTexture(TextureWrapMode.Clamp);
+               .CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear);
 
             texture.name = chunkId.ToString();
 

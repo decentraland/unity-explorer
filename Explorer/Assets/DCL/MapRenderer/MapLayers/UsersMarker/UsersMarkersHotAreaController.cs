@@ -79,9 +79,6 @@ namespace DCL.MapRenderer.MapLayers.Users
         [Query]
         private void RemoveMarker(in AvatarShapeComponent avatarShape, in DeleteEntityIntention deleteEntityIntention)
         {
-            if (deleteEntityIntention.DeferDeletion || !isEnabled)
-                return;
-
             if (markers.TryGetValue(avatarShape.ID, out var marker))
             {
                 mapCullingController.StopTracking(marker);

@@ -13,8 +13,6 @@ namespace DCL.MapRenderer.MapLayers.Users
     {
         private readonly ICoordsUtils coordsUtils;
 
-        private CancellationTokenSource cts;
-
         public string CurrentPlayerId { get; private set; }
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
@@ -31,8 +29,6 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         public void UpdateMarkerPosition(string playerId, Vector3 position)
         {
-            cts = new CancellationTokenSource();
-
             CurrentPlayerId = playerId;
             var gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
             poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, coordsUtils.CoordsToPositionUnclamped(gridPosition)));
@@ -41,8 +37,6 @@ namespace DCL.MapRenderer.MapLayers.Users
         private void ResetPlayer()
         {
             CurrentPlayerId = null;
-            cts?.Cancel();
-            cts?.Dispose();
         }
 
         public void Dispose()
