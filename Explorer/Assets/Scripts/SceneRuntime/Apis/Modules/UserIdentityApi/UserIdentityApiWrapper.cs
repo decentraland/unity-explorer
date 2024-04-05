@@ -3,14 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace SceneRuntime.Apis.Modules.UserIdentityApi
 {
@@ -36,10 +33,14 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
             lifeCycleCts.SafeCancelAndDispose();
         }
 
+        [PublicAPI("Used by StreamingAssets/Js/Modules/UserIdentity.js ")]
+        public object UserPublicKey() =>
+            new GetUserPublicKeyResponse(identityCache);
+
         [PublicAPI("Used by StreamingAssets/Js/Modules/UserIdentity.js")]
         public object GetOwnUserData()
         {
-            async UniTask<GetUserDataResponse.Data?> GetOwnUserDataAsync(CancellationToken ct)
+            async UniTask<GetUserDataResponse> GetOwnUserDataAsync(CancellationToken ct)
             {
                 try
                 {
@@ -47,58 +48,26 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     Profile? profile = await profileRepository.GetAsync(identity.Address, 0, ct);
 
                     if (profile == null)
-                        return null;
-
-                    Avatar avatar = profile.Avatar;
+                        return new GetUserDataResponse(null);
 
                     lock (wearablesCache)
                     {
                         wearablesCache.Clear();
 
-                        foreach (URN urn in avatar.Wearables)
+                        foreach (URN urn in profile.Avatar.Wearables)
                             wearablesCache.Add(urn);
 
-                        return new GetUserDataResponse.Data
-                        {
-                            version = profile.Version,
-                            displayName = profile.DisplayName,
-                            publicKey = identity.Address,
-                            hasConnectedWeb3 = profile.HasConnectedWeb3,
-                            userId = profile.UserId,
-                            avatar = new GetUserDataResponse.Data.Avatar
-                            {
-                                snapshots = new GetUserDataResponse.Data.Avatar.Snapshot
-                                {
-                                    body = avatar.BodySnapshotUrl,
-                                    face256 = avatar.FaceSnapshotUrl,
-                                },
-                                wearables = wearablesCache,
-                                bodyShape = avatar.BodyShape,
-                                eyeColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.EyesColor)}",
-                                hairColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.HairColor)}",
-                                skinColor = $"#{ColorUtility.ToHtmlStringRGB(avatar.SkinColor)}",
-                            },
-                        };
+                        return new GetUserDataResponse(profile, identity, wearablesCache);
                     }
                 }
                 catch (Exception e)
                 {
                     sceneExceptionsHandler.OnEngineException(e);
-
-                    return null;
+                    return new GetUserDataResponse(null);
                 }
             }
 
-            return GetOwnUserDataAsync(lifeCycleCts.Token)
-                  .ContinueWith(ToUserDataResponse)
-                  .AsTask()
-                  .ToPromise();
-        }
-
-        private static GetUserDataResponse ToUserDataResponse(GetUserDataResponse.Data? data)
-        {
-            var response = new GetUserDataResponse { data = data };
-            return response;
+            return GetOwnUserDataAsync(lifeCycleCts.Token).ToPromise();
         }
     }
 }
