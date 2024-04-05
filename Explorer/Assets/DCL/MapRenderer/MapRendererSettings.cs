@@ -34,6 +34,9 @@ namespace DCL.MapRenderer
         [field: SerializeField]
         public AssetReferenceGameObject FavoriteMarker { get; private set; }
 
+        [field: SerializeField]
+        public AssetReferenceGameObject UserMarker { get; private set; }
+
         [Serializable]
         public class SpriteRendererRef : ComponentReference<SpriteRenderer>
         {

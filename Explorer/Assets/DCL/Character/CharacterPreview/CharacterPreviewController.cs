@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.CharacterPreview.Components;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -32,7 +33,8 @@ namespace DCL.CharacterPreview
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(avatarContainer.avatarParent),
-                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
+                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
+                new CharacterPreviewComponent());
         }
 
         public void Dispose()

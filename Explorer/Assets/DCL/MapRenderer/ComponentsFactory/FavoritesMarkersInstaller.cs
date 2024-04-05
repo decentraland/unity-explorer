@@ -72,7 +72,5 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private async UniTask<FavoriteMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.FavoriteMarker, cancellationToken)).Value.GetComponent<FavoriteMarkerObject>();
-
-
     }
 }
