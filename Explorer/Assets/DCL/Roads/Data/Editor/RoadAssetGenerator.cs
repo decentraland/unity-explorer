@@ -68,7 +68,6 @@ namespace DCL.LOD.Data.Editor
                 }
                 string assetPath = $"Assets/{relativeToAssetsPath}{assetName}.prefab";
                 PrefabUtility.SaveAsPrefabAsset(instantiatedRoad, assetPath);
-                AssetImporter.GetAtPath(assetPath).SetAssetBundleNameAndVariant("AssetBundles/roads/" + assetName, "");
                 Object.DestroyImmediate(instantiatedRoad); // Cleanup
             }
             AssetDatabase.SaveAssets();

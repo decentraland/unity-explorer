@@ -18,7 +18,6 @@ namespace DCL.Roads.Systems
 {
     public class RoadPlugin : IDCLGlobalPlugin
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
 
         private readonly IPerformanceBudget frameCapBudget;
@@ -29,12 +28,11 @@ namespace DCL.Roads.Systems
 
         private RoadAssetsPool? roadAssetPool;
 
-        public RoadPlugin(CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner,
+        public RoadPlugin(CacheCleaner cacheCleaner,
             IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget,
             IReadOnlyList<GameObject> roadPrefabs, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary)
         {
             this.cacheCleaner = cacheCleaner;
-            this.assetsProvisioner = assetsProvisioner;
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
             this.roadPrefabs = roadPrefabs;

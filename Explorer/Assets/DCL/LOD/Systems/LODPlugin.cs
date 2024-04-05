@@ -26,7 +26,6 @@ namespace DCL.PluginSystem.Global
 {
     public class LODPlugin : IDCLGlobalPlugin
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
@@ -44,7 +43,7 @@ namespace DCL.PluginSystem.Global
 
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
-            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder, IAssetsProvisioner assetsProvisioner,
+            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset)
         {
@@ -56,7 +55,6 @@ namespace DCL.PluginSystem.Global
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
             this.debugBuilder = debugBuilder;
-            this.assetsProvisioner = assetsProvisioner;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.textureArrayContainerFactory = textureArrayContainerFactory;

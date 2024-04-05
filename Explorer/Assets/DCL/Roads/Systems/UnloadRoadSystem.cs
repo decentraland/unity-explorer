@@ -17,6 +17,9 @@ namespace DCL.Roads.Systems
     {
         private readonly IRoadAssetPool roadAssetPool;
 
+        private static readonly QueryDescription DELETE_ROAD_QUERY = new QueryDescription()
+            .WithAll<RoadInfo, VisualSceneState, DeleteEntityIntention>();
+
         public UnloadRoadSystem(World world, IRoadAssetPool roadAssetPool) : base(world)
         {
             this.roadAssetPool = roadAssetPool;
@@ -24,15 +27,13 @@ namespace DCL.Roads.Systems
 
         protected override void Update(float t)
         {
-            UnloadRoadQuery(World);
+            World.Query(in DELETE_ROAD_QUERY,
+                (Entity e, ref RoadInfo roadInfo) =>
+                {
+                    roadInfo.Dispose(roadAssetPool);
+                    World.Remove<RoadInfo, VisualSceneState, DeleteEntityIntention>(e);
+                });
         }
-        
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void UnloadRoad(in Entity entity, ref RoadInfo roadInfo)
-        {
-            roadInfo.Dispose(roadAssetPool);
-            World.Remove<RoadInfo, VisualSceneState, DeleteEntityIntention>(entity);
-        }
+      
     }
 }

@@ -68,14 +68,13 @@ namespace DCL.LOD.Systems
                 
                 // Create plugins
                 c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
-                    staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList.AsReadOnly(), roadDataDictionary);
+                    staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList, roadDataDictionary);
 
                 c.LODPlugin = new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue,
+                    staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value);
 
                 return UniTask.CompletedTask;
@@ -85,6 +84,7 @@ namespace DCL.LOD.Systems
         public override void Dispose()
         {
             roadSettingsAsset.Dispose();
+            lodSettingsAsset.Dispose();
         }
 
         protected override async UniTask InitializeInternalAsync(LODContainerSettings lodContainerSettings, CancellationToken ct)

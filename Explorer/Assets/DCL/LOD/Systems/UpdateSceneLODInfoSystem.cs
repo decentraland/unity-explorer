@@ -42,7 +42,6 @@ namespace DCL.LOD.Systems
 
         private readonly Transform lodsTransformParent;
 
-        private readonly IExtendedObjectPool<Material> materialPool;
         private readonly TextureArrayContainer lodTextureArrayContainer;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
@@ -91,7 +90,7 @@ namespace DCL.LOD.Systems
 
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer), materialPool);
+                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer));
                     else
                         sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache);

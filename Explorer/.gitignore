@@ -11,6 +11,8 @@
 /[Mm]emoryCaptures/
 [Aa]ssets/AVProVideo
 [Aa]ssets/AVProVideo.meta
+Assets/StreamingAssets/AssetBundles/lods/
+
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta

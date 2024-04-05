@@ -16,7 +16,7 @@ namespace DCL.LOD
 {
     public static class LODUtils
     {
-        public static readonly URLDomain LOD_WEB_URL = URLDomain.FromString("https://ab-cdn-decentraland-org-contentbucket-4e8caab.s3.amazonaws.com/LOD/");
+        public static readonly URLDomain LOD_WEB_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/LOD/");
 
         public static readonly URLSubdirectory LOD_EMBEDDED_SUBDIRECTORIES = URLSubdirectory.FromString("lods");
 

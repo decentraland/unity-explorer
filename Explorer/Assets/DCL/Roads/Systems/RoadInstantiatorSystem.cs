@@ -13,6 +13,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Roads.Systems
 {
@@ -57,7 +58,8 @@ namespace DCL.Roads.Systems
                 }
 
                 //HACK: Since all original scene dont have the correct pivot, we move it here
-                roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + new Vector3(8, 0, 8);
+                roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + ParcelMathHelper.RoadPivotDeviation;
+                ;
                 roadAsset.localRotation = roadDescription.Rotation;
                 roadAsset.gameObject.SetActive(true);
 

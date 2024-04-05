@@ -12,7 +12,6 @@ namespace DCL.LOD
         //Texture array settings
         public int TextureArrayMinSize { get; }
         int[] DefaultTextureArrayResolutions { get;  }
-        TextureFormat[] FormatsToCreate { get;  }
 
         //Debug features        
         public bool IsColorDebuging { get; set; }
