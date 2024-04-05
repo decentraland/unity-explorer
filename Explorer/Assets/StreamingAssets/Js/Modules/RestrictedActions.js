@@ -57,7 +57,9 @@ module.exports.openNftDialog = async function(message) {
 
 module.exports.setCommunicationsAdapter = async function(message) {
     console.log('JSMODULE: setCommunicationsAdapter')
-    return {};
+    return {
+        success: false
+    };
 }
 
 module.exports.triggerSceneEmote = async function(message) {

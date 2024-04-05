@@ -1,20 +1,21 @@
 ﻿using DCL.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.V8;
+using SceneRuntime.ModuleHub;
 
 namespace SceneRuntime.Apis
 {
     public class UnityOpsApi
     {
         private readonly V8ScriptEngine engine;
-        private readonly SceneModuleLoader moduleLoader;
+        private readonly ISceneModuleHub moduleHub;
         private readonly V8Script sceneScript;
         private readonly SceneShortInfo sceneShortInfo;
 
-        public UnityOpsApi(V8ScriptEngine engine, SceneModuleLoader moduleLoader, V8Script sceneScript, SceneShortInfo sceneShortInfo)
+        public UnityOpsApi(V8ScriptEngine engine, ISceneModuleHub moduleHub, V8Script sceneScript, SceneShortInfo sceneShortInfo)
         {
             this.engine = engine;
-            this.moduleLoader = moduleLoader;
+            this.moduleHub = moduleHub;
             this.sceneScript = sceneScript;
             this.sceneShortInfo = sceneShortInfo;
         }
@@ -34,7 +35,10 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Error(object message)
         {
-            ReportHub.LogError(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message + " stackTrace: " + engine.GetStackTrace());
+            ReportHub.LogError(
+                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo),
+                message + " stackTrace: " + engine.GetStackTrace()
+            );
         }
 
         [UsedImplicitly]
@@ -48,7 +52,7 @@ namespace SceneRuntime.Apis
             string filename = moduleName.Substring(1);
 
             // Load JavaScript wrapper in the Runtime
-            V8Script moduleScript = moduleLoader.GetModuleScript(filename);
+            V8Script moduleScript = moduleHub.ModuleScript(filename);
 
             return engine.Evaluate(moduleScript);
         }

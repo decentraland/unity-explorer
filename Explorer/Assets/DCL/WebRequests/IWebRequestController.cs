@@ -57,7 +57,7 @@ namespace DCL.WebRequests
                 )
             );
 
-        public static UniTask<GenericPostRequest> SignedFetchAsync(
+        public static UniTask<GenericPostRequest> SignedFetchPostAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             string jsonMetaData,
@@ -65,27 +65,23 @@ namespace DCL.WebRequests
         )
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            string path = new Uri(commonArguments.URL).AbsolutePath;
-            string payload = $"post:{path}:{unixTimestamp}:{jsonMetaData}".ToLower();
 
             return controller.PostAsync(
                 commonArguments,
                 GenericPostArguments.Empty,
                 ct,
-                signInfo: new WebRequestSignInfo(payload),
-                headersInfo: new WebRequestHeadersInfo()
-                            .Add("x-identity-timestamp", unixTimestamp.ToString()!)
-                            .Add("x-identity-metadata", jsonMetaData)
+                signInfo: WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp)
             );
         }
 
-        public static UniTask<GenericPostRequest> SignedFetchAsync(
+        public static UniTask<GenericPostRequest> SignedFetchPostAsync(
             this IWebRequestController controller,
             string url,
             string jsonMetaData,
             CancellationToken ct
         ) =>
-            controller.SignedFetchAsync(new CommonArguments(URLAddress.FromString(url)), jsonMetaData, ct);
+            controller.SignedFetchPostAsync(new CommonArguments(URLAddress.FromString(url)), jsonMetaData, ct);
 
         /// <summary>
         ///     Make a generic get request to download arbitrary data

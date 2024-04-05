@@ -1,4 +1,6 @@
+using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {
@@ -7,5 +9,14 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         IRoom IslandRoom();
 
         IRoom SceneRoom();
+
+        class Fake : IRoomHub
+        {
+            public IRoom IslandRoom() =>
+                NullRoom.INSTANCE;
+
+            public IRoom SceneRoom() =>
+                NullRoom.INSTANCE;
+        }
     }
 }
