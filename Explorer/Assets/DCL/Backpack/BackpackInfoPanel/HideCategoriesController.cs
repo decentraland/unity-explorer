@@ -2,12 +2,13 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
@@ -20,11 +21,11 @@ namespace DCL.Backpack
         private const int ITEMS_PER_ROW = 3;
 
         private readonly HideCategoryGridView view;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IReadOnlyEquippedWearables equippedWearables;
         private readonly NftTypeIconSO categoryIcons;
 
-        private IObjectPool<HideCategoryRowView> rowsPool;
-        private IObjectPool<HideCategoryView> hidesPool;
+        private IObjectPool<HideCategoryRowView> rowsPool = null!;
+        private IObjectPool<HideCategoryView> hidesPool = null!;
 
         private readonly List<HideCategoryRowView> usedRows = new (MAX_HIDE_ROWS);
         private readonly List<HideCategoryView> usedHides = new (MAX_HIDE_CATEGORIES);
@@ -34,11 +35,11 @@ namespace DCL.Backpack
         public HideCategoriesController(
             HideCategoryGridView view,
             IBackpackEventBus backpackEventBus,
-            IBackpackEquipStatusController backpackEquipStatusController,
+            IReadOnlyEquippedWearables equippedWearables,
             NftTypeIconSO categoryIcons)
         {
             this.view = view;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedWearables = equippedWearables;
             this.categoryIcons = categoryIcons;
 
             backpackEventBus.SelectEvent += SetHideCategories;
@@ -55,6 +56,7 @@ namespace DCL.Backpack
                 actionOnGet: rowView => rowView.gameObject.SetActive(true),
                 actionOnRelease: rowView => rowView.gameObject.SetActive(false)
             );
+
             hidesPool = new ObjectPool<HideCategoryView>(
                 () => CreateCategoryHide(hideCategoryView),
                 defaultCapacity: MAX_HIDE_CATEGORIES,
@@ -78,17 +80,19 @@ namespace DCL.Backpack
         private void SetHideCategories(IWearable wearable)
         {
             ClearPools();
-            wearable.GetHidingList(backpackEquipStatusController.GetEquippedWearableForCategory("body_shape").GetUrn(), hidingList);
+            wearable.GetHidingList(equippedWearables.Wearable("body_shape").EnsureNotNull().GetUrn(), hidingList);
             var rowsNumber = (int)Math.Ceiling((double)hidingList.Count / ITEMS_PER_ROW);
             view.HideHeader.SetActive(hidingList.Count > 0);
+
             for (var i = 0; i < rowsNumber; i++)
             {
                 HideCategoryRowView hideCategoryRowView = rowsPool.Get();
                 usedRows.Add(hideCategoryRowView);
                 hideCategoryRowView.transform.SetAsLastSibling();
+
                 for (int j = 0; j < ITEMS_PER_ROW; j++)
                 {
-                    int itemIndex = j+(i*ITEMS_PER_ROW);
+                    int itemIndex = j + (i * ITEMS_PER_ROW);
 
                     if (itemIndex >= hidingList.Count)
                         return;

@@ -206,7 +206,9 @@ namespace Global.Dynamic
             );
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
-                new ProfileBroadcast(messagePipesHub)
+                new EnsureSelfPublishedProfileBroadcast(
+                    new ProfileBroadcast(messagePipesHub)
+                )
             );
 
             container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Threading;
@@ -27,7 +28,7 @@ namespace DCL.Backpack
             NftTypeIconSO categoryIcons,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             NFTColorsSO rarityColors,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IReadOnlyEquippedWearables equippedWearables)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
@@ -38,7 +39,7 @@ namespace DCL.Backpack
             hideCategoriesController = new HideCategoriesController(
                 view.HideCategoryGridView,
                 backpackEventBus,
-                backpackEquipStatusController,
+                equippedWearables,
                 categoryIcons);
 
             backpackEventBus.SelectEvent += SetPanelContent;

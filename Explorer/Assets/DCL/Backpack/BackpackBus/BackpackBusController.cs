@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -12,18 +13,18 @@ namespace DCL.Backpack.BackpackBus
         private readonly IWearableCatalog wearableCatalog;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IReadOnlyEquippedWearables equippedWearables;
 
         public BackpackBusController(
             IWearableCatalog wearableCatalog,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IReadOnlyEquippedWearables equippedWearables)
         {
             this.wearableCatalog = wearableCatalog;
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedWearables = equippedWearables;
 
             this.backpackCommandBus.OnEquipMessageReceived += HandleEquipCommand;
             this.backpackCommandBus.OnUnEquipMessageReceived += HandleUnEquipCommand;
@@ -77,7 +78,7 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            IWearable? wearableToUnequip = backpackEquipStatusController.GetEquippedWearableForCategory(category);
+            IWearable? wearableToUnequip = equippedWearables.Wearable(category);
 
             if (wearableToUnequip != null)
                 backpackEventBus.SendUnEquip(wearableToUnequip);

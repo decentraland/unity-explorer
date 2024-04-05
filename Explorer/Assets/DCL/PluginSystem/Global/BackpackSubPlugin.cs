@@ -2,12 +2,15 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.Profiles;
+using DCL.Profiles.Publishing;
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using System.Threading;
 using UnityEngine.Pool;
@@ -50,10 +53,21 @@ namespace DCL.PluginSystem.Global
             CancellationToken ct)
         {
             // Initialize assets that do not require World
+            var equippedWearables = new EquippedWearables();
             var sortController = new BackpackSortController(view.BackpackSortView);
-            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity, wearableCatalog, ProvideEcsContext);
+            var profilePublishing = new ProfilePublishing(profileRepository, web3Identity, equippedWearables, wearableCatalog);
 
-            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
+            //TODO after refactor this object is unused at all, remove?
+            var backpackEquipStatusController = new BackpackEquipStatusController(
+                backpackEventBus,
+                profileRepository,
+                web3Identity,
+                equippedWearables,
+                profilePublishing,
+                ProvideEcsContext
+            );
+
+            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, equippedWearables);
 
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
@@ -61,12 +75,12 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            PageButtonView? pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>();
+            PageButtonView pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>().EnsureNotNull();
 
-            AvatarView? avatarView = view.GetComponentInChildren<AvatarView>();
+            AvatarView avatarView = view.GetComponentInChildren<AvatarView>().EnsureNotNull();
 
             var infoPanelController = new BackpackInfoPanelController(avatarView.backpackInfoPanelView, backpackEventBus,
-                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController);
+                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, equippedWearables);
 
             await infoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
@@ -74,15 +88,17 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments args) =>
             {
-                world = builder.World;
+                world = builder.World!;
                 playerEntity = args.PlayerEntity;
 
-                var gridController = new BackpackGridController(avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
+                var gridController = new BackpackGridController(
+                    avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                    backpackEquipStatusController, sortController, pageButtonView, gridPool, builder.World);
+                    equippedWearables, sortController, pageButtonView, gridPool, world
+                );
 
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
-                    characterPreviewFactory, gridController, infoPanelController, builder.World, args.PlayerEntity);
+                    characterPreviewFactory, gridController, infoPanelController, world, args.PlayerEntity);
             };
         }
 
