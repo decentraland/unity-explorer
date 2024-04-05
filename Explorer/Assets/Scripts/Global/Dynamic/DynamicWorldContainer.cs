@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
-using DCL.Chat.ChatCommands;
 using DCL.Chat.MessageBus;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.DebugUtilities;

@@ -2,7 +2,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
-using DCL.Chat.ChatCommands;
 using DCL.Emoji;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -209,9 +208,12 @@ namespace DCL.Chat
                 chatMessagesBus.Send(messageToSend);
         }
 
+        private CancellationTokenSource commandCts = new ();
+
         private async UniTask ExecuteChatCommandAsync(IChatCommand command)
         {
-            string? response = await command.ExecuteAsync();
+            commandCts = commandCts.SafeRestart();
+            string? response = await command.ExecuteAsync(commandCts.Token);
 
             if (!string.IsNullOrEmpty(response))
                 CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
@@ -320,8 +322,11 @@ namespace DCL.Chat
             emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
             emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
             dclInput.UI.Submit.performed -= OnSubmitAction;
+
             emojiPanelController.Dispose();
+
             cts.SafeCancelAndDispose();
+            commandCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

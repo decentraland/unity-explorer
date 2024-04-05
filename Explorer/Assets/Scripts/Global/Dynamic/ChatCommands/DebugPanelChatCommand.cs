@@ -1,8 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatCommands;
+using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -19,7 +20,7 @@ namespace Global.Dynamic.ChatCommands
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
-        public UniTask<string> ExecuteAsync()
+        public UniTask<string> ExecuteAsync(CancellationToken _)
         {
             if (param == "help")
             {

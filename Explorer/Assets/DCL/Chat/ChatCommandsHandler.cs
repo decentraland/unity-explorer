@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace DCL.Chat.ChatCommands
+namespace DCL.Chat
 {
     internal class ChatCommandsHandler
     {

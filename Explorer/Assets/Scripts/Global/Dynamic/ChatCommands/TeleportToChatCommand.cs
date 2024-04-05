@@ -1,12 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatCommands;
+using DCL.Chat;
 using ECS.SceneLifeCycle.Realm;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Random = UnityEngine.Random;
-using static DCL.Chat.ChatCommands.IChatCommand;
+using static DCL.Chat.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -40,10 +40,13 @@ namespace Global.Dynamic.ChatCommands
             }
         }
 
-        public async UniTask<string> ExecuteAsync()
+        public async UniTask<string> ExecuteAsync(CancellationToken ct)
         {
-            await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), CancellationToken.None);
-            return $"🟢 You teleported to {x},{y} in Genesis City";
+            await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct);
+
+            return ct.IsCancellationRequested
+                ? "🔴 Error. The operation was canceled!"
+                : $"🟢 You teleported to {x},{y} in Genesis City";
         }
     }
 }

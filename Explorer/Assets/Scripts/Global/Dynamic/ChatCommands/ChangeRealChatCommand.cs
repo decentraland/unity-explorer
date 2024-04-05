@@ -1,11 +1,11 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatCommands;
+using DCL.Chat;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
-using static DCL.Chat.ChatCommands.IChatCommand;
+using static DCL.Chat.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -47,9 +47,12 @@ namespace Global.Dynamic.ChatCommands
             }
         }
 
-        public async UniTask<string> ExecuteAsync()
+        public async UniTask<string> ExecuteAsync(CancellationToken ct)
         {
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), CancellationToken.None);
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), ct);
+
+            if (ct.IsCancellationRequested)
+                return "🔴 Error. The operation was canceled!";
 
             return isSuccess
                 ? $"🟢 Welcome to the {worldName} world!"

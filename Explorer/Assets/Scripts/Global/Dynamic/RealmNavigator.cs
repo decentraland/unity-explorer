@@ -33,11 +33,11 @@ namespace Global.Dynamic
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
-            // var domain = URLDomain.FromString(realm);
-
+            ct.ThrowIfCancellationRequested();
             if (!await realmController.IsReachableAsync(realm, ct))
                 return false;
 
+            ct.ThrowIfCancellationRequested();
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, realm == genesisDomain);
 
             await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
@@ -48,12 +48,16 @@ namespace Global.Dynamic
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             await ShowLoadingScreenAndExecuteTaskAsync(async loadReport =>
             {
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
                     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
                     mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, true);
+
+                    ct.ThrowIfCancellationRequested();
                 }
 
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
@@ -63,6 +67,8 @@ namespace Global.Dynamic
 
         private async UniTask ShowLoadingScreenAndExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             var timeout = TimeSpan.FromSeconds(30);
             var loadReport = AsyncLoadProcessReport.Create();
 
