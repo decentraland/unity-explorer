@@ -3,7 +3,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-using UnityEditor;
+// using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -102,9 +102,10 @@ namespace DCL.AvatarRendering.Emotes
                     if (isLooping)
                     {
                         animationClip.wrapMode = WrapMode.Loop;
-                        AnimationClipSettings? settings = AnimationUtility.GetAnimationClipSettings(animationClip);
-                        settings.loopTime = true;
-                        AnimationUtility.SetAnimationClipSettings(animationClip, settings);
+                        // TODO move looping to the Asset Bundle Converter
+                        // AnimationClipSettings? settings = AnimationUtility.GetAnimationClipSettings(animationClip);
+                        // settings.loopTime = true;
+                        // AnimationUtility.SetAnimationClipSettings(animationClip, settings);
                     }
 
                     if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
