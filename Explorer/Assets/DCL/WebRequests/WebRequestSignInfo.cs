@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using System;
 
 namespace DCL.WebRequests
 {
@@ -7,18 +8,28 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct WebRequestSignInfo
     {
-        public readonly string StringToSign;
+        private readonly string stringToSign;
 
-        public WebRequestSignInfo(URLAddress signUrl) : this(signUrl.ToString())
-        {
-        }
+        public string StringToSign => stringToSign;
+
+        public WebRequestSignInfo(URLAddress signUrl) : this(signUrl.ToString()) { }
 
         public WebRequestSignInfo(string stringToSign)
         {
-            this.StringToSign = stringToSign;
+            this.stringToSign = stringToSign;
+        }
+
+        public static WebRequestSignInfo? NewFromRaw(string? rawToSign, string url, ulong unixTimestamp, string method)
+        {
+            if (rawToSign == null)
+                return null;
+
+            string path = new Uri(url).AbsolutePath;
+            string payload = $"{method}:{path}:{unixTimestamp}:{rawToSign}".ToLower();
+            return new WebRequestSignInfo(payload);
         }
 
         public override string ToString() =>
-            $"WebRequestSignInfo: Content to sign {StringToSign}";
+            $"WebRequestSignInfo: Content to sign {stringToSign}";
     }
 }

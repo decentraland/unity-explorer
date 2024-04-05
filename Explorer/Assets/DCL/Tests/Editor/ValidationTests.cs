@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿#nullable enable
+
+using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using Global.Dynamic;
 using Microsoft.CodeAnalysis;
@@ -29,16 +31,24 @@ namespace DCL.Tests.Editor
         private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs" };
         private readonly string[] fileNameExclusionKeywords = { "Test", "Sentry" };
 
+        private readonly IReadOnlyCollection<string> pathIgnores = new List<string>
+        {
+            "node_modules",
+        };
+
         [Test]
         public void ProjectShouldNotContainEmptyFolders()
         {
             // Arrange
-            string[] allDirectories = Directory.GetDirectories(Application.dataPath, "*", SearchOption.AllDirectories);
+            string[] allDirectories = Directory.GetDirectories(Application.dataPath!, "*", SearchOption.AllDirectories);
             string excludedDirectory = Path.Combine(Application.dataPath, "AddressableAssetsData");
             allDirectories = allDirectories.Where(directory => !directory.StartsWith(excludedDirectory, StringComparison.OrdinalIgnoreCase)).ToArray();
 
             // Act
-            var emptyDirectories = allDirectories.Where(IsDirectoryEmpty).ToList();
+            var emptyDirectories = allDirectories
+                                  .Where(IsDirectoryEmpty)
+                                  .Where(p => PathInIgnore(p) == false)
+                                  .ToList();
             string errorMessage = "Found empty directories:\n" + string.Join("\n", emptyDirectories);
 
             // Assert
@@ -139,5 +149,16 @@ namespace DCL.Tests.Editor
 
         private static bool IsDirectoryEmpty(string path) =>
             !Directory.EnumerateFileSystemEntries(path).Any();
+
+        private bool PathInIgnore(string path)
+        {
+            foreach (string ignore in pathIgnores)
+            {
+                if (path.Contains(ignore))
+                    return true;
+            }
+
+            return false;
+        }
     }
 }
