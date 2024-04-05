@@ -99,6 +99,9 @@ namespace DCL.Audio
             if (!AvatarAudioSettings.AvatarAudioEnabled) return;
 
             var clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
+
+            if (clipConfig == null) return;
+
             AvatarAudioSource.pitch = DEFAULT_AVATAR_AUDIO_PITCH + AudioPlaybackUtilities.GetPitchVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
             AvatarAudioSource.PlayOneShot(clipConfig.audioClips[clipIndex]);

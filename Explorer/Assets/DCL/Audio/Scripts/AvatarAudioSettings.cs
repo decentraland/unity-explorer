@@ -11,7 +11,7 @@ namespace DCL.Audio
     {
         //This threshold indicates at what point in the animation movement blend we stop producing sounds. This avoids unwanted sounds from "ghost" steps produced by the animation blending.
         [SerializeField] private float movementBlendThreshold = 0.05f;
-        [SerializeField] private Dictionary<AvatarAudioClipType, AudioClipConfig> audioClipConfigs = new Dictionary<AvatarAudioClipType, AudioClipConfig>();
+        [SerializeField] private Dictionary<AvatarAudioClipType, AudioClipConfig> audioClipConfigs;
         [SerializeField] private int avatarAudioPriority = 125;
 
         public float MovementBlendThreshold => movementBlendThreshold;
@@ -21,6 +21,8 @@ namespace DCL.Audio
 
         public void SetAudioClipConfigForType(AvatarAudioClipType clipType, AudioClipConfig clipConfig)
         {
+            audioClipConfigs ??= new Dictionary<AvatarAudioClipType, AudioClipConfig>();
+
             if (audioClipConfigs.ContainsKey(clipType))
             {
                 audioClipConfigs[clipType] = clipConfig;
@@ -33,8 +35,13 @@ namespace DCL.Audio
 
         public AudioClipConfig GetAudioClipConfigForType(AvatarAudioClipType type)
         {
-            audioClipConfigs.TryGetValue(type, out var clipConfig);
-            return clipConfig;
+            if (audioClipConfigs != null)
+            {
+                audioClipConfigs.TryGetValue(type, out var clipConfig);
+                return clipConfig;
+            }
+
+            return null;
         }
     }
 
@@ -60,6 +67,8 @@ namespace DCL.Audio
             DisplayAudioClipConfigs();
 
             serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(target);
+
         }
 
         private void DisplayAudioClipConfigs()
@@ -71,6 +80,7 @@ namespace DCL.Audio
                 EditorGUILayout.BeginHorizontal();
 
                 AudioClipConfig clipConfig = audioSettings.GetAudioClipConfigForType(clipType);
+                EditorGUI.BeginChangeCheck(); // Begin change check
                 clipConfig = EditorGUILayout.ObjectField(clipType.ToString(), clipConfig, typeof(AudioClipConfig), false) as AudioClipConfig;
                 if (EditorGUI.EndChangeCheck())
                 {

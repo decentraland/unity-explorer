@@ -13,24 +13,5 @@ MonoBehaviour:
   m_Name: AvatarAudioSettings
   m_EditorClassIdentifier: 
   movementBlendThreshold: 0.05
-  audioClipList:
-  - key: 3
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 4
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 5
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 6
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 7
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 8
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 0
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 1
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  - key: 2
-    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
-  avatarAudioVolume: 1
   avatarAudioPriority: 125
+  AvatarAudioEnabled: 1
