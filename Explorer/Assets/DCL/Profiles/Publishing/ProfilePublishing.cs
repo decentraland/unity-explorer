@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -37,7 +38,7 @@ namespace DCL.Profiles.Publishing
 
         public async UniTask PublishProfileAsync(CancellationToken ct)
         {
-            Profile profile = await profileRepository.EnsuredProfileAsync(web3IdentityCache.Identity!.Address, ct);
+            Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
 
             using (var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables))
             {
@@ -52,7 +53,7 @@ namespace DCL.Profiles.Publishing
             await profileRepository.SetAsync(profile, ct);
         }
 
-        private void ConvertEquippedWearablesIntoUniqueUrns(Profile profile, ISet<URN> uniqueWearables)
+        private void ConvertEquippedWearablesIntoUniqueUrns(Profile? profile, ISet<URN> uniqueWearables)
         {
             foreach ((string category, IWearable? w) in equippedWearables.Items())
             {
@@ -67,7 +68,7 @@ namespace DCL.Profiles.Publishing
                         uniqueUrn = registry!.First().Value.Urn;
                     else
                     {
-                        foreach (URN profileWearable in profile.Avatar.Wearables)
+                        foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
                             if (profileWearable.Shorten() == uniqueUrn)
                                 uniqueUrn = profileWearable;
                     }
