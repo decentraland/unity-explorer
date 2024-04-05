@@ -22,11 +22,6 @@ namespace DCL.Settings
             view.GraphicsSectionButton.onClick.AddListener(OpenGraphicsSection);
             view.SoundSectionButton.onClick.AddListener(OpenSoundSection);
             view.ControlsSectionButton.onClick.AddListener(OpenControlsSection);
-
-            view.GeneralSectionButton.gameObject.SetActive(view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0);
-            view.GraphicsSectionButton.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
-            view.SoundSectionButton.gameObject.SetActive(view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0);
-            view.ControlsSectionButton.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
         }
 
         public void Activate()
