@@ -1,12 +1,13 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatCommands;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using static DCL.Chat.ChatCommands.IChatCommand;
 
-namespace DCL.Chat.ChatCommands
+namespace Global.Dynamic.ChatCommands
 {
     public class ChangeRealmChatCommand : IChatCommand
     {

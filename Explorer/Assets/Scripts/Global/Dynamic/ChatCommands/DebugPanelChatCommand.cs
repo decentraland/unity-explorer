@@ -4,7 +4,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
 using System.Text.RegularExpressions;
 
-namespace Global.Dynamic
+namespace Global.Dynamic.ChatCommands
 {
     public class DebugPanelChatCommand : IChatCommand
     {

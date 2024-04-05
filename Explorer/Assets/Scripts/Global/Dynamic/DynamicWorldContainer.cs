@@ -43,6 +43,7 @@ using DCL.Nametags;
 using DCL.NftInfoAPIService;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
+using Global.Dynamic.ChatCommands;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Buffers;

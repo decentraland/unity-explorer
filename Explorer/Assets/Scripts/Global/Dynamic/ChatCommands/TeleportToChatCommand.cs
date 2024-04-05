@@ -1,12 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatCommands;
 using ECS.SceneLifeCycle.Realm;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Random = UnityEngine.Random;
 using static DCL.Chat.ChatCommands.IChatCommand;
 
-namespace DCL.Chat.ChatCommands
+namespace Global.Dynamic.ChatCommands
 {
     public class TeleportToChatCommand : IChatCommand
     {
@@ -33,8 +35,8 @@ namespace DCL.Chat.ChatCommands
             }
             else // means that it was PARAMETER_RANDOM
             {
-                x = Random.Range(-150, 150);
-                y = Random.Range(-150, 150);
+                x = Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x);
+                y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
         }
 
