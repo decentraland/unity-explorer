@@ -15,23 +15,22 @@ MonoBehaviour:
   movementBlendThreshold: 0.05
   audioClipList:
   - key: 3
-    value: {fileID: 8300000, guid: ea30ebbec1fa4e449af92faaa5abaa64, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 4
-    value: {fileID: 8300000, guid: cc9367bc49fdcdd418c85be271294d1b, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 5
-    value: {fileID: 8300000, guid: 097562e4bee8ddb4f8af722adc56ef07, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 6
-    value: {fileID: 8300000, guid: 34a75e3eb664192459f2f101505a6d88, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 7
-    value: {fileID: 8300000, guid: a4aec19478425294a8223958ad80321c, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 8
-    value: {fileID: 8300000, guid: 608ae0590cd5351428fa1240603cd697, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 0
-    value: {fileID: 8300000, guid: 5c7349f12b4680e4d95b0917bfc20964, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 1
-    value: {fileID: 8300000, guid: c854f59a064ee344686fb9643e30a854, type: 3}
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
   - key: 2
-    value: {fileID: 8300000, guid: bd93a16f2d9589140847436ee9cd974e, type: 3}
-  defaultAudioClip: {fileID: 8300000, guid: 2c053e492698c8848a8cc9a7bbd26564, type: 3}
-  avatarAudioVolume: 0.5
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
+  avatarAudioVolume: 1
   avatarAudioPriority: 125

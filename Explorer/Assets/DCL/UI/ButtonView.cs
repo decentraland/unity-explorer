@@ -25,7 +25,7 @@ namespace DCL.UI
 
         private void OnClick()
         {
-            AudioEventsBus.Instance.SendAudioEvent(ButtonPressedAudio);
+            AudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }
     }
 }

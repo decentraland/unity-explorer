@@ -12,7 +12,6 @@ namespace DCL.Audio
         //This threshold indicates at what point in the animation movement blend we stop producing sounds. This avoids unwanted sounds from "ghost" steps produced by the animation blending.
         [SerializeField] private float movementBlendThreshold = 0.05f;
         [SerializeField] private List<AvatarAudioClipKeyValuePair> audioClipList = new List<AvatarAudioClipKeyValuePair>();
-        [SerializeField] private AudioClip defaultAudioClip;
         [SerializeField] private float avatarAudioVolume = 0.5f;
         [SerializeField] private int avatarAudioPriority = 125;
 
@@ -24,23 +23,22 @@ namespace DCL.Audio
         [Serializable]
         public class AvatarAudioClipKeyValuePair
         {
-            public AvatarAudioSourceManager.AvatarAudioClipTypes key;
-            public AudioClip value;
+            public AvatarAudioPlaybackController.AvatarAudioClipTypes key;
+            public AudioClipConfig value;
         }
 
         [CustomPropertyDrawer(typeof(AvatarAudioClipKeyValuePair))]
         public class AudioClipKeyValuePairDrawer : KeyValuePairCustomDrawer
         { }
 
-        public AudioClip GetAudioClipForType(AvatarAudioSourceManager.AvatarAudioClipTypes type)
+        public AudioClipConfig GetAudioClipForType(AvatarAudioPlaybackController.AvatarAudioClipTypes type)
         {
             foreach (var pair in audioClipList)
             {
                 if (pair.key == type) { return pair.value; }
             }
 
-            ReportHub.Log(ReportCategory.AUDIO, $"Audio Clip for type {type} not found, returning default audio clip {defaultAudioClip}");
-            return defaultAudioClip;
+            return null;
         }
     }
 }

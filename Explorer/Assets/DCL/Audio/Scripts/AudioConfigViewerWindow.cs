@@ -131,7 +131,7 @@ namespace DCL.Audio
             EditorGUILayout.BeginHorizontal();
             {
                 GUILayout.Label("Volume", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
-                audioConfig.volume = EditorGUILayout.Slider(audioConfig.volume, 0f, 1f, GUILayout.Width(position.width * 0.4f));
+                audioConfig.relativeVolume = EditorGUILayout.Slider(audioConfig.relativeVolume, 0f, 1f, GUILayout.Width(position.width * 0.4f));
 
                 GUILayout.Label("Category", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
                 audioConfig.audioCategory = (AudioCategory)EditorGUILayout.EnumPopup(audioConfig.audioCategory);

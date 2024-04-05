@@ -53,9 +53,6 @@ namespace DCL.SceneLoadingScreens
         [Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig BackgroundMusic;
-        [field: SerializeField]
-        public float FadeDuration = 1;
-
 
         public event Action<int>? OnBreadcrumbClicked;
 

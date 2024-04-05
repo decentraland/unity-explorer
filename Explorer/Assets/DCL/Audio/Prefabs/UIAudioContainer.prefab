@@ -42,7 +42,7 @@ AudioSource:
   m_GameObject: {fileID: 6031514947145761153}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 2832862654527898687, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
@@ -143,3 +143,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioSource: {fileID: 4176269392466139462}
   UIAudioSettings: {fileID: 11400000, guid: 692f5528b18d0284b9d6956d8a873141, type: 2}
+  fadeDuration: 1.5

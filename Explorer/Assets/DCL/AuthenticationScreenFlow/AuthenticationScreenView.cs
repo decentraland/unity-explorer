@@ -65,10 +65,6 @@ namespace DCL.AuthenticationScreenFlow
         [Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig BackgroundMusic;
-        [field: SerializeField]
-        public float FadeDuration = 1;
-
-
 
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {

@@ -257,7 +257,7 @@ namespace Global.Dynamic
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
                 new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, dclInput),
-                new UIAudioPlugin(staticContainer.AssetsProvisioner),
+                new AudioPlaybackPlugin(staticContainer.AssetsProvisioner, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.CacheCleaner),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,

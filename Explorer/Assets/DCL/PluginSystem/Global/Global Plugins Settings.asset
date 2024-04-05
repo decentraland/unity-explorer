@@ -37,14 +37,14 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
-  - rid: 758312339400556546
+  - rid: 758312392028848128
   references:
     version: 2
     RefIds:
-    - rid: 758312339400556546
-      type: {class: UIAudioPlugin/UIAudioPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 758312392028848128
+      type: {class: AudioPlaybackPlugin/AudioPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        UIAudioManagerContainerReference:
+        AudioManagerContainerReference:
           m_AssetGUID: df3decac75a242f4689cb445dc93eb06
           m_SubObjectName: 
           m_SubObjectType: 

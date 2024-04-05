@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using System;
+using UnityEngine;
 
 namespace DCL.Audio
 {
@@ -36,23 +37,29 @@ namespace DCL.Audio
             }
         }
 
-        public event Action<AudioClipConfig> AudioEvent;
-        public event Action<AudioClipConfig, bool, float> LoopingAudioEvent;
+        public event Action<AudioClipConfig> PlayAudioEvent;
+        public event Action<AudioClipConfig, Vector3> PlayAudioAtPositionEvent;
+        public event Action<AudioClipConfig, bool> PlayLoopingAudioEvent;
 
         public void Dispose() { }
 
-        public void SendAudioEvent(AudioClipConfig audioClipConfig)
+        public void SendPlayAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (audioClipConfig != null) { AudioEvent?.Invoke(audioClipConfig); }
+            if (audioClipConfig != null) { PlayAudioEvent?.Invoke(audioClipConfig); }
         }
 
-        public void SendLoopingAudioEvent(AudioClipConfig audioClipConfig, float fadeDuration = 0)
+        public void SendPlayAudioAtPositionEvent(AudioClipConfig audioClipConfig, Vector3 worldPosition)
         {
-            if (audioClipConfig != null) { LoopingAudioEvent?.Invoke(audioClipConfig, true, fadeDuration); }
+            if (audioClipConfig != null) { PlayAudioAtPositionEvent?.Invoke(audioClipConfig, worldPosition); }
         }
-        public void SendStopLoopingAudioEvent(AudioClipConfig audioClipConfig, float fadeDuration = 0)
+
+        public void SendPlayLoopingAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (audioClipConfig != null) { LoopingAudioEvent?.Invoke(audioClipConfig, false, fadeDuration); }
+            if (audioClipConfig != null) { PlayLoopingAudioEvent?.Invoke(audioClipConfig, true); }
+        }
+        public void SendStopPlayingLoopingAudioEvent(AudioClipConfig audioClipConfig)
+        {
+            if (audioClipConfig != null) { PlayLoopingAudioEvent?.Invoke(audioClipConfig, false); }
         }
 
     }

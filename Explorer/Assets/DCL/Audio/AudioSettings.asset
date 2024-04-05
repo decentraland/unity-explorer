@@ -9,6 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 6d26d247b34147599fd534fd57448300, type: 3}
   m_Name: AudioSettings
   m_EditorClassIdentifier: DCL.Audio:DCL.Audio:AudioSettings
+  audioCategorySettings: []
+  masterVolume: 1
+  masterAudioMixer: {fileID: 24300002, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
