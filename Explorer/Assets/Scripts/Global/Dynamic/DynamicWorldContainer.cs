@@ -81,6 +81,8 @@ namespace Global.Dynamic
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
+        public IRoomHub RoomHub { get; private set; }
+
         public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
 
         public void Dispose()
@@ -204,8 +206,9 @@ namespace Global.Dynamic
                 realmData,
                 staticContainer.ScenesCache);
 
-            var roomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            var messagePipesHub = new MessagePipesHub(roomHub, multiPool, memoryPool);
+
+            container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            var messagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
             var entityParticipantTable = new EntityParticipantTable();
 
@@ -230,7 +233,7 @@ namespace Global.Dynamic
             container.MultiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable);
 
             var remotePoses = new DebounceRemotePoses(
-                new RemotePoses(roomHub)
+                new RemotePoses(container.RoomHub)
             );
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -238,7 +241,7 @@ namespace Global.Dynamic
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
-                    roomHub,
+                    container.RoomHub,
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
