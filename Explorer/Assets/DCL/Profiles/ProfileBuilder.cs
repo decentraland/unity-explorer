@@ -137,8 +137,8 @@ namespace DCL.Profiles
             avatar.HairColor = hairColor;
             avatar.SkinColor = skinColor;
             avatar.EyesColor = eyesColor;
-            avatar.BodySnapshotUrl = bodySnapshotUrl ?? new URLAddress();
-            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? new URLAddress();
+            avatar.BodySnapshotUrl = bodySnapshotUrl ?? URLAddress.EMPTY;
+            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
 
             return profile;
         }
