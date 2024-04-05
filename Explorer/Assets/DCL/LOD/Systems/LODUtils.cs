@@ -23,6 +23,7 @@ namespace DCL.LOD
             Enumerable.Range(0, 4).Select(level => new SceneAssetBundleManifest(URLDomain.FromString($"{LOD_WEB_URL}{level}/"))).ToArray();
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
+        public static string LOD_SHADER = "DCL/Scene_TexArray";
 
         public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
@@ -37,7 +38,14 @@ namespace DCL.LOD
                         {
                             if (pooledList.Value[i].materials[j].mainTexture.width != pooledList.Value[i].materials[j].mainTexture.height)
                             {
-                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneDefinitionComponent.Definition.id}");
+                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}");
+                                continue;
+                            }
+
+                            if (pooledList.Value[i].materials[j].shader.name != LOD_SHADER)
+                            {
+                                ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}. " +
+                                                                         $"It has {pooledList.Value[i].materials[j].shader} while it should be {LOD_SHADER}. Please check the AB Converter");
                                 continue;
                             }
 
