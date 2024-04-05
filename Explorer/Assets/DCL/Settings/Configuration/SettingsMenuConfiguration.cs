@@ -26,7 +26,7 @@ namespace DCL.Settings.Configuration
         [field: SerializeField]
         public string GroupTitle { get; private set; }
 
-        [field: SerializeReference] // TODO Introduce a custom property drawer to choose from the list of available Modules
+        [field: SerializeReference, SubclassSelector] // TODO Introduce a custom property drawer to choose from the list of available Modules
         public List<SettingsModuleBindingBase> Modules { get; private set; }
     }
 }
