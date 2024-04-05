@@ -16,22 +16,21 @@ namespace DCL.Chat
             this.commandsFactory = commandsFactory;
         }
 
-        public bool TryGetChatCommand(in string message, ref IChatCommand command)
+        public bool TryGetChatCommand(in string message, ref (IChatCommand command, Match match) commandTuple)
         {
             if (!message.StartsWith(CHAT_COMMAND_CHAR)) return false;
 
             foreach (Regex? commandRegex in commandsFactory.Keys)
             {
-                Match match = commandRegex.Match(message);
-                if (!match.Success) continue;
+                commandTuple.match = commandRegex.Match(message);
+                if (!commandTuple.match.Success) continue;
 
-                if (!commandsCache.TryGetValue(commandRegex, out command))
+                if (!commandsCache.TryGetValue(commandRegex, out commandTuple.command))
                 {
-                    command = commandsFactory[commandRegex]();
-                    commandsCache[commandRegex] = command;
+                    commandTuple.command = commandsFactory[commandRegex]();
+                    commandsCache[commandRegex] = commandTuple.command;
                 }
 
-                command.Set(match);
                 return true;
             }
 

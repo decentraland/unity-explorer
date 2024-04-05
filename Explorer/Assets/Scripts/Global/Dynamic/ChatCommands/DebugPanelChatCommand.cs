@@ -20,8 +20,10 @@ namespace Global.Dynamic.ChatCommands
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
-        public UniTask<string> ExecuteAsync(CancellationToken _)
+        public UniTask<string> ExecuteAsync(Match match, CancellationToken _)
         {
+            param = match.Groups[1].Value;
+
             if (param == "help")
             {
                 string result = string.Empty;
@@ -50,11 +52,6 @@ namespace Global.Dynamic.ChatCommands
             }
 
             return UniTask.FromResult($"🔴 Error. Widget '{param}' not found.");
-        }
-
-        public void Set(Match match)
-        {
-            param = match.Groups[1].Value;
         }
     }
 }

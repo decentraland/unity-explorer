@@ -48,7 +48,7 @@ namespace DCL.Chat
         private readonly DCLInput dclInput;
 
         private readonly ChatCommandsHandler commandsHandler;
-        private IChatCommand chatCommand;
+        private (IChatCommand command, Match param) chatCommand;
         private CancellationTokenSource commandCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -204,15 +204,15 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
             if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
-                ExecuteChatCommandAsync(chatCommand).Forget();
+                ExecuteChatCommandAsync(chatCommand.command, chatCommand.param).Forget();
             else
                 chatMessagesBus.Send(messageToSend);
         }
 
-        private async UniTask ExecuteChatCommandAsync(IChatCommand command)
+        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
         {
             commandCts = commandCts.SafeRestart();
-            string? response = await command.ExecuteAsync(commandCts.Token);
+            string? response = await command.ExecuteAsync(param, commandCts.Token);
 
             if (!string.IsNullOrEmpty(response))
                 CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));

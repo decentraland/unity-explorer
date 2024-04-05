@@ -26,7 +26,7 @@ namespace Global.Dynamic.ChatCommands
             this.realmNavigator = realmNavigator;
         }
 
-        public void Set(Match match)
+        public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             if (match.Groups[1].Success && match.Groups[2].Success)
             {
@@ -38,10 +38,7 @@ namespace Global.Dynamic.ChatCommands
                 x = Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x);
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
-        }
 
-        public async UniTask<string> ExecuteAsync(CancellationToken ct)
-        {
             await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct);
 
             return ct.IsCancellationRequested

@@ -9,8 +9,6 @@ namespace DCL.Chat
         // Constants that shared between several ChatCommands
         const string COMMAND_GOTO = "goto";
 
-        UniTask<string> ExecuteAsync(CancellationToken ct);
-
-        void Set(Match match);
+        UniTask<string> ExecuteAsync(Match match, CancellationToken ct);
     }
 }

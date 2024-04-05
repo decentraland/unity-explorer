@@ -29,26 +29,11 @@ namespace Global.Dynamic.ChatCommands
             this.realmNavigator = realmNavigator;
         }
 
-        public void Set(Match match)
+        public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             worldName = match.Groups[2].Value;
             realmUrl = worldName == PARAMETER_GENESIS ? IRealmNavigator.GENESIS_URL : GetWorldAddress(worldName);
-            return;
 
-            string GetWorldAddress(string worldPath)
-            {
-                if (!worldAddressesCaches.TryGetValue(worldPath, out URLAddress address))
-                {
-                    address = worldDomain.Append(URLPath.FromString(worldPath));
-                    worldAddressesCaches.Add(worldPath, address);
-                }
-
-                return address.Value;
-            }
-        }
-
-        public async UniTask<string> ExecuteAsync(CancellationToken ct)
-        {
             bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), ct);
 
             if (ct.IsCancellationRequested)
@@ -57,6 +42,17 @@ namespace Global.Dynamic.ChatCommands
             return isSuccess
                 ? $"🟢 Welcome to the {worldName} world!"
                 : $"🔴 Error. The world {worldName} doesn't exist!";
+        }
+
+        private string GetWorldAddress(string worldPath)
+        {
+            if (!worldAddressesCaches.TryGetValue(worldPath, out URLAddress address))
+            {
+                address = worldDomain.Append(URLPath.FromString(worldPath));
+                worldAddressesCaches.Add(worldPath, address);
+            }
+
+            return address.Value;
         }
     }
 }
