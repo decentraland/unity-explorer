@@ -25,6 +25,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         private RemovedTrackedPlayersPositionSystem untrackSystem;
 
         private readonly Dictionary<string, IHotUserMarker> markers = new ();
+        private bool isEnabled;
 
         public UsersMarkersHotAreaController(
             IObjectPool<HotUserMarkerObject> objectsPool,
@@ -59,6 +60,9 @@ namespace DCL.MapRenderer.MapLayers.Users
         [Query]
         private void SetPlayerMarker(in CharacterTransform transformComponent, in AvatarShapeComponent avatarShape)
         {
+            if (!isEnabled)
+                return;
+
             if(markers.TryGetValue(avatarShape.ID, out var marker))
             {
                 marker.UpdateMarkerPosition(avatarShape.ID, transformComponent.Transform.position);
@@ -75,7 +79,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         [Query]
         private void RemoveMarker(in AvatarShapeComponent avatarShape, in DeleteEntityIntention deleteEntityIntention)
         {
-            if (deleteEntityIntention.DeferDeletion)
+            if (deleteEntityIntention.DeferDeletion || !isEnabled)
                 return;
 
             if (markers.TryGetValue(avatarShape.ID, out var marker))
@@ -86,14 +90,23 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
         }
 
-        public UniTask Enable(CancellationToken cancellationToken) =>
-            UniTask.CompletedTask;
+        public UniTask Enable(CancellationToken cancellationToken)
+        {
+            isEnabled = true;
+            return UniTask.CompletedTask;
+        }
 
         public UniTask Disable(CancellationToken cancellationToken)
         {
-            foreach (IHotUserMarker marker in markers.Values)
-                wrapsPool.Release(marker);
+            isEnabled = false;
 
+            foreach (IHotUserMarker marker in markers.Values)
+            {
+                mapCullingController.StopTracking(marker);
+                wrapsPool.Release(marker);
+            }
+
+            wrapsPool.Clear();
             markers.Clear();
             return UniTask.CompletedTask;
         }

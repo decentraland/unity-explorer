@@ -49,14 +49,12 @@ namespace DCL.Navmap
             CloseButtonArea.gameObject.SetActive(false);
 
             poisToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.ScenesOfInterest, isOn));
+            peopleToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.HotUsersMarkers, isOn));
+            favoritesToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.Favorites, isOn));
             /* TODO: add the rest of the toggles once the MapLayers are implemented
             favoritesToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.Favorites, isOn));
             friendsToggle.onValueChanged.AddListener((isOn) => OnFilterChanged?.Invoke(MapLayer.Friends, isOn));
-            peopleToggle.onValueChanged.AddListener((isOn) =>
-            {
-                OnFilterChanged?.Invoke(MapLayer.ColdUsersMarkers, isOn);
-                OnFilterChanged?.Invoke(MapLayer.HotUsersMarkers, isOn);
-            });*/
+            */
         }
 
         private void OnSortDropdownClick()
