@@ -1,4 +1,3 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -12,9 +11,7 @@ using Microsoft.ClearScript.JavaScript;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRuntime;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.Runtime;
-using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -27,8 +24,6 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
-        private const bool IS_PREVIEW_DEFAULT_VALUE = false;
-
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
         private readonly IWorldTimeProvider timeProvider;
@@ -79,22 +74,7 @@ namespace CrdtEcsBridge.Engine
         public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-
-            var realmInfo = new IRuntime.RealmInfo();
-
-            if (realmData != null)
-            {
-                realmInfo.realmName = realmData.RealmName;
-                realmInfo.networkId = realmData.NetworkId;
-                realmInfo.isPreview = IS_PREVIEW_DEFAULT_VALUE;
-                realmInfo.commsAdapter = realmData.CommsAdapter;
-                realmInfo.baseURL = realmData.Ipfs.CatalystBaseUrl.Value;
-            }
-
-            return new IRuntime.GetRealmResponse
-            {
-                realmInfo = realmInfo,
-            };
+            return new IRuntime.GetRealmResponse(realmData);
         }
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
@@ -111,7 +91,7 @@ namespace CrdtEcsBridge.Engine
             new ()
             {
                 baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
-                contentMapping = sceneData.SceneEntityDefinition.content,
+                content = sceneData.SceneEntityDefinition.content.ToArray(), //TODO for some reasons arrays and lists won't work
                 urn = sceneData.SceneEntityDefinition.id,
                 metadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
             };

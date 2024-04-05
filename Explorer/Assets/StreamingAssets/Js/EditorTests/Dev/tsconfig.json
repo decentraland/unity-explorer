@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "declarationDir": "dist",
+    "outDir": "dist",
+    "strictNullChecks": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "stripInternal": true,
+    "moduleResolution": "Node",
+    "pretty": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "downlevelIteration": true,
+    "noUnusedLocals": true,
+    "lib": [
+      "ES2020"
+    ],
+    "types": [],
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es5"
+  }
+}
