@@ -15,10 +15,10 @@ namespace DCL.Chat.MessageBus
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
-        private readonly IMessageDeduplication messageDeduplication;
+        private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;

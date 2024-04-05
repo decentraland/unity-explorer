@@ -41,8 +41,6 @@ namespace DCL.PluginSystem.Global
         {
             var mutexSync = new MutexSync();
 
-            messageBus.SetOwnProfile(arguments.PlayerEntity);
-
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 mutexSync,

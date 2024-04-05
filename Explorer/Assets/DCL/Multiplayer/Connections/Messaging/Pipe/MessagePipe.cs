@@ -124,7 +124,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.Scene => (packet.Scene as T).EnsureNotNull(),
                 Packet.MessageOneofCase.Voice => (packet.Voice as T).EnsureNotNull(),
                 Packet.MessageOneofCase.Movement => (packet.Movement as T).EnsureNotNull(),
-                Packet.MessageOneofCase.Emote => (packet.Emote as T).EnsureNotNull(),
+                Packet.MessageOneofCase.PlayerEmote => (packet.PlayerEmote as T).EnsureNotNull(),
+                Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => throw new ArgumentOutOfRangeException(),
                 _ => throw new ArgumentOutOfRangeException(),
             };

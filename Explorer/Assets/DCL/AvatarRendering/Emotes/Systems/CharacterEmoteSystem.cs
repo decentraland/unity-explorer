@@ -6,18 +6,19 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
+using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Profiles;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using RfcEmote = Decentraland.Kernel.Comms.Rfc4.Emote;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -44,13 +45,12 @@ namespace DCL.AvatarRendering.Emotes
 
         protected override void Update(float t)
         {
-            messageBus.InjectWorld(World);
-
             ConsumeEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             CancelEmotesByMovementQuery(World);
             CancelEmotesByTagQuery(World);
             UpdateEmoteTagsQuery(World);
+            CleanUpQuery(World);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
@@ -106,6 +106,7 @@ namespace DCL.AvatarRendering.Emotes
 
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
         {
             URN emoteId = emoteIntent.EmoteId;
@@ -155,11 +156,12 @@ namespace DCL.AvatarRendering.Emotes
             World.Remove<CharacterEmoteIntent>(entity);
         }
 
-        // Every time that the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
+        // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
         // TODO (Kinerius): This does not support scene emotes yet
         [Query]
+        [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView, in Profile profile)
+        private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView)
         {
             int prevTag = animationComponent.CurrentAnimationTag;
             int currentTag = avatarView.GetAnimatorCurrentStateTag();
@@ -167,22 +169,14 @@ namespace DCL.AvatarRendering.Emotes
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
 
-            IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
+            messageBus.Send(animationComponent.EmoteUrn, true, true);
+        }
 
-            for (var i = 0; i < emotes.Count; i++)
-            {
-                if (emotes[i] != animationComponent.EmoteUrn) continue;
-
-                messageBus.Send((uint)i);
-                messageBus.SelfSendWithDelayAsync(new RfcEmote
-                           {
-                               EmoteId = (uint)i,
-                               Timestamp = -1,
-                           })
-                          .Forget();
-
-                break;
-            }
+        [Query]
+        private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
+        {
+            if (!deleteEntityIntention.DeferDeletion)
+                messageBus.OnPlayerRemoved(profile.UserId);
         }
     }
 }

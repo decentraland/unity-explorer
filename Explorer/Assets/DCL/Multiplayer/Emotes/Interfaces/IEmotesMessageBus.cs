@@ -1,17 +1,14 @@
 using Arch.Core;
-using Cysharp.Threading.Tasks;
-using Decentraland.Kernel.Comms.Rfc4;
+using CommunicationData.URLHelpers;
 
 namespace DCL.Multiplayer.Emotes.Interfaces
 {
     public interface IEmotesMessageBus
     {
-        void InjectWorld(World world);
+        void InjectWorld(World world, Entity playerEntity);
 
-        void Send(uint emoteIndex);
+        void Send(URN urn, bool loopCyclePassed, bool sendToSelfReplica);
 
-        UniTaskVoid SelfSendWithDelayAsync(Emote emote);
-
-        void SetOwnProfile(Entity playerEntity);
+        void OnPlayerRemoved(string walletId);
     }
 }

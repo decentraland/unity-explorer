@@ -1,15 +1,17 @@
+using System;
+
 namespace DCL.Chat.MessageBus.Deduplication
 {
-    public interface IMessageDeduplication
+    public interface IMessageDeduplication<in T> where T :  IComparable<T>
     {
-        bool Contains(string walletId, double timestamp);
+        bool Contains(string walletId, T timestamp);
 
-        void Register(string walletId, double timestamp);
+        void Register(string walletId, T timestamp);
     }
 
     public static class MessageDeduplicationExtensions
     {
-        public static bool TryPass(this IMessageDeduplication deduplication, string walletId, double timestamp)
+        public static bool TryPass<T>(this IMessageDeduplication<T> deduplication, string walletId, T timestamp) where T : IComparable<T>
         {
             if (deduplication.Contains(walletId, timestamp))
                 return false;

@@ -1,9 +1,10 @@
+using DCL.Chat.MessageBus.Deduplication;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Chat.MessageBus.Deduplication
+namespace DCL.Multiplayer.Deduplication
 {
-    public class MessageDeduplication : IMessageDeduplication
+    public class MessageDeduplication<T> : IMessageDeduplication<T> where T : IComparable<T>, IEquatable<T>
     {
         private readonly ISet<RegisteredStamp> registeredStamps = new HashSet<RegisteredStamp>();
         private readonly TimeSpan cleanPerPeriod;
@@ -19,10 +20,10 @@ namespace DCL.Chat.MessageBus.Deduplication
             previousClean = DateTime.Now;
         }
 
-        public bool Contains(string walletId, double timestamp) =>
+        public bool Contains(string walletId, T timestamp) =>
             registeredStamps.Contains(new RegisteredStamp(walletId, timestamp));
 
-        public void Register(string walletId, double timestamp)
+        public void Register(string walletId, T timestamp)
         {
             if (DateTime.Now - previousClean > cleanPerPeriod)
             {
@@ -34,12 +35,12 @@ namespace DCL.Chat.MessageBus.Deduplication
         }
 
         [Serializable]
-        private struct RegisteredStamp : IEquatable<RegisteredStamp>
+        internal struct RegisteredStamp : IEquatable<RegisteredStamp>
         {
             public string walletId;
-            public double timestamp;
+            public T timestamp;
 
-            public RegisteredStamp(string walletId, double timestamp)
+            public RegisteredStamp(string walletId, T timestamp)
             {
                 this.walletId = walletId;
                 this.timestamp = timestamp;

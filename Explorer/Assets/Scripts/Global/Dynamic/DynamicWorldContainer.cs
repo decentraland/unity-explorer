@@ -40,7 +40,9 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
@@ -75,14 +77,16 @@ namespace Global.Dynamic
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
-        public IChatMessagesBus MessagesBus { get; private set; } = null!;
+        public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
+
+        public IEmotesMessageBus EmotesMessageBus { get; private set; } = null!;
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public void Dispose()
         {
             MvcManager.Dispose();
-            MessagesBus.Dispose();
+            ChatMessagesBus.Dispose();
             ProfileBroadcast.Dispose();
         }
 
@@ -190,9 +194,9 @@ namespace Global.Dynamic
 
             var entityParticipantTable = new EntityParticipantTable();
 
-            container.MessagesBus = new DebugPanelChatMessageBus(
+            container.ChatMessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(messagePipesHub, container.ProfileRepository, new MessageDeduplication()),
+                    new MultiplayerChatMessagesBus(messagePipesHub, container.ProfileRepository, new MessageDeduplication<double>()),
                     identityCache,
                     container.ProfileRepository
                 ),
@@ -211,7 +215,7 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub)
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, container.ProfileRepository);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, identityCache);
 
             var remotePoses = new DebounceRemotePoses(
                 new RemotePoses(roomHub)
@@ -258,7 +262,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.MessagesBus, entityParticipantTable, nametagsData, dclInput),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -306,7 +310,8 @@ namespace Global.Dynamic
                 realmData,
                 globalPlugins,
                 debugBuilder,
-                staticContainer.ScenesCache);
+                staticContainer.ScenesCache,
+                multiplayerEmotesMessageBus);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);

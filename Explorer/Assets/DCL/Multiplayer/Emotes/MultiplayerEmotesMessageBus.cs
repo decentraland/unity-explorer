@@ -2,21 +2,17 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.Chat.MessageBus.Deduplication;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.Profiles;
+using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
-using Emote = Decentraland.Kernel.Comms.Rfc4.Emote;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -26,25 +22,26 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private IMessageDeduplication messageDeduplication;
+        private readonly EmotesDeduplication messageDeduplication;
+        private EmoteSendIdProvider sendIdProvider = new ();
+
         private World globalWorld = null!;
 
-        private Profile? selfProfile;
         private Entity playerEntity;
 
-        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IProfileRepository profileRepository)
+        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IWeb3IdentityCache identityCache)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
-            this.profileRepository = profileRepository;
+            this.identityCache = identityCache;
 
-            messageDeduplication = new MessageDeduplication();
+            messageDeduplication = new EmotesDeduplication();
 
-            this.messagePipesHub.IslandPipe().Subscribe<Emote>(Packet.MessageOneofCase.Emote, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<Emote>(Packet.MessageOneofCase.Emote, OnMessageReceived);
+            this.messagePipesHub.IslandPipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
         }
 
         public void Dispose()
@@ -53,72 +50,69 @@ namespace DCL.Multiplayer.Emotes
             cancellationTokenSource.Dispose();
         }
 
-        public void InjectWorld(World world)
+        public void InjectWorld(World world, Entity playerEntity)
         {
             globalWorld = world;
+            this.playerEntity = playerEntity;
         }
 
-        public void Send(uint emote)
+        public void Send(URN emote, bool loopCyclePassed, bool sendToSelfReplica)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 
-            float timestamp = Time.unscaledTime;
+            uint sendId = sendIdProvider.GetNextID(emote, loopCyclePassed);
 
-            SendTo(emote, timestamp, messagePipesHub.IslandPipe());
-            SendTo(emote, timestamp, messagePipesHub.ScenePipe());
+            SendTo(emote, sendId, messagePipesHub.IslandPipe());
+            SendTo(emote, sendId, messagePipesHub.ScenePipe());
+
+            if (sendToSelfReplica)
+                SelfSendWithDelayAsync(emote, sendId).Forget();
         }
 
-        private void SendTo(uint emoteId, float timestamp, IMessagePipe messagePipe)
-        {
-            MessageWrap<Emote> emote = messagePipe.NewMessage<Emote>();
+        public void OnPlayerRemoved(string walletId) =>
+            messageDeduplication.RemoveWallet(walletId);
 
-            emote.Payload.EmoteId = emoteId;
-            emote.Payload.Timestamp = timestamp;
+        private void SendTo(URN emoteId, uint timestamp, IMessagePipe messagePipe)
+        {
+            MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
+
+            emote.Payload.Urn = emoteId;
+            emote.Payload.IncrementalId = timestamp;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        public async UniTaskVoid SelfSendWithDelayAsync(Emote message)
+        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, uint id)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            InboxAsync(message, walletId: RemotePlayerMovementComponent.TEST_ID).Forget();
+            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, id);
         }
 
-        public void SetOwnProfile(Entity playerEntity) =>
-            this.playerEntity = playerEntity;
-
-        private void OnMessageReceived(ReceivedMessage<Emote> obj)
+        private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
         {
-            if (cancellationTokenSource.Token.IsCancellationRequested)
+            using (receivedMessage)
+            {
+                if (cancellationTokenSource.Token.IsCancellationRequested)
+                    return;
+
+                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId);
+            }
+        }
+
+        private void Inbox(string walletId, URN emoteURN, uint incrementalId)
+        {
+            if (messageDeduplication.TryPass(walletId, incrementalId) == false)
                 return;
 
-            InboxAsync(obj.Payload, obj.FromWalletId).Forget();
+            Entity entity = identityCache.Identity!.Address.Equals(walletId) ? playerEntity : entityParticipantTable.Entity(walletId);
+
+            TriggerEmote(emoteURN, entity);
         }
 
-        private async UniTaskVoid InboxAsync(Emote emoteMessage, string walletId)
+        private void TriggerEmote(URN emoteURN, in Entity entity)
         {
-            if (messageDeduplication.TryPass(walletId, emoteMessage.Timestamp) == false)
-                return;
-
-            Profile? profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
-
-            if (profile == null)
-                profile = selfProfile ?? globalWorld.Get<Profile>(playerEntity);
-
-            Entity entity = entityParticipantTable.Entity(walletId);
-            TriggerEmote((int)emoteMessage.EmoteId, entity, profile!);
-        }
-
-        // Copy-Paste from UpdateEmoteInputSystem.cs
-        private void TriggerEmote(int emoteIndex, in Entity entity, in Profile profile)
-        {
-            IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
-            if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
-
-            URN emoteId = emotes[emoteIndex];
-
-            if (!string.IsNullOrEmpty(emoteId))
-                globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
+            if (!emoteURN.IsNullOrEmpty())
+                globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteURN });
         }
     }
 }

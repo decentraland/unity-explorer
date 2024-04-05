@@ -70,7 +70,6 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (triggeredEmote < 0) return;
 
-            messageBus.InjectWorld(World!);
             TriggerEmoteQuery(World, triggeredEmote);
             triggeredEmote = -1;
         }
@@ -80,20 +79,18 @@ namespace DCL.AvatarRendering.Emotes
         [None(typeof(CharacterEmoteIntent))]
         private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile)
         {
-            messageBus.Send((uint)emoteIndex);
-            messageBus.SelfSendWithDelayAsync(new Decentraland.Kernel.Comms.Rfc4.Emote
-            {
-                EmoteId = (uint)emoteIndex,
-                Timestamp = UnityEngine.Time.unscaledTime,
-            }).Forget();
-
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
 
             URN emoteId = emotes[emoteIndex];
 
-            if (!string.IsNullOrEmpty(emoteId))
-                World.Add(entity, new CharacterEmoteIntent { EmoteId = emoteId });
+            if (emoteId.IsNullOrEmpty()) return;
+
+            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId };
+            ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
+            emoteIntent = newEmoteIntent;
+
+            messageBus.Send(emoteId, false, true);
         }
     }
 }

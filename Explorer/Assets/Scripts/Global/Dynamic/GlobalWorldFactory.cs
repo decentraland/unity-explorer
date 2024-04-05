@@ -8,6 +8,7 @@ using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
+using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -67,12 +68,13 @@ namespace Global.Dynamic
         private readonly StaticSettings staticSettings;
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
+        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly CharacterContainer characterContainer;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
-            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -90,6 +92,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
+            this.emotesMessageBus = emotesMessageBus;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -110,6 +113,8 @@ namespace Global.Dynamic
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
+
+            emotesMessageBus.InjectWorld(world, playerEntity);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
@@ -177,7 +182,6 @@ namespace Global.Dynamic
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
 
             return (globalWorld, playerEntity);
-            ;
         }
     }
 }
