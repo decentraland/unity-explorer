@@ -6,25 +6,10 @@ module.exports.crdtSendToRenderer = async function(messages) {
     };
 }
 
-const unityEvents = []
-const sceneStart = {
-    generic: {
-        eventId: 'sceneStart',
-        eventData: "{}"
-    }
-}
-unityEvents.push(sceneStart)
-
-module.exports.sendBatch = async function() {
-    // console.log('PRAVS - sendBatch() - unityEvents...', unityEvents)
-    
-    // clear events
-    const eventsCopy = unityEvents.map((x) => x)
-    if (eventsCopy.length) {
-        unityEvents.length = 0
-    }
-    
-    return { events: eventsCopy }
+module.exports.sendBatch = async function() {    
+    return { 
+        events: UnityEngineApi.SendBatch() 
+    };
 }
 
 module.exports.crdtGetState = async function() {
@@ -34,9 +19,11 @@ module.exports.crdtGetState = async function() {
     };
 }
 
-module.exports.subscribe = async function() {
-    return {}
+module.exports.subscribe = async function(data) {
+    UnityEngineApi.SubscribeToObservableEvent(data.eventId)
+    return {};
 }
-module.exports.unsubscribe = async function() {
-    return {}
+module.exports.unsubscribe = async function(data) {
+    UnityEngineApi.UnsubscribeFromObservableEvent(data.eventId)
+    return {};
 }
