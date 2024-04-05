@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -40,6 +41,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
+using DCL.Profiles.Publishing;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -69,7 +71,7 @@ namespace Global.Dynamic
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
 
-        public ParcelServiceContainer ParcelServiceContainer { get; private set; }
+        public ParcelServiceContainer ParcelServiceContainer { get; private set; } = null!;
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
@@ -101,7 +103,14 @@ namespace Global.Dynamic
                 var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
                 await UniTask.WhenAll(mvcManager.ShowAsync(
-                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
+                        SceneLoadingScreenController.IssueCommand(
+                            new SceneLoadingScreenController.Params(
+                                loadReport,
+                                TimeSpan.FromSeconds(30)
+                            )
+                        ),
+                        ct
+                    ),
                     realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct));
             }
 
@@ -135,7 +144,7 @@ namespace Global.Dynamic
 
             var realmData = new RealmData();
 
-            PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+            PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>())!;
             container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
@@ -147,8 +156,8 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var webBrowser = new UnityAppWebBrowser();
-            ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
-            NametagsData? nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
+            ChatEntryConfigurationSO chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            NametagsData nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -205,9 +214,13 @@ namespace Global.Dynamic
                 actionOnRelease: x => x.Clear()
             );
 
+            var equippedWearables = new EquippedWearables();
+            var profilePublishing = new ProfilePublishing(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog);
+
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
-                    new ProfileBroadcast(messagePipesHub)
+                    new ProfileBroadcast(messagePipesHub),
+                    profilePublishing
                 )
             );
 
@@ -271,6 +284,8 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
+                    profilePublishing,
+                    equippedWearables,
                     webBrowser),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

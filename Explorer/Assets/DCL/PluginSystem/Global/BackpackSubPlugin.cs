@@ -21,6 +21,8 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly IProfilePublishing profilePublishing;
+        private readonly IEquippedWearables equippedWearables;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -33,14 +35,22 @@ namespace DCL.PluginSystem.Global
 
         internal BackpackController? backpackController { get; private set; }
 
-        public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity,
-            ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog,
-            IProfileRepository profileRepository)
+        public BackpackSubPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IWeb3IdentityCache web3Identity,
+            ICharacterPreviewFactory characterPreviewFactory,
+            IWearableCatalog wearableCatalog,
+            IProfilePublishing profilePublishing,
+            IEquippedWearables equippedWearables,
+            IProfileRepository profileRepository
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
+            this.profilePublishing = profilePublishing;
+            this.equippedWearables = equippedWearables;
             this.profileRepository = profileRepository;
 
             backpackCommandBus = new BackpackCommandBus();
@@ -53,9 +63,7 @@ namespace DCL.PluginSystem.Global
             CancellationToken ct)
         {
             // Initialize assets that do not require World
-            var equippedWearables = new EquippedWearables();
             var sortController = new BackpackSortController(view.BackpackSortView);
-            var profilePublishing = new ProfilePublishing(profileRepository, web3Identity, equippedWearables, wearableCatalog);
 
             //TODO after refactor this object is unused at all, remove?
             var backpackEquipStatusController = new BackpackEquipStatusController(

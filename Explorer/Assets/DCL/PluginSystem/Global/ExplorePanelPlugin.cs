@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
@@ -10,6 +11,7 @@ using DCL.Navmap;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Profiles.Publishing;
 using DCL.Settings;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -56,6 +58,8 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
+            IProfilePublishing profilePublishing,
+            IEquippedWearables equippedWearables,
             IWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -70,7 +74,7 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.webBrowser = webBrowser;
 
-            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository);
+            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profilePublishing, equippedWearables, profileRepository);
         }
 
         public override void Dispose()
