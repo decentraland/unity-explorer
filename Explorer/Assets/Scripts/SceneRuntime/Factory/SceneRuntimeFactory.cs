@@ -45,7 +45,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
+            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -79,7 +79,7 @@ namespace SceneRuntime.Factory
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
         }
 
-        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCode(CancellationToken ct)
+        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
         {
             string validateCode = await LoadJavaScriptSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
