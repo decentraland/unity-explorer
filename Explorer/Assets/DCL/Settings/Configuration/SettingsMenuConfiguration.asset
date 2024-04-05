@@ -15,30 +15,51 @@ MonoBehaviour:
   <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
   <GeneralSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
-    - <GroupTitle>k__BackingField: G1
+    - <GroupTitle>k__BackingField: GE Group 1
       <Modules>k__BackingField:
       - rid: 5242998230784409603
       - rid: 5242998230784409604
-    - <GroupTitle>k__BackingField: G2
+    - <GroupTitle>k__BackingField: GE Group 2
       <Modules>k__BackingField:
       - rid: 5242998230784409605
-    - <GroupTitle>k__BackingField: G3
+    - <GroupTitle>k__BackingField: GE Group 3
       <Modules>k__BackingField:
       - rid: 5242998230784409606
       - rid: 5242998230784409607
       - rid: 5242998230784409608
-    - <GroupTitle>k__BackingField: G4
+    - <GroupTitle>k__BackingField: GE Group 4
       <Modules>k__BackingField:
       - rid: 5242998230784409611
       - rid: 5242998230784409612
       - rid: 5242998230784409613
       - rid: 5242998230784409614
   <GraphicsSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField: []
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: GR Group 1
+      <Modules>k__BackingField:
+      - rid: 5242998230784409622
+      - rid: 5242998230784409623
+    - <GroupTitle>k__BackingField: GR Group 2
+      <Modules>k__BackingField:
+      - rid: 5242998230784409624
+      - rid: 5242998230784409625
   <SoundSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField: []
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: SO Group 1
+      <Modules>k__BackingField:
+      - rid: 5242998230784409618
+    - <GroupTitle>k__BackingField: SO Group 2
+      <Modules>k__BackingField:
+      - rid: 5242998230784409619
+      - rid: 5242998230784409620
+      - rid: 5242998230784409621
   <ControlsSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField: []
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: CO Group 1
+      <Modules>k__BackingField:
+      - rid: 5242998230784409615
+      - rid: 5242998230784409616
+      - rid: 5242998230784409617
   references:
     version: 2
     RefIds:
@@ -47,14 +68,14 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Dropdown 1.1
+          <ModuleName>k__BackingField: Dropdown GE 1.1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409604
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Slider 1.2
+          <ModuleName>k__BackingField: Slider GE 1.2
           minValue: 0
           maxValue: 100
         <Feature>k__BackingField: 0
@@ -63,21 +84,21 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Toggle 2.1
+          <ModuleName>k__BackingField: Toggle GE 2.1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409606
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Toggle 3.1
+          <ModuleName>k__BackingField: Toggle GE 3.1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409607
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Slider 3.2
+          <ModuleName>k__BackingField: Slider GE 3.2
           minValue: 0
           maxValue: 100
         <Feature>k__BackingField: 0
@@ -86,28 +107,28 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Dropdown 3.3
+          <ModuleName>k__BackingField: Dropdown GE 3.3
         <Feature>k__BackingField: 0
     - rid: 5242998230784409611
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Toggle 4.1
+          <ModuleName>k__BackingField: Toggle GE 4.1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409612
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Toggle 4.2
+          <ModuleName>k__BackingField: Toggle GE 4.2
         <Feature>k__BackingField: 0
     - rid: 5242998230784409613
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Slider 4.3
+          <ModuleName>k__BackingField: Slider GE 4.3
           minValue: 0
           maxValue: 80
         <Feature>k__BackingField: 0
@@ -116,5 +137,88 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Dropdown 4.4
+          <ModuleName>k__BackingField: Dropdown GE 4.4
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409615
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Toggle CO 1.1
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409616
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Slider CO 1.2
+          minValue: 0
+          maxValue: 100
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409617
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Dropdown CO 1.3
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409618
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Dropdown SO 1.1
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409619
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Slider SO 2.1
+          minValue: 0
+          maxValue: 50
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409620
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Toggle SO 2.2
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409621
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Dropdowm 2.3
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409622
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Dropdown GR 1.1
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409623
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Slider GR 1.1
+          minValue: 100
+          maxValue: 500
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409624
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Dropdown GR 2.1
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409625
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Toggle GR 2.2
         <Feature>k__BackingField: 0

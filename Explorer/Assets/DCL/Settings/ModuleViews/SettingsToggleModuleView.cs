@@ -14,6 +14,15 @@ namespace DCL.Settings.ModuleViews
 
         [field: SerializeField] public ToggleView Control { get; private set; }
 
+        private void Awake()
+        {
+            Control.Toggle.onValueChanged.AddListener(isOn =>
+            {
+                Control.OnImage.SetActive(isOn);
+                Control.OffImage.SetActive(!isOn);
+            });
+        }
+
         protected override void Configure(Config configuration)
         {
 
