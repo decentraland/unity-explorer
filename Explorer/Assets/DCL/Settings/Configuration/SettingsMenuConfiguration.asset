@@ -14,15 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
   <GeneralSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField:
-    - <GroupTitle>k__BackingField: Group 1
-      <Modules>k__BackingField:
-      - rid: 6904826491447541762
-      - rid: 6904826491447541763
-    - <GroupTitle>k__BackingField: Group 2
-      <Modules>k__BackingField:
-      - rid: -2
-      - rid: -2
+    <SettingsGroups>k__BackingField: []
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField: []
   <SoundSectionConfig>k__BackingField:
@@ -31,22 +23,4 @@ MonoBehaviour:
     <SettingsGroups>k__BackingField: []
   references:
     version: 2
-    RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
-    - rid: 6904826491447541762
-      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 0}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: 
-          minValue: 0
-          maxValue: 0
-        <Feature>k__BackingField: 0
-    - rid: 6904826491447541763
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 0}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: 
-        <Feature>k__BackingField: 0
+    RefIds: []
