@@ -90,14 +90,14 @@ namespace DCL.Backpack
 
         public void InvokeSlotButtonPressed()
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
             OnSlotButtonPressed?.Invoke(this);
             ScaleUpAnimation(SelectedBackground.transform);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             HoverTootlip.SetActive(true);
             focusedImage.enabled = true;
             UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn) && !BlockUnEquip);

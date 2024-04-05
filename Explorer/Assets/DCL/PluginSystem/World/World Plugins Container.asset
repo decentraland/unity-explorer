@@ -18,9 +18,14 @@ MonoBehaviour:
   - rid: 7387084847885844480
   - rid: 4753057106328551424
   - rid: 847852733734322176
+  - rid: 758312403201687554
   references:
     version: 2
     RefIds:
+    - rid: 758312403201687554
+      type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
     - rid: 847852733734322176
       type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

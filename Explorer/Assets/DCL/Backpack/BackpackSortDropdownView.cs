@@ -52,7 +52,7 @@ namespace DCL.Backpack
 
         private void OnSortDropdownClick()
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(openDropDownAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(openDropDownAudio);
 
             if (SortContentDeselectable.gameObject.activeInHierarchy) { CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false)); }
             else

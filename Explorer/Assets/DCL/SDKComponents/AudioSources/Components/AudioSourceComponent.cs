@@ -1,6 +1,7 @@
 ﻿using DCL.ECSComponents;
 using System;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Serialization;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
@@ -28,9 +29,10 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = false;
         }
 
-        public void SetAudioSource(AudioSource audioSource)
+        public void SetAudioSource(AudioSource audioSource, AudioMixerGroup audioMixerGroup)
         {
             AudioSource = audioSource;
+            if (audioMixerGroup != null) { audioSource.outputAudioMixerGroup = audioMixerGroup; }
             AudioSourceAssigned = true;
         }
 

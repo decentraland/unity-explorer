@@ -42,9 +42,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AudioPluginSettings settings, CancellationToken ct)
         {
-
             uiAudioManagerContainer = (await assetsProvisioner.ProvideInstanceAsync(settings.AudioManagerContainerReference, ct: ct)).Value;
-            uiAudioManagerContainer.Initialize();
+            uiAudioManagerContainer.Initialize(audioSourcePool);
         }
 
         public class AudioPluginSettings : IDCLPluginSettings

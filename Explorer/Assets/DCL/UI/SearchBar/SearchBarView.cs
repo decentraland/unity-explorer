@@ -39,12 +39,12 @@ namespace DCL.UI
 
         private void OnClearText()
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(ClearTextAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ClearTextAudio);
         }
 
         private void OnValueChanged(string value)
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(InputTextAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(InputTextAudio);
         }
     }
 }

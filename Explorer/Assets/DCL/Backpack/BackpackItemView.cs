@@ -82,7 +82,7 @@ namespace DCL.Backpack
         public void OnPointerEnter(PointerEventData eventData)
         {
             AnimateHover();
-            AudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             SetEquipButtonsState();
 
             if (IsEquipped)
@@ -119,7 +119,7 @@ namespace DCL.Backpack
             if (string.IsNullOrEmpty(ItemId))
                 return;
 
-            AudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
             OnSelectItem?.Invoke(ItemId);
         }
     }

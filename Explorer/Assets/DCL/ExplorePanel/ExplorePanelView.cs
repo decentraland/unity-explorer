@@ -34,14 +34,14 @@ namespace DCL.ExplorePanel
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
-            AudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
             AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
-            AudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
             AnimationTransform.anchoredPosition = Vector2.zero;
             return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }

@@ -124,7 +124,7 @@ namespace DCL.Chat
             if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
-            AudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
             viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
@@ -139,7 +139,7 @@ namespace DCL.Chat
 
         private void AddEmojiToInput(string emoji)
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
 
             if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
@@ -154,7 +154,7 @@ namespace DCL.Chat
 
         private void ToggleEmojiPanel()
         {
-            AudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.OpenEmojiPanelAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.OpenEmojiPanelAudio);
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
@@ -193,7 +193,7 @@ namespace DCL.Chat
                 return;
             }
 
-            AudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatSendMessageAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatSendMessageAudio);
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
@@ -245,7 +245,7 @@ namespace DCL.Chat
         private void OnInputChanged(string inputText)
         {
             HandleEmojiSearch(inputText);
-            AudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatInputTextAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatInputTextAudio);
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
@@ -286,7 +286,7 @@ namespace DCL.Chat
             {
                 Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
-                AudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
             }
 
             viewInstance.ResetChatEntriesFadeout();

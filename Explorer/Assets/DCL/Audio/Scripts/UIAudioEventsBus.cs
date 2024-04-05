@@ -4,36 +4,15 @@ using UnityEngine;
 
 namespace DCL.Audio
 {
-    public enum UIAudioType
+    public class UIAudioEventsBus : IDisposable
     {
-        GENERIC_TOGGLE_ON = 0,
-        GENERIC_TOGGLE_OFF = 1,
-        GENERIC_TAB_SELECTED = 2,
-        GENERIC_INPUT_TEXT = 3,
-        GENERIC_INPUT_CLEAR_TEXT = 4,
-        GENERIC_DROPDOWN = 5,
-        GENERIC_BUTTON = 6,
-        CHAT_SEND_MESSAGE = 100,
-        CHAT_RECEIVE_MESSAGE = 101,
-        CHAT_CLOSE = 102,
-        CHAT_INPUT_SELECTED = 103,
-        CHAT_INPUT_DESELECTED = 104,
-        CHAT_ADD_EMOJI = 105,
-        CHAT_OPEN_EMOJI_PANEL = 106,
-        BACKPACK_UNEQUIP_WEARABLE = 200,
-        BACKPACK_EQUIP_WEARABLE = 201,
-        BACKPACK_CHANGE_TAB = 202,
-    }
+        private static UIAudioEventsBus instance;
 
-    public class AudioEventsBus : IDisposable
-    {
-        private static AudioEventsBus instance;
-
-        public static AudioEventsBus Instance
+        public static UIAudioEventsBus Instance
         {
             get
             {
-                return instance ??= new AudioEventsBus();
+                return instance ??= new UIAudioEventsBus();
             }
         }
 
@@ -41,7 +20,16 @@ namespace DCL.Audio
         public event Action<AudioClipConfig, Vector3> PlayAudioAtPositionEvent;
         public event Action<AudioClipConfig, bool> PlayLoopingAudioEvent;
 
+        public event Action<AudioClipConfig, AudioSource> PlayAudioWithAudioSourceEvent;
+
         public void Dispose() { }
+
+
+        public void SendPlayAudioWithAudioSourceEvent(AudioClipConfig audioClipConfig, AudioSource audioSource)
+        {
+            if (audioClipConfig != null && audioSource != null) { PlayAudioWithAudioSourceEvent?.Invoke(audioClipConfig, audioSource); }
+        }
+
 
         public void SendPlayAudioEvent(AudioClipConfig audioClipConfig)
         {

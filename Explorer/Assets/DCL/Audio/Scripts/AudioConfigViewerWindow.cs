@@ -187,7 +187,7 @@ namespace DCL.Audio
             AudioClipConfig newAudioConfig = ScriptableObject.CreateInstance<AudioClipConfig>();
             string assetPath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(folderPath, "NewUIAudioConfig.asset"));
             AssetDatabase.CreateAsset(newAudioConfig, assetPath);
-            newAudioConfig.audioCategory = AudioCategory.OTHER;
+            newAudioConfig.audioCategory = AudioCategory.None;
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

@@ -10,22 +10,11 @@ namespace DCL.Audio
     [CreateAssetMenu(fileName = "UIAudioSettings", menuName = "SO/Audio/UIAudioSettings")]
     public class UIAudioSettings : ScriptableObject
     {
-        [SerializeField] private List<UIAudioClipKeyValuePair> audioClipList = new ();
         [SerializeField] private AudioClip defaultAudioClip;
         [SerializeField] private float uiAudioVolume = 0.5f;
         [SerializeField] private int uiAudioPriority = 125;
 
         public float UIAudioVolume => uiAudioVolume;
 
-
-        [Serializable]
-        public class UIAudioClipKeyValuePair
-        {
-            public UIAudioType key;
-            public AudioClip value;
-        }
-
-        [CustomPropertyDrawer(typeof(UIAudioClipKeyValuePair))]
-        public class AudioClipKeyValuePairDrawer : KeyValuePairCustomDrawer { }
     }
 }
