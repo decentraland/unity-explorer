@@ -7,25 +7,22 @@ namespace DCL.Settings.ModuleViews
     public class SettingsToggleModuleView : SettingsModuleView<SettingsToggleModuleView.Config>
     {
         [Serializable]
-        public class Config : SettingsModuleViewConfiguration
-        {
-            // ...
-        }
+        public class Config : SettingsModuleViewConfiguration { }
 
-        [field: SerializeField] public ToggleView Control { get; private set; }
+        [field: SerializeField] public ToggleView ToggleView { get; private set; }
 
         private void Awake()
         {
-            Control.Toggle.onValueChanged.AddListener(isOn =>
+            ToggleView.Toggle.onValueChanged.AddListener(isOn =>
             {
-                Control.OnImage.SetActive(isOn);
-                Control.OffImage.SetActive(!isOn);
+                ToggleView.OnImage.SetActive(isOn);
+                ToggleView.OffImage.SetActive(!isOn);
             });
         }
 
         protected override void Configure(Config configuration)
         {
-
+            ToggleView.Toggle.interactable = configuration.IsEnabled;
         }
     }
 }

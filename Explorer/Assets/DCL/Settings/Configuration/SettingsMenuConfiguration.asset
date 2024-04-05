@@ -18,7 +18,7 @@ MonoBehaviour:
     - <GroupTitle>k__BackingField: GE Group 1
       <Modules>k__BackingField:
       - rid: 5242998230784409603
-      - rid: 5242998230784409604
+      - rid: 5242998230784409626
     - <GroupTitle>k__BackingField: GE Group 2
       <Modules>k__BackingField:
       - rid: 5242998230784409605
@@ -69,15 +69,13 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown GE 1.1
-        <Feature>k__BackingField: 0
-    - rid: 5242998230784409604
-      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Slider GE 1.2
-          minValue: 0
-          maxValue: 100
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Option 1
+          - Option 2
+          - Option 3
         <Feature>k__BackingField: 0
     - rid: 5242998230784409605
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -85,6 +83,8 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle GE 2.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409606
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -92,6 +92,8 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle GE 3.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409607
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -99,8 +101,11 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Slider GE 3.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
           minValue: 0
           maxValue: 100
+          wholeNumbers: 0
         <Feature>k__BackingField: 0
     - rid: 5242998230784409608
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -108,6 +113,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown GE 3.3
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409611
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -115,6 +124,8 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle GE 4.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409612
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -122,6 +133,8 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle GE 4.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409613
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -129,8 +142,11 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Slider GE 4.3
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
           minValue: 0
           maxValue: 80
+          wholeNumbers: 0
         <Feature>k__BackingField: 0
     - rid: 5242998230784409614
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -138,6 +154,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown GE 4.4
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409615
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -145,6 +165,8 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle CO 1.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409616
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -152,8 +174,11 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Slider CO 1.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
           minValue: 0
           maxValue: 100
+          wholeNumbers: 0
         <Feature>k__BackingField: 0
     - rid: 5242998230784409617
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -161,6 +186,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown CO 1.3
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409618
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -168,6 +197,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown SO 1.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409619
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -175,8 +208,11 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Slider SO 2.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
           minValue: 0
           maxValue: 50
+          wholeNumbers: 0
         <Feature>k__BackingField: 0
     - rid: 5242998230784409620
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -184,6 +220,8 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle SO 2.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409621
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -191,6 +229,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdowm 2.3
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409622
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -198,6 +240,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown GR 1.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409623
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -205,8 +251,11 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Slider GR 1.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
           minValue: 100
           maxValue: 500
+          wholeNumbers: 0
         <Feature>k__BackingField: 0
     - rid: 5242998230784409624
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -214,6 +263,10 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Dropdown GR 2.1
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409625
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -221,4 +274,30 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Toggle GR 2.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+        <Feature>k__BackingField: 0
+    - rid: 5242998230784409626
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Dropdown GE 1.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 1
+          options:
+          - Option A
+          - Option B
+          - Option C
+          - Option D
+          - Option E
+          - Option F
+          - Option G
+          - Option H
+          - Option I
+          - Option J
+          - Option K
+          - Option L
+          - Option M
         <Feature>k__BackingField: 0
