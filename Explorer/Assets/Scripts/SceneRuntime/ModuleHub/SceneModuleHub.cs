@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace SceneRuntime
+namespace SceneRuntime.ModuleHub
 {
-    public class SceneModuleHub
+    public class SceneModuleHub : ISceneModuleHub
     {
         private readonly V8ScriptEngine engine;
         private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new ();
@@ -19,7 +19,7 @@ namespace SceneRuntime
             foreach (string filename in sources.Keys)
             {
                 // Compile the module using the V8ScriptEngine
-                V8Script script = engine.Compile(sources[filename]);
+                V8Script script = engine.Compile(sources[filename]!)!;
 
                 // Add the compiled script to a dictionary with the module name as the key
                 jsNodulesCompiledScripts.Add($"system/{filename}", script);
@@ -31,7 +31,7 @@ namespace SceneRuntime
         /// </summary>
         /// <param name="moduleName">The name of the module to get the V8Script for.</param>
         /// <returns>The compiled V8Script for the specified module name.</returns>
-        public V8Script GetModuleScript(string moduleName)
+        public V8Script ModuleScript(string moduleName)
         {
             // Check if the module name is in the dictionary of compiled scripts
             if (jsNodulesCompiledScripts.TryGetValue(moduleName, out V8Script code))

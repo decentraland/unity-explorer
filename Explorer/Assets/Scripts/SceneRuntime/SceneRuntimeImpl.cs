@@ -8,6 +8,7 @@ using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.ModuleHub;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
@@ -34,13 +35,17 @@ namespace SceneRuntime
             (string validateCode, string jsInitCode) initCode,
             IReadOnlyDictionary<string, string> jsModules,
             IInstancePoolsProvider instancePoolsProvider,
-            SceneShortInfo sceneShortInfo)
+            SceneShortInfo sceneShortInfo
+        )
         {
             this.instancePoolsProvider = instancePoolsProvider;
             resetableSource = new JSTaskResolverResetable();
             engine = V8EngineFactory.Create();
-            var moduleHub = new SceneModuleHub(engine);
             jsApiBunch = new JsApiBunch(engine);
+
+            var moduleHub = new SceneModuleHub(engine);
+
+            moduleHub.LoadAndCompileJsModules(jsModules);
 
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
@@ -57,7 +62,6 @@ namespace SceneRuntime
             engine.AddHostObject("__resetableSource", resetableSource);
 
             // Load and Compile Js Modules
-            moduleHub.LoadAndCompileJsModules(jsModules);
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')
@@ -122,6 +126,7 @@ namespace SceneRuntime
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
             PoolableByteArray result = engineApi.EnsureNotNull().api.CrdtSendToRenderer(data, false);
+
             // Initial messages are not expected to return anything
             Assert.IsTrue(result.IsEmpty);
         }
