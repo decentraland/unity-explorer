@@ -31,9 +31,8 @@ namespace DCL.Profiles.Publishing
 
         public async UniTask<bool> IsProfilePublishedAsync(CancellationToken ct)
         {
-            //TODO
-
-            return false;
+            var profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
+            return profile != null;
         }
 
         public async UniTask PublishProfileAsync(CancellationToken ct)
@@ -65,7 +64,7 @@ namespace DCL.Profiles.Publishing
                 if (!uniqueUrn.IsExtended())
                 {
                     if (wearableCatalog.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry!.First().Value.Urn;
+                        uniqueUrn = registry.First().Value.Urn;
                     else
                     {
                         foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
