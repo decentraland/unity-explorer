@@ -22,6 +22,11 @@ namespace DCL.Settings
             view.GraphicsSectionButton.onClick.AddListener(OpenGraphicsSection);
             view.SoundSectionButton.onClick.AddListener(OpenSoundSection);
             view.ControlsSectionButton.onClick.AddListener(OpenControlsSection);
+
+            view.GeneralSectionButton.gameObject.SetActive(view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0);
+            view.GraphicsSectionButton.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
+            view.SoundSectionButton.gameObject.SetActive(view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0);
+            view.ControlsSectionButton.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
         }
 
         public void Activate()
@@ -39,10 +44,17 @@ namespace DCL.Settings
 
         private void GenerateSettings()
         {
+            if (view.Configuration.SettingsGroupPrefab == null)
+            {
+                ReportHub.LogError(ReportCategory.SETTINGS_MENU, $"Settings Group prefab not found! Please set it the SettingsMenuConfiguration asset.");
+                return;
+            }
+
             GenerateSettingsSection(view.Configuration.GeneralSectionConfig, view.GeneralSectionContainer);
             GenerateSettingsSection(view.Configuration.GraphicsSectionConfig, view.GraphicsSectionContainer);
             GenerateSettingsSection(view.Configuration.SoundSectionConfig, view.SoundSectionContainer);
             GenerateSettingsSection(view.Configuration.ControlsSectionConfig, view.ControlsSectionContainer);
+
             OpenGeneralSection();
         }
 
