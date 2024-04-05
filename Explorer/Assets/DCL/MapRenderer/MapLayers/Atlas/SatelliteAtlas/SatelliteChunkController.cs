@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
+using DG.Tweening;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -19,6 +20,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private CancellationTokenSource internalCts;
         private CancellationTokenSource linkedCts;
         private int webRequestAttempts;
+        private readonly Color finalColor = Color.white;
+        private readonly Color initialColor = new Color(0,0,0,0);
 
         public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
             Transform parent,
@@ -54,7 +57,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         {
             webRequestAttempts = 0;
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
-
+            spriteRenderer.color = initialColor;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)), new GetTextureArguments(false), linkedCts.Token))
@@ -66,6 +69,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             float pixelsPerUnit = texture.width / chunkWorldSize;
 
+            spriteRenderer.DOColor(finalColor, 0.5f);
             spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
                 0, SpriteMeshType.FullRect, Vector4.one, false);
         }
