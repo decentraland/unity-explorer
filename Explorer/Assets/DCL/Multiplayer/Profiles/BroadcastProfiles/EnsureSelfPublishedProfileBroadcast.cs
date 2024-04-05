@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles.Publishing;
+using DCL.Profiles.Self;
 using System.Threading;
 using Utility;
 
@@ -8,13 +8,13 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
     public class EnsureSelfPublishedProfileBroadcast : IProfileBroadcast
     {
         private readonly IProfileBroadcast origin;
-        private readonly IProfilePublishing profilePublishing;
+        private readonly ISelfProfile selfProfile;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public EnsureSelfPublishedProfileBroadcast(IProfileBroadcast origin, IProfilePublishing profilePublishing)
+        public EnsureSelfPublishedProfileBroadcast(IProfileBroadcast origin, ISelfProfile selfProfile)
         {
             this.origin = origin;
-            this.profilePublishing = profilePublishing;
+            this.selfProfile = selfProfile;
         }
 
         public void NotifyRemotes()
@@ -24,10 +24,10 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         private async UniTaskVoid NotifyAsync(CancellationToken ct)
         {
-            bool published = await profilePublishing.IsProfilePublishedAsync(ct);
+            bool published = await selfProfile.IsProfilePublishedAsync(ct);
 
             if (published == false)
-                await profilePublishing.PublishProfileAsync(ct);
+                await selfProfile.PublishAsync(ct);
 
             origin.NotifyRemotes();
         }

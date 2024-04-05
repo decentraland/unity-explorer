@@ -11,9 +11,9 @@ using System.Linq;
 using System.Threading;
 using UnityEngine.Pool;
 
-namespace DCL.Profiles.Publishing
+namespace DCL.Profiles.Self
 {
-    public class ProfilePublishing : IProfilePublishing
+    public class SelfProfile : ISelfProfile
     {
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -21,7 +21,7 @@ namespace DCL.Profiles.Publishing
         private readonly IWearableCatalog wearableCatalog;
         private readonly ProfileBuilder profileBuilder = new ();
 
-        public ProfilePublishing(IProfileRepository profileRepository, IWeb3IdentityCache web3IdentityCache, IEquippedWearables equippedWearables, IWearableCatalog wearableCatalog)
+        public SelfProfile(IProfileRepository profileRepository, IWeb3IdentityCache web3IdentityCache, IEquippedWearables equippedWearables, IWearableCatalog wearableCatalog)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -29,15 +29,12 @@ namespace DCL.Profiles.Publishing
             this.wearableCatalog = wearableCatalog;
         }
 
-        public async UniTask<bool> IsProfilePublishedAsync(CancellationToken ct)
-        {
-            var profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
-            return profile != null;
-        }
+        public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
+            profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
 
-        public async UniTask PublishProfileAsync(CancellationToken ct)
+        public async UniTask PublishAsync(CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
+            Profile? profile = await ProfileAsync(ct);
 
             using (var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables))
             {

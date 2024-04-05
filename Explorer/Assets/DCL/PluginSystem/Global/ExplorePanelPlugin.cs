@@ -11,7 +11,7 @@ using DCL.Navmap;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.Profiles.Publishing;
+using DCL.Profiles.Self;
 using DCL.Settings;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -58,7 +58,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
-            IProfilePublishing profilePublishing,
+            ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IWebBrowser webBrowser)
         {
@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.webBrowser = webBrowser;
 
-            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profilePublishing, equippedWearables, profileRepository);
+            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, selfProfile, equippedWearables, profileRepository);
         }
 
         public override void Dispose()

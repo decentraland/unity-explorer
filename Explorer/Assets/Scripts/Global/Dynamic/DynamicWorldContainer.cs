@@ -41,7 +41,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
-using DCL.Profiles.Publishing;
+using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -215,7 +215,7 @@ namespace Global.Dynamic
             );
 
             var equippedWearables = new EquippedWearables();
-            var profilePublishing = new ProfilePublishing(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog);
+            var profilePublishing = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(

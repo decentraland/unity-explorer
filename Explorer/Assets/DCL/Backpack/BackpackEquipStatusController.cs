@@ -5,7 +5,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
-using DCL.Profiles.Publishing;
+using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace DCL.Backpack
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Func<(World, Entity)> ecsContextProvider;
         private readonly IReadOnlyEquippedWearables equippedWearables;
-        private readonly IProfilePublishing profilePublishing;
+        private readonly ISelfProfile selfProfile;
 
         private World? world;
         private Entity? playerEntity;
@@ -31,7 +31,7 @@ namespace DCL.Backpack
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IEquippedWearables equippedWearables,
-            IProfilePublishing profilePublishing,
+            ISelfProfile selfProfile,
             Func<(World, Entity)> ecsContextProvider
         )
         {
@@ -39,7 +39,7 @@ namespace DCL.Backpack
             this.web3IdentityCache = web3IdentityCache;
             this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
-            this.profilePublishing = profilePublishing;
+            this.selfProfile = selfProfile;
             backpackEventBus.EquipEvent += equippedWearables.Equip;
             backpackEventBus.UnEquipEvent += equippedWearables.UnEquip;
             backpackEventBus.PublishProfileEvent += PublishProfile;
@@ -49,7 +49,7 @@ namespace DCL.Backpack
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
-                await profilePublishing.PublishProfileAsync(ct);
+                await selfProfile.PublishAsync(ct);
                 var profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
 
                 // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?

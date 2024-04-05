@@ -8,7 +8,7 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.Profiles;
-using DCL.Profiles.Publishing;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
-        private readonly IProfilePublishing profilePublishing;
+        private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3Identity;
@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
             IWearableCatalog wearableCatalog,
-            IProfilePublishing profilePublishing,
+            ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IProfileRepository profileRepository
         )
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
-            this.profilePublishing = profilePublishing;
+            this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.profileRepository = profileRepository;
 
@@ -71,7 +71,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 web3Identity,
                 equippedWearables,
-                profilePublishing,
+                selfProfile,
                 ProvideEcsContext
             );
 
