@@ -10,6 +10,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using Utility;
 
 namespace DCL.LOD
 {
@@ -25,6 +26,9 @@ namespace DCL.LOD
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         public static string LOD_SHADER = "DCL/Scene_TexArray";
 
+        private static readonly List<Material> TEMP_MATERIALS = new (3);
+
+
         public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
             var newSlots = TEXTURE_ARRAY_SLOTS.Get();
@@ -32,17 +36,18 @@ namespace DCL.LOD
             {
                 for (int i = 0; i < pooledList.Value.Count; i++)
                 {
-                    for (int j = 0; j < pooledList.Value[i].materials.Length; j++)
+                    pooledList.Value[i].SafeGetMaterials(TEMP_MATERIALS);
+                    for (int j = 0; j < TEMP_MATERIALS.Count; j++)
                     {
-                        if (pooledList.Value[i].materials[j].mainTexture != null)
+                        if (TEMP_MATERIALS[j].mainTexture != null)
                         {
-                            if (pooledList.Value[i].materials[j].mainTexture.width != pooledList.Value[i].materials[j].mainTexture.height)
+                            if (TEMP_MATERIALS[j].mainTexture.width != TEMP_MATERIALS[j].mainTexture.height)
                             {
                                 ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}");
                                 continue;
                             }
 
-                            if (pooledList.Value[i].materials[j].shader.name != LOD_SHADER)
+                            if (TEMP_MATERIALS[j].shader.name != LOD_SHADER)
                             {
                                 ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}. " +
                                                                          $"It has {pooledList.Value[i].materials[j].shader} while it should be {LOD_SHADER}. Please check the AB Converter");
@@ -50,7 +55,7 @@ namespace DCL.LOD
                             }
 
                             newSlots.AddRange(lodTextureArrayContainer.SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], pooledList.Value[i].materials[j]));
-                            pooledList.Value[i].materials[j].mainTexture = null;
+                            TEMP_MATERIALS[j].mainTexture = null;
                         }
                     }
                 }

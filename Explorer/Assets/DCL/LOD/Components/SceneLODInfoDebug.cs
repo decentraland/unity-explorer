@@ -19,11 +19,18 @@ namespace DCL.LOD
         private Transform MissingSceneParent;
         public byte CurrentLODLevel;
 
+        //This is a sync method, so we can use a shared list
+        private static readonly List<Material> TEMP_MATERIALS = new (3);
+        
         private void UpdateContent(SceneLODInfoDebugContent newContent, Color debugColor)
         {
             for (int i = 0; i < newContent.Renderers.Length; i++)
-            for (int j = 0; j < newContent.Renderers[i].materials.Length; j++)
-                newContent.Renderers[i].materials[j].color = debugColor;
+            {
+                newContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+                foreach (var t in TEMP_MATERIALS)
+                    t.color = debugColor;
+            }
+
 
             foreach (var faillingCubesGameObjects in newContent.FaillingCubesGameObjects)
                 faillingCubesGameObjects.gameObject.SetActive(true);
@@ -52,8 +59,14 @@ namespace DCL.LOD
             foreach (var faillingCubesGameObject in debugContent.FaillingCubesGameObjects)
                 faillingCubesGameObject.gameObject.SetActive(false);
             for (int i = 0; i < debugContent.Renderers.Length; i++)
-            for (int j = 0; j < debugContent.Renderers[i].materials.Length; j++)
-                debugContent.Renderers[i].materials[j].color = debugContent.OriginalColors[i + j];
+            {
+                debugContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+                for (int j = 0; j < TEMP_MATERIALS.Count; j++)
+                {
+                    TEMP_MATERIALS[j].color = debugContent.OriginalColors[i + j];
+                }
+            }
+
         }
 
         private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents(IReadOnlyList<Vector2Int> parcels, LODAsset lodAsset, ILODSettingsAsset lodSettingsAsset)
@@ -78,9 +91,11 @@ namespace DCL.LOD
                 var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
                 var originalColorsList = new List<Color>();
                 for (int i = 0; i < renderers.Length; i++)
-                for (int j = 0; j < renderers[i].materials.Length; j++)
-                    originalColorsList.Add(renderers[i].materials[j].color);
-
+                {
+                    renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+                    foreach (var t in TEMP_MATERIALS)
+                        originalColorsList.Add(t.color);
+                }
                 sceneLODInfoDebugContents  = new SceneLODInfoDebugContent
                 {
                     OriginalColors = originalColorsList.ToArray(), Renderers = renderers, FaillingCubesGameObjects = Array.Empty<GameObject>()

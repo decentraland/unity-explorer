@@ -10,7 +10,6 @@ namespace DCL.LOD
 {
     public struct LODAsset : IDisposable
     {
-        private static readonly ListObjectPool<Material> MATERIALS_LIST_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
         public readonly LODKey LodKey;
         public readonly GameObject Root;
@@ -18,9 +17,8 @@ namespace DCL.LOD
         public readonly bool LoadingFailed;
         private readonly ILODAssetsPool Pool;
         private readonly TextureArraySlot?[] Slots;
-        private readonly IExtendedObjectPool<Material> MaterialPool;
 
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot?[] slots, IExtendedObjectPool<Material> materialPool)
+        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot?[] slots)
         {
             LodKey = lodKey;
             Root = root;
@@ -28,7 +26,6 @@ namespace DCL.LOD
             LoadingFailed = false;
             Pool = pool;
             Slots = slots;
-            MaterialPool = materialPool;
 
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
@@ -43,7 +40,6 @@ namespace DCL.LOD
             LoadingFailed = false;
             Pool = pool;
             Slots = Array.Empty<TextureArraySlot?>();
-            MaterialPool = null;
 
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
@@ -59,7 +55,6 @@ namespace DCL.LOD
             Root = null;
             AssetBundleReference = null;
             Pool = null;
-            MaterialPool = null;
         }
 
         public void Dispose()
@@ -71,18 +66,6 @@ namespace DCL.LOD
 
             if (!LodKey.Level.Equals(0))
             {
-                using (var pooledList = Root.GetComponentsInChildrenIntoPooledList<Renderer>(true))
-                {
-                    foreach (var renderer in pooledList.Value)
-                    {
-                        var materialsToRelease =  MATERIALS_LIST_POOL.Get();
-                        renderer.GetMaterials(materialsToRelease);
-                        foreach (var rendererMaterial in materialsToRelease)
-                            MaterialPool.Release(rendererMaterial);
-                        MATERIALS_LIST_POOL.Release(materialsToRelease);
-                    }
-                }
-
                 for (int i = 0; i < Slots.Length; i++)
                     Slots[i]?.FreeSlot();
             }
