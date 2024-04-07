@@ -6,7 +6,7 @@ namespace DCL.DebugUtilities.UIBindings
     /// <summary>
     ///     Two-way way binding from a typed value to an element of the corresponding type
     /// </summary>
-    public class ElementBinding<T> : IBinding
+    public class ElementBinding<T> : IElementBinding<T>
     {
         private T tempValue;
 
@@ -40,7 +40,7 @@ namespace DCL.DebugUtilities.UIBindings
         ///     Called from the Builder
         /// </summary>
         /// <param name="element"></param>
-        internal void Connect(INotifyValueChanged<T> element)
+        public void Connect(INotifyValueChanged<T> element)
         {
             this.element = element;
             this.element.value = Value;
