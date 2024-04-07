@@ -48,46 +48,33 @@ namespace DCL.Audio
     [CustomEditor(typeof(AvatarAudioSettings))]
     public class AvatarAudioSettingsEditor : Editor
     {
-        private AvatarAudioSettings audioSettings;
+        private SerializedProperty movementBlendThresholdProp;
+        private SerializedProperty audioClipConfigsProp;
+        private SerializedProperty avatarAudioPriorityProp;
 
         private void OnEnable()
         {
-            audioSettings = (AvatarAudioSettings)target;
+            movementBlendThresholdProp = serializedObject.FindProperty("movementBlendThreshold");
+            audioClipConfigsProp = serializedObject.FindProperty("audioClipConfigs");
+            avatarAudioPriorityProp = serializedObject.FindProperty("avatarAudioPriority");
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("movementBlendThreshold"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("avatarAudioPriority"));
+            EditorGUILayout.PropertyField(movementBlendThresholdProp);
+            EditorGUILayout.PropertyField(avatarAudioPriorityProp);
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Audio Clip Configs", EditorStyles.boldLabel);
-            DisplayAudioClipConfigs();
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(audioClipConfigsProp, true);
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+            }
 
             serializedObject.ApplyModifiedProperties();
-            EditorUtility.SetDirty(target);
-
         }
+    }
 
-        private void DisplayAudioClipConfigs()
-        {
-            Array clipTypes = Enum.GetValues(typeof(AvatarAudioClipType));
-
-            foreach (AvatarAudioClipType clipType in clipTypes)
-            {
-                EditorGUILayout.BeginHorizontal();
-
-                AudioClipConfig clipConfig = audioSettings.GetAudioClipConfigForType(clipType);
-                EditorGUI.BeginChangeCheck(); // Begin change check
-                clipConfig = EditorGUILayout.ObjectField(clipType.ToString(), clipConfig, typeof(AudioClipConfig), false) as AudioClipConfig;
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (clipConfig != null) { audioSettings.SetAudioClipConfigForType(clipType, clipConfig); }
-                }
-
-                EditorGUILayout.EndHorizontal();
-            }
-        }
-    }}
+}
