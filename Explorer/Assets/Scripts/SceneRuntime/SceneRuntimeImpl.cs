@@ -7,7 +7,6 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
 using System;
@@ -50,9 +49,6 @@ namespace SceneRuntime
 
             // Compile Scene Code
             V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
-
-            // Load and Compile Js Modules
-            moduleLoader.LoadAndCompileJsModules(engine, jsModules);
 
             // Initialize init API
             // TODO: This is only needed for the LifeCycle
@@ -106,16 +102,6 @@ namespace SceneRuntime
         public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
-        }
-
-        public void RegisterWebSocketApi(IWebSocketApi webSocketApi)
-        {
-            engine.AddHostObject("UnityWebSocketApi", webSocketApiWrapper = new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
-        }
-
-        public void RegisterSimpleFetchApi(ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController)
-        {
-            engine.AddHostObject("UnitySimpleFetchApi", simpleFetchApiWrapper = new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
         }
 
         public void SetIsDisposing()

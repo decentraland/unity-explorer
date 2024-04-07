@@ -61,17 +61,16 @@ async function fetch(url, init) {
     const reqHeaders = headers ?? {}
     const reqRedirect = redirect ?? 'follow'
 
-    console.error("NOT ERROR: Starting FETCH:");
-
     const response = await UnitySimpleFetchApi.Fetch(
         reqMethod, url, reqHeaders, hasBody, body ?? '', reqRedirect, reqTimeout
     )
     
-    console.error("NOT ERROR: Received REsponse to FETCH:");
+    console.error("NOT ERROR: Received REsponse to FETCH:", response);
 
 
     response.headers = new Headers(response.headers)
-    // TODO: the headers object should be read-only
+
+    console.error("NOT ERROR: Parsed Headers:", response.headers);
 
     let alreadyConsumed = false
     function notifyConsume() {

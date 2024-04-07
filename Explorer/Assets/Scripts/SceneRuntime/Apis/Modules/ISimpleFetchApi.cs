@@ -13,7 +13,7 @@ namespace SceneRuntime.Apis.Modules
 
         public struct FetchResponse
         {
-            public FetchResponse(List<Header> headers, bool ok, bool redirected, int status, string statusText,
+            public FetchResponse(IReadOnlyDictionary<string, string> headers, bool ok, bool redirected, int status, string statusText,
                 string url, string data)
             {
                 this.headers = headers;
@@ -25,25 +25,13 @@ namespace SceneRuntime.Apis.Modules
                 this.data = data;
             }
 
-            private List<Header> headers { get; }
+            private IReadOnlyDictionary<string, string> headers { get; }
             private bool ok { get; }
             private bool redirected { get; }
             private int status { get; }
             private string statusText { get; }
             private string url { get; }
             private string data { get; }
-        }
-
-        public struct Header
-        {
-            public Header(string value, string name)
-            {
-                this.value = value;
-                this.name = name;
-            }
-
-            private string value { get; }
-            private string name { get; }
         }
     }
 }
