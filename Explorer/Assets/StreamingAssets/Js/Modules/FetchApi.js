@@ -61,16 +61,13 @@ async function fetch(url, init) {
     const reqHeaders = headers ?? {}
     const reqRedirect = redirect ?? 'follow'
 
-    const response = await UnitySimpleFetchApi.Fetch(
+    let response = await UnitySimpleFetchApi.Fetch(
         reqMethod, url, reqHeaders, hasBody, body ?? '', reqRedirect, reqTimeout
     )
     
-    console.error("NOT ERROR: Received REsponse to FETCH:", response);
+    response = { ...response };
 
-
-    response.headers = new Headers(response.headers)
-
-    console.error("NOT ERROR: Parsed Headers:", response.headers);
+    response.headers = new Headers(response.headers);
 
     let alreadyConsumed = false
     function notifyConsume() {
@@ -96,7 +93,7 @@ async function fetch(url, init) {
         async text() {
             notifyConsume()
             throwErrorFailed()
-            return data
+            return response.data
         }
     })
 
@@ -108,51 +105,57 @@ class Headers {
         this.headers = {};
 
         if (init instanceof Headers) {
-            init.forEach((value, name) => {
-                this.append(name, value);
+            init.forEach((key, value) => {
+                this.append(key, value);
             });
         } else if (Array.isArray(init)) {
-            init.forEach(([name, value]) => {
-                this.append(name, value);
+            init.forEach(([key, value]) => {
+                this.append(key, value);
             });
         } else if (init && typeof init === 'object') {
-            Object.keys(init).forEach(name => {
-                this.append(name, init[name]);
+            Object.keys(init).forEach(key => {
+                this.append(key, init[key]);
             });
         }
     }
 
-    append(name, value) {
-        name = name.toLowerCase();
-        if (!this.headers[name]) {
-            this.headers[name] = [];
+    append(key, value) {
+        if (!this.headers[key]) {
+            this.headers[key] = [];
         }
-        this.headers[name].push(value);
+        this.headers[key].push(value);
     }
 
-    delete(name) {
-        name = name.toLowerCase();
-        delete this.headers[name];
+    delete(key) {
+        delete this.headers[key];
     }
 
 
     forEach(callback) {
-        for (const name in this.headers) {
-            if (this.headers.hasOwnProperty(name)) {
-                const values = this.headers[name];
-                name.split(',').forEach(callback.bind(null, values, name));
+        for (const key in this.headers) {
+            if (this.headers.hasOwnProperty(key)) {
+                const values = this.headers[key];
+                key.split(',').forEach(callback.bind(null, values, key));
             }
         }
     }
 
-    get(name) {
-        name = name.toLowerCase();
-        return this.headers[name] ? this.headers[name][0] : null;
+    keys() {
+        return Object.keys(this.headers);
     }
 
-    has(name) {
-        name = name.toLowerCase();
-        return !!this.headers[name];
+
+    set(key, value) {
+        this.headers[key] = [value];
+    }
+
+
+    get(key) {
+        return this.headers[key] ? this.headers[key][0] : null;
+    }
+
+    has(key) {
+        return !!this.headers[key];
     }
 
     getSetCookie() {
@@ -168,9 +171,8 @@ class Headers {
         return result;
     }
 
-    getAll(name) {
-        name = name.toLowerCase();
-        return this.headers[name] || [];
+    getAll(key) {
+        return this.headers[key] || [];
     }
 
 }

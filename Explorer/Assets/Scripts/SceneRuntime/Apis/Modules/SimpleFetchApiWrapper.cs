@@ -32,7 +32,10 @@ namespace SceneRuntime.Apis.Modules
         public object Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout)
         {
-            try { return api.Fetch(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try
+            {
+                return api.Fetch(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).AsTask().ToPromise();
+            }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
     }

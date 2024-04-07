@@ -31,10 +31,11 @@ namespace CrdtEcsBridge.Engine
         }
 
         private readonly Dictionary<string, string> headersDictionary = new ();
+        private readonly Dictionary<string, string> responseHeadersDictionary = new ();
 
         public void Dispose() { }
 
-        public async UniTask<ISimpleFetchApi.FetchResponse> Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
+        public async UniTask<object> Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout, IWebRequestController webController, CancellationToken ct)
         {
 
@@ -85,27 +86,38 @@ namespace CrdtEcsBridge.Engine
             }
         }
 
-        private ISimpleFetchApi.FetchResponse GenerateResponse<T>(T request) where T : ITypedWebRequest
+        private object GenerateResponse<T>(T request) where T : ITypedWebRequest
         {
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
             string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
 
-            var headers = new Dictionary<string, string>();
+            responseHeadersDictionary.Clear();
 
             foreach (string headerKey in unityWebRequest.GetResponseHeaders().Keys)
             {
                 string headerValue = unityWebRequest.GetResponseHeader(headerKey);
-                headers.Add(headerKey, headerValue);
+                responseHeadersDictionary.Add(headerKey, headerValue);
             }
 
-            bool ok = unityWebRequest.result == UnityWebRequest.Result.Success;
-            bool redirected = unityWebRequest.result == UnityWebRequest.Result.ProtocolError || unityWebRequest.result == UnityWebRequest.Result.ConnectionError;
-            var status = (int)unityWebRequest.responseCode;
-            var statusText = unityWebRequest.responseCode.ToString();
-            string url = unityWebRequest.url;
+            bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
+            bool requestRedirected = unityWebRequest.result == UnityWebRequest.Result.ProtocolError || unityWebRequest.result == UnityWebRequest.Result.ConnectionError;
+            var requestStatus = (int)unityWebRequest.responseCode;
+            var requestStatusText = unityWebRequest.responseCode.ToString();
+            string requestUrl = unityWebRequest.url;
 
             unityWebRequest.Dispose();
-            return new ISimpleFetchApi.FetchResponse(headers, ok, redirected, status, statusText, url, responseData);
+
+            return new
+            {
+                headers = responseHeadersDictionary,
+                ok = requestOk,
+                redirected = requestRedirected,
+                status = requestStatus,
+                statusText = requestStatusText,
+                url = requestUrl,
+                data = responseData,
+                type = "basic" //Handle Response Types properly  type ResponseType = 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect'
+            };
         }
 
         private RequestMethod ParseRequestMethod(string request) =>
