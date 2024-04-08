@@ -15,7 +15,8 @@ namespace DCL.Profiles.Self.Playground
     {
         [SerializeField] private string url = "https://peer-eu1.decentraland.org/lambdas/";
 
-        private void Start()
+        [ContextMenu(nameof(Start))]
+        public void Start()
         {
             ExecuteAsync(destroyCancellationToken).Forget();
         }

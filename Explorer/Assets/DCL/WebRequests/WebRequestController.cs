@@ -51,7 +51,7 @@ namespace DCL.WebRequests
                     // Print verbose
                     ReportHub.LogError(
                         envelope.ReportCategory,
-                        $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL}.\n"
+                        $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL}\n"
                         + $"Attempt Left: {attemptsLeft}"
                     );
 
