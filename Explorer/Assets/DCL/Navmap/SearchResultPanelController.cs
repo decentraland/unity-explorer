@@ -78,7 +78,9 @@ namespace DCL.Navmap
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
                 usedPoolElements.Add(fullSearchResultsView);
                 fullSearchResultsView.placeName.text = placeInfo.title;
+                fullSearchResultsView.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
                 fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
+                fullSearchResultsView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
                 fullSearchResultsView.resultAnimator.SetTrigger(LOADED_TRIGGER);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);

@@ -10,6 +10,9 @@ namespace DCL.Navmap
     public class FullSearchResultsView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField]
+        public GameObject playerCounterContainer;
+
+        [field: SerializeField]
         public ImageView placeImage;
 
         [field: SerializeField]
