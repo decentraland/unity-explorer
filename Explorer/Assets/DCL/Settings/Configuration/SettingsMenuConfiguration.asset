@@ -76,6 +76,9 @@ MonoBehaviour:
           - Option 1
           - Option 2
           - Option 3
+          - Option 4
+          - Option 5
+          - Option 6
         <Feature>k__BackingField: 0
     - rid: 5242998230784409605
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -104,7 +107,7 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           minValue: 0
-          maxValue: 100
+          maxValue: 5
           wholeNumbers: 0
         <Feature>k__BackingField: 0
     - rid: 5242998230784409608
@@ -145,8 +148,8 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           minValue: 0
-          maxValue: 80
-          wholeNumbers: 0
+          maxValue: 7
+          wholeNumbers: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409614
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
