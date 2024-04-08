@@ -14,29 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.Audio:DCL.Audio:AudioSettings
   audioCategorySettings:
   - key: 0
-    value:
-      categoryVolume: 1
-      audioPriority: 125
-      audioMixerGroup: {fileID: -569781701901290150, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+    value: {fileID: 0}
   - key: 1
-    value:
-      categoryVolume: 1
-      audioPriority: 125
-      audioMixerGroup: {fileID: -3414157981442100215, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+    value: {fileID: 0}
   - key: 2
-    value:
-      categoryVolume: 1
-      audioPriority: 125
-      audioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+    value: {fileID: 0}
   - key: 3
-    value:
-      categoryVolume: 1
-      audioPriority: 125
-      audioMixerGroup: {fileID: 2832862654527898687, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+    value: {fileID: 11400000, guid: b21e79c1385d35d4388c8016a09c8316, type: 2}
   - key: 4
-    value:
-      categoryVolume: 1
-      audioPriority: 125
-      audioMixerGroup: {fileID: 99258197097754026, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+    value: {fileID: 0}
   masterVolume: 1
   masterAudioMixer: {fileID: 24100000, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}

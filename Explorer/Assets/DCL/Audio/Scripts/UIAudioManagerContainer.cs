@@ -141,7 +141,7 @@ namespace DCL.Audio
 
         private AudioMixerGroup GetAudioMixerGroup(AudioClipConfig audioClipConfig)
         {
-            return audioSettings.CategorySettings.Find(c => c.key == audioClipConfig.audioCategory).value.audioMixerGroup;
+            return audioSettings.CategorySettings.Find(c => c.key == audioClipConfig.audioCategory).value.MixerGroup;
         }
 
 

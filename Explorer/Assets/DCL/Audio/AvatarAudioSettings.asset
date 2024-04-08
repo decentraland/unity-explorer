@@ -12,6 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11d0ba7c7a4a483ea0eceb26e3c89152, type: 3}
   m_Name: AvatarAudioSettings
   m_EditorClassIdentifier: 
+  categoryVolume: 1
+  audioPriority: 125
+  audioMixerGroup: {fileID: 2832862654527898687, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+  AudioEnabled: 1
   movementBlendThreshold: 0.05
-  avatarAudioPriority: 125
-  AvatarAudioEnabled: 1
+  audioClipConfigsList:
+  - key: 0
+    value: {fileID: 11400000, guid: 5cfead82aa5615d439b22e29bc282dd3, type: 2}
+  - key: 1
+    value: {fileID: 11400000, guid: 5cfead82aa5615d439b22e29bc282dd3, type: 2}
+  - key: 2
+    value: {fileID: 11400000, guid: 5cfead82aa5615d439b22e29bc282dd3, type: 2}
+  - key: 3
+    value: {fileID: 11400000, guid: 3681bccfe6c60cd4eb073576d98e8ce2, type: 2}
+  - key: 4
+    value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
+  - key: 5
+    value: {fileID: 11400000, guid: 724e4ead730577d478d3f78a275f5d5b, type: 2}
+  - key: 7
+    value: {fileID: 11400000, guid: 1ac389fba80f9484a91ea595f1c0ff4c, type: 2}
+  - key: 8
+    value: {fileID: 11400000, guid: 1ac389fba80f9484a91ea595f1c0ff4c, type: 2}
+  - key: 6
+    value: {fileID: 11400000, guid: 1ac389fba80f9484a91ea595f1c0ff4c, type: 2}

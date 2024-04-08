@@ -23,7 +23,7 @@ namespace DCL.Audio
         private void Start()
         {
             blendThreshold = AvatarAudioSettings.MovementBlendThreshold;
-            AvatarAudioSource.priority = AvatarAudioSettings.AvatarAudioPriority;
+            AvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
         }
 
         [UsedImplicitly]
@@ -96,7 +96,7 @@ namespace DCL.Audio
 
         private void PlayAvatarAudioForType(AvatarAudioClipType clipType, Action check = null)
         {
-            if (!AvatarAudioSettings.AvatarAudioEnabled) return;
+            if (!AvatarAudioSettings.AudioEnabled) return;
 
             var clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
 
