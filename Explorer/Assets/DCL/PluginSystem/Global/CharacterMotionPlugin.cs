@@ -7,7 +7,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
-using DCL.Multiplayer.Emotes;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -17,21 +16,16 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IEmoteCache emoteCache;
-        private readonly MultiplayerEmotesMessageBus multiplayerEmotesMessageBus;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
         public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
             ICharacterObject characterObject,
-            IDebugContainerBuilder debugContainerBuilder,
-            IEmoteCache emoteCache, MultiplayerEmotesMessageBus multiplayerEmotesMessageBus)
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.emoteCache = emoteCache;
-            this.multiplayerEmotesMessageBus = multiplayerEmotesMessageBus;
         }
 
         public void Dispose()

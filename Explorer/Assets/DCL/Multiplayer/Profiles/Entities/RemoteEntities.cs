@@ -11,6 +11,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
 using UnityEngine;

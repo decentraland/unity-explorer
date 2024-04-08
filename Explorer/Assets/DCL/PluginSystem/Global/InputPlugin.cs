@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.Input;
@@ -14,15 +13,13 @@ namespace DCL.PluginSystem.Global
     public class InputPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly DCLInput dclInput;
-        private readonly IEmoteCache emoteCache;
         private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly IEventSystem eventSystem;
 
-        public InputPlugin(DCLInput dclInput, IEmoteCache emoteCache, MultiplayerEmotesMessageBus messageBus, IEventSystem eventSystem)
+        public InputPlugin(DCLInput dclInput, MultiplayerEmotesMessageBus messageBus, IEventSystem eventSystem)
         {
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
-            this.emoteCache = emoteCache;
             this.messageBus = messageBus;
             dclInput.Enable();
         }
