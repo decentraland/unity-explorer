@@ -30,8 +30,8 @@ namespace DCL.Chat
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private EmojiPanelController emojiPanelController;
-        private EmojiSuggestionPanel emojiSuggestionPanelController;
+        private EmojiPanelController? emojiPanelController;
+        private EmojiSuggestionPanel? emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
@@ -165,7 +165,7 @@ namespace DCL.Chat
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
-            emojiSuggestionPanelController.SetPanelVisibility(false);
+            emojiSuggestionPanelController!.SetPanelVisibility(false);
             ToggleEmojiPanelAsync(emojiPanelCts.Token).Forget();
         }
 
@@ -296,7 +296,7 @@ namespace DCL.Chat
             {
                 if (match.Value.Length < 2)
                 {
-                    emojiSuggestionPanelController.SetPanelVisibility(false);
+                    emojiSuggestionPanelController!.SetPanelVisibility(false);
                     return;
                 }
 
@@ -305,14 +305,14 @@ namespace DCL.Chat
 
                 SearchAndSetEmojiSuggestionsAsync(match.Value, cts.Token).Forget();
             }
-            else { emojiSuggestionPanelController.SetPanelVisibility(false); }
+            else { emojiSuggestionPanelController!.SetPanelVisibility(false); }
         }
 
         private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
         {
             await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, keysWithPrefix, ct);
 
-            emojiSuggestionPanelController.SetValues(keysWithPrefix);
+            emojiSuggestionPanelController!.SetValues(keysWithPrefix);
             emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 
@@ -340,12 +340,17 @@ namespace DCL.Chat
         public override void Dispose()
         {
             chatMessagesBus.OnMessageAdded -= CreateChatEntry;
-            emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
-            emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
+
+            if (emojiPanelController != null)
+            {
+                emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
+                emojiPanelController.Dispose();
+            }
+
+            if (emojiSuggestionPanelController != null)
+                emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
+
             dclInput.UI.Submit.performed -= OnSubmitAction;
-
-            emojiPanelController.Dispose();
-
             cts.SafeCancelAndDispose();
             commandCts.SafeCancelAndDispose();
         }

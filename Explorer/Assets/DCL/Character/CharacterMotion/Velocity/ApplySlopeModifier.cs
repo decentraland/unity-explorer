@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.Physics;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
