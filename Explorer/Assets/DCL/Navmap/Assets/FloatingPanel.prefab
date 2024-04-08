@@ -1605,6 +1605,7 @@ GameObject:
   - component: {fileID: 6340347681702132046}
   - component: {fileID: 4920695936791869430}
   - component: {fileID: 4114018274006828034}
+  - component: {fileID: 6487922241336898360}
   m_Layer: 5
   m_Name: FloatingPanel
   m_TagString: Untagged
@@ -1622,7 +1623,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4654449089487359942}
   - {fileID: 2339755230597314523}
@@ -1748,6 +1749,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!225 &6487922241336898360
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2842296464104635411}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2945859757405099506
 GameObject:
   m_ObjectHideFlags: 0
