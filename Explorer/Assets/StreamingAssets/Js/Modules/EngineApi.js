@@ -13,6 +13,23 @@ module.exports.sendBatch = async function() {
 module.exports.crdtGetState = async function() {
     const data = new Uint8Array(UnityEngineApi.CrdtGetState())
     return {
-        data: [data]
+        data: [data],
+        hasEntities: true //TODO replace with actual value
     };
+}
+
+module.exports.subscribe = async function(message) {
+    console.log(`JSMODULE: EngineApi.subscribe(${message.eventId}): deprecated`)
+    return {}
+}
+
+module.exports.unsubscribe = async function(message) {
+    console.log(`JSMODULE: EngineApi.unsubscribe(${message.eventId}): deprecated`)
+    return {}
+}
+
+module.exports.isServer = async function () {
+    return {
+        isServer: false
+    }
 }
