@@ -1,52 +1,74 @@
-using DCL.UI;
 using System;
-using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
     public class BackpackCommandBus : IBackpackCommandBus
     {
-        public event Action<BackpackEquipCommand> OnEquipMessageReceived;
-        public event Action<BackpackUnEquipCommand> OnUnEquipMessageReceived;
-        public event Action<BackpackSelectCommand> OnSelectMessageReceived;
-        public event Action<BackpackHideCommand> OnHideMessageReceived;
-        public event Action<BackpackFilterCategoryCommand> OnFilterCategoryMessageReceived;
-        public event Action<BackpackSearchCommand> OnSearchMessageReceived;
-        public event Action<BackpackPublishProfileCommand> OnPublishProfileReceived;
+        public event Action<BackpackEquipWearableCommand>? EquipWearableMessageReceived;
+        public event Action<BackpackEquipEmoteCommand>? EquipEmoteMessageReceived;
+        public event Action<BackpackUnEquipEmoteCommand>? UnEquipEmoteMessageReceived;
+        public event Action<BackpackEmoteSlotSelectCommand>? EmoteSlotSelectMessageReceived;
+        public event Action<BackpackUnEquipWearableCommand>? UnEquipWearableMessageReceived;
+        public event Action<BackpackSelectWearableCommand>? SelectWearableMessageReceived;
+        public event Action<BackpackSelectEmoteCommand>? SelectEmoteMessageReceived;
+        public event Action<BackpackHideCommand>? HideMessageReceived;
+        public event Action<BackpackFilterCategoryCommand>? FilterCategoryMessageReceived;
+        public event Action<BackpackSearchCommand>? SearchMessageReceived;
+        public event Action<BackpackPublishProfileCommand>? PublishProfileReceived;
 
-        public void SendCommand(BackpackEquipCommand command)
+        public void SendCommand(BackpackEquipWearableCommand command)
         {
-            OnEquipMessageReceived?.Invoke(command);
+            EquipWearableMessageReceived?.Invoke(command);
         }
 
-        public void SendCommand(BackpackUnEquipCommand command)
+        public void SendCommand(BackpackUnEquipWearableCommand command)
         {
-            OnUnEquipMessageReceived?.Invoke(command);
+            UnEquipWearableMessageReceived?.Invoke(command);
         }
 
-        public void SendCommand(BackpackSelectCommand command)
+        public void SendCommand(BackpackSelectWearableCommand command)
         {
-            OnSelectMessageReceived?.Invoke(command);
+            SelectWearableMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackSelectEmoteCommand command)
+        {
+            SelectEmoteMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackHideCommand command)
         {
-            OnHideMessageReceived?.Invoke(command);
+            HideMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackFilterCategoryCommand command)
         {
-            OnFilterCategoryMessageReceived?.Invoke(command);
+            FilterCategoryMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackSearchCommand command)
         {
-            OnSearchMessageReceived?.Invoke(command);
+            SearchMessageReceived?.Invoke(command);
         }
 
         public void SendCommand(BackpackPublishProfileCommand command)
         {
-            OnPublishProfileReceived?.Invoke(command);
+            PublishProfileReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackEquipEmoteCommand command)
+        {
+            EquipEmoteMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackUnEquipEmoteCommand command)
+        {
+            UnEquipEmoteMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackEmoteSlotSelectCommand command)
+        {
+            EmoteSlotSelectMessageReceived?.Invoke(command);
         }
     }
 }

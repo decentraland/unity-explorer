@@ -75,5 +75,8 @@ namespace SceneRunner.Scene
 
         public URLAddress GetAssetBundleURL(string hash) =>
             assetBundlesBaseUrl.Append(new URLPath($"{dto.Version}/{hash}"));
+
+        public string GetVersion() =>
+            dto.version;
     }
 }
