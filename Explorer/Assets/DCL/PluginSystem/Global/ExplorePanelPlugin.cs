@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
 
         private NavmapController? navmapController;
+        private SettingsController? settingsController;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -76,6 +77,7 @@ namespace DCL.PluginSystem.Global
         public override void Dispose()
         {
             navmapController?.Dispose();
+            settingsController?.Dispose();
             backpackSubPlugin.Dispose();
         }
 
@@ -87,7 +89,7 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController, webRequestController, mvcManager);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
-            var settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
             PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);

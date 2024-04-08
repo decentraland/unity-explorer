@@ -1,15 +1,19 @@
 using DCL.Diagnostics;
 using DCL.Settings.Configuration;
+using DCL.Settings.ModuleControllers;
 using DCL.UI;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
-    public class SettingsController : ISection
+    public class SettingsController : ISection, IDisposable
     {
         private readonly SettingsView view;
         private readonly RectTransform rectTransform;
+        private List<SettingsFeatureController> controllers = new ();
 
         public SettingsController(SettingsView view)
         {
@@ -61,7 +65,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    module?.CreateModule(generalGroupView.ModulesContainer);
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer));
             }
         }
 
@@ -99,6 +103,12 @@ namespace DCL.Settings
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
             view.ContentScrollRect.verticalNormalizedPosition = 1;
+        }
+
+        public void Dispose()
+        {
+            foreach (SettingsFeatureController controller in controllers)
+                controller.Dispose();
         }
     }
 }

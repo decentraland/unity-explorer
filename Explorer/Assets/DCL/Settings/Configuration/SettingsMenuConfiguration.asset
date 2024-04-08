@@ -97,7 +97,7 @@ MonoBehaviour:
           sliderType: 1
           minValue: 0
           maxValue: 100
-          wholeNumbers: 0
+          wholeNumbers: 1
         <Feature>k__BackingField: 0
     - rid: 5242998297641615369
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
