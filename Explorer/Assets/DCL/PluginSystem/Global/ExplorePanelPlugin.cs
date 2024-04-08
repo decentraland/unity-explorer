@@ -17,8 +17,10 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
+using System;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -42,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableCatalog wearableCatalog;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteCache emoteCache;
         private readonly IWebRequestController webRequestController;
 
@@ -62,7 +65,8 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IWebBrowser webBrowser,
-            IEmoteCache emoteCache)
+            IEmoteCache emoteCache,
+            IRealmNavigator realmNavigator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -77,7 +81,9 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.webBrowser = webBrowser;
+            this.realmNavigator = realmNavigator;
             this.emoteCache = emoteCache;
+            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository);
         }
 
         public override void Dispose()
@@ -93,7 +99,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController, webRequestController, mvcManager);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, realmNavigator);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             var settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());

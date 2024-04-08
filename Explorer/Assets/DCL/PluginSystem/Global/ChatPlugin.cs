@@ -8,6 +8,8 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -24,6 +26,7 @@ namespace DCL.PluginSystem.Global
         private ChatController chatController;
         private readonly DCLInput dclInput;
         private readonly IEventSystem eventSystem;
+        private readonly Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -32,7 +35,8 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
-            IEventSystem eventSystem)
+            IEventSystem eventSystem,
+            Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -41,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
+            this.chatCommandsFactory = chatCommandsFactory;
         }
 
         public void Dispose() { }
@@ -72,7 +77,8 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
-                    eventSystem
+                    eventSystem,
+                    chatCommandsFactory
                 );
 
                 mvcManager.RegisterController(chatController);
