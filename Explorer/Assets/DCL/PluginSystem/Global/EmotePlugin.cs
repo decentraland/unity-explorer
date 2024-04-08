@@ -66,7 +66,8 @@ namespace DCL.PluginSystem.Global
         {
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
             IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
-            audioSourceReference = settings.EmoteAudioSource.editorAsset.GetComponent<AudioSource>();
+
+            audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
