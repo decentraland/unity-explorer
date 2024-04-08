@@ -95,11 +95,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 4478972627316701346}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80f9377cf1da4d6d9c51f876d1dd47d1, type: 3}
+  m_Script: {fileID: 11500000, guid: 241a43e98fcd4912a016a663d8067d11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <MainSpriteRenderer>k__BackingField: {fileID: 5191401156417962899}
   <LoadingSpriteRenderer>k__BackingField: {fileID: 1802344957827422875}
+  <MainSpriteRenderer>k__BackingField: {fileID: 5191401156417962899}
 --- !u!1 &7474575258961375657
 GameObject:
   m_ObjectHideFlags: 0
