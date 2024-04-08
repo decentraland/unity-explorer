@@ -12,6 +12,7 @@ namespace DCL.Navmap
     public class NavmapSearchBarController : IDisposable
     {
         public event Action<string> OnResultClicked;
+        public event Action OnSearchTextChanged;
 
         private readonly SearchBarView view;
         private readonly IPlacesAPIService placesAPIService;
@@ -51,7 +52,7 @@ namespace DCL.Navmap
         private void OnValueChanged(string searchText)
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
-            floatingPanelView.gameObject.SetActive(false);
+            OnSearchTextChanged?.Invoke();
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
 

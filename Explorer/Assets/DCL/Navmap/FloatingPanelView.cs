@@ -14,15 +14,6 @@ namespace DCL.Navmap
         public string[] categoryNames;
 
         [field: SerializeField]
-        public RectTransform contentViewport;
-
-        [field: SerializeField]
-        public RectTransform descriptionContent;
-
-        [field: SerializeField]
-        public RectTransform rectTransform;
-
-        [field: SerializeField]
         public RectTransform CategoriesContainer { get; private set; }
 
         [field: SerializeField]

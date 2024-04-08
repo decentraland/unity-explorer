@@ -202,7 +202,7 @@ namespace DCL.Navmap
                 dislikeButtonController.SetButtonState(false);
         }
 
-        private void HidePanel()
+        public void HidePanel()
         {
             view.panelAnimator.SetTrigger(OUT);
         }

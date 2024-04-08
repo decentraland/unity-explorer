@@ -72,7 +72,7 @@ namespace DCL.Navmap
         public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
         {
             ReleasePool();
-
+            view.NoResultsContainer.gameObject.SetActive(places.Count == 0);
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
                 FullSearchResultsView fullSearchResultsView = resultsPool.Get();
@@ -86,8 +86,6 @@ namespace DCL.Navmap
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
                 fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
             }
-
-            view.LoadingContainer.SetActive(false);
         }
 
         private void ReleasePool()

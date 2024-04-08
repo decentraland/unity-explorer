@@ -62,6 +62,7 @@ namespace DCL.Navmap
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, navmapView.floatingPanelView, webRequestController);
             searchBarController.OnResultClicked += OnResultClicked;
+            searchBarController.OnSearchTextChanged += floatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
