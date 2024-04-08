@@ -113,7 +113,6 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             dclInput.UI.Submit.performed += OnSubmitAction;
-            dclInput.Camera.Lock.performed += CloseAllEmojiPanels;
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
         }
 
@@ -186,6 +185,9 @@ namespace DCL.Chat
 
         private void OnSubmit(string _)
         {
+            emojiPanelController.SetPanelVisibility(false);
+            emojiSuggestionPanelController.SetPanelVisibility(false);
+
             if (string.IsNullOrWhiteSpace(currentMessage))
             {
                 viewInstance.InputField.DeactivateInputField();
@@ -196,9 +198,7 @@ namespace DCL.Chat
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
-            emojiPanelController.SetPanelVisibility(false);
             viewInstance.InputField.ActivateInputField();
-            emojiSuggestionPanelController.SetPanelVisibility(false);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -292,18 +292,6 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 
-        private void CloseAllEmojiPanels(InputAction.CallbackContext obj)
-        {
-            eventSystem.RaycastAll(Mouse.current.position.value);
-
-            if (eventSystem.RaycastAll(Mouse.current.position.value).Count == 0)
-            {
-                emojiSuggestionPanelController.SetPanelVisibility(false);
-                emojiPanelController.SetPanelVisibility(false);
-                viewInstance.InputField.text = string.Empty;
-            }
-        }
-
         private void CreateChatEntry(ChatMessage chatMessage)
         {
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
@@ -331,7 +319,6 @@ namespace DCL.Chat
             emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
             emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
             dclInput.UI.Submit.performed -= OnSubmitAction;
-            dclInput.Camera.Lock.performed -= CloseAllEmojiPanels;
             emojiPanelController.Dispose();
             cts.SafeCancelAndDispose();
         }

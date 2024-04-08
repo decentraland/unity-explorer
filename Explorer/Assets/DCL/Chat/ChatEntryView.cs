@@ -8,6 +8,8 @@ namespace DCL.Chat
 {
     public class ChatEntryView : MonoBehaviour
     {
+        private const float BACKGROUND_HEIGHT_OFFSET = 56;
+
         [field: SerializeField]
         internal RectTransform backgroundRectTransform { get; private set; }
 
@@ -45,13 +47,15 @@ namespace DCL.Chat
 
         public void SetUsername(string username, string walletId)
         {
+            int walletIdIndexOf = username.IndexOf("#", StringComparison.Ordinal);
+
             playerName.text = username.Contains("#")
-                ? $"{username.Substring(0, username.IndexOf("#", StringComparison.Ordinal))}"
+                ? $"{username.Substring(0, walletIdIndexOf)}"
                 : username;
             walletIdText.text = $"#{walletId.Substring(0,5)}";
 
-            walletIdText.gameObject.SetActive(username.Contains("#"));
-            verifiedIcon.gameObject.SetActive(!username.Contains("#"));
+            walletIdText.gameObject.SetActive(walletIdIndexOf != -1);
+            verifiedIcon.gameObject.SetActive(walletIdIndexOf == -1);
         }
 
         public void AnimateChatEntry()
@@ -67,7 +71,7 @@ namespace DCL.Chat
 
             contentSizeFitter.SetLayoutVertical();
             backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + 56);
+            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + BACKGROUND_HEIGHT_OFFSET);
 
             backgroundRectTransform.sizeDelta = backgroundSize;
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, backgroundSize.y);
