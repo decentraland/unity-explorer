@@ -64,8 +64,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
 
-        public void Awake()
+        private void Awake()
         {
+            if (!avatarAnimator)
+                return;
+
             avatarAnimator.fireEvents = false;
 
             overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);

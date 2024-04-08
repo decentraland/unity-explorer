@@ -88,23 +88,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
 
-            WearablesLoadResult wearablesResult;
-
-            if (!avatarShapeComponent.WearablePromise.IsConsumed)
-            {
-                if (!avatarShapeComponent.WearablePromise.TryConsume(World, out wearablesResult)) return null;
-            }
-            else
-                wearablesResult = avatarShapeComponent.WearablePromise.Result!.Value;
-
-            EmotesLoadResult emotesResult;
-
-            if (!avatarShapeComponent.EmotePromise.IsConsumed)
-            {
-                if (!avatarShapeComponent.EmotePromise.TryConsume(World, out emotesResult)) return null;
-            }
-            else
-                emotesResult = avatarShapeComponent.EmotePromise.Result!.Value;
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return null;
+            if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return null;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
