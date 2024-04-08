@@ -14,7 +14,7 @@ namespace DCL.LOD
 
         public LODKey(string hash, byte level)
         {
-            Hash = hash;
+            Hash = hash.ToLower();
             Level = level;
         }
 
