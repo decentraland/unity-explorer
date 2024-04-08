@@ -5,6 +5,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
@@ -18,6 +19,7 @@ namespace DCL.Navmap
         private readonly IWebRequestController webRequestController;
         private ObjectPool<FullSearchResultsView> resultsPool;
         private readonly List<FullSearchResultsView> usedPoolElements;
+        private static readonly int LOADED_TRIGGER = Animator.StringToHash("Loaded");
 
         public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
         {
@@ -32,7 +34,8 @@ namespace DCL.Navmap
 
             resultsPool = new ObjectPool<FullSearchResultsView>(
                 () => CreatePoolElements(asset),
-                _ => { },
+                actionOnGet: result => result.gameObject.SetActive(true),
+                actionOnRelease: result => result.gameObject.SetActive(false),
                 defaultCapacity: 8
             );
         }
@@ -44,16 +47,26 @@ namespace DCL.Navmap
             return fullSearchResultsView;
         }
 
-        public void ShowLoading()
+        public void Show()
         {
-            ReleasePool();
-            view.LoadingContainer.SetActive(true);
             view.gameObject.SetActive(true);
         }
 
         public void Hide()
         {
+            ReleasePool();
             view.gameObject.SetActive(false);
+        }
+
+        public void SetLoadingState()
+        {
+            view.gameObject.SetActive(true);
+            ReleasePool();
+            for(var i = 0; i < 8; i++)
+            {
+                FullSearchResultsView fullSearchResultsView = resultsPool.Get();
+                usedPoolElements.Add(fullSearchResultsView);
+            }
         }
 
         public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
@@ -67,6 +80,7 @@ namespace DCL.Navmap
                 fullSearchResultsView.placeName.text = placeInfo.title;
                 fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
+                fullSearchResultsView.resultAnimator.SetTrigger(LOADED_TRIGGER);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
                 fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
             }
@@ -79,6 +93,8 @@ namespace DCL.Navmap
             foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
             {
                 fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
+                fullSearchResultsView.resultAnimator.Rebind();
+                fullSearchResultsView.resultAnimator.Update(0f);
                 resultsPool.Release(fullSearchResultsView);
             }
 

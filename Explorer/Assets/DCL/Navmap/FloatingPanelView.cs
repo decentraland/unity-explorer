@@ -69,5 +69,8 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public MultiStateButtonView favoriteButton;
+
+        [field: SerializeField]
+        public Animator panelAnimator;
     }
 }

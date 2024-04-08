@@ -27,6 +27,9 @@ namespace DCL.Navmap
         [field: SerializeField]
         public Image arrowImage;
 
+        [field: SerializeField]
+        public Animator resultAnimator;
+
         private ImageController imageController;
 
         public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>

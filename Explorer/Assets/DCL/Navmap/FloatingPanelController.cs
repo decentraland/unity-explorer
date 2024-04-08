@@ -29,9 +29,9 @@ namespace DCL.Navmap
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
 
-        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
-        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
         private readonly ImageController placeImageController;
+        private static readonly int OUT = Animator.StringToHash("Out");
+        private static readonly int LOADED = Animator.StringToHash("Loaded");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             ITeleportController teleportController, IWebRequestController webRequestController,
@@ -63,39 +63,18 @@ namespace DCL.Navmap
             likeButtonController.OnButtonClicked += OnLike;
             dislikeButtonController.OnButtonClicked += OnDislike;
             favoriteButtonController.OnButtonClicked += OnFavorite;
-            view.backButton.onClick.AddListener(HideWithSlide);
-        }
-
-        private void HideWithSlide()
-        {
-            view.rectTransform.localPosition = rectTransformLocalPosition;
-            view.rectTransform.DOLocalMove(rectTransformLocalPositionOutside, 0.5f).SetEase(Ease.Linear).OnComplete(() => view.gameObject.SetActive(false));
+            view.backButton.onClick.AddListener(HidePanel);
         }
 
         public void HandlePanelVisibility(Vector2Int parcel, bool popAnimation = true)
         {
-            view.rectTransform.localPosition = rectTransformLocalPosition;
-
             if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
             else { ShowPanel(parcel, popAnimation); }
         }
 
         private void ShowPanel(Vector2Int parcel, bool popAnimation)
         {
-            view.rectTransform.localScale = Vector3.zero;
             view.gameObject.SetActive(true);
-
-            if (popAnimation)
-            {
-                view.rectTransform.localScale = Vector3.zero;
-                view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
-            }
-            else
-            {
-                view.rectTransform.localScale = Vector3.one;
-                view.rectTransform.localPosition = rectTransformLocalPositionOutside;
-                view.rectTransform.DOLocalMove(rectTransformLocalPosition, 0.5f).SetEase(Ease.Linear);
-            }
 
             cts = new CancellationTokenSource();
             GetPlaceInfoAsync(parcel).Forget();
@@ -110,6 +89,7 @@ namespace DCL.Navmap
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
+                view.panelAnimator.SetTrigger(LOADED);
             }
             catch (Exception ex) { SetEmptyParcelInfo(parcel); }
         }
@@ -214,8 +194,7 @@ namespace DCL.Navmap
 
         private void HidePanel()
         {
-            view.rectTransform.localScale = Vector3.one;
-            view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(() => view.gameObject.SetActive(false));
+            view.panelAnimator.SetTrigger(OUT);
         }
 
         public void Dispose()

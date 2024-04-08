@@ -51,20 +51,24 @@ namespace DCL.Navmap
         private void OnValueChanged(string searchText)
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
-            if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
-                searchResultPanelController.Hide();
-
             floatingPanelView.gameObject.SetActive(false);
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
+
+            if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
+            {
+                searchResultPanelController.Hide();
+                return;
+            }
+
             SearchAndShowAsync(searchText).Forget();
         }
 
         private async UniTaskVoid SearchAndShowAsync(string searchText)
         {
+            searchResultPanelController.SetLoadingState();
             await UniTask.Delay(1000, cancellationToken: cts.Token);
-            ResetFloatingPanelStatus();
-            searchResultPanelController.ShowLoading();
+
             using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, 0, 8, cts.Token);
             searchResultPanelController.SetResults(response.Data);
         }
@@ -74,13 +78,6 @@ namespace DCL.Navmap
             view.inputField.SetTextWithoutNotify("");
             searchResultPanelController.Hide();
             view.clearSearchButton.gameObject.SetActive(false);
-            ResetFloatingPanelStatus();
-        }
-
-        private void ResetFloatingPanelStatus()
-        {
-            floatingPanelView.gameObject.SetActive(false);
-            floatingPanelView.backButton.gameObject.SetActive(false);
         }
 
         public void Dispose()
