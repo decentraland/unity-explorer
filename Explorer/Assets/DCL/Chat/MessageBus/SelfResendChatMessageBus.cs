@@ -61,6 +61,7 @@ namespace DCL.Chat.MessageBus
                     message,
                     profile?.DisplayName ?? string.Empty,
                     identity.Address,
+                    true,
                     true
                 )
             );

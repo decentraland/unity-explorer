@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles.Helpers;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -46,6 +47,7 @@ namespace DCL.Profiles
             if (profile == null)
                 throw new Exception($"Profile not found {intention.ProfileId}");
 
+            ProfileUtils.CreateProfilePicturePromise(profile, World, partition);
             return new StreamableLoadingResult<Profile>(profile);
         }
 

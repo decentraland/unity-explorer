@@ -23,14 +23,15 @@ namespace DCL.Chat
                     StringUtils.GenerateRandomString(Random.Range(1,250)),
                     sender,
                     Random.Range(0, 2) == 0 ? "" : sender,
-                    Random.Range(0, 10) <= 2));
+                    Random.Range(0, 10) <= 2,
+                    true));
         }
 
         //Add message will be called from the message handling system of the livekit integration
 
         public void Send(string message)
         {
-            OnMessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true));
+            OnMessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true, true));
         }
 
         public void Dispose()
