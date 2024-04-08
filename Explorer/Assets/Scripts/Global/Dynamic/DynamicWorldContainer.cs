@@ -136,7 +136,6 @@ namespace Global.Dynamic
                 await settingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
-                container.ParcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, container.DebugContainer.Builder, container.MvcManager);
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
             }
 
