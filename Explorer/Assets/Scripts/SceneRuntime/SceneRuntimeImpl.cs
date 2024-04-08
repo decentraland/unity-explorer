@@ -13,6 +13,7 @@ using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
@@ -124,7 +125,7 @@ namespace SceneRuntime
 
         public void RegisterEngineApi(IEngineApi api)
         {
-            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
+            engine.AddHostObject("UnityEngineApi", engineApi = new SDKObservablesEngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
         public void RegisterRuntime(IRuntime api)

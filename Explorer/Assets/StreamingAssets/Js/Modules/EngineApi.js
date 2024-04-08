@@ -6,9 +6,11 @@ module.exports.crdtSendToRenderer = async function(messages) {
     };
 }
 
-module.exports.sendBatch = async function() {    
+module.exports.sendBatch = async function() {
+    const data = UnityEngineApi.SendBatch()
+    // console.pravslog(`PRAVS - sendBatch() - ${data}`, data)
     return { 
-        events: UnityEngineApi.SendBatch() 
+        events: data
     };
 }
 
@@ -20,10 +22,10 @@ module.exports.crdtGetState = async function() {
 }
 
 module.exports.subscribe = async function(data) {
-    UnityEngineApi.SubscribeToObservableEvent(data.eventId)
+    UnityEngineApi.SubscribeToSDKObservableEvent(data.eventId)
     return {};
 }
 module.exports.unsubscribe = async function(data) {
-    UnityEngineApi.UnsubscribeFromObservableEvent(data.eventId)
+    UnityEngineApi.UnsubscribeFromSDKObservableEvent(data.eventId)
     return {};
 }
