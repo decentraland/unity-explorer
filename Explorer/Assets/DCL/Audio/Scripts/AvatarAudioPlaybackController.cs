@@ -9,8 +9,6 @@ namespace DCL.Audio
 {
     public class AvatarAudioPlaybackController : MonoBehaviour
     {
-        private const int DEFAULT_AVATAR_AUDIO_PITCH = 1;
-
         [FormerlySerializedAs("audioSource")]
         [SerializeField] private AudioSource AvatarAudioSource;
         [FormerlySerializedAs("animator")]
@@ -102,9 +100,9 @@ namespace DCL.Audio
 
             if (clipConfig == null) return;
 
-            AvatarAudioSource.pitch = DEFAULT_AVATAR_AUDIO_PITCH + AudioPlaybackUtilities.GetPitchVariation(clipConfig);
+            AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-            AvatarAudioSource.PlayOneShot(clipConfig.audioClips[clipIndex]);
+            AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex]);
         }
 
     }

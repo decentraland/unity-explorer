@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DCL.Audio
 {
-    public class AudioConfigViewerWindow : EditorWindow
+    /*public class AudioConfigViewerWindow : EditorWindow
     {
         private const string ASSETS_PATH = "Assets/DCL/Audio/AudioConfigs";
 
@@ -131,10 +131,10 @@ namespace DCL.Audio
             EditorGUILayout.BeginHorizontal();
             {
                 GUILayout.Label("Volume", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
-                audioConfig.relativeVolume = EditorGUILayout.Slider(audioConfig.relativeVolume, 0f, 1f, GUILayout.Width(position.width * 0.4f));
+                audioConfig.relativeVolume = EditorGUILayout.Slider(audioConfig.RelativeVolume, 0f, 1f, GUILayout.Width(position.width * 0.4f));
 
                 GUILayout.Label("Category", GUILayout.Width(EditorGUIUtility.labelWidth * 0.4f));
-                audioConfig.audioCategory = (AudioCategory)EditorGUILayout.EnumPopup(audioConfig.audioCategory);
+                audioConfig.audioCategory = (AudioCategory)EditorGUILayout.EnumPopup(audioConfig.Category);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -142,20 +142,20 @@ namespace DCL.Audio
             {
                 EditorGUILayout.LabelField("Audio Clips:", GUILayout.Width(position.width * 0.5f));
 
-                if (GUILayout.Button("Add AudioClip")) { Array.Resize(ref audioConfig.audioClips, audioConfig.audioClips.Length + 1); }
+                if (GUILayout.Button("Add AudioClip")) { Array.Resize(ref audioConfig.audioClips, audioConfig.AudioClips.Length + 1); }
             }
             EditorGUILayout.EndHorizontal();
 
-            if (audioConfig.audioClips != null)
+            if (audioConfig.AudioClips != null)
             {
                 EditorGUI.indentLevel++;
-                for (int i = 0; i < audioConfig.audioClips.Length; i++)
+                for (int i = 0; i < audioConfig.AudioClips.Length; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
-                    audioConfig.audioClips[i] = (AudioClip)EditorGUILayout.ObjectField("Clip " + i, audioConfig.audioClips[i], typeof(AudioClip), false, GUILayout.Width(position.width * 0.7f));
+                    audioConfig.AudioClips[i] = (AudioClip)EditorGUILayout.ObjectField("Clip " + i, audioConfig.AudioClips[i], typeof(AudioClip), false, GUILayout.Width(position.width * 0.7f));
                     if (GUILayout.Button("Remove"))
                     {
-                        audioConfig.audioClips = audioConfig.audioClips.Where((clip, index) => index != i).ToArray();
+                        audioConfig.audioClips = audioConfig.AudioClips.Where((clip, index) => index != i).ToArray();
                         EditorGUIUtility.ExitGUI();
                         break;
                     }
@@ -172,7 +172,7 @@ namespace DCL.Audio
 
         private IEnumerable<IGrouping<AudioCategory, AudioClipConfig>> GroupByCategory(IEnumerable<AudioClipConfig> configs)
         {
-            return configs.GroupBy(config => config.audioCategory);
+            return configs.GroupBy(config => config.Category);
         }
 
 
@@ -209,6 +209,6 @@ namespace DCL.Audio
                 if (audioConfig != null) { audioConfigs.Add(audioConfig); }
             }
         }
-    }
+    }*/
 }
 

@@ -11,13 +11,14 @@ namespace DCL.Audio
 {
     public class UIAudioManagerContainer : MonoBehaviour, IDisposable
     {
-        [FormerlySerializedAs("audioSource")]
         [SerializeField]
-        private AudioSource AudioSource;
+        private AudioSource UiAudioSource;
         [SerializeField]
-        private UIAudioSettings UIAudioSettings;
+        private AudioSource MusicAudioSource;
         [SerializeField]
-        private float fadeDuration = 1.5f;
+        private AudioSource ChatAudioSource;
+        [SerializeField]
+        private float fadeDuration = 1.5f;//This should go into music settings or just general settings
         [SerializeField]
         private AudioSettings audioSettings;
 
@@ -27,140 +28,100 @@ namespace DCL.Audio
         public void Dispose()
         {
             UIAudioEventsBus.Instance.PlayAudioEvent -= OnPlayAudioEvent;
-            AudioSource.Stop();
-            //Dispose of IEnumerators
+            UiAudioSource.Stop();
+            MusicAudioSource.Stop();
+            ChatAudioSource.Stop();
         }
 
-        public void Initialize(IComponentPool<AudioSource> audioSourcePool)
+        public void Initialize()
         {
-            this.audioSourcePool = audioSourcePool;
             UIAudioEventsBus.Instance.PlayAudioEvent += OnPlayAudioEvent;
             UIAudioEventsBus.Instance.PlayLoopingAudioEvent += OnPlayLoopingAudioEvent;
-            UIAudioEventsBus.Instance.PlayAudioWithAudioSourceEvent += OnPlayAudioWithAudioSourceEvent;
         }
 
         private void OnPlayLoopingAudioEvent(AudioClipConfig audioClipConfig, bool startLoop)
         {
-            if (UIAudioSettings.UIAudioVolume > 0) // Check if audio volume is greater than 0
+            //if (UIAudioSettings.UIAudioVolume > 0) // Check if audio volume is greater than 0
             {
                 if (startLoop)
                 {
-                    if (audioClipConfig.audioClips.Length > 0)
+                    if (audioClipConfig.AudioClips.Length > 0)
                     {
-                        int randomIndex = Random.Range(0, audioClipConfig.audioClips.Length);
-                        AudioClip randomClip = audioClipConfig.audioClips[randomIndex];
-                        StartCoroutine(FadeInAndPlay(randomClip, UIAudioSettings.UIAudioVolume * audioClipConfig.relativeVolume, fadeDuration));
+                        int randomIndex = Random.Range(0, audioClipConfig.AudioClips.Length);
+                        AudioClip randomClip = audioClipConfig.AudioClips[randomIndex];
+                   //     StartCoroutine(FadeInAndPlay(randomClip, UIAudioSettings.UIAudioVolume * audioClipConfig.relativeVolume, fadeDuration));
                     }
                 }
                 else
                 {
-                    StartCoroutine(FadeOutAndStop(fadeDuration));
+                //    StartCoroutine(FadeOutAndStop(fadeDuration));
                 }
             }
         }
 
 
-        private IEnumerator FadeInAndPlay(AudioClip clip, float targetVolume, float duration)
+        private IEnumerator FadeInAndPlay(AudioClip clip, float targetVolume, float duration, AudioSource audioSource)
         {
             float currentTime = 0;
             float startVolume = 0;
             while (currentTime < duration)
             {
                 currentTime += Time.deltaTime;
-                AudioSource.volume = Mathf.Lerp(startVolume, targetVolume, currentTime / duration);
+                audioSource.volume = Mathf.Lerp(startVolume, targetVolume, currentTime / duration);
                 yield return null;
             }
-            AudioSource.volume = targetVolume;
-            AudioSource.clip = clip;
-            AudioSource.loop = true;
-            AudioSource.Play();
+            audioSource.volume = targetVolume;
+            audioSource.clip = clip;
+            audioSource.loop = true;
+            audioSource.Play();
         }
 
-        private IEnumerator FadeOutAndStop(float duration)
+        private IEnumerator FadeOutAndStop(float duration, AudioSource audioSource)
         {
             float currentTime = 0;
-            float startVolume = AudioSource.volume;
+            float startVolume = audioSource.volume;
             while (currentTime < duration)
             {
                 currentTime += Time.deltaTime;
-                AudioSource.volume = Mathf.Lerp(startVolume, 0, currentTime / duration);
+                audioSource.volume = Mathf.Lerp(startVolume, 0, currentTime / duration);
                 yield return null;
             }
-            AudioSource.volume = 0;
-            AudioSource.loop = false;
-            AudioSource.Stop();
+            audioSource.volume = 0;
+            audioSource.loop = false;
+            audioSource.Stop();
         }
 
 
         //We will need to use a pooled AudioSource and set proper volume, priority, pitch, volume, etc for each sound depending on category
 
-        private void OnPlayAudioWithAudioSourceEvent(AudioClipConfig audioClipConfig, AudioSource audioSource)
-        {
-            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
-            PlayClip(audioClipConfig, audioSource, clipIndex);
-        }
-
-        private void PlayClip(AudioClipConfig audioClipConfig, AudioSource audioSource, int clipIndex)
-        {
-            audioSource.pitch = 1 + AudioPlaybackUtilities.GetPitchVariation(audioClipConfig);
-
-            if (audioClipConfig.ClipPlaybackMode == AudioClipPlaybackMode.Once)
-            {
-                audioSource.PlayOneShot(audioClipConfig.audioClips[clipIndex], audioClipConfig.relativeVolume);
-            }
-            else if (audioClipConfig.ClipPlaybackMode == AudioClipPlaybackMode.Loop)
-            {
-                audioSource.Stop(); //Maybe do fadeout and fade in?
-                audioSource.clip = audioClipConfig.audioClips[clipIndex];
-
-                switch (audioClipConfig.ClipLoopMode)
-                {
-                    case AudioClipLoopMode.Loop:
-                        audioSource.loop = true;
-                        break;
-                    case AudioClipLoopMode.Contiguous:
-                        break;
-                    case AudioClipLoopMode.Random:
-                        break;
-                    default: throw new ArgumentOutOfRangeException();
-                }
-
-                audioSource.Play();
-            }
-        }
-
-
-        private void PlayLoop(AudioClipConfig audioClipConfig, AudioSource audioSource, AudioClip clip)
-        {
-            audioSource.Stop();
-            audioSource.loop = true;
-            audioSource.clip = clip;
-            audioSource.Play();
-
-        }
-
-        private AudioMixerGroup GetAudioMixerGroup(AudioClipConfig audioClipConfig)
-        {
-            return audioSettings.CategorySettings.Find(c => c.key == audioClipConfig.audioCategory).value.MixerGroup;
-        }
-
-
         private void OnPlayAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (UIAudioSettings.UIAudioVolume > 0) //Here we will use proper Settings for the type of audio clip
-            {
-                AudioSource.volume = 1;
+            if (audioClipConfig.Category is not (AudioCategory.Chat or AudioCategory.Music or AudioCategory.UI))
+                //We can only play UI sounds through this bus. Other sounds are discarded -> maybe add a log here?
+                return;
 
-                if (audioClipConfig.audioClips.Length > 1)
-                {
-                    int randomIndex = Random.Range(0, audioClipConfig.audioClips.Length);
-                    AudioClip randomClip = audioClipConfig.audioClips[randomIndex];
-                    AudioSource.PlayOneShot(randomClip, UIAudioSettings.UIAudioVolume * audioClipConfig.relativeVolume);
-                }
-                else
-                {
-                    AudioSource.PlayOneShot(audioClipConfig.audioClips[0], UIAudioSettings.UIAudioVolume * audioClipConfig.relativeVolume);
-                }
+            var settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
+            if (!settings.AudioEnabled) return;
+
+            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+
+            var audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
+
+            audioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(audioClipConfig);
+            audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], audioClipConfig.RelativeVolume);
+        }
+
+        private AudioSource GetAudioSourceForCategory(AudioCategory audioCategory)
+        {
+            switch (audioCategory)
+            {
+                case AudioCategory.UI: return UiAudioSource;
+                case AudioCategory.Chat: return ChatAudioSource;
+                case AudioCategory.Music: return MusicAudioSource;
+                case AudioCategory.World:
+                case AudioCategory.Avatar:
+                case AudioCategory.None:
+                default: throw new ArgumentOutOfRangeException(nameof(audioCategory), audioCategory, null);
             }
         }
     }

@@ -1041,9 +1041,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a94ccb75ff1486a89b3580b005822a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  audioSource: {fileID: 8473738078940835052}
-  animator: {fileID: 6654053651110562472}
-  audioSettings: {fileID: 11400000, guid: b21e79c1385d35d4388c8016a09c8316, type: 2}
+  AvatarAudioSource: {fileID: 8473738078940835052}
+  AvatarAnimator: {fileID: 6654053651110562472}
+  AvatarAudioSettings: {fileID: 11400000, guid: b21e79c1385d35d4388c8016a09c8316, type: 2}
 --- !u!82 &8473738078940835052
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1100,7 +1100,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0

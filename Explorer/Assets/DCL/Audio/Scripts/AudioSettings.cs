@@ -13,8 +13,22 @@ namespace DCL.Audio
         [SerializeField] private float masterVolume = 1;
         [SerializeField] private AudioMixer masterAudioMixer;
 
+
+        private Dictionary<AudioCategory, AudioCategorySettings> audioCategorySettingsDictionary = new Dictionary<AudioCategory, AudioCategorySettings>();
+
         public float MasterVolume => masterVolume;
-        public List<AudioCategorySettingsKeyValuePair> CategorySettings => audioCategorySettings;
+
+
+        public AudioCategorySettings GetSettingsForCategory(AudioCategory category)
+        {
+            if (!audioCategorySettingsDictionary.TryGetValue(category, out var settings))
+            {
+                settings = audioCategorySettings.Find(s => s.key == category).value;
+                audioCategorySettingsDictionary.Add(category, settings);
+            }
+
+            return settings;
+        }
 
     }
 

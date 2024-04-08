@@ -4,15 +4,16 @@ namespace DCL.Audio
 {
     public static class AudioPlaybackUtilities
     {
-        public static float GetPitchVariation(AudioClipConfig audioClipConfig)
+        private const int DEFAULT_PITCH = 1;
+        public static float GetPitchWithVariation(AudioClipConfig audioClipConfig)
         {
-            if (audioClipConfig.pitchVariation > 0)
+            if (audioClipConfig.PitchVariation > 0)
             {
-                return Random.Range(-audioClipConfig.pitchVariation, audioClipConfig.pitchVariation);
+                return DEFAULT_PITCH + Random.Range(-audioClipConfig.PitchVariation, audioClipConfig.PitchVariation);
             }
             else
             {
-                return 0;
+                return DEFAULT_PITCH;
             }
         }
 
@@ -24,7 +25,7 @@ namespace DCL.Audio
                 case AudioClipSelectionMode.First:
                     return startingClip;
                 case AudioClipSelectionMode.Random:
-                    return Random.Range(0, audioClipConfig.audioClips.Length);
+                    return Random.Range(0, audioClipConfig.AudioClips.Length);
             }
         }
 

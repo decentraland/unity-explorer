@@ -7,16 +7,22 @@ namespace DCL.Audio
     [CreateAssetMenu(fileName = "AudioClipConfig", menuName = "SO/Audio/AudioClipConfig")]
     public class AudioClipConfig : ScriptableObject
     {
-        [SerializeField] public AudioClip[] audioClips = Array.Empty<AudioClip>();
-        [SerializeField] public float relativeVolume = 1;
-        [SerializeField] public AudioCategory audioCategory;
-        [SerializeField] public float pitchVariation = 0.5f;
+        [SerializeField] private AudioClip[] audioClips = Array.Empty<AudioClip>();
+        [SerializeField] private float relativeVolume = 1;
+        [SerializeField] private AudioCategory audioCategory;
+        [SerializeField] private float pitchVariation = 0.5f;
+        [SerializeField] private AudioClipSelectionMode clipSelectionMode;
+        public float PitchVariation => pitchVariation;
+        public AudioCategory Category => audioCategory;
+        public float RelativeVolume => relativeVolume;
+        public AudioClip[] AudioClips => audioClips;
 
-        //We need to improve this ->
-        [SerializeField] public AudioClipSelectionMode ClipSelectionMode;
-        [SerializeField] public AudioClipPlaybackMode ClipPlaybackMode;
-        [SerializeField] public AudioClipLoopMode ClipLoopMode;
-        [SerializeField] public bool startInRandomPositionInsideClip;
+        public AudioClipSelectionMode ClipSelectionMode => clipSelectionMode;
+
+
+        //[SerializeField] public AudioClipPlaybackMode ClipPlaybackMode;
+        //[SerializeField] public AudioClipLoopMode ClipLoopMode;
+        //[SerializeField] public bool startInRandomPositionInsideClip;
     }
 
     public enum AudioClipSelectionMode
@@ -25,13 +31,13 @@ namespace DCL.Audio
         First // Chooses first clip on array
     }
 
-    public enum AudioClipPlaybackMode
+    public enum AudioClipPlaybackMode //WIP
     {
         Once, //Plays only the chosen clip once
         Loop, //Plays the chosen clip and then keeps playing clips depending on the AudioClipLoopMode
     }
 
-    public enum AudioClipLoopMode
+    public enum AudioClipLoopMode //WIP
     {
         Loop, //Plays the same clip over and over until stopped
         Contiguous, //Plays clips following the order they are in the array, when reaching the last one, starts over, until stopped
@@ -47,6 +53,5 @@ namespace DCL.Audio
         Music,
         None
     }
-
 
 }
