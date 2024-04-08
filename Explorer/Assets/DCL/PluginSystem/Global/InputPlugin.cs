@@ -16,10 +16,12 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IEmoteCache emoteCache;
         private readonly MultiplayerEmotesMessageBus messageBus;
+        private readonly IEventSystem eventSystem;
 
-        public InputPlugin(DCLInput dclInput, IEmoteCache emoteCache, MultiplayerEmotesMessageBus messageBus)
+        public InputPlugin(DCLInput dclInput, IEmoteCache emoteCache, MultiplayerEmotesMessageBus messageBus, IEventSystem eventSystem)
         {
             this.dclInput = dclInput;
+            this.eventSystem = eventSystem;
             this.emoteCache = emoteCache;
             this.messageBus = messageBus;
             dclInput.Enable();
@@ -34,8 +36,10 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UnityEventSystem(EventSystem.current), new DCLCursor());
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, messageBus);
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, new DCLCursor());
+
+            // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
         }
     }
 }

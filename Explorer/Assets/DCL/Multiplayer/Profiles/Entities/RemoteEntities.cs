@@ -8,6 +8,7 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
+using DCL.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms;
@@ -106,6 +107,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );
+            ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
 
             entityParticipantTable.Register(profile.WalletId, entity);
         }

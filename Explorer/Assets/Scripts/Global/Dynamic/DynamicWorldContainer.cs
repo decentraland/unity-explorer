@@ -11,6 +11,7 @@ using DCL.Chat.MessageBus;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Input;
 using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
@@ -49,6 +50,7 @@ using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
@@ -226,6 +228,8 @@ namespace Global.Dynamic
                 new RemotePoses(container.RoomHub)
             );
 
+            var eventSystem = new UnityEventSystem(EventSystem.current);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -267,7 +271,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,

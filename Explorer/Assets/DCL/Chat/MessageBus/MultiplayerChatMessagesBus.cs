@@ -47,7 +47,8 @@ namespace DCL.Chat.MessageBus
                         receivedMessage.Payload.Message!,
                         profile?.DisplayName ?? string.Empty,
                         receivedMessage.FromWalletId,
-                        false
+                        false,
+                        true
                     )
                 );
             }
