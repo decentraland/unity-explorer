@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Networking;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
@@ -101,7 +102,10 @@ namespace DCL.Profiles
 
             try
             {
-                GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct);
+                GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+
+                if (response.UnityWebRequest.result is not UnityWebRequest.Result.Success)
+                    return null;
 
                 using GetProfileJsonRootDto root = await response.CreateFromNewtonsoftJsonAsync<GenericGetRequest, GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),

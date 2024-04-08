@@ -12,9 +12,7 @@ namespace DCL.Web3.Identities
         {
             private readonly IWeb3Identity? identity;
 
-            public Fake() : this(new IWeb3Identity.Random())
-            {
-            }
+            public Fake() : this(new IWeb3Identity.Random()) { }
 
             public Fake(IWeb3Identity? identity)
             {
@@ -39,6 +37,37 @@ namespace DCL.Web3.Identities
             public void Dispose()
             {
                 //ignore
+            }
+        }
+
+        class Default : IWeb3IdentityCache
+        {
+            private readonly IWeb3IdentityCache origin;
+
+            public Default()
+            {
+                origin = new ProxyIdentityCache(
+                    new MemoryWeb3IdentityCache(),
+                    new PlayerPrefsIdentityProvider(
+                        new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                    )
+                );
+            }
+
+            public IWeb3Identity? Identity
+            {
+                get => origin.Identity;
+                set => origin.Identity = value;
+            }
+
+            public void Clear()
+            {
+                origin.Clear();
+            }
+
+            public void Dispose()
+            {
+                origin.Dispose();
             }
         }
     }
