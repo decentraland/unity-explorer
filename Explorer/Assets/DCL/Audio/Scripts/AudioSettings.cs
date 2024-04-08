@@ -13,24 +13,12 @@ namespace DCL.Audio
         [SerializeField] private float masterVolume = 1;
         [SerializeField] private AudioMixer masterAudioMixer;
 
-
         public float MasterVolume => masterVolume;
         public List<AudioCategorySettingsKeyValuePair> CategorySettings => audioCategorySettings;
 
     }
 
     [Serializable]
-    public class AudioCategorySettings
-    {
-        [SerializeField] private float categoryVolume = 1;
-        [SerializeField] private int audioPriority = 125;
-        [SerializeField] public AudioMixerGroup audioMixerGroup;
-
-        public float CategoryVolume => categoryVolume;
-        public int AudioPriority => audioPriority;
-    }
-
-     [Serializable]
     public class AudioCategorySettingsKeyValuePair
     {
             public AudioCategory key;
