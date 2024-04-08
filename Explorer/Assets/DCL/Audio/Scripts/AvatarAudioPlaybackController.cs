@@ -102,7 +102,7 @@ namespace DCL.Audio
 
             AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-            AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex]);
+            AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex], clipConfig.RelativeVolume);
         }
 
     }
