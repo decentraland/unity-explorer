@@ -3,8 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Emoji;
+using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
@@ -37,6 +39,7 @@ namespace DCL.Chat
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
+        private readonly IEventSystem eventSystem;
         private World world;
 
         private string currentMessage = string.Empty;
@@ -61,7 +64,8 @@ namespace DCL.Chat
             EmojiSuggestionView emojiSuggestionViewPrefab,
             World world,
             Entity playerEntity,
-            DCLInput dclInput
+            DCLInput dclInput,
+            IEventSystem eventSystem
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -76,6 +80,7 @@ namespace DCL.Chat
             this.world = world;
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
+            this.eventSystem = eventSystem;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             //Adding two elements to count as top and bottom padding
@@ -180,6 +185,9 @@ namespace DCL.Chat
 
         private void OnSubmit(string _)
         {
+            emojiPanelController.SetPanelVisibility(false);
+            emojiSuggestionPanelController.SetPanelVisibility(false);
+
             if (string.IsNullOrWhiteSpace(currentMessage))
             {
                 viewInstance.InputField.DeactivateInputField();
@@ -190,9 +198,7 @@ namespace DCL.Chat
             chatMessagesBus.Send(currentMessage);
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
-            emojiPanelController.SetPanelVisibility(false);
             viewInstance.InputField.ActivateInputField();
-            emojiSuggestionPanelController.SetPanelVisibility(false);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -208,8 +214,23 @@ namespace DCL.Chat
             {
                 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-                itemScript.playerName.color = itemData.SentByOwnUser ? Color.white : chatEntryConfiguration.GetNameColor(itemData.Sender);
+
+                if (entityParticipantTable.Has(itemData.WalletAddress))
+                {
+                    var entity = entityParticipantTable.Entity(itemData.WalletAddress);
+                    Profile profile = world.Get<Profile>(entity);
+                    if(profile.ProfilePicture != null)
+                        itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
+                }
+                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender);
                 itemScript.SetItemData(itemData);
+
+                //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
+                if (itemData.HasToAnimate)
+                {
+                    itemScript.AnimateChatEntry();
+                    chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
+                }
             }
 
             return item;
