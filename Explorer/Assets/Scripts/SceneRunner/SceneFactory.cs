@@ -64,7 +64,6 @@ namespace SceneRunner
         private readonly IRealmData? realmData;
         private IGlobalWorldActions globalWorldActions = null!;
         private IMessagePipesHub messagePipesHub;
-        private IRoomHub roomHub;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -233,6 +232,7 @@ namespace SceneRunner
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             var webSocketAipImplementation = new WebSocketApiImplementation();
+            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
 
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
 
@@ -246,11 +246,9 @@ namespace SceneRunner
                 runtimeImplementation,
                 ethereumApi,
                 webSocketAipImplementation,
-                identityCache
+                identityCache,
+                communicationsControllerAPI
             );
-
-            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
-            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
 
             sceneRuntime.ExecuteSceneJson();
 

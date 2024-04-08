@@ -7,8 +7,6 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
-using SceneRuntime.Apis.Modules;
-using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
 using System;
@@ -23,13 +21,13 @@ namespace SceneRuntime
         internal readonly V8ScriptEngine engine;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
-        private readonly ScriptObject updateFunc;
-        private readonly ScriptObject startFunc;
         private readonly JsApiBunch jsApiBunch;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
 
+        private ScriptObject updateFunc;
+        private ScriptObject startFunc;
         private EngineApiWrapper? engineApi;
 
         public SceneRuntimeImpl(

@@ -180,7 +180,6 @@ namespace Global.Dynamic
             sceneFactory.SetMultiplayerReferences(messagePipesHub);
 
             return (globalWorld, playerEntity);
-            ;
         }
     }
 }

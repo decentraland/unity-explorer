@@ -6,6 +6,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.Players;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -33,8 +34,7 @@ namespace SceneRuntime
 
     public static class SceneRuntimeExtensions
     {
-        public static void RegisterAll(
-            this ISceneRuntime sceneRuntime,
+        public static void RegisterAll(this ISceneRuntime sceneRuntime,
             ISceneExceptionsHandler exceptionsHandler,
             IRoomHub roomHub,
             IProfileRepository profileRepository,
@@ -44,8 +44,8 @@ namespace SceneRuntime
             IRuntime runtime,
             IEthereumApi ethereumApi,
             IWebSocketApi webSocketApi,
-            IWeb3IdentityCache web3IdentityCache
-        )
+            IWeb3IdentityCache web3IdentityCache,
+            ICommunicationsControllerAPI communicationsControllerAPI)
         {
             sceneRuntime.RegisterPlayers(roomHub, profileRepository);
             sceneRuntime.RegisterSceneApi(sceneApi);
@@ -56,6 +56,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
+            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
@@ -101,6 +102,11 @@ namespace SceneRuntime
         private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
+        }
+
+        private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api)
+        {
+            sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api));
         }
     }
 }
