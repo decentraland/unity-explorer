@@ -8,14 +8,14 @@ namespace DCL.Audio
     public class AvatarAudioSettings : AudioCategorySettings
     {
         /// <summary>
-        /// This threshold indicates at what point in the animation movement blend we stop producing sounds.
-        /// This avoids unwanted sounds from "ghost" steps produced by the animation blending.
+        ///     This threshold indicates at what point in the animation movement blend we stop producing sounds.
+        ///     This avoids unwanted sounds from "ghost" steps produced by the animation blending.
         /// </summary>
         [SerializeField] private float movementBlendThreshold = 0.05f;
 
-        [SerializeField] private List<AudioClipTypeAndConfigKeyValuePair> audioClipConfigsList = new List<AudioClipTypeAndConfigKeyValuePair>();
+        [SerializeField] private List<AudioClipTypeAndConfigKeyValuePair> audioClipConfigsList = new ();
 
-        private Dictionary<AvatarAudioClipType, AudioClipConfig> audioClipConfigs = new Dictionary<AvatarAudioClipType, AudioClipConfig>();
+        private readonly Dictionary<AvatarAudioClipType, AudioClipConfig> audioClipConfigs = new ();
 
         public float MovementBlendThreshold => movementBlendThreshold;
 
@@ -24,11 +24,11 @@ namespace DCL.Audio
             if (!audioClipConfigs.TryGetValue(type, out AudioClipConfig clipConfig))
             {
                 clipConfig = audioClipConfigsList.Find(c => c.Key == type).Value;
-                audioClipConfigs.Add(type,clipConfig);
+                audioClipConfigs.Add(type, clipConfig);
             }
+
             return clipConfig;
         }
-
 
         [Serializable]
         private struct AudioClipTypeAndConfigKeyValuePair
@@ -37,6 +37,4 @@ namespace DCL.Audio
             public AudioClipConfig Value;
         }
     }
-
-
 }

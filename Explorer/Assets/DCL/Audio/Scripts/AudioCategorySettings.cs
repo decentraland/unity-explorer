@@ -12,10 +12,10 @@ namespace DCL.Audio
         [SerializeField] private int audioPriority = 125;
         [SerializeField] private AudioMixerGroup audioMixerGroup;
 
+        public bool AudioEnabled = true; //when we implement proper settings we will change this
+
         public float CategoryVolume => categoryVolume;
         public int AudioPriority => audioPriority;
         public AudioMixerGroup MixerGroup => audioMixerGroup;
-
-        public bool AudioEnabled = true; //when we implement proper settings we will change this
     }
 }

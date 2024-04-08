@@ -26,9 +26,9 @@ namespace DCL.Audio
         private float fadeDuration = 1.5f;
         [SerializeField]
         private AudioSettings audioSettings;
-
-        private Dictionary<AudioCategory,List<AudioSource>> currentAudioSources = new Dictionary<AudioCategory, List<AudioSource>>();
         private IComponentPool<AudioSource> audioSourcePool;
+
+        private Dictionary<AudioCategory, List<AudioSource>> currentAudioSources = new ();
         private Tweener loopingAudioTweener;
 
         public void Dispose()
@@ -51,21 +51,15 @@ namespace DCL.Audio
         {
             if (!CheckAudioCategory(audioClipConfig.Category)) return;
 
-            var settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
+            AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;
 
-            var audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
+            AudioSource audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
 
             loopingAudioTweener.Kill();
 
-            if (audioSource.isPlaying)
-            {
-                loopingAudioTweener = audioSource.DOFade(0, fadeDuration).OnComplete(() => ContinuePlayLoopingUIAudio(audioSource, startLoop, audioClipConfig));
-            }
-            else
-            {
-                ContinuePlayLoopingUIAudio(audioSource, startLoop, audioClipConfig);
-            }
+            if (audioSource.isPlaying) { loopingAudioTweener = audioSource.DOFade(0, fadeDuration).OnComplete(() => ContinuePlayLoopingUIAudio(audioSource, startLoop, audioClipConfig)); }
+            else { ContinuePlayLoopingUIAudio(audioSource, startLoop, audioClipConfig); }
         }
 
         private void ContinuePlayLoopingUIAudio(AudioSource audioSource, bool startLoop, AudioClipConfig audioClipConfig)
@@ -77,18 +71,14 @@ namespace DCL.Audio
                 audioSource.Play();
                 audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration);
             }
-            else
-            {
-                audioSource.Stop();
-            }
+            else { audioSource.Stop(); }
         }
-
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
             if (!CheckAudioCategory(audioClipConfig.Category)) return;
 
-            var settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
+            AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;
 
             PlaySingleAudio(audioClipConfig);
@@ -107,7 +97,7 @@ namespace DCL.Audio
         private void PlaySingleAudio(AudioClipConfig audioClipConfig)
         {
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
-            var audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
+            AudioSource audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
             audioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(audioClipConfig);
             audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], audioClipConfig.RelativeVolume);
         }

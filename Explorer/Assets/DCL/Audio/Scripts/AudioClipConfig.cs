@@ -19,7 +19,6 @@ namespace DCL.Audio
 
         public AudioClipSelectionMode ClipSelectionMode => clipSelectionMode;
 
-
         //[SerializeField] public AudioClipPlaybackMode ClipPlaybackMode;
         //[SerializeField] public AudioClipLoopMode ClipLoopMode;
         //[SerializeField] public bool startInRandomPositionInsideClip;
@@ -28,7 +27,7 @@ namespace DCL.Audio
     public enum AudioClipSelectionMode
     {
         Random, //Choose first clip at random
-        First // Chooses first clip on array
+        First, // Chooses first clip on array
     }
 
     public enum AudioClipPlaybackMode //WIP
@@ -51,7 +50,6 @@ namespace DCL.Audio
         World,
         Avatar,
         Music,
-        None
+        None,
     }
-
 }

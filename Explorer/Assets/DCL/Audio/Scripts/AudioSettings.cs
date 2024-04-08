@@ -9,19 +9,17 @@ namespace DCL.Audio
     [CreateAssetMenu(fileName = "AudioSettings", menuName = "SO/Audio/AudioSettings")]
     public class AudioSettings : ScriptableObject
     {
-        [SerializeField] private List<AudioCategorySettingsKeyValuePair> audioCategorySettings = new List<AudioCategorySettingsKeyValuePair>();
+        [SerializeField] private List<AudioCategorySettingsKeyValuePair> audioCategorySettings = new ();
         [SerializeField] private float masterVolume = 1;
         [SerializeField] private AudioMixer masterAudioMixer;
 
-
-        private Dictionary<AudioCategory, AudioCategorySettings> audioCategorySettingsDictionary = new Dictionary<AudioCategory, AudioCategorySettings>();
+        private readonly Dictionary<AudioCategory, AudioCategorySettings> audioCategorySettingsDictionary = new ();
 
         public float MasterVolume => masterVolume;
 
-
         public AudioCategorySettings GetSettingsForCategory(AudioCategory category)
         {
-            if (!audioCategorySettingsDictionary.TryGetValue(category, out var settings))
+            if (!audioCategorySettingsDictionary.TryGetValue(category, out AudioCategorySettings settings))
             {
                 settings = audioCategorySettings.Find(s => s.key == category).value;
                 audioCategorySettingsDictionary.Add(category, settings);
@@ -29,15 +27,12 @@ namespace DCL.Audio
 
             return settings;
         }
-
     }
 
     [Serializable]
     public class AudioCategorySettingsKeyValuePair
     {
-            public AudioCategory key;
-            public AudioCategorySettings value;
+        public AudioCategory key;
+        public AudioCategorySettings value;
     }
-
 }
-

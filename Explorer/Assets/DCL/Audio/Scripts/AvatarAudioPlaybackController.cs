@@ -46,10 +46,7 @@ namespace DCL.Audio
         public void OnRunFootHitGround()
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) &&
-                AvatarAnimator.GetBool(AnimationHashes.GROUNDED))
-            {
-                PlayAvatarAudioForType(AvatarAudioClipType.StepRun);
-            }
+                AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) { PlayAvatarAudioForType(AvatarAudioClipType.StepRun); }
         }
 
         [UsedImplicitly]
@@ -57,10 +54,7 @@ namespace DCL.Audio
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold &&
                 AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk)
-                && AvatarAnimator.GetBool(AnimationHashes.GROUNDED))
-            {
-                PlayAvatarAudioForType(AvatarAudioClipType.StepWalk);
-            }
+                && AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) { PlayAvatarAudioForType(AvatarAudioClipType.StepWalk); }
         }
 
         [UsedImplicitly]
@@ -68,10 +62,7 @@ namespace DCL.Audio
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk) &&
                 AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) &&
-                AvatarAnimator.GetBool(AnimationHashes.GROUNDED))
-            {
-                PlayAvatarAudioForType(AvatarAudioClipType.StepJog);
-            }
+                AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) { PlayAvatarAudioForType(AvatarAudioClipType.StepJog); }
         }
 
         [UsedImplicitly]
@@ -96,7 +87,7 @@ namespace DCL.Audio
         {
             if (!AvatarAudioSettings.AudioEnabled) return;
 
-            var clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
+            AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
 
             if (clipConfig == null) return;
 
@@ -104,7 +95,6 @@ namespace DCL.Audio
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
             AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex], clipConfig.RelativeVolume);
         }
-
     }
 
     [Serializable]
@@ -120,5 +110,4 @@ namespace DCL.Audio
         JumpRunLand,
         JumpJogLand,
     }
-
 }

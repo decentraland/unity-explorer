@@ -21,7 +21,6 @@ namespace DCL.Audio
 
         public void Dispose() { }
 
-
         public void SendPlayAudioEvent(AudioClipConfig audioClipConfig)
         {
             if (audioClipConfig != null) { PlayUIAudioEvent?.Invoke(audioClipConfig); }
@@ -31,10 +30,10 @@ namespace DCL.Audio
         {
             if (audioClipConfig != null) { PlayLoopingUIAudioEvent?.Invoke(audioClipConfig, true); }
         }
+
         public void SendStopPlayingLoopingAudioEvent(AudioClipConfig audioClipConfig)
         {
             if (audioClipConfig != null) { PlayLoopingUIAudioEvent?.Invoke(audioClipConfig, false); }
         }
-
     }
 }
