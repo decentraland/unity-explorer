@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
 using DCL.Emoji;
+using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
@@ -24,6 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private ChatController chatController;
         private readonly DCLInput dclInput;
+        private readonly IEventSystem eventSystem;
         private readonly Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory;
 
         public ChatPlugin(
@@ -33,6 +35,7 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
+            IEventSystem eventSystem,
             Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -41,6 +44,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
+            this.eventSystem = eventSystem;
             this.chatCommandsFactory = chatCommandsFactory;
         }
 
@@ -73,6 +77,7 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
+                    eventSystem,
                     chatCommandsFactory
                 );
 
