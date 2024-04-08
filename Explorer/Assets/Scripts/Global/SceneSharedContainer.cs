@@ -1,5 +1,6 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
@@ -25,6 +26,7 @@ namespace Global
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
+            IRoomHub roomHub,
             IRealmData? realmData)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -52,6 +54,7 @@ namespace Global
                     profileRepository,
                     web3IdentityCache,
                     webRequestController,
+                    roomHub,
                     realmData
                 ),
             };

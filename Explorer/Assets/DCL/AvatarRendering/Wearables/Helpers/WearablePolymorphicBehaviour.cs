@@ -10,9 +10,11 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -23,6 +25,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         public const int MAIN_ASSET_INDEX = 0;
         public const int MASK_ASSET_INDEX = 1;
+
+        public static bool CreateAssetBundleManifestPromise<T>(this T component, World world, BodyShape bodyShape, CancellationTokenSource cts, IPartitionComponent partitionComponent)
+            where T: IAvatarAttachment
+        {
+            var promise = AssetBundleManifestPromise.Create(world,
+                new GetWearableAssetBundleManifestIntention(component.GetHash(), new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: cts)),
+                partitionComponent);
+
+            component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
+            component.IsLoading = true;
+            world.Create(promise, component, bodyShape);
+            return true;
+        }
 
         /// <summary>
         ///     Create a certain number of AssetBundlePromises based on the type of the wearable,
@@ -35,9 +50,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             IPartitionComponent partitionComponent,
             World world)
         {
-            SceneAssetBundleManifest manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : wearable.ManifestResult?.Asset;
+            SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : wearable.ManifestResult?.Asset;
 
-            var bodyShape = intention.BodyShape;
+            BodyShape bodyShape = intention.BodyShape;
 
             switch (wearable.Type)
             {
@@ -62,8 +77,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        private static bool TryCreateSingleGameObjectAssetBundlePromise(
-            SceneAssetBundleManifest sceneAssetBundleManifest,
+        public static bool TryCreateSingleGameObjectAssetBundlePromise(
+            SceneAssetBundleManifest? sceneAssetBundleManifest,
             in GetWearablesByPointersIntention intention,
             URLSubdirectory customStreamingSubdirectory,
             IWearable wearable,
@@ -71,7 +86,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             BodyShape bodyShape,
             World world)
         {
-            ref var wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 1);
+            ref WearableAssets wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 1);
 
             return TryCreateMainFilePromise(typeof(GameObject), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world);
         }
@@ -88,7 +103,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             BodyShape bodyShape,
             World world)
         {
-            ref var wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 2);
+            ref WearableAssets wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 2);
 
             // 0 stands for the main texture
             // 1 stands for the mask
@@ -127,7 +142,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     out string mainFileHash))
             {
                 // If there is no mask, we don't need to create a promise for it, and it's not an exception
-                wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<WearableAssetBase>((WearableTextureAsset) null);
+                wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<WearableAssetBase>((WearableTextureAsset)null);
                 return false;
             }
 
@@ -145,16 +160,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return true;
         }
 
-        private static bool TryCreateMainFilePromise(
+        private static bool TryCreateMainFilePromise<T>(
             Type expectedObjectType,
             SceneAssetBundleManifest sceneAssetBundleManifest,
-            GetWearablesByPointersIntention intention, URLSubdirectory customStreamingSubdirectory, IWearable wearable,
+            GetWearablesByPointersIntention intention, URLSubdirectory customStreamingSubdirectory, T wearable,
             IPartitionComponent partitionComponent, ref WearableAssets wearableAssets, BodyShape bodyShape, World world)
+            where T: IAvatarAttachment
         {
             if (wearableAssets.Results[MAIN_ASSET_INDEX] != null)
                 return false;
 
-            if (!wearable.TryGetMainFileHash(bodyShape, out string mainFileHash))
+            if (!wearable.TryGetMainFileHash(bodyShape, out string? mainFileHash))
             {
                 wearableAssets.Results[MAIN_ASSET_INDEX] =
                     new StreamableLoadingResult<WearableAssetBase>(new Exception("Main file hash not found"));
@@ -166,7 +182,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 sceneAssetBundleManifest,
                 intention,
                 customStreamingSubdirectory,
-                mainFileHash,
+                mainFileHash!,
                 wearable,
                 MAIN_ASSET_INDEX,
                 partitionComponent,
@@ -175,16 +191,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return true;
         }
 
-        private static void CreatePromise(
+        private static void CreatePromise<T>(
             Type expectedObjectType,
             SceneAssetBundleManifest sceneAssetBundleManifest,
             GetWearablesByPointersIntention intention,
             URLSubdirectory customStreamingSubdirectory,
             string hash,
-            IWearable wearable,
+            T wearable,
             int index,
             IPartitionComponent partitionComponent,
-            World world)
+            World world) where T: IAvatarAttachment
         {
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
@@ -208,24 +224,28 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 case WearableType.FacialFeature:
                     return new StreamableLoadingResult<WearableAssetBase>(new WearableTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
                 default:
-                {
-                    var go = result.Asset!.GetMainAsset<GameObject>();
-                    // collect all renderers
-                    List<WearableRegularAsset.RendererInfo> rendererInfos = WearableRegularAsset.RENDERER_INFO_POOL.Get();
-
-                    using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
-
-                    foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                        rendererInfos.Add(new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
-
-                    return new StreamableLoadingResult<WearableAssetBase>(new WearableRegularAsset(go, rendererInfos, result.Asset));
-                }
+                    return new StreamableLoadingResult<WearableAssetBase>(ToRegularAsset(result));
             }
+        }
+
+        public static WearableRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
+        {
+            GameObject go = result.Asset!.GetMainAsset<GameObject>();
+
+            // collect all renderers
+            List<WearableRegularAsset.RendererInfo> rendererInfos = WearableRegularAsset.RENDERER_INFO_POOL.Get();
+
+            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+                rendererInfos.Add(new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+
+            return new WearableRegularAsset(go, rendererInfos, result.Asset);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, WearableRegularAsset wearableRegularAsset, BodyShape bodyShape)
         {
-            ref var results = ref wearable.WearableAssetResults[bodyShape];
+            ref WearableAssets results = ref wearable.WearableAssetResults[bodyShape];
             results.Results ??= new StreamableLoadingResult<WearableAssetBase>?[1];
 
             results.Results[MAIN_ASSET_INDEX] = new StreamableLoadingResult<WearableAssetBase>(wearableRegularAsset);

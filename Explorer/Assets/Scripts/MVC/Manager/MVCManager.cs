@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
@@ -55,20 +56,28 @@ namespace MVC
                 ? destructionCancellationTokenSource.Token
                 : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionCancellationTokenSource.Token).Token;
 
-            switch (controller.Layer)
+            try
             {
-                case CanvasOrdering.SortingLayer.Popup:
-                    await ShowPopupAsync(command, controller, ct);
-                    break;
-                case CanvasOrdering.SortingLayer.Fullscreen:
-                    await ShowFullScreenAsync(command, controller, ct);
-                    break;
-                case CanvasOrdering.SortingLayer.Persistent:
-                    await ShowPersistentAsync(command, controller, ct);
-                    break;
-                case CanvasOrdering.SortingLayer.Overlay:
-                    await ShowTopAsync(command, controller, ct);
-                    break;
+                switch (controller.Layer)
+                {
+                    case CanvasOrdering.SortingLayer.Popup:
+                        await ShowPopupAsync(command, controller, ct);
+                        break;
+                    case CanvasOrdering.SortingLayer.Fullscreen:
+                        await ShowFullScreenAsync(command, controller, ct);
+                        break;
+                    case CanvasOrdering.SortingLayer.Persistent:
+                        await ShowPersistentAsync(command, controller, ct);
+                        break;
+                    case CanvasOrdering.SortingLayer.Overlay:
+                        await ShowTopAsync(command, controller, ct);
+                        break;
+                }
+            }
+            catch (OperationCanceledException _)
+            {
+                // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
+                ReportHub.LogError(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
             }
         }
 

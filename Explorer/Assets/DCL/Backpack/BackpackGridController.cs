@@ -85,8 +85,8 @@ namespace DCL.Backpack
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
-            eventBus.EquipEvent += OnEquip;
-            eventBus.UnEquipEvent += OnUnequip;
+            eventBus.EquipWearableEvent += OnEquip;
+            eventBus.UnEquipWearableEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
@@ -166,13 +166,13 @@ namespace DCL.Backpack
         private void OnEquipButtonClicked(BackpackItemView backpackItemView)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(backpackItemView.EquipWearableAudio);
-            commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId));
+            commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId));
         }
 
         private void OnUnEquipButtonClicked(BackpackItemView backpackItemView)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(backpackItemView.UnEquipWearableAudio);
-            commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId));
+            commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId));
         }
 
         public void RequestTotalNumber()
@@ -283,9 +283,9 @@ namespace DCL.Backpack
             ct.ThrowIfCancellationRequested();
 
             do { await UniTask.Delay(250, cancellationToken: ct); }
-            while (itemWearable.WearableThumbnail == null);
+            while (itemWearable.ThumbnailAssetResult == null);
 
-            itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            itemView.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
         }
 
@@ -309,7 +309,7 @@ namespace DCL.Backpack
         }
 
         private void SelectItem(string itemId) =>
-            commandBus.SendCommand(new BackpackSelectCommand(itemId));
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
 
         private void OnUnequip(IWearable unequippedWearable)
         {

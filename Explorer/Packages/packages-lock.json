@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "cc64cb48e635d25bbcb5ff9867f28bf0776db17e"
+      "hash": "1c03523924a67730d180b8ab3569d56e46abf931"
     },
     "com.decentraland.unity-shared-dependencies": {
       "version": "https://github.com/decentraland/unity-shared-dependencies.git",
@@ -69,6 +69,16 @@
       "source": "git",
       "dependencies": {},
       "hash": "a31ce587c60180d6bfa804507acac7d2ad94f2d1"
+    },
+    "com.olegknyazev.softmask": {
+      "version": "https://github.com/olegknyazev/SoftMask.git?path=/Packages/com.olegknyazev.softmask#1.7.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.modules.ui": "1.0.0"
+      },
+      "hash": "ba10acd1e94e89a5e7dc03140e46aa0c230902a9"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

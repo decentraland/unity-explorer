@@ -1,4 +1,5 @@
 using AssetManagement;
+using CommunicationData.URLHelpers;
 using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -15,14 +16,14 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public readonly bool FallbackToDefaultWearables;
 
         public readonly AssetSource PermittedSources;
-        public readonly List<string> Pointers;
+        public readonly List<URN> Pointers;
 
         /// <summary>
         ///     Instead of storing a separate collection for the resolved wearables, we store the indices of the resolved wearables in the WearableAssetResults array.
         /// </summary>
         public long ResolvedWearablesIndices;
 
-        internal GetWearablesByPointersIntention(List<string> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL,
+        internal GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL,
             bool fallbackToDefaultWearables = true)
         {
             Pointers = pointers;

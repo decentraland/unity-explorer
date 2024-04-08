@@ -5,9 +5,9 @@ namespace DCL.DebugUtilities
 {
     public class DebugVector2IntFieldDef : IDebugElementDef
     {
-        public readonly ElementBinding<Vector2Int> Binding;
+        public readonly IElementBinding<Vector2Int> Binding;
 
-        public DebugVector2IntFieldDef(ElementBinding<Vector2Int> binding)
+        public DebugVector2IntFieldDef(IElementBinding<Vector2Int> binding)
         {
             Binding = binding;
         }

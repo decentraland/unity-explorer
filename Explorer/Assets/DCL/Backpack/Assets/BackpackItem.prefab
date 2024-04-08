@@ -998,10 +998,6 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 8252342816705450076}
   <FullBackpackItem>k__BackingField: {fileID: 8241648339715965561}
   <IsEquipped>k__BackingField: 0
-  EquipWearableAudio: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
-  UnEquipWearableAudio: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
-  HoverAudio: {fileID: 11400000, guid: 9f05f6f4feb860e40bc2e79e57f7e6bd, type: 2}
-  ClickAudio: {fileID: 11400000, guid: 10a360c99e97f3246bb8cb8d022720a9, type: 2}
 --- !u!1 &7257904519296327889
 GameObject:
   m_ObjectHideFlags: 0
@@ -1339,6 +1335,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6252267455741274073}
     m_Modifications:
+    - target: {fileID: 2287322344157701924, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
+      propertyPath: m_Color.a
+      value: 0.56078434
+      objectReference: {fileID: 0}
     - target: {fileID: 3066730706478737799, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1422,6 +1422,22 @@ PrefabInstance:
     - target: {fileID: 3066730706478737799, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3234025837055934583, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
+      propertyPath: m_Color.a
+      value: 0.19607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 3234025837055934583, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
+      propertyPath: m_Color.b
+      value: 0.9529412
+      objectReference: {fileID: 0}
+    - target: {fileID: 3234025837055934583, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
+      propertyPath: m_Color.g
+      value: 0.29411766
+      objectReference: {fileID: 0}
+    - target: {fileID: 3234025837055934583, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
+      propertyPath: m_Color.r
+      value: 0.6313726
       objectReference: {fileID: 0}
     - target: {fileID: 6647536690506209645, guid: 896b313ccb63b47999d8596c72449d6d, type: 3}
       propertyPath: m_Name

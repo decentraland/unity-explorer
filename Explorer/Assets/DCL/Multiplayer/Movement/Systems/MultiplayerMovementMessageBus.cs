@@ -31,13 +31,16 @@ namespace DCL.Multiplayer.Movement.Systems
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
         }
 
-        private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> obj)
+        private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
         {
-            if (cancellationTokenSource.Token.IsCancellationRequested)
-                return;
+            using (receivedMessage)
+            {
+                if (cancellationTokenSource.Token.IsCancellationRequested)
+                    return;
 
-            var message = MovementMessage(obj.Payload);
-            Inbox(message, obj.FromWalletId);
+                var message = MovementMessage(receivedMessage.Payload);
+                Inbox(message, receivedMessage.FromWalletId);
+            }
         }
 
         public void Send(NetworkMovementMessage message)
