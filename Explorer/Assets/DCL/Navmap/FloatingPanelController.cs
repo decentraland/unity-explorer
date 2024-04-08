@@ -32,6 +32,7 @@ namespace DCL.Navmap
         private readonly ImageController placeImageController;
         private static readonly int OUT = Animator.StringToHash("Out");
         private static readonly int LOADED = Animator.StringToHash("Loaded");
+        private static readonly int LOADING = Animator.StringToHash("Loading");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             ITeleportController teleportController, IWebRequestController webRequestController,
@@ -68,8 +69,17 @@ namespace DCL.Navmap
 
         public void HandlePanelVisibility(Vector2Int parcel, bool popAnimation = true)
         {
-            if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
-            else { ShowPanel(parcel, popAnimation); }
+            if (!view.gameObject.activeInHierarchy || view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("Out"))
+            {
+                view.panelAnimator.Rebind();
+                view.panelAnimator.Update(0f);
+                ShowPanel(parcel, popAnimation);
+            }
+            else
+            {
+                view.panelAnimator.SetTrigger(LOADING);
+                GetPlaceInfoAsync(parcel).Forget();
+            }
         }
 
         private void ShowPanel(Vector2Int parcel, bool popAnimation)
@@ -89,9 +99,9 @@ namespace DCL.Navmap
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
-                view.panelAnimator.SetTrigger(LOADED);
             }
             catch (Exception ex) { SetEmptyParcelInfo(parcel); }
+            finally { view.panelAnimator.SetTrigger(LOADED); }
         }
 
         private void TeleportToParcel(Vector2Int parcel)
