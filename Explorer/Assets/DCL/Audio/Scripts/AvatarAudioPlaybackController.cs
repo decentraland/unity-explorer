@@ -1,4 +1,5 @@
-﻿using DCL.CharacterMotion.Animation;
+﻿using DCL.Character.CharacterMotion.Components;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using JetBrains.Annotations;
 using System;

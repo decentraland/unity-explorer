@@ -43,6 +43,7 @@ namespace DCL.Chat
         private readonly List<EmojiData> keysWithPrefix = new ();
         private readonly IEventSystem eventSystem;
         private readonly World world;
+        private readonly Entity playerEntity;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
@@ -53,6 +54,7 @@ namespace DCL.Chat
         private readonly ChatCommandsHandler commandsHandler;
         private (IChatCommand command, Match param) chatCommand;
         private CancellationTokenSource commandCts = new ();
+
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
