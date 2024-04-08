@@ -1,3 +1,4 @@
+using Castle.Core.Internal;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -47,12 +48,21 @@ namespace DCL.Chat
 
         public void SetUsername(string username, string walletId)
         {
+            if (string.IsNullOrEmpty(walletId))
+            {
+                playerName.text = username;
+                walletIdText.gameObject.SetActive(false);
+                verifiedIcon.gameObject.SetActive(false);
+                return;
+            }
+
             int walletIdIndexOf = username.IndexOf("#", StringComparison.Ordinal);
 
             playerName.text = username.Contains("#")
                 ? $"{username.Substring(0, walletIdIndexOf)}"
                 : username;
-            walletIdText.text = $"#{walletId.Substring(0,5)}";
+
+            walletIdText.text = $"#{walletId.Substring(0, 5)}";
 
             walletIdText.gameObject.SetActive(walletIdIndexOf != -1);
             verifiedIcon.gameObject.SetActive(walletIdIndexOf == -1);
@@ -67,6 +77,7 @@ namespace DCL.Chat
         public void SetItemData(ChatMessage data)
         {
             SetUsername(data.Sender, data.WalletAddress);
+
             entryText.text = data.Message;
 
             contentSizeFitter.SetLayoutVertical();

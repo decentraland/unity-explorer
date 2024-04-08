@@ -222,7 +222,7 @@ namespace DCL.Chat
             string? response = await command.ExecuteAsync(param, commandCts.Token);
 
             if (!string.IsNullOrEmpty(response))
-                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true));
+                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true, false));
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
