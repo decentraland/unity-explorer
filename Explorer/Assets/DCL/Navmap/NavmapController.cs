@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
@@ -40,6 +41,7 @@ namespace DCL.Navmap
         private readonly StreetViewController streetViewController;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly NavmapLocationController navmapLocationController;
+        private readonly IWebBrowser webBrowser;
 
         public NavmapController(
             NavmapView navmapView,
@@ -48,12 +50,14 @@ namespace DCL.Navmap
             ITeleportController teleportController,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
+            IWebBrowser webBrowser,
             DCLInput dclInput,
             World world,
             Entity playerEntity)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
+            this.webBrowser = webBrowser;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
@@ -63,7 +67,7 @@ namespace DCL.Navmap
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, navmapView.floatingPanelView, webRequestController);
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += floatingPanelController.HidePanel;
-            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
+            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
 
