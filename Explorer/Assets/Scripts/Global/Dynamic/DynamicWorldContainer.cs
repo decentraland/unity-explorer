@@ -247,8 +247,8 @@ namespace Global.Dynamic
                     staticContainer.CharacterContainer.CharacterObject,
                     queuePoolFullMovementMessage
                 ),
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, emotesCache, multiplayerEmotesMessageBus),
-                new InputPlugin(dclInput, emotesCache, multiplayerEmotesMessageBus),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
+                new InputPlugin(dclInput, multiplayerEmotesMessageBus, eventSystem),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
