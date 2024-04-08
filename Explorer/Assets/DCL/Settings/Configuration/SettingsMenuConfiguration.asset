@@ -32,7 +32,7 @@ MonoBehaviour:
       - rid: 5242998230784409611
       - rid: 5242998230784409612
       - rid: 5242998230784409613
-      - rid: 5242998230784409614
+      - rid: 5242998297641615362
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: GR Group 1
@@ -106,9 +106,10 @@ MonoBehaviour:
           <ModuleName>k__BackingField: Slider GE 3.2
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
+          sliderType: 0
           minValue: 0
           maxValue: 5
-          wholeNumbers: 0
+          wholeNumbers: 1
         <Feature>k__BackingField: 0
     - rid: 5242998230784409608
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -147,20 +148,10 @@ MonoBehaviour:
           <ModuleName>k__BackingField: Slider GE 4.3
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
+          sliderType: 1
           minValue: 0
-          maxValue: 7
+          maxValue: 100
           wholeNumbers: 1
-        <Feature>k__BackingField: 0
-    - rid: 5242998230784409614
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Dropdown GE 4.4
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          isMultiselect: 0
-          options: []
         <Feature>k__BackingField: 0
     - rid: 5242998230784409615
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -179,6 +170,7 @@ MonoBehaviour:
           <ModuleName>k__BackingField: Slider CO 1.2
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
+          sliderType: 0
           minValue: 0
           maxValue: 100
           wholeNumbers: 0
@@ -213,6 +205,7 @@ MonoBehaviour:
           <ModuleName>k__BackingField: Slider SO 2.1
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
+          sliderType: 0
           minValue: 0
           maxValue: 50
           wholeNumbers: 0
@@ -256,6 +249,7 @@ MonoBehaviour:
           <ModuleName>k__BackingField: Slider GR 1.1
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
+          sliderType: 0
           minValue: 100
           maxValue: 500
           wholeNumbers: 0
@@ -303,4 +297,17 @@ MonoBehaviour:
           - Option K
           - Option L
           - Option M
+        <Feature>k__BackingField: 0
+    - rid: 5242998297641615362
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Slider GE 4.4
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 2
+          minValue: 0
+          maxValue: 24
+          wholeNumbers: 0
         <Feature>k__BackingField: 0
