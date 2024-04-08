@@ -205,9 +205,8 @@ namespace Global.Dynamic
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);
 
-                OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
-
                 UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
+                OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)
             {
