@@ -1,14 +1,11 @@
-module.exports.getPlayerData = async function(message) {
-    console.log('JSMODULE: getPlayerData')
-    return {};
+module.exports.getPlayerData = async function (message) {
+    return UnityPlayers.PlayerData(message.userId);
 }
 
-module.exports.getPlayersInScene = async function(message) {
-    console.log('JSMODULE: getPlayersInScene')
-    return {};
+module.exports.getPlayersInScene = async function (message) {
+    return UnityPlayers.PlayersInScene();
 }
 
-module.exports.getConnectedPlayers = async function(message) {
-    console.log('JSMODULE: getConnectedPlayers')
-    return {};
+module.exports.getConnectedPlayers = async function (message) {
+    return UnityPlayers.ConnectedPlayers();
 }
