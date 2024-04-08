@@ -15,6 +15,9 @@ namespace DCL.Navmap
         public SearchResultPanelView SearchBarResultPanel;
 
         [field: SerializeField]
+        public HistoryRecordPanelView HistoryRecordPanelView;
+
+        [field: SerializeField]
         public FloatingPanelView floatingPanelView;
 
         [field: SerializeField]
