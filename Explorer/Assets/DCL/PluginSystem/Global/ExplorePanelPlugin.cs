@@ -83,7 +83,6 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.emoteCache = emoteCache;
-            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository);
         }
 
         public override void Dispose()
