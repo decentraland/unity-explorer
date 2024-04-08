@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Emotes.Interfaces;
@@ -24,12 +25,19 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
         private readonly DebugContainerBuilder debugBuilder;
-        private AudioSource audioSourceReference;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private AudioSource? audioSourceReference;
 
-        public EmotePlugin(IWebRequestController webRequestController, MemoryEmotesCache emoteCache, RealmData realmData, IEmotesMessageBus messageBus, DebugContainerBuilder debugBuilder)
+        public EmotePlugin(IWebRequestController webRequestController,
+            IEmoteCache emoteCache,
+            IRealmData realmData,
+            IEmotesMessageBus messageBus,
+            DebugContainerBuilder debugBuilder,
+            IAssetsProvisioner assetsProvisioner)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
+            this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
@@ -54,22 +62,21 @@ namespace DCL.PluginSystem.Global
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
         }
 
-        public UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
-            IEnumerable<IEmote> embeddedEmotes = settings.EmbeddedEmotes.editorAsset.GenerateEmotes();
+            EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
+            IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
             audioSourceReference = settings.EmoteAudioSource.editorAsset.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
-
-            return UniTask.CompletedTask;
         }
 
         [Serializable]
         public class EmoteSettings : IDCLPluginSettings
         {
-            [field: SerializeField] public EmbeddedEmotesReference EmbeddedEmotes { get; set; } = null!;
-            [field: SerializeField] public EmoteAudioSourceReference EmoteAudioSource { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -8,7 +7,6 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Chat.MessageBus;
-using DCL.Chat.MessageBus.Deduplication;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
@@ -16,31 +14,8 @@ using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Nametags;
-using DCL.NftInfoAPIService;
-using DCL.ParcelsService;
-using DCL.PlacesAPIService;
-using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
-using DCL.Profiles;
-using DCL.SceneLoadingScreens;
-using DCL.UserInAppInitializationFlow;
-using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics;
-using ECS;
-using ECS.Prioritization.Components;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using MVC;
-using MVC.PopupsController.PopupCloser;
-using SceneRunner.EmptyScene;
-using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Threading;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Emotes.Interfaces;
@@ -51,14 +26,29 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
+using DCL.ParcelsService;
+using DCL.PlacesAPIService;
+using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
+using DCL.Profiles;
+using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
+using ECS;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.ChatCommands;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using MVC;
+using MVC.PopupsController.PopupCloser;
+using SceneRunner.EmptyScene;
+using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using UnityEngine;
+using System.Threading;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -266,7 +256,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
-                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData, multiplayerEmotesMessageBus, debugBuilder),
+                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData, multiplayerEmotesMessageBus, debugBuilder, staticContainer.AssetsProvisioner),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
