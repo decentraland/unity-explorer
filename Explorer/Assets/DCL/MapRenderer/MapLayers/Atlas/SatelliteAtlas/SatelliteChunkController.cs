@@ -13,7 +13,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     {
         private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/3/";
 
-        private readonly SpriteRenderer spriteRenderer;
         private readonly IWebRequestController webRequestController;
         private readonly MapRendererTextureContainer textureContainer;
 
@@ -22,6 +21,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private int webRequestAttempts;
         private readonly Color finalColor = Color.white;
         private readonly Color initialColor = new Color(0,0,0,0);
+        private AtlasChunk atlasChunk;
 
         public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
             Transform parent,
@@ -31,12 +31,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
-            spriteRenderer = Object.Instantiate(prefab, parent);
-            spriteRenderer.transform.localPosition = chunkLocalPosition;
-            spriteRenderer.sortingOrder = drawOrder;
+            atlasChunk = Object.Instantiate(prefab, parent).GetComponent<AtlasChunk>();
+            atlasChunk.transform.localPosition = chunkLocalPosition;
+            atlasChunk.LoadingSpriteRenderer.sortingOrder = drawOrder;
+            atlasChunk.MainSpriteRenderer.sortingOrder = drawOrder;
 
 #if UNITY_EDITOR
-            spriteRenderer.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";
+            atlasChunk.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";
 #endif
         }
 
@@ -49,15 +50,16 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
-            if (spriteRenderer)
-                UnityObjectUtils.SafeDestroy(spriteRenderer.gameObject);
+            if (atlasChunk)
+                UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
         }
 
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
             webRequestAttempts = 0;
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
-            spriteRenderer.color = initialColor;
+            atlasChunk.MainSpriteRenderer.enabled = false;
+            atlasChunk.MainSpriteRenderer.color = initialColor;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)), new GetTextureArguments(false), linkedCts.Token))
@@ -69,8 +71,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             float pixelsPerUnit = texture.width / chunkWorldSize;
 
-            spriteRenderer.DOColor(finalColor, 0.5f);
-            spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
+            atlasChunk.MainSpriteRenderer.enabled = true;
+            atlasChunk.LoadingSpriteRenderer.DOColor(initialColor, 0.5f).OnComplete(()=>atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+            atlasChunk.MainSpriteRenderer.DOColor(finalColor, 0.5f);
+            atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
                 0, SpriteMeshType.FullRect, Vector4.one, false);
         }
     }
