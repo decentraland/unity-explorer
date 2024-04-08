@@ -62,7 +62,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <ModuleTitle>k__BackingField: {fileID: 8852146151382913035}
   <DescriptionText>k__BackingField: {fileID: 0}
-  <Dropdown>k__BackingField: {fileID: 6330022963802488016}
+  <DropdownView>k__BackingField: {fileID: 1669326828403567488}
 --- !u!1 &7072378744961823622
 GameObject:
   m_ObjectHideFlags: 0
@@ -383,6 +383,17 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 8181048388119919993}
   m_SourcePrefab: {fileID: 100100000, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
+--- !u!114 &1669326828403567488 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8936808559723068834, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
+  m_PrefabInstance: {fileID: 7723479772922156578}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1296571d0b4849b582d82ec6b599c4d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3575399042942443994 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6535023856177625080, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
@@ -428,17 +439,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 1
---- !u!114 &6330022963802488016 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4393135781987986162, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
-  m_PrefabInstance: {fileID: 7723479772922156578}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b743370ac3e4ec2a1668f5455a8ef8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &7421819556573224944 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 995531357363407314, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}

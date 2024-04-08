@@ -1,6 +1,6 @@
-﻿using System;
+﻿using DCL.UI;
+using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.Settings.ModuleViews
 {
@@ -14,14 +14,14 @@ namespace DCL.Settings.ModuleViews
             public bool wholeNumbers;
         }
 
-        [field: SerializeField] public Slider Slider { get; private set; }
+        [field: SerializeField] public SliderView SliderView { get; private set; }
 
         protected override void Configure(Config configuration)
         {
-            Slider.interactable = configuration.IsEnabled;
-            Slider.minValue = configuration.minValue;
-            Slider.maxValue = configuration.maxValue;
-            Slider.wholeNumbers = configuration.wholeNumbers;
+            SliderView.Slider.interactable = configuration.IsEnabled;
+            SliderView.Slider.minValue = configuration.minValue;
+            SliderView.Slider.maxValue = configuration.maxValue;
+            SliderView.Slider.wholeNumbers = configuration.wholeNumbers;
         }
     }
 }

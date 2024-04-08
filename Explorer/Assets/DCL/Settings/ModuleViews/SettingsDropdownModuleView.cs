@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.UI;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -14,15 +15,15 @@ namespace DCL.Settings.ModuleViews
             public List<string> options;
         }
 
-        [field: SerializeField] public TMP_Dropdown Dropdown { get; private set; }
+        [field: SerializeField] public DropdownView DropdownView { get; private set; }
 
         protected override void Configure(Config configuration)
         {
-            Dropdown.interactable = configuration.IsEnabled;
-            Dropdown.MultiSelect = configuration.isMultiselect;
-            Dropdown.options.Clear();
+            DropdownView.Dropdown.interactable = configuration.IsEnabled;
+            DropdownView.Dropdown.MultiSelect = configuration.isMultiselect;
+            DropdownView.Dropdown.options.Clear();
             foreach (string option in configuration.options)
-                Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
+                DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
         }
     }
 }
