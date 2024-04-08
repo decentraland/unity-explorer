@@ -1,11 +1,14 @@
+using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.Profiles
 {
     public class Profile
     {
+        public StreamableLoadingResult<Sprite>? ProfilePicture { get; set; }
         private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
 
         private string userId;
