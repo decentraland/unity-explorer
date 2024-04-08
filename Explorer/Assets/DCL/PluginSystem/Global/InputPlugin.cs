@@ -12,10 +12,12 @@ namespace DCL.PluginSystem.Global
     public class InputPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly DCLInput dclInput;
+        private readonly IEventSystem eventSystem;
 
-        public InputPlugin(DCLInput dclInput)
+        public InputPlugin(DCLInput dclInput, IEventSystem eventSystem)
         {
             this.dclInput = dclInput;
+            this.eventSystem = eventSystem;
             dclInput.Enable();
         }
 
@@ -28,7 +30,7 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UnityEventSystem(EventSystem.current), new DCLCursor());
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, new DCLCursor());
 
             // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
         }
