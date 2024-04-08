@@ -77,6 +77,8 @@ namespace Global.Dynamic
 
         public IChatMessagesBus MessagesBus { get; private set; } = null!;
 
+        public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
+
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; }
@@ -193,6 +195,7 @@ namespace Global.Dynamic
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
+            container.MessagePipesHub = messagePipesHub;
 
             var entityParticipantTable = new EntityParticipantTable();
 

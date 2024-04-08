@@ -62,8 +62,8 @@ namespace SceneRunner
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
+        private readonly IMessagePipesHub messagePipesHub;
         private IGlobalWorldActions globalWorldActions = null!;
-        private IMessagePipesHub messagePipesHub;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -79,8 +79,8 @@ namespace SceneRunner
             IWeb3IdentityCache identityCache,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
-            IRealmData? realmData
-        )
+            IRealmData? realmData,
+            IMessagePipesHub messagePipesHub)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -96,6 +96,7 @@ namespace SceneRunner
             this.webRequestController = webRequestController;
             this.roomHub = roomHub;
             this.realmData = realmData;
+            this.messagePipesHub = messagePipesHub;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -149,11 +150,6 @@ namespace SceneRunner
         public void SetGlobalWorldActions(IGlobalWorldActions actions)
         {
             globalWorldActions = actions;
-        }
-
-        public void SetMultiplayerReferences(IMessagePipesHub messagePipes)
-        {
-            this.messagePipesHub = messagePipes;
         }
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)

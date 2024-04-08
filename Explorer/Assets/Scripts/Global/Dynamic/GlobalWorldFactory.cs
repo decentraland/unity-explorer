@@ -177,7 +177,6 @@ namespace Global.Dynamic
             staticContainer.GlobalWorldProxy.SetObject(world);
 
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity));
-            sceneFactory.SetMultiplayerReferences(messagePipesHub);
 
             return (globalWorld, playerEntity);
         }

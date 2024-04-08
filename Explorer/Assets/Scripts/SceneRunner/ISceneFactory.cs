@@ -55,11 +55,5 @@ namespace SceneRunner
         /// </summary>
         /// <param name="actions"></param>
         void SetGlobalWorldActions(IGlobalWorldActions actions);
-
-        /// <summary>
-        /// Used for passing references from the global world to the scene world
-        /// </summary>
-        /// <param name="messagePipes"></param>
-        void SetMultiplayerReferences(IMessagePipesHub messagePipes);
     }
 }
