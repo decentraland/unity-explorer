@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Diagnostics;
@@ -45,6 +46,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
+        [SerializeField] private AudioClipConfig backgroundMusic;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -182,6 +184,8 @@ namespace Global.Dynamic
                     return;
                 }
 
+                UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
+
                 Entity playerEntity;
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
@@ -201,6 +205,8 @@ namespace Global.Dynamic
                     globalWorld.EcsWorld, playerEntity, ct);
 
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+
+                UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
             }
             catch (OperationCanceledException)
             {

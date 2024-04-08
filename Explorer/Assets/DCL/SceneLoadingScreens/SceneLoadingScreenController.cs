@@ -79,8 +79,6 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(viewInstance.BackgroundMusic);
-
             viewInstance.RootCanvasGroup.alpha = 1f;
             viewInstance.ContentCanvasGroup.alpha = 1f;
         }
@@ -88,8 +86,6 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(viewInstance.BackgroundMusic);
-
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
         }

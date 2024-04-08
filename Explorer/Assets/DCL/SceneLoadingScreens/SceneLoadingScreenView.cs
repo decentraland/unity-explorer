@@ -50,10 +50,6 @@ namespace DCL.SceneLoadingScreens
         [SerializeField]
         private Transform breadcrumbParent = null!;
 
-        [Header("Audio")]
-        [field: SerializeField]
-        public AudioClipConfig BackgroundMusic;
-
         public event Action<int>? OnBreadcrumbClicked;
 
         private readonly List<TipView> tips = new ();

@@ -62,10 +62,6 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
-        [Header("Audio")]
-        [field: SerializeField]
-        public AudioClipConfig BackgroundMusic;
-
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do

@@ -11,7 +11,7 @@ namespace DCL.PluginSystem.Global
     public class UIAudioPlaybackPlugin : IDCLGlobalPlugin<UIAudioPlaybackPlugin.AudioPluginSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private UIAudioManagerContainer? uiAudioManagerContainer;
+        private UIAudioPlaybackController? uiAudioManagerContainer;
 
         public UIAudioPlaybackPlugin(IAssetsProvisioner assetsProvisioner)
         {
@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
-        public class AudioManagerContainerReference : ComponentReference<UIAudioManagerContainer>
+        public class AudioManagerContainerReference : ComponentReference<UIAudioPlaybackController>
         {
             public AudioManagerContainerReference(string guid) : base(guid) { }
         }

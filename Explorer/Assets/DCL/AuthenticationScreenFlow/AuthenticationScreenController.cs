@@ -96,8 +96,6 @@ namespace DCL.AuthenticationScreenFlow
 
             Assert.IsNotNull(world);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
-
-            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(viewInstance.BackgroundMusic);
         }
 
         protected override void OnBeforeViewShow()
@@ -111,9 +109,9 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewClose();
 
+
             CancelLoginProcess();
             CancelVerificationCountdown();
-            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(viewInstance.BackgroundMusic);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
@@ -143,6 +141,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
+
                     viewInstance.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
