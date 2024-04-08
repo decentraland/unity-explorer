@@ -1,4 +1,6 @@
-﻿using DCL.Web3.Identities;
+﻿#nullable enable
+
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using NSubstitute;

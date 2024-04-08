@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,8 @@ namespace DCL.Chat
 {
     public class ChatEntryView : MonoBehaviour
     {
+        private const float BACKGROUND_HEIGHT_OFFSET = 56;
+
         [field: SerializeField]
         internal RectTransform backgroundRectTransform { get; private set; }
 
@@ -21,6 +24,9 @@ namespace DCL.Chat
 
         [field: SerializeField]
         internal TMP_Text playerName { get; private set; }
+
+        [field: SerializeField]
+        internal TMP_Text walletIdText { get; private set; }
 
         [field: SerializeField]
         internal Image playerIcon { get; private set; }
@@ -41,10 +47,15 @@ namespace DCL.Chat
 
         public void SetUsername(string username, string walletId)
         {
-            playerName.text =
-                string.IsNullOrEmpty(walletId) ?
-                    username : $"{username}#<color=#76717E>{walletId.Substring(0,5)}</color>";
-            verifiedIcon.gameObject.SetActive(string.IsNullOrEmpty(walletId));
+            int walletIdIndexOf = username.IndexOf("#", StringComparison.Ordinal);
+
+            playerName.text = username.Contains("#")
+                ? $"{username.Substring(0, walletIdIndexOf)}"
+                : username;
+            walletIdText.text = $"#{walletId.Substring(0,5)}";
+
+            walletIdText.gameObject.SetActive(walletIdIndexOf != -1);
+            verifiedIcon.gameObject.SetActive(walletIdIndexOf == -1);
         }
 
         public void AnimateChatEntry()
@@ -60,7 +71,7 @@ namespace DCL.Chat
 
             contentSizeFitter.SetLayoutVertical();
             backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + 40, 58);
+            backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + BACKGROUND_HEIGHT_OFFSET);
 
             backgroundRectTransform.sizeDelta = backgroundSize;
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, backgroundSize.y);
