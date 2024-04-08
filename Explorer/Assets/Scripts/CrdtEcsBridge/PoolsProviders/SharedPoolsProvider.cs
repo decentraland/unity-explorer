@@ -24,9 +24,9 @@ namespace CrdtEcsBridge.PoolsProviders
             lock (PROCESSED_CRDT_MESSAGES_POOL) { PROCESSED_CRDT_MESSAGES_POOL.Return(messages); }
         }
 
-        public byte[] GetSerializedStateBytesPool(int size)
+        public PoolableByteArray GetSerializedStateBytesPool(int size)
         {
-            lock (SERIALIZED_STATE_BYTES_POOL) { return SERIALIZED_STATE_BYTES_POOL.Rent(size); }
+            lock (SERIALIZED_STATE_BYTES_POOL) { return new PoolableByteArray(SERIALIZED_STATE_BYTES_POOL.Rent(size), size, this); }
         }
 
         public void ReleaseSerializedStateBytesPool(byte[] bytes)

@@ -13,7 +13,7 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.Ethereums
 {
-    public class EthereumApiWrapper : IDisposable
+    public class EthereumApiWrapper : IJsApiWrapper
     {
         private readonly IEthereumApi ethereumApi;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;

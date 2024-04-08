@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -15,31 +16,25 @@ namespace CrdtEcsBridge.CommunicationsController
 {
     public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
     {
-        private readonly ISceneData sceneData;
-        private readonly IMessagePipesHub messagePipesHub;
-        private readonly IJsOperations jsOperations;
-        private readonly List<byte[]> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-
-        private enum MsgType
-        {
-            String = 1, // Deprecated in SDK7
-            Uint8Array = 2,
-        }
+        private readonly List<byte[]> eventsToProcess = new ();
+        private readonly IJsOperations jsOperations;
+        private readonly ICommunicationControllerHub messagePipesHub;
+        private readonly ISceneData sceneData;
 
         public CommunicationsControllerAPIImplementation(
             ISceneData sceneData,
-            IMessagePipesHub messagePipesHub,
+            ICommunicationControllerHub messagePipesHub,
             IJsOperations jsOperations)
         {
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
             this.jsOperations = jsOperations;
+        }
 
-            if (messagePipesHub == null)
-                return;
-
-            messagePipesHub.ScenePipe().Subscribe<Scene>(Packet.MessageOneofCase.Scene, OnMessageReceived);
+        public void OnSceneBecameCurrent()
+        {
+            messagePipesHub.SetSceneMessageHandler(OnMessageReceived);
         }
 
         public object SendBinary(byte[][] data)
@@ -50,7 +45,7 @@ namespace CrdtEcsBridge.CommunicationsController
                     continue;
 
                 byte[] encodedMessage = EncodeMessage(message, MsgType.Uint8Array);
-                SendMessage(encodedMessage, messagePipesHub.ScenePipe());
+                SendMessage(encodedMessage);
             }
 
             byte[][] resultData = eventsToProcess.ToArray();
@@ -60,21 +55,21 @@ namespace CrdtEcsBridge.CommunicationsController
 
         public void Dispose()
         {
+            // TODO clean-up events to process
+
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
         }
 
-        private  void SendMessage(byte[] message, IMessagePipe messagePipe)
+        private void SendMessage(ReadOnlySpan<byte> message)
         {
-            var sceneMessage = messagePipe.NewMessage<Scene>();
-            sceneMessage.Payload.Data = ByteString.CopyFrom(message);
-            sceneMessage.Payload.SceneId = sceneData.SceneEntityDefinition.id;
-            sceneMessage.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
-            var decodedMessage = DecodeMessage(receivedMessage.Payload.Data.ToByteArray());
+            (MsgType msgType, byte[] data) decodedMessage = DecodeMessage(receivedMessage.Payload.Data.ToByteArray());
+
             if (decodedMessage.msgType != MsgType.Uint8Array || decodedMessage.data.Length == 0)
                 return;
 
@@ -98,10 +93,16 @@ namespace CrdtEcsBridge.CommunicationsController
 
         private static (MsgType msgType, byte[] data) DecodeMessage(byte[] value)
         {
-            MsgType msgType = (MsgType)value[0];
+            var msgType = (MsgType)value[0];
             var data = new byte[value.Length - 1];
             Array.Copy(value, 1, data, 0, value.Length - 1);
             return (msgType, data);
+        }
+
+        private enum MsgType
+        {
+            String = 1, // Deprecated in SDK7
+            Uint8Array = 2,
         }
     }
 }

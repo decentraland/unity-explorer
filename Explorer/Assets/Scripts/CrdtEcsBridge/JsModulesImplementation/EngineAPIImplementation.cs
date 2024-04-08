@@ -150,10 +150,10 @@ namespace CrdtEcsBridge.Engine
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
                 // We know exactly how many bytes we need to serialize
-                byte[] serializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
+                var serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
+                var currentStateSpan = serializationBufferPoolable.Span;
 
                 // Serialize the current state
-                Span<byte> currentStateSpan = serializationBuffer.AsSpan()[..currentStatePayloadLength];
 
                 for (var i = 0; i < messagesCount; i++)
                     crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
@@ -162,7 +162,7 @@ namespace CrdtEcsBridge.Engine
                 sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
 
                 // Return the buffer to the caller
-                return new PoolableByteArray(serializationBuffer, currentStatePayloadLength, sharedPoolsProvider);
+                return serializationBufferPoolable;
             }
             catch (Exception e)
             {
@@ -183,22 +183,20 @@ namespace CrdtEcsBridge.Engine
             {
                 outgoingMessagesSampler.Begin();
 
-                int payloadLength;
-                byte[] serializationBuffer;
+                PoolableByteArray serializationBufferPoolable;
 
                 using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
                 {
-                    serializationBuffer =
-                        sharedPoolsProvider.GetSerializedStateBytesPool(
-                            payloadLength = outgoingMessagesSyncBlock.PayloadLength);
+                    serializationBufferPoolable =
+                        sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.PayloadLength);
 
-                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBuffer.AsSpan());
+                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBufferPoolable.Span);
 
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
                 }
 
                 outgoingMessagesSampler.End();
-                return new PoolableByteArray(serializationBuffer, payloadLength, sharedPoolsProvider);
+                return serializationBufferPoolable;
             }
             catch (Exception e)
             {

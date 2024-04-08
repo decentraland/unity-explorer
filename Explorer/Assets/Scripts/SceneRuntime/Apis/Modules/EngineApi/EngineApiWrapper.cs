@@ -7,7 +7,7 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : IDisposable
+    public class EngineApiWrapper : IJsApiWrapper
     {
         internal readonly IEngineApi api;
 

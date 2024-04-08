@@ -21,7 +21,7 @@ namespace SceneRuntime
 {
     public interface ISceneRuntime : IDisposable
     {
-        void Register<T>(string itemName, T target) where T: IDisposable;
+        void Register<T>(string itemName, T target) where T: IJsApiWrapper;
 
         UniTask StartScene();
 
@@ -101,7 +101,7 @@ namespace SceneRuntime
 
         private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi));
         }
 
         private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api)

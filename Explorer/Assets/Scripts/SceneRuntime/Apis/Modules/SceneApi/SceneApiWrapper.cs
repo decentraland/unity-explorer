@@ -3,7 +3,7 @@ using System;
 
 namespace SceneRuntime.Apis.Modules.SceneApi
 {
-    public class SceneApiWrapper : IDisposable
+    public class SceneApiWrapper : IJsApiWrapper
     {
         private readonly ISceneApi api;
 

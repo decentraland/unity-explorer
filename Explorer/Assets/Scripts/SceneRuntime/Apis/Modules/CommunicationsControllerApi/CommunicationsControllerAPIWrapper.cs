@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
-    public class CommunicationsControllerAPIWrapper : IDisposable
+    public class CommunicationsControllerAPIWrapper : IJsApiWrapper
     {
         private readonly ICommunicationsControllerAPI api;
 
@@ -17,6 +17,11 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         public void Dispose()
         {
             api.Dispose();
+        }
+
+        public void OnSceneBecameCurrent()
+        {
+            api.OnSceneBecameCurrent();
         }
 
         [UsedImplicitly]

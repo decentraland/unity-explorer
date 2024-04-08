@@ -20,6 +20,8 @@ namespace CrdtEcsBridge.PoolsProviders
             IsDisposed = false;
         }
 
+        public Span<byte> Span => new(Array, 0, Length);
+
         public bool IsDisposed { get; private set; }
 
         public bool IsEmpty => Length == 0;
