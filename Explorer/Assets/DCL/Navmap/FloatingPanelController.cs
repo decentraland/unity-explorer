@@ -128,12 +128,13 @@ namespace DCL.Navmap
         private void SetEmptyParcelInfo(Vector2Int parcel)
         {
             view.placeName.text = "Empty parcel";
-            view.placeCreator.text = $"created by <b>Unknown</b>";
+            view.placeCreator.gameObject.SetActive(false);
             view.placeDescription.text = "This place doesn't have a description set";
-            view.location.text = parcel.ToString();
+            view.location.text = parcel.ToString().Replace("(", "").Replace(")", "");
             view.visits.text = "-";
             view.upvotes.text = "-";
             view.parcelsCount.text = "1";
+            //placeImageController.SetImage(placeInfo.image);
 
             ResetCategories();
         }
@@ -143,6 +144,7 @@ namespace DCL.Navmap
             placeImageController.RequestImage(placeInfo.image);
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
+            view.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
 
             view.placeDescription.text = string.IsNullOrEmpty(placeInfo.description)
                 ? "This place doesn't have a description set"
