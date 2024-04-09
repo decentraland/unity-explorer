@@ -81,6 +81,7 @@ jobs:
         with:
           projectPath: Explorer
           testMode: all
+          customParameters: -nographics
 
       - name: Convert NUnit to JUnit
         if: always()
