@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
@@ -50,7 +51,7 @@ namespace DCL.Backpack
             BackpackEmoteGridController backpackEmoteGridController,
             AvatarSlotView[] avatarSlotViews,
             EmotesController emotesController,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IEquippedEmotes equippedEmotes)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -95,7 +96,7 @@ namespace DCL.Backpack
                     });
             }
 
-            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus, world, backpackEquipStatusController);
+            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus, world, equippedEmotes);
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }
