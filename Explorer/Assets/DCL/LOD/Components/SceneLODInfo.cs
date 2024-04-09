@@ -15,7 +15,7 @@ namespace DCL.LOD.Components
         internal LODAsset? LastSuccessfulLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
-        public bool IsInit;
+        
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
