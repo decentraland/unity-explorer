@@ -66,6 +66,21 @@ AudioMixerGroupController:
   m_Mute: 0
   m_Solo: 0
   m_BypassEffects: 0
+--- !u!245 &-1473976123031914414
+AudioMixerSnapshotController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: OnMenu
+  m_AudioMixer: {fileID: 24100000}
+  m_SnapshotID: 97f9f12b433cc9a48a31fd470c3aeedd
+  m_FloatValues:
+    a86cc11096ba1e043b6ae7089303c3f8: -9.833286
+    3aa14eb4f1d3d9440931805f03169a57: -10.345207
+    41896c455d9a1ae4aa309cc74ca710d0: -10.345207
+    856382ba013d5eb468afa9f4a06fb492: 0
+  m_TransitionOverrides: {}
 --- !u!243 &-569781701901290150
 AudioMixerGroupController:
   m_ObjectHideFlags: 0
@@ -96,6 +111,7 @@ AudioMixerController:
   m_MasterGroup: {fileID: 24300002}
   m_Snapshots:
   - {fileID: 24500006}
+  - {fileID: -1473976123031914414}
   m_StartSnapshot: {fileID: 24500006}
   m_SuspendThreshold: -80
   m_EnableSuspend: 1
@@ -168,7 +184,7 @@ AudioMixerSnapshotController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Snapshot
+  m_Name: Normal
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: e726fc49e60a8284d9c7c62e1adfc570
   m_FloatValues:

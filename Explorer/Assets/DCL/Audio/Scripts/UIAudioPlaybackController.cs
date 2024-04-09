@@ -1,13 +1,6 @@
-using DCL.Optimization.Pools;
 using DG.Tweening;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.Audio;
-using UnityEngine.Serialization;
-using Random = UnityEngine.Random;
 
 namespace DCL.Audio
 {
@@ -24,11 +17,9 @@ namespace DCL.Audio
         private AudioSource ChatAudioSource;
         [SerializeField]
         private float fadeDuration = 1.5f;
-        [SerializeField]
-        private AudioSettings audioSettings;
-        private IComponentPool<AudioSource> audioSourcePool;
 
-        private Dictionary<AudioCategory, List<AudioSource>> currentAudioSources = new ();
+
+        private AudioSettings audioSettings;
         private Tweener loopingAudioTweener;
 
         public void Dispose()
@@ -41,8 +32,9 @@ namespace DCL.Audio
             loopingAudioTweener.Kill();
         }
 
-        public void Initialize()
+        public void Initialize(AudioSettings audioSettings)
         {
+            this.audioSettings = audioSettings;
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayLoopingUIAudioEvent += OnPlayLoopingUIAudioEvent;
         }

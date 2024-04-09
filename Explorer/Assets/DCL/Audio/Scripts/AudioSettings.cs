@@ -16,6 +16,7 @@ namespace DCL.Audio
         private readonly Dictionary<AudioCategory, AudioCategorySettings> audioCategorySettingsDictionary = new ();
 
         public float MasterVolume => masterVolume;
+        public AudioMixer MasterAudioMixer => masterAudioMixer;
 
         public AudioCategorySettings GetSettingsForCategory(AudioCategory category)
         {

@@ -19,6 +19,7 @@ namespace DCL.Audio
         public event Action<AudioClipConfig> PlayUIAudioEvent;
         public event Action<AudioClipConfig, bool> PlayLoopingUIAudioEvent;
 
+
         public void Dispose() { }
 
         public void SendPlayAudioEvent(AudioClipConfig audioClipConfig)
