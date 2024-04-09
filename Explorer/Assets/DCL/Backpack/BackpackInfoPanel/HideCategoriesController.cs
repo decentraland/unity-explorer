@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
-using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +24,6 @@ namespace DCL.Backpack
         private readonly HideCategoryGridView view;
         private readonly IReadOnlyEquippedWearables equippedWearables;
         private readonly NftTypeIconSO categoryIcons;
-
-        private IObjectPool<HideCategoryRowView> rowsPool = null!;
-        private IObjectPool<HideCategoryView> hidesPool = null!;
 
         private readonly List<HideCategoryRowView> usedRows = new (MAX_HIDE_ROWS);
         private readonly List<HideCategoryView> usedHides = new (MAX_HIDE_CATEGORIES);
@@ -91,7 +87,7 @@ namespace DCL.Backpack
 
             ClearPools();
 
-            IWearable? bodyShapeWearable = backpackEquipStatusController.GetEquippedWearableForCategory(WearablesConstants.Categories.BODY_SHAPE);
+            IWearable? bodyShapeWearable = equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE);
 
             if (bodyShapeWearable == null)
             {
@@ -101,7 +97,6 @@ namespace DCL.Backpack
 
             URN bodyShapeUrn = bodyShapeWearable.GetUrn();
             wearable.GetHidingList(bodyShapeUrn, hidingList);
-            wearable.GetHidingList(equippedWearables.Wearable("body_shape").EnsureNotNull().GetUrn(), hidingList);
             var rowsNumber = (int)Math.Ceiling((double)hidingList.Count / ITEMS_PER_ROW);
             view.HideHeader.SetActive(hidingList.Count > 0);
 
