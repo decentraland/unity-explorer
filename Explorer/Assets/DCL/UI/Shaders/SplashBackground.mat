@@ -59,7 +59,7 @@ Material:
     - _Wave_Tiling: 5.3
     m_Colors:
     - _Center: {r: 0.5, g: 0.5, b: 0, a: 0}
-    - _Inner_Color: {r: 0.9333334, g: 0.18431373, b: 0.8941177, a: 0}
+    - _Inner_Color: {r: 0.7735849, g: 0.1788003, b: 0.7424442, a: 0}
     - _Offset: {r: 0, g: 0, b: 0, a: 0}
     - _Outer_Color: {r: 0.34901962, g: 0.08627451, b: 0.5058824, a: 0}
     - _Radius: {r: 0.46, g: 0.5, b: 0, a: 0}
