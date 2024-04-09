@@ -1,10 +1,10 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
-using DCL.Input;
 using DCL.Time;
 using DCL.Time.Systems;
 using ECS.Abstract;

@@ -1,0 +1,1447 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!181963792 &2655988077585873504
+Preset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: PopuzDevLogs
+  m_TargetType:
+    m_NativeTypeID: 114
+    m_ManagedTypePPtr: {fileID: 11500000, guid: 71ed1db8ba3d47b5bb84cf25f7a327d8, type: 3}
+    m_ManagedTypeFallback: 
+  m_Properties:
+  - target: {fileID: 0}
+    propertyPath: m_Enabled
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorHideFlags
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorClassIdentifier
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.size
+    value: 130
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[0].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[0].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[1].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[1].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[2].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[2].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[3].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[3].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[4].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[4].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[5].Category
+    value: LANDSCAPE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[5].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[6].Category
+    value: LANDSCAPE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[6].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[7].Category
+    value: LANDSCAPE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[7].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[8].Category
+    value: LANDSCAPE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[8].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[9].Category
+    value: LANDSCAPE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[9].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[10].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[10].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[11].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[11].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[12].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[12].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[13].Category
+    value: REALM
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[13].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[14].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[14].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[15].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[15].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[16].Category
+    value: SCENE_UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[16].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[17].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[17].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[18].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[18].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[19].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[19].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[20].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[20].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[21].Category
+    value: PRIORITIZATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[21].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[22].Category
+    value: MOTION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[22].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[23].Category
+    value: INPUT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[23].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[24].Category
+    value: AVATAR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[24].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[25].Category
+    value: PROFILE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[25].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[26].Category
+    value: WEARABLE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[26].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[27].Category
+    value: AUTHENTICATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[27].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[28].Category
+    value: LOD
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[28].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[29].Category
+    value: QUALITY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[29].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[30].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[30].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[31].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[31].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[32].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[32].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[33].Category
+    value: REALM
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[33].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[34].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[34].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[35].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[35].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[36].Category
+    value: SCENE_UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[36].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[37].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[37].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[38].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[38].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[39].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[39].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[40].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[40].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[41].Category
+    value: PRIORITIZATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[41].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[42].Category
+    value: MOTION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[42].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[43].Category
+    value: INPUT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[43].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[44].Category
+    value: AVATAR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[44].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[45].Category
+    value: PROFILE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[45].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[46].Category
+    value: WEARABLE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[46].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[47].Category
+    value: AUTHENTICATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[47].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[48].Category
+    value: LOD
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[48].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[49].Category
+    value: QUALITY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[49].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[50].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[50].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[51].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[51].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[52].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[52].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[53].Category
+    value: REALM
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[53].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[54].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[54].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[55].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[55].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[56].Category
+    value: SCENE_UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[56].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[57].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[57].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[58].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[58].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[59].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[59].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[60].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[60].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[61].Category
+    value: PRIORITIZATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[61].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[62].Category
+    value: MOTION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[62].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[63].Category
+    value: INPUT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[63].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[64].Category
+    value: AVATAR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[64].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[65].Category
+    value: PROFILE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[65].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[66].Category
+    value: WEARABLE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[66].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[67].Category
+    value: AUTHENTICATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[67].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[68].Category
+    value: LOD
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[68].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[69].Category
+    value: QUALITY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[69].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[70].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[70].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[71].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[71].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[72].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[72].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[73].Category
+    value: REALM
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[73].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[74].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[74].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[75].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[75].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[76].Category
+    value: SCENE_UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[76].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[77].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[77].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[78].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[78].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[79].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[79].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[80].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[80].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[81].Category
+    value: PRIORITIZATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[81].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[82].Category
+    value: MOTION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[82].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[83].Category
+    value: INPUT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[83].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[84].Category
+    value: AVATAR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[84].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[85].Category
+    value: PROFILE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[85].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[86].Category
+    value: WEARABLE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[86].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[87].Category
+    value: AUTHENTICATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[87].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[88].Category
+    value: LOD
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[88].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[89].Category
+    value: QUALITY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[89].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[90].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[90].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[91].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[91].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[92].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[92].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[93].Category
+    value: REALM
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[93].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[94].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[94].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[95].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[95].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[96].Category
+    value: SCENE_UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[96].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[97].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[97].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[98].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[98].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[99].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[99].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[100].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[100].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[101].Category
+    value: PRIORITIZATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[101].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[102].Category
+    value: MOTION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[102].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[103].Category
+    value: INPUT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[103].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[104].Category
+    value: AVATAR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[104].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[105].Category
+    value: PROFILE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[105].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[106].Category
+    value: WEARABLE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[106].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[107].Category
+    value: AUTHENTICATION
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[107].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[108].Category
+    value: LOD
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[108].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[109].Category
+    value: QUALITY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[109].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[110].Category
+    value: ARCHIPELAGO_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[110].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[111].Category
+    value: ARCHIPELAGO_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[111].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[112].Category
+    value: ARCHIPELAGO_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[112].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[113].Category
+    value: ARCHIPELAGO_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[113].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[114].Category
+    value: ARCHIPELAGO_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[114].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[115].Category
+    value: ANIMATOR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[115].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[116].Category
+    value: ANIMATOR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[116].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[117].Category
+    value: ANIMATOR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[117].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[118].Category
+    value: ANIMATOR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[118].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[119].Category
+    value: ANIMATOR
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[119].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[120].Category
+    value: REMOTE_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[120].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[121].Category
+    value: MULTIPLAYER_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[121].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[122].Category
+    value: MULTIPLAYER_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[122].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[123].Category
+    value: REMOTE_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[123].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[124].Category
+    value: REMOTE_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[124].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[125].Category
+    value: MULTIPLAYER_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[125].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[126].Category
+    value: REMOTE_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[126].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[127].Category
+    value: MULTIPLAYER_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[127].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[128].Category
+    value: REMOTE_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[128].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[129].Category
+    value: MULTIPLAYER_MOVEMENT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[129].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.size
+    value: 45
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[0].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[0].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[1].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[1].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[2].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[2].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[3].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[3].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[4].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[4].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[5].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[5].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[6].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[6].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[7].Category
+    value: STREAMABLE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[7].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[8].Category
+    value: ASSET_BUNDLES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[8].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[9].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[9].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[10].Category
+    value: GLTF_CONTAINER
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[10].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[11].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[11].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[12].Category
+    value: PRIMITIVE_COLLIDERS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[12].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[13].Category
+    value: PRIMITIVE_MESHES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[13].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[14].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[14].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[15].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[15].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[16].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[16].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[17].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[17].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[18].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[18].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[19].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[19].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[20].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[20].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[21].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[21].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[22].Category
+    value: STREAMABLE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[22].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[23].Category
+    value: ASSET_BUNDLES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[23].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[24].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[24].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[25].Category
+    value: GLTF_CONTAINER
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[25].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[26].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[26].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[27].Category
+    value: PRIMITIVE_COLLIDERS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[27].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[28].Category
+    value: PRIMITIVE_MESHES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[28].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[29].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[29].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[30].Category
+    value: ENGINE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[30].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[31].Category
+    value: CRDT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[31].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[32].Category
+    value: CRDT_ECS_BRIDGE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[32].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[33].Category
+    value: SCENE_FACTORY
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[33].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[34].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[34].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[35].Category
+    value: JAVASCRIPT
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[35].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[36].Category
+    value: ECS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[36].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[37].Category
+    value: STREAMABLE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[37].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[38].Category
+    value: ASSET_BUNDLES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[38].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[39].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[39].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[40].Category
+    value: GLTF_CONTAINER
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[40].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[41].Category
+    value: MATERIALS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[41].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[42].Category
+    value: PRIMITIVE_COLLIDERS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[42].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[43].Category
+    value: PRIMITIVE_MESHES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[43].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[44].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: sentryMatrix.entries.Array.data[44].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debounceEnabled
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: isSentryEnabled
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: isDebugLogEnabled
+    value: 1
+    objectReference: {fileID: 0}
+  m_ExcludedProperties: []

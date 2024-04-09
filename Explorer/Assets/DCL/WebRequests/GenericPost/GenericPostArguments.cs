@@ -47,6 +47,9 @@ namespace DCL.WebRequests
         public static GenericPostArguments CreateJson(string postData) =>
             new (postData, "application/json");
 
+        public static GenericPostArguments CreateJsonOrDefault(string? postData) =>
+            postData == null ? Empty : CreateJson(postData);
+
         public override string ToString() =>
             "GenericPostArguments:"
             + $"\nMultipartFormSections: {MultipartFormSections}"

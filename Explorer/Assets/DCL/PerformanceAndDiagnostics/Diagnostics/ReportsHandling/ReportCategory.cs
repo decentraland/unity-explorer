@@ -165,6 +165,7 @@
         ///     Wearable related
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
+        public const string EMOTE = nameof(EMOTE);
 
         public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
@@ -208,5 +209,8 @@
         public const string LIVEKIT = nameof(LIVEKIT);
 
         public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
+
+        public const string MVC = nameof(MVC);
+
     }
 }

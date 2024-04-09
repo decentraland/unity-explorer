@@ -1,7 +1,9 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
 using DCL.Utilities.Extensions;
@@ -29,8 +31,10 @@ namespace DCL.Backpack
 
         private readonly List<HideCategoryRowView> usedRows = new (MAX_HIDE_ROWS);
         private readonly List<HideCategoryView> usedHides = new (MAX_HIDE_CATEGORIES);
+        private readonly HashSet<string> hidingList = new (MAX_HIDE_CATEGORIES);
 
-        private HashSet<string> hidingList = new (MAX_HIDE_CATEGORIES);
+        private IObjectPool<HideCategoryRowView>? rowsPool;
+        private IObjectPool<HideCategoryView>? hidesPool;
 
         public HideCategoriesController(
             HideCategoryGridView view,
@@ -42,10 +46,10 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.categoryIcons = categoryIcons;
 
-            backpackEventBus.SelectEvent += SetHideCategories;
+            backpackEventBus.SelectWearableEvent += SetHideCategories;
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        public async UniTask InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
             HideCategoryRowView hideCategoryRowView = (await assetsProvisioner.ProvideMainAssetAsync(view.HideRow, ct: ct)).Value;
             HideCategoryView hideCategoryView = (await assetsProvisioner.ProvideMainAssetAsync(view.HideCategory, ct: ct)).Value;
@@ -79,7 +83,24 @@ namespace DCL.Backpack
 
         private void SetHideCategories(IWearable wearable)
         {
+            if (rowsPool == null || hidesPool == null)
+            {
+                view.HideHeader.SetActive(false);
+                return;
+            }
+
             ClearPools();
+
+            IWearable? bodyShapeWearable = backpackEquipStatusController.GetEquippedWearableForCategory(WearablesConstants.Categories.BODY_SHAPE);
+
+            if (bodyShapeWearable == null)
+            {
+                view.HideHeader.SetActive(false);
+                return;
+            }
+
+            URN bodyShapeUrn = bodyShapeWearable.GetUrn();
+            wearable.GetHidingList(bodyShapeUrn, hidingList);
             wearable.GetHidingList(equippedWearables.Wearable("body_shape").EnsureNotNull().GetUrn(), hidingList);
             var rowsNumber = (int)Math.Ceiling((double)hidingList.Count / ITEMS_PER_ROW);
             view.HideHeader.SetActive(hidingList.Count > 0);
@@ -110,6 +131,8 @@ namespace DCL.Backpack
 
         private void ClearPools()
         {
+            if (rowsPool == null || hidesPool == null) return;
+
             foreach (var usedHide in usedHides)
                 hidesPool.Release(usedHide);
 
