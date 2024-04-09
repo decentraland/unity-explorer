@@ -54,7 +54,10 @@ MonoBehaviour:
   <ControlsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Controls Group 1
-      <Modules>k__BackingField: []
+      <Modules>k__BackingField:
+      - rid: 5242998319625273348
+  <SantiConfig>k__BackingField:
+    <SettingsGroups>k__BackingField: []
   references:
     version: 2
     RefIds:
@@ -300,6 +303,15 @@ MonoBehaviour:
         <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
         <Config>k__BackingField:
           <ModuleName>k__BackingField: SO 1.2
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+        <Feature>k__BackingField: 0
+    - rid: 5242998319625273348
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: CO 1.1
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
         <Feature>k__BackingField: 0
