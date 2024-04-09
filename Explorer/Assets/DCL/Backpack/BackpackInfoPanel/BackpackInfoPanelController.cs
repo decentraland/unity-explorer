@@ -30,7 +30,6 @@ namespace DCL.Backpack
             NftTypeIconSO rarityInfoPanelBackgrounds,
             NFTColorsSO rarityColors,
             IReadOnlyEquippedWearables equippedWearables,
-            IBackpackEquipStatusController backpackEquipStatusController,
             AttachmentType attachmentType)
         {
             this.view = view;
