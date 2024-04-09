@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -50,24 +51,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.GateKeeper.Meta;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
-using DCL.Multiplayer.Profiles.BroadcastProfiles;
-using DCL.Multiplayer.Profiles.Poses;
-using DCL.Multiplayer.Profiles.Tables;
-using DCL.Nametags;
-using DCL.NftInfoAPIService;
 using DCL.Profiles.Self;
-using DCL.Utilities.Extensions;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using System.Buffers;
-using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -122,32 +106,10 @@ namespace Global.Dynamic
 
         private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
-            async UniTask ChangeRealmAsync(string realm, CancellationToken ct)
-            {
-                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-                await UniTask.WhenAll(mvcManager.ShowAsync(
-                        SceneLoadingScreenController.IssueCommand(
-                            new SceneLoadingScreenController.Params(
-                                loadReport,
-                                TimeSpan.FromSeconds(30)
-                            )
-                        ),
-                        ct
-                    ),
-                    realmController.SetRealmAsync(URLDomain.FromString(realm), Vector2Int.zero, loadReport, ct));
-            }
-
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
-                                      evt =>
-                                      {
-                                          realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget();
-                                      }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm =>
-                                  {
-                                      realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget();
-                                  });
+                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -249,12 +211,13 @@ namespace Global.Dynamic
             );
 
             var equippedWearables = new EquippedWearables();
-            var profilePublishing = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog);
+            var equippedEmotes = new EquippedEmotes();
+            var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
                     new ProfileBroadcast(messagePipesHub),
-                    profilePublishing
+                    selfProfile
                 )
             );
 
@@ -264,7 +227,7 @@ namespace Global.Dynamic
                 new RemotePoses(container.RoomHub)
             );
 
-            var eventSystem = new UnityEventSystem(EventSystem.current);
+            var eventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
 
             IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController);
 
@@ -322,7 +285,6 @@ namespace Global.Dynamic
                     container.MvcManager,
                     mapRendererContainer,
                     placesAPIService,
-                    parcelServiceContainer.TeleportController,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
                     wearableCatalog,
@@ -330,11 +292,12 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
-                    emotesCache,
-                    realmNavigator,
-                    profilePublishing,
+                    selfProfile,
                     equippedWearables,
-                    webBrowser
+                    equippedEmotes,
+                    webBrowser,
+                    emotesCache,
+                    realmNavigator
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
