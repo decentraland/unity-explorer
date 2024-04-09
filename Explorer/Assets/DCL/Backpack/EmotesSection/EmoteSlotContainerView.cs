@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -46,15 +47,32 @@ namespace DCL.Backpack
         [field: SerializeField]
         public Button UnEquipButton { get; private set; }
 
+
+        [Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig EquipAudio;
+        [field: SerializeField]
+        public AudioClipConfig UnEquipAudio;
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio;
+
+        
         public event Action<EmoteSlotContainerView>? OnSlotButtonPressed;
 
         private void Start()
         {
             SlotButton.onClick.AddListener(OnButtonPressed);
+            UnEquipButton.onClick.AddListener(OnUnequipButton);
+        }
+
+        private void OnUnequipButton()
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(UnEquipAudio);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             UnEquipButton.gameObject.SetActive(!EmptyOverlay.activeSelf);
             FocusedImage.enabled = true;
             ScaleUpAnimation(FocusedImage.transform);
@@ -79,6 +97,7 @@ namespace DCL.Backpack
 
         private void OnButtonPressed()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipAudio);
             OnSlotButtonPressed?.Invoke(this);
             ScaleUpAnimation(SelectedBackground.transform);
         }

@@ -17,9 +17,10 @@ namespace DCL.Audio
         private AudioSource ChatAudioSource;
         [SerializeField]
         private float fadeDuration = 1.5f;
-
-
+        [SerializeField]
         private AudioSettings audioSettings;
+
+
         private Tweener loopingAudioTweener;
 
         public void Dispose()
@@ -32,9 +33,8 @@ namespace DCL.Audio
             loopingAudioTweener.Kill();
         }
 
-        public void Initialize(AudioSettings audioSettings)
+        public void Initialize()
         {
-            this.audioSettings = audioSettings;
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayLoopingUIAudioEvent += OnPlayLoopingUIAudioEvent;
         }

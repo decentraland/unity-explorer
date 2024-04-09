@@ -1,5 +1,6 @@
 using DCL.Audio;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.UI
@@ -27,5 +28,6 @@ namespace DCL.UI
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }
+
     }
 }

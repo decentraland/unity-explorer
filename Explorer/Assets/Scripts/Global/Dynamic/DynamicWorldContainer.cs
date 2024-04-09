@@ -277,7 +277,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new AudioPlaybackPlugin(staticContainer.AssetsProvisioner),
+                new UIAudioPlaybackPlugin(staticContainer.AssetsProvisioner),
                 new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem, chatCommandsFactory),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,

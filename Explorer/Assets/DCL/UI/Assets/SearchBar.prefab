@@ -196,8 +196,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputField: {fileID: 7152686171439982118}
   clearSearchButton: {fileID: 591611072373950417}
-  EnterTextAudioClipConfig: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
-  ClearTextAudioClipConfig: {fileID: 11400000, guid: ef8137a9dffa4d246b25fe9acb15e54c, type: 2}
+  InputTextAudio: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  ClearTextAudio: {fileID: 11400000, guid: ef8137a9dffa4d246b25fe9acb15e54c, type: 2}
+  SubmitAudio: {fileID: 11400000, guid: 14d6e8c4562170b4dbbfc985de1717c0, type: 2}
 --- !u!1 &1684105793296059905
 GameObject:
   m_ObjectHideFlags: 0

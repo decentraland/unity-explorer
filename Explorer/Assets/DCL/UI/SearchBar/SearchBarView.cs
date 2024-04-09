@@ -16,25 +16,31 @@ namespace DCL.UI
         public Button clearSearchButton;
 
 
-        [FormerlySerializedAs("EnterTextAudioClipConfig")]
         [Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig InputTextAudio;
-
-        [FormerlySerializedAs("ClearTextAudioClipConfig")]
         [field: SerializeField]
         public AudioClipConfig ClearTextAudio;
+        [field: SerializeField]
+        public AudioClipConfig SubmitAudio;
 
-        private void Awake()
+        private void OnEnable()
         {
             inputField.onValueChanged.AddListener(OnValueChanged);
+            inputField.onSubmit.AddListener(OnSubmit);
             clearSearchButton.onClick.AddListener(OnClearText);
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             inputField.onValueChanged.RemoveListener(OnValueChanged);
             clearSearchButton.onClick.RemoveListener(OnClearText);
+            inputField.onSubmit.RemoveListener(OnSubmit);
+        }
+
+        private void OnSubmit(string text)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(SubmitAudio);
         }
 
         private void OnClearText()
