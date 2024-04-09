@@ -29,6 +29,8 @@ namespace DCL.ResourcesUnloading.Tests
         private IExtendedObjectPool<Material> materialPool;
         private IProfileCache profileCache;
         private ILODAssetsPool lodAssetsPool;
+        private IRoadAssetPool roadAssetPool;
+
 
 
         [SetUp]
@@ -47,6 +49,8 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
             profileCache = Substitute.For<IProfileCache>();
             lodAssetsPool = Substitute.For<ILODAssetsPool>();
+            roadAssetPool = Substitute.For<IRoadAssetPool>();
+
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
 
@@ -59,6 +63,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(materialPool);
             cacheCleaner.Register(profileCache);
             cacheCleaner.Register(lodAssetsPool);
+            cacheCleaner.Register(roadAssetPool);
         }
 
         [TestCase(true, 1)]
