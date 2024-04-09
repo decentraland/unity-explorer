@@ -31,6 +31,8 @@ namespace DCL.Settings.ModuleViews
         private void Awake()
         {
             SliderView.Slider.onValueChanged.AddListener(OnValueChanged);
+            SliderView.DecreaseButton.onClick.AddListener(() => SliderView.Slider.value -= 1);
+            SliderView.IncreaseButton.onClick.AddListener(() => SliderView.Slider.value += 1);
             OnValueChanged(SliderView.Slider.value);
         }
 
