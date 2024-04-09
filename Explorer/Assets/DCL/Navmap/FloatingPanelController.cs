@@ -137,13 +137,14 @@ namespace DCL.Navmap
             view.visits.text = "-";
             view.upvotes.text = "-";
             view.parcelsCount.text = "1";
-            //placeImageController.SetImage(placeInfo.image);
+            placeImageController.SetVisible(false);
 
             ResetCategories();
         }
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
+            placeImageController.SetVisible(true);
             placeImageController.RequestImage(placeInfo.image);
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";

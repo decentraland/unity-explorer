@@ -30,6 +30,11 @@ namespace DCL.UI
             RequestImageAsync(uri, cts.Token).Forget();
         }
 
+        public void SetVisible(bool isVisible)
+        {
+            view.gameObject.SetActive(isVisible);
+        }
+
         public async UniTask RequestImageAsync(string uri, CancellationToken ct)
         {
             view.LoadingObject.SetActive(true);
