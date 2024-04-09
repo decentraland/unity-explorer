@@ -1711,6 +1711,7 @@ MonoBehaviour:
   - fashion
   - shop
   - education
+  <CanvasGroup>k__BackingField: {fileID: 6487922241336898360}
   <CategoriesContainer>k__BackingField: {fileID: 2627153927686046327}
   placeImage: {fileID: 3544030107733454522}
   closeButton: {fileID: 336449712889304881}

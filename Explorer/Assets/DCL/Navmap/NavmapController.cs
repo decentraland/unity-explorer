@@ -100,12 +100,12 @@ namespace DCL.Navmap
         private void OnResultClicked(string coordinates)
         {
             VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
-            floatingPanelController.HandlePanelVisibility(result, false);
+            floatingPanelController.HandlePanelVisibility(result, true);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
-            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel);
+            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, false);
         }
 
         public void Activate()

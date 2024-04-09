@@ -14,6 +14,9 @@ namespace DCL.Navmap
         public string[] categoryNames;
 
         [field: SerializeField]
+        public CanvasGroup CanvasGroup { get; private set; }
+
+        [field: SerializeField]
         public RectTransform CategoriesContainer { get; private set; }
 
         [field: SerializeField]

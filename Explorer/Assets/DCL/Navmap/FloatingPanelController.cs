@@ -67,13 +67,14 @@ namespace DCL.Navmap
             view.backButton.onClick.AddListener(HidePanel);
         }
 
-        public void HandlePanelVisibility(Vector2Int parcel, bool popAnimation = true)
+        public void HandlePanelVisibility(Vector2Int parcel, bool showBackButton)
         {
+            view.backButton.gameObject.SetActive(showBackButton);
             if (!view.gameObject.activeInHierarchy || view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("Out"))
             {
                 view.panelAnimator.Rebind();
                 view.panelAnimator.Update(0f);
-                ShowPanel(parcel, popAnimation);
+                ShowPanel(parcel);
             }
             else
             {
@@ -82,9 +83,11 @@ namespace DCL.Navmap
             }
         }
 
-        private void ShowPanel(Vector2Int parcel, bool popAnimation)
+        private void ShowPanel(Vector2Int parcel)
         {
             view.gameObject.SetActive(true);
+            view.CanvasGroup.interactable = true;
+            view.CanvasGroup.blocksRaycasts = true;
 
             cts = new CancellationTokenSource();
             GetPlaceInfoAsync(parcel).Forget();
@@ -207,6 +210,8 @@ namespace DCL.Navmap
         public void HidePanel()
         {
             view.panelAnimator.SetTrigger(OUT);
+            view.CanvasGroup.interactable = false;
+            view.CanvasGroup.blocksRaycasts = false;
         }
 
         public void Dispose()
