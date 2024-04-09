@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.MapRenderer.CoordsUtils
 {
@@ -26,6 +27,8 @@ namespace DCL.MapRenderer.CoordsUtils
         Vector3 CoordsToPositionUnclamped(Vector2 coords);
 
         Vector3 CoordsToPosition(Vector2Int coords);
+
+        IEnumerable<Vector2Int> ConvertToVector2Int(IEnumerable<string> coordinatesList);
 
         Vector3 CoordsToPositionWithOffset(Vector2 coords);
 

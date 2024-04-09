@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
+using PlacesData = DCL.PlacesAPIService.PlacesData;
 
 namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 {
@@ -44,14 +45,12 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public async UniTask Initialize(CancellationToken cancellationToken)
         {
             IReadOnlyList<string> pointsOfInterestCoordsAsync = await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken);
-
+            using var placesByCoordsListAsync = await placesAPIService.GetPlacesByCoordsListAsync(coordsUtils.ConvertToVector2Int(pointsOfInterestCoordsAsync), cancellationToken, true);
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
-            foreach (string sceneCoordinates in pointsOfInterestCoordsAsync)
+            foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
             {
                 try
                 {
-                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(coordsUtils.StringToCoords(sceneCoordinates), cancellationToken);
-
                     if (markers.ContainsKey(placeInfo))
                         continue;
 

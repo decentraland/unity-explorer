@@ -58,7 +58,7 @@ namespace DCL.PlacesAPIService
             return place;
         }
 
-        public async UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false)
         {
             using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> rentedAlreadyCachedPlaces = PlacesData.PLACE_INFO_LIST_POOL.AutoScope();
             using PoolExtensions.Scope<List<Vector2Int>> coordsToRequest = COORDS_TO_REQ_POOL.AutoScope();
@@ -81,7 +81,7 @@ namespace DCL.PlacesAPIService
                 }
             }
 
-            using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> rentedPlaces = PlacesData.PLACE_INFO_LIST_POOL.AutoScope();
+            PoolExtensions.Scope<List<PlacesData.PlaceInfo>> rentedPlaces = PlacesData.PLACE_INFO_LIST_POOL.AutoScope();
             List<PlacesData.PlaceInfo> places = rentedPlaces.Value;
 
             if (coordsToRequest.Value.Count > 0)
@@ -93,8 +93,7 @@ namespace DCL.PlacesAPIService
             }
 
             places.AddRange(alreadyCachedPlaces);
-
-            return places;
+            return rentedPlaces;
         }
 
         public async UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)

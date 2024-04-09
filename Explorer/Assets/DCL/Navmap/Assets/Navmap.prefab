@@ -972,7 +972,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &8235211841819826033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1018,8 +1018,8 @@ MonoBehaviour:
   <SatellitePixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 5012019790087633832}
   <StreetViewRenderImage>k__BackingField: {fileID: 4556225041539844487}
   <MapCameraDragBehaviorData>k__BackingField:
-    inertia: 0
-    decelerationRate: 0
+    inertia: 1
+    decelerationRate: 0.00001
 --- !u!1001 &351487765774893139
 PrefabInstance:
   m_ObjectHideFlags: 0

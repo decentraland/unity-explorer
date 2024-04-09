@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -20,7 +21,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
 
-        UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
+        UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
 
         UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
 
