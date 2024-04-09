@@ -120,5 +120,8 @@ namespace DCL.CharacterPreview
         {
             previewController?.UpdateAvatar(previewAvatarModel);
         }
+
+        protected void PlayEmote(string emoteId) =>
+            previewController?.PlayEmote(emoteId);
     }
 }

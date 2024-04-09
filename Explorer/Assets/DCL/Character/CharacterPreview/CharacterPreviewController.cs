@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -10,6 +12,9 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
+using System.Collections.Generic;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.CharacterPreview
 {
@@ -32,7 +37,8 @@ namespace DCL.CharacterPreview
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(avatarContainer.avatarParent),
-                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
+                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
+                new CharacterEmoteComponent());
         }
 
         public void Dispose()
@@ -68,7 +74,16 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
+            avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
+                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape, ((IReadOnlyCollection<URN>) avatarModel.Emotes) ?? Array.Empty<URN>()),
+                PartitionComponent.TOP_PRIORITY);
+
             avatarShape.IsDirty = true;
+        }
+
+        public void PlayEmote(string emoteId)
+        {
+            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId });
         }
     }
 }

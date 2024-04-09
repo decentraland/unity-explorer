@@ -6,7 +6,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
-using ECS.Unity.Transforms.Components;
 using MVC;
 using System.Threading;
 using UnityEngine;

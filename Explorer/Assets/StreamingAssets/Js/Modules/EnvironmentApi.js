@@ -8,11 +8,17 @@ module.exports.areUnsafeRequestAllowed = async function(messages) {
 
 module.exports.getBootstrapData = async function() {
 	showDeprecated();
+    return {
+        baseUrl: "",
+        id: "",
+        useFPSThrottling: false
+    }
 }
 
 module.exports.getCurrentRealm = async function() {
 	showDeprecated();
-    const runtimeResponse = module.exports.getRealm().realmInfo;
+    const realm = await UnityRuntime.GetRealm();
+    const runtimeResponse = realm.realmInfo;
     return { currentRealm : {
             displayName : runtimeResponse.realmName,
             serverName : runtimeResponse.realmName,
@@ -25,13 +31,15 @@ module.exports.getCurrentRealm = async function() {
 
 module.exports.getDecentralandTime = async function() {
 	showDeprecated();
-    const { time } = await UnityRuntime.GetWorldTime()
-    return { time };
+    return await UnityRuntime.GetWorldTime()
 }
 
 module.exports.getExplorerConfiguration = async function() {
 	showDeprecated();
-    return { };
+    return {
+        clientUri: "",
+        configurations: {}
+    };
 }
 
 module.exports.getPlatform = async function() {

@@ -1,8 +1,19 @@
-﻿{
-  "name": "Realm",
-  "references": [
-    "GUID:8322ea9340a544c59ddc56d4793eac74",
-    "GUID:101b8b6ebaf64668909b49c4b7a1420d",
-    "GUID:e25ef972de004615a22937e739de2def"
-  ]
+{
+    "name": "Realm",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:e25ef972de004615a22937e739de2def",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
