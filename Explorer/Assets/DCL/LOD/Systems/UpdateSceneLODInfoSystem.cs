@@ -82,17 +82,17 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                sceneLODInfo.CurrentLOD?.Release();
+                LODAsset newLod = default;
                 if (result.Succeeded)
                 {
                     var instantiatedLOD = Object.Instantiate(result.Asset?.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity, lodsTransformParent)!;
 
                     if (!sceneLODInfo.CurrentLODLevel.Equals(0))
-                        sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer));
                     else
-                        sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                             instantiatedLOD, result.Asset, lodCache);
 
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
@@ -103,8 +103,10 @@ namespace DCL.LOD.Systems
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
 
-                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
+
+                sceneLODInfo.SetCurrentLOD(newLod);
                 scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
                 CheckSceneReadiness(sceneDefinitionComponent);
                 sceneLODInfo.IsDirty = false;
@@ -137,17 +139,24 @@ namespace DCL.LOD.Systems
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.CurrentLOD))
+            if (newLODKey.Equals(sceneLODInfo.GetCurrentLOD()))
             {
                 sceneLODInfo.IsDirty = false;
                 return;
             }
 
+            if (newLODKey.Equals(sceneLODInfo.GetCurrentSuccessfulLOD()))
+            {
+                sceneLODInfo.IsDirty = false;
+                sceneLODInfo.ResetToCurrentSuccesfullLOD();
+                return;
+            }
+                
+
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
-                sceneLODInfo.CurrentLOD?.Release();
-                sceneLODInfo.CurrentLOD = cachedAsset;
+                sceneLODInfo.SetCurrentLOD(cachedAsset);
                 sceneLODInfo.IsDirty = false;
                 CheckSceneReadiness(sceneDefinitionComponent);
             }

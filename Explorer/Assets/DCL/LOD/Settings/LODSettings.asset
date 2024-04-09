@@ -13,15 +13,12 @@ MonoBehaviour:
   m_Name: LODSettings
   m_EditorClassIdentifier: 
   <LodPartitionBucketThresholds>k__BackingField: 040000000500000006000000
-  <DefaultLODMaterial>k__BackingField:
-    m_AssetGUID: ee038e77440a71e4c8e8bae23ad62c01
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
+  <TextureArrayMinSize>k__BackingField: 500
+  <DefaultTextureArrayResolutions>k__BackingField: 0001000000020000
   <IsColorDebuging>k__BackingField: 1
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
   - {r: 0, g: 0, b: 0, a: 1}
-  <FaillingCube>k__BackingField: {fileID: 3600501844928612175, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
+  <FaillingCube>k__BackingField: {fileID: 8255452435763093729, guid: c9870b17ce36346458f07a63c096a16a, type: 3}

@@ -95,12 +95,11 @@ namespace DCL.LOD.Systems
         [Query]
         private void UpdateLODDebugInfo(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
         {
-            if (sceneLODInfo.CurrentLOD == null) return;
+            if (sceneLODInfo.GetCurrentLOD() == null) return;
 
-            var lodAsset = sceneLODInfo.CurrentLOD.Value;
-
+            var lodAsset = sceneLODInfo.GetCurrentLOD()!.Value;
             if (!lodAsset.LodKey.Level.Equals(sceneLODInfoDebug.CurrentLODLevel))
-                sceneLODInfoDebug.Update(sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, sceneLODInfo.CurrentLOD.Value, lodSettingsAsset);
+                sceneLODInfoDebug.Update(sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, lodAsset, lodSettingsAsset);
         }
     }
 

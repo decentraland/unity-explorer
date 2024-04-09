@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8529400446873817898}
+  - component: {fileID: 8255452435763093729}
   m_Layer: 0
   m_Name: FaillingLODCubePivot
   m_TagString: Untagged
@@ -30,8 +31,21 @@ Transform:
   m_Children:
   - {fileID: 7196343999396769977}
   m_Father: {fileID: 0}
-  m_RootOrder: 15
+  m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8255452435763093729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3600501844928612175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 465f8df7c76d2aa4fa67a8e544d681e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  failingLODCubeMeshRenderer: {fileID: 8728699826711050495}
 --- !u!1 &8286096782819136087
 GameObject:
   m_ObjectHideFlags: 0

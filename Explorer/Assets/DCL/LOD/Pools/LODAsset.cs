@@ -79,9 +79,6 @@ namespace DCL.LOD
 
         public void EnableAsset()
         {
-            if (LoadingFailed)
-                ProfilingCounters.Failling_LOD_Amount.Value++;
-
             ProfilingCounters.LODInstantiatedInCache.Value--;
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
             Root.SetActive(true);
@@ -102,10 +99,7 @@ namespace DCL.LOD
 
         public void Release()
         {
-            if (LoadingFailed)
-                ProfilingCounters.Failling_LOD_Amount.Value--;
-            else
-                Pool.Release(LodKey, this);
+            Pool.Release(LodKey, this);
         }
     }
 }

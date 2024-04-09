@@ -10,7 +10,7 @@ namespace DCL.LOD
     {
         public Color[] OriginalColors;
         public Renderer[] Renderers;
-        public GameObject[] FaillingCubesGameObjects;
+        public FaillingLODCube[] FaillingCubesGameObjects;
     }
 
     public struct SceneLODInfoDebug : IDisposable
@@ -30,7 +30,6 @@ namespace DCL.LOD
                 foreach (var t in TEMP_MATERIALS)
                     t.color = debugColor;
             }
-
 
             foreach (var faillingCubesGameObjects in newContent.FaillingCubesGameObjects)
                 faillingCubesGameObjects.gameObject.SetActive(true);
@@ -62,11 +61,8 @@ namespace DCL.LOD
             {
                 debugContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
                 for (int j = 0; j < TEMP_MATERIALS.Count; j++)
-                {
                     TEMP_MATERIALS[j].color = debugContent.OriginalColors[i + j];
-                }
             }
-
         }
 
         private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents(IReadOnlyList<Vector2Int> parcels, LODAsset lodAsset, ILODSettingsAsset lodSettingsAsset)
@@ -74,10 +70,11 @@ namespace DCL.LOD
             SceneLODInfoDebugContent sceneLODInfoDebugContents;
             if (lodAsset.LoadingFailed)
             {
-                var faillingCubes =  new GameObject[parcels.Count];
+                var faillingCubes =  new FaillingLODCube[parcels.Count];
                 for (int i = 0; i < parcels.Count; i++)
                 {
                     faillingCubes[i] = Object.Instantiate(lodSettingsAsset.FaillingCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, MissingSceneParent);
+                    faillingCubes[i].failingLODCubeMeshRenderer.material.color = lodSettingsAsset.LODDebugColors[lodAsset.LodKey.Level];
                     faillingCubes[i].gameObject.SetActive(false);
                 }
 
@@ -98,10 +95,9 @@ namespace DCL.LOD
                 }
                 sceneLODInfoDebugContents  = new SceneLODInfoDebugContent
                 {
-                    OriginalColors = originalColorsList.ToArray(), Renderers = renderers, FaillingCubesGameObjects = Array.Empty<GameObject>()
+                    OriginalColors = originalColorsList.ToArray(), Renderers = renderers, FaillingCubesGameObjects = Array.Empty<FaillingLODCube>()
                 };
             }
-
             SceneLODInfoDebugContents.Add(lodAsset.LodKey.Level, sceneLODInfoDebugContents);
             return sceneLODInfoDebugContents;
         }

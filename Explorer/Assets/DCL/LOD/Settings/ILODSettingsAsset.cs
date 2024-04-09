@@ -16,7 +16,7 @@ namespace DCL.LOD
         //Debug features        
         public bool IsColorDebuging { get; set; }
         public Color[] LODDebugColors { get; set; }
-        public GameObject FaillingCube { get; set; }
+        public FaillingLODCube FaillingCube { get; set; }
         
         
     }
