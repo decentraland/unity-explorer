@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Utility.Primitives.Tests
 {
-    [TestFixture]
+
     public class SphereFactoryShould
     {
-        [Test]
+
         public void GenerateCorrectSize()
         {
             var mesh = new Mesh();
@@ -20,7 +20,7 @@ namespace Utility.Primitives.Tests
             Assert.Less((meshRenderer.bounds.extents - new Vector3(0.50f, 0.50f, 0.50f)).magnitude, 0.005f);
         }
 
-        [Test]
+
         public void ValidateMeshCount()
         {
             int finalVerticesCount = ((SphereFactory.LONGITUDE + 1) * SphereFactory.LATITUDE) + 2;
@@ -35,7 +35,7 @@ namespace Utility.Primitives.Tests
             Assert.AreEqual(mesh.triangles.Length, trianglesCount);
         }
 
-        [Test]
+
         public void ReuseBuffers()
         {
             int finalVerticesCount = ((SphereFactory.LONGITUDE + 1) * SphereFactory.LATITUDE) + 2;

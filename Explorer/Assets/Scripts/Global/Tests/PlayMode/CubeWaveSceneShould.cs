@@ -62,16 +62,16 @@ namespace Global.Tests
 
     Billboard.create(sign)*/
 
-    [TestFixture]
+
     public class CubeWaveSceneShould
     {
-        [SetUp]
+
         public async Task SetUp()
         {
             (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer();
         }
 
-        [TearDown]
+
         public async Task Dispose()
         {
             if (sceneFacade != null)
@@ -85,7 +85,7 @@ namespace Global.Tests
         private ISceneFacade sceneFacade;
         private const string PATH = "cube-wave-16x16";
 
-        [Test]
+
         public async Task EmitECSComponents()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug

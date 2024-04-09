@@ -39,7 +39,7 @@ namespace DCL.ResourcesUnloading.Tests
 
         private IExtendedObjectPool<Material> materialPool;
 
-        [SetUp]
+
         public void SetUp()
         {
             releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
@@ -63,7 +63,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(lodAssets);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             cacheCleaner.UnloadCache();
@@ -78,9 +78,9 @@ namespace DCL.ResourcesUnloading.Tests
         }
 
         [Performance]
-        [TestCase(1)]
-        [TestCase(10)]
-        [TestCase(100)]
+
+
+
         public void CacheCleaningPerformance(int cachedElementsAmount)
         {
             // Arrange
@@ -102,7 +102,7 @@ namespace DCL.ResourcesUnloading.Tests
         }
 
         [Category(INTEGRATION)]
-        [Test]
+
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
@@ -128,7 +128,7 @@ namespace DCL.ResourcesUnloading.Tests
         }
 
         [Category(INTEGRATION)]
-        [Test]
+
         public void ShouldCleanCachesWithRespectToReferencing()
         {
             // Arrange

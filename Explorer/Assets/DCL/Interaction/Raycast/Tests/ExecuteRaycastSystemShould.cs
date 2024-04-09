@@ -38,7 +38,7 @@ namespace DCL.Interaction.Raycast.Tests
         private Entity raycastEntity;
         private PBRaycastResult raycastResult;
 
-        [SetUp]
+
         public void SetUp()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
@@ -86,7 +86,7 @@ namespace DCL.Interaction.Raycast.Tests
             AddTransformToEntity(raycastEntity);
         }
 
-        [TearDown]
+
         public void DestroyGarbage()
         {
             foreach (Component component in instantiatedTemp)
@@ -95,7 +95,7 @@ namespace DCL.Interaction.Raycast.Tests
             instantiatedTemp.Clear();
         }
 
-        [Test]
+
         public void FindClosestHit()
         {
             // Create two colliders, the first is not qualified
@@ -122,7 +122,7 @@ namespace DCL.Interaction.Raycast.Tests
             AssertHit(0, 1);
         }
 
-        [Test]
+
         public void FindAllQualifiedHits()
         {
             // 8 ignore
@@ -149,7 +149,7 @@ namespace DCL.Interaction.Raycast.Tests
             AssertHit(2, 2);
         }
 
-        [Test]
+
         public void FindNoHits()
         {
             CreateColliders(ColliderLayer.ClCustom5, ColliderLayer.ClCustom8);
@@ -173,7 +173,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
         }
 
-        [Test]
+
         public void IgnoreEntityOutsideBucketThreshold([Values(5, 7, 10)] byte value)
         {
             partitionComponent.Bucket = value;
@@ -193,7 +193,7 @@ namespace DCL.Interaction.Raycast.Tests
                            .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
         }
 
-        [Test]
+
         public void DoNothingIfOutOfBudget()
         {
             budget.TrySpendBudget().Returns(false);
@@ -212,7 +212,7 @@ namespace DCL.Interaction.Raycast.Tests
             ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<PBRaycastResult>(), Arg.Any<CRDTEntity>());
         }
 
-        [Test]
+
         public void KeepExecutionIfContinuous()
         {
             pbRaycast.Continuous = true;

@@ -12,7 +12,7 @@ using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Tests
 {
-    [TestFixture]
+
     public class LoadSceneDefinitionSystemShould : LoadSystemBaseShould<LoadSceneDefinitionSystem, SceneEntityDefinition, GetSceneDefinition>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Content/bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"}";

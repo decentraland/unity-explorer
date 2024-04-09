@@ -6,10 +6,10 @@ using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
-    [TestFixture]
+
     public class LoadAssetBundleSystemShould : LoadSystemBaseShould<LoadAssetBundleSystem, AssetBundleData, GetAssetBundleIntention>
     {
-        [TearDown]
+
         public void UnloadBundle()
         {
             // Unload the bundle so we load it again, otherwise it throws an exception

@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         private Entity cameraEntity;
         private World globalWorld;
 
-        [SetUp]
+
         public void Setup()
         {
             globalWorld = World.Create();
@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             AddTransformToEntity(entity);
         }
 
-        [Test]
+
         public void SetupCharacterTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
@@ -66,7 +66,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
 
-        [Test]
+
         public void UpdateCharacterTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
@@ -103,7 +103,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
 
-        [Test]
+
         public void SetupCameraModeAreaComponentCorrectly()
         {
             var component = new PBCameraModeArea
@@ -124,7 +124,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsTrue(world.Has<CameraModeAreaComponent>(entity));
         }
 
-        [Test]
+
         public void UpdateCameraModeOnTriggerAreaEnter()
         {
             system.OnEnteredCameraModeArea(CameraMode.FirstPerson);
@@ -138,7 +138,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsFalse(cameraComponent.CameraInputChangeEnabled);
         }
 
-        [Test]
+
         public void HandleCameraModeResetCorrectlyOnTriggerAreaExit()
         {
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
@@ -183,7 +183,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
         }
 
-        [Test]
+
         public void HandleComponentRemoveCorrectly()
         {
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));
@@ -225,7 +225,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsFalse(world.Has<CameraModeAreaComponent>(entity));
         }
 
-        [Test]
+
         public void HandleEntityDestructionCorrectly()
         {
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out CameraComponent cameraComponent));

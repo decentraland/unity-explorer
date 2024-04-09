@@ -7,10 +7,10 @@ using UnityEngine;
 
 namespace ECS.Unity.Transforms.Tests
 {
-    [TestFixture]
+
     public class UpdateTransformSystemShould : UnitySystemTestBase<UpdateTransformSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             sdkTransform = new SDKTransform
@@ -26,7 +26,7 @@ namespace ECS.Unity.Transforms.Tests
             system = new UpdateTransformSystem(world);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             Object.DestroyImmediate(testTransformComponent.Transform.gameObject);
@@ -37,7 +37,7 @@ namespace ECS.Unity.Transforms.Tests
 
         private readonly Vector3 TEST_VECTOR = new (1, 2, 3);
 
-        [Test]
+
         public void UpdateDirtyTransformComponent()
         {
             // Act

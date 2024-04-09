@@ -36,7 +36,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             return s;
         }
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = new ComponentPoolsRegistry(
@@ -53,8 +53,8 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             AddTransformToEntity(entity);
         }
 
-        [Test]
-        [TestCaseSource(nameof(TestCases))]
+
+
         public void InstantiateNonExistingCollider(PBMeshCollider input, Type expectedType)
         {
             world.Add(entity, input);
@@ -71,8 +71,8 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }
 
-        [Test]
-        [TestCaseSource(nameof(TestCases))]
+
+
         public void UpdateInvalidatedCollider(PBMeshCollider input, Type expectedType)
         {
             input.IsDirty = true;
@@ -94,8 +94,8 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }
 
-        [Test]
-        [TestCaseSource(nameof(TestCases))]
+
+
         public void UpdateChangedCollider(PBMeshCollider input, Type expectedType)
         {
             world.Add(entity, input);

@@ -9,10 +9,10 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.Tests
 {
-    [TestFixture]
+
     public class FrameTimeCapBudgetProviderShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             profilingProvider = new ProfilingProvider();
@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Tests
         private FrameTimeCapBudget budget;
         private ProfilingProvider profilingProvider;
 
-        [Test]
+
         public async Task SpendBudget()
         {
             budget = new FrameTimeCapBudget(5f, profilingProvider);
@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.AreEqual(false, budget.TrySpendBudget());
         }
 
-        [Test]
+
         public async Task StopSystemWhenBudgetIsBlown()
         {
             budget = new FrameTimeCapBudget(15f, profilingProvider);

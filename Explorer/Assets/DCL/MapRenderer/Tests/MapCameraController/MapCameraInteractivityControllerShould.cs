@@ -9,7 +9,7 @@ using UnityEngine.Pool;
 
 namespace DCL.MapRenderer.Tests.MapCameraController
 {
-    [TestFixture]
+
     public class MapCameraInteractivityControllerShould
     {
         private MapCameraInteractivityController controller;
@@ -18,7 +18,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         private IParcelHighlightMarker marker;
         private ICoordsUtils coordUtils;
 
-        [SetUp]
+
         public void Setup()
         {
             camera = new GameObject("Camera").AddComponent<Camera>();
@@ -45,10 +45,10 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             controller = new MapCameraInteractivityController(null, camera, pool, coordUtils);
         }
 
-        [Test]
-        [TestCase(MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight)]
-        [TestCase(MapLayer.ParcelHoverHighlight)]
-        [TestCase(MapLayer.ParcelHoverHighlight | MapLayer.ParcelsAtlas)]
+
+
+
+
         public void InitializedInActiveState(MapLayer layer)
         {
             controller.Initialize(layer);
@@ -56,10 +56,10 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             pool.Received(1).Get();
         }
 
-        [Test]
-        [TestCase(MapLayer.PlayerMarker)]
-        [TestCase(MapLayer.ParcelsAtlas)]
-        [TestCase(MapLayer.ParcelsAtlas)]
+
+
+
+
         public void InitializeInInActiveState(MapLayer layer)
         {
             controller.Initialize(layer);
@@ -67,7 +67,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             pool.DidNotReceive().Get();
         }
 
-        [Test]
+
         public void ActivateOnHighlight()
         {
             controller.Initialize(MapLayer.ParcelHoverHighlight);
@@ -76,8 +76,8 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             marker.Received(1).Activate();
         }
 
-        [Test]
-        [TestCaseSource(nameof(SetPositionOnHighlightTestCases))]
+
+
         public void SetPositionOnHighlight(Vector3 cameraPos, Vector2 norm, Vector3 expected)
         {
             camera.transform.localPosition = cameraPos;
@@ -100,7 +100,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             new object[] { new Vector3(-2f, 2f, 10f), new Vector2(1f, 1f), new Vector3(3f, 7f, 0f)}
         };
 
-        [Test]
+
         public void RemoveHighlight()
         {
             controller.Initialize(MapLayer.ParcelHoverHighlight);

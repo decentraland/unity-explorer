@@ -9,14 +9,14 @@ using UnityEngine;
 
 namespace DCL.MapRenderer.Tests.PlayerMarker
 {
-    [TestFixture]
+
     public class PlayerMarkerControllerShould
     {
         private PlayerMarkerController controller;
         private IPlayerMarker marker;
         private PlayerMarkerController.PlayerMarkerBuilder builder;
 
-        [SetUp]
+
         public void Setup()
         {
             var coordUtils = Substitute.For<ICoordsUtils>();
@@ -37,27 +37,27 @@ namespace DCL.MapRenderer.Tests.PlayerMarker
             controller.Initialize();
         }
 
-        [Test]
+
         public void Initialize()
         {
             builder.Received(1).Invoke(Arg.Any<Transform>());
         }
 
-        [Test]
+
         public async Task SetActiveOnEnable()
         {
             await controller.Enable(CancellationToken.None);
             marker.Received(1).SetActive(true);
         }
 
-        [Test]
+
         public void Dispose()
         {
             controller.Dispose();
             marker.Received(1).Dispose();
         }
 
-        [Test]
+
         public async Task DeactivateOnDisable()
         {
             await controller.Enable(CancellationToken.None);

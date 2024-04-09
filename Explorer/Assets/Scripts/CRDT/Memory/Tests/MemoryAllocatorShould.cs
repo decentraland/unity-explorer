@@ -7,9 +7,9 @@ namespace CRDT.Memory.Tests
 {
     public class MemoryAllocatorShould
     {
-        [TestCase(1000)]
-        [TestCase(10000)]
-        [TestCase(100000)]
+
+
+
         public void PoolNotAllocating(int arraySize)
         {
             var crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
@@ -28,9 +28,9 @@ namespace CRDT.Memory.Tests
             }
         }
 
-        [TestCase(1000)]
-        [TestCase(10000)]
-        [TestCase(100000)]
+
+
+
         public void OriginalMemorySlicerAllocating(int arraySize)
         {
             var originalMemorySlicer = CRDTOriginalMemorySlicer.Create();

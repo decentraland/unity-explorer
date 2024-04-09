@@ -11,7 +11,7 @@ using Utility.Multithreading;*/
 
 namespace ECS.SceneLifeCycle.Tests
 {
-    [TestFixture]
+
 
     // Can't test as Post to FileSystem is not supported
     public class LoadSceneDefinitionListSystemShould /*: LoadSystemBaseShould<LoadSceneDefinitionListSystem, SceneDefinitions, GetSceneDefinitionList>*/

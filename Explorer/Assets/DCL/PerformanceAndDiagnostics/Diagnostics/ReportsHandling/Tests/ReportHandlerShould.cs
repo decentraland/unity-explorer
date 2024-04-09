@@ -12,14 +12,14 @@ namespace Diagnostics.ReportsHandling.Tests
         private ICategorySeverityMatrix categorySeverityMatrix;
         private TestHandler reportHandlerBase;
 
-        [SetUp]
+
         public void SetUp()
         {
             categorySeverityMatrix = Substitute.For<ICategorySeverityMatrix>();
             reportHandlerBase = Substitute.For<TestHandler>(categorySeverityMatrix, true);
         }
 
-        [Test]
+
         public void Log([Values(LogType.Log, LogType.Warning, LogType.Error, LogType.Exception)] LogType logType)
         {
             categorySeverityMatrix.IsEnabled(Arg.Any<string>(), logType).Returns(true);
@@ -28,7 +28,7 @@ namespace Diagnostics.ReportsHandling.Tests
             reportHandlerBase.Received(1).LogTest(logType, new ReportData("TEST"), null, "message");
         }
 
-        [Test]
+
         public void Debounce([Values(LogType.Log, LogType.Warning, LogType.Error, LogType.Exception)] LogType logType,
             [Values(ReportHint.AssemblyStatic, ReportHint.SessionStatic)] ReportHint hint)
         {
@@ -41,7 +41,7 @@ namespace Diagnostics.ReportsHandling.Tests
             reportHandlerBase.Received(1).LogTest(logType, new ReportData("TEST", hint), null, "message");
         }
 
-        [Test]
+
         public void DebounceException()
         {
             var e = new ArgumentOutOfRangeException("test_message");
@@ -54,7 +54,7 @@ namespace Diagnostics.ReportsHandling.Tests
             reportHandlerBase.Received(1).LogExceptionTest(e, null);
         }
 
-        [Test]
+
         public void DebounceEcsException()
         {
             var e = new EcsSystemException(null, new ArgumentException("test"), new ReportData("TEST", ReportHint.AssemblyStatic));
@@ -67,7 +67,7 @@ namespace Diagnostics.ReportsHandling.Tests
             reportHandlerBase.Received(1).LogExceptionTest(e);
         }
 
-        [Test]
+
         public void Filter()
         {
             categorySeverityMatrix.IsEnabled(Arg.Any<string>(), Arg.Is<LogType>(l => l == LogType.Log)).Returns(false);

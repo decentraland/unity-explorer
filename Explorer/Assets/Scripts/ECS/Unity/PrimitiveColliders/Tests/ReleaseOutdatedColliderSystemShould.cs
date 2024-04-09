@@ -17,14 +17,14 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         private IComponentPoolsRegistry poolsRegistry;
         private IEntityCollidersSceneCache collidersSceneCache;
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
             system = new ReleaseOutdatedColliderSystem(world, poolsRegistry, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 
-        [Test]
+
         public void InvalidateColliderIfTypeChanged()
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();
@@ -48,7 +48,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(null, world.Get<PrimitiveColliderComponent>(entity).Collider);
         }
 
-        [Test]
+
         public void ReleaseColliderIfComponentRemoved()
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();
@@ -70,7 +70,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.That(world.Has<PrimitiveColliderComponent>(entity), Is.False);
         }
 
-        [Test]
+
         public void DoNothingIfNotDirty()
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();

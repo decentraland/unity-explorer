@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DCL.CharacterMotion.Tests
 {
-    [TestFixture]
+
     public class CoyoteTimerShould
     {
         private const int BONUS_FRAMES = 3;
@@ -16,7 +16,7 @@ namespace DCL.CharacterMotion.Tests
         private JumpInputComponent jumpInputComponent;
         private MovementInputComponent movementInputComponent;
 
-        [SetUp]
+
         public void SetUp()
         {
             settings = Substitute.For<ICharacterControllerSettings>();
@@ -28,7 +28,7 @@ namespace DCL.CharacterMotion.Tests
         }
 
         // Coyote Timer: Pressing Jump before touching ground
-        [Test]
+
         public void JumpWhenTriggeredBeforeGrounding()
         {
             SetupFallingPlayer();
@@ -51,7 +51,7 @@ namespace DCL.CharacterMotion.Tests
         }
 
         // Coyote Timer: Pressing Jump before touching ground
-        [Test]
+
         public void NotJumpWhenTriggeredBeforeGroundingTooEarly()
         {
             SetupFallingPlayer();
@@ -66,7 +66,7 @@ namespace DCL.CharacterMotion.Tests
         }
 
         // Coyote Timer: Pressing Jump after being ungrounded
-        [Test]
+
         public void JumpWhenTriggeredAfterFallingEarly()
         {
             SetupFallingPlayer();
@@ -82,7 +82,7 @@ namespace DCL.CharacterMotion.Tests
         }
 
         // Coyote Timer: Pressing Jump after being ungrounded
-        [Test]
+
         public void NotJumpWhenTriggeredAfterFallingLate()
         {
             SetupFallingPlayer();
@@ -98,7 +98,7 @@ namespace DCL.CharacterMotion.Tests
 
         // Coyote Timer: Pressing Jump after being ungrounded
         // Avoid Double Jumping
-        [Test]
+
         public void NotJumpWhenTriggeredAfterJumpingInsideBonusFrames()
         {
             SetupFallingPlayer();

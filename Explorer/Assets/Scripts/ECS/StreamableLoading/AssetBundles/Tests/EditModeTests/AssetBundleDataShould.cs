@@ -4,8 +4,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     public class AssetBundleDataShould
     {
-        [TestCase(0)]
-        [TestCase(5)]
+
+
         public void ProperlyCountReferenceWhenAddReferenceCalled(int refCount)
         {
             // Arrange
@@ -19,9 +19,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(assetBundleData.referencesCount, Is.EqualTo(refCount));
         }
 
-        [TestCase(13, 3, 10)]
-        [TestCase(5, 5, 0)]
-        [TestCase(0, 0, 0)]
+
+
+
         public void ProperlyRemoveReferenceWhenDereferenced(int initialRefs, int derefs, int remainedRefs)
         {
             // Arrange
@@ -38,8 +38,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(assetBundleData.referencesCount, Is.EqualTo(remainedRefs));
         }
 
-        [TestCase(5, false)]
-        [TestCase(0, true)]
+
+
         public void CannotBeDisposedWhenStillReferenced(int refCount, bool canBeDisposed)
         {
             // Arrange

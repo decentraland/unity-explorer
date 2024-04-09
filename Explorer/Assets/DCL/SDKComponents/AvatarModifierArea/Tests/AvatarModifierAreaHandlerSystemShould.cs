@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         private GameObject fakeTriggerAreaGO;
         private CharacterTriggerArea.CharacterTriggerArea characterTriggerArea;
 
-        [SetUp]
+
         public void Setup()
         {
             globalWorld = World.Create();
@@ -63,7 +63,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             AddTransformToEntity(triggerAreaEntity);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             Object.DestroyImmediate(fakeAvatarGO);
@@ -71,7 +71,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Object.DestroyImmediate(fakeTriggerAreaGO);
         }
 
-        [Test]
+
         public void SetupCharacterTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
 
-        [Test]
+
         public void UpdateCharacterTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
@@ -132,7 +132,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
 
-        [Test]
+
         public void SetupAvatarModifierAreaComponentCorrectly()
         {
             var excludedId = "Ia4Ia5Cth0ulhu2Ftaghn2";
@@ -160,7 +160,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsTrue(avatarModifierAreaComponent.ExcludedIds.Contains(excludedId.ToLower()));
         }
 
-        [Test]
+
         public void UpdateAvatarModifierAreaComponentCorrectly()
         {
             var excludedId = "Ia4Ia5Cth0ulhu2Ftaghn2";
@@ -201,7 +201,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.AreEqual(0, world.Get<AvatarModifierAreaComponent>(triggerAreaEntity).ExcludedIds.Count);
         }
 
-        [Test]
+
         public void ToggleHidingFlagCorrectly()
         {
             var excludedIds = new HashSet<string>();
@@ -215,7 +215,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
         }
 
-        [Test]
+
         public void FilterByExcludedIds()
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
@@ -235,7 +235,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(triggerAreaEntity).HiddenByModifierArea);
         }
 
-        [Test]
+
         public void HandleExcludedIdsUpdateCorrectly()
         {
             var avatar1ExcludedId = "Ia4Ia5Cth0ulhu2Ftaghn2";
@@ -328,7 +328,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
         // TODO: leeaving scene ???
 
-        [Test]
+
         public void HandleComponentRemoveCorrectly()
         {
             var pbComponent = new PBAvatarModifierArea
@@ -367,7 +367,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsFalse(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
         }
 
-        [Test]
+
         public void HandleEntityDestructionCorrectly()
         {
             var pbComponent = new PBAvatarModifierArea

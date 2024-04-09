@@ -8,10 +8,10 @@ using SceneRunner.Tests.TestUtils;
 
 namespace SceneRunner.Tests
 {
-    [TestFixture]
+
     public class ECSWorldFacadeShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             world = World.Create();
@@ -31,7 +31,7 @@ namespace SceneRunner.Tests
         private SimulationTestSystem1 simulationTestSystem1;
         private IFinalizeWorldSystem finalizeWorldSystem;
 
-        [Test]
+
         public void CallInitializeOnSystems()
         {
             ecsWorldFacade.Initialize();
@@ -44,7 +44,7 @@ namespace SceneRunner.Tests
             finally { world.Dispose(); }
         }
 
-        [Test]
+
         public void DisposeProperly()
         {
             ecsWorldFacade.Dispose();

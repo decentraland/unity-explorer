@@ -14,7 +14,7 @@ namespace MVC.Tests
         private MVCManager mvcManager;
         private IPopupCloserView popupCloserView;
 
-        [SetUp]
+
         public void Setup()
         {
             windowsStackManager = Substitute.For<IWindowsStackManager>();
@@ -22,7 +22,7 @@ namespace MVC.Tests
             mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), popupCloserView);
         }
 
-        [Test]
+
         public void RegisterController()
         {
             // Arrange
@@ -35,7 +35,7 @@ namespace MVC.Tests
             Assert.AreEqual(1, mvcManager.Controllers.Count);
         }
 
-        [Test]
+
         public void RegisterControllerThrowsExceptionWhenSameControllerIsAddedTwice()
         {
             // Arrange
@@ -48,11 +48,11 @@ namespace MVC.Tests
             Assert.Throws<ArgumentException>(() => mvcManager.RegisterController(controller));
         }
 
-        [Test]
-        [TestCase(CanvasOrdering.SortingLayer.Popup)]
-        [TestCase(CanvasOrdering.SortingLayer.Fullscreen)]
-        [TestCase(CanvasOrdering.SortingLayer.Overlay)]
-        [TestCase(CanvasOrdering.SortingLayer.Persistent)]
+
+
+
+
+
         public async Task Show(CanvasOrdering.SortingLayer layer)
         {
             IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();

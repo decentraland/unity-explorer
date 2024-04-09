@@ -8,10 +8,10 @@ using System.Linq;
 
 namespace CRDT.CRDTTests
 {
-    [TestFixture]
+
     public class CRDTDeserializerShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
@@ -29,7 +29,7 @@ namespace CRDT.CRDTTests
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
         private CRDTDeserializer deserializer;
 
-        [Test]
+
         public void ParsePutComponent()
         {
             byte[] bytes =
@@ -55,7 +55,7 @@ namespace CRDT.CRDTTests
             TestInput(bytes, new[] { expectedMessage });
         }
 
-        [Test]
+
         public void ParseAppendComponent()
         {
             byte[] bytes =
@@ -81,7 +81,7 @@ namespace CRDT.CRDTTests
             TestInput(bytes, new[] { expectedMessage });
         }
 
-        [Test]
+
         public void ParseDeleteEntity()
         {
             byte[] bytes =
@@ -94,7 +94,7 @@ namespace CRDT.CRDTTests
             TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_ENTITY, new CRDTEntity(666), 0, 0, EmptyMemoryOwner<byte>.EMPTY) });
         }
 
-        [Test]
+
         public void ParseDeleteComponent()
         {
             byte[] bytes =
@@ -109,7 +109,7 @@ namespace CRDT.CRDTTests
             TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, new CRDTEntity(666), 100, 100, EmptyMemoryOwner<byte>.EMPTY) });
         }
 
-        [Test]
+
         public void ParseTwoMessagesInSameByteArray()
         {
             byte[] bytesMsgA =
@@ -137,7 +137,7 @@ namespace CRDT.CRDTTests
             TestInput(bytes, new[] { expectedComponentHeader, expectedComponentHeader });
         }
 
-        [Test]
+
         public void CopyByteArrayDataCorrectly()
         {
             byte[] binaryMessage =
@@ -162,7 +162,7 @@ namespace CRDT.CRDTTests
                 Assert.IsTrue(data.AsSpan().SequenceEqual(crdtMessage.Data.Memory.Span), "Messages are not equal");
         }
 
-        [Test]
+
         public void SetDataOnPutComponentWithEmptyPayload()
         {
             byte[] message =
@@ -185,7 +185,7 @@ namespace CRDT.CRDTTests
             CollectionAssert.AreEqual(expected, list);
         }
 
-        [Test]
+
         public void SkipUnknownMessageType()
         {
             byte[] message =
@@ -203,7 +203,7 @@ namespace CRDT.CRDTTests
             CollectionAssert.IsEmpty(list);
         }
 
-        [Test]
+
         public void DeserializeMixBatch()
         {
             byte[] append =

@@ -4,10 +4,10 @@ using System;
 
 namespace DCL.Optimization.Tests
 {
-    [TestFixture]
+
     public class ConcurrentLoadingBudgetProviderShould
     {
-        [Test]
+
         public void SpendBudget()
         {
             // Arrange
@@ -19,7 +19,7 @@ namespace DCL.Optimization.Tests
             Assert.AreEqual(false, budgetProvider.TrySpendBudget());
         }
 
-        [Test]
+
         public void RefillBudget()
         {
             // Arrange
@@ -37,7 +37,7 @@ namespace DCL.Optimization.Tests
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());
         }
 
-        [Test]
+
         public void BudgetOverflowThrown()
         {
             // Arrange

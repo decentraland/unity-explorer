@@ -11,10 +11,10 @@ using Random = UnityEngine.Random;
 
 namespace CRDT.CRDTTests
 {
-    [TestFixture]
+
     public class CRDTSerializerShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             crdtSerializer = new CRDTSerializer();
@@ -48,11 +48,11 @@ namespace CRDT.CRDTTests
             });
         }
 
-        [TestCaseSource(nameof(SerializeCorrectlyPutComponentTestSource))]
+
         public byte[] SerializeCorrectlyPutComponent(int entityId, int componentId, int timestamp, byte[] data) =>
             SerializeCorrectlyPutComponent(entityId, componentId, timestamp, data, false);
 
-        [TestCaseSource(nameof(SerializeCorrectlyPutComponentTestSource))]
+
         public byte[] SerializeCorrectlyPutComponentWithContamination(int entityId, int componentId, int timestamp, byte[] data) =>
             SerializeCorrectlyPutComponent(entityId, componentId, timestamp, data, true);
 
@@ -115,11 +115,11 @@ namespace CRDT.CRDTTests
             });
         }
 
-        [TestCaseSource(nameof(SerializeCorrectlyDeleteComponentTestSources))]
+
         public byte[] SerializeCorrectlyDeleteComponent(int entityId, int componentId, int timestamp) =>
             SerializeCorrectlyDeleteComponent(entityId, componentId, timestamp, false);
 
-        [TestCaseSource(nameof(SerializeCorrectlyDeleteComponentTestSources))]
+
         public byte[] SerializeCorrectlyDeleteComponentWithContamination(int entityId, int componentId, int timestamp) =>
             SerializeCorrectlyDeleteComponent(entityId, componentId, timestamp, true);
 

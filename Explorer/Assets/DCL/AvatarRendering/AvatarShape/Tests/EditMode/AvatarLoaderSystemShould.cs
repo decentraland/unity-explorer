@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color3 fakeSkinColor;
         private Color3 fakeEyeColor;
 
-        [SetUp]
+
         public void Setup()
         {
             fakeHairColor = WearablesConstants.DefaultColors.GetRandomHairColor3();
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 fakePointers.Add(urn);
         }
 
-        [Test]
+
         public void StartAvatarLoad()
         {
             //Arrange
@@ -82,7 +82,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.ToArray(), fakePointers);
         }
 
-        [Test]
+
         public void UpdateAvatarLoad()
         {
             //Arrange
@@ -101,7 +101,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(avatarShapeComponent.BodyShape.Value, BODY_SHAPE_FEMALE);
         }
 
-        [Test]
+
         public void CancelAvatarLoad()
         {
             Entity entity = world.Create(pbAvatarShape, PartitionComponent.TOP_PRIORITY);

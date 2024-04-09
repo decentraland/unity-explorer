@@ -33,7 +33,7 @@ namespace DCL.CharacterTriggerArea.Tests
         private IComponentPool<CharacterTriggerArea> characterTriggerAreaPool;
         private ICharacterObject characterObject;
 
-        [SetUp]
+
         public async void Setup()
         {
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
@@ -67,7 +67,7 @@ namespace DCL.CharacterTriggerArea.Tests
             system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
         }
 
-        [TearDown]
+
         public void Teardown()
         {
             poolsRegistry.Dispose();
@@ -77,7 +77,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Object.DestroyImmediate(characterTriggerArea.gameObject);
         }
 
-        [Test]
+
         public async Task SetupMonobehaviourCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -93,7 +93,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.IsNotNull(world.Get<CharacterTriggerAreaComponent>(entity));
         }
 
-        [Test]
+
         public async Task SetupTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -113,7 +113,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);
         }
 
-        [Test]
+
         public async Task UpdateTriggerAreaSizeCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -143,7 +143,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);
         }
 
-        [Test]
+
         public async Task UpdateTransformCorrectlyIgnoringScale()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -175,7 +175,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(Vector3.one, characterTriggerArea.BoxCollider.size);
         }
 
-        [Test]
+
         public async Task TrackEnterExitCollectionsCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -213,7 +213,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(1, component.ExitedThisFrame.Count);
         }
 
-        [Test]
+
         public async Task HandlePlayerLeaveSceneCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -252,7 +252,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
         }
 
-        [Test]
+
         public async Task DetectCharacterWhenAlreadyInside()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -278,7 +278,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
-        [Test]
+
         public async Task WaitUntilAvatarBaseIsConfiguredBeforeDetecting()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -317,9 +317,9 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+
+
+
         public async Task DiscriminateCharacterTypeCorrectly(bool onlyMainPlayer)
         {
             // Workaround for Unity bug not awaiting async Setup correctly

@@ -14,13 +14,13 @@ namespace ECS.Unity.Materials.Tests
     {
         private IMaterialsCache materialsCache;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new LoadMaterialFromCacheSystem(world, materialsCache = Substitute.For<IMaterialsCache>());
         }
 
-        [Test]
+
         public void FinishLoadingIfPresentInCache()
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
@@ -50,7 +50,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(materialComponent.Result, Is.Not.Null);
         }
 
-        [Test]
+
         public void DoNothingIfLoadingStarted([Values(StreamableLoading.LifeCycle.LoadingInProgress, StreamableLoading.LifeCycle.LoadingFinished, StreamableLoading.LifeCycle.Applied)] StreamableLoading.LifeCycle status)
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
@@ -80,7 +80,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(materialComponent.Result, Is.Null);
         }
 
-        [Test]
+
         public void NotFinishLoadingIfNotPresentInCache()
         {
             var materialComponent = new MaterialComponent(MaterialData.CreatePBRMaterial(

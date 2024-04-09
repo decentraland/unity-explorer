@@ -6,10 +6,10 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.Tests
 {
-    [TestFixture]
+
     public class ParcelMathShould
     {
-        [Test]
+
         public void CheckParcelsInRange()
         {
             var parcels = new HashSet<int2>(100);

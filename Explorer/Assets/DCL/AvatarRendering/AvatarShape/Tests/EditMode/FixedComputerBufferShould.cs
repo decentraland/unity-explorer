@@ -10,19 +10,19 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
     {
         private FixedComputeBufferHandler bufferHandler;
 
-        [SetUp]
+
         public void Setup()
         {
             bufferHandler = new FixedComputeBufferHandler(1000, 4, 4);
         }
 
-        [SetUp]
+
         public void TearDown()
         {
             bufferHandler.Dispose();
         }
 
-        [Test]
+
         public void Rent([Values(1, 10, 100, 500, 999)] int length)
         {
             FixedComputeBufferHandler.Slice slice = bufferHandler.Rent(length);
@@ -30,7 +30,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.That(bufferHandler.RentedRegions, Contains.Item(new FixedComputeBufferHandler.Slice(0, length)));
         }
 
-        [Test]
+
         [Sequential]
         public void ThrowIfCapacityExceeded([Values(0, 100, 800)] int firstIteration, [Values(1001, 905, 231)] int secondIteration)
         {
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.That(() => bufferHandler.Rent(secondIteration), Throws.TypeOf<OverflowException>());
         }
 
-        [Test]
+
         public void PassTestScenarios([ValueSource(nameof(CreateTestScenarios))] TestScenario[] testScenarios)
         {
             for (var index = 0; index < testScenarios.Length; index++)

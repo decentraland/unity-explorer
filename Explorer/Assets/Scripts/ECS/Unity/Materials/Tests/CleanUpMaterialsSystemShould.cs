@@ -22,7 +22,7 @@ namespace ECS.Unity.Materials.Tests
         private Entity e;
         private Entity texPromise;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
@@ -30,7 +30,7 @@ namespace ECS.Unity.Materials.Tests
             e = world.Create(new MaterialComponent(new MaterialData()) { AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("url") }, PartitionComponent.TOP_PRIORITY) }, new DeleteEntityIntention());
         }
 
-        [Test]
+
         public void AbortLoadingIntentions()
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
@@ -44,7 +44,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(world.Get<MaterialComponent>(e).AlbedoTexPromise, Is.EqualTo(null));
         }
 
-        [Test]
+
         public void Dereference()
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);

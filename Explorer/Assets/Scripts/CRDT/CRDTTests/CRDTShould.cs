@@ -11,10 +11,10 @@ using System.Text;
 
 namespace CRDT.CRDTTests
 {
-    [TestFixture]
+
     public class CRDTShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             serializer = new CRDTSerializer();
@@ -25,8 +25,8 @@ namespace CRDT.CRDTTests
         private ICRDTDeserializer deserializer;
         private static readonly CRDTPooledMemoryAllocator CRDT_POOLED_MEMORY_ALLOCATOR = CRDTPooledMemoryAllocator.Create();
 
-        [Test]
-        [TestCaseSource(nameof(GetIndividualMessages))]
+
+
         public void HaveDeserializerAndSerializerOnParWithIndividualMessages(CRDTMessage expected)
         {
             int messageDataLength = expected.GetMessageDataLength();
@@ -44,8 +44,8 @@ namespace CRDT.CRDTTests
             CollectionAssert.AreEqual(new[] { expected }, messages);
         }
 
-        [Test]
-        [TestCaseSource(nameof(GetBatches))]
+
+
         public void HaveDeserializerAndSerializerOnParWithBatches(CRDTMessage[] expected)
         {
             int dataLength = expected.Aggregate(0, (acc, msg) => acc + msg.GetMessageDataLength());

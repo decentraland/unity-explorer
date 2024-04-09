@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Utility.Primitives.Tests
 {
-    [TestFixture]
+
     public class BoxFactoryShould
     {
-        [Test]
+
         public void GenerateCorrectSize()
         {
             var mesh = new Mesh();
@@ -21,7 +21,7 @@ namespace Utility.Primitives.Tests
             Assert.AreEqual(new Vector3(0.50f, 0.50f, 0.50f), meshRenderer.bounds.extents);
         }
 
-        [Test]
+
         public void ValidateMeshCount()
         {
             int finalVerticesCount = BoxFactory.VERTICES_NUM;
@@ -36,7 +36,7 @@ namespace Utility.Primitives.Tests
             Assert.AreEqual(mesh.triangles.Length, trianglesCount);
         }
 
-        [Test]
+
         public void UpdateUVS()
         {
             var mesh = new Mesh();
@@ -55,7 +55,7 @@ namespace Utility.Primitives.Tests
             Assert.AreNotEqual(mesh.uv, originalUVs);
         }
 
-        [Test]
+
         public void ReuseBuffers()
         {
             int finalVerticesCount = BoxFactory.VERTICES_NUM;

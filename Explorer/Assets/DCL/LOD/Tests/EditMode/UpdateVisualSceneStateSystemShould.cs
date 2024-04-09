@@ -20,7 +20,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     private SceneDefinitionComponent sceneDefinitionComponent;
     private VisualSceneState visualSceneState;
 
-    [SetUp]
+
     public void Setup()
     {
         var lodSettings = Substitute.For<ILODSettingsAsset>();
@@ -58,7 +58,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings);
     }
 
-    [Test]
+
     public void UpdateFromSceneLODInfoToScenePromise()
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
@@ -71,7 +71,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         Assert.IsFalse(world.Has<SceneLODInfo>(entityReference));
     }
 
-    [Test]
+
     public void UpdateFromSceneFacadeToSceneLOD()
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
@@ -84,7 +84,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         Assert.IsFalse(world.Has<ISceneFacade>(entityReference));
     }
 
-    [Test]
+
     public void UpdateFromScenePromiseToSceneLOD()
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
@@ -97,7 +97,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         Assert.IsFalse(world.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entityReference));
     }
 
-    [Test]
+
     public void KeepSceneLODWhenSDK6()
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;

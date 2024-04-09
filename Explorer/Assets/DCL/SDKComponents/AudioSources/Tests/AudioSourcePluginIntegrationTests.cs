@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         private PBAudioSource pbAudioSource;
         private Entity entity;
 
-        [SetUp]
+
         public void SetUp()
         {
             world = World.Create();
@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             EcsTestsUtils.AddTransformToEntity(world, entity);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             startLoadingSystem?.Dispose();
@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             world?.Dispose();
         }
 
-        [Test]
+
         public async Task ShouldCreateAudioSource_WithDownloadedAudioClip_WhenPBAudioSourcePresented()
         {
             startLoadingSystem.Update(0);

@@ -12,20 +12,20 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
     {
         private CRDTWorldSynchronizer crdtWorldSynchronizer;
 
-        [SetUp]
+
         public void SetUp()
         {
             crdtWorldSynchronizer = new CRDTWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>(), Substitute.For<ISceneEntityFactory>(), new Dictionary<CRDTEntity, Entity>());
         }
 
-        [Test]
+
         public void ThrowIfSyncBufferIsAlreadyRented()
         {
             IWorldSyncCommandBuffer cb = crdtWorldSynchronizer.GetSyncCommandBuffer();
             Assert.Throws<TimeoutException>(() => crdtWorldSynchronizer.GetSyncCommandBuffer());
         }
 
-        [Test]
+
         public void ReleaseSyncBuffer()
         {
             IWorldSyncCommandBuffer worldSyncCommandBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();

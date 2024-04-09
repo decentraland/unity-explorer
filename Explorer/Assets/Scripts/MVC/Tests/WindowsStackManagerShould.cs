@@ -8,14 +8,14 @@ namespace MVC.Tests
         private WindowStackManager manager;
         private IController controller;
 
-        [SetUp]
+
         public void Setup()
         {
             manager = new WindowStackManager();
             controller = Substitute.For<IController>();
         }
 
-        [Test]
+
         public void PushPopup()
         {
             manager.PushPopup(controller);
@@ -23,7 +23,7 @@ namespace MVC.Tests
             Assert.AreEqual(1, manager.popupStack.Count);
         }
 
-        [Test]
+
         public void PopPopup()
         {
             manager.PushPopup(controller);
@@ -32,7 +32,7 @@ namespace MVC.Tests
             Assert.AreEqual(0, manager.popupStack.Count);
         }
 
-        [Test]
+
         public void PushPopupWithPrevious()
         {
             var previousController = Substitute.For<IController>();
@@ -45,7 +45,7 @@ namespace MVC.Tests
             Assert.AreSame(previousController, pushInfo.PreviousController);
         }
 
-        [Test]
+
         public void PushFullscreen()
         {
             manager.PushFullscreen(controller);
@@ -53,7 +53,7 @@ namespace MVC.Tests
             Assert.AreSame(controller, manager.fullscreenController);
         }
 
-        [Test]
+
         public void PopFullscreen()
         {
             manager.PushFullscreen(controller);
@@ -63,7 +63,7 @@ namespace MVC.Tests
             Assert.IsNull(manager.fullscreenController);
         }
 
-        [Test]
+
         public void PushPersistent()
         {
             manager.PushPersistent(controller);
@@ -71,7 +71,7 @@ namespace MVC.Tests
             Assert.AreEqual(1, manager.persistentStack.Count);
         }
 
-        [Test]
+
         public void PushTop()
         {
             manager.PushOverlay(controller);
@@ -79,7 +79,7 @@ namespace MVC.Tests
             Assert.AreSame(controller, manager.topController);
         }
 
-        [Test]
+
         public void PopTop()
         {
             manager.PushOverlay(controller);

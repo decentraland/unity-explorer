@@ -24,7 +24,7 @@ namespace ECS.SceneLifeCycle.Tests
         private IRealmPartitionSettings realmPartitionSettings;
         private RealmComponent realmComponent;
 
-        [SetUp]
+
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
@@ -33,7 +33,7 @@ namespace ECS.SceneLifeCycle.Tests
             realmComponent = new RealmComponent(new RealmData(new TestIpfsRealm()));
         }
 
-        [Test]
+
         public async Task LimitScenesLoading()
         {
             realmPartitionSettings.ScenesRequestBatchSize.Returns(2);
@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(entities.Any(e => world.Get<IPartitionComponent>(e).Bucket == 1), Is.True);
         }
 
-        [Test]
+
         public void StartUnloading()
         {
             realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);

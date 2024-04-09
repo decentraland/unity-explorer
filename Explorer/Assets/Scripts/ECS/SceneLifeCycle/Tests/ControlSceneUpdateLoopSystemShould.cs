@@ -19,14 +19,14 @@ namespace ECS.SceneLifeCycle.Tests
     {
         private IRealmPartitionSettings realmPartitionSettings;
 
-        [SetUp]
+
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
             system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>());
         }
 
-        [Test]
+
         public void StartScene()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
         }
 
-        [Test]
+
         public async Task StartSceneWithCorrectFPS()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
         }
 
-        [Test]
+
         public void ChangeSceneFPS()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();

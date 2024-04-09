@@ -10,7 +10,7 @@ namespace DCL.CharacterMotion.Tests
     {
         private ICharacterControllerSettings settings;
 
-        [SetUp]
+
         public void SetUp()
         {
             settings = Substitute.For<ICharacterControllerSettings>();
@@ -18,7 +18,7 @@ namespace DCL.CharacterMotion.Tests
             settings.JumpVelocityDrag.Returns(2);
         }
 
-        [Test]
+
         public void DontApplyWhenGrounded()
         {
             var rigidTransform = new CharacterRigidTransform();
@@ -30,7 +30,7 @@ namespace DCL.CharacterMotion.Tests
             Assert.IsTrue(Mathf.Approximately(1, rigidTransform.MoveVelocity.Velocity.z), "Velocity didn't change");
         }
 
-        [Test]
+
         public void ReduceVelocity()
         {
             var rigidTransform = new CharacterRigidTransform();
@@ -42,7 +42,7 @@ namespace DCL.CharacterMotion.Tests
             Assert.IsTrue(rigidTransform.MoveVelocity.Velocity.magnitude < 1, "Velocity is lower");
         }
 
-        [Test]
+
         public void DontAffectVerticalVelocity()
         {
             var rigidTransform = new CharacterRigidTransform();

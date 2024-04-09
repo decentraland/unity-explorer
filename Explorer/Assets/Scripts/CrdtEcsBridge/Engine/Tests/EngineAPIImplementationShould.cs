@@ -41,7 +41,7 @@ namespace CrdtEcsBridge.Engine.Tests
         private IWorldSyncCommandBuffer worldSyncCommandBuffer;
         private Mutex mutex;
 
-        [SetUp]
+
         public void SetUp()
         {
             mutex = new Mutex();
@@ -117,7 +117,7 @@ namespace CrdtEcsBridge.Engine.Tests
                                          });
         }
 
-        [Test]
+
         public void CallDeserializeBatch()
         {
             engineAPIImplementation.CrdtSendToRenderer(INPUT);
@@ -125,7 +125,7 @@ namespace CrdtEcsBridge.Engine.Tests
             crdtDeserializer.Received(1).DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>());
         }
 
-        [Test]
+
         public void MakeCallsInProperOrderCrdtSendToRenderer()
         {
             engineAPIImplementation.CrdtSendToRenderer(INPUT);
@@ -155,7 +155,7 @@ namespace CrdtEcsBridge.Engine.Tests
             });
         }
 
-        [Test]
+
         public void MakeCallsInProperOrderCrdtGetState()
         {
             PoolableByteArray state = engineAPIImplementation.CrdtGetState();
@@ -173,7 +173,7 @@ namespace CrdtEcsBridge.Engine.Tests
             Assert.AreEqual(400 + 120, state.Length);
         }
 
-        [Test]
+
         public void ReleasePreviousBufferCrdtSendToRenderer()
         {
             PoolableByteArray data = engineAPIImplementation.CrdtSendToRenderer(INPUT);
@@ -182,7 +182,7 @@ namespace CrdtEcsBridge.Engine.Tests
             sharedPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
         }
 
-        [Test]
+
         public void ReleasePreviousBufferCrdtGetState()
         {
             PoolableByteArray data = engineAPIImplementation.CrdtGetState();

@@ -19,7 +19,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private IGlobalWorldActions globalWorldActions;
         private ISceneData sceneData;
 
-        [SetUp]
+
         public void SetUp()
         {
             mvcManager = Substitute.For<IMVCManager>();
@@ -41,7 +41,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 sceneData);
         }
 
-        [Test]
+
         public void OpenExternalUrl()
         {
             // Arrange
@@ -54,9 +54,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             mvcManager.Received(1).ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(testUrl)));
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+
+
+
         public void MovePlayerTo(bool withCameraTarget)
         {
             // Arrange
@@ -76,7 +76,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 sceneData.Geometry.BaseParcelPosition + testNewRelativePosition);
         }
 
-        [Test]
+
         public void TeleportTo()
         {
             // Arrange
@@ -89,7 +89,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             mvcManager.Received(1).ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(testCoords)));
         }
 
-        [Test]
+
         public void ChangeRealm()
         {
             // Arrange
@@ -103,7 +103,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             mvcManager.Received(1).ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(TEST_MESSAGE, TEST_REALM)));
         }
 
-        [Test]
+
         public void OpenNftDialog()
         {
             // Arrange

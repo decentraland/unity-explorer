@@ -10,10 +10,10 @@ using UnityEngine;
 
 namespace ECS.Unity.Transforms.Tests
 {
-    [TestFixture]
+
     public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             transformPool = Substitute.For<IComponentPool<Transform>>();
@@ -26,7 +26,7 @@ namespace ECS.Unity.Transforms.Tests
             system = new InstantiateTransformSystem(world, componentRegistry);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             Object.DestroyImmediate(testTransform.gameObject);
@@ -37,7 +37,7 @@ namespace ECS.Unity.Transforms.Tests
         private IComponentPool<Transform> transformPool;
         private Transform testTransform;
 
-        [Test]
+
         public void InstantiateTransformComponent()
         {
             // Arrange

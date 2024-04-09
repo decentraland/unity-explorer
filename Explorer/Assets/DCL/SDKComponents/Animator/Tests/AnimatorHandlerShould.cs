@@ -29,7 +29,7 @@ using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.Animator.Tests
 {
-    [TestFixture]
+
     public class AnimatorHandlerShould : UnitySystemTestBase<AnimatorHandlerSystem>
     {
         private Entity entity;
@@ -39,7 +39,7 @@ namespace DCL.SDKComponents.Animator.Tests
         private readonly GltfContainerTestResources resources = new ();
 
 
-        [SetUp]
+
         public void SetUp()
         {
             Entity sceneRoot = world.Create(new SceneRootComponent());
@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.Animator.Tests
 
 
 
-        [TearDown]
+
         public void TearDown()
         {
             system.Dispose();
@@ -116,7 +116,7 @@ namespace DCL.SDKComponents.Animator.Tests
         }
 
 
-        [Test]
+
         public async Task AddAnimatorComponentToEntityWithPBAnimator()
         {
             await InitializeGlftContainerComponent();
@@ -127,7 +127,7 @@ namespace DCL.SDKComponents.Animator.Tests
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKAnimatorComponent>().WithAll<PBAnimator>()));
         }
 
-        [Test]
+
         public async Task UpdateAnimationStatesOnAnimatorComponentDirty()
         {
             await InitializeGlftContainerComponent();
@@ -151,7 +151,7 @@ namespace DCL.SDKComponents.Animator.Tests
         }
 
 
-        [Test]
+
         public async Task ResetAnimationOnPBAnimatorRemoved()
         {
             await InitializeGlftContainerComponent();

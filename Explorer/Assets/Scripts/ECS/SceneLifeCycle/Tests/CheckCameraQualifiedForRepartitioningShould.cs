@@ -15,7 +15,7 @@ namespace ECS.SceneLifeCycle.Tests
     {
         private IPartitionSettings partitionSettings;
 
-        [SetUp]
+
         public void SetUp()
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
@@ -25,7 +25,7 @@ namespace ECS.SceneLifeCycle.Tests
             world.Create(new RealmComponent(realmData));
         }
 
-        [Test]
+
         public void ToleratePositionChange()
         {
             partitionSettings.AngleTolerance.Returns(float.MaxValue);
@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(cameraSamplingData.Position, Is.EqualTo(new Vector3(10, 10, 10)));
         }
 
-        [Test]
+
         public void RespectPositionChange()
         {
             partitionSettings.AngleTolerance.Returns(float.MaxValue);
@@ -67,7 +67,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(cameraSamplingData.Position, Is.EqualTo(new Vector3(12, 11, 11)));
         }
 
-        [Test]
+
         public void TolerateRotationChange()
         {
             partitionSettings.AngleTolerance.Returns(10f); // 10 degrees
@@ -88,7 +88,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(cameraSamplingData.Rotation, Is.EqualTo(Quaternion.Euler(25, 25, 25)));
         }
 
-        [Test]
+
         public void RespectRotationChange()
         {
             partitionSettings.AngleTolerance.Returns(10f); // 10 degrees

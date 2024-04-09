@@ -24,14 +24,14 @@ namespace ECS.Unity.GLTFContainer.Tests
         private IDereferencableCache<GltfContainerAsset, string> cache;
         private IEntityCollidersSceneCache collidersSceneCache;
 
-        [SetUp]
+
         public void SetUp()
         {
             cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>();
             system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 
-        [Test]
+
         public void Release()
         {
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };

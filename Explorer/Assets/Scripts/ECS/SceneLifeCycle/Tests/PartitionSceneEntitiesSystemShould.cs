@@ -24,7 +24,7 @@ namespace ECS.SceneLifeCycle.Tests
         private IComponentPool<PartitionComponent> componentPool;
         private PartitionSceneEntitiesSystemMock mockSystem;
 
-        [SetUp]
+
         public void SetUp()
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
@@ -41,7 +41,7 @@ namespace ECS.SceneLifeCycle.Tests
             mockSystem = system as PartitionSceneEntitiesSystemMock;
         }
 
-        [Test]
+
         public void PartitionNewEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
@@ -70,7 +70,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(partitionComponent.IsDirty, Is.True);
         }
 
-        [Test]
+
         public void PartitionExistingEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);

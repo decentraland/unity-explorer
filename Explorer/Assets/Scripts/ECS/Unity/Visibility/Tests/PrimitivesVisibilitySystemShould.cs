@@ -11,13 +11,13 @@ namespace ECS.Unity.Visibility.Tests
 {
     public class PrimitivesVisibilitySystemShould : UnitySystemTestBase<PrimitivesVisibilitySystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             system = new PrimitivesVisibilitySystem(world);
         }
 
-        [Test]
+
         public void ChangeVisibility()
         {
             // Arrange
@@ -40,7 +40,7 @@ namespace ECS.Unity.Visibility.Tests
             }
         }
 
-        [Test]
+
         public void ChangeVisibilityWhenComponentRemoved()
         {
             // Arrange

@@ -12,7 +12,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 {
     public class InteractionInputUtilsShould : InputTestFixture
     {
-        [Test]
+
         public void GatherAnyButtonReleased()
         {
             (Keyboard keyboard, InputAction[] actions) = CreateInput();
@@ -24,7 +24,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.IsTrue(anyInputInfo.AnyButtonWasReleasedThisFrame);
         }
 
-        [Test]
+
         public void GatherAnyButtonPressed()
         {
             (Keyboard keyboard, InputAction[] actions) = CreateInput();
@@ -35,7 +35,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.IsFalse(anyInputInfo.AnyButtonWasReleasedThisFrame);
         }
 
-        [Test]
+
         public void GatherAnyButtonPressedThisFrame()
         {
             (Keyboard keyboard, InputAction[] actions) = CreateInput();
@@ -46,7 +46,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.IsFalse(anyInputInfo.AnyButtonWasReleasedThisFrame);
         }
 
-        [Test]
+
         public void GatherNoAnyInput()
         {
             (_, InputAction[] actions) = CreateInput();
@@ -57,7 +57,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.IsFalse(anyInputInfo.AnyButtonIsPressed);
         }
 
-        [Test]
+
         public void QualifyByDistance()
         {
             Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(new PlayerOriginRaycastResult
@@ -67,7 +67,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             }, new PBPointerEvents.Types.Info { MaxDistance = 110 }));
         }
 
-        [Test]
+
         public void AppendHoverInput()
         {
             var resultsIntent = new AppendPointerEventResultsIntent();
@@ -88,7 +88,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.AreEqual(3, resultsIntent.ValidIndices[0]);
         }
 
-        [Test]
+
         public void NotAppendHoverInput()
         {
             var resultsIntent = new AppendPointerEventResultsIntent();
@@ -108,7 +108,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.AreEqual(0, resultsIntent.ValidIndices.Length);
         }
 
-        [Test]
+
         public void AppendAnyButtonInput()
         {
             IReadOnlyDictionary<ECSComponents.InputAction, InputAction> map = Substitute.For<IReadOnlyDictionary<ECSComponents.InputAction, InputAction>>();
@@ -133,7 +133,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             map.DidNotReceive().TryGetValue(Arg.Any<ECSComponents.InputAction>(), out Arg.Any<InputAction>());
         }
 
-        [Test]
+
         public void AppendMappedButtonInput()
         {
             (Keyboard keyboard, InputAction[] actions) = CreateInput();

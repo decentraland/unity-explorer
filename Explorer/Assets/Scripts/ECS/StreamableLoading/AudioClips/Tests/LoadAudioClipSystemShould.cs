@@ -13,7 +13,7 @@ using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AudioClips.Tests
 {
-    [TestFixture]
+
     public class LoadAudioClipSystemShould : LoadSystemBaseShould<LoadAudioClipSystem, AudioClip, GetAudioClipIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}";

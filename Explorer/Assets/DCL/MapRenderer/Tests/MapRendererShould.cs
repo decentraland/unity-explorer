@@ -16,7 +16,7 @@ using Utility;
 
 namespace DCL.MapRenderer.Tests
 {
-    [TestFixture]
+
     public class MapRendererShould
     {
         private DCL.MapRenderer.MapRenderer mapRenderer;
@@ -28,7 +28,7 @@ namespace DCL.MapRenderer.Tests
             MapLayer.PlayerMarker,
         };
 
-        [SetUp]
+
         public async Task Setup()
         {
             var componentsFactory = Substitute.For<IMapRendererComponentsFactory>();
@@ -49,13 +49,13 @@ namespace DCL.MapRenderer.Tests
             layers = mapRenderer.layersDictionary_Test;
         }
 
-        [Test]
+
         public void InitializeLayers()
         {
             CollectionAssert.AreEquivalent(EnumUtils.Values<MapLayer>().Where(l => l != MapLayer.None), mapRenderer.initializedLayers_Test);
         }
 
-        [Test]
+
         public void EnableLayerByMask([ValueSource(nameof(TEST_MAP_LAYERS))] MapLayer mask)
         {
             IMapActivityOwner owner = Substitute.For<IMapActivityOwner>();
@@ -69,7 +69,7 @@ namespace DCL.MapRenderer.Tests
             }
         }
 
-        [Test]
+
         [Ignore("")]
         public void DisableLayerByMask([ValueSource(nameof(TEST_MAP_LAYERS))] MapLayer mask)
         {
@@ -85,7 +85,7 @@ namespace DCL.MapRenderer.Tests
             }
         }
 
-        [Test]
+
         [Ignore("")]
         public void NotDisableLayerIfStillUsed([ValueSource(nameof(TEST_MAP_LAYERS))] MapLayer mask)
         {

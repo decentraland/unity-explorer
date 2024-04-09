@@ -9,10 +9,10 @@ using NUnit.Framework;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
 {
-    [TestFixture]
+
     public class CommandBufferSynchronizerShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             world = World.Create();
@@ -22,7 +22,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
             commandBufferSynchronizer = new SDKComponentCommandBufferSynchronizer<TestComponent>(componentPool);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             commandBuffer.Dispose();
@@ -41,7 +41,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
 
         private SDKComponentCommandBufferSynchronizer<TestComponent> commandBufferSynchronizer;
 
-        [Test]
+
         public void ApplyModifiedComponent()
         {
             entity = world.Create(new TestComponent { Value = 100 });
@@ -53,7 +53,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
             Assert.AreEqual(200, world.Get<TestComponent>(entity).Value);
         }
 
-        [Test]
+
         public void ApplyAddedComponent()
         {
             entity = world.Create();
@@ -65,7 +65,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
             Assert.AreEqual(300, world.Get<TestComponent>(entity).Value);
         }
 
-        [Test]
+
         public void ApplyDeletedComponent()
         {
             entity = world.Create(new TestComponent { Value = 100 }, RemovedComponents.CreateDefault());

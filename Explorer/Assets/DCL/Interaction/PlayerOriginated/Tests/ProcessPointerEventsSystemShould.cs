@@ -17,13 +17,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
     {
         private World world;
 
-        [SetUp]
+
         public void CreateWorld()
         {
             world = World.Create();
         }
 
-        [TearDown]
+
         public void DestroyWorld()
         {
             world.Dispose();
@@ -40,7 +40,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-        [Test]
+
         public void IssueHoverLeaveForPreviousEntity()
         {
             GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
@@ -70,7 +70,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices[0], Is.EqualTo(0));
         }
 
-        [Test]
+
         public void NotIssueHoverLeaveIfOutOfRange()
         {
             GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
@@ -99,7 +99,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
         }
 
-        [Test]
+
         public void NotIssueHoverLeaveIfComponentWasRemoved()
         {
             GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
@@ -117,7 +117,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             // Nothing to assert, just checking that no exception is thrown
         }
 
-        [Test]
+
         public void NotIssueHoverLeaveIfEntityDied()
         {
             GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();

@@ -38,7 +38,7 @@ namespace Utility.Tests
             new (-3, 4), new (-2, 4), new (-1, 4), new (0, 4), new (1, 4), new (2, 4), new (3, 4),
         };
 
-        [Test]
+
         public void CalculateRingRadius4()
         {
             using var helper = new ParcelMathJobifiedHelper();

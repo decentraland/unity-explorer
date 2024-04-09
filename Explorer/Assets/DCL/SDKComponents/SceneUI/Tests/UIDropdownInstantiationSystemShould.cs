@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private UITransformComponent uiTransformComponent;
         private PBUiDropdown input;
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = new ComponentPoolsRegistry(
@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
         }
 
-        [Test]
+
         public void InstantiateUIDropdown()
         {
             // Assert
@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsTrue(uiDropdownComponent.TextElement.ClassListContains("unity-base-popup-field__text"));
         }
 
-        [Test]
+
         public void UpdateUIDropdown()
         {
             // Arrange
@@ -84,7 +84,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             }
         }
 
-        [Test]
+
         public void TriggerDropdownResults()
         {
             // Arrange

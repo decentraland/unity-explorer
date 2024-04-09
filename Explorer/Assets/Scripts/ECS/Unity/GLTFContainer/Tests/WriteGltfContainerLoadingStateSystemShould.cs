@@ -17,7 +17,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         private IECSToCRDTWriter writer;
         private IComponentPool<PBGltfContainerLoadingState> componentPool;
 
-        [SetUp]
+
         public void SetUp()
         {
             writer = Substitute.For<IECSToCRDTWriter>();
@@ -28,7 +28,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system = new WriteGltfContainerLoadingStateSystem(world, writer);
         }
 
-        [Test]
+
         public void WriteIfStateChanged()
         {
             var component = new GltfContainerComponent();
@@ -45,7 +45,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                        Arg.Is<LoadingState>(c => c == LoadingState.Finished));
         }
 
-        [Test]
+
         public void WriteRemove()
         {
             var rc = RemovedComponents.CreateDefault();

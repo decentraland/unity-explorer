@@ -38,7 +38,7 @@ namespace ECS.Unity.Materials.Tests
         private static string tex2 => $"file://{Application.dataPath + "/../TestResources/Images/atlas.png"}";
         private static string tex3 => $"file://{Application.dataPath + "/../TestResources/Images/Gradient A4.png"}";
 
-        [SetUp]
+
         public void SetUp()
         {
             IReleasablePerformanceBudget releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
@@ -57,7 +57,7 @@ namespace ECS.Unity.Materials.Tests
                       });
         }
 
-        [Test]
+
         public void CreatePBRComponent()
         {
             PBMaterial material = CreatePBRMaterial1();
@@ -76,7 +76,7 @@ namespace ECS.Unity.Materials.Tests
             AssertPBRMaterial(material, materialComponent);
         }
 
-        [Test]
+
         public void CreateBasicComponent()
         {
             PBMaterial basic = CreateBasicMaterial();
@@ -104,7 +104,7 @@ namespace ECS.Unity.Materials.Tests
             AssertTextureComponent(expected.Unlit.Texture, actual.Data.AlbedoTexture);
         }
 
-        [Test]
+
         public void KeepMaterialIfComponentNotChanged()
         {
             PBMaterial material1 = CreatePBRMaterial1();
@@ -136,7 +136,7 @@ namespace ECS.Unity.Materials.Tests
             destroyMaterial.DidNotReceive()(Arg.Any<MaterialData>(), Arg.Any<Material>());
         }
 
-        [Test]
+
         public void ChangeFromPBRToBasic()
         {
             PBMaterial material1 = CreatePBRMaterial1();
@@ -167,7 +167,7 @@ namespace ECS.Unity.Materials.Tests
             destroyMaterial.Received(1)(dataCopy, Arg.Any<Material>());
         }
 
-        [Test]
+
         public void StartBasicLoading()
         {
             PBMaterial sdkComponent = CreateBasicMaterial();
@@ -182,7 +182,7 @@ namespace ECS.Unity.Materials.Tests
             AssertTexturePromise(in afterUpdate.AlbedoTexPromise, tex2);
         }
 
-        [Test]
+
         public void StartPBRLoading()
         {
             PBMaterial sdkComponent = CreatePBRMaterial1();
@@ -200,7 +200,7 @@ namespace ECS.Unity.Materials.Tests
             AssertTexturePromise(afterUpdate.BumpTexPromise, tex2);
         }
 
-        [Test]
+
         public void AbortRequestIfMaterialChanged()
         {
             PBMaterial material1 = CreatePBRMaterial1();

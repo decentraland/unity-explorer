@@ -12,19 +12,19 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
     {
         private WorldSyncCommandBufferCollectionsPool pool;
 
-        [SetUp]
+
         public void SetUp()
         {
             pool = WorldSyncCommandBufferCollectionsPool.Create();
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             WorldSyncCommandBufferCollectionsPool.Create();
         }
 
-        [Test]
+
         public async Task BeMultiThreaded([Values(1, 2, 4, 8, 16, 32, 64, 128, 256)] int threadsCount)
         {
             var pools = new ConcurrentBag<WorldSyncCommandBufferCollectionsPool>();
@@ -55,7 +55,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             Assert.AreEqual(threadsCount, pools.Count);
         }
 
-        [Test]
+
         public void DisallowGetMainDictionaryMultipleTimes()
         {
             Dictionary<CRDTEntity, Dictionary<int, BatchState>> md = pool.GetMainDictionary();
@@ -63,7 +63,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             Assert.Throws<ThreadStateException>(() => pool.GetMainDictionary());
         }
 
-        [Test]
+
         public void DisallowGetDeletedEntitiesMultipleTimes()
         {
             var pool = WorldSyncCommandBufferCollectionsPool.Create();
@@ -72,7 +72,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             Assert.Throws<ThreadStateException>(() => pool.GetDeletedEntities());
         }
 
-        [Test]
+
         public void CleanMainDictionaryOnRelease()
         {
             Dictionary<CRDTEntity, Dictionary<int, BatchState>> md = pool.GetMainDictionary();
@@ -82,7 +82,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             CollectionAssert.IsEmpty(md);
         }
 
-        [Test]
+
         public void CleanDeletedEntitiesOnRelease()
         {
             List<CRDTEntity> md = pool.GetDeletedEntities();

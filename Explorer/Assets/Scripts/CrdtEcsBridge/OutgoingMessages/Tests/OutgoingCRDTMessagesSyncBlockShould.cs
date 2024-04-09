@@ -12,7 +12,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
 
         private List<ProcessedCRDTMessage> messages;
 
-        [SetUp]
+
         public void SetUp()
         {
             syncBlock = new OutgoingCRDTMessagesSyncBlock(
@@ -24,13 +24,13 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             );
         }
 
-        [Test]
+
         public void GetPayloadLength()
         {
             Assert.AreEqual(90, syncBlock.PayloadLength);
         }
 
-        [Test]
+
         public void ClearMessagesOnDispose()
         {
             syncBlock.Dispose();

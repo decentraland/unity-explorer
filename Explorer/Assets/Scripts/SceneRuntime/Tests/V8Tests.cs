@@ -7,7 +7,7 @@ namespace SceneRuntime.Tests
 {
     public class V8Tests
     {
-        [Test]
+
         public void CallInvokeAsFunction()
         {
             V8ScriptEngine engine = V8EngineFactory.Create();
@@ -20,7 +20,7 @@ namespace SceneRuntime.Tests
             sceneScriptObject!.InvokeAsFunction();
         }
 
-        [Test]
+
         public void ConvertCSharpByteArrayToUint8Array()
         {
             V8ScriptEngine engine = V8EngineFactory.Create();

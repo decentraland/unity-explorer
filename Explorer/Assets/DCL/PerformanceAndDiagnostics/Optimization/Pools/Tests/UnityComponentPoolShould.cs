@@ -3,16 +3,16 @@ using UnityEngine;
 
 namespace DCL.Optimization.Pools.Tests
 {
-    [TestFixture]
+
     public class UnityComponentPoolShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             gameObjectPool = new GameObjectPool<Transform>(null, null, null, 1000);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             gameObjectPool.Clear();
@@ -20,7 +20,7 @@ namespace DCL.Optimization.Pools.Tests
 
         private GameObjectPool<Transform> gameObjectPool;
 
-        [Test]
+
         public void GetGameObject()
         {
             //Act
@@ -31,7 +31,7 @@ namespace DCL.Optimization.Pools.Tests
             Assert.IsTrue(component.gameObject.activeSelf);
         }
 
-        [Test]
+
         public void ReleaseGameObject()
         {
             //Act
@@ -44,7 +44,7 @@ namespace DCL.Optimization.Pools.Tests
             Assert.AreEqual(1, gameObjectPool.CountInactive);
         }
 
-        [Test]
+
         public void ClearPool()
         {
             //Act

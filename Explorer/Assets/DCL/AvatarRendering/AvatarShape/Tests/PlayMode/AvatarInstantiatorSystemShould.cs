@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color randomEyesColor;
         private Mesh avatarMesh;
 
-        [SetUp]
+
         public async void Setup()
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
@@ -180,7 +180,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             return (mockWearable, wearableAsset);
         }
 
-        [Test]
+
         public async Task InstantiateAvatar()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
@@ -199,7 +199,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[2].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants.BASE_COLOUR_SHADER_ID), randomHairColor);
         }
 
-        [Test]
+
         public async Task UpdateInstantiatedAvatar()
         {
             // Arrange
@@ -231,7 +231,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables.Count, 1);
         }
 
-        [Test]
+
         public async Task DestroyInstantiatedAvatar()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug

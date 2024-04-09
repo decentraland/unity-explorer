@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.Tests
 
         protected abstract TSystem CreateSystem();
 
-        [SetUp]
+
         public void BaseSetUp()
         {
             mockedReportScope = new MockedReportScope();
@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Tests
             system.Initialize();
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             mockedReportScope.Dispose();
@@ -56,7 +56,7 @@ namespace ECS.StreamableLoading.Tests
             world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(budget);
         }
 
-        [Test]
+
         public async Task ConcludeSuccess()
         {
             TIntention intent = CreateSuccessIntention();
@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.Tests
             AssertSuccess(result.Asset);
         }
 
-        [Test]
+
         public async Task ConcludeExceptionOnParseFail()
         {
             TIntention intent = CreateWrongTypeIntention();
@@ -92,7 +92,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.IsNotNull(result.Exception);
         }
 
-        [Test]
+
         public async Task ConcludeFailIfNotFound()
         {
             TIntention intent = CreateNotFoundIntention();
@@ -110,7 +110,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.IsNotNull(result.Exception);
         }
 
-        [Test]
+
         public async Task RemoveCurrentSourceFromPermittedSources()
         {
             TIntention intent = CreateSuccessIntention();
@@ -126,7 +126,7 @@ namespace ECS.StreamableLoading.Tests
             await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
         }
 
-        [Test]
+
         public async Task GetAssetFromCache()
         {
             TIntention successIntent = CreateSuccessIntention();

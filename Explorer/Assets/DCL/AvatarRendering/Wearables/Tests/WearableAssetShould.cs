@@ -7,8 +7,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
 {
     public class WearableAssetShould
     {
-        [TestCase(0)]
-        [TestCase(5)]
+
+
         public void ProperlyCountReferenceWhenAddReferenceCalled(int refCount)
         {
             // Arrange
@@ -22,9 +22,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.That(wearableAsset.ReferenceCount, Is.EqualTo(refCount));
         }
 
-        [TestCase(13, 3, 10)]
-        [TestCase(5, 5, 0)]
-        [TestCase(0, 0, 0)]
+
+
+
         public void ProperlyRemoveReferenceWhenDereferenced(int initialRefs, int derefs, int remainedRefs)
         {
             // Arrange

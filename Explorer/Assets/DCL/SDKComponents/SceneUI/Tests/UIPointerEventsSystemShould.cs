@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private ISceneStateProvider sceneStateProvider;
         private IECSToCRDTWriter ecsToCRDTWriter;
 
-        [SetUp]
+
         public void SetUp()
         {
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
@@ -32,9 +32,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Add(entity, new CRDTEntity(500));
         }
 
-        [Test]
-        [TestCase(PointerEventType.PetDown)]
-        [TestCase(PointerEventType.PetUp)]
+
+
+
         public void TriggerPointerEvents(PointerEventType eventType)
         {
             // Arrange

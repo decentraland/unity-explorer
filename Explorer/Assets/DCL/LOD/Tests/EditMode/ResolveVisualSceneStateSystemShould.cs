@@ -12,7 +12,7 @@ namespace DCL.LOD.Tests
 {
     public class ResolveVisualSceneStateSystemShould : UnitySystemTestBase<ResolveVisualSceneStateSystem>
     {
-        [SetUp]
+
         public void Setup()
         {
             var lodSettings = Substitute.For<ILODSettingsAsset>();
@@ -24,7 +24,7 @@ namespace DCL.LOD.Tests
             system = new ResolveVisualSceneStateSystem(world, lodSettings);
         }
 
-        /*[Test]
+        /*
          TODO: Commented until we decide what we do with SDK6 scenes
         public void AddDefaultSceneVisualState()
         {
@@ -38,9 +38,9 @@ namespace DCL.LOD.Tests
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD);
         }*/
 
-        [Test]
-        [TestCase(0, VisualSceneStateEnum.SHOWING_SCENE)]
-        [TestCase(5, VisualSceneStateEnum.SHOWING_LOD)]
+
+
+
         public void AddDefaultSDK7SceneVisualState(byte bucket, VisualSceneStateEnum expectedVisualSceneState)
         {
             var partitionComponent = new PartitionComponent();

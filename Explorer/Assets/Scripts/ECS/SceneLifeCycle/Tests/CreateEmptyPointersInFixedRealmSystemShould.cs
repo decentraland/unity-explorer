@@ -27,7 +27,7 @@ namespace ECS.SceneLifeCycle.Tests
         private ParcelMathJobifiedHelper mathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new CreateEmptyPointersInFixedRealmSystem(world,
@@ -37,13 +37,13 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             mathJobifiedHelper.Dispose();
         }
 
-        [Test]
+
         public void CreatePointersForMissingScenes()
         {
             using var processed = new NativeHashSet<int2>(2, AllocatorManager.Persistent);

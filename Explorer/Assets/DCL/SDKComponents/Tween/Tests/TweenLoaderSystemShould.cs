@@ -14,14 +14,14 @@ using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.Tween.Tests
 {
-    [TestFixture]
+
     public class TweenLoaderSystemShould : UnitySystemTestBase<TweenLoaderSystem>
     {
         private Entity entity;
         private PBTween pbTween;
 
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new TweenLoaderSystem(world);
@@ -44,14 +44,14 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Add(entity, pbTween);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             system?.Dispose();
         }
 
 
-        [Test]
+
         public void AddTweenComponentWithCorrectModelToEntityWithPBTween()
         {
             Assert.AreEqual(0, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
@@ -63,7 +63,7 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CurrentTweenModel)));
         }
 
-        [Test]
+
         public void UpdateTweenComponentIfPBTweenIsDifferentThanStoredModel()
         {
             system.Update(0);
@@ -77,7 +77,7 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
         }
 
-        [Test]
+
         public void DirtyTweenComponentIfPBTweenIsDirty()
         {
             system.Update(0);
@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.Tween.Tests
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
         }
 
-        [Test]
+
         public void DontUpdateTweenComponentIfPBTweenIsNotDifferentThanStoredModelAndNotDirty()
         {
             system.Update(0);

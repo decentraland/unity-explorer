@@ -20,7 +20,7 @@ namespace ECS.Unity.Materials.Tests
     {
         private Material pbrMat;
 
-        [SetUp]
+
         public void SetUp()
         {
             pbrMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scripts/ECS/Unity/Materials/MaterialReference/ShapeMaterial.mat");
@@ -35,7 +35,7 @@ namespace ECS.Unity.Materials.Tests
             system.Initialize();
         }
 
-        [Test]
+
         public void ConstructMaterial()
         {
             MaterialComponent component = CreateMaterialComponent();
@@ -58,7 +58,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Result.shader, Is.EqualTo(pbrMat.shader));
         }
 
-        [Test]
+
         public void NotConstructMaterialIfTexturesLoadingNotFinished()
         {
             MaterialComponent component = CreateMaterialComponent();

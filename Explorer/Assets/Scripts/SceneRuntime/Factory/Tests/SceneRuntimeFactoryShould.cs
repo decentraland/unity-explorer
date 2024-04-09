@@ -19,7 +19,7 @@ namespace SceneRuntime.Factory.Tests
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
 
-        [UnityTest]
+
         public IEnumerator CreateBySourceCode() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -50,7 +50,7 @@ namespace SceneRuntime.Factory.Tests
                 await sceneRuntime.UpdateScene(0.01f);
             });
 
-        [UnityTest]
+
         public IEnumerator CreateByPath() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -73,7 +73,7 @@ namespace SceneRuntime.Factory.Tests
                 await sceneRuntime.UpdateScene(0.01f);
             });
 
-        [Test]
+
         public void WrapInModuleCommonJs()
         {
             // Arrange

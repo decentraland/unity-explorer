@@ -20,7 +20,7 @@ namespace ECS.SceneLifeCycle.Tests
         private IPartitionSettings partitionSettings;
 
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new LoadPointersByIncreasingRadiusSystem(world,
@@ -31,13 +31,13 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             parcelMathJobifiedHelper.Dispose();
         }
 
-        [Test]
+
         public void StartLoading([Range(1, 10, 1)] int radius)
         {
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
@@ -58,7 +58,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(scenePointers.ActivePromise.Value.LoadingIntention.Pointers.Count, Is.EqualTo(d * d));
         }
 
-        [Test]
+
         public void NotStartLoadingProcessedParcels([Range(1, 10, 1)] int radius)
         {
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));

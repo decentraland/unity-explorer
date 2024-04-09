@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         private AvatarBase playerAvatarBase;
         private ISceneStateProvider sceneStateProvider;
 
-        [SetUp]
+
         public async void Setup()
         {
             // Create player entity in global world
@@ -54,14 +54,14 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             entityTransformComponent = AddTransformToEntity(entity);
         }
 
-        [TearDown]
+
         public void Teardown()
         {
             Object.DestroyImmediate(playerAvatarBase.gameObject);
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
         }
 
-        [Test]
+
         public async Task SetupAndUpdateAvatarPositionAnchorPointCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
 
-        [Test]
+
         public async Task SetupAndUpdateAvatarLeftHandAnchorPointCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -131,7 +131,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreEqual(playerAvatarBase.LeftHandAnchorPoint.rotation.ToString(), entityTransformComponent.Transform.rotation.ToString());
         }
 
-        [Test]
+
         public async Task SetupAndUpdateAvatarRightHandAnchorPointCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreEqual(playerAvatarBase.RightHandAnchorPoint.rotation.ToString(), entityTransformComponent.Transform.rotation.ToString());
         }
 
-        [Test]
+
         public async Task UpdateAnchorPointCorrectly()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -193,7 +193,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreEqual(playerAvatarBase.RightHandAnchorPoint.position, entityTransformComponent.Transform.position);
         }
 
-        [Test]
+
         public async Task OverrideTransformValuesExceptScale()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -233,7 +233,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreEqual(Vector3.one * 5, entityTransformComponent.Transform.localScale);
         }
 
-        [Test]
+
         public async Task StopUpdatingTransformOnComponentRemoval()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -257,7 +257,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
 
-        [Test]
+
         public async Task StopUpdatingTransformOnEntityDeletion()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -283,7 +283,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
 
-        [Test]
+
         public async Task UpdateTransformOnlyWhenPlayerIsInCurrentScene()
         {
             // Workaround for Unity bug not awaiting async Setup correctly

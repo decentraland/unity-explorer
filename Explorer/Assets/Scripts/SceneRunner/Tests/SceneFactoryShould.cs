@@ -26,10 +26,10 @@ using UnityEngine;
 
 namespace SceneRunner.Tests
 {
-    [TestFixture]
+
     public class SceneFactoryShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
@@ -50,7 +50,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT, new IRoomHub.Fake(), Substitute.For<IRealmData>());
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             sceneFacade?.DisposeAsync().Forget();
@@ -68,7 +68,7 @@ namespace SceneRunner.Tests
 
         private string path;
 
-        [Test]
+
         public async Task CreateSceneFacadeForTestScene()
         {
             sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
@@ -87,7 +87,7 @@ namespace SceneRunner.Tests
             Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
         }
 
-        [Test]
+
         public async Task ReturnToTheThreadPool()
         {
             int threadId = Thread.CurrentThread.ManagedThreadId;

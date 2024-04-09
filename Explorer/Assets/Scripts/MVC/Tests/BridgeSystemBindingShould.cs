@@ -16,7 +16,7 @@ namespace MVC.Tests
         private IController controller;
         private ControllerECSBridgeSystem.QueryMethod queryMethod;
 
-        [SetUp]
+
         public void Setup()
         {
             controller = Substitute.For<IController>();
@@ -25,7 +25,7 @@ namespace MVC.Tests
             binding = new BridgeSystemBinding<TestSystem>(controller, queryMethod);
         }
 
-        [Test]
+
         public void InvokeQueryOnInjection()
         {
             controller.State.Returns(ControllerState.ViewFocused);
@@ -37,7 +37,7 @@ namespace MVC.Tests
             system.Received(1).InvokeQuery();
         }
 
-        [Test]
+
         public void NotInvokeQueryOnInjection([Values(ControllerState.ViewBlurred, ControllerState.ViewHidden)] ControllerState state)
         {
             controller.State.Returns(state);

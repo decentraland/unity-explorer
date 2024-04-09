@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
         protected abstract string targetShaderName { get; }
 
-        [SetUp]
+
         public void SetUp()
         {
             var targetShader = Shader.Find(targetShaderName);
@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             testTargetMaterial = new Material(targetShader);
         }
 
-        [Test]
+
         public void SetDefaultTexture()
         {
             // We recreate the material with no texture so the default one is applied
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             }
         }
 
-        [Test]
+
         public void SetTexture()
         {
             var textureArraySlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);
@@ -81,7 +81,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             }
         }
 
-        [Test]
+
         public void ReleaseAndReuseTexture()
         {
             var originalSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);

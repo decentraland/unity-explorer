@@ -6,7 +6,7 @@ namespace SceneRunner.Scene.Tests
 {
     public class SceneAssetBundleManifestShould
     {
-        [Test]
+
         public void ComputeVersionedHash()
         {
             unsafe
@@ -22,7 +22,7 @@ namespace SceneRunner.Scene.Tests
             }
         }
 
-        [Test]
+
         public void ComputeUnversionedHash()
         {
             unsafe

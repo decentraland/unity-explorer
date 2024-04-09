@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.Tests
 
         private AssetPromise<Asset, Intent> assetPromise;
 
-        [SetUp]
+
         public void SetUp()
         {
             world = World.Create();
@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Tests
             assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
         }
 
-        [Test]
+
         public void ProvideResultIfFinished()
         {
             var asset = new Asset();
@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.AreEqual(new StreamableLoadingResult<Asset>(asset), assetPromise.Result);
         }
 
-        [Test]
+
         public void NotProvideResultIfNotFinished()
         {
             Assert.IsFalse(assetPromise.TryGetResult(world, out StreamableLoadingResult<Asset> result));
@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.AreEqual(null, assetPromise.Result);
         }
 
-        [Test]
+
         public void ConsumeResult()
         {
             var asset = new Asset();
@@ -57,7 +57,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.IsFalse(assetPromise.Entity.IsAlive(world));
         }
 
-        [Test]
+
         public void ForbidConsumingTwice()
         {
             var asset = new Asset();
@@ -68,7 +68,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.Throws<AssertionException>(() => assetPromise.TryConsume(world, out _));
         }
 
-        [Test]
+
         public void Forget()
         {
             assetPromise.ForgetLoading(world);
@@ -77,7 +77,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.IsFalse(assetPromise.Entity.IsAlive(world));
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             world.Dispose();

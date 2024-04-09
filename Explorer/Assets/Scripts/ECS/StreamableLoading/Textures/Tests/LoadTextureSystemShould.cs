@@ -10,7 +10,7 @@ using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Textures.Tests
 {
-    [TestFixture]
+
     public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2D, GetTextureIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";

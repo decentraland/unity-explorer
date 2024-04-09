@@ -22,7 +22,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private Camera camera;
         private Entity cameraEntity;
 
-        [SetUp]
+
         public void Setup()
         {
             input.Setup();
@@ -44,7 +44,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             input.Set(mouse.position, new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f));
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             input.TearDown();
@@ -52,7 +52,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             camera = null;
         }
 
-        [Test]
+
         public void FindValidEntityUnderPointer()
         {
             var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));
@@ -76,7 +76,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(raycastResult.UnityRaycastHit.collider, Is.EqualTo(collider));
         }
 
-        [Test]
+
         public void FindValidEntityInCameraCenter()
         {
             var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));
@@ -103,7 +103,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(raycastResult.UnityRaycastHit.collider, Is.EqualTo(collider));
         }
 
-        [Test]
+
         public void IgnoreColliderWithWrongLayer()
         {
             var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));
@@ -127,7 +127,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(raycastResult.EntityInfo, Is.Null);
         }
 
-        [Test]
+
         public void RespectMaxRaycastDistance()
         {
             var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));
@@ -151,7 +151,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(raycastResult.EntityInfo, Is.Null);
         }
 
-        [Test]
+
         public void IgnoreNotRegisteredCollider()
         {
             var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));

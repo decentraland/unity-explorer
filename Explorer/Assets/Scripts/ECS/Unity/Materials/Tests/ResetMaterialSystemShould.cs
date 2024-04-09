@@ -19,7 +19,7 @@ namespace ECS.Unity.Materials.Tests
         private Entity entity;
         private MeshRenderer renderer;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new ResetMaterialSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>(), Substitute.For<ISceneData>());
@@ -36,7 +36,7 @@ namespace ECS.Unity.Materials.Tests
             entity = world.Create(matComp, rendComp);
         }
 
-        [Test]
+
         public void SetDefaultMaterial()
         {
             Material mat = DefaultMaterial.Get();
@@ -47,7 +47,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(renderer.sharedMaterial, Is.EqualTo(mat));
         }
 
-        [Test]
+
         public void DereferenceMaterial()
         {
             system.Update(0);
@@ -55,7 +55,7 @@ namespace ECS.Unity.Materials.Tests
             destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), Arg.Any<Material>());
         }
 
-        [Test]
+
         public void DeleteComponent()
         {
             system.Update(0);

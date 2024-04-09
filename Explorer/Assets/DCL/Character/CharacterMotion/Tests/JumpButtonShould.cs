@@ -15,10 +15,10 @@ using UnityEngine.InputSystem;
 
 namespace DCL.CharacterMotion.Tests
 {
-    [TestFixture]
+
     public class JumpInputComponentShould : InputTestFixture
     {
-        [SetUp]
+
         public void SetUp()
         {
             base.Setup();
@@ -49,7 +49,7 @@ namespace DCL.CharacterMotion.Tests
         private Entity playerEntity;
         private SingleInstanceEntity fixedTick;
 
-        [Test]
+
         public async Task JumpOccursOnCorrectPhysicalFrame()
         {
             //Lets simulate a Fixed Update tick

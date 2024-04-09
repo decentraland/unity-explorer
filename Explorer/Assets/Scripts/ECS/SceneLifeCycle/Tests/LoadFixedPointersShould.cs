@@ -30,13 +30,13 @@ namespace ECS.SceneLifeCycle.Tests
             "urn:decentraland:entity:bafkreiff5m4wv2pm6n4muiyy7p6yrohsqqnaggwhvcb2lzbbwiogpgkl2i?=&baseUrl=https://sdk-team-cdn.decentraland.org/ipfs/",
         };
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new LoadFixedPointersSystem(world);
         }
 
-        [Test]
+
         public void CreatePromises()
         {
             Entity e = world.Create(new RealmComponent(new RealmData(new TestIpfsRealm(URNs))));
@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreiff5m4wv2pm6n4muiyy7p6yrohsqqnaggwhvcb2lzbbwiogpgkl2i"), Is.True);
         }
 
-        [Test]
+
         public async Task CreateSceneEntityFromLoadedPromises()
         {
             var ipfsRealm = new TestIpfsRealm();

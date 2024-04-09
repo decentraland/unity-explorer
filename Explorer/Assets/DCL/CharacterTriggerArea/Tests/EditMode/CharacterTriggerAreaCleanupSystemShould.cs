@@ -20,7 +20,7 @@ namespace DCL.CharacterTriggerArea.Tests
         private CharacterTriggerArea characterTriggerArea;
         private IComponentPool<CharacterTriggerArea> poolRegistry;
 
-        [SetUp]
+
         public void Setup()
         {
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
@@ -34,7 +34,7 @@ namespace DCL.CharacterTriggerArea.Tests
             system = new CharacterTriggerAreaCleanupSystem(world, poolRegistry);
         }
 
-        [TearDown]
+
         public void Teardown()
         {
             poolRegistry.Dispose();
@@ -42,7 +42,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Object.DestroyImmediate(fakeTriggerAreaGO);
         }
 
-        [Test]
+
         public void ClearEnterExitCollectionsCorrectly()
         {
             var component = new CharacterTriggerAreaComponent(Vector3.one);
@@ -74,7 +74,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
         }
 
-        [Test]
+
         public void HandleCameraModeAreaComponentRemoveCorrectly()
         {
             var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
@@ -94,7 +94,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
         }
 
-        [Test]
+
         public void HandleAvatarModifierAreaComponentRemoveCorrectly()
         {
             var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
@@ -114,7 +114,7 @@ namespace DCL.CharacterTriggerArea.Tests
             Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
         }
 
-        [Test]
+
         public void HandleEntityDestructionCorrectly()
         {
             var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);

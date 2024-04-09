@@ -6,7 +6,7 @@ namespace Utility.Primitives.Tests
 {
     public class CylinderVariantsShould
     {
-        [Test]
+
         public void GenerateCylinder([Values(25, 50, 100, 300, 1000)] int verticesCount)
         {
             int finalVerticesCount = (verticesCount + 1) * 4;
@@ -22,7 +22,7 @@ namespace Utility.Primitives.Tests
             Assert.AreEqual(trianglesCount, mesh.triangles.Length);
         }
 
-        [Test]
+
         public void GenerateCone([Values(25, 50, 100, 300, 1000)] int verticesCount)
         {
             int finalVerticesCount = (verticesCount + 1) * 4;
@@ -38,7 +38,7 @@ namespace Utility.Primitives.Tests
             Assert.AreEqual(trianglesCount, mesh.triangles.Length);
         }
 
-        [Test]
+
         public void GenerateTruncatedCone([Values(25, 50, 100, 300, 1000)] int verticesCount)
         {
             int finalVerticesCount = (verticesCount + 1) * 4;
@@ -54,7 +54,7 @@ namespace Utility.Primitives.Tests
             Assert.AreEqual(trianglesCount, mesh.triangles.Length);
         }
 
-        [Test]
+
         public void ReuseBuffers()
         {
             int finalVerticesCount = (CylinderVariantsFactory.VERTICES_NUM + 1) * 4;

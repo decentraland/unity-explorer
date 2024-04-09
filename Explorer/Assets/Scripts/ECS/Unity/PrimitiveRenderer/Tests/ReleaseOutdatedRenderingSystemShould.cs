@@ -17,14 +17,14 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
     {
         private IComponentPoolsRegistry poolsRegistry;
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
             system = new ReleaseOutdatedRenderingSystem(world, poolsRegistry);
         }
 
-        [Test]
+
         public void InvalidateRenderingIfTypeChanged()
         {
             var comp = new PrimitiveMeshRendererComponent
@@ -44,7 +44,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             Assert.AreEqual(null, world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh);
         }
 
-        [Test]
+
         public void ReleaseRendererIfComponentRemoved()
         {
             var comp = new PrimitiveMeshRendererComponent
@@ -61,7 +61,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             Assert.That(world.Has<PrimitiveMeshRendererComponent>(entity), Is.False);
         }
 
-        [Test]
+
         public void DoNothingIfNotDirty()
         {
             var oldRenderer = new Mesh();

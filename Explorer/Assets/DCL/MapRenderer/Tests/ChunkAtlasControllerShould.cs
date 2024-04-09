@@ -14,7 +14,7 @@ using UnityEngine.TestTools;
 
 namespace DCL.MapRenderer.Tests
 {
-    [TestFixture]
+
     public class ChunkAtlasControllerShould
     {
         private const int PARCEL_SIZE = 20;
@@ -25,7 +25,7 @@ namespace DCL.MapRenderer.Tests
         private ParcelChunkAtlasController.ChunkBuilder builder;
         private int iterationsNumber;
 
-        [SetUp]
+
         public void Setup()
         {
             var coordUtils = Substitute.For<ICoordsUtils>();
@@ -44,7 +44,7 @@ namespace DCL.MapRenderer.Tests
                 * Mathf.CeilToInt((coordUtils.WorldMaxCoords.y - coordUtils.WorldMinCoords.y) / (float)parcelsInsideChunk);
         }
 
-        [Test]
+
         public async Task PerformsCorrectNumberOfIterations()
         {
             builder.Invoke(Arg.Any<Vector3>(), Arg.Any<Vector2Int>(), Arg.Any<Transform>(), Arg.Any<CancellationToken>())

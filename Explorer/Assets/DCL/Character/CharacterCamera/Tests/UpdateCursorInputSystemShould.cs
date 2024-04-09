@@ -11,10 +11,10 @@ using UnityEngine.InputSystem;
 
 namespace DCL.CharacterCamera.Tests
 {
-    [TestFixture]
+
     public class UpdateCursorInputSystemShould : InputTestFixture
     {
-        [SetUp]
+
         public void CreateCameraSetup()
         {
             base.Setup();
@@ -34,7 +34,7 @@ namespace DCL.CharacterCamera.Tests
             system.Initialize();
         }
 
-        [TearDown]
+
         public void Teardown()
         {
             InputSystem.RemoveDevice(keyboard);
@@ -49,7 +49,7 @@ namespace DCL.CharacterCamera.Tests
         private IEventSystem eventSystem;
         private ICursor cursor;
 
-        [Test]
+
         public void DontLockCursorWhenOverUI()
         {
             world.Set(entity, new CursorComponent { CursorIsLocked = false });
@@ -64,7 +64,7 @@ namespace DCL.CharacterCamera.Tests
             cursor.DidNotReceive().Lock();
         }
 
-        [Test]
+
         public void LockCursorWhenNotClickingUI()
         {
             world.Set(entity, new CursorComponent { CursorIsLocked = false });
@@ -77,7 +77,7 @@ namespace DCL.CharacterCamera.Tests
             cursor.Received(1).Lock();
         }
 
-        [Test]
+
         public void DontRaycastUIWhileLocked()
         {
             world.Set(entity, new CursorComponent { CursorIsLocked = true });
@@ -89,7 +89,7 @@ namespace DCL.CharacterCamera.Tests
             eventSystem.DidNotReceive().RaycastAll(Arg.Any<Vector2>());
         }
 
-        [Test]
+
         public void UnlockCursor()
         {
             world.Set(entity, new CursorComponent { CursorIsLocked = true });
@@ -102,7 +102,7 @@ namespace DCL.CharacterCamera.Tests
             cursor.Received(1).Unlock();
         }
 
-        [Test]
+
         public void LockAndUnlockCursorWithTemporalLock()
         {
             //setup press
@@ -126,7 +126,7 @@ namespace DCL.CharacterCamera.Tests
             cursor.Received(1).Unlock();
         }
 
-        [Test]
+
         public void AutomaticallyUnlockCursorByExternalUnlock()
         {
             world.Set(entity, new CursorComponent { CursorIsLocked = true });

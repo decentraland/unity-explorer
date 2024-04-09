@@ -14,7 +14,7 @@ namespace MVC.Tests
 
         private IMVCControllerModule module;
 
-        [SetUp]
+
         public void SetUp()
         {
             viewFactoryMethod = Substitute.For<ControllerBase<ITestView, TestInputData>.ViewFactoryMethod>();
@@ -24,7 +24,7 @@ namespace MVC.Tests
             controller = new TestController(viewFactoryMethod);
         }
 
-        [Test]
+
         public async Task LaunchViewLifeCycle()
         {
             var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100);
@@ -53,7 +53,7 @@ namespace MVC.Tests
             Assert.That(controller.Input, Is.EqualTo(input));
         }
 
-        [Test]
+
         public async Task HideView()
         {
             // Show first
@@ -78,7 +78,7 @@ namespace MVC.Tests
             await testView.Received(1).HideAsync(CancellationToken.None);
         }
 
-        [Test]
+
         public void Blur()
         {
             controller.Blur();
@@ -90,7 +90,7 @@ namespace MVC.Tests
             controller.Module.Received(1).OnBlur();
         }
 
-        [Test]
+
         public void Focus()
         {
             controller.Focus();

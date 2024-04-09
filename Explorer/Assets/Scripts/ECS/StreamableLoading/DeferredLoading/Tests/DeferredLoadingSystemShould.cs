@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         private ConcurrentLoadingPerformanceBudget concurrentLoadingPerformanceBudget;
         private IReleasablePerformanceBudget memoryBudgetMock;
 
-        [SetUp]
+
         public void SetUp()
         {
             // We ll create a budget system that only allows 5 concurrent loading requests
@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             entities = new List<Entity>();
         }
 
-        [Test]
+
         public void IntentionsOrderedByIsBehind()
         {
             // We'll create 10 intentions for testing. The one with a pair bucket value will have a
@@ -58,7 +58,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     Is.EqualTo(i < 5 ? StreamableLoadingState.Status.Allowed : StreamableLoadingState.Status.Forbidden));
         }
 
-        [Test]
+
         public void IntentionsOrderedByBucket()
         {
             for (var i = 0; i < 10; i++)
@@ -86,7 +86,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     world.Get<StreamableLoadingState>(entities[i]).Value == StreamableLoadingState.Status.Allowed);
         }
 
-        [Test]
+
         public void IntentionsAllowedWhenBudgetIsReleased()
         {
             for (var i = 0; i < 10; i++)

@@ -12,10 +12,10 @@ using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
-    [TestFixture]
+
     public class PrepareAssetBundleLoadingParametersSystemShould : UnitySystemTestBase<PrepareAssetBundleLoadingParametersSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             path = URLDomain.FromString($"file://{Application.dataPath}" + "/../TestResources/AssetBundles/");
@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
         private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/v1/");
 
-        [Test]
+
         public void ResolveHashFromName()
         {
             sceneData.TryGetHash("TEST", out Arg.Any<string>())
@@ -51,7 +51,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(intent.CommonArguments.URL.Value, Is.EqualTo(path.Value + "abcd" + PlatformUtils.GetPlatform()).Or.EqualTo(path.Value + "abcd".GetHashCode()));
         }
 
-        [Test]
+
         public void LoadFromEmbeddedFirst()
         {
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
@@ -67,7 +67,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(intent.CommonArguments.URL, Is.EqualTo(path + "TEST"));
         }
 
-        [Test]
+
         public void LoadFromWeb()
         {
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
@@ -84,7 +84,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
 
-        [Test]
+
         public void FailIfAbsentInManifest()
         {
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = Array.Empty<string>() }));

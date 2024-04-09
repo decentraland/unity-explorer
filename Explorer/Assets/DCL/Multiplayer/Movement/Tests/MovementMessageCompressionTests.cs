@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Tests
 {
-    [TestFixture]
+
     public class MovementMessageCompressionTests
     {
-        // [TestCase(0.1f, true, 1.525f, 20.3f, 1.575f)]
-        // [TestCase(9.01f, true, 3.05f, 18.03f, 8.125f)]
-        // [TestCase(0.255f, false, 15.5f, 32.5f, 15.5f)]
+        //
+        //
+        //
         public void EncodeDecodePositionTest(float timestamp, bool isMoving, float x, float y, float z)
         {
             long encoded = Encoder.Encode(isMoving, timestamp, x, y, z);

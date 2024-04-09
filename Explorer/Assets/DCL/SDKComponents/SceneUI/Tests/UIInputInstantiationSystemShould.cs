@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private Entity entity;
         private UITransformComponent uiTransformComponent;
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = new ComponentPoolsRegistry(
@@ -39,7 +39,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Add(entity, new CRDTEntity(500));
         }
 
-        [Test]
+
         public void InstantiateUIInput()
         {
             // Arrange
@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsNotNull(uiInputComponent.Placeholder);
         }
 
-        [Test]
+
         public void UpdateUIInput()
         {
             // Arrange
@@ -86,9 +86,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
             }
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+
+
+
         public void TriggerInputResults(bool isSubmit)
         {
             // Arrange

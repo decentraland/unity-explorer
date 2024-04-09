@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 namespace DCL.SDKComponents.Tween.Tests
 {
-    [TestFixture]
+
     public class TweenUpdaterSystemShould : UnitySystemTestBase<TweenUpdaterSystem>
     {
         private Entity entity;
@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.Tween.Tests
         private const float DEFAULT_CURRENT_TIME_0 = 0f;
         private const float DEFAULT_CURRENT_TIME_1 = 1f;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>());
@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.Tween.Tests
             system.Update(0);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             system?.Dispose();
@@ -63,7 +63,7 @@ namespace DCL.SDKComponents.Tween.Tests
         }
 
 
-        [Test]
+
         public void ChangingPBTweenCurrentTimeUpdatesTheTweenStateStatus()
         {
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>
@@ -79,7 +79,7 @@ namespace DCL.SDKComponents.Tween.Tests
                               comp.TweenStateStatus == TweenStateStatus.TsCompleted));
         }
 
-        [Test]
+
         public void ChangingPBTweenPlayingValueUpdatesTheTweenStateStatus()
         {
             world.Query(new QueryDescription().WithAll<SDKTweenComponent>(), (ref SDKTweenComponent comp) =>

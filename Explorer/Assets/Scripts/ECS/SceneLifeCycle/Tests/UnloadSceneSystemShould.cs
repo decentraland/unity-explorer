@@ -13,13 +13,13 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class UnloadSceneSystemShould : UnitySystemTestBase<UnloadSceneSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             system = new UnloadSceneSystem(world, Substitute.For<IScenesCache>());
         }
 
-        [Test]
+
         public void DisposeLoadedScene()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();

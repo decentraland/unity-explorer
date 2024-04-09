@@ -16,7 +16,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
         private ICRDTProtocol crdtProtocol;
         private SDKComponentsRegistry sdkComponentRegistry;
 
-        [SetUp]
+
         public void SetUp()
         {
             crdtProtocol = Substitute.For<ICRDTProtocol>();
@@ -24,7 +24,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             provider = new OutgoingCRDTMessagesProvider(sdkComponentRegistry, crdtProtocol, CRDTPooledMemoryAllocator.Create());
         }
 
-        [Test]
+
         public void AppendMessage()
         {
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -46,7 +46,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(provider.lwwMessageIndices, Does.Not.ContainKey(new OutgoingMessageKey(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
         }
 
-        [Test]
+
         public void PutMessage()
         {
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -68,7 +68,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(provider.lwwMessageIndices, Contains.Key(new OutgoingMessageKey(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
         }
 
-        [Test]
+
         public void DeleteMessage()
         {
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -87,7 +87,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(provider.lwwMessageIndices, Contains.Key(new OutgoingMessageKey(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
         }
 
-        [Test]
+
         public void ResolveSeriesOfLwwMessages()
         {
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -105,7 +105,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(provider.messages[0].MessageType, Is.EqualTo(CRDTMessageType.PUT_COMPONENT));
         }
 
-        [Test]
+
         public void ResolveSeriesOfLwwMessagesWithDeleteMessage()
         {
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -123,7 +123,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(provider.messages[0].MessageType, Is.EqualTo(CRDTMessageType.DELETE_COMPONENT));
         }
 
-        [Test]
+
         public void ProvideSerializationSyncBlock()
         {
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -139,7 +139,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             crdtProtocol.Received(1).CreateAppendMessage(Arg.Is<CRDTEntity>(c => c.Id == 3), ComponentID.POINTER_EVENTS_RESULT, 780, Arg.Any<IMemoryOwner<byte>>());
         }
 
-        [Test]
+
         public void ReleaseToPoolOnDispose()
         {
             provider.Dispose();

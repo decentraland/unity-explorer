@@ -23,7 +23,7 @@ namespace ECS.Unity.Tests
 
         private ref TransformComponent sceneRootTransform => ref world.Get<TransformComponent>(sceneRoot);
 
-        [SetUp]
+
         public void SetUp()
         {
             sceneRoot = world.Create(new SceneRootComponent());
@@ -41,7 +41,7 @@ namespace ECS.Unity.Tests
             system = new PartitionAssetEntitiesSystem(world, partitionSettings, scenePartition, samplingData, componentPool, sceneRoot);
         }
 
-        [Test]
+
         public void RepartitionExistingEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
@@ -63,7 +63,7 @@ namespace ECS.Unity.Tests
             Assert.That(partitionComponent.IsDirty, isDirty ? Is.True : Is.False);
         }
 
-        [Test]
+
         public void RepartitionExistingEntityWithoutTransform([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
@@ -83,7 +83,7 @@ namespace ECS.Unity.Tests
             Assert.That(partitionComponent.IsDirty, isDirty ? Is.True : Is.False);
         }
 
-        [Test]
+
         public void PartitionNewEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
@@ -104,7 +104,7 @@ namespace ECS.Unity.Tests
             Assert.That(partitionComponent.IsDirty, Is.True);
         }
 
-        [Test]
+
         public void PartitionNewEntityWithoutTransform([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
@@ -124,7 +124,7 @@ namespace ECS.Unity.Tests
             Assert.That(partitionComponent.IsDirty, Is.True);
         }
 
-        [Test]
+
         public void InheritScenePartition()
         {
             samplingData.IsDirty.Returns(true);

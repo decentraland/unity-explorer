@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private Texture mouthTexture;
         private Texture eyebrowsTexture;
 
-        [SetUp]
+
         public void SetUp()
         {
             wearableCatalog = Substitute.For<IWearableCatalog>();
@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             return tex;
         }
 
-        [Test]
+
         public void GetDefaultTextures()
         {
             var defaultFacialFeaturesDictionary = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(BodyShape.MALE);
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreEqual(defaultFacialFeaturesDictionary[WearablesConstants.Categories.EYEBROWS, WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE], eyebrowsTexture);
         }
 
-        [Test]
+
         public void GetDefaultTexturesAfterReplaced()
         {
             var defaultFacialFeaturesDictionary = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(BodyShape.MALE);

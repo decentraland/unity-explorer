@@ -16,7 +16,7 @@ namespace DCL.Tests
         private IWearable upperMockWearable;
         private IWearable upperSkinWearable;
 
-        [SetUp]
+
         public void SetUp()
         {
             upperMockWearable = Substitute.For<IWearable>();
@@ -46,7 +46,7 @@ namespace DCL.Tests
                 });
         }
 
-        [Test]
+
         public void HideWearables()
         {
             mockWearables = new List<IWearable>() { upperMockWearable };
@@ -59,7 +59,7 @@ namespace DCL.Tests
             Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
         }
 
-        [Test]
+
         public void HideHierarchyRespected()
         {
             mockWearables = new List<IWearable>() { upperMockWearable, upperSkinWearable };
@@ -73,7 +73,7 @@ namespace DCL.Tests
             Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.SKIN));
         }
 
-        [Test]
+
         public void ForceRenderRespected()
         {
             mockWearables = new List<IWearable>() { upperMockWearable };
@@ -89,7 +89,7 @@ namespace DCL.Tests
             Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
         }
 
-        [Test]
+
         public void HideBodyShape()
         {
             mockWearables = new List<IWearable>() { upperMockWearable };

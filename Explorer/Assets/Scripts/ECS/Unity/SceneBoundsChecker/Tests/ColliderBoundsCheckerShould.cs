@@ -14,7 +14,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
         private IPartitionComponent scenePartition;
         private BoxCollider collider;
 
-        [SetUp]
+
         public void Setup()
         {
             scenePartition = Substitute.For<IPartitionComponent>();
@@ -32,14 +32,14 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             collider = new GameObject(nameof(ColliderBoundsCheckerShould)).AddComponent<BoxCollider>();
         }
 
-        [TearDown]
+
         public void CleanUp()
         {
             UnityObjectUtils.SafeDestroyGameObject(collider);
             collider = null;
         }
 
-        [Test]
+
         public void IgnorePrimitiveCollider()
         {
             scenePartition.Bucket.Returns((byte)(CheckColliderBoundsSystem.BUCKET_THRESHOLD + 1));
@@ -60,7 +60,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             Assert.IsTrue(collider.enabled);
         }
 
-        [Test]
+
         public void DisableColliderOutOfBounds()
         {
             collider.center = new Vector3(-50, 0, -50);
@@ -78,7 +78,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             Assert.IsFalse(collider.enabled);
         }
 
-        [Test]
+
         public void KeepColliderWithinBounds()
         {
             collider.center = new Vector3(-20, 0, -20);

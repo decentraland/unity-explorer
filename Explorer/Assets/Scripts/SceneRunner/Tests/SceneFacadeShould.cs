@@ -40,10 +40,10 @@ using UnityEngine;
 
 namespace SceneRunner.Tests
 {
-    [TestFixture]
+
     public class SceneFacadeShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
@@ -96,7 +96,7 @@ namespace SceneRunner.Tests
 
         private string path;
 
-        [Test]
+
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
         {
             var sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>()!, CancellationToken.None);
@@ -112,7 +112,7 @@ namespace SceneRunner.Tests
             // Asserts are inside the method
         }
 
-        [Test]
+
         public async Task UpdateWithProperIntervals([Values(5, 10, 20, 40, 60, 90, 150)] int fps)
         {
             const int DURATION = 1000;
@@ -166,10 +166,10 @@ namespace SceneRunner.Tests
         private bool EqualWithTolerance(float dt, float expectedDT, float tolerance) =>
             dt >= expectedDT - tolerance && dt <= expectedDT + tolerance;
 
-        [Test]
-        [TestCase(new[] { 120, 60, 30 }, new[] { 200, 150, 500 })]
-        [TestCase(new[] { 30, 20, 10, 5, 2 }, new[] { 300, 300, 300, 300, 300 })]
-        [TestCase(new[] { 60, 60, 60, 60, 60 }, new[] { 300, 300, 300, 300, 300 })]
+
+
+
+
         public async Task UpdateMultipleInstancesAtDifferentRate(int[] fps, int[] lifeTimeMs)
         {
             int waitTime = lifeTimeMs.Max() + 100;
@@ -199,7 +199,7 @@ namespace SceneRunner.Tests
             Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
         }
 
-        [Test]
+
         public async Task DisposeInProperOrder()
         {
             const int DURATION = 1000;

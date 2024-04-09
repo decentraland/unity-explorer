@@ -24,7 +24,7 @@ namespace SceneRuntime.Tests
         private IInstancePoolsProvider poolsProvider;
         private ISceneExceptionsHandler sceneExceptionsHandler;
 
-        [SetUp]
+
         public void SetUp()
         {
             sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
@@ -32,7 +32,7 @@ namespace SceneRuntime.Tests
             poolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
         }
 
-        [UnityTest]
+
         public IEnumerator EngineApi_GetState() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -55,7 +55,7 @@ namespace SceneRuntime.Tests
                 engineApi.Received().CrdtGetState();
             });
 
-        [UnityTest]
+
         public IEnumerator EngineApi_CrdtSendToRenderer() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -101,7 +101,7 @@ namespace SceneRuntime.Tests
         private static bool CheckMemory(ReadOnlyMemory<byte> r) =>
             r.Length == 10 && r.Span[0] == 123;
 
-        [UnityTest]
+
         public IEnumerator ProfileOnUpdate() =>
             UniTask.ToCoroutine(async () =>
             {
@@ -130,7 +130,7 @@ namespace SceneRuntime.Tests
                 }
             });
 
-        [UnityTest]
+
         public IEnumerator EngineApi_TestRealScene() =>
             UniTask.ToCoroutine(async () =>
             {

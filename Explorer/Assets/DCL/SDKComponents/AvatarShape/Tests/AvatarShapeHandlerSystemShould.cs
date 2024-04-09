@@ -10,10 +10,10 @@ using NUnit.Framework;
 
 namespace ECS.Unity.AvatarShape.Tests
 {
-    [TestFixture]
+
     public class AvatarShapeHandlerSystemShould : UnitySystemTestBase<AvatarShapeHandlerSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             globalWorld = World.Create();
@@ -28,7 +28,7 @@ namespace ECS.Unity.AvatarShape.Tests
         private Entity entity;
         private World globalWorld;
 
-        [Test]
+
         public void ForwardSDKAvatarShapeInstantiationToGlobalWorldSystems()
         {
             Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
@@ -45,7 +45,7 @@ namespace ECS.Unity.AvatarShape.Tests
             globalWorld.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent.Name, comp.Name));
         }
 
-        [Test]
+
         public void ForwardSDKAvatarShapeUpdateToGlobalWorldSystems()
         {
             // Creation
@@ -69,7 +69,7 @@ namespace ECS.Unity.AvatarShape.Tests
             globalWorld.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent.Name, comp.Name));
         }
 
-        [Test]
+
         public void RemoveEntityFromGlobalWorldOnComponentRemove()
         {
             // Create
@@ -94,7 +94,7 @@ namespace ECS.Unity.AvatarShape.Tests
             Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape, DeleteEntityIntention>()));
         }
 
-        [Test]
+
         public void RemoveEntityFromGlobalWorldOnSceneEntityDestruction()
         {
             // Create

@@ -7,16 +7,16 @@ using Unity.PerformanceTesting;
 
 namespace ECS.PerformanceTests
 {
-    [TestFixture]
+
     public partial class ECSPerformanceTests
     {
-        [SetUp]
+
         public void Setup()
         {
             world = World.Create();
         }
 
-        [TearDown]
+
         public void Dispose()
         {
             world?.Dispose();
@@ -56,9 +56,9 @@ namespace ECS.PerformanceTests
         private static int[] GetTestSource() =>
             new[] { 1, 10, 100, 1_000, 5_000 };
 
-        [Test]
+
         [Performance]
-        [TestCaseSource(nameof(GetTestSource))]
+
         public void PerformanceMeasureAddComponent(int entitiesCount)
         {
             QueryDescription cleanUpQuery = new QueryDescription().WithAll<TestComponent>();
@@ -81,9 +81,9 @@ namespace ECS.PerformanceTests
             world.Add(entity, new TestComponent());
         }
 
-        [Test]
+
         [Performance]
-        [TestCaseSource(nameof(GetTestSource))]
+
         public void PerformanceMeasureRemoveComponent(int entitiesCount)
         {
             QueryDescription cleanUpQuery = new QueryDescription().WithNone<TestComponent>();
@@ -106,9 +106,9 @@ namespace ECS.PerformanceTests
             world.Remove<TestComponent>(entity);
         }
 
-        [Test]
+
         [Performance]
-        [TestCaseSource(nameof(GetTestSource))]
+
         public void PerformanceMeasureIteration(int entitiesCount)
         {
             ComponentType[] archetype = LONG_ARCHETYPE.Append(typeof(MarkerComponent)).ToArray();
@@ -127,9 +127,9 @@ namespace ECS.PerformanceTests
         ///     Iterates over query for which there is no matching archetype
         /// </summary>
         /// <param name="entitiesCount"></param>
-        [Test]
+
         [Performance]
-        [TestCaseSource(nameof(GetTestSource))]
+
         public void PerformanceMeasureEmptyIteration(int entitiesCount)
         {
             for (var i = 0; i < entitiesCount; i++)

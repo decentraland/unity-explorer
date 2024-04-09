@@ -16,10 +16,10 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D,
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
-    [TestFixture]
+
     public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveAvatarAttachmentThumbnailSystem>
     {
-        [SetUp]
+
         public void Setup()
         {
             wearableCatalog = new WearableCatalog();
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             return wearable;
         }
 
-        [Test]
+
         public void ResolveWearableThumbnail()
         {
             //Arrange

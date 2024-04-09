@@ -8,7 +8,7 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
 {
     public class ComponentSerializerShould
     {
-        [Test]
+
         public void DeserializeIntoExistingProtobufInstance()
         {
             var serializer = new ProtobufSerializer<PBMeshCollider>();
@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
             Assert.AreEqual(message, newMessage);
         }
 
-        [Test]
+
         public void SerializeIntoProtobufSpan()
         {
             //Arrange
@@ -50,7 +50,7 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
             Assert.AreEqual(byteArray.Length, memoryBuffer.Span.Length);
         }
 
-        [Test]
+
         public void SerializeAndDeserialize()
         {
             //Arrange

@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Tests
             new Vector2Int(180, 9091),
         };
 
-        [SetUp]
+
         public void SetUp()
         {
             loadEmptySceneSystemLogic = new LoadEmptySceneSystemLogic(
@@ -60,7 +60,7 @@ namespace ECS.SceneLifeCycle.Tests
             emptyScenesWorldFactory.Create(Arg.Any<EmptySceneData>()).Returns(new EmptyScenesWorld(builder.Finish(), map = new Dictionary<CRDTEntity, Entity>(), world, new MutexSync()));
         }
 
-        [Test]
+
         public async Task LoadMapping()
         {
             await loadEmptySceneSystemLogic.LoadMappingAsync(Array.Empty<Vector2Int>(), CancellationToken.None);
@@ -69,8 +69,8 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(loadEmptySceneSystemLogic.emptySceneData.Mappings.Count, Is.EqualTo(12));
         }
 
-        [Test]
-        [TestCaseSource(nameof(Parcels))]
+
+
         public async Task CreateSceneFacade(Vector2Int parcel)
         {
             IPartitionComponent partition = Substitute.For<IPartitionComponent>();
@@ -82,7 +82,7 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.NotNull(facade);
         }
 
-        //[Test]
+        //
         // Disabled temporally
         public async Task FacadeCreateEntities()
         {

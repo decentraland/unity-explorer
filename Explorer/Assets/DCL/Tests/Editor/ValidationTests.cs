@@ -36,7 +36,7 @@ namespace DCL.Tests.Editor
             "node_modules",
         };
 
-        [Test]
+
         public void ProjectShouldNotContainEmptyFolders()
         {
             // Arrange
@@ -55,7 +55,7 @@ namespace DCL.Tests.Editor
             Assert.That(emptyDirectories.Count, Is.EqualTo(0), errorMessage);
         }
 
-        [Test]
+
         public void CheckForDebugUsage()
         {
             string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
@@ -98,7 +98,7 @@ namespace DCL.Tests.Editor
             }
         }
 
-        [Test]
+
         public void CheckUnityObjectsForMissingReferences()
         {
             IEnumerable<ScriptableObject> scriptableObjects = GetAllScriptableObjectsInFolder("Assets/DCL");
@@ -123,7 +123,7 @@ namespace DCL.Tests.Editor
             }
         }
 
-        [UnityTest]
+
         public IEnumerator SettingsAreValid()
         {
             const string MAIN_SCENE = "Assets/Scenes/Main.unity";

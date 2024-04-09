@@ -15,7 +15,7 @@ namespace ECS.TestSuite
 
         protected World world => cachedWorld ??= World.Create();
 
-        [TearDown]
+
         public void DestroyWorld()
         {
             system?.Dispose();

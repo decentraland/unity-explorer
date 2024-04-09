@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         private PBAudioSource pbAudioSource;
         private Entity entity;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = CreateSystem(world);
@@ -43,13 +43,13 @@ namespace DCL.SDKComponents.AudioSources.Tests
             return new StartAudioSourceLoadingSystem(world, sceneData, concurrentBudgetProvider);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             system.Dispose();
         }
 
-        [Test]
+
         public void CreateAudioSourceComponentForPBAudioSource()
         {
             // Act

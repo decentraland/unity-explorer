@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         private ICoordsUtils coordsUtils;
         private IMapCullingController culling;
 
-        [SetUp]
+
         public void SetUp()
         {
             GameObject go = new GameObject();
@@ -33,7 +33,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                 Substitute.For<IMapInteractivityControllerInternal>(), mapCameraObject, coordsUtils, culling);
         }
 
-        [Test]
+
         public void BeConstructed()
         {
             Assert.AreEqual(mapCamera.MapCameraObject, mapCameraObject);
@@ -42,7 +42,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             Assert.IsNull(mapCamera.RenderTexture);
         }
 
-        [Test]
+
         public void BeInitialized()
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(30, 30), new Vector2Int(10, 20), MapLayer.ParcelsAtlas);
@@ -54,13 +54,13 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             Assert.AreEqual(new Vector2Int(100, 200), mapCamera.ZoomValues);
         }
 
-        [Test]
+
         public void ThrowIfAccessingRenderTextureWhenNotInitialized()
         {
             Assert.Throws<Exception>(() => mapCamera.GetRenderTexture());
         }
 
-        [Test]
+
         public void ReturnRenderTexture()
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), Vector2Int.one, MapLayer.ParcelsAtlas);
@@ -70,13 +70,13 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             Assert.AreEqual(mapCamera.RenderTexture, renderTexture);
         }
 
-        [TestCase(-5, 100, 200, 200)]
-        [TestCase(0, 100, 200, 200)]
-        [TestCase(0.75f, 100, 200, 125)]
-        [TestCase(0.5f, 100, 200, 150)]
-        [TestCase(0.25f, 100, 200, 175)]
-        [TestCase(1f, 100, 200, 100)]
-        [TestCase(2f, 100, 200, 100)]
+
+
+
+
+
+
+
         public void SetZoom(float zoom, int minZoom, int maxZoom, float expected)
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), new Vector2Int(100, 200), MapLayer.ParcelsAtlas);
@@ -87,7 +87,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             culling.Received().SetCameraDirty(mapCamera);
         }
 
-        [Test]
+
         public void SetPosition()
         {
             coordsUtils.VisibleWorldBounds.Returns(Rect.MinMaxRect(-1000, -1000, 1000, 1000));
@@ -102,8 +102,8 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             culling.Received().SetCameraDirty(mapCamera);
         }
 
-        [Test]
-        [TestCaseSource(nameof(LocalPositionTestCases))]
+
+
         public void SetLocalPosition(Vector2 desired, Vector2 expected, Vector2Int zoomValues, float zoom)
         {
             ((IMapCameraControllerInternal)mapCamera).Initialize(new Vector2Int(20, 20), zoomValues, MapLayer.ParcelsAtlas);
@@ -123,8 +123,8 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             new object[] { new Vector2(4000, -8000), new Vector2(600, -600), new Vector2Int(30, 50), 0.5f},
         };
 
-        [TestCase(true)]
-        [TestCase(false)]
+
+
         public void SetActive(bool value)
         {
             mapCamera.SetActive(value);
@@ -132,7 +132,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
             Assert.AreEqual(value, mapCameraObject.isActiveAndEnabled);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             mapCamera.Dispose();

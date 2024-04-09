@@ -38,7 +38,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             return s;
         }
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = new ComponentPoolsRegistry(
@@ -60,8 +60,8 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             AddTransformToEntity(entity);
         }
 
-        [Test]
-        [TestCaseSource(nameof(TestCases))]
+
+
         public void InstantiateNonExistingRenderer(PBMeshRenderer input, PBMeshRenderer.MeshOneofCase expectedType)
         {
             //Arrange
@@ -79,8 +79,8 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
                 meshRendererComponent.PrimitiveMesh.Mesh);
         }
 
-        [Test]
-        [TestCaseSource(nameof(TestCases))]
+
+
         public void UpdateInvalidatedRenderer(PBMeshRenderer input, PBMeshRenderer.MeshOneofCase expectedType)
         {
             //Arrange

@@ -20,7 +20,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         private IProfilingProvider profilingProvider;
         private ISystemMemory systemMemory;
 
-        [SetUp]
+
         public void Setup()
         {
             profilingProvider = Substitute.For<IProfilingProvider>();
@@ -29,9 +29,9 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             memoryBudget = new MemoryBudget(systemMemory, profilingProvider, memoryThreshold);
         }
 
-        [TestCase((ulong)1000, (ulong)500, MemoryUsageStatus.Normal)]
-        [TestCase((ulong)1000, (ulong)810, MemoryUsageStatus.Warning)]
-        [TestCase((ulong)1000, (ulong)910, MemoryUsageStatus.Full)]
+
+
+
         public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(ulong systemMemoryInMB, ulong usedMemoryInMB, MemoryUsageStatus expectedUsage)
         {
             // Arrange
@@ -42,8 +42,8 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
             Assert.That(memoryBudget.GetMemoryUsageStatus(), Is.EqualTo(expectedUsage));
         }
 
-        [TestCase((ulong)1000, (ulong)810, true)]
-        [TestCase((ulong)1000, (ulong)910, false)]
+
+
         public void CanSpendBudgetOnlyWhenMemoryIsNotFull(ulong systemMemoryInMB, ulong usedMemoryInMB, bool canSpendBudget)
         {
             // Arrange

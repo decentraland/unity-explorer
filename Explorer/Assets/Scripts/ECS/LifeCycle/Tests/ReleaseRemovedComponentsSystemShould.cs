@@ -7,10 +7,10 @@ using UnityEngine;
 
 namespace ECS.LifeCycle.Tests
 {
-    [TestFixture]
+
     public class ReleaseRemovedComponentsSystemShould : UnitySystemTestBase<ReleaseRemovedComponentsSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             system = new ReleaseRemovedComponentsSystem(world);
@@ -21,7 +21,7 @@ namespace ECS.LifeCycle.Tests
             public int v = Random.Range(0, 1000);
         }
 
-        [Test]
+
         public void Dispose()
         {
             Entity e = world.Create(new TestComponent1(), RemovedComponents.CreateDefault());

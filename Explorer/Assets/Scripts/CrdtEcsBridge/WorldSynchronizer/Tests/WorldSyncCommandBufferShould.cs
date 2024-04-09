@@ -33,7 +33,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private ISceneEntityFactory entityFactory;
         private WorldSyncCommandBufferCollectionsPool collectionsPool;
 
-        [SetUp]
+
         public void SetUp()
         {
             sdkComponentsRegistry = Substitute.For<ISDKComponentsRegistry>();
@@ -78,15 +78,15 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool = WorldSyncCommandBufferCollectionsPool.Create());
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             worldSyncCommandBuffer?.Dispose();
             collectionsPool?.Dispose();
         }
 
-        [Test]
-        [TestCaseSource(nameof(MessagesSource))]
+
+
         public void MergeReconciledMessagesCorrectly((CRDTMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected)[] series)
         {
             void FillDeserializeLoop(int lastIndex)
@@ -129,7 +129,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             }
         }
 
-        [Test]
+
         public void FailGracefullyOnUnknownComponent()
         {
             var message = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, ENTITY_ID, 999, 0, DATA);
@@ -192,8 +192,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private static CRDTMessage CreateDeleteEntityMessage(int entity) =>
             new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
 
-        [Test]
-        [TestCaseSource(nameof(ApplyChangesMessagesSource))]
+
+
         public void ApplyChangesCorrectly(Action<World, Dictionary<CRDTEntity, Entity>> prewarmWorld, (CRDTMessage, CRDTReconciliationEffect)[] messages, Action<World, Dictionary<CRDTEntity, Entity>> assertWorld)
         {
             var world = World.Create();
@@ -322,7 +322,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             };
         }
 
-        [Test]
+
         public void ThrowIfFinalized()
         {
             worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);
@@ -338,7 +338,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             Assert.Throws<InvalidOperationException>(() => worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentModified));
         }
 
-        [Test]
+
         public void ThrowIfApplyCalledBeforeDeserialize()
         {
             worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);

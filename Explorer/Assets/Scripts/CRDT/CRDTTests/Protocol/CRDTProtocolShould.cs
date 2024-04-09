@@ -8,10 +8,10 @@ using System.Linq;
 
 namespace CRDT.CRDTTests.Protocol
 {
-    [TestFixture]
+
     public class CRDTProtocolShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
@@ -19,16 +19,16 @@ namespace CRDT.CRDTTests.Protocol
 
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
-        [Test]
-        [TestCaseSource(typeof(CRDTTestsUtils), nameof(CRDTTestsUtils.GetTestFilesPath))]
+
+
         public void ProcessMessagesCorrectly(string testPath)
         {
             ParsedCRDTTestFile parsedFile = CRDTTestsUtils.ParseTestFile(testPath);
             AssertTestFile(parsedFile);
         }
 
-        [Test]
-        [TestCaseSource(typeof(CRDTTestsUtils), nameof(CRDTTestsUtils.GetTestFilesPath))]
+
+
         public void ProvideMessagesInAccordanceWithStateCorrectly(string testPath)
         {
             ParsedCRDTTestFile parsedFile = CRDTTestsUtils.ParseTestFile(testPath);

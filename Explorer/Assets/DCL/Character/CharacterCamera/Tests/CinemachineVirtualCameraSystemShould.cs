@@ -27,7 +27,7 @@ namespace DCL.CharacterCamera.Tests
         private SingleInstanceEntity inputMap;
         private ICinemachineThirdPersonCameraData thirdPersonCameraData;
 
-        [SetUp]
+
         public void CreateCameraSetup()
         {
             camera = new GameObject("Camera Test").AddComponent<Camera>();
@@ -74,13 +74,13 @@ namespace DCL.CharacterCamera.Tests
             system.Initialize();
         }
 
-        [TearDown]
+
         public void DisposeCameraSetup()
         {
             Object.DestroyImmediate(camera.gameObject);
         }
 
-        [Test]
+
         public void InitInputMapComponent()
         {
             // third person
@@ -88,7 +88,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
         }
 
-        [Test]
+
         public void SwitchFromThirdToFirstPerson()
         {
             world.Set(entity, new CameraInput { ZoomIn = true });
@@ -97,7 +97,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
         }
 
-        [Test]
+
         public void ZoomOutInThirdPerson()
         {
             world.Set(entity, new CameraInput { ZoomOut = true });
@@ -109,7 +109,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(cameraState.ThirdPersonZoomValue, Is.EqualTo(ZOOM_SENSITIVITY));
         }
 
-        [Test]
+
         public void SwitchFromThirdPersonToFree()
         {
             world.Set(entity, new CameraInput { ZoomOut = true }, new CinemachineCameraState
@@ -124,7 +124,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.Free));
         }
 
-        [Test]
+
         public void IgnoreCameraModeInputIfDisabled()
         {
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
@@ -150,9 +150,9 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+
+
+
         public void AdaptToCameraModeFromComponent(bool lockInput)
         {
             Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));

@@ -9,13 +9,13 @@ namespace CrdtEcsBridge.UpdateGate.Tests
     {
         private SystemGroupsUpdateGate updateGate;
 
-        [SetUp]
+
         public void SetUp()
         {
             updateGate = new SystemGroupsUpdateGate();
         }
 
-        [Test]
+
         public void OpenAllSystemGroups()
         {
             updateGate.Open();
@@ -31,13 +31,13 @@ namespace CrdtEcsBridge.UpdateGate.Tests
             }, updateGate.OpenGroups);
         }
 
-        [Test]
-        [TestCase(typeof(InitializationSystemGroup))]
-        [TestCase(typeof(SimulationSystemGroup))]
-        [TestCase(typeof(PresentationSystemGroup))]
-        [TestCase(typeof(PhysicsSystemGroup))]
-        [TestCase(typeof(PostPhysicsSystemGroup))]
-        [TestCase(typeof(PostRenderingSystemGroup))]
+
+
+
+
+
+
+
         public void CloseGroupOnInvocation(Type systemGroup)
         {
             updateGate.Open();

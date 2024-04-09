@@ -12,10 +12,10 @@ using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
-    [TestFixture]
+
     public class PrepareGltfAssetLoadingSystemShould : UnitySystemTestBase<PrepareGltfAssetLoadingSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>());
@@ -23,7 +23,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         private IStreamableCache<GltfContainerAsset, string> cache;
 
-        [Test]
+
         public void CreateAssetBundleIntention()
         {
             var intent = new GetGltfContainerAssetIntention("TEST", new CancellationTokenSource());
@@ -36,7 +36,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(result.Name, Is.EqualTo("TEST"));
         }
 
-        [Test]
+
         public void LoadFromCache()
         {
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), null);

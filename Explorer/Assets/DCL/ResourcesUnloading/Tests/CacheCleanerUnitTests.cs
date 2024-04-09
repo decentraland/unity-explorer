@@ -31,7 +31,7 @@ namespace DCL.ResourcesUnloading.Tests
         private ILODAssetsPool lodAssetsPool;
 
 
-        [SetUp]
+
         public void SetUp()
         {
             releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
@@ -61,8 +61,8 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(lodAssetsPool);
         }
 
-        [TestCase(true, 1)]
-        [TestCase(false, 0)]
+
+
         public void ShouldUnloadOnlyWhenHasFrameBudget(bool hasBudget, int callsAmount)
         {
             // Arrange

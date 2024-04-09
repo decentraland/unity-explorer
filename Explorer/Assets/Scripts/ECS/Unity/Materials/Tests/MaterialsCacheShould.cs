@@ -15,13 +15,13 @@ namespace ECS.Unity.Materials.Tests
         private MaterialsCappedCache cache;
         private DestroyMaterial destroy;
 
-        [SetUp]
+
         public void SetUp()
         {
             cache = new MaterialsCappedCache(SIZE, destroy = Substitute.For<DestroyMaterial>());
         }
 
-        [Test]
+
         public void IncreaseRefCountOnCacheHit()
         {
             var key = MaterialData.CreateBasicMaterial(new TextureComponent("1", TextureWrapMode.Mirror, FilterMode.Point),
@@ -37,7 +37,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(entry.refCount, Is.EqualTo(2));
         }
 
-        [Test]
+
         public void ProvideCacheMisses()
         {
             var key = MaterialData.CreateBasicMaterial(new TextureComponent("1", TextureWrapMode.Mirror, FilterMode.Point),
@@ -55,7 +55,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(cache.TryGetCacheEntry(in newKey, out (Material material, int refCount) entry), Is.False);
         }
 
-        [Test]
+
         public void Dereference()
         {
             var key = MaterialData.CreateBasicMaterial(new TextureComponent("1", TextureWrapMode.Mirror, FilterMode.Point),
@@ -71,7 +71,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(entry.refCount, Is.EqualTo(0));
         }
 
-        [Test]
+
         [Sequential]
         public void ReleaseMaterialIfSizeIsExceeded([Values(17, 31, 40, 80, 120)] int testCount, [Values(13, 15, 16, 16, 16)] int expected)
         {
@@ -94,7 +94,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(cache.Count, Is.EqualTo(expected));
         }
 
-        [Test]
+
         public void KeepAllMaterialsWhileTheyAreReferenced([Values(4, 17, 45, 90, 125)] int count)
         {
             var keys = Enumerable.Range(1, count)

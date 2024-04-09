@@ -9,10 +9,10 @@ using System;
 
 namespace SceneRunner.Scene.Tests
 {
-    [TestFixture]
+
     public class SceneExceptionHandlerShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo());
@@ -20,7 +20,7 @@ namespace SceneRunner.Scene.Tests
             reportHandler = new MockedReportScope();
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             reportHandler.Dispose();
@@ -30,7 +30,7 @@ namespace SceneRunner.Scene.Tests
         private SceneExceptionsHandler sceneExceptionsHandler;
         private MockedReportScope reportHandler;
 
-        [Test]
+
         public void SetStateOnEngineException()
         {
             var e = new Exception("TEST");
@@ -40,7 +40,7 @@ namespace SceneRunner.Scene.Tests
             reportHandler.Mock.Received().LogException(e, new ReportData("TEST"), null);
         }
 
-        [Test]
+
         public void TolerateEcsExceptions()
         {
             Type systemGroup = typeof(SimulationSystemGroup);
@@ -54,7 +54,7 @@ namespace SceneRunner.Scene.Tests
             sceneStateProvider.DidNotReceive().State = Arg.Any<SceneState>();
         }
 
-        [Test]
+
         public void SuspendIfToleranceExceeded()
         {
             Type systemGroup = typeof(SimulationSystemGroup);

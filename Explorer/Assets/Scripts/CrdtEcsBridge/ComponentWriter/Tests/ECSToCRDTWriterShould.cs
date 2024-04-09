@@ -7,10 +7,10 @@ using System;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
 {
-    [TestFixture]
+
     public class ECSToCRDTWriterShould
     {
-        [SetUp]
+
         public void Setup()
         {
             outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRDTMessagesProvider>();
@@ -20,7 +20,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
         private IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider;
         private ComponentWriter.ECSToCRDTWriter writer;
 
-        [Test]
+
         public void AppendMessage()
         {
             //Act
@@ -30,7 +30,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             outgoingCRDTMessageProvider.Received().AppendMessage(Arg.Any<Action<PBPointerEvents, int>>(), new CRDTEntity(500), 100, 5);
         }
 
-        [Test]
+
         public void PutLwwMessage()
         {
             writer.PutMessage<PBPointerEvents, int>((_, _) => { }, new CRDTEntity(500), 100);
@@ -38,7 +38,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             outgoingCRDTMessageProvider.Received().AddPutMessage(Arg.Any<Action<PBPointerEvents, int>>(), new CRDTEntity(500), 100);
         }
 
-        [Test]
+
         public void DeleteMessage()
         {
             writer.DeleteMessage<PBPointerEvents>(new CRDTEntity(500));

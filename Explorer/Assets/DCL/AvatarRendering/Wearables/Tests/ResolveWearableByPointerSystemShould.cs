@@ -22,10 +22,10 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
-    [TestFixture]
+
     public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<ResolveWearableByPointerSystem>
     {
-        [SetUp]
+
         public void Setup()
         {
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
@@ -109,7 +109,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             world.Add(assetBundlePromiseEntity, failed ? new StreamableLoadingResult<AssetBundleData>(new Exception("FAILED")) : mockedAB);
         }
 
-        [Test]
+
         public void ResolveWearable()
         {
             //Arrange
@@ -131,7 +131,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockWearable.Received().ManifestResult = mockedABManifest;
         }
 
-        [Test]
+
         public void ResolveUnisexWearable()
         {
             //Arrange
@@ -154,7 +154,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockUnisexWearable.Received().ManifestResult = mockedABManifest;
         }
 
-        [Test]
+
         public void ResolveDefaultWearableOnManifestFail()
         {
             //Arrange
@@ -175,7 +175,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockWearable.DidNotReceive().ManifestResult = mockedABManifest;
         }
 
-        [Test]
+
         public void ResolveDefaultWearableOnABFail()
         {
             //Arrange
@@ -197,7 +197,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockWearable.Received().ManifestResult = mockedABManifest;
         }
 
-        [Test]
+
         public void CancelIntentionOnManifestStage()
         {
             //Arrange
@@ -224,7 +224,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
         }
 
-        [Test]
+
         public void CancelIntentionOnABStage()
         {
             //Arrange

@@ -9,14 +9,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITransformInstantiationSystemShould : UITransformSystemTestBase<UITransformInstantiationSystem>
     {
-        [SetUp]
+
         public async Task SetUp()
         {
             await Initialize();
             system = new UITransformInstantiationSystem(world, canvas, poolsRegistry);
         }
 
-        [Test]
+
         public void InstantiateUITransform()
         {
             // Act

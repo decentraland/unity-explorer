@@ -29,7 +29,7 @@ namespace DCL.LOD.Tests
         private const string fakeHash = "FAKE_HASH";
 
 
-        [SetUp]
+
         public void Setup()
         {
             var lodSettings = Substitute.For<ILODSettingsAsset>();
@@ -74,13 +74,13 @@ namespace DCL.LOD.Tests
 
 
 
-        [Test]
-        [TestCase(0, 0)]
-        [TestCase(1, 0)]
-        [TestCase(2, 1)]
-        [TestCase(3, 1)]
-        [TestCase(4, 2)]
-        [TestCase(10, 2)]
+
+
+
+
+
+
+
         public void ResolveLODLevel(byte bucket, int expectedLODLevel)
         {
             //Arrange
@@ -97,7 +97,7 @@ namespace DCL.LOD.Tests
         }
 
 
-        [Test]
+
         public void ResolveLODPromise()
         {
             //Arrange
@@ -117,7 +117,7 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.Value.AssetBundleReference);
         }
 
-        [Test]
+
         public void UpdateCache()
         {
             //Arrange

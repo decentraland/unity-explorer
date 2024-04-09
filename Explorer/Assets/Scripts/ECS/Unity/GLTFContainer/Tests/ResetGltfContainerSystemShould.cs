@@ -23,7 +23,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         private IDereferencableCache<GltfContainerAsset, string> cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new ResetGltfContainerSystem(world,
@@ -31,7 +31,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 
-        [Test]
+
         public void InvalidatePromiseIfSourceChanged()
         {
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };
@@ -54,7 +54,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
         }
 
-        [Test]
+
         public void ReleaseIfComponentRemoved()
         {
             var c = new GltfContainerComponent();

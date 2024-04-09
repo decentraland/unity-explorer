@@ -15,13 +15,13 @@ namespace ECS.Unity.Materials.Tests
 {
     public class ApplyMaterialSystemShould : UnitySystemTestBase<ApplyMaterialSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             system = new ApplyMaterialSystem(world, Substitute.For<ISceneData>());
         }
 
-        [Test]
+
         public void ApplyMaterialIfLoadingFinished()
         {
             MeshRenderer renderer = new GameObject(nameof(ApplyMaterialIfLoadingFinished)).AddComponent<MeshRenderer>();
@@ -40,7 +40,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(renderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
         }
 
-        [Test]
+
         public void ApplyMaterialIfRendererIsDirty()
         {
             MeshRenderer renderer = new GameObject(nameof(ApplyMaterialIfLoadingFinished)).AddComponent<MeshRenderer>();

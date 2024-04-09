@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         private AudioSourceComponent component;
         private Entity entity;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = CreateSystem(world);
@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), sceneStateProvider, cache, poolsRegistry, budgetProvider, budgetProvider);
         }
 
-        [Test]
+
         public void NotCreateAudioSourceIfClipNotFinishedLoading()
         {
             // Act
@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(afterUpdate.AudioSource, Is.Null);
         }
 
-        [Test]
+
         public void CreateAudioSourceFromResolvedPromise()
         {
             // Arrange

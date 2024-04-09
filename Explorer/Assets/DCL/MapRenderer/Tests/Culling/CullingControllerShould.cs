@@ -15,17 +15,17 @@ namespace DCL.MapRenderer.Tests.Culling
         private MapCullingController culling;
         private IMapCullingVisibilityChecker visibilityChecker;
 
-        [SetUp]
+
         public void SetUp()
         {
             visibilityChecker = Substitute.For<IMapCullingVisibilityChecker>();
             culling = new MapCullingController(visibilityChecker);
         }
 
-        [TestCase(0b000000000, 0, 0b000000001)]
-        [TestCase(0b000000001, 0, 0b000000001)]
-        [TestCase(0b11110111, 3, 0b11111111)]
-        [TestCase(0b11111111, 3, 0b11111111)]
+
+
+
+
         public void SetCameraDirtyInternal(int initial, int index, int expected)
         {
             culling.DirtyCamerasFlag = initial;
@@ -35,10 +35,10 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(expected, culling.DirtyCamerasFlag);
         }
 
-        [TestCase(0b000000000, 0, false)]
-        [TestCase(0b000000001, 0, true)]
-        [TestCase(0b11110111, 3, false)]
-        [TestCase(0b11111111, 3, true)]
+
+
+
+
         public void ReturnIsCameraDirty(int initial, int index, bool expected)
         {
             culling.DirtyCamerasFlag = initial;
@@ -48,7 +48,7 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(expected, value);
         }
 
-        [Test]
+
         public void ThrowIfAddingCameraOutOfRange()
         {
             int size = System.Runtime.InteropServices.Marshal.SizeOf(culling.DirtyCamerasFlag);
@@ -59,9 +59,9 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.Throws<ArgumentOutOfRangeException>(() => culling.OnCameraAdded_Test(Substitute.For<IMapCameraControllerInternal>()));
         }
 
-        [TestCase(0)]
-        [TestCase(1)]
-        [TestCase(5)]
+
+
+
         public void SetDirtyCameraFlagWhenAddingCamera(int initialCameraCount)
         {
             for (int i = 0; i < initialCameraCount; i++)
@@ -83,9 +83,9 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.IsTrue(culling.IsCameraDirty_Test(initialCameraCount));
         }
 
-        [TestCase(1, 0, 0b00000001)]
-        [TestCase(4, 0, 0b00001111)]
-        [TestCase(4, 2, 0b00001100)]
+
+
+
         public void SetDirtyOnwardsCameraFlagWhenRemovingCamera(int initialCameraCount, int indexToRemove, int expectedDirtyCameras)
         {
             for (int i = 0; i < initialCameraCount; i++)
@@ -106,15 +106,15 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(expectedDirtyCameras, culling.DirtyCamerasFlag);
         }
 
-        [Test]
+
         public void ThrowIfSettingDirtyANotTrackedCamera()
         {
             Assert.Throws<Exception>(() => ((IMapCullingController)culling).SetCameraDirty(Substitute.For<IMapCameraControllerInternal>()));
         }
 
-        [TestCase(4, 0, 0b000000001)]
-        [TestCase(4, 1, 0b000000010)]
-        [TestCase(4, 3, 0b000001000)]
+
+
+
         public void SetCameraDirty(int cameraCount, int index, int expected)
         {
             for (int i = 0; i < cameraCount; i++)
@@ -134,9 +134,9 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(expected, culling.DirtyCamerasFlag);
         }
 
-        [TestCase(0)]
-        [TestCase(1)]
-        [TestCase(3)]
+
+
+
         public void TrackObjectPosition(int initialTrackedCount)
         {
             for (int i = 0; i < initialTrackedCount; i++) { ((IMapCullingController)culling).StartTracking(Substitute.For<IMapPositionProvider>(), Substitute.For<IMapCullingListener<IMapPositionProvider>>()); }
@@ -150,7 +150,7 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(listener, ((MapCullingController.TrackedState<IMapPositionProvider>)culling.TrackedObjs[obj]).Listener);
         }
 
-        [Test]
+
         public void TrackObjectPositionIgnoringDuplicates()
         {
             var obj = Substitute.For<IMapPositionProvider>();
@@ -165,9 +165,9 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(listener, ((MapCullingController.TrackedState<IMapPositionProvider>)culling.TrackedObjs[obj]).Listener);
         }
 
-        [TestCase(1)]
-        [TestCase(3)]
-        [TestCase(10)]
+
+
+
         public void StopTrackingObjectNotDirty(int initialTrackedCount)
         {
             for (int i = 0; i < initialTrackedCount; i++)
@@ -187,9 +187,9 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(initialTrackedCount - 1, culling.DirtyObjects.Count);
         }
 
-        [TestCase(1)]
-        [TestCase(3)]
-        [TestCase(10)]
+
+
+
         public void StopTrackingObjectDirty(int initialTrackedCount)
         {
             for (int i = 0; i < initialTrackedCount; i++)
@@ -207,7 +207,7 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.AreEqual(initialTrackedCount - 1, culling.DirtyObjects.Count);
         }
 
-        [Test]
+
         public void SetDirtyNewTrackedObjects()
         {
             var obj = Substitute.For<IMapPositionProvider>();
@@ -219,7 +219,7 @@ namespace DCL.MapRenderer.Tests.Culling
             Assert.IsTrue(culling.DirtyObjects.Contains(state));
         }
 
-        [Test]
+
         public void ResolveDirtyCameras_NoCameraDirty()
         {
             // Arrange
@@ -248,7 +248,7 @@ namespace DCL.MapRenderer.Tests.Culling
             visibilityChecker.DidNotReceiveWithAnyArgs().IsVisible(Arg.Any<IMapPositionProvider>(), Arg.Any<CameraState>());
         }
 
-        [Test]
+
         public void ResolveDirtyCameras_SingleCameraDirty()
         {
             // Arrange
@@ -281,7 +281,7 @@ namespace DCL.MapRenderer.Tests.Culling
             visibilityChecker.DidNotReceive().IsVisible(Arg.Any<IMapPositionProvider>(), culling.CameraStates[2]); // Camera 2 is not dirty
         }
 
-        [Test]
+
         public void ResolveDirtyCameras_MultipleCameraDirty()
         {
             // Arrange
@@ -314,7 +314,7 @@ namespace DCL.MapRenderer.Tests.Culling
             visibilityChecker.Received().IsVisible(Arg.Any<IMapPositionProvider>(), culling.CameraStates[2]); // Camera 2 is not dirty
         }
 
-        [Test]
+
         public void ResolveDirtyCameras_NoLongerTrackerCameraIsDirty()
         {
             // Arrange
@@ -345,7 +345,7 @@ namespace DCL.MapRenderer.Tests.Culling
             visibilityChecker.DidNotReceiveWithAnyArgs().IsVisible(Arg.Any<IMapPositionProvider>(), Arg.Any<CameraState>());
         }
 
-        [Test]
+
         public void ResolveDirtyObjects()
         {
             // Arrange

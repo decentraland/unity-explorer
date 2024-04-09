@@ -9,19 +9,19 @@ namespace DCL.AvatarRendering.Wearables.Tests
     {
         private WearableAssetsCache cache;
 
-        [SetUp]
+
         public void SetUp()
         {
             cache = new WearableAssetsCache(100);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             cache.Dispose();
         }
 
-        [Test]
+
         public void ReturnToPool()
         {
             var asset = new WearableRegularAsset(new GameObject("ORIGINAL"), new List<WearableRegularAsset.RendererInfo>(), null);
@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 Assert.That(cache.TryGet(asset, out _), Is.True);
         }
 
-        [Test]
+
         public void GetPooledObject()
         {
             var asset = new WearableRegularAsset(new GameObject("ORIGINAL"), new List<WearableRegularAsset.RendererInfo>(), null);

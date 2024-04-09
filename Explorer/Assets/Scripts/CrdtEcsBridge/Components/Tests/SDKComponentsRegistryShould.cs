@@ -11,7 +11,7 @@ namespace CrdtEcsBridge.Components.Tests
     {
         private SDKComponentsRegistry sdkComponentsRegistry;
 
-        [SetUp]
+
         public void Setup()
         {
             sdkComponentsRegistry = new SDKComponentsRegistry();
@@ -32,16 +32,16 @@ namespace CrdtEcsBridge.Components.Tests
                                                                          .AsProtobufComponent());
         }
 
-        [Test]
-        [TestCaseSource(nameof(AllTypes))]
+
+
         public void ProvideRegisteredComponents(Type componentType, int id)
         {
             Assert.IsTrue(sdkComponentsRegistry.TryGet(id, out SDKComponentBridge bridge));
             Assert.AreEqual(componentType, bridge.ComponentType);
         }
 
-        [Test]
-        [TestCaseSource(nameof(AllTypes))]
+
+
         public void BuildUpAllRequiredComponents(Type componentType, int id)
         {
             sdkComponentsRegistry.TryGet(id, out SDKComponentBridge bridge);

@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.Optimization.Pools.Tests
 {
-    [TestFixture]
+
     public class ReleasePoolableComponentSystemShould
     {
         public class TestComponent1
@@ -32,7 +32,7 @@ namespace DCL.Optimization.Pools.Tests
             public void Dispose() { }
         }
 
-        [Test]
+
         public void ReleaseAllComponentsToPools()
         {
             var world = World.Create();

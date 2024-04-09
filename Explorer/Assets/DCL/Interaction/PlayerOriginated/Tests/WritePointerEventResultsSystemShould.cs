@@ -23,7 +23,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private IECSToCRDTWriter writer;
         private IGlobalInputEvents globalInputEvents;
 
-        [SetUp]
+
         public void SetUp()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
@@ -42,13 +42,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 pool);
         }
 
-        [TearDown]
+
         public void ClearResults()
         {
             results.Clear();
         }
 
-        [Test]
+
         public void WriteGlobalEvents()
         {
             writer.AppendMessage(
@@ -92,7 +92,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(second.Hit, Is.Null);
         }
 
-        [Test]
+
         public void WriteValidResults()
         {
             var sdkEvents = new PBPointerEvents

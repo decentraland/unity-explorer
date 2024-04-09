@@ -7,10 +7,10 @@ using Utility.Primitives;
 
 namespace DCL.Optimization.Pools.Tests
 {
-    [TestFixture]
+
     public class MeshRendererUnityComponentPoolShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             gameObjectPool = new GameObjectPool<MeshRenderer>(null,
@@ -19,7 +19,7 @@ namespace DCL.Optimization.Pools.Tests
             mesh = new Mesh();
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             gameObjectPool.Clear();
@@ -28,7 +28,7 @@ namespace DCL.Optimization.Pools.Tests
         private GameObjectPool<MeshRenderer> gameObjectPool;
         private Mesh mesh;
 
-        [Test]
+
         public void GetGameObject()
         {
             //Act
@@ -40,7 +40,7 @@ namespace DCL.Optimization.Pools.Tests
             Assert.NotNull(component.gameObject.GetComponent<MeshFilter>());
         }
 
-        [Test]
+
         public async Task ReleaseGameObject()
         {
             //Arrange
@@ -64,7 +64,7 @@ namespace DCL.Optimization.Pools.Tests
             Assert.AreEqual(1, gameObjectPool.CountInactive);
         }
 
-        [Test]
+
         public void ClearPool()
         {
             //Act

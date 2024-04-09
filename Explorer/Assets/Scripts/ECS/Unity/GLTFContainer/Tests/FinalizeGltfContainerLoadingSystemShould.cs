@@ -34,7 +34,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
 
-        [SetUp]
+
         public void SetUp()
         {
             Entity sceneRoot = world.Create(new SceneRootComponent());
@@ -49,7 +49,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             resources.UnloadBundle();
@@ -64,7 +64,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             createGltfAssetFromAssetBundleSystem.Update(0);
         }
 
-        [Test]
+
         public void FinalizeWithError()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
@@ -83,7 +83,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.State.Value, Is.EqualTo(LoadingState.FinishedWithError));
         }
 
-        [Test]
+
         public async Task FinalizeWithSuccess()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
@@ -106,7 +106,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.Promise.Result.Value.Asset.Root.activeSelf, Is.EqualTo(true));
         }
 
-        [Test]
+
         public async Task InstantiateVisibleMeshesColliders()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPointer, ColliderLayer.ClNone,
@@ -129,7 +129,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
         }
 
-        [Test]
+
         public async Task EnableInvisibleColliders()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClPointer,

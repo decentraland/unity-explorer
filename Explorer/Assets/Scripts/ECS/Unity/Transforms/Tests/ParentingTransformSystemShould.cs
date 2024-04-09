@@ -11,10 +11,10 @@ using UnityEngine;
 
 namespace ECS.Unity.Transforms.Tests
 {
-    [TestFixture]
+
     public class ParentingTransformSystemShould : UnitySystemTestBase<ParentingTransformSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             sceneRootCRDT = new CRDTEntity(0);
@@ -68,7 +68,7 @@ namespace ECS.Unity.Transforms.Tests
 
         private Dictionary<CRDTEntity, Entity> crdtToEntityDict;
 
-        [Test]
+
         public void ParentTransform()
         {
             // Act
@@ -82,7 +82,7 @@ namespace ECS.Unity.Transforms.Tests
             Assert.AreEqual(parentTransformComponent.Transform.GetChild(0), childTransformComponent.Transform);
         }
 
-        [Test]
+
         public void UnParentTransform()
         {
             // Arrange
@@ -106,7 +106,7 @@ namespace ECS.Unity.Transforms.Tests
             Assert.AreEqual(0, parentTransformComponent.Children.Count);
         }
 
-        [Test]
+
         public void ParentChildToSceneRootIfParentIsDeleted()
         {
             // Arrange

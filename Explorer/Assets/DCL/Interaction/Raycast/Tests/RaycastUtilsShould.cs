@@ -19,14 +19,14 @@ namespace DCL.Interaction.Raycast.Tests
         private readonly List<Collider> temp = new ();
         private TransformComponent ts;
 
-        [SetUp]
+
         public void Setup()
         {
             Entity e = world.Create(new PBRaycast());
             ts = AddTransformToEntity(e);
         }
 
-        [TearDown]
+
         public void DestroyGarbage()
         {
             foreach (Collider o in temp)
@@ -35,7 +35,7 @@ namespace DCL.Interaction.Raycast.Tests
             temp.Clear();
         }
 
-        [Test]
+
         public void CreateLocalDirectionRay()
         {
             var rot = Quaternion.Euler(0, 45, 0);
@@ -48,7 +48,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(ray.direction, Is.EqualTo(rot * new Vector3(0, 0, 10).normalized));
         }
 
-        [Test]
+
         public void CreateGlobalTargetRay()
         {
             var pbRaycast = new PBRaycast
@@ -62,7 +62,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(ray.direction, Is.EqualTo(new Vector3(10, 5, 10).normalized));
         }
 
-        [Test]
+
         public void CreateTargetEntityRay()
         {
             Entity targetEntity = world.Create();
@@ -88,7 +88,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(ray.direction, Is.EqualTo(new Vector3(200, -500, -700).normalized));
         }
 
-        [Test]
+
         public void CreateGlobalDirectionRay()
         {
             var pbRaycast = new PBRaycast { GlobalDirection = new Decentraland.Common.Vector3 { X = -5, Y = 0, Z = 10 } };
@@ -98,7 +98,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(ray.direction, Is.EqualTo(new Vector3(-5, 0, 10).normalized));
         }
 
-        [Test]
+
         public void FillSDKRaycastHit()
         {
             BoxCollider collider = new GameObject(nameof(RaycastUtilsShould)).AddComponent<BoxCollider>();

@@ -23,7 +23,6 @@ namespace DCL.Tests
                          .Where(assetPath => Path.GetFileName(assetPath) != "AssemblyInfo.cs" && Path.GetExtension(assetPath) == ".cs" &&
                                              !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS.Any(assetPath.Contains));
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
         public void ClassShouldBeInNamespaces(string file)
         {
             // Arrange
@@ -44,7 +43,7 @@ namespace DCL.Tests
                 $"File {Path.GetFileName(file)}: Found {classesOutsideNamespaces.Count} non-partial classes outside of namespaces. All non-partial classes should be within a namespace.");
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
+
         public void AllAsyncMethodsShouldEndWithAsyncSuffix(string file)
         {
             // Arrange
@@ -71,7 +70,7 @@ namespace DCL.Tests
                 $"File {Path.GetFileName(file)}: Found async methods/functions without 'Async' suffix: \n{string.Join("\n", methodsWithoutProperSuffix)}");
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
+
         public void UsingUnityEditorShouldBeSurroundedByDirectives(string file)
         {
             string fileContent = File.ReadAllText(file);

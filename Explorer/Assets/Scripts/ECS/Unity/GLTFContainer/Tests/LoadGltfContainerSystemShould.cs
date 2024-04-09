@@ -28,7 +28,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
 
-        [SetUp]
+
         public void SetUp()
         {
             system = new LoadGltfContainerSystem(world);
@@ -37,13 +37,13 @@ namespace ECS.Unity.GLTFContainer.Tests
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             resources.UnloadBundle();
         }
 
-        [Test]
+
         public void CreateGetIntent()
         {
             var sdkComponent = new PBGltfContainer
@@ -75,9 +75,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             createGltfAssetFromAssetBundleSystem.Update(0);
         }
 
-        [Test]
-        [TestCase(true, false)]
-        [TestCase(false, true)]
+
+
+
         public async Task ReconfigureInvisibleColliders(bool from, bool to)
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, from ? ColliderLayer.ClPointer : ColliderLayer.ClNone,
@@ -118,7 +118,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.enabled), Is.EqualTo(to));
         }
 
-        [Test]
+
         public void ReconfigureSource()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone,

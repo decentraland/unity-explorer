@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private WearableCatalog wearableCatalog;
         private GameObject emptyDefaultWearable;
 
-        [SetUp]
+
         public void Setup()
         {
             var partialTargetList = new List<WearableDTO>(64);
@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             system.Initialize();
         }
 
-        [Test]
+
         public void CreatePromisesForDefaultWearables()
         {
             AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] promises = world.CacheDefaultWearablesState().GetDefaultWearablesState(world).PromisePerBodyShape;
@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             }
         }
 
-        [Test]
+
         public void ConsumePromises()
         {
             ref readonly DefaultWearablesComponent state = ref world.CacheDefaultWearablesState().GetDefaultWearablesState(world);
@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.That(state.ResolvedState, Is.EqualTo(DefaultWearablesComponent.State.Success));
         }
 
-        [Test]
+
         public void LoadEmptyDefaultWearable()
         {
             //Look for an empty and a non-empty default wearable
@@ -99,7 +99,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.AreNotEqual(upperBodyDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
         }
 
-        [Test]
+
         public void HasUnloadPolicySet()
         {
             int defaultWearableCount = wearableCatalog.wearablesCache.Keys.Count;

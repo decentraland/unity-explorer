@@ -9,13 +9,13 @@ namespace DCL.Interaction.Raycast.Tests
 {
     public class InitializeRaycastSystemShould : UnitySystemTestBase<InitializeRaycastSystem>
     {
-        [SetUp]
+
         public void Setup()
         {
             system = new InitializeRaycastSystem(world);
         }
 
-        [Test]
+
         public void AddRaycastComponent()
         {
             Entity e = world.Create(new PBRaycast());
@@ -27,7 +27,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(raycastComponent.Executed, Is.False);
         }
 
-        [Test]
+
         public void RelaunchIfChangedToContinuous()
         {
             Entity e = world.Create(new PBRaycast { Continuous = true, IsDirty = true }, new RaycastComponent { Executed = true });

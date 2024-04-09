@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace DCL.Optimization.Pools.Tests
 {
-    [TestFixture]
+
     public class ComponentPoolShould
     {
-        [SetUp]
+
         public void SetUp()
         {
             onRelease = Substitute.For<Action<TestClass>>();
@@ -18,7 +18,7 @@ namespace DCL.Optimization.Pools.Tests
             componentPool = new ComponentPool<TestClass>(onGet, onRelease);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             componentPool.Clear();
@@ -33,7 +33,7 @@ namespace DCL.Optimization.Pools.Tests
         private Action<TestClass> onRelease;
         private Action<TestClass> onGet;
 
-        [Test]
+
         public async Task GetFromMultipleThreads()
         {
             async UniTask Run()
@@ -51,7 +51,7 @@ namespace DCL.Optimization.Pools.Tests
             onGet.Received(10).Invoke(Arg.Any<TestClass>());
         }
 
-        [Test]
+
 
         // Basically checks that are no exceptions
         public async Task MixGetReleaseFromMultipleThreads([Values(5, 10, 30, 50, 100, 500, 5000)] int threadsCount)

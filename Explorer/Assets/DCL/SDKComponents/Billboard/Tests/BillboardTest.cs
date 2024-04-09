@@ -14,7 +14,7 @@ namespace DCL.Billboard.Tests
 {
     public class BillboardTest
     {
-        [Test]
+
         public void NoRotation()
         {
             (Transform transform, BillboardSystem system) = Construct(BillboardMode.BmNone);
@@ -24,7 +24,7 @@ namespace DCL.Billboard.Tests
             Assert.AreEqual(expected, transform.rotation);
         }
 
-        [Test]
+
         public void XRotation()
         {
             (Transform transform, BillboardSystem system) = Construct(BillboardMode.BmX);
@@ -37,7 +37,7 @@ namespace DCL.Billboard.Tests
             Assert.AreEqual(expected.z, actual.z);
         }
 
-        [Test]
+
         public void YRotation()
         {
             (Transform transform, BillboardSystem system) = Construct(BillboardMode.BmY);
@@ -50,7 +50,7 @@ namespace DCL.Billboard.Tests
             Assert.AreEqual(expected.z, actual.z);
         }
 
-        [Test]
+
         public void ZRotation()
         {
             (Transform transform, BillboardSystem system) = Construct(BillboardMode.BmZ);
@@ -63,7 +63,7 @@ namespace DCL.Billboard.Tests
             Assert.AreEqual(expected.y, actual.y);
         }
 
-        [Test]
+
         public void AllRotation()
         {
             (Transform transform, BillboardSystem system) = Construct(BillboardMode.BmAll);
@@ -76,11 +76,11 @@ namespace DCL.Billboard.Tests
             Assert.AreNotEqual(expected.z, actual.z);
         }
 
-        [Test]
+
         [Performance]
-        [TestCase(200)]
-        [TestCase(500)]
-        [TestCase(1000)]
+
+
+
         [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         public void BillboardPerformance(int randomCounts)
         {

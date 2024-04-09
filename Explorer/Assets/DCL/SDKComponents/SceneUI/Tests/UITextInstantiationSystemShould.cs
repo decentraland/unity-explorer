@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private Entity entity;
         private UITransformComponent uiTransformComponent;
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = new ComponentPoolsRegistry(
@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             uiTransformComponent = AddUITransformToEntity(entity);
         }
 
-        [Test]
+
         public void InstantiateUIText()
         {
             // Arrange
@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsTrue(uiTransformComponent.Transform.Contains(uiTextComponent.Label));
         }
 
-        [Test]
+
         public void UpdateUIText()
         {
             // Arrange

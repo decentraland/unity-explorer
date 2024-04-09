@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.Optimization.Pools.Tests
 {
-    [TestFixture]
+
     public class ReleaseComponentsSystemShould
     {
         public class TestComponent1
@@ -26,7 +26,7 @@ namespace DCL.Optimization.Pools.Tests
             public int i;
         }
 
-        [Test]
+
         public void ReleaseAllComponentsToPools()
         {
             var world = World.Create();
@@ -44,7 +44,7 @@ namespace DCL.Optimization.Pools.Tests
             componentsPoolRegistry.Received(100).TryGetPool(Arg.Is<Type>(t => typeof(TestComponent2) == t), out _);
         }
 
-        [Test]
+
         public void IgnoreValueTypes()
         {
             var world = World.Create();

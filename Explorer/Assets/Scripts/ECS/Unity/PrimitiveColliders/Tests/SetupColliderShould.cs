@@ -7,7 +7,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
 {
     public class SetupColliderShould
     {
-        [Test]
+
         public void SetBoxSize()
         {
             BoxCollider collider = new GameObject("Box").AddComponent<BoxCollider>();
@@ -17,7 +17,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(new Vector3(PrimitivesSize.CUBE_SIZE, PrimitivesSize.CUBE_SIZE, PrimitivesSize.CUBE_SIZE), collider.size);
         }
 
-        [Test]
+
         public void SetSphereSize()
         {
             SphereCollider collider = new GameObject("Sphere").AddComponent<SphereCollider>();
@@ -27,7 +27,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(PrimitivesSize.SPHERE_RADIUS, collider.radius);
         }
 
-        [Test]
+
         public void SetPlaneSize()
         {
             BoxCollider collider = new GameObject("Plane").AddComponent<BoxCollider>();

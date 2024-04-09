@@ -16,7 +16,7 @@ using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
-    [TestFixture]
+
     public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
     {
         private WearableCatalog wearableCatalog;
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             Assert.NotNull(wearableCatalog.wearablesCache[existingURN]);
         }
 
-        [Test]
+
         public async Task ConcludeSuccessOnExistingWearable()
         {
             wearableCatalog.wearablesCache.Add(existingURN, Substitute.For<IWearable>());

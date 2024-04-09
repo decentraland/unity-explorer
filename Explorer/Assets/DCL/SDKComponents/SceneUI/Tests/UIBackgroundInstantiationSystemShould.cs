@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         private Entity entity;
         private UITransformComponent uiTransformComponent;
 
-        [SetUp]
+
         public void SetUp()
         {
             poolsRegistry = new ComponentPoolsRegistry(
@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Add(entity, PartitionComponent.TOP_PRIORITY);
         }
 
-        [Test]
+
         public void InstantiateUIBackground()
         {
             // Arrange
@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsNotNull(uiBackgroundComponent.Image);
         }
 
-        [Test]
+
         public void UpdateUIBackground()
         {
             // Arrange

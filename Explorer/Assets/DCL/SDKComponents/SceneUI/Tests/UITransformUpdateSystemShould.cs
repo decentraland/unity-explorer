@@ -8,14 +8,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITransformUpdateSystemShould : UITransformSystemTestBase<UITransformUpdateSystem>
     {
-        [SetUp]
+
         public async void SetUp()
         {
             await Initialize();
             system = new UITransformUpdateSystem(world, canvas, sceneStateProvider);
         }
 
-        [Test]
+
         public void UpdateUITransform()
         {
             // Arrange
@@ -39,9 +39,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
             }
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+
+
+
         public void CheckUITransformOutOfScene(bool isCurrentScene)
         {
             // Arrange

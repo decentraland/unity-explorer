@@ -14,10 +14,10 @@ using System.Threading.Tasks;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
-    [TestFixture]
+
     public class CreateGltfAssetFromAssetBundleSystemShould : UnitySystemTestBase<CreateGltfAssetFromAssetBundleSystem>
     {
-        [SetUp]
+
         public void SetUp()
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
@@ -25,7 +25,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
-        [TearDown]
+
         public void TearDown()
         {
             resources.UnloadBundle();
@@ -33,7 +33,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         private readonly GltfContainerTestResources resources = new ();
 
-        [Test]
+
         public async Task ResolveSimpleScene()
         {
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);
@@ -60,7 +60,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(asset.Animations.Count, Is.EqualTo(1));
         }
 
-        [Test]
+
         public async Task ResolveSceneWithColliders()
         {
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER);
@@ -87,7 +87,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(asset.Animations.Count, Is.EqualTo(0));
         }
 
-        [Test]
+
         public async Task DoNothingIfCancelled()
         {
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);
@@ -103,7 +103,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.False);
         }
 
-        [Test]
+
         public async Task ResolveExceptionIfNoGameObjects()
         {
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.NO_GAME_OBJECTS);
@@ -117,7 +117,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(result.Exception, Is.TypeOf<AssetBundleMissingMainAssetException>().Or.TypeOf<EcsSystemException>().And.InnerException.TypeOf<AssetBundleMissingMainAssetException>());
         }
 
-        [Test]
+
         public void PropagateAssetBundleException()
         {
             var exception = new ArgumentException();

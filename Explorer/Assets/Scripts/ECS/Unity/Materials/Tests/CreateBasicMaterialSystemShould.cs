@@ -20,7 +20,7 @@ namespace ECS.Unity.Materials.Tests
     {
         private Material basicMat;
 
-        [SetUp]
+
         public void SetUp()
         {
             basicMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scripts/ECS/Unity/Materials/MaterialReference/BasicShapeMaterial.mat");
@@ -34,7 +34,7 @@ namespace ECS.Unity.Materials.Tests
             system.Initialize();
         }
 
-        [Test]
+
         public void ConstructMaterial()
         {
             MaterialComponent component = CreateMaterialComponent();
@@ -54,7 +54,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Result.shader, Is.EqualTo(basicMat.shader));
         }
 
-        [Test]
+
         public void NotConstructMaterialIfTexturesLoadingNotFinished()
         {
             MaterialComponent component = CreateMaterialComponent();

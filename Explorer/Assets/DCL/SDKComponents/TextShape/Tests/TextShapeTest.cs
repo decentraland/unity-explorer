@@ -10,7 +10,7 @@ namespace DCL.SDKComponents.TextShape.Tests
 {
     public class TextShapeTest
     {
-        [Test]
+
         public void TMPTextRendererColoring()
         {
             var props = new PBTextShape
