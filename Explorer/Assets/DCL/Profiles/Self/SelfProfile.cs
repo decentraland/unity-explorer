@@ -54,8 +54,8 @@ namespace DCL.Profiles.Self
                 uniqueWearables = uniqueWearables.EnsureNotNull();
                 ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
 
-                var uniqueEmotes = new URN[profile!.Avatar.Emotes.Count];
-                ConvertEquippedEmotesIntoUniqueUrns(profile!, uniqueEmotes);
+                var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
+                ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
                 profile = profileBuilder.From(profile)
                                         .WithWearables(uniqueWearables)
@@ -91,7 +91,7 @@ namespace DCL.Profiles.Self
             }
         }
 
-        private void ConvertEquippedEmotesIntoUniqueUrns(Profile profile, IList<URN> uniqueEmotes)
+        private void ConvertEquippedEmotesIntoUniqueUrns(Profile? profile, IList<URN> uniqueEmotes)
         {
             for (var i = 0; i < equippedEmotes.SlotCount; i++)
             {
@@ -107,7 +107,7 @@ namespace DCL.Profiles.Self
                         uniqueUrn = registry.First().Value.Urn;
                     else
                     {
-                        foreach (URN urn in profile.Avatar.Emotes)
+                        foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())
                             if (urn.Shorten() == uniqueUrn)
                                 uniqueUrn = urn;
                     }
