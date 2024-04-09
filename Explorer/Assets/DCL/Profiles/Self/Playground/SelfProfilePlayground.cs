@@ -1,5 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Ipfs;
@@ -42,7 +44,9 @@ namespace DCL.Profiles.Self.Playground
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
-                new WearableCatalog()
+                new WearableCatalog(),
+                new MemoryEmotesCache(),
+                new EquippedEmotes()
             );
 
             var profile = await profiles.ProfileAsync(ct);
