@@ -11,6 +11,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Settings;
+using DCL.UI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -20,9 +21,9 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
-
 namespace DCL.PluginSystem.Global
 {
     public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
@@ -39,12 +40,15 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebBrowser webBrowser;
+        private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
+        private bool isUIHidden;
 
         private NavmapController? navmapController;
+        private PersistentExploreOpenerView? exploreOpener;
+        private PersistentExplorePanelOpenerController explorePanelOpener;
 
-        public ExplorePanelPlugin(
-            IAssetsProvisioner assetsProvisioner,
+        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
@@ -56,7 +60,8 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            DCLInput dclInput)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -69,6 +74,7 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.webBrowser = webBrowser;
+            this.dclInput = dclInput;
 
             backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository);
         }
@@ -88,7 +94,7 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             var settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
+            exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -96,14 +102,47 @@ namespace DCL.PluginSystem.Global
             {
                 backpackInitialization.Invoke(ref builder, arguments);
 
-                mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
+                mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow)));
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow),
+                    dclInput));
 
-                mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
-                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager)
+                explorePanelOpener = new PersistentExplorePanelOpenerController(
+                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
+
+                mvcManager.RegisterController(explorePanelOpener
                 );
+
+                RegisterHotkeys();
             };
+        }
+
+        private void RegisterHotkeys()
+        {
+            dclInput.Shortcuts.MainMenu.performed += OnMainMenuHotkeyPressed;
+            dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
+            dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
+            dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+        }
+
+        private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExplorePanelController.GetLastShownSection())));
+        }
+
+        private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
+        }
+
+        private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
+        }
+
+        private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

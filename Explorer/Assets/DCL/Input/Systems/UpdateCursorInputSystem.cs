@@ -163,11 +163,25 @@ namespace DCL.Input.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults)
         {
+            if (cursorComponent.IsOverUI)
+            {
+                if (cursorComponent.CursorIsLocked)
+                    UnlockCursor(ref cursorComponent);
+
+                cursorComponent.AllowCameraMovement = false;
+                return;
+            }
+
+            var mouseBoundsOffset = 10;
+
+            bool isMouseOutOfBounds = mousePos.x < mouseBoundsOffset || mousePos.x > Screen.width - mouseBoundsOffset ||
+                                      mousePos.y < mouseBoundsOffset || mousePos.y > Screen.height - mouseBoundsOffset;
+
             bool inputWantsToLock = cameraActions.Lock.WasReleasedThisFrame();
             bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
             bool justStoppedTemporalLock = cameraActions.TemporalLock.WasReleasedThisFrame();
 
-            if (inputWantsToLock && cursorComponent is { CursorIsLocked: false, CancelCursorLock: false })
+            if (inputWantsToLock && !isMouseOutOfBounds && cursorComponent is { CursorIsLocked: false, CancelCursorLock: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {
@@ -182,7 +196,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent.CursorIsLocked)
                 UnlockCursor(ref cursorComponent);
 
-            cursorComponent.AllowCameraMovement = cameraActions.TemporalLock.IsPressed() || cursorComponent.CursorIsLocked;
+            cursorComponent.AllowCameraMovement = !isMouseOutOfBounds && (cameraActions.TemporalLock.IsPressed() || cursorComponent.CursorIsLocked);
 
             if (justStoppedTemporalLock)
                 cursorComponent.CancelCursorLock = false;
@@ -191,13 +205,22 @@ namespace DCL.Input.Systems
             {
                 cursorComponent.CursorIsLocked = false;
                 cursor.Unlock();
-                cursorComponent.Position = mousePos;
+
+                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                //cursorComponent.Position = mousePos;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
         {
+            if (cursorComponent.AllowCameraMovement)
+            {
+                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+                return;
+            }
+
             if (cursorComponent.CursorIsLocked)
                 return;
 

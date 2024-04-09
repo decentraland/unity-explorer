@@ -24,6 +24,17 @@ namespace DCL.CharacterCamera.Systems
         protected override void Update(float t)
         {
             UpdateInputQuery(World);
+            ResetInputQuery(World);
+        }
+
+        [Query]
+        [All(typeof(CameraBlockerComponent))]
+        private void ResetInput(ref CameraInput cameraInput)
+        {
+            cameraInput.ZoomIn = false;
+            cameraInput.ZoomOut = false;
+            cameraInput.Delta = Vector2.zero;
+            cameraInput.FreeMovement = Vector2.zero;
         }
 
         [Query]
@@ -37,8 +48,6 @@ namespace DCL.CharacterCamera.Systems
                                   || cameraActions.ZoomOut.WasPressedThisFrame();
 
             cameraInput.Delta = cursorComponent.CursorIsLocked || cursorComponent.AllowCameraMovement ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
-
-            if (cursorComponent.AllowCameraMovement) { Debug.Log(cameraInput.Delta.sqrMagnitude); }
 
             if (cameraInput.Delta.sqrMagnitude > 2f)
                 cursorComponent.CancelCursorLock = true;
