@@ -17,6 +17,7 @@ namespace DCL.Settings.ModuleViews
             {
                 ToggleView.OnImage.SetActive(isOn);
                 ToggleView.OffImage.SetActive(!isOn);
+                ToggleView.Toggle.targetGraphic = isOn ? ToggleView.OnBackgroundImage : ToggleView.OffBackgroundImage;
             });
         }
 

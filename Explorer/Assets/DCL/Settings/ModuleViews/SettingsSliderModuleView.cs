@@ -14,6 +14,8 @@ namespace DCL.Settings.ModuleViews
     }
     public class SettingsSliderModuleView : SettingsModuleView<SettingsSliderModuleView.Config>
     {
+        private const float MAX_TIME_VALUE = 23.998f;
+
         private SliderType sliderType;
 
         [Serializable]
@@ -31,13 +33,27 @@ namespace DCL.Settings.ModuleViews
         private void Awake()
         {
             SliderView.Slider.onValueChanged.AddListener(OnValueChanged);
-            SliderView.DecreaseButton.onClick.AddListener(() => SliderView.Slider.value -= 1);
-            SliderView.IncreaseButton.onClick.AddListener(() => SliderView.Slider.value += 1);
+            SliderView.DecreaseButton.onClick.AddListener(() =>
+            {
+                if (!SliderView.Slider.interactable)
+                    return;
+
+                SliderView.Slider.value -= 1;
+            });
+            SliderView.IncreaseButton.onClick.AddListener(() =>
+            {
+                if (!SliderView.Slider.interactable)
+                    return;
+
+                SliderView.Slider.value += 1;
+            });
             OnValueChanged(SliderView.Slider.value);
         }
 
         protected override void Configure(Config configuration)
         {
+            SliderView.DecreaseButton.gameObject.SetActive(configuration.IsEnabled);
+            SliderView.IncreaseButton.gameObject.SetActive(configuration.IsEnabled);
             SliderView.Slider.interactable = configuration.IsEnabled;
             SliderView.Slider.minValue = configuration.minValue;
             SliderView.Slider.maxValue = configuration.maxValue;
@@ -56,12 +72,15 @@ namespace DCL.Settings.ModuleViews
                     SliderValueText.text = $"{value.ToString(SliderView.Slider.wholeNumbers ? "0" : "0.00", CultureInfo.InvariantCulture)}%";
                     break;
                 case SliderType.Time:
-                    value = Mathf.Clamp(value, 0, 23.998f);
+                    value = Mathf.Clamp(value, 0, MAX_TIME_VALUE);
                     var hourSection = (int)value;
                     var minuteSection = (int)((value - hourSection) * 60);
                     SliderValueText.text = $"{hourSection:00}:{minuteSection:00}";
                     break;
             }
+
+            SliderView.DecreaseButton.interactable = value > SliderView.Slider.minValue;
+            SliderView.IncreaseButton.interactable = value < (sliderType == SliderType.Time ? Mathf.Clamp(SliderView.Slider.maxValue, 0, MAX_TIME_VALUE) : SliderView.Slider.maxValue);
         }
     }
 }

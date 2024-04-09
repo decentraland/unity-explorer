@@ -13,5 +13,11 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject OffImage { get; private set; }
+
+        [field: SerializeField]
+        public Image OnBackgroundImage { get; private set; }
+
+        [field: SerializeField]
+        public Image OffBackgroundImage { get; private set; }
     }
 }
