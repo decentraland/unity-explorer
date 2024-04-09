@@ -43,7 +43,9 @@ namespace Utility.Tests
         {
             var helper = new ParcelMathJobifiedHelper();
 
-            helper.StartParcelsRingSplit(int2.zero, 4, new NativeHashSet<int2>(0, AllocatorManager.Persistent));
+            using var processedParcels = new NativeHashSet<int2>(0, AllocatorManager.Persistent);
+
+            helper.StartParcelsRingSplit(int2.zero, 4, processedParcels);
             ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> result = ref helper.FinishParcelsRingSplit();
 
             Assert.That(helper.GetRing(0).Select(p => p.Parcel), Is.EquivalentTo(new[]
