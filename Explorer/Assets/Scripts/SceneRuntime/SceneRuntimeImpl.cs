@@ -10,8 +10,10 @@ using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
+using Utility;
 
 namespace SceneRuntime
 {
@@ -135,17 +137,19 @@ namespace SceneRuntime
         public ITypedArray<byte> CreateUint8Array(int length) =>
             (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()").EnsureNotNull();
 
-        public object ConvertToScriptTypedArrays(byte[][] byteArrays)
+        public object ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
         {
             var js2DArray = (ScriptObject) engine.Evaluate("[]"); // create an outer array
 
             // for every inner array create ITypedArray<byte>
-            foreach (byte[] innerArray in byteArrays)
+            foreach (var innerArray in byteArrays)
             {
-                var innerJsArray = CreateUint8Array(innerArray.Length);
+                var memory = innerArray.Memory;
+
+                var innerJsArray = CreateUint8Array(memory.Length);
 
                 // Call into JS to write the data via a pointer
-                innerJsArray.Write(innerArray, 0, (ulong) innerArray.Length, 0);
+                innerJsArray.Write(memory, (ulong)memory.Length, 0);
 
                 // Push the new element to js2DArray
                 js2DArray.InvokeMethod("push", innerJsArray);

@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CrdtEcsBridge.PoolsProviders;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.Web3;
@@ -45,7 +46,8 @@ namespace SceneRuntime
             IEthereumApi ethereumApi,
             IWebSocketApi webSocketApi,
             IWeb3IdentityCache web3IdentityCache,
-            ICommunicationsControllerAPI communicationsControllerAPI)
+            ICommunicationsControllerAPI communicationsControllerAPI,
+            IInstancePoolsProvider instancePoolsProvider)
         {
             sceneRuntime.RegisterPlayers(roomHub, profileRepository);
             sceneRuntime.RegisterSceneApi(sceneApi);
@@ -56,7 +58,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
-            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
+            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
@@ -104,9 +106,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi));
         }
 
-        private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api)
+        private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider)
         {
-            sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api));
+            sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api, instancePoolsProvider));
         }
     }
 }

@@ -62,7 +62,9 @@ namespace SceneRunner
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
-        private readonly IMessagePipesHub messagePipesHub;
+        private readonly ICommunicationControllerHub messagePipesHub;
+
+
         private IGlobalWorldActions globalWorldActions = null!;
 
         public SceneFactory(
@@ -80,7 +82,7 @@ namespace SceneRunner
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            IMessagePipesHub messagePipesHub)
+            ICommunicationControllerHub messagePipesHub)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -228,7 +230,7 @@ namespace SceneRunner
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             var webSocketAipImplementation = new WebSocketApiImplementation();
-            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
+            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator);
 
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
 
@@ -243,8 +245,8 @@ namespace SceneRunner
                 ethereumApi,
                 webSocketAipImplementation,
                 identityCache,
-                communicationsControllerAPI
-            );
+                communicationsControllerAPI,
+                instancePoolsProvider);
 
             sceneRuntime.ExecuteSceneJson();
 

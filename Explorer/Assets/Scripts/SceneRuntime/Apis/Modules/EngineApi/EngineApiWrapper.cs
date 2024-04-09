@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
-        private byte[] lastInput;
+        private byte[]? lastInput;
 
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
         {
@@ -26,10 +26,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         public void Dispose()
         {
             // Dispose the last input buffer
-            if (lastInput != null)
-                instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
-
-            lastInput = null;
+            instancePoolsProvider.ReleaseAndDispose(ref lastInput);
 
             // Dispose the engine API Implementation
             // It will dispose its buffers
@@ -43,23 +40,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
 
-                var intLength = (int)data.Length;
-
-                if (lastInput == null || lastInput.Length < intLength)
-                {
-                    // Release the old one
-                    if (lastInput != null)
-                        instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
-
-                    // Rent a new one
-                    lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
-                }
-
-                // V8ScriptItem does not support zero length
-                if (data.Length > 0)
-
-                    // otherwise use the existing one
-                    data.Read(0, data.Length, lastInput, 0);
+                int intLength = instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
 

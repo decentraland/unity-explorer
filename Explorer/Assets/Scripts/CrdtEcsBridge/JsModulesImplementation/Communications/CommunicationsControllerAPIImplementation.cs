@@ -1,4 +1,5 @@
-﻿using DCL.Multiplayer.Connections.Messaging;
+﻿using CRDT.Memory;
+using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -8,6 +9,7 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -17,19 +19,22 @@ namespace CrdtEcsBridge.CommunicationsController
     public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
     {
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly List<byte[]> eventsToProcess = new ();
+        private readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         private readonly IJsOperations jsOperations;
         private readonly ICommunicationControllerHub messagePipesHub;
+        private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         private readonly ISceneData sceneData;
 
         public CommunicationsControllerAPIImplementation(
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
-            IJsOperations jsOperations)
+            IJsOperations jsOperations,
+            ICRDTMemoryAllocator crdtMemoryAllocator)
         {
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
             this.jsOperations = jsOperations;
+            this.crdtMemoryAllocator = crdtMemoryAllocator;
         }
 
         public void OnSceneBecameCurrent()
@@ -37,7 +42,7 @@ namespace CrdtEcsBridge.CommunicationsController
             messagePipesHub.SetSceneMessageHandler(OnMessageReceived);
         }
 
-        public object SendBinary(byte[][] data)
+        public object SendBinary(IReadOnlyList<byte[]> data)
         {
             foreach (byte[] message in data)
             {
@@ -48,17 +53,27 @@ namespace CrdtEcsBridge.CommunicationsController
                 SendMessage(encodedMessage);
             }
 
-            byte[][] resultData = eventsToProcess.ToArray();
-            eventsToProcess.Clear();
-            return jsOperations.ConvertToScriptTypedArrays(resultData);
+            object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
+
+            CleanUpReceivedMessages();
+
+            return result;
         }
 
         public void Dispose()
         {
-            // TODO clean-up events to process
+            CleanUpReceivedMessages();
 
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
+        }
+
+        private void CleanUpReceivedMessages()
+        {
+            foreach (var message in eventsToProcess)
+                message.Dispose();
+
+            eventsToProcess.Clear();
         }
 
         private void SendMessage(ReadOnlySpan<byte> message)
@@ -68,19 +83,29 @@ namespace CrdtEcsBridge.CommunicationsController
 
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
-            (MsgType msgType, byte[] data) decodedMessage = DecodeMessage(receivedMessage.Payload.Data.ToByteArray());
+            using (receivedMessage)
+            {
+                var decodedMessage = receivedMessage.Payload.Data.Span;
+                MsgType msgType = DecodeMessage(ref decodedMessage);
 
-            if (decodedMessage.msgType != MsgType.Uint8Array || decodedMessage.data.Length == 0)
-                return;
+                if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
+                    return;
 
-            byte[] senderBytes = Encoding.UTF8.GetBytes(receivedMessage.FromWalletId);
-            int messageLength = senderBytes.Length + decodedMessage.data.Length + 1;
-            var serializedMessage = new byte[messageLength];
-            serializedMessage[0] = (byte)senderBytes.Length;
-            Array.Copy(senderBytes, 0, serializedMessage, 1, senderBytes.Length);
-            Array.Copy(decodedMessage.data, 0, serializedMessage, senderBytes.Length + 1, decodedMessage.data.Length);
+                // Wallet Id
+                int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.FromWalletId);
+                Span<byte> senderBytes = stackalloc byte[walletBytesCount];
 
-            eventsToProcess.Add(serializedMessage);
+                int messageLength = senderBytes.Length + decodedMessage.Length + 1;
+
+                var serializedMessageOwner = crdtMemoryAllocator.GetMemoryBuffer(messageLength);
+                var serializedMessage = serializedMessageOwner.Memory.Span;
+
+                serializedMessage[0] = (byte)senderBytes.Length;
+                senderBytes.CopyTo(serializedMessage[1..]);
+                decodedMessage.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
+
+                eventsToProcess.Add(serializedMessageOwner);
+            }
         }
 
         private static byte[] EncodeMessage(byte[] data, MsgType type)
@@ -91,12 +116,11 @@ namespace CrdtEcsBridge.CommunicationsController
             return message;
         }
 
-        private static (MsgType msgType, byte[] data) DecodeMessage(byte[] value)
+        private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {
             var msgType = (MsgType)value[0];
-            var data = new byte[value.Length - 1];
-            Array.Copy(value, 1, data, 0, value.Length - 1);
-            return (msgType, data);
+            value = value[1..];
+            return msgType;
         }
 
         private enum MsgType
