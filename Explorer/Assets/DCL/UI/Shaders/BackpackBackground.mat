@@ -108,7 +108,7 @@ Material:
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _Speed: 2
+    - _Speed: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
@@ -117,10 +117,10 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color1: {r: 0.53333336, g: 0.24313727, b: 0.7843138, a: 1}
-    - _Color2: {r: 0.71638876, g: 0.45745817, b: 0.9433962, a: 1}
-    - _Color3: {r: 0.6831515, g: 0.36078432, b: 0.90588236, a: 1}
-    - _Color4: {r: 0.47463745, g: 0.24896757, b: 0.6698113, a: 1}
+    - _Color1: {r: 0.20852943, g: 0.07079922, b: 0.3490566, a: 1}
+    - _Color2: {r: 0.6321856, g: 0.09655393, b: 0.7207546, a: 1}
+    - _Color3: {r: 0.60528064, g: 0.18369527, b: 0.9056604, a: 1}
+    - _Color4: {r: 0.34752345, g: 0.020870427, b: 0.6320754, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
