@@ -1,13 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
-using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
-using ECS.SceneLifeCycle.Reporting;
-using MVC;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,27 +16,26 @@ namespace DCL.Navmap
     {
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ITeleportController teleportController;
-        private readonly IMVCManager mvcManager;
+        private readonly IRealmNavigator realmNavigator;
+
         private readonly Dictionary<string, GameObject> categoriesDictionary;
+
+        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
+        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
+        private readonly ImageController placeImageController;
 
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
 
-        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
-        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
-        private readonly ImageController placeImageController;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-            ITeleportController teleportController, IWebRequestController webRequestController,
-            IMVCManager mvcManager)
+           IWebRequestController webRequestController, IRealmNavigator realmNavigator)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
-            this.teleportController = teleportController;
-            this.mvcManager = mvcManager;
+            this.realmNavigator = realmNavigator;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -53,6 +48,13 @@ namespace DCL.Navmap
 
             ResetCategories();
             InitButtons();
+        }
+
+        public void Dispose()
+        {
+            likeButtonController.OnButtonClicked -= OnLike;
+            dislikeButtonController.OnButtonClicked -= OnDislike;
+            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
 
         private void InitButtons()
@@ -106,39 +108,18 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => TeleportToParcel(parcel));
+                view.jumpInButton.onClick.AddListener(() => realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget());
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
-            catch (Exception ex) { SetEmptyParcelInfo(parcel); }
-        }
-
-        private void TeleportToParcel(Vector2Int parcel)
-        {
-            async UniTaskVoid ShowLoadingAndTeleportAsync(CancellationToken ct)
-            {
-                var timeout = TimeSpan.FromSeconds(30);
-                var loadReport = AsyncLoadProcessReport.Create();
-
-                async UniTask TeleportAsync()
-                {
-                    var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-                    await waitForSceneReadiness.ToUniTask(ct);
-                }
-
-                await UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
-                                                .AttachExternalCancellation(ct),
-                    TeleportAsync());
-            }
-
-            ShowLoadingAndTeleportAsync(cts.Token).Forget();
+            catch (Exception) { SetEmptyParcelInfo(parcel); }
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
         {
             view.placeName.text = "Empty parcel";
-            view.placeCreator.text = $"created by <b>Unknown</b>";
+            view.placeCreator.text = "created by <b>Unknown</b>";
             view.placeDescription.text = "This place doesn't have a description set";
             view.location.text = parcel.ToString();
             view.visits.text = "-";
@@ -216,13 +197,6 @@ namespace DCL.Navmap
         {
             view.rectTransform.localScale = Vector3.one;
             view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(() => view.gameObject.SetActive(false));
-        }
-
-        public void Dispose()
-        {
-            likeButtonController.OnButtonClicked -= OnLike;
-            dislikeButtonController.OnButtonClicked -= OnDislike;
-            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
     }
 }

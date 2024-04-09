@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PluginSystem;
 using DCL.Profiles;
 using DCL.Web3;
@@ -126,8 +128,16 @@ namespace Global.Static
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                new MVCManager(new WindowStackManager(), new CancellationTokenSource(), null),
-                identityCache, profileRepository, webRequestController, null);
+                new MVCManager(
+                    new WindowStackManager(),
+                    new CancellationTokenSource(), null
+                ),
+                identityCache,
+                profileRepository,
+                webRequestController,
+                new IRoomHub.Fake(),
+                null
+            );
 
             return (staticContainer, sceneSharedContainer);
         }

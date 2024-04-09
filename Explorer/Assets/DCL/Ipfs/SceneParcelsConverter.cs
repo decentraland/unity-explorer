@@ -11,11 +11,27 @@ namespace DCL.Ipfs
     /// </summary>
     public class SceneParcelsConverter : JsonConverter<SceneMetadataScene>
     {
-        public override bool CanWrite => false;
+        public override bool CanWrite => true;
 
+        private static string EncodePointer(Vector2Int pointer) =>
+            $"{pointer.x.ToString()},{pointer.y.ToString()}";
+
+        /// <summary>
+        ///     Used by GetSceneInfo
+        /// </summary>
         public override void WriteJson(JsonWriter writer, SceneMetadataScene value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("base");
+            writer.WriteValue(EncodePointer(value.DecodedBase));
+
+            writer.WritePropertyName("parcels");
+            writer.WriteStartArray();
+            foreach (Vector2Int parcel in value.DecodedParcels) writer.WriteValue(EncodePointer(parcel));
+            writer.WriteEndArray();
+
+            writer.WriteEndObject();
         }
 
         public override SceneMetadataScene ReadJson(JsonReader reader, Type objectType, SceneMetadataScene existingValue, bool hasExistingValue, JsonSerializer serializer)

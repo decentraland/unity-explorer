@@ -81,7 +81,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (wearablesByPointersIntention.FallbackToDefaultWearables && !defaultWearablesResolved)
                 return; // Wait for default wearables to be resolved
 
-            List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
+            List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get();
 
             var successfulResults = 0;
@@ -89,9 +89,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
-                string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
+                URN loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
 
-                if (loadingIntentionPointer == null)
+                if (loadingIntentionPointer.IsNullOrEmpty())
                 {
                     ReportHub.LogError(
                         GetReportCategory(),
@@ -267,16 +267,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             // Manifest is required for Web loading only
             if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
-            {
-                var promise = AssetBundleManifestPromise.Create(World,
-                    new GetWearableAssetBundleManifestIntention(component.GetHash(), new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: intention.CancellationTokenSource)),
-                    partitionComponent);
-
-                component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
-                component.IsLoading = true;
-                World.Create(promise, component, intention.BodyShape);
-                return true;
-            }
+                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (component.TryCreateAssetBundlePromise(in intention, customStreamingSubdirectory, partitionComponent, World))
             {
@@ -287,7 +278,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return false;
         }
 
-        private void CreateMissingPointersPromise(List<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private void CreateMissingPointersPromise(List<URN> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
@@ -301,7 +292,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (!defaultWearablesLoaded)
             {
-                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.WearableDTO.Asset.id} failed to load");
+                ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.GetHash()} failed to load");
 
                 StreamableLoadingResult<WearableAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
                    .ToWearableAsset(wearable);

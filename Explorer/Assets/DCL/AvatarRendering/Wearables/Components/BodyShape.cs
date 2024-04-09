@@ -1,4 +1,5 @@
-﻿using DCL.Diagnostics;
+﻿using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,9 @@ namespace DCL.AvatarRendering.Wearables
         }
 
         public static implicit operator string(BodyShape bodyShape) =>
+            bodyShape.Value;
+
+        public static implicit operator URN(BodyShape bodyShape) =>
             bodyShape.Value;
 
         public static implicit operator int(BodyShape bodyShape) =>

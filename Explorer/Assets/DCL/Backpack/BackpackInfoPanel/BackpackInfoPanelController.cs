@@ -12,6 +12,7 @@ namespace DCL.Backpack
     {
         private const string DEFAULT_DESCRIPTION = "This wearable does not have a description set.";
         private const int MINIMUM_WAIT_TIME = 500;
+        private const string EMOTE_CATEGORY = "emote";
 
         private readonly BackpackInfoPanelView view;
         private readonly BackpackEventBus backpackEventBus;
@@ -19,7 +20,7 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly HideCategoriesController hideCategoriesController;
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? cts;
 
         public BackpackInfoPanelController(
             BackpackInfoPanelView view,
@@ -27,7 +28,8 @@ namespace DCL.Backpack
             NftTypeIconSO categoryIcons,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             NFTColorsSO rarityColors,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IBackpackEquipStatusController backpackEquipStatusController,
+            AttachmentType attachmentType)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
@@ -41,15 +43,19 @@ namespace DCL.Backpack
                 backpackEquipStatusController,
                 categoryIcons);
 
-            backpackEventBus.SelectEvent += SetPanelContent;
+            if ((attachmentType & AttachmentType.Wearable) != 0)
+                backpackEventBus.SelectWearableEvent += SetPanelContent;
+
+            if ((attachmentType & AttachmentType.Emote) != 0)
+                backpackEventBus.SelectEmoteEvent += SetPanelContent;
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            await hideCategoriesController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            await hideCategoriesController.InitializeAssetsAsync(assetsProvisioner, ct);
         }
 
-        private void SetPanelContent(IWearable wearable)
+        private void SetPanelContent(IAvatarAttachment wearable)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
@@ -58,7 +64,7 @@ namespace DCL.Backpack
             view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
             view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? DEFAULT_DESCRIPTION : wearable.GetDescription();
-            view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
+            view.CategoryImage.sprite = categoryIcons.GetTypeImage(string.IsNullOrEmpty(wearable.GetCategory()) ? EMOTE_CATEGORY : wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
             view.RarityName.text = wearable.GetRarity();
@@ -71,22 +77,31 @@ namespace DCL.Backpack
             view.FullPanel.SetActive(!isEmpty);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment itemWearable, CancellationToken ct)
         {
             do
             {
                 await UniTask.Delay(MINIMUM_WAIT_TIME, cancellationToken: ct);
             }
-            while (itemWearable.WearableThumbnail == null);
+            while (itemWearable.ThumbnailAssetResult == null);
 
-            view.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            view.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
             view.LoadingSpinner.SetActive(false);
             view.WearableThumbnail.gameObject.SetActive(true);
         }
 
         public void Dispose()
         {
-            backpackEventBus.SelectEvent -= SetPanelContent;
+            backpackEventBus.SelectWearableEvent -= SetPanelContent;
+            backpackEventBus.SelectEmoteEvent -= SetPanelContent;
+        }
+
+        [Flags]
+        public enum AttachmentType
+        {
+            Wearable = 1 << 1,
+            Emote = 1 << 2,
+            All = Wearable | Emote,
         }
     }
 }

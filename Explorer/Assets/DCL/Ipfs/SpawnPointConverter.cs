@@ -11,7 +11,15 @@ namespace DCL.Ipfs
     {
         public override void WriteJson(JsonWriter writer, SceneMetadata.SpawnPoint.Coordinate value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            if (value.SingleValue is { } v)
+            {
+                writer.WriteValue(v);
+                return;
+            }
+
+            writer.WriteStartArray();
+            foreach (float item in value.MultiValue ?? Array.Empty<float>()) writer.WriteValue(item);
+            writer.WriteEndArray();
         }
 
         public override SceneMetadata.SpawnPoint.Coordinate ReadJson(JsonReader reader, Type objectType, SceneMetadata.SpawnPoint.Coordinate existingValue, bool hasExistingValue, JsonSerializer serializer)

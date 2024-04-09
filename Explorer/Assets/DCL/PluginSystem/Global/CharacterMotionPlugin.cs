@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -18,7 +19,9 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
-        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject, IDebugContainerBuilder debugContainerBuilder)
+        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
+            ICharacterObject characterObject,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
@@ -46,6 +49,7 @@ namespace DCL.PluginSystem.Global
                 characterObject,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new CharacterPlatformComponent(),
                 new StunComponent(),
                 new FeetIKComponent(),

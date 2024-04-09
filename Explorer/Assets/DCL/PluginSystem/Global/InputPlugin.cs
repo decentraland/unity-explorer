@@ -13,6 +13,9 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
+using DCL.Multiplayer.Emotes;
+using UnityEngine.EventSystems;
+using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -29,6 +32,8 @@ namespace DCL.PluginSystem.Global
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
         private readonly DCLInput dclInput;
+        private readonly MultiplayerEmotesMessageBus messageBus;
+        private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
         private readonly UnityEventSystem unityEventSystem;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -40,13 +45,16 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             UnityEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
-            UIDocument canvas)
+            UIDocument canvas,
+            MultiplayerEmotesMessageBus messageBus)
         {
             this.dclInput = dclInput;
             this.cursor = cursor;
-            unityEventSystem = eventSystem;
+            this.eventSystem = eventSystem;
             this.assetsProvisioner = assetsProvisioner;
             this.canvas = canvas;
+            this.messageBus = messageBus;
+
             dclInput.Enable();
         }
 
@@ -73,7 +81,8 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, unityEventSystem, cursor, crosshairCanvas);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, messageBus);
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
         }
 
         public void Dispose()
