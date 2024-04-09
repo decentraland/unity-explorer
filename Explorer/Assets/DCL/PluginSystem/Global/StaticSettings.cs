@@ -6,6 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
+using DCL.Roads.Settings;
 using DCL.AvatarRendering;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -73,6 +74,12 @@ namespace DCL.PluginSystem.Global
         public class AvatarRandomizerSettingsRef : AssetReferenceT<AvatarRandomizerAsset>
         {
             public AvatarRandomizerSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class RoadDataRef : AssetReferenceT<RoadSettingsAsset>
+        {
+            public RoadDataRef(string guid) : base(guid) { }
         }
     }
 }
