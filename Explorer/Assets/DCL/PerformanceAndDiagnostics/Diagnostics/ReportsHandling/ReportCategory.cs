@@ -201,6 +201,11 @@
         public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
 
         /// <summary>
+        ///     PBPlayerIdentityData component update
+        /// </summary>
+        public const string PLAYER_IDENTITY_DATA = nameof(PLAYER_IDENTITY_DATA);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);

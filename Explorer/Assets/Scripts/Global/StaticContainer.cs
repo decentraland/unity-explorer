@@ -29,6 +29,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
 namespace Global
 {
@@ -203,6 +204,7 @@ namespace Global
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
+                new MultiplayerPlugin(container.GlobalWorldProxy),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
