@@ -195,8 +195,7 @@ jobs:
 
       - name: Download and Extract Zip File
         run: |
-          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "lods.zip"
-          Expand-Archive -Path "lods.zip" -DestinationPath "build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}_Data/StreamingAssets/AssetBundles/lods"
+          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}_Data/StreamingAssets/AssetBundles/lods/lods.zip"
           Remove-Item "lods.zip"
         shell: pwsh
 
