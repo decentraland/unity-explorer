@@ -68,6 +68,7 @@ jobs:
             sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
             sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
             sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
+            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperMask|file:../../unity-explorer-packages/SuperMask|' "$jsonFilePath"
             ls -l
             # Display the content of manifest.json
             cat "$jsonFilePath"

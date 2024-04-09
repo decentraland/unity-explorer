@@ -171,6 +171,7 @@ jobs:
               (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
               (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' | Set-Content -Path $jsonFilePath
               (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' | Set-Content -Path $jsonFilePath
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperMask' | Set-Content -Path $jsonFilePath
           
               # Display the content of manifest.json
               Get-Content -Path $jsonFilePath
