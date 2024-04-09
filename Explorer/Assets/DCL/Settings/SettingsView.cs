@@ -21,7 +21,12 @@ namespace DCL.Settings
         [field: SerializeField] public ButtonWithSelectableStateView GraphicsSectionButtonWithSelectableState { get; private set; }
         [field: SerializeField] public ButtonWithSelectableStateView SoundSectionButtonWithSelectableState { get; private set; }
         [field: SerializeField] public ButtonWithSelectableStateView ControlsSectionButtonWithSelectableState { get; private set; }
-
+        [field: Header("Sections Backgrounds")]
+        [field: SerializeField] public Image BackgroundImage { get; private set; }
+        [field: SerializeField] public Sprite GeneralSectionBackground { get; private set; }
+        [field: SerializeField] public Sprite GraphicsSectionBackground { get; private set; }
+        [field: SerializeField] public Sprite SoundSectionBackground { get; private set; }
+        [field: SerializeField] public Sprite ControlsSectionBackground { get; private set; }
         [field: Header("Others")]
         [field: SerializeField] public ScrollRect ContentScrollRect { get; private set; }
     }

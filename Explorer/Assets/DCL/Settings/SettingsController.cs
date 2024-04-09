@@ -79,6 +79,7 @@ namespace DCL.Settings
             view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
             view.SoundSectionButtonWithSelectableState.SetSelected(false);
             view.ControlsSectionButtonWithSelectableState.SetSelected(false);
+            view.BackgroundImage.sprite = view.GeneralSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -92,6 +93,7 @@ namespace DCL.Settings
             view.GraphicsSectionButtonWithSelectableState.SetSelected(true);
             view.SoundSectionButtonWithSelectableState.SetSelected(false);
             view.ControlsSectionButtonWithSelectableState.SetSelected(false);
+            view.BackgroundImage.sprite = view.GraphicsSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -105,6 +107,7 @@ namespace DCL.Settings
             view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
             view.SoundSectionButtonWithSelectableState.SetSelected(true);
             view.ControlsSectionButtonWithSelectableState.SetSelected(false);
+            view.BackgroundImage.sprite = view.SoundSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -118,6 +121,7 @@ namespace DCL.Settings
             view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
             view.SoundSectionButtonWithSelectableState.SetSelected(false);
             view.ControlsSectionButtonWithSelectableState.SetSelected(true);
+            view.BackgroundImage.sprite = view.ControlsSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
