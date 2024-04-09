@@ -52,6 +52,7 @@ using System.Collections.Generic;
 using DCL.LOD.Systems;
 using System.Text.RegularExpressions;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -156,7 +157,6 @@ namespace Global.Dynamic
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current);
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
-
 
             var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
@@ -300,7 +300,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem, chatCommandsFactory),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, unityEventSystem, chatCommandsFactory),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
@@ -316,7 +316,7 @@ namespace Global.Dynamic
                     container.UserInAppInitializationFlow,
                     webBrowser,
                     emotesCache,
-                    realmNavigator),
+                    realmNavigator,
                     dclInput),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
