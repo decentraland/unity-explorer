@@ -37,6 +37,12 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            mathJobifiedHelper.Dispose();
+        }
+
         [Test]
         public void CreatePointersForMissingScenes()
         {

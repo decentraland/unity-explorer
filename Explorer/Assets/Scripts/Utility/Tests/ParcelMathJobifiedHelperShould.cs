@@ -41,7 +41,7 @@ namespace Utility.Tests
         [Test]
         public void CalculateRingRadius4()
         {
-            var helper = new ParcelMathJobifiedHelper();
+            using var helper = new ParcelMathJobifiedHelper();
 
             using var processedParcels = new NativeHashSet<int2>(0, AllocatorManager.Persistent);
 
