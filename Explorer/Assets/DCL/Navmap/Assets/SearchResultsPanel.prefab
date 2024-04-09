@@ -382,6 +382,7 @@ GameObject:
   - component: {fileID: 2898210557555381710}
   - component: {fileID: 2963534357147214929}
   - component: {fileID: 2921726426666161021}
+  - component: {fileID: 4979883465811775721}
   m_Layer: 5
   m_Name: SearchResultsPanel
   m_TagString: Untagged
@@ -399,7 +400,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 215140445858919972}
   - {fileID: 2834296969470325745}
@@ -503,6 +504,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
+--- !u!225 &4979883465811775721
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7279776787525905429}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &7744301998278568505
 GameObject:
   m_ObjectHideFlags: 0
