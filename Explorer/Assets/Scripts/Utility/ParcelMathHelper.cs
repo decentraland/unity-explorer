@@ -15,6 +15,8 @@ namespace Utility
             Vector3.zero,
             new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue));
 
+        public static readonly Vector3 RoadPivotDeviation  =  new (8, 0, 8);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>
             new (vector2Int.x, vector2Int.y);

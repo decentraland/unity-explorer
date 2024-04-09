@@ -193,9 +193,14 @@ jobs:
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
 
+      - name: Download and Extract Zip File
+        run: |
+          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}_Data/StreamingAssets/AssetBundles/lods/lods.zip"
+        shell: pwsh
+
       # Upload artifact
       - name: Upload windows artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: |

@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             SceneAbDto sceneAbDto = await (await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, GetReportCategory()))
                .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-            return new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, sceneAbDto));
+            return new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files));
         }
     }
 }
