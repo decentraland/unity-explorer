@@ -51,7 +51,7 @@ namespace DCL.ParcelsService
                 );
 
             debugContainerBuilder
-               .AddWidget("Teleport")!
+                .AddWidget("Teleport")!
                .AddControl(new DebugVector2IntFieldDef(binding), null)
                .AddControl(
                     new DebugButtonDef("To Parcel", () =>

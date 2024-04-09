@@ -202,9 +202,9 @@
         public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
 
         /// <summary>
-        ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
+        ///     Roads related systems
         /// </summary>
-        public const string UNSPECIFIED = nameof(UNSPECIFIED);
+        public const string ROADS = nameof(ROADS);
 
         public const string LIVEKIT = nameof(LIVEKIT);
 
@@ -214,5 +214,9 @@
 
         public const string MVC = nameof(MVC);
 
+        /// <summary>
+        ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
+        /// </summary>
+        public const string UNSPECIFIED = nameof(UNSPECIFIED);
     }
 }

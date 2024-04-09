@@ -49,6 +49,7 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using DCL.LOD.Systems;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine.EventSystems;
@@ -65,6 +66,10 @@ namespace Global.Dynamic
         public MVCManager MvcManager { get; private set; } = null!;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
+        
+        public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
+        
+        public LODContainer LODContainer { get; private set; } = null!;
 
         public IRealmController RealmController { get; private set; } = null!;
 
@@ -123,23 +128,35 @@ namespace Global.Dynamic
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
-            (_, bool result) = await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct);
-
-            if (!result)
-                return (null, false);
-
-            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
+            var realmData = new RealmData();
+            
+            async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+            {
+                // Init itself
+                await settingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
+                // Init other containers
+                container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
+                container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
+            }
 
+            try
+            {
+                await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct);
+            }
+            catch (Exception)
+            {
+                return (null, false);
+            }
+
+            var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
-
-            var realmData = new RealmData();
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
@@ -272,7 +289,8 @@ namespace Global.Dynamic
                     chatEntryConfiguration,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     entityParticipantTable,
-                    nametagsData
+                    nametagsData,
+                    container.DefaultTexturesContainer.TextureArrayContainerFactory
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -300,10 +318,6 @@ namespace Global.Dynamic
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, identityCache, characterPreviewFactory),
                 new StylizedSkyboxPlugin(staticContainer.AssetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
-                new LODPlugin(staticContainer.CacheCleaner, realmData,
-                    staticContainer.SingletonSharedDependencies.MemoryBudget,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget,
-                    staticContainer.ScenesCache, debugBuilder, staticContainer.AssetsProvisioner, staticContainer.SceneReadinessReportQueue),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager),
                 new TeleportPromptPlugin(staticContainer.AssetsProvisioner, parcelServiceContainer.TeleportController, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService),
                 new ChangeRealmPromptPlugin(
@@ -315,6 +329,8 @@ namespace Global.Dynamic
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable)),
+                container.LODContainer.LODPlugin,
+                container.LODContainer.RoadPlugin
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

@@ -42,6 +42,8 @@ namespace DCL.ResourcesUnloading
         private IWearableCatalog wearableCatalog;
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
+        private IRoadAssetPool roadCache;
+
         private IEmoteCache? emoteCache;
 
         public CacheCleaner(IPerformanceBudget fpsCapBudget)
@@ -66,6 +68,7 @@ namespace DCL.ResourcesUnloading
             profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             profileIntentionCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             lodCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            roadCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -77,10 +80,11 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void Register(ILODAssetsPool lodAssetsPool)
-        {
+        public void Register(ILODAssetsPool lodAssetsPool) =>
             lodCache = lodAssetsPool;
-        }
+
+        public void Register(IRoadAssetPool roadAssetPool) =>
+            roadCache = roadAssetPool;
 
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>
             this.assetBundleCache = assetBundleCache;

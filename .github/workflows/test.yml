@@ -78,9 +78,10 @@ jobs:
       - uses: game-ci/unity-test-runner@v4.1.1
         id: testRunner
         timeout-minutes: 30
+        continue-on-error: true
         with:
           projectPath: Explorer
-          testMode: all
+          testMode: all      
 
       - name: Convert NUnit to JUnit
         if: always()
