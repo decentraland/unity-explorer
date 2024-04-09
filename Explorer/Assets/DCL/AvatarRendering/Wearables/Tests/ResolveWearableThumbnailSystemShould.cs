@@ -17,7 +17,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D,
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
-    public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveWearableThumbnailSystem>
+    public class ResolveWearableThumbnailSystemShould : UnitySystemTestBase<ResolveAvatarAttachmentThumbnailSystem>
     {
         [SetUp]
         public void Setup()
@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false);
             wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
             realmData = new RealmData(new TestIpfsRealm());
-            system = new ResolveWearableThumbnailSystem(world);
+            system = new ResolveAvatarAttachmentThumbnailSystem(world);
         }
 
         private StreamableLoadingResult<WearableAssetBase> mockedDefaultAB;

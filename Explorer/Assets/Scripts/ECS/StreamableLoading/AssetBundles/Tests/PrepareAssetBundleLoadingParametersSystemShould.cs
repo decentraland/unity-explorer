@@ -70,7 +70,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromWeb()
         {
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, "200", new[] { "abcd" } ));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -87,7 +87,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void FailIfAbsentInManifest()
         {
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = Array.Empty<string>() }));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, null, Array.Empty<string>()));
 
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());

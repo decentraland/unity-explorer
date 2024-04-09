@@ -4,20 +4,32 @@ namespace DCL.Backpack.BackpackBus
 {
     public interface IBackpackCommandBus
     {
-        public event Action<BackpackEquipCommand> OnEquipMessageReceived;
-        public event Action<BackpackUnEquipCommand> OnUnEquipMessageReceived;
-        public event Action<BackpackSelectCommand> OnSelectMessageReceived;
-        public event Action<BackpackHideCommand> OnHideMessageReceived;
-        public event Action<BackpackFilterCategoryCommand> OnFilterCategoryMessageReceived;
-        public event Action<BackpackSearchCommand> OnSearchMessageReceived;
-        public event Action<BackpackPublishProfileCommand> OnPublishProfileReceived;
+        public event Action<BackpackEquipWearableCommand> EquipWearableMessageReceived;
+        public event Action<BackpackUnEquipWearableCommand> UnEquipWearableMessageReceived;
+        public event Action<BackpackEquipEmoteCommand> EquipEmoteMessageReceived;
+        public event Action<BackpackUnEquipEmoteCommand> UnEquipEmoteMessageReceived;
+        public event Action<BackpackEmoteSlotSelectCommand>? EmoteSlotSelectMessageReceived;
+        public event Action<BackpackSelectWearableCommand> SelectWearableMessageReceived;
+        public event Action<BackpackSelectEmoteCommand> SelectEmoteMessageReceived;
+        public event Action<BackpackHideCommand> HideMessageReceived;
+        public event Action<BackpackFilterCategoryCommand> FilterCategoryMessageReceived;
+        public event Action<BackpackSearchCommand> SearchMessageReceived;
+        public event Action<BackpackPublishProfileCommand> PublishProfileReceived;
 
-        void SendCommand(BackpackEquipCommand command);
-        void SendCommand(BackpackUnEquipCommand command);
-        void SendCommand(BackpackSelectCommand command);
+        void SendCommand(BackpackEquipWearableCommand command);
+
+        void SendCommand(BackpackUnEquipWearableCommand command);
+
+        void SendCommand(BackpackSelectWearableCommand command);
+
         void SendCommand(BackpackHideCommand command);
 
         void SendCommand(BackpackFilterCategoryCommand command);
+
         void SendCommand(BackpackSearchCommand command);
+
+        void SendCommand(BackpackEmoteSlotSelectCommand command);
+
+        void SendCommand(BackpackUnEquipEmoteCommand command);
     }
 }
