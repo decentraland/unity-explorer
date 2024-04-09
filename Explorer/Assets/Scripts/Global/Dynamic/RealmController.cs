@@ -19,6 +19,7 @@ using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests.GenericHead;
 using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
 using UnityEngine;
@@ -104,8 +105,8 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM))
-               .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+            GenericGetRequest genericGetRequest = await webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
@@ -126,6 +127,26 @@ namespace Global.Dynamic
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
+        }
+
+        public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            var isReachable = true;
+
+            URLAddress url = realm.Append(new URLPath("/about"));
+
+            try
+            {
+                await webRequestController.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct);
+            }
+            catch (Exception)
+            {
+                isReachable = false;
+            }
+
+            return isReachable;
         }
 
         public IRealmData GetRealm() =>

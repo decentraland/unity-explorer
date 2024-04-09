@@ -7,7 +7,6 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -17,7 +16,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearableComponentsUtils
     {
-        internal static readonly ListObjectPool<string> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
+        internal static readonly ListObjectPool<URN> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
+
+        internal static readonly HashSetObjectPool<URN> POINTERS_HASHSET_POOL = new (hashsetInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
         internal static readonly ListObjectPool<IWearable> WEARABLES_POOL =
             new (listInstanceDefaultCapacity: PoolConstants.WEARABLES_PER_AVATAR_COUNT, defaultCapacity: PoolConstants.AVATARS_COUNT);
@@ -30,30 +31,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
-            List<string> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);
-            pointers.AddRange(wearables);
+
+            foreach (string wearable in wearables)
+                pointers.Add(wearable);
+
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
         {
-            List<string> pointers = POINTERS_POOL.Get();
+            List<URN> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);
-
-            foreach (URN urn in wearables)
-                pointers.Add(urn);
+            pointers.AddRange(wearables);
 
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static void CreateWearableThumbnailPromise(IRealmData realmData, IWearable wearable, World world, IPartitionComponent partitionComponent)
+        public static void CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent)
         {
-            URLPath thumbnailPath = wearable.GetThumbnail();
+            URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
-                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
                 return;
             }
 
@@ -67,7 +69,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 },
                 partitionComponent);
 
-            world.Create(wearable, promise, partitionComponent);
+            world.Create(attachment, promise, partitionComponent);
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)

@@ -829,7 +829,7 @@ namespace DCL.Landscape
         }
 
         // Convert flat NativeArray to a 2D array (is there another way?)
-        private float[,] ConvertTo2DArray(NativeArray<float> array, int width, int height)
+        private static float[,] ConvertTo2DArray(NativeArray<float> array, int width, int height)
         {
             var result = new float[width, height];
 

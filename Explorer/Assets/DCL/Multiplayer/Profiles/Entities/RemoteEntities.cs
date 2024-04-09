@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -102,6 +103,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 profile.Profile,
                 transformComp,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent()

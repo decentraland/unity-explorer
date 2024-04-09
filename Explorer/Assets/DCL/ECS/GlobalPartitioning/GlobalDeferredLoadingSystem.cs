@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -15,7 +16,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
-using Ipfs;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -51,6 +51,8 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetProfileIntention, Profile>(),
                 CreateQuery<GetTextureIntention, Texture2D>(),
                 CreateQuery<GetNFTShapeIntention, Texture2D>(),
+                CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
+                CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
             };
         }
 

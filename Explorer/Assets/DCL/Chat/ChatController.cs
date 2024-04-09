@@ -10,6 +10,7 @@ using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -19,18 +20,18 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public partial class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView>
     {
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const int MAX_MESSAGE_LENGTH = 250;
 
-        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN);
+        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
+        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private EmojiPanelController emojiPanelController;
-        private EmojiSuggestionPanel emojiSuggestionPanelController;
+        private EmojiPanelController? emojiPanelController;
+        private EmojiSuggestionPanel? emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
@@ -40,14 +41,18 @@ namespace DCL.Chat
         private readonly List<ChatMessage> chatMessages = new ();
         private readonly List<EmojiData> keysWithPrefix = new ();
         private readonly IEventSystem eventSystem;
-        private World world;
+        private readonly World world;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
         private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
-        private DCLInput dclInput;
+        private readonly DCLInput dclInput;
+
+        private readonly ChatCommandsHandler commandsHandler;
+        private (IChatCommand command, Match param) chatCommand;
+        private CancellationTokenSource commandCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -65,7 +70,8 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
-            IEventSystem eventSystem
+            IEventSystem eventSystem,
+            Dictionary<Regex, Func<IChatCommand>> commandsFactory
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -82,8 +88,10 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
 
+            commandsHandler = new ChatCommandsHandler(commandsFactory);
+
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
-            //Adding two elements to count as top and bottom padding
+            // Adding two elements to count as top and bottom padding
             chatMessages.Add(new ChatMessage(true));
             chatMessages.Add(new ChatMessage(true));
         }
@@ -157,7 +165,7 @@ namespace DCL.Chat
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
-            emojiSuggestionPanelController.SetPanelVisibility(false);
+            emojiSuggestionPanelController!.SetPanelVisibility(false);
             ToggleEmojiPanelAsync(emojiPanelCts.Token).Forget();
         }
 
@@ -195,10 +203,26 @@ namespace DCL.Chat
                 return;
             }
 
-            chatMessagesBus.Send(currentMessage);
+            string messageToSend = currentMessage;
+
             currentMessage = string.Empty;
             viewInstance.InputField.text = string.Empty;
             viewInstance.InputField.ActivateInputField();
+            emojiSuggestionPanelController.SetPanelVisibility(false);
+
+            if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
+                ExecuteChatCommandAsync(chatCommand.command, chatCommand.param).Forget();
+            else
+                chatMessagesBus.Send(messageToSend);
+        }
+
+        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
+        {
+            commandCts = commandCts.SafeRestart();
+            string? response = await command.ExecuteAsync(param, commandCts.Token);
+
+            if (!string.IsNullOrEmpty(response))
+                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true, false));
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -272,7 +296,7 @@ namespace DCL.Chat
             {
                 if (match.Value.Length < 2)
                 {
-                    emojiSuggestionPanelController.SetPanelVisibility(false);
+                    emojiSuggestionPanelController!.SetPanelVisibility(false);
                     return;
                 }
 
@@ -281,14 +305,14 @@ namespace DCL.Chat
 
                 SearchAndSetEmojiSuggestionsAsync(match.Value, cts.Token).Forget();
             }
-            else { emojiSuggestionPanelController.SetPanelVisibility(false); }
+            else { emojiSuggestionPanelController!.SetPanelVisibility(false); }
         }
 
         private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
         {
             await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController.EmojiNameMapping, value, keysWithPrefix, ct);
 
-            emojiSuggestionPanelController.SetValues(keysWithPrefix);
+            emojiSuggestionPanelController!.SetValues(keysWithPrefix);
             emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 
@@ -316,11 +340,19 @@ namespace DCL.Chat
         public override void Dispose()
         {
             chatMessagesBus.OnMessageAdded -= CreateChatEntry;
-            emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
-            emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
+
+            if (emojiPanelController != null)
+            {
+                emojiPanelController.OnEmojiSelected -= AddEmojiToInput;
+                emojiPanelController.Dispose();
+            }
+
+            if (emojiSuggestionPanelController != null)
+                emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
+
             dclInput.UI.Submit.performed -= OnSubmitAction;
-            emojiPanelController.Dispose();
             cts.SafeCancelAndDispose();
+            commandCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
