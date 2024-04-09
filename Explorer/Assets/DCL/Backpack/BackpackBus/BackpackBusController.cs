@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -14,7 +15,7 @@ namespace DCL.Backpack.BackpackBus
         private readonly IWearableCatalog wearableCatalog;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
 
         private int currentEmoteSlot = -1;
@@ -25,13 +26,13 @@ namespace DCL.Backpack.BackpackBus
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
             IReadOnlyEquippedWearables equippedWearables,
-            IBackpackEquipStatusController backpackEquipStatusController,
+            IEquippedEmotes equippedEmotes,
             IEmoteCache emoteCache)
         {
             this.wearableCatalog = wearableCatalog;
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedEmotes = equippedEmotes;
             this.emoteCache = emoteCache;
             this.equippedWearables = equippedWearables;
 
@@ -128,7 +129,7 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            backpackEventBus.SendUnEquipEmote(slot, backpackEquipStatusController.GetEquippedEmote(slot));
+            backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
             backpackEventBus.SendEquipEmote(slot, emote);
         }
 
@@ -147,7 +148,7 @@ namespace DCL.Backpack.BackpackBus
             if (command.Slot != null)
                 slot = command.Slot.Value;
             else if (command.Id != null)
-                slot = backpackEquipStatusController.GetEmoteEquippedSlot(command.Id);
+                slot = equippedEmotes.SlotOf(command.Id);
 
             if (slot == -1)
             {
@@ -155,7 +156,7 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            backpackEventBus.SendUnEquipEmote(slot, backpackEquipStatusController.GetEquippedEmote(slot));
+            backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
         }
 
         private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
