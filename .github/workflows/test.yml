@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest-xl
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
