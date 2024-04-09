@@ -1,5 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -19,14 +21,25 @@ namespace DCL.Profiles.Self
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly IEquippedEmotes equippedEmotes;
+        private readonly IEmoteCache emoteCache;
         private readonly ProfileBuilder profileBuilder = new ();
 
-        public SelfProfile(IProfileRepository profileRepository, IWeb3IdentityCache web3IdentityCache, IEquippedWearables equippedWearables, IWearableCatalog wearableCatalog)
+        public SelfProfile(
+            IProfileRepository profileRepository,
+            IWeb3IdentityCache web3IdentityCache,
+            IEquippedWearables equippedWearables,
+            IWearableCatalog wearableCatalog,
+            IEmoteCache emoteCache,
+            IEquippedEmotes equippedEmotes
+        )
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
             this.equippedWearables = equippedWearables;
             this.wearableCatalog = wearableCatalog;
+            this.emoteCache = emoteCache;
+            this.equippedEmotes = equippedEmotes;
         }
 
         public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
@@ -41,8 +54,12 @@ namespace DCL.Profiles.Self
                 uniqueWearables = uniqueWearables.EnsureNotNull();
                 ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
 
+                var uniqueEmotes = new URN[profile!.Avatar.Emotes.Count];
+                ConvertEquippedEmotesIntoUniqueUrns(profile!, uniqueEmotes);
+
                 profile = profileBuilder.From(profile)
                                         .WithWearables(uniqueWearables)
+                                        .WithEmotes(uniqueEmotes)
                                         .Build();
             }
 
@@ -71,6 +88,32 @@ namespace DCL.Profiles.Self
                 }
 
                 uniqueWearables.Add(uniqueUrn);
+            }
+        }
+
+        private void ConvertEquippedEmotesIntoUniqueUrns(Profile profile, IList<URN> uniqueEmotes)
+        {
+            for (var i = 0; i < equippedEmotes.SlotCount; i++)
+            {
+                IEmote? w = equippedEmotes.EmoteInSlot(i);
+
+                if (w == null) continue;
+
+                URN uniqueUrn = w.GetUrn();
+
+                if (!uniqueUrn.IsExtended())
+                {
+                    if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                        uniqueUrn = registry.First().Value.Urn;
+                    else
+                    {
+                        foreach (URN urn in profile.Avatar.Emotes)
+                            if (urn.Shorten() == uniqueUrn)
+                                uniqueUrn = urn;
+                    }
+                }
+
+                uniqueEmotes[i] = uniqueUrn;
             }
         }
     }
