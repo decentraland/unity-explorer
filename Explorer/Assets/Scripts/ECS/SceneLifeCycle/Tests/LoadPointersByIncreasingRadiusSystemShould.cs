@@ -31,6 +31,12 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            parcelMathJobifiedHelper.Dispose();
+        }
+
         [Test]
         public void StartLoading([Range(1, 10, 1)] int radius)
         {
