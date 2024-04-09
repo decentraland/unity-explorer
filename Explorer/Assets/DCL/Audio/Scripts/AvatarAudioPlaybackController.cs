@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 
 namespace DCL.Audio
 {
-    public class AvatarAudioPlaybackController2 : MonoBehaviour
+    public class AvatarAudioPlaybackController : MonoBehaviour
     {
         [FormerlySerializedAs("audioSource")]
         [SerializeField] private AudioSource AvatarAudioSource;
@@ -26,32 +26,32 @@ namespace DCL.Audio
         }
 
         [UsedImplicitly]
-        public void OnJumpStartA()
+        public void OnJumpStart()
         {
             PlayAvatarAudioForType(AvatarAudioClipType.JumpStart);
         }
 
         [UsedImplicitly]
-        public void OnJogJumpStartA()
+        public void OnJogJumpStart()
         {
             PlayAvatarAudioForType(AvatarAudioClipType.JumpJogStart);
         }
 
         [UsedImplicitly]
-        public void OnRunJumpStartA()
+        public void OnRunJumpStart()
         {
             PlayAvatarAudioForType(AvatarAudioClipType.JumpRunStart);
         }
 
         [UsedImplicitly]
-        public void OnRunFootHitGroundA()
+        public void OnRunFootHitGround()
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) &&
                 AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) { PlayAvatarAudioForType(AvatarAudioClipType.StepRun); }
         }
 
         [UsedImplicitly]
-        public void OnWalkFootHitGroundA()
+        public void OnWalkFootHitGround()
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold &&
                 AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk)
@@ -59,7 +59,7 @@ namespace DCL.Audio
         }
 
         [UsedImplicitly]
-        public void OnJogFootHitGroundA()
+        public void OnJogFootHitGround()
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Walk) &&
                 AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= ApplyAnimationMovementBlend.GetMovementBlendId(MovementKind.Jog) &&
@@ -67,19 +67,19 @@ namespace DCL.Audio
         }
 
         [UsedImplicitly]
-        public void OnJogJumpFootHitGroundA()
+        public void OnJogJumpFootHitGround()
         {
             PlayAvatarAudioForType(AvatarAudioClipType.JumpJogLand);
         }
 
         [UsedImplicitly]
-        public void OnRunJumpFootHitGroundA()
+        public void OnRunJumpFootHitGround()
         {
             PlayAvatarAudioForType(AvatarAudioClipType.JumpRunLand);
         }
 
         [UsedImplicitly]
-        public void OnJumpFootHitGroundA()
+        public void OnJumpFootHitGround()
         {
             PlayAvatarAudioForType(AvatarAudioClipType.JumpLand);
         }
