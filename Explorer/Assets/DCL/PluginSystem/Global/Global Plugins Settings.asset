@@ -36,6 +36,7 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
+  - rid: 6697045322133929986
   references:
     version: 2
     RefIds:
@@ -143,6 +144,28 @@ MonoBehaviour:
             m_SubObjectName: 
             m_SubObjectType: 
             m_EditorAssetChanged: 0
+        <EmbeddedEmotes>k__BackingField:
+        - wave
+        - fistpump
+        - dance
+        - raiseHand
+        - clap
+        - money
+        - kiss
+        - shrug
+        - headexplode
+        - cry
+        - dab
+        - disco
+        - dontsee
+        - hammer
+        - handsair
+        - hohoho
+        - robot
+        - snowfall
+        - tektonik
+        - tik
+        - confettipopper
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -325,6 +348,19 @@ MonoBehaviour:
       data:
         <spatialStateSettings>k__BackingField:
           m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6697045322133929986
+      type: {class: EmotePlugin/EmoteSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <EmbeddedEmotes>k__BackingField:
+          m_AssetGUID: 2a58c49334237a24781cae8b1e3fa351
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmoteAudioSource>k__BackingField:
+          m_AssetGUID: 62f68ba25f6c905428b36a081b072566
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

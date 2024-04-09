@@ -1,4 +1,5 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
@@ -43,6 +44,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
         private IRoadAssetPool roadCache;
 
+        private IEmoteCache? emoteCache;
 
         public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
@@ -60,6 +62,7 @@ namespace DCL.ResourcesUnloading
             audioClipsCache.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
             wearableAssetsCache.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
             wearableCatalog.Unload(fpsCapBudget);
+            emoteCache?.Unload(fpsCapBudget);
             gltfContainerAssetsCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
             assetBundleCache.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
             profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
@@ -77,15 +80,11 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void Register(ILODAssetsPool lodAssetsPool)
-        {
+        public void Register(ILODAssetsPool lodAssetsPool) =>
             lodCache = lodAssetsPool;
-        }
 
-        public void Register(IRoadAssetPool roadAssetPool)
-        {
+        public void Register(IRoadAssetPool roadAssetPool) =>
             roadCache = roadAssetPool;
-        }
 
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>
             this.assetBundleCache = assetBundleCache;
@@ -116,6 +115,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IStreamableCache<Profile, GetProfileIntention> profileIntentionCache) =>
             this.profileIntentionCache = profileIntentionCache;
+
+        public void Register(IEmoteCache emoteCache) =>
+            this.emoteCache = emoteCache;
 
         public void UpdateProfilingCounters()
         {

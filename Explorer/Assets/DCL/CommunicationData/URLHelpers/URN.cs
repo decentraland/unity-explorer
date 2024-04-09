@@ -19,6 +19,12 @@ namespace CommunicationData.URLHelpers
             this.urn = urn.ToString();
         }
 
+        public bool IsNullOrEmpty() =>
+            string.IsNullOrEmpty(urn);
+
+        public bool IsValid() =>
+            !IsNullOrEmpty() && urn.StartsWith("urn");
+
         public bool Equals(int other) => Equals(other.ToString());
 
         public bool Equals(URN other) =>
@@ -32,13 +38,6 @@ namespace CommunicationData.URLHelpers
 
         public override string ToString() =>
             urn;
-
-        public URLAddress ToUrlOrEmpty() =>
-            ToUrlOrEmpty(
-                URLAddress.FromString(
-                    "https://opensea.decentraland.org/api/v2/chain/ethereum/contract/{address}/nfts/{id}"
-                )
-            );
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
@@ -95,6 +94,8 @@ namespace CommunicationData.URLHelpers
 
         public URN Shorten()
         {
+            if (string.IsNullOrEmpty(urn)) return urn;
+
             int index = -1;
 
             for (var i = 0; i < SHORTEN_URN_PARTS; i++)

@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.CharacterPreview;
 using System;
@@ -7,9 +8,13 @@ namespace DCL.Backpack.BackpackBus
 {
     public class BackpackEventBus : IBackpackEventBus
     {
-        public event Action<IWearable> SelectEvent;
-        public event Action<IWearable> EquipEvent;
-        public event Action<IWearable> UnEquipEvent;
+        public event Action<IWearable> SelectWearableEvent;
+        public event Action<IWearable> EquipWearableEvent;
+        public event Action<IWearable> UnEquipWearableEvent;
+        public event Action<int, IEmote>? EquipEmoteEvent;
+        public event Action<int, IEmote?>? UnEquipEmoteEvent;
+        public event Action<int>? EmoteSlotSelectEvent;
+        public event Action<IEmote>? SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
@@ -17,14 +22,14 @@ namespace DCL.Backpack.BackpackBus
 
         public event Action<string> SearchEvent;
 
-        public void SendSelect(IWearable equipWearable) =>
-            SelectEvent?.Invoke(equipWearable);
+        public void SendWearableSelect(IWearable equipWearable) =>
+            SelectWearableEvent?.Invoke(equipWearable);
 
-        public void SendEquip(IWearable equipWearable) =>
-            EquipEvent?.Invoke(equipWearable);
+        public void SendEquipWearable(IWearable equipWearable) =>
+            EquipWearableEvent?.Invoke(equipWearable);
 
-        public void SendUnEquip(IWearable unEquipWearable) =>
-            UnEquipEvent?.Invoke(unEquipWearable);
+        public void SendUnEquipWearable(IWearable unEquipWearable) =>
+            UnEquipWearableEvent?.Invoke(unEquipWearable);
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
             ForceRenderEvent?.Invoke(forceRender);
@@ -40,5 +45,17 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendPublishProfile() =>
             PublishProfileEvent?.Invoke();
+
+        public void SendUnEquipEmote(int slot, IEmote? emote) =>
+            UnEquipEmoteEvent?.Invoke(slot, emote);
+
+        public void SendEquipEmote(int slot, IEmote emote) =>
+            EquipEmoteEvent?.Invoke(slot, emote);
+
+        public void SendEmoteSelect(IEmote emote) =>
+            SelectEmoteEvent?.Invoke(emote);
+
+        public void SendEmoteSlotSelect(int slot) =>
+            EmoteSlotSelectEvent?.Invoke(slot);
     }
 }

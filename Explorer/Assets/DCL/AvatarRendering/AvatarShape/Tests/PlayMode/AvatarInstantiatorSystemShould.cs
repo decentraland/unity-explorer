@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
@@ -23,12 +24,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using Google.Protobuf.WellKnownTypes;
+using DCL.AvatarRendering.Emotes;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -68,19 +70,28 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IObjectPool<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPool<UnityEngine.ComputeShader>>();
             computeShaderPool.Get().Returns(Object.Instantiate(computeShader));
 
-            var promise = Promise.Create(world,
+            var partitionComponent = new PartitionComponent();
+
+            var wearablePromise = WearablePromise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>
                     { "skin", "hair" }, Array.Empty<string>()),
-                new PartitionComponent());
+                partitionComponent);
 
-            world.Add(promise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
+            world.Add(wearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {
                 GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE),
                 GetMockWearable("skin", WearablesConstants.Categories.UPPER_BODY),
                 GetMockWearable("hair", WearablesConstants.Categories.HAIR),
             })));
 
-            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
+            var emotePromise = EmotePromise.Create(world, new GetEmotesByPointersIntention(new List<URN> { "clap" }, BodyShape.MALE), partitionComponent);
+
+            world.Add(emotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(new[]
+            {
+                GetMockEmote("clap", "emote"),
+            }, 1)));
+
+            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise, emotePromise,
                 randomSkinColor, randomHairColor, randomEyesColor);
 
             Material? celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");
@@ -110,7 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                                        {
                                            [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
                                            [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
-                                           [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) }
+                                           [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
                                        }));
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
@@ -118,12 +129,31 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler);
         }
 
+        private IEmote GetMockEmote(string materialName, string category)
+        {
+            (IEmote mockWearable, WearableRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
+
+            mockWearable.WearableAssetResults.Returns(
+                new StreamableLoadingResult<WearableRegularAsset>?[] { new StreamableLoadingResult<WearableRegularAsset>(wearableAsset) });
+
+            return mockWearable;
+        }
+
         private IWearable GetMockWearable(string materialName, string category)
         {
-            IWearable mockWearable = Substitute.For<IWearable>();
+            (IWearable mockWearable, WearableRegularAsset wearableAsset) = GetMockedAvatarAttachment<IWearable>(materialName, category);
 
-            var assetBundleData
-                = new StreamableLoadingResult<WearableAssetBase>?[BodyShape.COUNT];
+            mockWearable.WearableAssetResults.Returns(new WearableAssets[]
+            {
+                new StreamableLoadingResult<WearableAssetBase>(wearableAsset),
+            });
+
+            return mockWearable;
+        }
+
+        private (T, WearableRegularAsset) GetMockedAvatarAttachment<T>(string materialName, string category) where T: class, IAvatarAttachment
+        {
+            T mockWearable = Substitute.For<T>();
 
             //Creating a hierarchy
             var avatarGameObject = new GameObject();
@@ -142,20 +172,14 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             };
 
             skinnedMeshRenderer.material = fakeABMaterial;
+            mockWearable.GetCategory().Returns(category);
 
             var rendererInfo = new WearableRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
             var wearableAsset = new WearableRegularAsset(avatarGameObject, new List<WearableRegularAsset.RendererInfo> { rendererInfo }, null);
             wearableAsset.AddReference();
 
-            mockWearable.WearableAssetResults.Returns(new WearableAssets[]
-            {
-                new StreamableLoadingResult<WearableAssetBase>(wearableAsset)
-            });
-
-            mockWearable.GetCategory().Returns(category);
-
-            return mockWearable;
+            return (mockWearable, wearableAsset);
         }
 
         [Test]
@@ -184,14 +208,20 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             await InstantiateAvatar();
 
             // Act
-            var newPromise = Promise.Create(world,
+            var newWearablePromise = WearablePromise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
                 new PartitionComponent());
 
-            world.Add(newPromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
+            var newEmotePromise = EmotePromise.Create(world,
+                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(BodyShape.MALE, new List<URN>()),
+                new PartitionComponent());
+
+            world.Add(newWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
+            world.Add(newEmotePromise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(new[] { GetMockEmote("emote", WearablesConstants.Categories.EYES) }, 1)));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
-            world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newPromise;
+            world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newWearablePromise;
+            world.Get<AvatarShapeComponent>(avatarEntity).EmotePromise = newEmotePromise;
 
             system.Update(0);
 

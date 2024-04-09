@@ -86,5 +86,8 @@ namespace SceneRunner.Scene
 
         public URLAddress GetAssetBundleURL(string hash) =>
             assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
+        
+        public string GetVersion() =>
+            version;
     }
 }
