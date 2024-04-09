@@ -22,10 +22,10 @@ namespace DCL.Settings
 
             GenerateSettings();
 
-            view.GeneralSectionButton.onClick.AddListener(OpenGeneralSection);
-            view.GraphicsSectionButton.onClick.AddListener(OpenGraphicsSection);
-            view.SoundSectionButton.onClick.AddListener(OpenSoundSection);
-            view.ControlsSectionButton.onClick.AddListener(OpenControlsSection);
+            view.GeneralSectionButtonWithSelectableState.Button.onClick.AddListener(OpenGeneralSection);
+            view.GraphicsSectionButtonWithSelectableState.Button.onClick.AddListener(OpenGraphicsSection);
+            view.SoundSectionButtonWithSelectableState.Button.onClick.AddListener(OpenSoundSection);
+            view.ControlsSectionButtonWithSelectableState.Button.onClick.AddListener(OpenControlsSection);
         }
 
         public void Activate()
@@ -75,6 +75,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(false);
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(false);
+            view.GeneralSectionButtonWithSelectableState.SetSelected(true);
+            view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
+            view.SoundSectionButtonWithSelectableState.SetSelected(false);
+            view.ControlsSectionButtonWithSelectableState.SetSelected(false);
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -84,6 +88,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(false);
+            view.GeneralSectionButtonWithSelectableState.SetSelected(false);
+            view.GraphicsSectionButtonWithSelectableState.SetSelected(true);
+            view.SoundSectionButtonWithSelectableState.SetSelected(false);
+            view.ControlsSectionButtonWithSelectableState.SetSelected(false);
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -93,6 +101,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(false);
             view.SoundSectionContainer.gameObject.SetActive(view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0);
             view.ControlsSectionContainer.gameObject.SetActive(false);
+            view.GeneralSectionButtonWithSelectableState.SetSelected(false);
+            view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
+            view.SoundSectionButtonWithSelectableState.SetSelected(true);
+            view.ControlsSectionButtonWithSelectableState.SetSelected(false);
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -102,6 +114,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(false);
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
+            view.GeneralSectionButtonWithSelectableState.SetSelected(false);
+            view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
+            view.SoundSectionButtonWithSelectableState.SetSelected(false);
+            view.ControlsSectionButtonWithSelectableState.SetSelected(true);
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
