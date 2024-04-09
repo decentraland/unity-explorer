@@ -1,14 +1,18 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3.Identities;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 
@@ -19,6 +23,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
         private readonly IProfileRepository profileRepository;
+        private readonly IEmoteCache emoteCache;
+        private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
@@ -32,13 +38,17 @@ namespace DCL.PluginSystem.Global
 
         public BackpackSubPlugin(IAssetsProvisioner assetsProvisioner, IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory, IWearableCatalog wearableCatalog,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IEmoteCache emoteCache,
+            IReadOnlyCollection<URN> embeddedEmotes)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
             this.profileRepository = profileRepository;
+            this.emoteCache = emoteCache;
+            this.embeddedEmotes = embeddedEmotes;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -51,9 +61,9 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
-            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity, wearableCatalog, ProvideEcsContext);
+            var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus, profileRepository, web3Identity, wearableCatalog, emoteCache, ProvideEcsContext);
 
-            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
+            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController, emoteCache);
 
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
@@ -65,10 +75,21 @@ namespace DCL.PluginSystem.Global
 
             AvatarView? avatarView = view.GetComponentInChildren<AvatarView>();
 
-            var infoPanelController = new BackpackInfoPanelController(avatarView.backpackInfoPanelView, backpackEventBus,
-                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController);
+            BackpackInfoPanelController wearableInfoPanelController = new (avatarView.backpackInfoPanelView, backpackEventBus,
+                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController,
+                BackpackInfoPanelController.AttachmentType.Wearable);
 
-            await infoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            EmotesView emoteView = view.GetComponentInChildren<EmotesView>();
+
+            BackpackInfoPanelController emoteInfoPanelController = new (emoteView.BackpackInfoPanelView, backpackEventBus,
+                categoryIconsMapping, rarityInfoPanelBackgroundsMapping, rarityColorMappings, backpackEquipStatusController,
+                BackpackInfoPanelController.AttachmentType.Emote);
+
+            var emoteBreadCrumb = new BackpackEmoteBreadCrumbController(emoteView.BreadCrumb, backpackEventBus);
+
+            ObjectPool<BackpackEmoteGridItemView>? emoteGridPool = await BackpackEmoteGridController.InitializeAssetsAsync(assetsProvisioner, emoteView.GridView, ct);
+
+            await wearableInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
@@ -81,8 +102,16 @@ namespace DCL.PluginSystem.Global
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                     backpackEquipStatusController, sortController, pageButtonView, gridPool, builder.World);
 
+                var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
+                    web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, backpackEquipStatusController,
+                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes);
+
+                var emotesController = new EmotesController(emoteView,
+                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityInfoPanelBackgroundsMapping));
+
                 backpackController = new BackpackController(view, avatarView, rarityInfoPanelBackgroundsMapping, backpackCommandBus, backpackEventBus,
-                    characterPreviewFactory, gridController, infoPanelController, builder.World, args.PlayerEntity);
+                    characterPreviewFactory, gridController, wearableInfoPanelController, emoteInfoPanelController, builder.World, args.PlayerEntity,
+                    emoteGridController, avatarView.GetComponentsInChildren<AvatarSlotView>(), emotesController, backpackEquipStatusController);
             };
         }
 

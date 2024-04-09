@@ -37,14 +37,20 @@ namespace ECS.SceneLifeCycle.Tests
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            mathJobifiedHelper.Dispose();
+        }
+
         [Test]
         public void CreatePointersForMissingScenes()
         {
-            var processed = new NativeHashSet<int2>(2, AllocatorManager.Persistent);
+            using var processed = new NativeHashSet<int2>(2, AllocatorManager.Persistent);
             processed.Add(new int2(1, -1));
             processed.Add(new int2(0, 1));
 
-            var processedCopy = processed.ToNativeArray(AllocatorManager.Persistent);
+            using var processedCopy = processed.ToNativeArray(AllocatorManager.Persistent);
 
             mathJobifiedHelper.StartParcelsRingSplit(int2.zero, 1, processed);
 

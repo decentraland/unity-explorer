@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -36,10 +37,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         public override void Initialize()
         {
-            var pointersRequest = new List<string>[BodyShape.COUNT];
+            var pointersRequest = new List<URN>[BodyShape.COUNT];
 
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
-                pointersRequest[BodyShape.VALUES[i]] = new List<string>(defaultWearableDefinition.Value.Count);
+                pointersRequest[BodyShape.VALUES[i]] = new List<URN>(defaultWearableDefinition.Value.Count);
 
             var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
 
@@ -55,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
             {
                 BodyShape bodyShape = BodyShape.VALUES[i];
-                List<string> pointers = pointersRequest[bodyShape];
+                List<URN> pointers = pointersRequest[bodyShape];
 
                 state.PromisePerBodyShape[bodyShape] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
                    .Create(World, new GetWearablesByPointersIntention(pointers, bodyShape, Array.Empty<string>(), AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);

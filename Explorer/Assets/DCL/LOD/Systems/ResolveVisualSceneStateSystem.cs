@@ -1,11 +1,7 @@
-﻿using System.Threading;
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AssetsProvision;
-using DCL.Diagnostics;
 using DCL.LOD;
-using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -13,10 +9,6 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
-using SceneRunner;
-using SceneRunner.Scene;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -27,10 +19,14 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly VisualSceneStateResolver visualSceneStateResolver;
+        private readonly IRealmData realmData;
 
-        public ResolveVisualSceneStateSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
+        public ResolveVisualSceneStateSystem(World world, ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, IRealmData realmData) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
+            this.visualSceneStateResolver = visualSceneStateResolver;
+            this.realmData = realmData;
         }
 
         protected override void Update(float t)
@@ -43,7 +39,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void AddSceneVisualState(in Entity entity, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             VisualSceneState visualSceneState = new VisualSceneState();
-            VisualSceneStateUtils.ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent, lodSettingsAsset);
+            visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent, lodSettingsAsset, realmData);
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }

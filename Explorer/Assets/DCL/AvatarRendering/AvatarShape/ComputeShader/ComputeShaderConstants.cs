@@ -4,7 +4,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderConstants
     {
-        public const string TOON_KEYWORD = "_DCL_COMPUTE_SKINNING";
 
         public const string HAIR_MATERIAL_NAME = "hair";
         public const string SKIN_MATERIAL_NAME = "skin";

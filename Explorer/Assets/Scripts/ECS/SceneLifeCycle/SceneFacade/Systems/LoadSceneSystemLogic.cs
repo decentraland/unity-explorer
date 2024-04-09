@@ -81,7 +81,7 @@ namespace ECS.SceneLifeCycle.Systems
                    .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 if (sceneAbDto.ValidateVersion())
-                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto);
+                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files);
 
                 ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundle Version Mismatch for {sceneId}");
                 return SceneAssetBundleManifest.NULL;
