@@ -33,6 +33,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             AudioSource = audioSource;
             if (audioMixerGroup != null) { audioSource.outputAudioMixerGroup = audioMixerGroup; }
+            audioSource.spatialBlend = 1; // We make the AudioSource to work on 3D space
             AudioSourceAssigned = true;
         }
 
