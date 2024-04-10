@@ -50,6 +50,7 @@ namespace DCL.Nametags
         private float previousDistance;
         private const float DISTANCE_THRESHOLD = 0.1f;
 
+        private readonly Color startingTextColor = new (1,1,1,0);
         private Color textColor = new (1,1,1,1);
         private Color usernameTextColor = new (1,1,1,1);
         private Color backgroundColor = new (1, 1, 1, 1);
@@ -67,6 +68,7 @@ namespace DCL.Nametags
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + chatBubbleConfiguration.nametagMarginOffsetHeight);
             Username.rectTransform.anchoredPosition = Vector2.zero;
             Background.size = new Vector2(Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth, Username.preferredHeight + chatBubbleConfiguration.nametagMarginOffsetHeight);
+            MessageContent.color = startingTextColor;
         }
 
         public void SetTransparency(float distance, float maxDistance)
@@ -124,7 +126,7 @@ namespace DCL.Nametags
             usernameFinalPosition.y = MessageContentRectTransform.sizeDelta.y + (chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
 
             //Start all animations
-            MessageContent.DOColor(textColor, chatBubbleConfiguration.animationDuration);
+            DOTween.Sequence().AppendInterval(chatBubbleConfiguration.animationDuration / 3).Append(MessageContent.DOColor(textColor, chatBubbleConfiguration.animationDuration / 4)).Play();
             Username.rectTransform.DOAnchorPos(usernameFinalPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve);
             MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve);
             DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve);
@@ -140,7 +142,7 @@ namespace DCL.Nametags
 
             Username.rectTransform.DOAnchorPos(Vector2.zero, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear);
             MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear);
-            MessageContent.DOColor(finishColor, chatBubbleConfiguration.animationDuration / 4);
+            MessageContent.DOColor(finishColor, chatBubbleConfiguration.animationDuration / 10);
             DOTween.To(() => Background.size, x=> Background.size = x, backgroundFinalSize, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear);
         }
 
