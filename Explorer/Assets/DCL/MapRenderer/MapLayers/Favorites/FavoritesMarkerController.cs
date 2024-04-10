@@ -54,7 +54,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
             marker.OnBecameVisible();
         }
 
-        private async UniTaskVoid GetFavorites(CancellationToken cancellationToken)
+        private async UniTaskVoid GetFavoritesAsync(CancellationToken cancellationToken)
         {
             foreach (PlacesData.PlaceInfo placeInfo in await placesAPIService.GetFavoritesAsync(-1, -1, cancellationToken))
                 OnMinimapSceneInfoUpdated(placeInfo);
@@ -151,7 +151,7 @@ namespace DCL.MapRenderer.MapLayers.Favorites
 
         public UniTask Enable(CancellationToken cancellationToken)
         {
-            GetFavorites(CancellationToken.None).Forget();
+            GetFavoritesAsync(CancellationToken.None).Forget();
             foreach (IFavoritesMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 

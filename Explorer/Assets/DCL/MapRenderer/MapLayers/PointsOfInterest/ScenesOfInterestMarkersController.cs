@@ -42,36 +42,28 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             this.builder = builder;
         }
 
-        public async UniTask Initialize(CancellationToken cancellationToken)
+        public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
             IReadOnlyList<string> pointsOfInterestCoordsAsync = await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken);
             using var placesByCoordsListAsync = await placesAPIService.GetPlacesByCoordsListAsync(coordsUtils.ConvertToVector2Int(pointsOfInterestCoordsAsync), cancellationToken, true);
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
             foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
             {
-                try
-                {
-                    if (markers.ContainsKey(placeInfo))
-                        continue;
+                if (markers.ContainsKey(placeInfo))
+                    continue;
 
-                    if (IsEmptyParcel(placeInfo))
-                        continue;
+                if (IsEmptyParcel(placeInfo))
+                    continue;
 
-                    var marker = builder(objectsPool, mapCullingController);
+                var marker = builder(objectsPool, mapCullingController);
+                var centerParcel = GetParcelsCenter(placeInfo);
+                var position = coordsUtils.CoordsToPosition(centerParcel);
 
-                    var centerParcel = GetParcelsCenter(placeInfo);
-                    var position = coordsUtils.CoordsToPosition(centerParcel);
+                marker.SetData(placeInfo.title, position);
+                markers.Add(placeInfo, marker);
 
-                    marker.SetData(placeInfo.title, position);
-
-                    markers.Add(placeInfo, marker);
-
-                    if (isEnabled)
-                        mapCullingController.StartTracking(marker, this);
-                } catch(Exception e)
-                {
-                    Debug.LogError($"Error initializing scene of interest marker: {e}");
-                }
+                if (isEnabled)
+                    mapCullingController.StartTracking(marker, this);
             }
         }
 

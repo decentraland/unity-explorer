@@ -35,7 +35,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             placesAPIService = placesAPI;
             assetsProvisioner = assetsProv;
             mapSettings = settings;
-            var prefab = await GetPrefab(cancellationToken);
+            var prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<FavoriteMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
@@ -70,7 +70,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static IFavoritesMarker CreateMarker(IObjectPool<FavoriteMarkerObject> objectsPool, IMapCullingController cullingController) =>
             new FavoritesMarker(objectsPool, cullingController);
 
-        private async UniTask<FavoriteMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
+        private async UniTask<FavoriteMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.FavoriteMarker, cancellationToken)).Value.GetComponent<FavoriteMarkerObject>();
     }
 }

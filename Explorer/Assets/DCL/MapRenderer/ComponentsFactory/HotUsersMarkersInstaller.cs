@@ -29,7 +29,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         {
             assetsProvisioner = assetsProv;
             mapSettings = settings;
-            var prefab = await GetPrefab(cancellationToken);
+            var prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<HotUserMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
@@ -56,7 +56,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             coordsUtils.SetObjectScale(markerObject);
             return markerObject;
         }
-        private async UniTask<HotUserMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
+        private async UniTask<HotUserMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.UserMarker, cancellationToken)).Value.GetComponent<HotUserMarkerObject>();
     }
 }

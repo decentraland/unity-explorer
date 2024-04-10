@@ -35,7 +35,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.mapSettings = settings;
             this.assetsProvisioner = assetsProv;
             this.placesAPIService = placesAPI;
-            var prefab = await GetPrefab(cancellationToken);
+            var prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<SceneOfInterestMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
@@ -52,7 +52,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 cullingController
             );
 
-            await controller.Initialize(cancellationToken);
+            await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.ScenesOfInterest, controller);
             zoomScalingWriter.Add(controller);
         }
@@ -71,7 +71,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static ISceneOfInterestMarker CreateMarker(IObjectPool<SceneOfInterestMarkerObject> objectsPool, IMapCullingController cullingController) =>
             new SceneOfInterestMarker(objectsPool, cullingController);
 
-        private async UniTask<SceneOfInterestMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
+        private async UniTask<SceneOfInterestMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SceneOfInterestMarker, cancellationToken)).Value.GetComponent<SceneOfInterestMarkerObject>();
     }
 }
