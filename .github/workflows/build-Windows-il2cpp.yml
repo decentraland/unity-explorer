@@ -40,7 +40,7 @@ jobs:
           - targetPlatform: StandaloneWindows64
 
     name: Build
-    runs-on: bigwin
+    runs-on: bigwin2022
     timeout-minutes: 120
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
@@ -162,6 +162,7 @@ jobs:
               (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
               (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' | Set-Content -Path $jsonFilePath
               (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' | Set-Content -Path $jsonFilePath
+              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' | Set-Content -Path $jsonFilePath
           
               # Display the content of manifest.json
               Get-Content -Path $jsonFilePath
@@ -169,8 +170,7 @@ jobs:
               # Display list of files
               ls
 
-
-      - uses: decentraland/unity-builder@0.91
+      - uses: game-ci/unity-builder@v4.2.3
         id: build
         timeout-minutes: 120
         with:
@@ -183,9 +183,14 @@ jobs:
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
 
+      - name: Download and Extract Zip File
+        run: |
+          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}_Data/StreamingAssets/AssetBundles/lods/lods.zip"
+        shell: pwsh
+
       # Upload artifact
       - name: Upload windows artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: |

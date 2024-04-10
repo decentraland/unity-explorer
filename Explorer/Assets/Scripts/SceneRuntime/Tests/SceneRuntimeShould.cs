@@ -8,6 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
 using System;
 using System.Collections;
@@ -46,9 +47,9 @@ namespace SceneRuntime.Tests
         ";
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
                 await sceneRuntime.StartScene();
 
                 engineApi.Received().CrdtGetState();
@@ -72,9 +73,9 @@ namespace SceneRuntime.Tests
         ";
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
 
                 var testOk = new TestUtilCheckOk();
                 sceneRuntime.engine.AddHostObject("test", testOk);
@@ -110,7 +111,7 @@ namespace SceneRuntime.Tests
         ";
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 await sceneRuntime.StartScene();
 
@@ -137,9 +138,9 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
 
                 await sceneRuntime.StartScene();
 

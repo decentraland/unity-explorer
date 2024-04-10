@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
@@ -33,6 +34,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(MovementBlockerComponent))]
         private void UpdateInput([Data] int tickValue, ref JumpInputComponent inputToUpdate)
         {
             if (inputAction.WasPressedThisFrame())

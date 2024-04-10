@@ -30,7 +30,6 @@ namespace DCL.Emoji
         private int startDec;
         private int endDec;
         private int emojiCode;
-        private string emojiChar;
 
         public EmojiPanelController(
             EmojiPanelView view,
@@ -129,13 +128,12 @@ namespace DCL.Emoji
             for (int i = 0; i < endDec-startDec; i++)
             {
                 emojiCode = startDec + i;
-                emojiChar = char.ConvertFromUtf32(emojiCode);
 
                 if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromUnicode((uint) emojiCode) == -1)
                     continue;
 
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
-                emojiButton.EmojiImage.text = emojiChar;
+                emojiButton.EmojiImage.text = $"\\U000{emojiCode:X}";
                 emojiButton.OnEmojiSelected += EmojiSelected;
 
                 if (emojiValueMapping.TryGetValue(emojiCode, out string emojiValue))

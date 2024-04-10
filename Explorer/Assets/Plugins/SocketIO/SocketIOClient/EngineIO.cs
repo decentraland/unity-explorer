@@ -4,5 +4,6 @@
     {
         V3 = 3,
         V4 = 4,
+        WebSocketDefault = 5,
     }
 }

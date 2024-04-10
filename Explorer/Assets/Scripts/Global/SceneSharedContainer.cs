@@ -1,9 +1,11 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
 using SceneRunner;
 using SceneRunner.ECSWorld;
@@ -23,7 +25,9 @@ namespace Global
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            IRealmData realmData)
+            IWebRequestController webRequestController,
+            IRoomHub roomHub,
+            IRealmData? realmData)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -49,6 +53,8 @@ namespace Global
                     mvcManager,
                     profileRepository,
                     web3IdentityCache,
+                    webRequestController,
+                    roomHub,
                     realmData
                 ),
             };

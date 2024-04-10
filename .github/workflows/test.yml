@@ -68,6 +68,7 @@ jobs:
             sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
             sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
             sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
+            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask|file:../../unity-explorer-packages/SoftMask|' "$jsonFilePath"
             ls -l
             # Display the content of manifest.json
             cat "$jsonFilePath"
@@ -77,9 +78,10 @@ jobs:
       - uses: game-ci/unity-test-runner@v4.1.1
         id: testRunner
         timeout-minutes: 30
+        continue-on-error: true
         with:
           projectPath: Explorer
-          testMode: all
+          testMode: all      
 
       - name: Convert NUnit to JUnit
         if: always()

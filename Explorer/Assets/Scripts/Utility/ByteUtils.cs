@@ -106,8 +106,8 @@ namespace Utility
                 // Get a pointer to the start of the value's memory
                 var pResult = (byte*)Unsafe.AsPointer(ref result);
 
-                // Set the additional bytes to 0 using pointer arithmetic
-                *(TTo*)(pResult + sizeof(TEnum)) = default(TTo);
+                // Zero out the additional bytes
+                Unsafe.InitBlockUnaligned(pResult + sizeof(TEnum), 0, (uint)sizeDiff);
             }
 
             MemoryMarshal.Write(span, ref result);
