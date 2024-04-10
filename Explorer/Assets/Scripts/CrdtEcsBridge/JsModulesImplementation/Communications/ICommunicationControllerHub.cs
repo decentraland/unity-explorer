@@ -3,7 +3,7 @@ using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
 
-namespace CrdtEcsBridge.CommunicationsController
+namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public interface ICommunicationControllerHub
     {

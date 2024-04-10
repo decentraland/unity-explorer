@@ -7,6 +7,7 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
@@ -69,7 +70,8 @@ namespace SceneRunner.Tests
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
                 new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT, new IRoomHub.Fake(), Substitute.For<IRealmData>());
+                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>());
         }
 
         [OneTimeTearDown]

@@ -8,7 +8,6 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
@@ -16,7 +15,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     /// <summary>
     ///     Unique instance for each Scene Runtime

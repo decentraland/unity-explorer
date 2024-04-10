@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using CRDT.Memory;
 using CRDT.Protocol;
-using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
@@ -204,6 +203,8 @@ namespace SceneRunner
         public void SetIsCurrent(bool isCurrent)
         {
             sceneStateProvider.IsCurrent = isCurrent;
+            if (isCurrent)
+                runtimeInstance.OnSceneBecameCurrent();
         }
 
         public async UniTask DisposeAsync()

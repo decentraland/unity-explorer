@@ -31,6 +31,8 @@ namespace SceneRuntime
         void ApplyStaticMessages(ReadOnlyMemory<byte> data);
 
         void SetIsDisposing();
+
+        void OnSceneBecameCurrent();
     }
 
     public static class SceneRuntimeExtensions

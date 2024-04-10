@@ -1,10 +1,6 @@
 ﻿using CRDT.Memory;
 using DCL.Multiplayer.Connections.Messaging;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
-using Google.Protobuf;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -14,7 +10,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
-namespace CrdtEcsBridge.CommunicationsController
+namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
     {
@@ -37,6 +33,8 @@ namespace CrdtEcsBridge.CommunicationsController
             this.crdtMemoryAllocator = crdtMemoryAllocator;
         }
 
+        internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
+
         public void OnSceneBecameCurrent()
         {
             messagePipesHub.SetSceneMessageHandler(OnMessageReceived);
@@ -49,8 +47,15 @@ namespace CrdtEcsBridge.CommunicationsController
                 if (message.Length == 0)
                     continue;
 
-                byte[] encodedMessage = EncodeMessage(message, MsgType.Uint8Array);
-                SendMessage(encodedMessage);
+                EncodeAndSend();
+
+                void EncodeAndSend()
+                {
+                    Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
+                    encodedMessage[0] = (byte)MsgType.Uint8Array;
+                    message.CopyTo(encodedMessage[1..]);
+                    SendMessage(encodedMessage);
+                }
             }
 
             object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
@@ -94,6 +99,7 @@ namespace CrdtEcsBridge.CommunicationsController
                 // Wallet Id
                 int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.FromWalletId);
                 Span<byte> senderBytes = stackalloc byte[walletBytesCount];
+                Encoding.UTF8.GetBytes(receivedMessage.FromWalletId, senderBytes);
 
                 int messageLength = senderBytes.Length + decodedMessage.Length + 1;
 
@@ -108,14 +114,6 @@ namespace CrdtEcsBridge.CommunicationsController
             }
         }
 
-        private static byte[] EncodeMessage(byte[] data, MsgType type)
-        {
-            var message = new byte[data.Length + 1];
-            message[0] = (byte)type;
-            Array.Copy(data, 0, message, 1, data.Length);
-            return message;
-        }
-
         private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {
             var msgType = (MsgType)value[0];
@@ -123,7 +121,7 @@ namespace CrdtEcsBridge.CommunicationsController
             return msgType;
         }
 
-        private enum MsgType
+        internal enum MsgType
         {
             String = 1, // Deprecated in SDK7
             Uint8Array = 2,

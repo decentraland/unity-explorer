@@ -13,7 +13,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine.Pool;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class WebSocketApiImplementation : IWebSocketApi
     {

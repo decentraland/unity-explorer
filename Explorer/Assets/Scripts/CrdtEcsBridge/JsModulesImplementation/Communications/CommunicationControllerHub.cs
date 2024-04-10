@@ -6,7 +6,7 @@ using Google.Protobuf;
 using System;
 using System.Threading;
 
-namespace CrdtEcsBridge.CommunicationsController
+namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     /// <summary>
     /// We can't subscribe to the `Scene` message multiple times

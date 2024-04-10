@@ -97,6 +97,11 @@ namespace SceneRuntime
             jsApiBunch.Dispose();
         }
 
+        public void OnSceneBecameCurrent()
+        {
+            jsApiBunch.OnSceneBecameCurrent();
+        }
+
         public void Register<T>(string itemName, T target) where T: IJsApiWrapper
         {
             jsApiBunch.AddHostObject(itemName, target);

@@ -17,7 +17,7 @@ using Unity.Collections;
 using UnityEngine.Networking;
 using Utility;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     /// <summary>
     ///     Unique instance for each Scene Runtime

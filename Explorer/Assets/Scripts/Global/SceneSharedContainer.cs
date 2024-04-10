@@ -1,4 +1,5 @@
 using CRDT.Serializer;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -58,7 +59,7 @@ namespace Global
                     webRequestController,
                     roomHub,
                     realmData,
-                    messagePipesHub
+                    new CommunicationControllerHub(messagePipesHub)
                 ),
             };
         }
