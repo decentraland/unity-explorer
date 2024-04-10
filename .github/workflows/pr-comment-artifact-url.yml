@@ -39,7 +39,7 @@ jobs:
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            .id")
+            .id | first")
           
           echo "Artifact ID: $ARTIFACT_ID"
           echo "ARTIFACT_ID=$ARTIFACT_ID" >> "$GITHUB_ENV"
@@ -55,6 +55,11 @@ jobs:
           
           echo "Head SHA: $HEAD_SHA"
           echo "HEAD_SHA=$HEAD_SHA" >> "$GITHUB_ENV"
+
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "Build done on: $BUILD_DATE"
+          echo "BUILD_DATE=$BUILD_DATE" >> "$GITHUB_ENV"
+          
       - name: Find Comment
         uses: peter-evans/find-comment@v2
         id: find-comment
@@ -81,6 +86,7 @@ jobs:
             | Commit   | ${{ env.HEAD_SHA }}     |
             | Logs     | ${{ env.JOB_PATH }}     |
             | Download | ${{ env.ARTIFACT_URL }} |
+            | Built on | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
 
