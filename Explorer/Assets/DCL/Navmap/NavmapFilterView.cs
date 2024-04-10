@@ -27,6 +27,9 @@ namespace DCL.Navmap
         public Button infoButton;
 
         [field: SerializeField]
+        public Button daoButton;
+
+        [field: SerializeField]
         public GameObject infoContent;
 
         [field: SerializeField]
