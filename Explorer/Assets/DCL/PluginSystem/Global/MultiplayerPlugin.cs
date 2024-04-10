@@ -17,9 +17,11 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Systems;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
+using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
 using UnityEngine.Pool;
@@ -41,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemotePoses remotePoses;
         private readonly ICharacterObject characterObject;
+        private readonly IScenesCache scenesCache;
 
         public MultiplayerPlugin(
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -55,7 +58,8 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
-            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
+            IScenesCache scenesCache
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -69,6 +73,7 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
             this.remotePoses = remotePoses;
             this.characterObject = characterObject;
+            this.scenesCache = scenesCache;
 
             remoteEntities = new RemoteEntities(
                 roomHub,
@@ -104,6 +109,8 @@ namespace DCL.PluginSystem.Global
                 characterObject,
                 realFlowLoadingStatus
             );
+
+            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache);
 #endif
         }
     }

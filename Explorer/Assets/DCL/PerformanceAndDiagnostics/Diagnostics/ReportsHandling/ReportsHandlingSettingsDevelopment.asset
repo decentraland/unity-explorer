@@ -474,6 +474,26 @@ MonoBehaviour:
       Severity: 1
     - Category: MULTIPLAYER_MOVEMENT
       Severity: 1
+    - Category: MULTIPLAYER_SDK_COMPONENTS_HANDLER
+      Severity: 3
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 3
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 2
+    - Category: MULTIPLAYER_SDK_COMPONENTS_HANDLER
+      Severity: 2
+    - Category: MULTIPLAYER_SDK_COMPONENTS_HANDLER
+      Severity: 0
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 0
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_COMPONENTS_HANDLER
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_COMPONENTS_HANDLER
+      Severity: 1
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE

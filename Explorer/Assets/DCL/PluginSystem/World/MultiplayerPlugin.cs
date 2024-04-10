@@ -11,13 +11,6 @@ namespace DCL.PluginSystem.World
 {
     public class MultiplayerPlugin : IDCLWorldPlugin
     {
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
-
-        public MultiplayerPlugin(ObjectProxy<Arch.Core.World> globalWorldProxy)
-        {
-            this.globalWorldProxy = globalWorldProxy;
-        }
-
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -28,7 +21,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            var playerIdentityDataSystem = PlayerIdentityDataSystem.InjectToWorld(ref builder, globalWorldProxy, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            var playerIdentityDataSystem = WritePlayerIdentityDataSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
             // finalizeWorldSystems.Add(playerIdentityDataSystem); // TODO
         }
 

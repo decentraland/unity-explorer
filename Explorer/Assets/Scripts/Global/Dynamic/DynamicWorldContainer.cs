@@ -230,7 +230,8 @@ namespace Global.Dynamic
                     messagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
-                    queuePoolFullMovementMessage
+                    queuePoolFullMovementMessage,
+                    staticContainer.ScenesCache
                 ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
