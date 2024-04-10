@@ -11,7 +11,6 @@ using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -109,9 +108,22 @@ namespace Global.Dynamic
                 identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
 
+#if !UNITY_EDITOR
+                string authServerUrl = Debug.isDebugBuild
+                    ? settings.AuthWebSocketUrlDev
+                    : settings.AuthWebSocketUrl;
+
+                string authSignatureUrl = Debug.isDebugBuild
+                    ? settings.AuthSignatureUrlDev
+                    : settings.AuthSignatureUrl;
+#else
+                string authServerUrl = settings.AuthWebSocketUrl;
+                string authSignatureUrl = settings.AuthSignatureUrl;
+#endif
+
                 web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
-                    settings.AuthWebSocketUrl,
-                    settings.AuthSignatureUrl,
+                    authServerUrl,
+                    authSignatureUrl,
                     identityCache,
                     new HashSet<string>(settings.Web3WhitelistMethods));
 

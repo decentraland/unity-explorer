@@ -33,9 +33,11 @@ namespace DCL.LOD.Systems
             lodSettingsAsset.IsColorDebuging = false;
             debugBuilder.AddWidget("LOD")
                 .AddSingleButton("LOD Debugging", ToggleLODColor)
+                .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, false)
                 .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold",  newValue => SetLOD(newValue, 0))
                 .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold",  newValue => SetLOD(newValue, 1))
                 .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[2], "LOD 3 Threshold",  newValue => SetLOD(newValue, 2));
+
         }
 
         private void SetLOD(int newValue, int i)

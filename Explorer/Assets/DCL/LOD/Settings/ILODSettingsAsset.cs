@@ -17,6 +17,9 @@ namespace DCL.LOD
         public bool IsColorDebuging { get; set; }
         public Color[] LODDebugColors { get; set; }
         public FaillingLODCube FaillingCube { get; set; }
+
+        public bool EnableLODStreaming { get; set; }
+
         
         
     }
