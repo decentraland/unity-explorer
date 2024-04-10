@@ -19,7 +19,13 @@ namespace DCL.Navmap
         private readonly IWebRequestController webRequestController;
         private ObjectPool<FullSearchResultsView> resultsPool;
         private readonly List<FullSearchResultsView> usedPoolElements;
-        private static readonly int LOADED_TRIGGER = Animator.StringToHash("Loaded");
+
+        private static readonly int OUT = Animator.StringToHash("Out");
+        private static readonly int IN = Animator.StringToHash("In");
+        private static readonly int LOADED = Animator.StringToHash("Loaded");
+        private static readonly int LOADING = Animator.StringToHash("Loading");
+        private static readonly int TO_LEFT = Animator.StringToHash("ToLeft");
+        private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
         public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
         {
@@ -47,20 +53,27 @@ namespace DCL.Navmap
             return fullSearchResultsView;
         }
 
-        public void Show()
+        private void Show()
         {
             view.gameObject.SetActive(true);
+            view.CanvasGroup.interactable = true;
+            view.CanvasGroup.blocksRaycasts = true;
+            view.panelAnimator.Rebind();
+            view.panelAnimator.Update(0f);
+            view.panelAnimator.SetTrigger(IN);
         }
 
         public void Hide()
         {
             ReleasePool();
-            view.gameObject.SetActive(false);
+            view.CanvasGroup.interactable = false;
+            view.CanvasGroup.blocksRaycasts = false;
+            view.panelAnimator.SetTrigger(OUT);
         }
 
         public void SetLoadingState()
         {
-            view.gameObject.SetActive(true);
+            Show();
             ReleasePool();
             for(var i = 0; i < 8; i++)
             {
@@ -82,7 +95,7 @@ namespace DCL.Navmap
                 fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
                 fullSearchResultsView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
-                fullSearchResultsView.resultAnimator.SetTrigger(LOADED_TRIGGER);
+                fullSearchResultsView.resultAnimator.SetTrigger(LOADED);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
                 fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
             }

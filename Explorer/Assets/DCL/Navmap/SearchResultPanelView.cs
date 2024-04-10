@@ -15,6 +15,12 @@ namespace DCL.Navmap
         [field: SerializeField]
         public RectTransform searchResultsContainer;
 
+        [field: SerializeField]
+        public CanvasGroup CanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public Animator panelAnimator;
+
         [Serializable]
         public class ResultAssetReference : ComponentReference<FullSearchResultsView>
         {
