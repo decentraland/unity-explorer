@@ -31,7 +31,6 @@ namespace CrdtEcsBridge.Engine
         }
 
         private readonly Dictionary<string, string> headersDictionary = new ();
-        private readonly Dictionary<string, string> responseHeadersDictionary = new ();
 
         public void Dispose() { }
 
@@ -91,13 +90,7 @@ namespace CrdtEcsBridge.Engine
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
             string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
 
-            responseHeadersDictionary.Clear();
-
-            foreach (string headerKey in unityWebRequest.GetResponseHeaders().Keys)
-            {
-                string headerValue = unityWebRequest.GetResponseHeader(headerKey);
-                responseHeadersDictionary.Add(headerKey, headerValue);
-            }
+            var responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
 
             bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
             bool requestRedirected = unityWebRequest.result == UnityWebRequest.Result.ProtocolError || unityWebRequest.result == UnityWebRequest.Result.ConnectionError;
