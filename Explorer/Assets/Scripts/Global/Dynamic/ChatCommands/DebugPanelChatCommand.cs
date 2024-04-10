@@ -24,6 +24,14 @@ namespace Global.Dynamic.ChatCommands
         {
             param = match.Groups[1].Value;
 
+            if (string.IsNullOrEmpty(param))
+            {
+                bool visible = !debugContainerBuilder.IsVisible;
+                debugContainerBuilder.IsVisible = visible;
+
+                return UniTask.FromResult(string.Empty);
+            }
+
             if (param == "help")
             {
                 string result = string.Empty;

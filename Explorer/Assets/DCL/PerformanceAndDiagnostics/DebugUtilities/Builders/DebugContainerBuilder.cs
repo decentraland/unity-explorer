@@ -16,6 +16,19 @@ namespace DCL.DebugUtilities
 
         public DebugContainer Container { get; private set; }
 
+        public bool IsVisible
+        {
+            get => Container.visible;
+
+            set
+            {
+                Container.visible = value;
+
+                foreach (DebugWidget widget in Widgets.Values)
+                    widget.visible = value;
+            }
+        }
+
         public DebugContainerBuilder(
             Func<DebugWidget> widgetFactoryMethod,
             Func<DebugControl> controlFactoryMethod,
