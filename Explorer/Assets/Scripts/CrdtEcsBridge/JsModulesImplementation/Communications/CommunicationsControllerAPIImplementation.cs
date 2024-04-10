@@ -16,6 +16,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IJsOperations jsOperations;
         private readonly ICommunicationControllerHub messagePipesHub;
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
@@ -25,12 +26,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
             IJsOperations jsOperations,
-            ICRDTMemoryAllocator crdtMemoryAllocator)
+            ICRDTMemoryAllocator crdtMemoryAllocator,
+            ISceneStateProvider sceneStateProvider)
         {
             this.sceneData = sceneData;
             this.messagePipesHub = messagePipesHub;
             this.jsOperations = jsOperations;
             this.crdtMemoryAllocator = crdtMemoryAllocator;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
@@ -42,6 +45,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public object SendBinary(IReadOnlyList<byte[]> data)
         {
+            if (!sceneStateProvider.IsCurrent)
+                return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
+
             foreach (byte[] message in data)
             {
                 if (message.Length == 0)

@@ -35,8 +35,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "TEST_SCENE" });
 
             crdtMemoryAllocator = CRDTOriginalMemorySlicer.Create();
+            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
 
-            api = new CommunicationsControllerAPIImplementation(sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator);
+            api = new CommunicationsControllerAPIImplementation(sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
             api.OnSceneBecameCurrent();
         }
 
