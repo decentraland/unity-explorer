@@ -3,9 +3,8 @@ using DCL.Chat.MessageBus.Deduplication;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
 using Decentraland.Kernel.Comms.Rfc4;
+using DCL.Profiles;
 using LiveKit.Proto;
 using System;
 using System.Threading;
@@ -16,10 +15,10 @@ namespace DCL.Chat.MessageBus
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
-        private readonly IMessageDeduplication messageDeduplication;
+        private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;
@@ -48,7 +47,8 @@ namespace DCL.Chat.MessageBus
                         receivedMessage.Payload.Message!,
                         profile?.DisplayName ?? string.Empty,
                         receivedMessage.FromWalletId,
-                        false
+                        false,
+                        true
                     )
                 );
             }

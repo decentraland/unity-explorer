@@ -1,7 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -44,7 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             SceneAssetBundleManifest? assetBundleManifest = null,
             URLSubdirectory customEmbeddedSubDirectory = default,
-            CancellationTokenSource? cancellationTokenSource = null)
+            CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
             Hash = hash;
@@ -83,7 +82,7 @@ namespace ECS.StreamableLoading.AssetBundles
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash), Name);
+            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? ""), Name);
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";

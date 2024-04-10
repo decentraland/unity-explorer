@@ -11,9 +11,9 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly List<string> Pointers;
+        public readonly List<URN> Pointers;
 
-        public GetWearableDTOByPointersIntention(List<string> pointers, CommonLoadingArguments commonArguments)
+        public GetWearableDTOByPointersIntention(List<URN> pointers, CommonLoadingArguments commonArguments)
         {
             Pointers = pointers;
             CommonArguments = commonArguments;

@@ -30,10 +30,10 @@ namespace DCL.Landscape.Systems
             this.realmPartitionSettings = realmPartitionSettings;
             this.landscapeData = landscapeData;
 
-            lodBias = new ElementBinding<int>(100);
+            lodBias = new ElementBinding<int>(180);
             detailDensity = new ElementBinding<int>(100);
             detailDistance = new ElementBinding<int>(80);
-            cullDistance = new ElementBinding<int>(200);
+            cullDistance = new ElementBinding<int>(5000);
 
             debugBuilder.AddWidget("Landscape")
                         .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)

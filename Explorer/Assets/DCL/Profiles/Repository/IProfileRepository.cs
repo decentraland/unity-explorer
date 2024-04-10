@@ -10,6 +10,9 @@ namespace DCL.Profiles
 {
     public interface IProfileRepository
     {
+        public const string GUEST_RANDOM_ID = "fakeUserId";
+        public const string PLAYER_RANDOM_ID = "Player";
+
         UniTask SetAsync(Profile profile, CancellationToken ct);
 
         UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct);
