@@ -5,6 +5,11 @@ using DCL.UI;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using DCL.PlacesAPIService;
+using DCL.UI;
+using DCL.WebRequests;
+using DG.Tweening;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,8 +23,8 @@ namespace DCL.Navmap
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
-
         private readonly Dictionary<string, GameObject> categoriesDictionary;
+
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;

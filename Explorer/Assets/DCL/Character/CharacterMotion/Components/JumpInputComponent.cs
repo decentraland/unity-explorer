@@ -1,6 +1,7 @@
-﻿using DCL.Input.Component;
+﻿using DCL.CharacterMotion.Components;
+using DCL.Input.Component;
 
-namespace DCL.CharacterMotion.Components
+namespace DCL.Character.CharacterMotion.Components
 {
     public struct JumpInputComponent : IInputComponent
     {

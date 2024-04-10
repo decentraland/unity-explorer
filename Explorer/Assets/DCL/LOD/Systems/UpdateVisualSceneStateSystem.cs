@@ -44,13 +44,16 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<ISceneFacade> sceneFacadeToLODContinuation;
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
+        private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset) : base(world)
+
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.lodAssetsPool = lodAssetsPool;
             this.lodSettingsAsset = lodSettingsAsset;
+            this.visualSceneStateResolver = visualSceneStateResolver;
             sceneFacadeToLODContinuation = SwapSceneFacadeToLOD;
             scenePromiseToLODContinuation = SwapScenePromiseToLOD;
             sceneLODToScenePromiseContinuation = SwapLODToScenePromise;
@@ -107,7 +110,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                     if (partitionComponent.IsDirty)
                     {
-                        VisualSceneStateUtils.ResolveVisualSceneState(ref visualSceneStateComponent, partitionComponent, sceneDefinitionComponent, lodSettingsAsset);
+                        visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneStateComponent, partitionComponent, sceneDefinitionComponent, lodSettingsAsset, realmData);
 
                         // we call it directly so we avoid an extra query
                         if (visualSceneStateComponent.IsDirty)

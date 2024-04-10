@@ -8,7 +8,6 @@ using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;

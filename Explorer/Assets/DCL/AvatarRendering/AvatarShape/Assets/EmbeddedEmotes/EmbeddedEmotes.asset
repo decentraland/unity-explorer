@@ -42,7 +42,7 @@ MonoBehaviour:
   - id: cry
     name: cry
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 421866c63941c466aaa78f9f5098685b, type: 3}
     entity:
       representations: []
@@ -77,7 +77,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: disco
     name: disco
     audioClip: {fileID: 0}
@@ -90,11 +90,11 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: dontsee
     name: dontsee
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 4ee2739d276aba843bd732c5a4a40dad, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 869cd89681c12421da3da0478168e421, type: 3}
     entity:
       representations: []
@@ -107,7 +107,7 @@ MonoBehaviour:
   - id: fistpump
     name: fistpump
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 2b2f4028cd39d984e80dabe0732fdd87, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 7693f9dc71d4e4a58816014d4ece5b06, type: 3}
     entity:
       representations: []
@@ -129,11 +129,11 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: hands_in_the_air
     name: hands_in_the_air
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
     prefab: {fileID: 6200107889642170044, guid: 42bbd277642a57346972d66d0c99bf1f, type: 3}
     entity:
       representations: []
@@ -146,7 +146,7 @@ MonoBehaviour:
   - id: handsair
     name: handsair
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 425469edfdeba472c907877cc4c364c3, type: 3}
     entity:
       representations: []
@@ -159,7 +159,7 @@ MonoBehaviour:
   - id: headexplode
     name: headexplode
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: db09a3000c06f1e46a56c971875a6aa1, type: 3}
     prefab: {fileID: 8018143466885850673, guid: eb3fb75fdcb3b4748863cad3e2fbc570, type: 3}
     entity:
       representations: []
@@ -211,7 +211,7 @@ MonoBehaviour:
   - id: raiseHand
     name: raiseHand
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: ff8a6278dd9d9334da10fa959cdb26dc, type: 3}
     prefab: {fileID: 8018143466885850673, guid: 4c2f52d666b4140cfb9fabb951379dcd, type: 3}
     entity:
       representations: []
@@ -233,7 +233,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: shrug
     name: shrug
     audioClip: {fileID: 0}
@@ -263,7 +263,7 @@ MonoBehaviour:
   - id: tektonik
     name: tektonik
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 84771a68677a08b43a7247d73aa5a6d8, type: 3}
     prefab: {fileID: 8018143466885850673, guid: cbb63c683b55046749f6cb47138ca9bc, type: 3}
     entity:
       representations: []
@@ -272,7 +272,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: tik
     name: tik
     audioClip: {fileID: 0}
@@ -285,7 +285,7 @@ MonoBehaviour:
       replaces: []
       hides: []
       removesDefaultHiding: []
-      loop: 0
+      loop: 1
   - id: Victory
     name: Victory
     audioClip: {fileID: 0}
@@ -302,7 +302,7 @@ MonoBehaviour:
   - id: wave
     name: wave
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
     prefab: {fileID: 8018143466885850673, guid: c1d9a11790afd475fbf6ad94eb29306c, type: 3}
     entity:
       representations: []
@@ -315,7 +315,7 @@ MonoBehaviour:
   - id: Waving
     name: Waving
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
     prefab: {fileID: 8018143466885850673, guid: d667e461497064fcb8e5caf9125cc9d8, type: 3}
     entity:
       representations: []
@@ -325,7 +325,7 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       loop: 0
-  - id: confetti
+  - id: confettipopper
     name: confetti
     audioClip: {fileID: 8300000, guid: 5caae9f69edac88479351686704e0c94, type: 3}
     thumbnail: {fileID: 21300000, guid: 52e4def7262db19429d325d7cb5f1a7a, type: 3}

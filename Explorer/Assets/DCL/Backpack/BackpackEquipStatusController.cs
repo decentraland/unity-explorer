@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
@@ -20,8 +21,10 @@ namespace DCL.Backpack
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly IEmoteCache emoteCache;
         private readonly Func<(World, Entity)> ecsContextProvider;
         private readonly Dictionary<string, IWearable?> equippedWearables = new ();
+        private readonly IEmote?[] equippedEmotes = new IEmote[10];
         private readonly ProfileBuilder profileBuilder = new ();
 
         private World? world;
@@ -32,15 +35,19 @@ namespace DCL.Backpack
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IWearableCatalog wearableCatalog,
+            IEmoteCache emoteCache,
             Func<(World, Entity)> ecsContextProvider)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
             this.wearableCatalog = wearableCatalog;
+            this.emoteCache = emoteCache;
             this.ecsContextProvider = ecsContextProvider;
-            backpackEventBus.EquipEvent += SetWearableForCategory;
-            backpackEventBus.UnEquipEvent += RemoveWearableForCategory;
+            backpackEventBus.EquipWearableEvent += SetWearableForCategory;
+            backpackEventBus.UnEquipWearableEvent += RemoveWearableForCategory;
             backpackEventBus.PublishProfileEvent += PublishProfile;
+            backpackEventBus.EquipEmoteEvent += EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
 
             foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
                 equippedWearables.Add(category, null);
@@ -53,11 +60,14 @@ namespace DCL.Backpack
                 Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
 
                 HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
+                var uniqueEmotes = new URN[profile!.Avatar.Emotes.Count];
 
                 ConvertEquippedWearablesIntoUniqueUrns(profile!, uniqueWearables);
+                ConvertEquippedEmotesIntoUniqueUrns(profile!, uniqueEmotes);
 
                 profile = profileBuilder.From(profile!)
                                         .WithWearables(uniqueWearables)
+                                        .WithEmotes(uniqueEmotes)
                                         .Build();
 
                 HashSetPool<URN>.Release(uniqueWearables);
@@ -75,8 +85,40 @@ namespace DCL.Backpack
         public IWearable? GetEquippedWearableForCategory(string category) =>
             equippedWearables[category];
 
+        public IEmote? GetEquippedEmote(int slot) =>
+            equippedEmotes[slot];
+
+        public int GetEmoteEquippedSlot(string id)
+        {
+            for (var i = 0; i < equippedEmotes.Length; i++)
+                if (equippedEmotes[i]?.GetUrn() == id)
+                    return i;
+
+            return -1;
+        }
+
         public bool IsWearableEquipped(IWearable wearable) =>
             equippedWearables[wearable.GetCategory()] == wearable;
+
+        public bool IsEmoteEquipped(IEmote emote)
+        {
+            foreach (IEmote? equippedEmote in equippedEmotes)
+            {
+                if (equippedEmote == null) continue;
+                if (equippedEmote == emote) return true;
+            }
+
+            return false;
+        }
+
+        public int GetEmoteEquippedSlot(IEmote emote)
+        {
+            for (var i = 0; i < equippedEmotes.Length; i++)
+                if (equippedEmotes[i] == emote)
+                    return i;
+
+            return -1;
+        }
 
         //This will retrieve the list of default hides for the current equipped wearables
         //Manual hide override will be a separate task
@@ -101,6 +143,38 @@ namespace DCL.Backpack
 
         private void SetWearableForCategory(IWearable wearable) =>
             equippedWearables[wearable.GetCategory()] = wearable;
+
+        private void EquipEmote(int slot, IEmote emote) =>
+            equippedEmotes[slot] = emote;
+
+        private void UnEquipEmote(int slot, IEmote? emote) =>
+            equippedEmotes[slot] = null;
+
+        private void ConvertEquippedEmotesIntoUniqueUrns(Profile profile, IList<URN> uniqueEmotes)
+        {
+            for (var i = 0; i < equippedEmotes.Length; i++)
+            {
+                IEmote? w = equippedEmotes[i];
+
+                if (w == null) continue;
+
+                URN uniqueUrn = w.GetUrn();
+
+                if (!uniqueUrn.IsExtended())
+                {
+                    if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                        uniqueUrn = registry.First().Value.Urn;
+                    else
+                    {
+                        foreach (URN urn in profile.Avatar.Emotes)
+                            if (urn.Shorten() == uniqueUrn)
+                                uniqueUrn = urn;
+                    }
+                }
+
+                uniqueEmotes[i] = uniqueUrn;
+            }
+        }
 
         private void ConvertEquippedWearablesIntoUniqueUrns(Profile profile, HashSet<URN> uniqueWearables)
         {
@@ -151,6 +225,14 @@ namespace DCL.Backpack
     {
         IWearable? GetEquippedWearableForCategory(string category);
 
+        IEmote? GetEquippedEmote(int slot);
+
+        int GetEmoteEquippedSlot(string id);
+
         bool IsWearableEquipped(IWearable wearable);
+
+        bool IsEmoteEquipped(IEmote emote);
+
+        int GetEmoteEquippedSlot(IEmote emote);
     }
 }

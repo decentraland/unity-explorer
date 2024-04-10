@@ -1,6 +1,8 @@
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
@@ -18,7 +20,7 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
-using System;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -30,8 +32,6 @@ namespace DCL.PluginSystem.Global
     public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-
-        private readonly BackpackSubPlugin backpackSubPlugin;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
@@ -39,12 +39,15 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWearableCatalog wearableCatalog;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly DCLInput dclInput;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IWebRequestController webRequestController;
-
         private NavmapController navmapController;
+        private readonly IEmoteCache emoteCache;
+        private readonly IWebRequestController webRequestController;
+        private BackpackSubPlugin backpackSubPlugin;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -60,6 +63,7 @@ namespace DCL.PluginSystem.Global
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IWebBrowser webBrowser,
             DCLInput dclInput,
+            IEmoteCache emoteCache,
             IRealmNavigator realmNavigator)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -68,14 +72,15 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
+            this.wearableCatalog = wearableCatalog;
+            this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.webBrowser = webBrowser;
             this.dclInput = dclInput;
             this.realmNavigator = realmNavigator;
-
-            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository);
+            this.emoteCache = emoteCache;
         }
 
         public override void Dispose()
@@ -86,6 +91,8 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
+            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository, emoteCache, settings.EmbeddedEmotes.Select(s => new URN(s)).ToArray());
+
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
@@ -129,6 +136,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }
+
+            [field: SerializeField]
+            public string[] EmbeddedEmotes { get; private set; }
         }
     }
 }

@@ -242,23 +242,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a58c49334237a24781cae8b1e3fa351
+    m_Address: EmbeddedEmotes
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
     m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1f557ed079be146f9aeb090104c115c9
-    m_Address: SceneOfInterest
+  - m_GUID: 79eb8e4682b784de1b1b18eaeba27edc
+    m_Address: Assets/DCL/Backpack/Assets/BackpackEmoteGridItem.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5f2c1af519efc4b82b87b887f93077fc
-    m_Address: FavoriteMarker
+  - m_GUID: 62f68ba25f6c905428b36a081b072566
+    m_Address: EmoteAudioSource
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f557ed079be146f9aeb090104c115c9
+    m_Address: Assets/DCL/MapRenderer/Addressables/SceneOfInterest.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 53b70d09c4a814878a30c68582ad4523
     m_Address: Assets/DCL/MapRenderer/Addressables/HotUserMarkerObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f2c1af519efc4b82b87b887f93077fc
+    m_Address: Assets/DCL/MapRenderer/Addressables/Favorite.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
