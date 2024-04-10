@@ -47,11 +47,11 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case ToggleFeatures.CHAT_SOUNDS_FEATURE:
-                    return new ChatSoundsSettingsController(View);
+                    return new ChatSoundsSettingsController(viewInstance);
                 // add other cases...
             }
 
-            throw new ArgumentOutOfRangeException(nameof(View));
+            throw new ArgumentOutOfRangeException(nameof(viewInstance));
         }
     }
 
@@ -78,23 +78,23 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case SliderFeatures.SCENE_DISTANCE_FEATURE:
-                    return new SceneDistanceSettingsController(View);
+                    return new SceneDistanceSettingsController(viewInstance);
                 case SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE:
-                    return new EnvironmentDistanceSettingsController(View);
+                    return new EnvironmentDistanceSettingsController(viewInstance);
                 case SliderFeatures.MOUSE_SENSITIVITY_FEATURE:
-                    return new MouseSensitivitySettingsController(View);
+                    return new MouseSensitivitySettingsController(viewInstance);
                 case SliderFeatures.MASTER_VOLUME_FEATURE:
-                    return new MasterVolumeSettingsController(View);
+                    return new MasterVolumeSettingsController(viewInstance);
                 case SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE:
-                    return new WorldSoundsVolumeSettingsController(View);
+                    return new WorldSoundsVolumeSettingsController(viewInstance);
                 case SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE:
-                    return new AvatarSoundsVolumeSettingsController(View);
+                    return new AvatarSoundsVolumeSettingsController(viewInstance);
                 case SliderFeatures.UI_SOUNDS_VOLUME_FEATURE:
-                    return new UISoundsVolumeSettingsController(View);
+                    return new UISoundsVolumeSettingsController(viewInstance);
                 // add other cases...
             }
 
-            throw new ArgumentOutOfRangeException(nameof(View));
+            throw new ArgumentOutOfRangeException(nameof(viewInstance));
         }
     }
 
@@ -117,15 +117,15 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(View);
+                    return new GraphicsQualitySettingsController(viewInstance, Config.defaultOptionIndex);
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
-                    return new CameraLockSettingsController(View);
+                    return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
-                    return new CameraShoulderSettingsController(View);
+                    return new CameraShoulderSettingsController(viewInstance);
                 // add other cases...
             }
 
-            throw new ArgumentOutOfRangeException(nameof(View));
+            throw new ArgumentOutOfRangeException(nameof(viewInstance));
         }
     }
 }

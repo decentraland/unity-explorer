@@ -57,10 +57,7 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
-          options:
-          - High
-          - Medium
-          - Low
+          options: []
           defaultOptionIndex: 1
         <Feature>k__BackingField: 0
     - rid: 5242998342527483909
