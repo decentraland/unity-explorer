@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using UnityEngine.UI;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
@@ -12,6 +16,12 @@ namespace DCL.Emoji
         private readonly EmojiSuggestionPanelView view;
         private readonly IObjectPool<EmojiSuggestionView> suggestionItemsPool;
         private readonly List<EmojiSuggestionView> usedPoolItems = new ();
+
+        private readonly float minHeight = 50;
+        private readonly float entryHeight = 34;
+        private readonly float padding = 16;
+        private readonly float maxHeight = 340;
+        private Navigation navigation = new () { mode = Navigation.Mode.Vertical };
 
         public EmojiSuggestionPanel(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
         {
@@ -37,6 +47,22 @@ namespace DCL.Emoji
 
         public void SetValues(List<EmojiData> foundEmojis)
         {
+            view.NoResults.gameObject.SetActive(foundEmojis.Count == 0);
+            view.ScrollViewComponent.vertical = foundEmojis.Count > 7;
+
+            switch (foundEmojis.Count)
+            {
+                case <= 1:
+                    view.ScrollView.sizeDelta = new Vector2(view.ScrollView.sizeDelta.x, minHeight);
+                    break;
+                case <= 7:
+                    view.ScrollView.sizeDelta = new Vector2(view.ScrollView.sizeDelta.x, (entryHeight * foundEmojis.Count) + padding);
+                    break;
+                default:
+                    view.ScrollView.sizeDelta = new Vector2(view.ScrollView.sizeDelta.x, maxHeight);
+                    break;
+            }
+
             for(int i = foundEmojis.Count; i < usedPoolItems.Count; i++)
                 suggestionItemsPool.Release(usedPoolItems[i]);
 
