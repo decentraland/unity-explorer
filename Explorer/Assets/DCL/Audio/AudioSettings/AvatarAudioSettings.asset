@@ -14,13 +14,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   categoryVolume: 1
   audioPriority: 125
-  audioMixerGroup: {fileID: 0}
+  audioMixerGroup: {fileID: 2832862654527898687, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
   AudioEnabled: 1
   movementBlendThreshold: 0.05
   audioClipConfigsList:
   - Key: 0
-    Value: {fileID: 11400000, guid: 5cfead82aa5615d439b22e29bc282dd3, type: 2}
+    Value: {fileID: 11400000, guid: 042713ec48c36eb44b8e13c5e2f81bf0, type: 2}
+  - Key: 2
+    Value: {fileID: 11400000, guid: 4608dcfc1a0f5d941871b8b772d33d14, type: 2}
   - Key: 1
     Value: {fileID: 11400000, guid: 5cfead82aa5615d439b22e29bc282dd3, type: 2}
-  - Key: 2
-    Value: {fileID: 11400000, guid: 5cfead82aa5615d439b22e29bc282dd3, type: 2}
+  - Key: 3
+    Value: {fileID: 11400000, guid: abac94b331bd6ca4db03171aa8cd1f02, type: 2}
+  - Key: 5
+    Value: {fileID: 11400000, guid: 724e4ead730577d478d3f78a275f5d5b, type: 2}
+  - Key: 4
+    Value: {fileID: 11400000, guid: 3681bccfe6c60cd4eb073576d98e8ce2, type: 2}
+  - Key: 6
+    Value: {fileID: 11400000, guid: 1ac389fba80f9484a91ea595f1c0ff4c, type: 2}
+  - Key: 7
+    Value: {fileID: 11400000, guid: 83d3818fd051e1745b563ba8eee1f2dd, type: 2}
+  - Key: 8
+    Value: {fileID: 11400000, guid: 1f99a500dc66b6d45a132c6199a9289d, type: 2}
+  - Key: 9
+    Value: {fileID: 11400000, guid: f67105f93be636844ae2e881124450fe, type: 2}
+  - Key: 10
+    Value: {fileID: 11400000, guid: 53978fe097a6732498ba14166eb25dbe, type: 2}

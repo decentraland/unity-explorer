@@ -1,4 +1,3 @@
-using DCL.Audio;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;

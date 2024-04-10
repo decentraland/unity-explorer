@@ -2,11 +2,10 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Audio.Systems;
+using DCL.CharacterMotion.Systems;
 using System;
 using System.Threading;
 using UnityEngine;
-using AudioSettings = DCL.Audio.AudioSettings;
 
 namespace DCL.PluginSystem.Global
 {
@@ -27,7 +26,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            //AvatarAudioSystem.InjectToWorld(ref builder);
+            AvatarAudioSystem.InjectToWorld(ref builder);
         }
 
         public async UniTask InitializeAsync(AudioPluginSettings settings, CancellationToken ct)

@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -66,9 +65,9 @@ namespace Global.Dynamic
         public MVCManager MvcManager { get; private set; } = null!;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
-        
+
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
-        
+
         public LODContainer LODContainer { get; private set; } = null!;
 
         public IRealmController RealmController { get; private set; } = null!;
@@ -132,7 +131,7 @@ namespace Global.Dynamic
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             var realmData = new RealmData();
-            
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init itself

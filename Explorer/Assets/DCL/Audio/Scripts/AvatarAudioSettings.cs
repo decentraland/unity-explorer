@@ -39,15 +39,17 @@ namespace DCL.Audio
 
         public enum AvatarAudioClipType
         {
-            JumpRunStart,
-            JumpJogStart,
-            JumpStart,
+            JumpStartRun,
+            JumpStartJog,
+            JumpStartWalk,
             StepRun,
             StepWalk,
             StepJog,
-            JumpJogLand,
-            JumpRunLand,
-            JumpLand
+            JumpLandJog,
+            JumpLandRun,
+            JumpLandWalk,
+            LongFall,
+            ShortFall,
         }
     }
 }

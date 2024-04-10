@@ -18,7 +18,7 @@ namespace DCL.Audio
         [SerializeField]
         private float fadeDuration = 1.5f;
         [SerializeField]
-        private AudioSettings audioSettings;
+        private DCLAudioSettings audioSettings;
 
 
         private Tweener loopingAudioTweener;

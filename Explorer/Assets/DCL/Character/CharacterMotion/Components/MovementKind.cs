@@ -5,16 +5,16 @@ namespace DCL.CharacterMotion.Components
         /// <summary>
         ///     Walk
         /// </summary>
-        Walk,
+        Walk = 1,
 
         /// <summary>
         ///     Jog
         /// </summary>
-        Jog,
+        Jog = 2,
 
         /// <summary>
         ///     Run
         /// </summary>
-        Run,
+        Run = 3,
     }
 }
