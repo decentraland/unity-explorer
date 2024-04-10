@@ -176,7 +176,8 @@ namespace SceneRunner
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
-            entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));
+            SceneEcsExecutor ecsExecutor = new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync);
+            entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, ecsExecutor);
 
             URLAddress sceneCodeUrl;
 
@@ -259,7 +260,8 @@ namespace SceneRunner
                 exceptionsHandler,
                 sceneStateProvider,
                 entityCollidersCache,
-                sceneData);
+                sceneData,
+                ecsExecutor);
         }
     }
 }

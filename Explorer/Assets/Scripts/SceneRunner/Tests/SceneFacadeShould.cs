@@ -126,7 +126,8 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
                 Substitute.For<IEntityCollidersSceneCache>(),
-                Substitute.For<ISceneData>()
+                Substitute.For<ISceneData>(),
+                new SceneEcsExecutor()
             );
 
             sceneFacades.Add(sceneFacade);
@@ -213,7 +214,8 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
                 Substitute.For<IEntityCollidersSceneCache>(),
-                Substitute.For<ISceneData>()
+                Substitute.For<ISceneData>(),
+                new SceneEcsExecutor()
             );
 
             await UniTask.SwitchToThreadPool();

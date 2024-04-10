@@ -33,12 +33,12 @@ namespace SceneRunner
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
         internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         internal readonly ISceneStateProvider sceneStateProvider;
+        internal readonly ISceneData sceneData;
 
         private int intervalMS;
 
-        public ISceneData SceneData { get; }
-
-        public SceneShortInfo Info => SceneData.SceneShortInfo;
+        public SceneEcsExecutor EcsExecutor { get; }
+        public SceneShortInfo Info => sceneData.SceneShortInfo;
 
         public SceneFacade(
             ISceneRuntime runtimeInstance,
@@ -51,7 +51,8 @@ namespace SceneRunner
             ISceneExceptionsHandler sceneExceptionsHandler,
             ISceneStateProvider sceneStateProvider,
             IEntityCollidersSceneCache entityCollidersSceneCache,
-            ISceneData sceneData)
+            ISceneData sceneData,
+            SceneEcsExecutor ecsExecutor)
         {
             this.runtimeInstance = runtimeInstance;
             this.ecsWorldFacade = ecsWorldFacade;
@@ -63,7 +64,8 @@ namespace SceneRunner
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.sceneStateProvider = sceneStateProvider;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
-            SceneData = sceneData;
+            this.sceneData = sceneData;
+            EcsExecutor = ecsExecutor;
         }
 
         public void Dispose()
@@ -97,8 +99,8 @@ namespace SceneRunner
                 throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
 
             // Process "main.crdt" first
-            if (SceneData.StaticSceneMessages.Data.Length > 0)
-                runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
+            if (sceneData.StaticSceneMessages.Data.Length > 0)
+                runtimeInstance.ApplyStaticMessages(sceneData.StaticSceneMessages.Data);
 
             sceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 

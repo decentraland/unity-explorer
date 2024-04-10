@@ -26,6 +26,7 @@ namespace SceneRunner.EmptyScene
 
         private Args args;
 
+        public SceneEcsExecutor EcsExecutor { get; }
         public SceneShortInfo Info => args.ShortInfo;
 
         internal Entity sceneRoot { get; private set; } = Entity.Null;

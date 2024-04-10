@@ -23,6 +23,9 @@ namespace DCL.Multiplayer.SDK.Systems
     {
         private readonly IScenesCache scenesCache;
 
+        // FOR TESTING ONLY
+        private int crdtEntityId = 32;
+
         public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache) : base(world)
         {
             this.scenesCache = scenesCache;
@@ -37,18 +40,28 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(PlayerIdentityDataComponent))]
         private void UpdatePlayerIdentityData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
         {
-            if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+                return;
+
+            // External world access should be always synchronized (Global World calls into Scene World)
+            // using (sceneFacade.EcsExecutor.Sync.GetScope())
             {
-                var crdtEntityComponent = new CRDTEntity();
+                var crdtEntityComponent = new CRDTEntity(crdtEntityId++);
+                Debug.Log($"PRAVS - UpdatePlayerIdentityDataQuery() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}");
 
-                Debug.Log($"PRAVS - UpdatePlayerIdentityDataQuery() - CRDTEntity: {crdtEntityComponent}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}");
+                World sceneWorld = sceneFacade.EcsExecutor.World;
 
-                World.Add(entity, new PlayerIdentityDataComponent()
+                var playerIdentityData = new PlayerIdentityDataComponent
                 {
                     CRDTEntity = crdtEntityComponent,
                     Address = profile.UserId,
-                    IsGuest = !profile.HasConnectedWeb3 // TODO: check if this assumption is correct
-                }, crdtEntityComponent);
+                    IsGuest = !profile.HasConnectedWeb3, // TODO: check if this assumption is correct
+                };
+
+                World.Add(entity, playerIdentityData);
+
+                // sceneWorld.Add(entity, playerIdentityData, crdtEntityComponent);
+                sceneWorld.Add(entity, playerIdentityData);
             }
         }
     }
