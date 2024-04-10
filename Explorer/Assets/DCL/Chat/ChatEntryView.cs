@@ -61,7 +61,7 @@ namespace DCL.Chat
                 ? $"{username.Substring(0, walletIdIndexOf)}"
                 : username;
 
-            walletIdText.text = $"#{walletId.Substring(0, 5)}";
+            walletIdText.text = $"#{walletId.Substring(walletId.Length - 4)}";
 
             walletIdText.gameObject.SetActive(walletIdIndexOf != -1);
             verifiedIcon.gameObject.SetActive(walletIdIndexOf == -1);

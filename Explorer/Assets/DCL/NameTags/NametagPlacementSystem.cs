@@ -81,7 +81,7 @@ namespace DCL.Nametags
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
-            nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID.Substring(0, 4)}</color>");
+            nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID.Substring(avatarShape.ID.Length - 4)}</color>");
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
