@@ -79,6 +79,11 @@ namespace ECS.SceneLifeCycle.Systems
             sqrDistanceBuckets.Dispose();
         }
 
+        internal void ForceCompleteJob()
+        {
+            partitionJobHandle.Complete();
+        }
+
         protected override void Update(float t)
         {
             // once the job is completed, we query and update all partitions

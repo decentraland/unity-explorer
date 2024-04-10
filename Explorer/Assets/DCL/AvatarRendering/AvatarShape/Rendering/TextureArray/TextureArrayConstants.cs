@@ -7,6 +7,8 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     {
         public const string TOON_SHADER = "DCL/DCL_Toon";
         public const string FACIAL_SHADER = "DCL/DCL_Avatar_Facial_Features";
+        public const string SCENE_TEX_ARRAY_SHADER = "DCL/Scene_TexArray";
+
 
         /// <summary>
         ///     This format is applicable to both Regular and Normal textures

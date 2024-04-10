@@ -114,9 +114,22 @@ namespace Global.Dynamic
                     )
                 );
 
+#if !UNITY_EDITOR
+                string authServerUrl = Debug.isDebugBuild
+                    ? settings.AuthWebSocketUrlDev
+                    : settings.AuthWebSocketUrl;
+
+                string authSignatureUrl = Debug.isDebugBuild
+                    ? settings.AuthSignatureUrlDev
+                    : settings.AuthSignatureUrl;
+#else
+                string authServerUrl = settings.AuthWebSocketUrl;
+                string authSignatureUrl = settings.AuthSignatureUrl;
+#endif
+
                 web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
-                    settings.AuthWebSocketUrl,
-                    settings.AuthSignatureUrl,
+                    authServerUrl,
+                    authSignatureUrl,
                     identityCache,
                     new HashSet<string>(settings.Web3WhitelistMethods));
 
