@@ -153,7 +153,9 @@ namespace Global.Dynamic
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
+            container.ProfileRepository = new LogProfileRepository(
+                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache)
+            );
 
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
@@ -186,7 +188,6 @@ namespace Global.Dynamic
                 dynamicWorldParams.StaticLoadPositions,
                 realmData,
                 staticContainer.ScenesCache);
-
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);

@@ -43,7 +43,10 @@ namespace DCL.Profiles.Self
         }
 
         public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
-            profileRepository.GetAsync(web3IdentityCache.Identity!.Address, ct);
+            profileRepository.GetAsync(
+                web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!,
+                ct
+            );
 
         public async UniTask PublishAsync(CancellationToken ct)
         {

@@ -46,10 +46,12 @@ namespace DCL.Web3.Identities
 
             public Default()
             {
-                origin = new ProxyIdentityCache(
-                    new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(
-                        new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                origin = new LogWeb3IdentityCache(
+                    new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                        )
                     )
                 );
             }

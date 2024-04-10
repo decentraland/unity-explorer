@@ -11,7 +11,6 @@ using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -102,13 +101,18 @@ namespace Global.Dynamic
             enableLandscape = true;
 #endif
 
-
             try
             {
                 splashRoot.SetActive(showSplash);
 
-                identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+                identityCache = new LogWeb3IdentityCache(
+                    new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                        )
+                    )
+                );
 
                 web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
                     settings.AuthWebSocketUrl,
