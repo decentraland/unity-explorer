@@ -388,8 +388,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <FrameTimeCap>k__BackingField: 33
-        <ScenesLoadingBudget>k__BackingField: 100
-        <AssetsLoadingBudget>k__BackingField: 50
+        <ScenesLoadingBudget>k__BackingField: 20
+        <AssetsLoadingBudget>k__BackingField: 10
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
