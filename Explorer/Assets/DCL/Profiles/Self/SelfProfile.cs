@@ -52,19 +52,25 @@ namespace DCL.Profiles.Self
         {
             Profile? profile = await ProfileAsync(ct);
 
-            using (var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables))
+            if (profile == null)
             {
-                uniqueWearables = uniqueWearables.EnsureNotNull();
-                ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
-
-                var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
-                ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
-
-                profile = profileBuilder.From(profile)
-                                        .WithWearables(uniqueWearables)
-                                        .WithEmotes(uniqueEmotes)
-                                        .Build();
+                profile = Profile.NewRandomProfile(web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized"));
+                await profileRepository.SetAsync(profile, ct);
+                return;
             }
+
+            using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
+
+            uniqueWearables = uniqueWearables.EnsureNotNull();
+            ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
+
+            var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
+            ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
+
+            profile = profileBuilder.From(profile)
+                                    .WithWearables(uniqueWearables)
+                                    .WithEmotes(uniqueEmotes)
+                                    .Build();
 
             profile.UserId = web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!;
             await profileRepository.SetAsync(profile, ct);

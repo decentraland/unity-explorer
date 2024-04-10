@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utilities.Extensions;
 using System.Threading;
 
 namespace DCL.Profiles.Self
@@ -16,6 +17,16 @@ namespace DCL.Profiles.Self
         {
             var profile = await selfProfile.ProfileAsync(ct);
             return profile != null;
+        }
+
+        public static async UniTask<Profile> ProfileOrPublishIfNotAsync(this ISelfProfile selfProfile, CancellationToken ct)
+        {
+            bool isPublished = await selfProfile.IsProfilePublishedAsync(ct);
+
+            if (isPublished == false)
+                await selfProfile.PublishAsync(ct);
+
+            return (await selfProfile.ProfileAsync(ct)).EnsureNotNull();
         }
     }
 }
