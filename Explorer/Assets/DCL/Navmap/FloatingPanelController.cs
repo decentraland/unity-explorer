@@ -45,7 +45,6 @@ namespace DCL.Navmap
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
 
-            view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
@@ -103,19 +102,6 @@ namespace DCL.Navmap
                     GetPlaceInfoAsync(parcel, LOADED).Forget();
                 }
             }
-/*
-            if (!view.gameObject.activeInHierarchy || view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("Out"))
-            {
-                view.panelAnimator.Rebind();
-                view.panelAnimator.Update(0f);
-                view.panelAnimator.SetTrigger(IN);
-                ShowPanel(parcel, LOADED);
-            }
-            else
-            {
-                view.panelAnimator.SetTrigger(LOADING);
-                GetPlaceInfoAsync(parcel, LOADED).Forget();
-            }*/
         }
 
         private void ShowPanel(Vector2Int parcel, int animationTrigger)

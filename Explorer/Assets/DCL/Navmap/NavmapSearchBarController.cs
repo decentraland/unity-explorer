@@ -48,8 +48,7 @@ namespace DCL.Navmap
 
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
 
-            view.inputField.onSelect.AddListener((_)=>OnSelectedSearchbarChange(true));
-            view.inputField.onDeselect.AddListener((_)=>OnSelectedSearchbarChange(false));
+            view.inputField.onSelect.AddListener((_) => OnSelectedSearchbarChange(true));
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             floatingPanelView.closeButton.onClick.AddListener(ClearSearch);
@@ -62,6 +61,7 @@ namespace DCL.Navmap
         {
             view.inputField.SetTextWithoutNotify(historyText);
             OnValueChanged(historyText);
+            historyRecordPanelView.gameObject.SetActive(false);
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
@@ -69,7 +69,6 @@ namespace DCL.Navmap
 
         private void ClickedResult(string coordinates)
         {
-            floatingPanelView.backButton.gameObject.SetActive(true);
             OnResultClicked?.Invoke(coordinates);
         }
 
