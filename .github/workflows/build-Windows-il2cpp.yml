@@ -103,7 +103,7 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
-
+          
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
@@ -178,7 +178,6 @@ jobs:
 
               # Display list of files
               ls
-
 
       - uses: game-ci/unity-builder@v4.2.3
         id: build
