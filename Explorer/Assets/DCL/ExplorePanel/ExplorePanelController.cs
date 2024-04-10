@@ -75,8 +75,6 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewInstantiated()
         {
-            Debug.Log("Instantianting explorer");
-
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
                 { ExploreSections.Navmap, navmapController },
