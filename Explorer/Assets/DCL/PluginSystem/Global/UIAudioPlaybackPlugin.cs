@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.Audio.Systems;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -24,7 +25,10 @@ namespace DCL.PluginSystem.Global
             if (UIAudioPlaybackController != null) {UIAudioPlaybackController.Dispose();}
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            //AvatarAudioSystem.InjectToWorld(ref builder);
+        }
 
         public async UniTask InitializeAsync(AudioPluginSettings settings, CancellationToken ct)
         {

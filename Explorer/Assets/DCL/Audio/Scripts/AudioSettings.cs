@@ -1,5 +1,4 @@
-﻿using Decentraland.Kernel.Comms.V1;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
