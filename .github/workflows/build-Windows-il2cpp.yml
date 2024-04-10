@@ -193,7 +193,7 @@ jobs:
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
 
-      - name: Download and Extract Zip File
+      - name: Download and Extract Zip File for LODS
         run: |
           Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}_Data/StreamingAssets/AssetBundles/lods/lods.zip"
         shell: pwsh
