@@ -7,7 +7,10 @@ namespace DCL.Settings.ModuleViews
     public class SettingsToggleModuleView : SettingsModuleView<SettingsToggleModuleView.Config>
     {
         [Serializable]
-        public class Config : SettingsModuleViewConfiguration { }
+        public class Config : SettingsModuleViewConfiguration
+        {
+            public bool defaultIsOn;
+        }
 
         [field: SerializeField] public ToggleView ToggleView { get; private set; }
 

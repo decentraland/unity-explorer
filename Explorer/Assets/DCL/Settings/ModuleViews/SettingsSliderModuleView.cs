@@ -25,6 +25,7 @@ namespace DCL.Settings.ModuleViews
             public float minValue;
             public float maxValue;
             public bool wholeNumbers;
+            public float defaultValue;
         }
 
         [field: SerializeField] public SliderView SliderView { get; private set; }

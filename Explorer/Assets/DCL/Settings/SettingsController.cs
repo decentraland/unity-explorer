@@ -22,10 +22,10 @@ namespace DCL.Settings
 
             GenerateSettings();
 
-            view.GeneralSectionButtonWithSelectableState.Button.onClick.AddListener(OpenGeneralSection);
-            view.GraphicsSectionButtonWithSelectableState.Button.onClick.AddListener(OpenGraphicsSection);
-            view.SoundSectionButtonWithSelectableState.Button.onClick.AddListener(OpenSoundSection);
-            view.ControlsSectionButtonWithSelectableState.Button.onClick.AddListener(OpenControlsSection);
+            view.GeneralSectionButton.Button.onClick.AddListener(OpenGeneralSection);
+            view.GraphicsSectionButton.Button.onClick.AddListener(OpenGraphicsSection);
+            view.SoundSectionButton.Button.onClick.AddListener(OpenSoundSection);
+            view.ControlsSectionButton.Button.onClick.AddListener(OpenControlsSection);
         }
 
         public void Activate()
@@ -54,7 +54,7 @@ namespace DCL.Settings
             GenerateSettingsSection(view.Configuration.SoundSectionConfig, view.SoundSectionContainer);
             GenerateSettingsSection(view.Configuration.ControlsSectionConfig, view.ControlsSectionContainer);
 
-            OpenGeneralSection();
+            SetInitialSectionsVisibility();
         }
 
         private void GenerateSettingsSection(SettingsSectionConfig sectionConfig, Transform sectionContainer)
@@ -69,16 +69,33 @@ namespace DCL.Settings
             }
         }
 
+        private void SetInitialSectionsVisibility()
+        {
+            view.GeneralSectionButton.gameObject.SetActive(view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0);
+            view.GraphicsSectionButton.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
+            view.SoundSectionButton.gameObject.SetActive(view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0);
+            view.ControlsSectionButton.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
+
+            if (view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0)
+                OpenGeneralSection();
+            else if (view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0)
+                OpenGraphicsSection();
+            else if (view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0)
+                OpenSoundSection();
+            else if (view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0)
+                OpenControlsSection();
+        }
+
         private void OpenGeneralSection()
         {
             view.GeneralSectionContainer.gameObject.SetActive(view.Configuration.GeneralSectionConfig.SettingsGroups.Count > 0);
             view.GraphicsSectionContainer.gameObject.SetActive(false);
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(false);
-            view.GeneralSectionButtonWithSelectableState.SetSelected(true);
-            view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
-            view.SoundSectionButtonWithSelectableState.SetSelected(false);
-            view.ControlsSectionButtonWithSelectableState.SetSelected(false);
+            view.GeneralSectionButton.SetSelected(true);
+            view.GraphicsSectionButton.SetSelected(false);
+            view.SoundSectionButton.SetSelected(false);
+            view.ControlsSectionButton.SetSelected(false);
             view.BackgroundImage.sprite = view.GeneralSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
@@ -89,10 +106,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(view.Configuration.GraphicsSectionConfig.SettingsGroups.Count > 0);
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(false);
-            view.GeneralSectionButtonWithSelectableState.SetSelected(false);
-            view.GraphicsSectionButtonWithSelectableState.SetSelected(true);
-            view.SoundSectionButtonWithSelectableState.SetSelected(false);
-            view.ControlsSectionButtonWithSelectableState.SetSelected(false);
+            view.GeneralSectionButton.SetSelected(false);
+            view.GraphicsSectionButton.SetSelected(true);
+            view.SoundSectionButton.SetSelected(false);
+            view.ControlsSectionButton.SetSelected(false);
             view.BackgroundImage.sprite = view.GraphicsSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
@@ -103,10 +120,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(false);
             view.SoundSectionContainer.gameObject.SetActive(view.Configuration.SoundSectionConfig.SettingsGroups.Count > 0);
             view.ControlsSectionContainer.gameObject.SetActive(false);
-            view.GeneralSectionButtonWithSelectableState.SetSelected(false);
-            view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
-            view.SoundSectionButtonWithSelectableState.SetSelected(true);
-            view.ControlsSectionButtonWithSelectableState.SetSelected(false);
+            view.GeneralSectionButton.SetSelected(false);
+            view.GraphicsSectionButton.SetSelected(false);
+            view.SoundSectionButton.SetSelected(true);
+            view.ControlsSectionButton.SetSelected(false);
             view.BackgroundImage.sprite = view.SoundSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
@@ -117,10 +134,10 @@ namespace DCL.Settings
             view.GraphicsSectionContainer.gameObject.SetActive(false);
             view.SoundSectionContainer.gameObject.SetActive(false);
             view.ControlsSectionContainer.gameObject.SetActive(view.Configuration.ControlsSectionConfig.SettingsGroups.Count > 0);
-            view.GeneralSectionButtonWithSelectableState.SetSelected(false);
-            view.GraphicsSectionButtonWithSelectableState.SetSelected(false);
-            view.SoundSectionButtonWithSelectableState.SetSelected(false);
-            view.ControlsSectionButtonWithSelectableState.SetSelected(true);
+            view.GeneralSectionButton.SetSelected(false);
+            view.GraphicsSectionButton.SetSelected(false);
+            view.SoundSectionButton.SetSelected(false);
+            view.ControlsSectionButton.SetSelected(true);
             view.BackgroundImage.sprite = view.ControlsSectionBackground;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }

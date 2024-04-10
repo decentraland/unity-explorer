@@ -13,6 +13,7 @@ namespace DCL.Settings.ModuleViews
         {
             public bool isMultiselect;
             public List<string> options;
+            public int defaultOptionIndex;
         }
 
         [field: SerializeField] public DropdownView DropdownView { get; private set; }

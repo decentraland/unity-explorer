@@ -13,7 +13,7 @@ namespace DCL.Settings.Configuration
     {
         public abstract SettingsFeatureController CreateModule(Transform parent);
     }
-    
+
     [Serializable]
     public abstract class SettingsModuleBinding<TView, TConfig, TControllerType> : SettingsModuleBindingBase
         where TView : SettingsModuleView<TConfig>
@@ -35,7 +35,7 @@ namespace DCL.Settings.Configuration
     {
         public enum ToggleFeatures
         {
-            ToggleModuleFeature1,
+            CHAT_SOUNDS_FEATURE,
             // add other features...
         }
 
@@ -46,8 +46,8 @@ namespace DCL.Settings.Configuration
 
             switch (Feature)
             {
-                case ToggleFeatures.ToggleModuleFeature1:
-                    return new Example1Controller(View);
+                case ToggleFeatures.CHAT_SOUNDS_FEATURE:
+                    return new ChatSoundsSettingsController(View);
                 // add other cases...
             }
 
@@ -60,7 +60,13 @@ namespace DCL.Settings.Configuration
     {
         public enum SliderFeatures
         {
-            SliderModuleFeature1,
+            SCENE_DISTANCE_FEATURE,
+            ENVIRONMENT_DISTANCE_FEATURE,
+            MOUSE_SENSITIVITY_FEATURE,
+            MASTER_VOLUME_FEATURE,
+            WORLD_SOUNDS_VOLUME_FEATURE,
+            AVATAR_SOUNDS_VOLUME_FEATURE,
+            UI_SOUNDS_VOLUME_FEATURE,
             // add other features...
         }
 
@@ -71,8 +77,20 @@ namespace DCL.Settings.Configuration
 
             switch (Feature)
             {
-                case SliderFeatures.SliderModuleFeature1:
-                    return new Example2Controller(View);
+                case SliderFeatures.SCENE_DISTANCE_FEATURE:
+                    return new SceneDistanceSettingsController(View);
+                case SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE:
+                    return new EnvironmentDistanceSettingsController(View);
+                case SliderFeatures.MOUSE_SENSITIVITY_FEATURE:
+                    return new MouseSensitivitySettingsController(View);
+                case SliderFeatures.MASTER_VOLUME_FEATURE:
+                    return new MasterVolumeSettingsController(View);
+                case SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE:
+                    return new WorldSoundsVolumeSettingsController(View);
+                case SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE:
+                    return new AvatarSoundsVolumeSettingsController(View);
+                case SliderFeatures.UI_SOUNDS_VOLUME_FEATURE:
+                    return new UISoundsVolumeSettingsController(View);
                 // add other cases...
             }
 
@@ -85,7 +103,9 @@ namespace DCL.Settings.Configuration
     {
         public enum DropdownFeatures
         {
-            DropdownModuleFeature1,
+            GRAPHICS_QUALITY_FEATURE,
+            CAMERA_LOCK_FEATURE,
+            CAMERA_SHOULDER_FEATURE
             // add other features...
         }
 
@@ -96,8 +116,12 @@ namespace DCL.Settings.Configuration
 
             switch (Feature)
             {
-                case DropdownFeatures.DropdownModuleFeature1:
-                    return new Example3Controller(View);
+                case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
+                    return new GraphicsQualitySettingsController(View);
+                case DropdownFeatures.CAMERA_LOCK_FEATURE:
+                    return new CameraLockSettingsController(View);
+                case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
+                    return new CameraShoulderSettingsController(View);
                 // add other cases...
             }
 

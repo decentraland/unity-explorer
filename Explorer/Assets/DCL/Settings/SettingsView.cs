@@ -17,10 +17,10 @@ namespace DCL.Settings
         [field: SerializeField] public Transform ControlsSectionContainer { get; private set; }
 
         [field: Header("Header Buttons")]
-        [field: SerializeField] public ButtonWithSelectableStateView GeneralSectionButtonWithSelectableState { get; private set; }
-        [field: SerializeField] public ButtonWithSelectableStateView GraphicsSectionButtonWithSelectableState { get; private set; }
-        [field: SerializeField] public ButtonWithSelectableStateView SoundSectionButtonWithSelectableState { get; private set; }
-        [field: SerializeField] public ButtonWithSelectableStateView ControlsSectionButtonWithSelectableState { get; private set; }
+        [field: SerializeField] public ButtonWithSelectableStateView GeneralSectionButton { get; private set; }
+        [field: SerializeField] public ButtonWithSelectableStateView GraphicsSectionButton { get; private set; }
+        [field: SerializeField] public ButtonWithSelectableStateView SoundSectionButton { get; private set; }
+        [field: SerializeField] public ButtonWithSelectableStateView ControlsSectionButton { get; private set; }
         [field: Header("Sections Backgrounds")]
         [field: SerializeField] public Image BackgroundImage { get; private set; }
         [field: SerializeField] public Sprite GeneralSectionBackground { get; private set; }
