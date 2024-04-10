@@ -7,11 +7,14 @@ namespace DCL.DebugUtilities
 {
     public class DebugContainerBuilder : IDebugContainerBuilder, IComparer<DebugWidgetBuilder>
     {
-        private readonly List<DebugWidgetBuilder> widgets = new (100);
+        private readonly List<DebugWidgetBuilder> widgetBuilders = new (100);
+        public readonly Dictionary<string, DebugWidget> Widgets = new (100);
 
         private readonly Func<DebugWidget> widgetFactoryMethod;
         private readonly Func<DebugControl> controlFactoryMethod;
         private readonly Dictionary<Type, IDebugElementFactory> factories;
+
+        public DebugContainer Container { get; private set; }
 
         public DebugContainerBuilder(
             Func<DebugWidget> widgetFactoryMethod,
@@ -26,29 +29,33 @@ namespace DCL.DebugUtilities
         public DebugWidgetBuilder AddWidget(string name)
         {
             var w = new DebugWidgetBuilder(name.ToUpper());
-            widgets.Add(w);
+            widgetBuilders.Add(w);
             return w;
         }
 
         public DebugContainer Build(UIDocument debugRootCanvas)
         {
             // Sort by name
-            widgets.Sort(this);
+            widgetBuilders.Sort(this);
 
-            DebugContainer container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
-            container.Initialize();
+            Container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
+            Container.Initialize();
 
-            debugRootCanvas.rootVisualElement.Add(container);
+            debugRootCanvas.rootVisualElement.Add(Container);
 
             // Instantiate widgets
-            foreach (DebugWidgetBuilder widgetBuilder in widgets)
+            foreach (DebugWidgetBuilder widgetBuilder in widgetBuilders)
             {
                 DebugWidget widget = widgetBuilder.Build(widgetFactoryMethod, controlFactoryMethod, factories);
                 widget.name = widgetBuilder.name;
-                container.containerRoot.Add(widget);
+                widget.visible = false;
+
+                Widgets.Add(widget.name, widget);
+                Container.containerRoot.Add(widget);
             }
 
-            return container;
+            Container.visible = false;
+            return Container;
         }
 
         public int Compare(DebugWidgetBuilder x, DebugWidgetBuilder y)

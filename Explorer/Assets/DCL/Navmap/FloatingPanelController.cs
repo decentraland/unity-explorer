@@ -1,12 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
-using DCL.SceneLoadingScreens;
 using DCL.UI;
 using DCL.WebRequests;
-using DG.Tweening;
-using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -20,10 +17,9 @@ namespace DCL.Navmap
     {
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly ITeleportController teleportController;
-        private readonly IMVCManager mvcManager;
-        private readonly Dictionary<string, GameObject> categoriesDictionary;
+        private readonly IRealmNavigator realmNavigator;
 
+        private readonly Dictionary<string, GameObject> categoriesDictionary;
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
@@ -35,13 +31,11 @@ namespace DCL.Navmap
         private static readonly int LOADING = Animator.StringToHash("Loading");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-            ITeleportController teleportController, IWebRequestController webRequestController,
-            IMVCManager mvcManager)
+           IWebRequestController webRequestController, IRealmNavigator realmNavigator)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
-            this.teleportController = teleportController;
-            this.mvcManager = mvcManager;
+            this.realmNavigator = realmNavigator;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -54,6 +48,13 @@ namespace DCL.Navmap
 
             ResetCategories();
             InitButtons();
+        }
+
+        public void Dispose()
+        {
+            likeButtonController.OnButtonClicked -= OnLike;
+            dislikeButtonController.OnButtonClicked -= OnDislike;
+            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
 
         private void InitButtons()
@@ -98,34 +99,13 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => TeleportToParcel(parcel));
+                view.jumpInButton.onClick.AddListener(() => realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget());
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
             catch (Exception ex) { SetEmptyParcelInfo(parcel); }
             finally { view.panelAnimator.SetTrigger(LOADED); }
-        }
-
-        private void TeleportToParcel(Vector2Int parcel)
-        {
-            async UniTaskVoid ShowLoadingAndTeleportAsync(CancellationToken ct)
-            {
-                var timeout = TimeSpan.FromSeconds(30);
-                var loadReport = AsyncLoadProcessReport.Create();
-
-                async UniTask TeleportAsync()
-                {
-                    var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-                    await waitForSceneReadiness.ToUniTask(ct);
-                }
-
-                await UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)))
-                                                .AttachExternalCancellation(ct),
-                    TeleportAsync());
-            }
-
-            ShowLoadingAndTeleportAsync(cts.Token).Forget();
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
@@ -213,13 +193,6 @@ namespace DCL.Navmap
             view.panelAnimator.SetTrigger(OUT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
-        }
-
-        public void Dispose()
-        {
-            likeButtonController.OnButtonClicked -= OnLike;
-            dislikeButtonController.OnButtonClicked -= OnDislike;
-            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
     }
 }

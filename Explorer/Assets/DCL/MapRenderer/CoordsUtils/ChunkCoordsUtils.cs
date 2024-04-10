@@ -1,23 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Utility;
 
 namespace DCL.MapRenderer.CoordsUtils
 {
     internal class ChunkCoordsUtils : ICoordsUtils
     {
-        private static readonly Vector2Int WORLD_MIN_COORDS = new (-150, -150);
-        private static readonly Vector2Int WORLD_MAX_COORDS = new (175, 175); // DCL map is not squared, there are some extra parcels in the top right
+        private const int PADDING = 25;
 
-        private static readonly Vector2Int VISIBLE_WORLD_MIN_COORDS = new (-175, -175);
-        private static readonly Vector2Int VISIBLE_WORLD_MAX_COORDS = new (175, 175); // DCL map is not squared, there are some extra parcels in the top right
+        private static readonly Vector2Int WORLD_MIN_COORDS = GenesisCityData.MIN_PARCEL;
+        private static readonly Vector2Int WORLD_MAX_COORDS = GenesisCityData.MAX_SQUARE_CITY_PARCEL + (PADDING * Vector2Int.one); // DCL map is not squared, there are some extra parcels in the top right
 
-        private static readonly Rect[] INTERACTABLE_WORLD_BOUNDS =
-        {
-            Rect.MinMaxRect(-150, -150, 150, 150),
-            Rect.MinMaxRect(62, 151, 162, 158),
-            Rect.MinMaxRect(151, 59, 163, 150)
-        };
+        private static readonly Vector2Int VISIBLE_WORLD_MIN_COORDS = WORLD_MIN_COORDS - (PADDING * Vector2Int.one);
+        private static readonly Vector2Int VISIBLE_WORLD_MAX_COORDS = WORLD_MAX_COORDS; // DCL map is not squared, there are some extra parcels in the top right
 
         private readonly List<Rect> interactableWorldBoundsInLocalCoordinates;
 
@@ -33,9 +29,9 @@ namespace DCL.MapRenderer.CoordsUtils
 
             var min = (VISIBLE_WORLD_MIN_COORDS - Vector2Int.one) * parcelSize;
             var max = VISIBLE_WORLD_MAX_COORDS * parcelSize;
-            VisibleWorldBounds = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+            VisibleWorldBounds = RectUtils.MinMaxRect(min, max);
 
-            interactableWorldBoundsInLocalCoordinates = INTERACTABLE_WORLD_BOUNDS
+            interactableWorldBoundsInLocalCoordinates = GenesisCityData.INTERACTABLE_WORLD_BOUNDS
                                                        .Select(chunk => Rect.MinMaxRect((chunk.xMin - 1) * parcelSize, (chunk.yMin - 1) * parcelSize, chunk.xMax * parcelSize, chunk.yMax * parcelSize))
                                                        .ToList();
         }

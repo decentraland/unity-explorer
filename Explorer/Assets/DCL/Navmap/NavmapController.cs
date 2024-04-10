@@ -12,6 +12,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -46,13 +47,13 @@ namespace DCL.Navmap
             NavmapView navmapView,
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
-            ITeleportController teleportController,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
             DCLInput dclInput,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IRealmNavigator realmNavigator)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -60,9 +61,10 @@ namespace DCL.Navmap
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController, webRequestController, mvcManager);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
+
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += floatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
