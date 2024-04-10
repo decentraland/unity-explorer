@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
@@ -261,10 +262,23 @@ namespace DCL.Web3.Authenticators
 
             public Default(IWeb3IdentityCache identityCache)
             {
+#if !UNITY_EDITOR
+                string serverUrl = Debug.isDebugBuild
+                    ? "https://auth-api.decentraland.zone"
+                    : "https://auth-api.decentraland.org";
+
+                string signatureUrl = Debug.isDebugBuild
+                    ? "https://decentraland.zone/auth/requests"
+                    : "https://decentraland.org/auth/requests";
+#else
+                const string serverUrl = "https://auth-api.decentraland.org";
+                const string signatureUrl = "https://decentraland.org/auth/requests";
+#endif
+
                 var origin = new DappWeb3Authenticator(
                     new UnityAppWebBrowser(),
-                    "https://auth-api.decentraland.zone",
-                    "https://decentraland.zone/auth/requests",
+                    serverUrl,
+                    signatureUrl,
                     identityCache,
                     new HashSet<string>(
                         new[]
