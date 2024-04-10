@@ -10,5 +10,6 @@ namespace DCL.Interaction.PlayerOriginated.Components
         public Collider LastHitCollider;
         public bool IsAtDistance;
         public bool IsHoverOver;
+        public bool HasCollider;
     }
 }

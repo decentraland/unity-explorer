@@ -4,18 +4,32 @@ using DCL.CharacterCamera.Systems;
 using DCL.Input;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
+using DCL.Interaction.PlayerOriginated.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.UI;
 
 namespace DCL.CharacterCamera.Tests
 {
     [TestFixture]
     public class UpdateCursorInputSystemShould : InputTestFixture
     {
+        private UpdateCursorInputSystem system;
+        private World world;
+        private Entity entity;
+        private Keyboard keyboard;
+        private Mouse mouse;
+        private IEventSystem eventSystem;
+        private ICursor cursor;
+        private ICrosshairView crosshairView;
+        private InputControl<Vector2> positionControl;
+        private Entity hoverEntity;
+
         [SetUp]
         public void CreateCameraSetup()
         {
@@ -28,11 +42,15 @@ namespace DCL.CharacterCamera.Tests
             var dlcInput = new DCLInput();
             dlcInput.Enable();
 
+            hoverEntity = world.Create(new HoverStateComponent());
             entity = world.Create(new CursorComponent());
             eventSystem = Substitute.For<IEventSystem>();
             cursor = Substitute.For<ICursor>();
+            crosshairView = Substitute.For<ICrosshairView>();
+            positionControl = mouse.GetChildControl<Vector2Control>("Position");
+            Move(positionControl, new Vector2(50, 50), new Vector2(0.5f, 0.5f));
 
-            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, new CrosshairCanvas());
+            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, crosshairView);
             system.Initialize();
         }
 
@@ -42,14 +60,6 @@ namespace DCL.CharacterCamera.Tests
             InputSystem.RemoveDevice(keyboard);
             InputSystem.RemoveDevice(mouse);
         }
-
-        private UpdateCursorInputSystem system;
-        private World world;
-        private Entity entity;
-        private Keyboard keyboard;
-        private Mouse mouse;
-        private IEventSystem eventSystem;
-        private ICursor cursor;
 
         [Test]
         public void DontLockCursorWhenOverUI()
@@ -71,7 +81,7 @@ namespace DCL.CharacterCamera.Tests
         {
             world.Set(entity, new CursorComponent { CursorIsLocked = false });
             cursor.IsLocked().Returns(true);
-            Press(mouse.leftButton);
+            PressAndRelease(mouse.rightButton);
 
             system.Update(0);
 
@@ -80,15 +90,60 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void DontRaycastUIWhileLocked()
+        public void SetCursorToInteractableWhenHoveringOverClickableUI()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = true });
+            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(true);
 
-            Press(mouse.leftButton);
+            var temporalGameObject = new GameObject("TEMP_GO");
+            temporalGameObject.AddComponent<Button>();
+
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () { gameObject = temporalGameObject } });
 
             system.Update(0);
 
-            eventSystem.DidNotReceive().RaycastAll(Arg.Any<Vector2>());
+            cursor.Received(1).SetStyle(CursorStyle.Interaction);
+            crosshairView.Received(1).SetCursorStyle(CursorStyle.Interaction);
+
+            Object.DestroyImmediate(temporalGameObject);
+        }
+
+        [TestCase(CursorStyle.Interaction, true)]
+        [TestCase(CursorStyle.Normal, false)]
+        public void ChangeCursorStyleWhenHoveringOverSDKInteractable(CursorStyle cursorStyle, bool isAtDistance)
+        {
+            world.Set(hoverEntity, new HoverStateComponent
+                { IsAtDistance = isAtDistance, IsHoverOver = false, HasCollider = true });
+
+            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(false);
+
+            system.Update(0);
+
+            cursor.Received(1).SetStyle(cursorStyle);
+            crosshairView.Received(1).SetCursorStyle(cursorStyle);
+        }
+
+        [Test]
+        public void SetCursorToNormalWhenHoveringOverNotClickableUI()
+        {
+            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(true);
+
+            var temporalGameObject = new GameObject("TEMP_GO");
+            temporalGameObject.AddComponent<Image>();
+
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () { gameObject = temporalGameObject } });
+
+            system.Update(0);
+
+            cursor.Received(1).SetStyle(CursorStyle.Normal);
+            crosshairView.Received(1).SetCursorStyle(CursorStyle.Normal);
+
+            Object.DestroyImmediate(temporalGameObject);
         }
 
         [Test]
@@ -105,18 +160,19 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void LockAndUnlockCursorWithTemporalLock()
+        public void AllowCameraMovementWithTemporalLock()
         {
             //setup press
             world.Set(entity, new CursorComponent { CursorIsLocked = false });
 
             Press(mouse.rightButton);
-            cursor.IsLocked().Returns(true);
+
+            cursor.IsLocked().Returns(false);
 
             system.Update(0);
 
-            Assert.IsTrue(world.Get<CursorComponent>(entity).CursorIsLocked);
-            cursor.Received(1).Lock();
+            Assert.IsTrue(world.Get<CursorComponent>(entity).AllowCameraMovement);
+            Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
 
             // setup release
             Release(mouse.rightButton);
@@ -124,8 +180,8 @@ namespace DCL.CharacterCamera.Tests
 
             system.Update(0);
 
+            Assert.IsFalse(world.Get<CursorComponent>(entity).AllowCameraMovement);
             Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
-            cursor.Received(1).Unlock();
         }
 
         [Test]

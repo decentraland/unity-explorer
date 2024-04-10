@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.Input.Crosshair
 {
-    public class CrosshairCanvas : VisualElement
+    public class CrosshairCanvas : VisualElement, ICrosshairView
     {
         private bool initialized;
         private VisualElement crossHairElement;
@@ -34,6 +35,11 @@ namespace DCL.Input.Crosshair
             styleBackground.value = background;
             crossHairElement.style.backgroundImage = styleBackground;
             currentState = style;
+        }
+
+        public void SetDisplayed(bool displayed)
+        {
+            VisualElementsExtensions.SetDisplayed(this, displayed);
         }
 
         public new class UxmlFactory : UxmlFactory<CrosshairCanvas> { }

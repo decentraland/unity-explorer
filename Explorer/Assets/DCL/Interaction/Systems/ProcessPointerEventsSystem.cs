@@ -71,6 +71,7 @@ namespace DCL.Interaction.Systems
 
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderEntityInfo previousEntityInfo);
             hoverStateComponent.LastHitCollider = null;
+            hoverStateComponent.HasCollider = false;
             hoverStateComponent.IsHoverOver = false;
             hoverStateComponent.IsAtDistance = false;
 
@@ -92,6 +93,7 @@ namespace DCL.Interaction.Systems
                     if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
                     {
                         hoverStateComponent.LastHitCollider = raycastResult.UnityRaycastHit.collider;
+                        hoverStateComponent.HasCollider = true;
 
                         bool newEntityWasHovered = !candidateForHoverLeaveIsValid
                                                    || (previousEntityInfo.EcsExecutor.World != world && previousEntityInfo.ColliderEntityInfo.EntityReference != entityRef);

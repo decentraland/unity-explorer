@@ -14,7 +14,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 using Button = UnityEngine.UIElements.Button;
 using Toggle = UnityEngine.UIElements.Toggle;
 
@@ -25,9 +24,10 @@ namespace DCL.Input.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
+        private const int MOUSE_BOUNDS_OFFSET = 10;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
-        private readonly CrosshairCanvas crosshairCanvas;
+        private readonly ICrosshairView crosshairCanvas;
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.UIActions uiActions;
         private bool hasHoverCollider;
@@ -38,7 +38,7 @@ namespace DCL.Input.Systems
         private readonly Dictionary<VisualElement, bool> uiToolkitInteractionCache = new ();
         private readonly List<VisualElement> visualElementPickCache = new ();
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, CrosshairCanvas crosshairCanvas) : base(world)
+        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
             this.eventSystem = eventSystem;
             this.cursor = cursor;
@@ -56,7 +56,7 @@ namespace DCL.Input.Systems
         [Query]
         private void GetSDKInteractionState(in HoverStateComponent hoverStateComponent)
         {
-            hasHoverCollider = hoverStateComponent.LastHitCollider != null;
+            hasHoverCollider = hoverStateComponent.HasCollider;
             isAtDistance = hoverStateComponent.IsAtDistance;
             isHoveringAnInteractable = hasHoverCollider && isAtDistance;
         }
@@ -172,10 +172,8 @@ namespace DCL.Input.Systems
                 return;
             }
 
-            var mouseBoundsOffset = 10;
-
-            bool isMouseOutOfBounds = mousePos.x < mouseBoundsOffset || mousePos.x > Screen.width - mouseBoundsOffset ||
-                                      mousePos.y < mouseBoundsOffset || mousePos.y > Screen.height - mouseBoundsOffset;
+            bool isMouseOutOfBounds = mousePos.x < MOUSE_BOUNDS_OFFSET || mousePos.x > Screen.width - MOUSE_BOUNDS_OFFSET ||
+                                      mousePos.y < MOUSE_BOUNDS_OFFSET || mousePos.y > Screen.height - MOUSE_BOUNDS_OFFSET;
 
             bool inputWantsToLock = cameraActions.Lock.WasReleasedThisFrame();
             bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
