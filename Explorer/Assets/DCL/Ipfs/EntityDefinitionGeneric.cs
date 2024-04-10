@@ -8,10 +8,10 @@ namespace DCL.Ipfs
     {
         public const string DEFAULT_VERSION = "v3";
 
-        public List<ContentDefinition> content;
-        public string id;
+        public List<ContentDefinition>? content;
+        public string id = string.Empty;
         public T metadata;
-        public List<string> pointers;
+        public List<string>? pointers;
         public string version;
         public long timestamp;
         public string type;

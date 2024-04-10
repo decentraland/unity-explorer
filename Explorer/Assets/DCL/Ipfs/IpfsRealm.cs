@@ -75,6 +75,12 @@ namespace DCL.Ipfs
 
         public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
+            var form = NewForm(entity, contentFiles);
+            return SendFormAsync(form, ct);
+        }
+
+        private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        {
             string entityJson = JsonUtility.ToJson(entity);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
             string entityId = entityFile.IpfsHashV1();
@@ -105,7 +111,7 @@ namespace DCL.Ipfs
             foreach ((string hash, byte[] data) in files)
                 form.AddBinaryData(hash, data);
 
-            return SendFormAsync(form, ct);
+            return form;
         }
 
         private UniTask SendFormAsync(WWWForm form, CancellationToken ct)
