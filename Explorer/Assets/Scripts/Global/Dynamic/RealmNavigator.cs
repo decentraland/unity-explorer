@@ -1,9 +1,14 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Landscape;
+using DCL.Landscape.Settings;
+using DCL.LOD;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
 using DCL.ParcelsService;
+using DCL.PluginSystem.Global;
+using DCL.Roads.Systems;
 using DCL.SceneLoadingScreens;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
@@ -22,13 +27,19 @@ namespace Global.Dynamic
         private readonly IMapRenderer mapRenderer;
         private readonly IRealmController realmController;
         private readonly ITeleportController teleportController;
+        private readonly LandscapePlugin landscapePlugin;
+        private readonly RoadPlugin roadsPlugin;
+        private readonly WorldTerrainGenerator worldsTerrainGenerator;
 
-        public RealmNavigator(MVCManager mvcManager, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController)
+        public RealmNavigator(MVCManager mvcManager, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController,
+            LandscapePlugin landscapePlugin, RoadPlugin roadsPlugin)
         {
             this.mvcManager = mvcManager;
             this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
+            this.landscapePlugin = landscapePlugin;
+            this.roadsPlugin = roadsPlugin;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
@@ -38,7 +49,8 @@ namespace Global.Dynamic
                 return false;
 
             ct.ThrowIfCancellationRequested();
-            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, realm == genesisDomain);
+
+            SwitchMiscVisibility(realm == genesisDomain);
 
             await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
                 realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct), ct);
@@ -55,7 +67,7 @@ namespace Global.Dynamic
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
                     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
-                    mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, true);
+                    SwitchMiscVisibility(true);
 
                     ct.ThrowIfCancellationRequested();
                 }
@@ -63,6 +75,14 @@ namespace Global.Dynamic
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
+        }
+
+        private void SwitchMiscVisibility(bool isVisible)
+        {
+            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
+            landscapePlugin.TerrainGenerator.SwitchVisibility(isVisible);
+            landscapePlugin.landscapeData.Value.showSatelliteView = isVisible;
+            roadsPlugin.RoadAssetPool.SwitchVisibility(isVisible);
         }
 
         private async UniTask ShowLoadingScreenAndExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)

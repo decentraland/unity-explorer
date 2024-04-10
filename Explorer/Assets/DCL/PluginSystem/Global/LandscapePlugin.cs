@@ -19,13 +19,15 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
     {
-        private TerrainGenerator terrainGenerator;
+        public TerrainGenerator TerrainGenerator;
+        public WorldTerrainGenerator WorldTerrainGenerator;
+
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
-        private ProvidedAsset<LandscapeData> landscapeData;
+        public ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
         private NativeArray<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
@@ -36,7 +38,8 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-            terrainGenerator = null!;
+            TerrainGenerator = null!;
+            WorldTerrainGenerator = null!;
         }
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
@@ -52,7 +55,8 @@ namespace DCL.PluginSystem.Global
             emptyParcels = parcelData.Value.GetEmptyParcels();
             ownedParcels = parcelData.Value.GetOwnedParcels();
 
-            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            TerrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            WorldTerrainGenerator = new WorldTerrainGenerator(landscapeData.Value.terrainData, ref ownedParcels);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -62,19 +66,19 @@ namespace DCL.PluginSystem.Global
             if (!enableLandscape) return;
 
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
-            LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, TerrainGenerator);
+            LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, TerrainGenerator);
         }
 
         public void Dispose()
         {
             if (!enableLandscape) return;
-            terrainGenerator.Dispose();
+            TerrainGenerator.Dispose();
         }
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            await terrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
+            await TerrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();

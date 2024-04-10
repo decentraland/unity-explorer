@@ -64,9 +64,9 @@ namespace Global.Dynamic
         public MVCManager MvcManager { get; private set; } = null!;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
-        
+
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
-        
+
         public LODContainer LODContainer { get; private set; } = null!;
 
         public IRealmController RealmController { get; private set; } = null!;
@@ -130,7 +130,7 @@ namespace Global.Dynamic
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             var realmData = new RealmData();
-            
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init itself
@@ -242,7 +242,7 @@ namespace Global.Dynamic
 
             var eventSystem = new UnityEventSystem(EventSystem.current);
 
-            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController);
+            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController, landscapePlugin, container.LODContainer.RoadPlugin);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {

@@ -26,7 +26,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape
 {
-    public class TerrainGenerator : ITerrainGenerator, IDisposable
+    public class TerrainGenerator : IDisposable
     {
         // increment this number if we want to force the users to generate a new terrain cache
         private const int CACHE_VERSION = 1;
@@ -90,6 +90,11 @@ namespace DCL.Landscape
 
         public IReadOnlyList<Transform> GetCliffs() =>
             cliffs;
+
+        public void SwitchVisibility(bool isVisible)
+        {
+            rootGo.SetActive(isVisible);
+        }
 
         public async UniTask GenerateTerrainAsync(
             uint worldSeed = 1,
@@ -899,6 +904,4 @@ namespace DCL.Landscape
             UnityObjectUtils.SafeDestroy(rootGo);
         }
     }
-
-    public interface ITerrainGenerator { }
 }
