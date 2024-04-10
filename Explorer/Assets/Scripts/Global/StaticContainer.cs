@@ -98,7 +98,12 @@ namespace Global
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
         {
             StaticSettings = settings;
-
+#if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
+            Debug.Log("JUANOLA 1");
+#else
+        Debug.Log("JUANOLA 2");
+#endif
+            
             (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
