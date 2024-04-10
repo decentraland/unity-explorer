@@ -167,7 +167,7 @@ namespace DCL.LOD.Systems
 
                 var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
                     platformLODKey,
-                    permittedSources: AssetSource.ALL,
+                    permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
                     customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                     manifest: manifest);
 
