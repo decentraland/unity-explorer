@@ -10,7 +10,6 @@ using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
-using DCL.LOD;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -64,9 +63,9 @@ namespace Global.Dynamic
         public MVCManager MvcManager { get; private set; } = null!;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
-        
+
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
-        
+
         public LODContainer LODContainer { get; private set; } = null!;
 
         public IRealmController RealmController { get; private set; } = null!;
@@ -110,14 +109,8 @@ namespace Global.Dynamic
         {
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
-                                      evt =>
-                                      {
-                                          realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget();
-                                      }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm =>
-                                  {
-                                      realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget();
-                                  });
+                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -130,24 +123,19 @@ namespace Global.Dynamic
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             var realmData = new RealmData();
-            
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init itself
                 await settingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
+
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
             }
 
-            try
-            {
-                await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct);
-            }
-            catch (Exception)
-            {
-                return (null, false);
-            }
+            try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
+            catch (Exception) { return (null, false); }
 
             var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
@@ -207,7 +195,6 @@ namespace Global.Dynamic
                 realmData,
                 staticContainer.ScenesCache);
 
-
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
@@ -242,7 +229,10 @@ namespace Global.Dynamic
 
             var eventSystem = new UnityEventSystem(EventSystem.current);
 
-            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController);
+            IRealmNavigator realmNavigator = new ChangeRoomsRealmNavigator(
+                new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController),
+                container.RoomHub.Reconnect
+            );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {

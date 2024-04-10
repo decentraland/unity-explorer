@@ -1,8 +1,5 @@
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
-using System;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {
@@ -22,5 +19,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom SceneRoom() =>
             gateKeeperSceneRoom.Room();
+
+        public void Reconnect()
+        {
+            archipelagoIslandRoom.Reconnect();
+            gateKeeperSceneRoom.Reconnect();
+        }
     }
 }

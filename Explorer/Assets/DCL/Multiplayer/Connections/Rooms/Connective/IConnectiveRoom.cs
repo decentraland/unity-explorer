@@ -47,6 +47,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 room.Start();
         }
 
+        public static void Reconnect(this IConnectiveRoom room)
+        {
+            room.Stop();
+            room.Start();
+        }
+
         public static string ParticipantCountInfo(this IConnectiveRoom room) =>
             room.CurrentState() is IConnectiveRoom.State.Running
                 ? room.Room().Participants.RemoteParticipantSids().Count.ToString()

@@ -10,6 +10,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         IRoom SceneRoom();
 
+        void Reconnect();
+
         class Fake : IRoomHub
         {
             public IRoom IslandRoom() =>
@@ -17,6 +19,11 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             public IRoom SceneRoom() =>
                 NullRoom.INSTANCE;
+
+            public void Reconnect()
+            {
+                //ignore
+            }
         }
     }
 }
