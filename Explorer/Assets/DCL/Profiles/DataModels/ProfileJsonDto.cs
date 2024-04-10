@@ -1,4 +1,4 @@
-#nullable disable
+#nullable enable
 
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
@@ -406,5 +406,16 @@ namespace DCL.Profiles
             profileDto.CopyFrom(profile);
             avatars.Add(profileDto);
         }
+
+        private bool AnyAvatarInList()
+        {
+            if (avatars == null) return false;
+            if (avatars.Count == 0) return false;
+
+            return true;
+        }
+
+        public ProfileJsonDto? FirstProfileDto() =>
+            AnyAvatarInList() ? avatars[0] : null;
     }
 }
