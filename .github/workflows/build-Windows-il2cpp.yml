@@ -40,7 +40,7 @@ jobs:
           - targetPlatform: StandaloneWindows64
 
     name: Build
-    runs-on: bigwin
+    runs-on: bigwin2022
     timeout-minutes: 120
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
@@ -180,7 +180,7 @@ jobs:
               ls
 
 
-      - uses: decentraland/unity-builder@chore/timeout-for-shader
+      - uses: game-ci/unity-builder@v4.2.3
         id: build
         timeout-minutes: 120
         with:

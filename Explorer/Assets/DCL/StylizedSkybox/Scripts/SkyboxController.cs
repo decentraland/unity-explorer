@@ -129,8 +129,13 @@ public class SkyboxController : MonoBehaviour
         if (Fog)
         {
             RenderSettings.fog = true;
+            /*
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.001f;
+            */
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogStartDistance = 200;
+            RenderSettings.fogEndDistance = 2500;
         }
 
         isInitialized = true;
@@ -253,7 +258,10 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateFog()
     {
-        if (Fog) { RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime); }
+        if (Fog)
+        {
+            RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime);
+        }
     }
 
     /// <summary>
