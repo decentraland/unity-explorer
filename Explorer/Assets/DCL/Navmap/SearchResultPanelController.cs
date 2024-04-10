@@ -71,6 +71,9 @@ namespace DCL.Navmap
             view.panelAnimator.SetTrigger(OUT);
         }
 
+        public void AnimateLeftRight(bool left) =>
+            view.panelAnimator.SetTrigger(left ? TO_LEFT : TO_RIGHT);
+
         public void SetLoadingState()
         {
             Show();

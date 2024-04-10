@@ -52,6 +52,7 @@ namespace DCL.Navmap
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             floatingPanelView.closeButton.onClick.AddListener(ClearSearch);
+            floatingPanelView.backButton.onClick.AddListener(() => searchResultPanelController.AnimateLeftRight(false));
             view.clearSearchButton.gameObject.SetActive(false);
             GetAndShowPreviousSearches();
             historyRecordPanelView.gameObject.SetActive(false);
@@ -69,6 +70,7 @@ namespace DCL.Navmap
 
         private void ClickedResult(string coordinates)
         {
+            searchResultPanelController.AnimateLeftRight(true);
             OnResultClicked?.Invoke(coordinates);
         }
 
