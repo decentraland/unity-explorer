@@ -56,6 +56,27 @@ namespace DCL.Profiling
 
         public static ProfilerCounterValue<int> LODInstantiatedInCache =
             new(MEMORY, "LOD Assets In Cache", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> LOD_0_Amount =
+            new(MEMORY, "LOD 0 Amount Active", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> LOD_1_Amount =
+            new(MEMORY, "LOD 1 Amount Active", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> LOD_2_Amount =
+            new(MEMORY, "LOD 2 Amount Active", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> LOD_3_Amount =
+            new(MEMORY, "LOD 3 Amount Active", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> Failling_LOD_Amount =
+            new(MEMORY, "LOD Failed Amount", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int>[] LOD_Per_Level_Values =
+        {
+            LOD_0_Amount, LOD_1_Amount, LOD_2_Amount, LOD_3_Amount
+        };
+        
         
         // Textures cache
         public static ProfilerCounterValue<int> TexturesAmount =
@@ -98,6 +119,10 @@ namespace DCL.Profiling
 
             LODInstantiatedInCache.Value = 0;
             LODAssetAmount.Value = 0;
+            LOD_0_Amount.Value = 0;
+            LOD_1_Amount.Value = 0;
+            LOD_2_Amount.Value = 0;
+            Failling_LOD_Amount.Value = 0;
             
             TexturesAmount.Value = 0;
             TexturesInCache.Value = 0;

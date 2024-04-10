@@ -2,13 +2,14 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Systems;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -68,14 +69,15 @@ namespace Global.Dynamic
         private readonly StaticSettings staticSettings;
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
+        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly CharacterContainer characterContainer;
         private readonly IMessagePipesHub messagePipesHub;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
-            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache,
-            IMessagePipesHub messagePipesHub)
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
+            IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus, IMessagePipesHub messagePipesHub)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -94,6 +96,7 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.messagePipesHub = messagePipesHub;
+            this.emotesMessageBus = emotesMessageBus;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -114,6 +117,8 @@ namespace Global.Dynamic
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
+
+            emotesMessageBus.InjectWorld(world, playerEntity);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
@@ -160,7 +165,9 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity);
+            IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
+
+            var pluginArgs = new GlobalPluginArguments(playerEntity, emoteProvider);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);

@@ -10,22 +10,33 @@ namespace SceneRunner.Scene
     public class SceneAssetBundleManifest
     {
         public static readonly SceneAssetBundleManifest NULL = new ();
-        internal readonly SceneAbDto dto;
 
         private readonly URLDomain assetBundlesBaseUrl;
+        private readonly string version;
         private readonly HashSet<string> convertedFiles;
 
         private readonly string versionHashPart;
 
+        private readonly bool ignoreConvertedFiles;
+
         public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
-        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, SceneAbDto dto)
+        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files)
         {
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
-            this.dto = dto;
-            convertedFiles = new HashSet<string>(dto.Files, StringComparer.OrdinalIgnoreCase);
+            this.version = version;
+            convertedFiles = new HashSet<string>(files, StringComparer.OrdinalIgnoreCase);
 
-            versionHashPart = string.IsNullOrEmpty(dto.Version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : dto.Version;
+            versionHashPart = string.IsNullOrEmpty(version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : string.Empty;
+            ignoreConvertedFiles = false;
+        }
+
+        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl)
+        {
+            this.assetBundlesBaseUrl = assetBundlesBaseUrl;
+            versionHashPart = string.Empty;
+            convertedFiles = new HashSet<string>();
+            ignoreConvertedFiles = true;
         }
 
         /// <summary>
@@ -71,9 +82,12 @@ namespace SceneRunner.Scene
         }
 
         public bool Contains(string hash) =>
-            convertedFiles.Contains(hash);
+            ignoreConvertedFiles || convertedFiles.Contains(hash);
 
         public URLAddress GetAssetBundleURL(string hash) =>
-            assetBundlesBaseUrl.Append(new URLPath($"{dto.Version}/{hash}"));
+            assetBundlesBaseUrl.Append(new URLPath($"{version}/{hash}"));
+        
+        public string GetVersion() =>
+            version;
     }
 }

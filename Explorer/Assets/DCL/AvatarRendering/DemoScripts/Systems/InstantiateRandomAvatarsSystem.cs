@@ -5,11 +5,13 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.DemoScripts.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion;
@@ -297,6 +299,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterController,
                 new CharacterRigidTransform(),
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new CharacterPlatformComponent(),
                 new StunComponent(),
                 new FeetIKComponent(),
@@ -356,6 +359,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var entity = World.Create(avatarShape,
                 transformComp,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(
                     new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(() => new SimplePriorityQueue<NetworkMovementMessage>())
                 ),

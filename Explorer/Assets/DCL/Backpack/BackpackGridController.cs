@@ -84,8 +84,8 @@ namespace DCL.Backpack
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
-            eventBus.EquipEvent += OnEquip;
-            eventBus.UnEquipEvent += OnUnequip;
+            eventBus.EquipWearableEvent += OnEquip;
+            eventBus.UnEquipWearableEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
@@ -148,8 +148,8 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)));
-                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId)));
+                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId)));
+                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId)));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
@@ -270,9 +270,9 @@ namespace DCL.Backpack
             ct.ThrowIfCancellationRequested();
 
             do { await UniTask.Delay(250, cancellationToken: ct); }
-            while (itemWearable.WearableThumbnail == null);
+            while (itemWearable.ThumbnailAssetResult == null);
 
-            itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            itemView.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
         }
 
@@ -296,7 +296,7 @@ namespace DCL.Backpack
         }
 
         private void SelectItem(string itemId) =>
-            commandBus.SendCommand(new BackpackSelectCommand(itemId));
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
 
         private void OnUnequip(IWearable unequippedWearable)
         {
