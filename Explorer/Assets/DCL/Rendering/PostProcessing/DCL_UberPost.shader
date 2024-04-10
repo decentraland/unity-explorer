@@ -280,8 +280,8 @@ Shader "DCL_UberPost"
                 return debugColor;
             }
             #endif
-
-            half alpha = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uvDistorted).a;
+            
+            half alpha = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, SCREEN_COORD_REMOVE_SCALEBIAS(uvDistorted)).a;
             return half4(color, alpha);
         }
 
