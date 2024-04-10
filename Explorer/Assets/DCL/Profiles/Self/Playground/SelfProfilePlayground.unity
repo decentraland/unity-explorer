@@ -377,3 +377,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71cd67be4183441685cf5c584c8dd9c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  url: https://peer.decentraland.org

@@ -36,6 +36,9 @@ namespace DCL.Profiles
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(profile.UserId))
+                throw new ArgumentException("Can't set a profile with an empty UserId");
+
             IIpfsRealm ipfs = realm.Ipfs;
 
             // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
@@ -70,7 +73,7 @@ namespace DCL.Profiles
         }
 
         private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, GetProfileJsonRootDto profileJsonRootDto, string bodyHash, string faceHash) =>
-            new(string.Empty, profileJsonRootDto)
+            new (string.Empty, profileJsonRootDto)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = new List<ContentDefinition>
