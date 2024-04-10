@@ -880,7 +880,6 @@ GameObject:
   - component: {fileID: 2952854576378652397}
   - component: {fileID: 5291351583751659876}
   - component: {fileID: 3644099486969308128}
-  - component: {fileID: 7962371899566430590}
   m_Layer: 0
   m_Name: AvatarBase
   m_TagString: Untagged
@@ -1125,21 +1124,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &7962371899566430590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2561918839770535189}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c827273871df4621b8e81591ccf81391, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  AvatarAudioSource: {fileID: 3644099486969308128}
-  AvatarAnimator: {fileID: 6654053651110562472}
-  AvatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
 --- !u!1 &2579945317508973258
 GameObject:
   m_ObjectHideFlags: 0
@@ -3539,6 +3523,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2645819381228160923}
   - component: {fileID: 9055752946258308431}
+  - component: {fileID: 8498544807636349755}
   m_Layer: 0
   m_Name: AvatarBase
   m_TagString: Untagged
@@ -3575,7 +3560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   avatarAnimator: {fileID: 6654053651110562472}
-  audioPlaybackController: {fileID: 0}
+  audioPlaybackController: {fileID: 8498544807636349755}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 8371887180010344672}
   <RightLegConstraint>k__BackingField: {fileID: 1621103848960102164}
@@ -3598,6 +3583,21 @@ MonoBehaviour:
   <HeadPositionConstraint>k__BackingField: {fileID: 3708642057345503796}
   <LeftHandAnchorPoint>k__BackingField: {fileID: 8257500666133283372}
   <RightHandAnchorPoint>k__BackingField: {fileID: 481221082041237366}
+--- !u!114 &8498544807636349755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8126905407514615045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c827273871df4621b8e81591ccf81391, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AvatarAudioSource: {fileID: 3644099486969308128}
+  AvatarAnimator: {fileID: 6654053651110562472}
+  AvatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0

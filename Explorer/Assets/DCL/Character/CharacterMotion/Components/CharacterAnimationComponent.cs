@@ -1,10 +1,18 @@
 ﻿using System;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {
         public AnimationStates States;
+        public AnimationAudioState AudioState;
+    }
+
+    [Serializable]
+    public struct AnimationAudioState
+    {
+        public bool IsFalling;
     }
 
     // buffer values for animation states

@@ -19,40 +19,50 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-           //MonitorIKDataAndSendAudioEventsQuery(World);
+           MonitorIKDataAndSendAudioEventsQuery(World);
         }
 
         [Query]
         private void MonitorIKDataAndSendAudioEvents(
             ref AvatarBase audioPlaybackController,
-            in FeetIKComponent feetIKComponent,
+            ref CharacterAnimationComponent animationComponent,
+            ref FeetIKComponent feetIKComponent,
             in CharacterRigidTransform rigidTransform,
-            in ICharacterControllerSettings settings,
-            in CharacterAnimationComponent animationComponent
+            in ICharacterControllerSettings settings
         )
         {
-            //We probably need a component that registers these things and measures time so we dont repeat sounds too soon
             if (feetIKComponent.IsDisabled) return;
+            
             if (rigidTransform.JustJumped)
             {
                 audioPlaybackController.GetAvatarAudioPlaybackController().PlayJumpSound();
+                animationComponent.AudioState.IsFalling = true;
             }
             else if (animationComponent.States.IsGrounded)
             {
-                if (rigidTransform.LastGroundedFrame - rigidTransform.LastJumpFrame < 1)
+                if (animationComponent.AudioState.IsFalling)
                 {
+                    animationComponent.AudioState.IsFalling = false;
                     audioPlaybackController.GetAvatarAudioPlaybackController().PlayLandSound();
                 }
                 else
                 {
-                    if (feetIKComponent.Left.IsGrounded)
+                    if (feetIKComponent.Left.IsGrounded && feetIKComponent.Left.WasLifted)
                     {
+                        feetIKComponent.Left.WasLifted = false;
+                        audioPlaybackController.GetAvatarAudioPlaybackController().PlayStepSound();
+                    }
+                    else if (feetIKComponent.Right.IsGrounded && feetIKComponent.Right.WasLifted)
+                    {
+                        feetIKComponent.Right.WasLifted = false;
+                        audioPlaybackController.GetAvatarAudioPlaybackController().PlayStepSound();
                     }
                 }
             }
             else
             {
                 float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
+                animationComponent.AudioState.IsFalling = true;
 
                 if (verticalVelocity < settings.AnimationLongFallSpeed)
                 {
