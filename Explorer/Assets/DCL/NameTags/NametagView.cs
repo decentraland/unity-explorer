@@ -95,9 +95,12 @@ namespace DCL.Nametags
             if(!isBubbleExpanded)
                 AnimateIn(chatMessage);
 
-            await UniTask.Delay(chatBubbleConfiguration.bubbleIdleTime);
+            await UniTask.Delay(chatBubbleConfiguration.bubbleIdleTime + AdditionalMessageVisibilityTimeMs(chatMessage));
             AnimateOut();
         }
+
+        private int AdditionalMessageVisibilityTimeMs(string chatMessage) =>
+            chatMessage.Length * chatBubbleConfiguration.additionalMsPerCharacter;
 
         //TODO: jobify this to improve the performance
         private void AnimateIn(string messageContent)

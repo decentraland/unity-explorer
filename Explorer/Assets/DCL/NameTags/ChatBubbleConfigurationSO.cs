@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using UnityEngine;
 
 namespace DCL.Nametags
@@ -12,5 +13,8 @@ namespace DCL.Nametags
         public float animationDuration;
         public float fullOpacityMaxDistance;
         public int bubbleIdleTime;
+
+        [Description("Additional ms wait per character when displaying a chat message in a bubble")]
+        public int additionalMsPerCharacter;
     }
 }
