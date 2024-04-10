@@ -70,7 +70,7 @@ namespace DCL.Profiles
         }
 
         private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, GetProfileJsonRootDto profileJsonRootDto, string bodyHash, string faceHash) =>
-            new()
+            new(string.Empty, profileJsonRootDto)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = new List<ContentDefinition>
@@ -81,7 +81,6 @@ namespace DCL.Profiles
                 pointers = new List<string> { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
-                metadata = profileJsonRootDto,
             };
 
         public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)

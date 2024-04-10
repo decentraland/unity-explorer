@@ -75,7 +75,7 @@ namespace DCL.Ipfs
         {
             var sb = new StringBuilder();
             sb.AppendLine("IpfsRealm PublishAsync requested");
-            sb.AppendLine($"Entity: {entity}");
+            sb.AppendLine($"Entity: {entity.FullInfo()}");
             sb.AppendLine($"Content files: {string.Join(", ", contentFiles?.Keys ?? Array.Empty<string>())}");
             log(sb.ToString());
             await origin.PublishAsync(entity, ct, contentFiles);

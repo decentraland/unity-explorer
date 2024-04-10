@@ -378,7 +378,7 @@ namespace DCL.Profiles
     {
         private static readonly ThreadSafeObjectPool<GetProfileJsonRootDto> POOL = new (() => new GetProfileJsonRootDto());
 
-        public List<ProfileJsonDto> avatars;
+        public List<ProfileJsonDto>? avatars;
 
         private GetProfileJsonRootDto() { }
 

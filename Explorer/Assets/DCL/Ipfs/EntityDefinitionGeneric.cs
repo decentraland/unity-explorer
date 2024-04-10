@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.Ipfs
 {
@@ -16,9 +17,7 @@ namespace DCL.Ipfs
         public long timestamp;
         public string type;
 
-        public EntityDefinitionGeneric()
-        {
-        }
+        public EntityDefinitionGeneric() { }
 
         public EntityDefinitionGeneric(string id, T metadata)
         {
@@ -41,5 +40,20 @@ namespace DCL.Ipfs
 
         public override string ToString() =>
             id;
+
+        public string FullInfo() =>
+            $"Id: {id}\n"
+            + $"Content: {ContentString()}\n"
+            + $"Metadata: {metadata}\n"
+            + $"Pointers: {PointersString()}\n"
+            + $"Version: {version}\n"
+            + $"Timestamp: {timestamp}\n"
+            + $"Type: {type}\n";
+
+        private string ContentString() =>
+            $"Count {content?.Count ?? 0}: {string.Join(", ", content?.Select(e => $"{e.file}: {e.hash}") ?? Array.Empty<string>())}";
+
+        private string PointersString() =>
+            $"Count {pointers?.Count ?? 0}: {string.Join(", ", pointers as IEnumerable<string> ?? Array.Empty<string>())}";
     }
 }
