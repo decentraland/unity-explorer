@@ -13,6 +13,7 @@ namespace DCL.Nametags
         public float animationDuration;
         public float fullOpacityMaxDistance;
         public int bubbleIdleTime;
+        public float maxDistance;
 
         [Description("Additional ms wait per character when displaying a chat message in a bubble")]
         public int additionalMsPerCharacter;

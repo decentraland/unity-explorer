@@ -141,10 +141,10 @@ namespace DCL.Nametags
             distanceFromCamera = Vector3.Distance(camera.transform.position, characterPosition);
             view.gameObject.transform.localScale
                 = Vector3.one * (Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * distanceFromCamera * NAMETAG_SCALE_MULTIPLIER);
-            view.SetTransparency(distanceFromCamera, nametagsData.maxDistance);
+            view.SetTransparency(distanceFromCamera, chatBubbleConfigurationSo.maxDistance);
         }
 
         private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform) =>
-            Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > nametagsData.maxDistance;
+            Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > chatBubbleConfigurationSo.maxDistance;
     }
 }

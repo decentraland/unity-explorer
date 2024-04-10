@@ -19,4 +19,5 @@ MonoBehaviour:
   animationDuration: 0.7
   fullOpacityMaxDistance: 20
   bubbleIdleTime: 5000
+  maxDistance: 40
   additionalMsPerCharacter: 20
