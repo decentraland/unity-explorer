@@ -57,14 +57,14 @@ namespace DCL.Ipfs
 
         public bool Equals(IpfsRealm other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(null!, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return CatalystBaseUrl == other.CatalystBaseUrl;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(null!, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
             return Equals((IpfsRealm)obj);
@@ -73,7 +73,7 @@ namespace DCL.Ipfs
         public override int GetHashCode() =>
             ContentBaseUrl.GetHashCode();
 
-        public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
+        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             string entityJson = JsonUtility.ToJson(entity);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
@@ -105,23 +105,28 @@ namespace DCL.Ipfs
             foreach ((string hash, byte[] data) in files)
                 form.AddBinaryData(hash, data);
 
+            return SendFormAsync(form, ct);
+        }
+
+        private UniTask SendFormAsync(WWWForm form, CancellationToken ct)
+        {
+            URLAddress url = Url();
+            return webRequestController.PostAsync(
+                new CommonArguments(url),
+                GenericPostArguments.CreateWWWForm(form),
+                ct,
+                ReportCategory.REALM
+            );
+        }
+
+        private URLAddress Url()
+        {
             urlBuilder.Clear();
 
-            URLAddress url = urlBuilder.AppendDomain(CatalystBaseUrl)
-                                       .AppendPath(URLPath.FromString("content/entities"))
-                                       .Build();
+            urlBuilder.AppendDomain(CatalystBaseUrl)
+                      .AppendPath(URLPath.FromString("content/entities"));
 
-            try
-            {
-                await webRequestController.PostAsync(new CommonArguments(url),
-                    GenericPostArguments.CreateWWWForm(form), ct,
-                    ReportCategory.REALM);
-            }
-            finally
-            {
-                urlBuilder.Clear();
-                files.Clear();
-            }
+            return urlBuilder.Build();
         }
 
         public string GetFileHash(byte[] file) =>
