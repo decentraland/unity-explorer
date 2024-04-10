@@ -13,7 +13,7 @@ namespace DCL.Settings
     {
         private readonly SettingsView view;
         private readonly RectTransform rectTransform;
-        private List<SettingsFeatureController> controllers = new ();
+        private readonly List<SettingsFeatureController> controllers = new ();
 
         public SettingsController(SettingsView view)
         {

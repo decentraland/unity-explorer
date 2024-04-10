@@ -33,22 +33,10 @@ namespace DCL.Settings.ModuleViews
 
         private void Awake()
         {
-            SliderView.Slider.onValueChanged.AddListener(OnValueChanged);
-            SliderView.DecreaseButton.onClick.AddListener(() =>
-            {
-                if (!SliderView.Slider.interactable)
-                    return;
-
-                SliderView.Slider.value -= 1;
-            });
-            SliderView.IncreaseButton.onClick.AddListener(() =>
-            {
-                if (!SliderView.Slider.interactable)
-                    return;
-
-                SliderView.Slider.value += 1;
-            });
-            OnValueChanged(SliderView.Slider.value);
+            SliderView.Slider.onValueChanged.AddListener(OnSliderValueChanged);
+            SliderView.DecreaseButton.onClick.AddListener(OnDecreaseButtonClicked);
+            SliderView.IncreaseButton.onClick.AddListener(OnIncreaseButtonClicked);
+            OnSliderValueChanged(SliderView.Slider.value);
         }
 
         protected override void Configure(Config configuration)
@@ -59,10 +47,11 @@ namespace DCL.Settings.ModuleViews
             SliderView.Slider.minValue = configuration.minValue;
             SliderView.Slider.maxValue = configuration.maxValue;
             SliderView.Slider.wholeNumbers = configuration.wholeNumbers;
+            SliderView.Slider.value = configuration.defaultValue;
             sliderType = configuration.sliderType;
         }
 
-        private void OnValueChanged(float value)
+        private void OnSliderValueChanged(float value)
         {
             switch (sliderType)
             {
@@ -82,6 +71,22 @@ namespace DCL.Settings.ModuleViews
 
             SliderView.DecreaseButton.interactable = value > SliderView.Slider.minValue;
             SliderView.IncreaseButton.interactable = value < (sliderType == SliderType.Time ? Mathf.Clamp(SliderView.Slider.maxValue, 0, MAX_TIME_VALUE) : SliderView.Slider.maxValue);
+        }
+
+        private void OnDecreaseButtonClicked()
+        {
+            if (!SliderView.Slider.interactable)
+                return;
+
+            SliderView.Slider.value -= 1;
+        }
+
+        private void OnIncreaseButtonClicked()
+        {
+            if (!SliderView.Slider.interactable)
+                return;
+
+            SliderView.Slider.value += 1;
         }
     }
 }

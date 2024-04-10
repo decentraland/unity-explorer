@@ -16,17 +16,21 @@ namespace DCL.Settings.ModuleViews
 
         private void Awake()
         {
-            ToggleView.Toggle.onValueChanged.AddListener(isOn =>
-            {
-                ToggleView.OnImage.SetActive(isOn);
-                ToggleView.OffImage.SetActive(!isOn);
-                ToggleView.Toggle.targetGraphic = isOn ? ToggleView.OnBackgroundImage : ToggleView.OffBackgroundImage;
-            });
+            ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
+            OnToggleValueChanged(ToggleView.Toggle.isOn);
         }
 
         protected override void Configure(Config configuration)
         {
             ToggleView.Toggle.interactable = configuration.IsEnabled;
+            ToggleView.Toggle.isOn = configuration.defaultIsOn;
+        }
+
+        private void OnToggleValueChanged(bool isOn)
+        {
+            ToggleView.OnImage.SetActive(isOn);
+            ToggleView.OffImage.SetActive(!isOn);
+            ToggleView.Toggle.targetGraphic = isOn ? ToggleView.OnBackgroundImage : ToggleView.OffBackgroundImage;
         }
     }
 }

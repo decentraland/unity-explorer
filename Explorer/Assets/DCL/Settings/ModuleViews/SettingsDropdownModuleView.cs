@@ -25,6 +25,7 @@ namespace DCL.Settings.ModuleViews
             DropdownView.Dropdown.options.Clear();
             foreach (string option in configuration.options)
                 DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
+            DropdownView.Dropdown.value = configuration.defaultOptionIndex;
         }
     }
 }
