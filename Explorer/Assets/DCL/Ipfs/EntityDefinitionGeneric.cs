@@ -9,12 +9,22 @@ namespace DCL.Ipfs
         public const string DEFAULT_VERSION = "v3";
 
         public List<ContentDefinition>? content;
-        public string id = string.Empty;
+        public string id;
         public T metadata;
         public List<string>? pointers;
         public string version;
         public long timestamp;
         public string type;
+
+        public EntityDefinitionGeneric()
+        {
+        }
+
+        public EntityDefinitionGeneric(string id, T metadata)
+        {
+            this.id = id;
+            this.metadata = metadata;
+        }
 
         /// <summary>
         ///     Clear data for the future reusing
