@@ -106,6 +106,7 @@ namespace DCL.Navmap
         {
             searchResultPanelController.SetLoadingState();
             await UniTask.Delay(1000, cancellationToken: cts.Token);
+            searchResultPanelController.Show();
 
             AddToPreviousSearch(searchText);
             using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, 0, 8, cts.Token);

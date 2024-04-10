@@ -53,8 +53,12 @@ namespace DCL.Navmap
             return fullSearchResultsView;
         }
 
-        private void Show()
+        public void Show()
         {
+            if(view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("In"))
+                return;
+
+            view.NoResultsContainer.gameObject.SetActive(false);
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
@@ -76,7 +80,6 @@ namespace DCL.Navmap
 
         public void SetLoadingState()
         {
-            Show();
             ReleasePool();
             for(var i = 0; i < 8; i++)
             {
