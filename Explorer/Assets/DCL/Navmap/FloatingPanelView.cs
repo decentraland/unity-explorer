@@ -1,4 +1,5 @@
 using DCL.UI;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,13 +15,7 @@ namespace DCL.Navmap
         public string[] categoryNames;
 
         [field: SerializeField]
-        public RectTransform contentViewport;
-
-        [field: SerializeField]
-        public RectTransform descriptionContent;
-
-        [field: SerializeField]
-        public RectTransform rectTransform;
+        public CanvasGroup CanvasGroup { get; private set; }
 
         [field: SerializeField]
         public RectTransform CategoriesContainer { get; private set; }
@@ -69,5 +64,8 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public MultiStateButtonView favoriteButton;
+
+        [field: SerializeField]
+        public Animator panelAnimator;
     }
 }
