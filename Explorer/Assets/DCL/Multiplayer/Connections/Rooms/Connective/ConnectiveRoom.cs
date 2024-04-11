@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Credentials;
-using DCL.Utilities.Extensions;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -76,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw new InvalidOperationException("Room is already stopped");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
-            await room.DisconnectAsync(cancellationTokenSource.EnsureNotNull("Cancellation token must exist").Token);
+            await AssignNewRoomAndReleasePrevious(NullRoom.INSTANCE, CancellationToken.None);
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
@@ -124,6 +123,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 return;
             }
 
+            await AssignNewRoomAndReleasePrevious(newRoom, token);
+            roomState.Set(IConnectiveRoom.State.Running);
+        }
+
+        private async UniTask AssignNewRoomAndReleasePrevious(IRoom newRoom, CancellationToken token)
+        {
             room.Assign(newRoom, out IRoom? previous);
 
             if (previous is not null)
@@ -131,8 +136,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 await previous.DisconnectAsync(token);
                 roomPool.Release(previous);
             }
-
-            roomState.Set(IConnectiveRoom.State.Running);
         }
     }
 }
