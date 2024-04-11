@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         }
 
         public IConnectiveRoom.State CurrentState() =>
-            current?.CurrentState() ?? IConnectiveRoom.State.Sleep;
+            current?.CurrentState() ?? IConnectiveRoom.State.Stopped;
 
         public IRoom Room() =>
             room;

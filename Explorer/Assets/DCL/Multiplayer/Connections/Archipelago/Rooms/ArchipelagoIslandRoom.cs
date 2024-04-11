@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private void OnNewConnectionString(string connectionString, CancellationToken token)
         {
-            if (CurrentState() is IConnectiveRoom.State.Sleep) throw new InvalidOperationException("Room is not running");
+            if (CurrentState() is IConnectiveRoom.State.Stopped) throw new InvalidOperationException("Room is not running");
             connectToRoomAsyncDelegate.EnsureNotNull("Connection delegate is not passed yet");
             connectToRoomAsyncDelegate!(connectionString, token).Forget();
         }

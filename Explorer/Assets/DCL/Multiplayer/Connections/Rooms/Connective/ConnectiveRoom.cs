@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Credentials;
+using DCL.Utilities.Extensions;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -32,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
-        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Sleep);
+        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
             () => new LogRoom(
                 new Room(
@@ -62,7 +63,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public void Start()
         {
-            if (CurrentState() is not IConnectiveRoom.State.Sleep)
+            if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
             roomState.Set(IConnectiveRoom.State.Starting);
@@ -71,11 +72,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public async UniTask StopAsync()
         {
-            if (CurrentState() is IConnectiveRoom.State.Sleep)
+            if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
 
-            roomState.Set(IConnectiveRoom.State.Sleep);
-            await room.DisconnectAsync(cancellationTokenSource?.Token ?? CancellationToken.None);
+            roomState.Set(IConnectiveRoom.State.Stopping);
+            await room.DisconnectAsync(cancellationTokenSource.EnsureNotNull("Cancellation token must exist").Token);
+            roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
@@ -88,7 +90,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask<CancellationToken> NewCancellationTokenAsync()
         {
-            await StopAsync();
+            if (cancellationTokenSource != null)
+                await StopAsync();
+
             cancellationTokenSource = new CancellationTokenSource();
             return cancellationTokenSource.Token;
         }

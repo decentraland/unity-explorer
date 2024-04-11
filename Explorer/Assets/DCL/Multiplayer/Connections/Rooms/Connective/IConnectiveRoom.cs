@@ -7,9 +7,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         enum State
         {
-            Sleep,
+            Stopped,
             Starting,
             Running,
+            Stopping
         }
 
         void Start();
@@ -31,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 UniTask.CompletedTask;
 
             public State CurrentState() =>
-                State.Sleep;
+                State.Stopped;
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;
@@ -42,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         public static void StartIfNot(this IConnectiveRoom room)
         {
-            if (room.CurrentState() is IConnectiveRoom.State.Sleep)
+            if (room.CurrentState() is IConnectiveRoom.State.Stopped)
                 room.Start();
         }
 

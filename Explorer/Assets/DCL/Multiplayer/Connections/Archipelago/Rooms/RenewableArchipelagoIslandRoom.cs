@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         }
 
         public IConnectiveRoom.State CurrentState() =>
-            current?.CurrentState() ?? IConnectiveRoom.State.Sleep;
+            current?.CurrentState() ?? IConnectiveRoom.State.Stopped;
 
         public IRoom Room() =>
             room;

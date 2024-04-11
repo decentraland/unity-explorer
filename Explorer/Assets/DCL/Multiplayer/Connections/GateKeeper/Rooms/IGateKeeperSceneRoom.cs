@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             //ignore
             public State CurrentState() =>
-                State.Sleep;
+                State.Stopped;
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;

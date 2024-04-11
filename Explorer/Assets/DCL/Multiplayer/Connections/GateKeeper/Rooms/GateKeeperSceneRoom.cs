@@ -27,11 +27,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             this.metaDataSource = metaDataSource;
             this.sceneHandleUrl = sceneHandleUrl;
 
-            connectiveRoom = new RenewableConnectiveRoom(
-                () => new ConnectiveRoom(
-                    _ => UniTask.CompletedTask,
-                    RunConnectCycleStepAsync
-                )
+            // connectiveRoom = new RenewableConnectiveRoom(
+            //     () => new ConnectiveRoom(
+            //         static _ => UniTask.CompletedTask,
+            //         RunConnectCycleStepAsync
+            //     )
+            // );
+
+            connectiveRoom = new ConnectiveRoom(
+                static _ => UniTask.CompletedTask,
+                RunConnectCycleStepAsync
             );
         }
 
@@ -51,7 +56,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             MetaData meta = await metaDataSource.MetaDataAsync(token);
 
-            if (meta.Equals(previousMetaData) == false)
+            if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running || meta.Equals(previousMetaData) == false)
             {
                 string connectionString = await ConnectionStringAsync(meta, token);
                 await connectToRoomAsyncDelegate(connectionString, token);

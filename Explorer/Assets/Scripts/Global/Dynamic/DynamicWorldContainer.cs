@@ -180,14 +180,16 @@ namespace Global.Dynamic
                 exposedGlobalDataContainer.CameraSamplingData,
                 dynamicWorldParams.EnableLandscape, landscapePlugin);
 
-            var archipelagoIslandRoom = new RenewableArchipelagoIslandRoom(
-                () => new ArchipelagoIslandRoom(
-                    staticContainer.CharacterContainer.CharacterObject,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    identityCache,
-                    multiPool
-                )
-            );
+            //TODO back
+            var archipelagoIslandRoom = new IArchipelagoIslandRoom.Fake();
+            //     new RenewableArchipelagoIslandRoom(
+            //     () => new ArchipelagoIslandRoom(
+            //         staticContainer.CharacterContainer.CharacterObject,
+            //         staticContainer.WebRequestsContainer.WebRequestController,
+            //         identityCache,
+            //         multiPool
+            //     )
+            // );
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
