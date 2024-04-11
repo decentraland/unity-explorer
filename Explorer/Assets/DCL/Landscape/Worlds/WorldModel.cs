@@ -36,7 +36,7 @@ namespace DCL.Landscape
 
             // +1 to include both the starting and ending points.
             sizeInParcels = new int2(maxParcel.x - minParcel.x + 1, maxParcel.y - minParcel.y + 1);
-            centerInParcels = sizeInParcels / 2;
+            centerInParcels = minParcel + (sizeInParcels / 2);
         }
     }
 }
