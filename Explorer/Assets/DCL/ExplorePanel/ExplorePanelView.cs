@@ -6,6 +6,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace DCL.ExplorePanel
@@ -30,10 +31,15 @@ namespace DCL.ExplorePanel
         [Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig BackgroundMusic;
+        [field: SerializeField]
+        public AudioMixerSnapshot MuteSoundsSnapshot;
+        [field: SerializeField]
+        public AudioMixerSnapshot RestoreSoundsSnapShot;
 
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
+            MuteSoundsSnapshot.TransitionTo(2);
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
             AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
@@ -41,6 +47,7 @@ namespace DCL.ExplorePanel
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
+            RestoreSoundsSnapShot.TransitionTo(2);
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
             AnimationTransform.anchoredPosition = Vector2.zero;
             return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
