@@ -40,17 +40,20 @@ namespace DCL.Settings.ModuleControllers
         {
             QualitySettings.SetQualityLevel(index);
 
-            switch (index)
+            if (realmPartitionSettings != null)
             {
-                case 0: // Low
-                    realmPartitionSettings.MaxLoadingDistanceInParcels = SCENE_LOAD_RADIUS_FOR_LOW_PRESET;
-                    break;
-                case 1: // Medium
-                    realmPartitionSettings.MaxLoadingDistanceInParcels = SCENE_LOAD_RADIUS_FOR_MEDIUM_PRESET;
-                    break;
-                case 2: // High
-                    realmPartitionSettings.MaxLoadingDistanceInParcels = SCENE_LOAD_RADIUS_FOR_HIGH_PRESET;
-                    break;
+                switch (index)
+                {
+                    case 0: // Low
+                        realmPartitionSettings.MaxLoadingDistanceInParcels = SCENE_LOAD_RADIUS_FOR_LOW_PRESET;
+                        break;
+                    case 1: // Medium
+                        realmPartitionSettings.MaxLoadingDistanceInParcels = SCENE_LOAD_RADIUS_FOR_MEDIUM_PRESET;
+                        break;
+                    case 2: // High
+                        realmPartitionSettings.MaxLoadingDistanceInParcels = SCENE_LOAD_RADIUS_FOR_HIGH_PRESET;
+                        break;
+                }
             }
 
             settingsDataStore.SetDropdownValue(GRAPHICS_QUALITY_DATA_STORE_KEY, index, save: true);
