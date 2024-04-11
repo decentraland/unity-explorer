@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Backpack;
 using DCL.Navmap;
 using DCL.Settings;

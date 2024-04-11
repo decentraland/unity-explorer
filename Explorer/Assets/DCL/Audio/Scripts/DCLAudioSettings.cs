@@ -1,5 +1,4 @@
-﻿using Decentraland.Kernel.Comms.V1;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -7,7 +6,7 @@ using UnityEngine.Audio;
 namespace DCL.Audio
 {
     [CreateAssetMenu(fileName = "AudioSettings", menuName = "SO/Audio/AudioSettings")]
-    public class AudioSettings : ScriptableObject
+    public class DCLAudioSettings : ScriptableObject
     {
         [SerializeField] private List<AudioCategorySettingsKeyValuePair> audioCategorySettings = new ();
         [SerializeField] private float masterVolume = 1;
