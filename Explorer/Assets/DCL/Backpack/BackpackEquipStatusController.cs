@@ -14,10 +14,12 @@ using Utility;
 
 namespace DCL.Backpack
 {
-    public class BackpackEquipStatusController
+    public class BackpackEquipStatusController : IDisposable
     {
         private readonly Func<(World, Entity)> ecsContextProvider;
-        private readonly IReadOnlyEquippedWearables equippedWearables;
+        private readonly IBackpackEventBus backpackEventBus;
+        private readonly IEquippedEmotes equippedEmotes;
+        private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
 
         private World? world;
@@ -32,6 +34,8 @@ namespace DCL.Backpack
             Func<(World, Entity)> ecsContextProvider
         )
         {
+            this.backpackEventBus = backpackEventBus;
+            this.equippedEmotes = equippedEmotes;
             this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
             this.selfProfile = selfProfile;
@@ -40,6 +44,16 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+        }
+
+        public void Dispose()
+        {
+            backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
+            backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
+            backpackEventBus.PublishProfileEvent += PublishProfile;
+            backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+            publishProfileCts?.SafeCancelAndDispose();
         }
 
         private void PublishProfile()
@@ -58,8 +72,11 @@ namespace DCL.Backpack
         }
 
         //This will retrieve the list of default hides for the current equipped wearables
+
         //Manual hide override will be a separate task
+
         //TODO retrieve logic from old renderer
+
         public List<string> GetCurrentWearableHides()
         {
             List<string> hides = new List<string>();

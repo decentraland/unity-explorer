@@ -15,17 +15,17 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
 {
-    internal class BackpackSubPlugin
+    internal class BackpackSubPlugin : IDisposable
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
-        private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
@@ -34,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly BackpackEquipStatusController backpackEquipStatusController;
 
         private BackpackBusController? busController;
         private Arch.Core.World? world;
@@ -57,7 +58,6 @@ namespace DCL.PluginSystem.Global
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
-            this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteCache = emoteCache;
@@ -65,6 +65,14 @@ namespace DCL.PluginSystem.Global
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
+
+            backpackEquipStatusController = new BackpackEquipStatusController(
+                backpackEventBus,
+                equippedEmotes,
+                equippedWearables,
+                selfProfile,
+                ProvideEcsContext
+            );
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -74,16 +82,6 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
-
-            //TODO after refactor this object is unused at all, remove?
-
-            var backpackEquipStatusController = new BackpackEquipStatusController(
-                backpackEventBus,
-                equippedEmotes,
-                equippedWearables,
-                selfProfile,
-                ProvideEcsContext
-            );
 
             busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
 
@@ -170,6 +168,7 @@ namespace DCL.PluginSystem.Global
         {
             busController?.Dispose();
             backpackController?.Dispose();
+            backpackEquipStatusController?.Dispose();
         }
 
         private (Arch.Core.World, Entity) ProvideEcsContext() =>
