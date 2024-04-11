@@ -35,7 +35,7 @@ namespace DCL.Nametags
         public string Id;
 
         [field: SerializeField]
-        public float FixedWidth { get; private set; }
+        public float MaxWidth { get; private set; }
 
         private readonly Color finishColor = new (1,1,1,0);
         private Vector2 messageContentAnchoredPosition;
@@ -110,8 +110,8 @@ namespace DCL.Nametags
             isBubbleExpanded = true;
 
             //Calculate message content preferred size with fixed width
-            preferredSize = MessageContent.GetPreferredValues(messageContent, FixedWidth, 0);
-            preferredSize.x = MessageContentRectTransform.sizeDelta.x;
+            preferredSize = MessageContent.GetPreferredValues(messageContent, MaxWidth, 0);
+            preferredSize.x =  CalculatePreferredWidth(messageContent);
             MessageContentRectTransform.sizeDelta = preferredSize;
 
             //Calculate the initial message content position to animate after
@@ -133,6 +133,17 @@ namespace DCL.Nametags
             Username.rectTransform.DOAnchorPos(usernameFinalPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve);
             MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve);
             DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve);
+        }
+
+        private float CalculatePreferredWidth(string messageContent)
+        {
+            if (Username.GetParsedText().Length > messageContent.Length)
+                return Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth;
+
+            if(MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x < MaxWidth)
+                return MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x;
+
+            return MaxWidth;
         }
 
         private void AnimateOut()
