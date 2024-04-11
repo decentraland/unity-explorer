@@ -1,17 +1,24 @@
 
+using DCL.Browser;
+using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers;
 using System;
 
 namespace DCL.Navmap
 {
     public class NavmapFilterController
     {
+        private const string DAO_URL = "https://decentraland.org/dao/";
         private readonly NavmapFilterView filterView;
+        private readonly IMapRenderer mapRenderer;
 
-        public NavmapFilterController(NavmapFilterView filterView)
+        public NavmapFilterController(NavmapFilterView filterView, IMapRenderer mapRenderer, IWebBrowser webBrowser)
         {
             this.filterView = filterView;
-            filterView.filterButton.onClick.AddListener(ToggleFilterContent);
+            this.mapRenderer = mapRenderer;
             filterView.infoButton.onClick.AddListener(ToggleInfoContent);
+            filterView.OnFilterChanged += ToggleLayer;
+            filterView.daoButton.onClick.AddListener(()=>webBrowser.OpenUrl(DAO_URL));
         }
 
         private void ToggleInfoContent()
@@ -19,11 +26,7 @@ namespace DCL.Navmap
             filterView.infoContent.SetActive(!filterView.infoContent.activeSelf);
         }
 
-        private void ToggleFilterContent()
-        {
-            //Add animations
-            filterView.filterContentTransform.gameObject.SetActive(!filterView.filterContentTransform.gameObject.activeSelf);
-            filterView.infoContent.SetActive(false);
-        }
+        private void ToggleLayer(MapLayer layerName, bool isActive) =>
+            mapRenderer.SetSharedLayer(layerName, isActive);
     }
 }
