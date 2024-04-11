@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -54,9 +55,9 @@ namespace DCL.Profiles.Self.Playground
             );
 
             var profile = await profiles.ProfileAsync(ct);
-            Debug.Log($"Profile is found {profile != null}");
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is found {profile != null}");
             await profiles.PublishAsync(ct);
-            Debug.Log($"Profile is published successfully");
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is published successfully");
         }
     }
 }
