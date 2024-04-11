@@ -72,6 +72,7 @@ namespace DCL.Input.Systems
             Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
             IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
+            cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
 
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults);
             UpdateCursorVisualState(ref cursorComponent, raycastResults);
@@ -87,8 +88,6 @@ namespace DCL.Input.Systems
             {
                 case CursorState.Free:
                 {
-                    cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
-
                     if (isHoveringAnInteractable)
                         cursorStyle = CursorStyle.Interaction;
 
@@ -191,7 +190,7 @@ namespace DCL.Input.Systems
             bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
-            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: false })
+            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: false, IsOverUI: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {
@@ -205,7 +204,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
 
-            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true })
+            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
                 nextState = CursorState.Panning;
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
