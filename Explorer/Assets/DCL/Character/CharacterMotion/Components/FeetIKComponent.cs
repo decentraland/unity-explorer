@@ -14,7 +14,6 @@ namespace DCL.CharacterMotion.Components
             public Vector3 TargetInitialPosition;
             public Quaternion TargetInitialRotation;
             public bool IsGrounded;
-            public bool WasLifted;
             public bool IsInsideMesh;
             public float Distance;
         }

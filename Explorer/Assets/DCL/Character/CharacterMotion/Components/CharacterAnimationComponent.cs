@@ -6,14 +6,6 @@ namespace DCL.CharacterMotion.Components
     public struct CharacterAnimationComponent
     {
         public AnimationStates States;
-        public AnimationAudioState AudioState;
-    }
-
-    [Serializable]
-    public struct AnimationAudioState
-    {
-        public bool IsFalling;
-        public int LastSoundFrame;
     }
 
     // buffer values for animation states

@@ -1,5 +1,6 @@
 ﻿using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -7,21 +8,17 @@ namespace DCL.Audio
 {
     public class AvatarAudioPlaybackController : MonoBehaviour
     {
-        [FormerlySerializedAs("audioSource")]
         [SerializeField] private AudioSource AvatarAudioSource;
-        [FormerlySerializedAs("animator")]
         [SerializeField] private Animator AvatarAnimator;
-        [FormerlySerializedAs("audioSettings")]
         [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
 
-        private float blendThreshold = 0.05f;
 
         private void Start()
         {
-            blendThreshold = AvatarAudioSettings.MovementBlendThreshold;
             AvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
         }
 
+        [PublicAPI("Used by Animation Events")]
         public void PlayJumpSound()
         {
             switch (GetMovementState())
@@ -38,6 +35,7 @@ namespace DCL.Audio
             }
         }
 
+        [PublicAPI("Used by Animation Events")]
         public void PlayStepSound()
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
@@ -56,6 +54,7 @@ namespace DCL.Audio
             }
         }
 
+        [PublicAPI("Used by Animation Events")]
         public void PlayLandSound()
         {
             switch (GetMovementState())
@@ -72,17 +71,20 @@ namespace DCL.Audio
             }
         }
 
+        [PublicAPI("Used by Animation Events")]
         public void PlayHardLandingSound()
         {
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
 
         }
 
+        [PublicAPI("Used by Animation Events")]
         public void PlayLongFallSound()
         {
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall);
         }
 
+        [PublicAPI("Used by Animation Events")]
         public void PlayShortFallSound()
         {
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ShortFall);
@@ -94,7 +96,7 @@ namespace DCL.Audio
 
             AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
 
-            if (clipConfig == null) return;
+            if (clipConfig == null || clipConfig.RelativeVolume == 0) return;
 
             AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
@@ -113,7 +115,7 @@ namespace DCL.Audio
                 return MovementKind.Jog;
             }
 
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold)
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > AvatarAudioSettings.MovementBlendThreshold)
             {
                 return MovementKind.Walk;
             }
