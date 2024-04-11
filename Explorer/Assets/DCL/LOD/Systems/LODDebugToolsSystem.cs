@@ -6,6 +6,10 @@ using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using Arch.System;
+using DCL.DebugUtilities.UIBindings;
+using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using UnityEngine;
 
 namespace DCL.LOD.Systems
 {
@@ -19,26 +23,26 @@ namespace DCL.LOD.Systems
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
             .WithAll<SceneLODInfoDebug>();
 
-        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset) : base(world)
+        private readonly Transform missingSceneParent;
+
+        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset, Transform missingSceneParent) : base(world)
         {
             this.debugBuilder = debugBuilder;
             this.lodSettingsAsset = lodSettingsAsset;
+            this.missingSceneParent = missingSceneParent;
             lodSettingsAsset.IsColorDebuging = false;
-
             debugBuilder.AddWidget("LOD")
-                        .AddSingleButton("Toggle lod color", ToggleLODColor)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold", SetLOD1)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold", SetLOD2);
+                .AddSingleButton("LOD Debugging", ToggleLODColor)
+                .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, false)
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold",  newValue => SetLOD(newValue, 0))
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold",  newValue => SetLOD(newValue, 1))
+                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[2], "LOD 3 Threshold",  newValue => SetLOD(newValue, 2));
+
         }
 
-        private void SetLOD1(int value)
+        private void SetLOD(int newValue, int i)
         {
-            lodSettingsAsset.LodPartitionBucketThresholds[0] = value;
-        }
-
-        private void SetLOD2(int value)
-        {
-            lodSettingsAsset.LodPartitionBucketThresholds[1] = value;
+            lodSettingsAsset.LodPartitionBucketThresholds[i] = newValue;
         }
 
         private void ToggleLODColor()
@@ -61,6 +65,7 @@ namespace DCL.LOD.Systems
                 AddSceneLODInfoDebugQuery(World);
                 RemoveSceneLODInfoQuery(World);
                 UpdateLODDebugInfoQuery(World);
+                UnloadSceneLODInfoDebugQuery(World);
             }
         }
 
@@ -78,19 +83,26 @@ namespace DCL.LOD.Systems
         [None(typeof(SceneLODInfoDebug))]
         private void AddSceneLODInfoDebug(in Entity entity)
         {
-            World.Add(entity, SceneLODInfoDebug.Create());
+            World.Add(entity, SceneLODInfoDebug.Create(missingSceneParent));
         }
 
         [Query]
-        private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
+        [All(typeof(DeleteEntityIntention))]
+        private void UnloadSceneLODInfoDebug(in Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug)
         {
-            if (sceneLODInfo.CurrentLOD == null) return;
+            sceneLODInfoDebug.Dispose();
+            World.Remove<SceneLODInfoDebug>(entity);
+        }
 
-            var lodAsset = sceneLODInfo.CurrentLOD.Value;
-            if (lodAsset.LoadingFailed) return;
+        [Query]
+        private void UpdateLODDebugInfo(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
+        {
+            if (sceneLODInfo.GetCurrentLOD() == null) return;
 
+            var lodAsset = sceneLODInfo.GetCurrentLOD()!.Value;
             if (!lodAsset.LodKey.Level.Equals(sceneLODInfoDebug.CurrentLODLevel))
-                sceneLODInfoDebug.Update(sceneLODInfo.CurrentLOD.Value, lodSettingsAsset);
+                sceneLODInfoDebug.Update(sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, lodAsset, lodSettingsAsset);
         }
     }
+
 }

@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: DynamicSceneLoaderSettings
   m_EditorClassIdentifier: 
   <StartPosition>k__BackingField: {x: 0, y: 0}
-  <SceneLoadRadius>k__BackingField: 4
   <StaticLoadPositions>k__BackingField: []
   <Realms>k__BackingField:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
@@ -24,8 +23,10 @@ MonoBehaviour:
   - https://worlds-content-server.decentraland.org/world/yemel.dcl.eth
   - https://worlds-content-server.decentraland.org/world/MetadyneLabs.dcl.eth
   - http://127.0.0.1:8000
-  <AuthWebSocketUrl>k__BackingField: https://auth-api.decentraland.zone
-  <AuthSignatureUrl>k__BackingField: https://decentraland.zone/auth/requests
+  <AuthWebSocketUrl>k__BackingField: https://auth-api.decentraland.org
+  <AuthWebSocketUrlDev>k__BackingField: https://auth-api.decentraland.zone
+  <AuthSignatureUrl>k__BackingField: https://decentraland.org/auth/requests
+  <AuthSignatureUrlDev>k__BackingField: https://decentraland.zone/auth/requests
   <Web3WhitelistMethods>k__BackingField:
   - eth_sendTransaction
   - eth_getTransactionReceipt

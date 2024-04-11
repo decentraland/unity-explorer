@@ -4,11 +4,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AssetsProvision;
-using DCL.AsyncLoadReporting;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.Profiling;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -19,9 +20,12 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.SceneBoundsChecker;
+using SceneRunner.Scene;
 using UnityEngine;
+using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
 
 namespace DCL.LOD.Systems
 {
@@ -36,8 +40,13 @@ namespace DCL.LOD.Systems
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
+        private readonly Transform lodsTransformParent;
+
+        private readonly TextureArrayContainer lodTextureArrayContainer;
+
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
+            Transform lodsTransformParent, TextureArrayContainer lodTextureArrayContainer) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
@@ -45,6 +54,8 @@ namespace DCL.LOD.Systems
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.lodsTransformParent = lodsTransformParent;
+            this.lodTextureArrayContainer = lodTextureArrayContainer;
         }
 
         protected override void Update(float t)
@@ -57,7 +68,7 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (partitionComponent.IsDirty || sceneLODInfo.CurrentLODLevel == byte.MaxValue)
+            if ((partitionComponent.IsDirty || sceneLODInfo.CurrentLODLevel == byte.MaxValue) && !partitionComponent.IsBehind)
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
@@ -71,33 +82,38 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                sceneLODInfo.CurrentLOD?.Release();
-
+                LODAsset newLod = default;
                 if (result.Succeeded)
                 {
-                    GameObject? instantiatedLOD = Object.Instantiate(result.Asset.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
-                        Quaternion.identity);
+                    var instantiatedLOD = Object.Instantiate(result.Asset?.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
+                        Quaternion.identity, lodsTransformParent)!;
+
+                    if (!sceneLODInfo.CurrentLODLevel.Equals(0))
+                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer));
+                    else
+                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                            instantiatedLOD, result.Asset, lodCache);
+
                     ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
                         in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
-
-                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        instantiatedLOD, result.Asset, lodCache);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
 
-                    sceneLODInfo.CurrentLOD = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
                 }
 
+                sceneLODInfo.SetCurrentLOD(newLod);
                 scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-
                 CheckSceneReadiness(sceneDefinitionComponent);
-
                 sceneLODInfo.IsDirty = false;
             }
         }
+
+
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -123,42 +139,40 @@ namespace DCL.LOD.Systems
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.CurrentLOD))
+            if (newLODKey.Equals(sceneLODInfo.GetCurrentLOD()))
             {
                 sceneLODInfo.IsDirty = false;
                 return;
             }
 
+            if (newLODKey.Equals(sceneLODInfo.GetCurrentSuccessfulLOD()))
+            {
+                sceneLODInfo.IsDirty = false;
+                sceneLODInfo.ResetToCurrentSuccesfullLOD();
+                return;
+            }
+                
+
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
-                sceneLODInfo.CurrentLOD?.Release();
-                sceneLODInfo.CurrentLOD = cachedAsset;
+                sceneLODInfo.SetCurrentLOD(cachedAsset);
                 sceneLODInfo.IsDirty = false;
                 CheckSceneReadiness(sceneDefinitionComponent);
             }
             else
             {
-                //TODO: TEMP, for some reason genesis plaza asset is crashing in mac
-                if ((Application.platform.Equals(RuntimePlatform.OSXPlayer) ||
-                     Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
-                    sceneDefinitionComponent.Definition.id.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                {
-                    return;
-                }
+                string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+                var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-                //TODO: TEMP, infinite floor sceene
-                if (sceneDefinitionComponent.Definition.id.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
-                {
-                    return;
-                }
+                var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
+                    platformLODKey,
+                    permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
+                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                    manifest: manifest);
 
                 sceneLODInfo.CurrentLODPromise =
-                    Promise.Create(World,
-                        GetAssetBundleIntention.FromHash(typeof(GameObject),newLODKey.ToString(),
-                            permittedSources: AssetSource.EMBEDDED,
-                            customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
-                        partitionComponent);
+                    Promise.Create(World, assetBundleIntention, partitionComponent);
 
                 sceneLODInfo.IsDirty = true;
             }

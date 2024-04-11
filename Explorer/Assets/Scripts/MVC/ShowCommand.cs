@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace MVC
+﻿namespace MVC
 {
     /// <summary>
     ///     Don't nest it as otherwise it will be referenced by the base type name, it's ugly

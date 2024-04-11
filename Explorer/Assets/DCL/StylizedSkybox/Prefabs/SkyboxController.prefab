@@ -24,13 +24,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8956920550138392057}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 673.9758, y: 1342.8049, z: -18.385132}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4357130098437806639
 MonoBehaviour:
@@ -46,9 +46,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SecondsInDay: 86400
   PlayOnStart: 1
-  Speed: 120
-  NaturalTime: 43007
-  NormalizedTime: 0.4977662
+  Speed: 60
+  NaturalTime: 43200
+  NormalizedTime: 0.5
   skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
   RefreshTime: 0
   DirectionalLight: {fileID: 0}
@@ -356,4 +356,4 @@ MonoBehaviour:
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
   textUI: {fileID: 0}
-  editMode: 1
+  editMode: 0
