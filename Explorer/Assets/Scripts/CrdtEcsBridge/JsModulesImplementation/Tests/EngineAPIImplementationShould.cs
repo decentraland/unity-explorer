@@ -106,7 +106,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             crdtWorldSynchronizer.GetSyncCommandBuffer().Returns(_ => worldSyncCommandBuffer = Substitute.For<IWorldSyncCommandBuffer>());
 
             instancePoolsProvider.GetDeserializationMessagesPool().Returns(_ => new List<CRDTMessage>());
-            sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), sharedPoolsProvider));
+            sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), sharedPoolsProvider.ReleaseSerializedStateBytesPool));
             sharedPoolsProvider.GetSerializationCrdtMessagesPool(Arg.Any<int>()).Returns(c => new ProcessedCRDTMessage[c.Arg<int>()]);
 
             outgoingCrtdMessagesProvider.GetSerializationSyncBlock()

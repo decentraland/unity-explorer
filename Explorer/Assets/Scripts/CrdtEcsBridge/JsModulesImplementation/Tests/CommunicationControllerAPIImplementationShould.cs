@@ -1,5 +1,6 @@
 ﻿using CRDT.Memory;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
+using CrdtEcsBridge.PoolsProviders;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -47,10 +48,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             // Generate random array of arrays
 
-            var outerArray = new byte[outerArraySize][];
+            var outerArray = new PoolableByteArray[outerArraySize];
 
             for (var i = 0; i < outerArraySize; i++)
-                outerArray[i] = GetRandomBytes(innerArraySize);
+                outerArray[i] = new PoolableByteArray(GetRandomBytes(innerArraySize), innerArraySize, null);
 
             api.SendBinary(outerArray);
 

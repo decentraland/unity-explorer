@@ -1,4 +1,6 @@
 ﻿using CRDT.Memory;
+using CrdtEcsBridge.PoolsProviders;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
@@ -14,6 +16,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
     {
+        internal enum MsgType
+        {
+            String = 1, // Deprecated in SDK7
+            Uint8Array = 2,
+        }
+
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         private readonly ISceneStateProvider sceneStateProvider;
@@ -21,6 +29,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ICommunicationControllerHub messagePipesHub;
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         private readonly ISceneData sceneData;
+
+        internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
         public CommunicationsControllerAPIImplementation(
             ISceneData sceneData,
@@ -36,22 +46,30 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.sceneStateProvider = sceneStateProvider;
         }
 
-        internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
+        public void Dispose()
+        {
+            lock (eventsToProcess) { CleanUpReceivedMessages(); }
+
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
+        }
 
         public void OnSceneBecameCurrent()
         {
             messagePipesHub.SetSceneMessageHandler(OnMessageReceived);
         }
 
-        public object SendBinary(IReadOnlyList<byte[]> data)
+        public object SendBinary(IReadOnlyList<PoolableByteArray> data)
         {
             if (!sceneStateProvider.IsCurrent)
                 return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
 
-            foreach (byte[] message in data)
+            foreach (var poolable in data)
             {
-                if (message.Length == 0)
+                if (poolable.Length == 0)
                     continue;
+
+                var message = poolable.Memory;
 
                 EncodeAndSend();
 
@@ -59,29 +77,23 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
                     encodedMessage[0] = (byte)MsgType.Uint8Array;
-                    message.CopyTo(encodedMessage[1..]);
+                    message.Span.CopyTo(encodedMessage[1..]);
                     SendMessage(encodedMessage);
                 }
             }
 
-            object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
+            lock (eventsToProcess)
+            {
+                object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
+                CleanUpReceivedMessages();
 
-            CleanUpReceivedMessages();
-
-            return result;
-        }
-
-        public void Dispose()
-        {
-            CleanUpReceivedMessages();
-
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+                return result;
+            }
         }
 
         private void CleanUpReceivedMessages()
         {
-            foreach (var message in eventsToProcess)
+            foreach (IMemoryOwner<byte>? message in eventsToProcess)
                 message.Dispose();
 
             eventsToProcess.Clear();
@@ -96,7 +108,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             using (receivedMessage)
             {
-                var decodedMessage = receivedMessage.Payload.Data.Span;
+                ReadOnlySpan<byte> decodedMessage = receivedMessage.Payload.Data.Span;
                 MsgType msgType = DecodeMessage(ref decodedMessage);
 
                 if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
@@ -109,14 +121,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
                 int messageLength = senderBytes.Length + decodedMessage.Length + 1;
 
-                var serializedMessageOwner = crdtMemoryAllocator.GetMemoryBuffer(messageLength);
-                var serializedMessage = serializedMessageOwner.Memory.Span;
+                IMemoryOwner<byte>? serializedMessageOwner = crdtMemoryAllocator.GetMemoryBuffer(messageLength);
+                Span<byte> serializedMessage = serializedMessageOwner.Memory.Span;
 
                 serializedMessage[0] = (byte)senderBytes.Length;
                 senderBytes.CopyTo(serializedMessage[1..]);
                 decodedMessage.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
 
-                eventsToProcess.Add(serializedMessageOwner);
+                lock (eventsToProcess) { eventsToProcess.Add(serializedMessageOwner); }
             }
         }
 
@@ -125,12 +137,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             var msgType = (MsgType)value[0];
             value = value[1..];
             return msgType;
-        }
-
-        internal enum MsgType
-        {
-            String = 1, // Deprecated in SDK7
-            Uint8Array = 2,
         }
     }
 }

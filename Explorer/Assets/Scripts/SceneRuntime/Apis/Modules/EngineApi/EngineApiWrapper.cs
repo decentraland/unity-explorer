@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
-        private byte[]? lastInput;
+        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
         {
@@ -26,7 +26,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         public void Dispose()
         {
             // Dispose the last input buffer
-            instancePoolsProvider.ReleaseAndDispose(ref lastInput);
+            lastInput.ReleaseAndDispose();
 
             // Dispose the engine API Implementation
             // It will dispose its buffers
@@ -40,9 +40,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
 
-                int intLength = instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 
-                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
+                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
                 Profiler.EndThreadProfiling();
 

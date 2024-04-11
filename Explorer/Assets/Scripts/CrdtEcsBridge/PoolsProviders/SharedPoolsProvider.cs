@@ -14,6 +14,13 @@ namespace CrdtEcsBridge.PoolsProviders
         // Must be synchronized
         private static readonly ArrayPool<byte> SERIALIZED_STATE_BYTES_POOL = ArrayPool<byte>.Create();
 
+        private readonly Action<byte[]> releaseFuncCached;
+
+        public SharedPoolsProvider()
+        {
+            releaseFuncCached = ReleaseSerializedStateBytesPool;
+        }
+
         public ProcessedCRDTMessage[] GetSerializationCrdtMessagesPool(int size)
         {
             lock (PROCESSED_CRDT_MESSAGES_POOL) { return PROCESSED_CRDT_MESSAGES_POOL.Rent(size); }
@@ -26,7 +33,7 @@ namespace CrdtEcsBridge.PoolsProviders
 
         public PoolableByteArray GetSerializedStateBytesPool(int size)
         {
-            lock (SERIALIZED_STATE_BYTES_POOL) { return new PoolableByteArray(SERIALIZED_STATE_BYTES_POOL.Rent(size), size, this); }
+            lock (SERIALIZED_STATE_BYTES_POOL) { return new PoolableByteArray(SERIALIZED_STATE_BYTES_POOL.Rent(size), size, releaseFuncCached); }
         }
 
         public void ReleaseSerializedStateBytesPool(byte[] bytes)

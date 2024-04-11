@@ -1,4 +1,5 @@
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using System;
@@ -11,7 +12,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         private readonly ICommunicationsControllerAPI api;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
-        private readonly List<byte[]> lastInput = new (10);
+        private readonly List<PoolableByteArray> lastInput = new (10);
 
         public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider)
         {
@@ -26,9 +27,11 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             // Release the last input buffer
             for (var i = 0; i < lastInput.Count; i++)
             {
-                byte[] message = lastInput[i];
-                instancePoolsProvider.ReleaseAndDispose(ref message);
+                PoolableByteArray message = lastInput[i];
+                message.ReleaseAndDispose();
             }
+
+            lastInput.Clear();
         }
 
         public void OnSceneBecameCurrent()
@@ -39,33 +42,43 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         [UsedImplicitly]
         public object SendBinary(IList<object> dataList)
         {
-            for (var i = 0; i < dataList.Count; i++)
+            try
             {
-                var message = (ITypedArray<byte>)dataList[i];
-                byte[]? element = null;
+                for (var i = 0; i < dataList.Count; i++)
+                {
+                    var message = (ITypedArray<byte>)dataList[i];
+                    var messageLength = message.Length;
+                    PoolableByteArray element = PoolableByteArray.EMPTY;
 
-                if (lastInput.Count <= i)
-                {
-                    instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                    lastInput.Add(element);
+                    if (lastInput.Count <= i)
+                    {
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        lastInput.Add(element);
+                    }
+                    else
+                    {
+                        element = lastInput[i];
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        lastInput[i] = element;
+                    }
                 }
-                else
+
+                // Remove excess elements
+                while (lastInput.Count > dataList.Count)
                 {
-                    element = lastInput[i];
-                    instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                    int lastIndex = lastInput.Count - 1;
+                    PoolableByteArray message = lastInput[lastIndex];
+                    message.ReleaseAndDispose();
+                    lastInput.RemoveAt(lastIndex);
                 }
+
+                return api.SendBinary(lastInput);
             }
-
-            // Remove excess elements
-            while (lastInput.Count > dataList.Count)
+            catch (Exception e)
             {
-                int lastIndex = lastInput.Count - 1;
-                byte[] message = lastInput[lastIndex];
-                instancePoolsProvider.ReleaseAndDispose(ref message);
-                lastInput.RemoveAt(lastIndex);
+                ReportHub.LogException(e, ReportCategory.ENGINE);
+                throw;
             }
-
-            return api.SendBinary(lastInput);
         }
     }
 }
