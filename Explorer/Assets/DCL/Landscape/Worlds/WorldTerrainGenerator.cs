@@ -381,6 +381,7 @@ namespace DCL.Landscape
                         }
 
                         await instancingHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                        instancingHandle.Complete();
                     }
 
                     // {

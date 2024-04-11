@@ -65,13 +65,13 @@ namespace Global.Dynamic
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
 
                     if (realm != genesisDomain)
-                        await GenerateWorldTerrain(ct);
+                        await GenerateWorldTerrainAsync(ct);
                 });
 
             return true;
         }
 
-        private async UniTask GenerateWorldTerrain(CancellationToken ct)
+        private async UniTask GenerateWorldTerrainAsync(CancellationToken ct)
         {
             FixedScenePointers scenePointers = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity);
             await UniTask.WaitUntil(() => scenePointers.AllPromisesResolved, cancellationToken: ct);
