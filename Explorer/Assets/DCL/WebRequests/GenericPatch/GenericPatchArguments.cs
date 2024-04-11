@@ -23,6 +23,9 @@ namespace DCL.WebRequests
             ContentType = contentType;
         }
 
+        public static GenericPatchArguments Create(string patchData, string contentType) =>
+            new (patchData, contentType);
+
         public static GenericPatchArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
             new (multipartFormSections);
 

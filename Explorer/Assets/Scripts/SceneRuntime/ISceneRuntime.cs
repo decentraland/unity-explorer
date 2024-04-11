@@ -44,7 +44,8 @@ namespace SceneRuntime
             IRuntime runtime,
             IEthereumApi ethereumApi,
             IWebSocketApi webSocketApi,
-            IWeb3IdentityCache web3IdentityCache
+            IWeb3IdentityCache web3IdentityCache,
+            ISimpleFetchApi simpleFetchApi
         )
         {
             sceneRuntime.RegisterPlayers(roomHub, profileRepository);
@@ -56,6 +57,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
@@ -102,5 +104,11 @@ namespace SceneRuntime
         {
             sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
+
+        private static void RegisterSimpleFetchApi(this ISceneRuntime sceneRuntime, ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController)
+        {
+            sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
+        }
+
     }
 }
