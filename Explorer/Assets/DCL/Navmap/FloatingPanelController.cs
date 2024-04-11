@@ -1,4 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.ParcelsService;
+using DCL.PlacesAPIService;
+using DCL.UI;
+using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
@@ -17,18 +23,20 @@ namespace DCL.Navmap
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
-
         private readonly Dictionary<string, GameObject> categoriesDictionary;
-
-        private readonly Vector2 rectTransformLocalPosition = new Vector3(742, -32);
-        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(1500, -32);
-        private readonly ImageController placeImageController;
 
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
 
+        private readonly ImageController placeImageController;
+        private static readonly int OUT = Animator.StringToHash("Out");
+        private static readonly int IN = Animator.StringToHash("In");
+        private static readonly int LOADED = Animator.StringToHash("Loaded");
+        private static readonly int LOADING = Animator.StringToHash("Loading");
+        private static readonly int TO_LEFT = Animator.StringToHash("ToLeft");
+        private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
            IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -37,9 +45,9 @@ namespace DCL.Navmap
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
 
-            view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
-            view.gameObject.SetActive(false);
+            view.CanvasGroup.interactable = false;
+            view.CanvasGroup.blocksRaycasts = false;
             placeImageController = new ImageController(view.placeImage, webRequestController);
             categoriesDictionary = new Dictionary<string, GameObject>();
 
@@ -65,45 +73,48 @@ namespace DCL.Navmap
             likeButtonController.OnButtonClicked += OnLike;
             dislikeButtonController.OnButtonClicked += OnDislike;
             favoriteButtonController.OnButtonClicked += OnFavorite;
-            view.backButton.onClick.AddListener(HideWithSlide);
+            view.backButton.onClick.AddListener(HidePanelFromBackButton);
         }
 
-        private void HideWithSlide()
+        public void HandlePanelVisibility(Vector2Int parcel, bool showBackButton)
         {
-            view.rectTransform.localPosition = rectTransformLocalPosition;
-            view.rectTransform.DOLocalMove(rectTransformLocalPositionOutside, 0.5f).SetEase(Ease.Linear).OnComplete(() => view.gameObject.SetActive(false));
-        }
+            view.backButton.gameObject.SetActive(showBackButton);
 
-        public void HandlePanelVisibility(Vector2Int parcel, bool popAnimation = true)
-        {
-            view.rectTransform.localPosition = rectTransformLocalPosition;
-
-            if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
-            else { ShowPanel(parcel, popAnimation); }
-        }
-
-        private void ShowPanel(Vector2Int parcel, bool popAnimation)
-        {
-            view.rectTransform.localScale = Vector3.zero;
-            view.gameObject.SetActive(true);
-
-            if (popAnimation)
+            if (showBackButton)
             {
-                view.rectTransform.localScale = Vector3.zero;
-                view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
+                view.panelAnimator.Rebind();
+                view.panelAnimator.Update(0f);
+                view.panelAnimator.SetTrigger(TO_LEFT);
+                ShowPanel(parcel, -1);
             }
             else
             {
-                view.rectTransform.localScale = Vector3.one;
-                view.rectTransform.localPosition = rectTransformLocalPositionOutside;
-                view.rectTransform.DOLocalMove(rectTransformLocalPosition, 0.5f).SetEase(Ease.Linear);
+                if (view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("Out") || view.panelAnimator.GetCurrentAnimatorStateInfo(0).IsName("Empty"))
+                {
+                    view.panelAnimator.Rebind();
+                    view.panelAnimator.Update(0f);
+                    view.panelAnimator.SetTrigger(IN);
+                    ShowPanel(parcel, LOADED);
+                }
+                else
+                {
+                    view.panelAnimator.SetTrigger(LOADING);
+                    GetPlaceInfoAsync(parcel, LOADED).Forget();
+                }
             }
-
-            cts = new CancellationTokenSource();
-            GetPlaceInfoAsync(parcel).Forget();
         }
 
-        private async UniTaskVoid GetPlaceInfoAsync(Vector2Int parcel)
+        private void ShowPanel(Vector2Int parcel, int animationTrigger)
+        {
+            view.gameObject.SetActive(true);
+            view.CanvasGroup.interactable = true;
+            view.CanvasGroup.blocksRaycasts = true;
+
+            cts = new CancellationTokenSource();
+            GetPlaceInfoAsync(parcel, animationTrigger).Forget();
+        }
+
+        private async UniTaskVoid GetPlaceInfoAsync(Vector2Int parcel, int animationTrigger)
         {
             try
             {
@@ -113,27 +124,35 @@ namespace DCL.Navmap
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
-            catch (Exception) { SetEmptyParcelInfo(parcel); }
+            catch (Exception ex) { SetEmptyParcelInfo(parcel); }
+            finally
+            {
+                if(animationTrigger != -1)
+                    view.panelAnimator.SetTrigger(animationTrigger);
+            }
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
         {
             view.placeName.text = "Empty parcel";
-            view.placeCreator.text = "created by <b>Unknown</b>";
+            view.placeCreator.gameObject.SetActive(false);
             view.placeDescription.text = "This place doesn't have a description set";
-            view.location.text = parcel.ToString();
+            view.location.text = parcel.ToString().Replace("(", "").Replace(")", "");
             view.visits.text = "-";
             view.upvotes.text = "-";
             view.parcelsCount.text = "1";
+            placeImageController.SetVisible(false);
 
             ResetCategories();
         }
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
+            placeImageController.SetVisible(true);
             placeImageController.RequestImage(placeInfo.image);
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
+            view.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
 
             view.placeDescription.text = string.IsNullOrEmpty(placeInfo.description)
                 ? "This place doesn't have a description set"
@@ -193,10 +212,18 @@ namespace DCL.Navmap
                 dislikeButtonController.SetButtonState(false);
         }
 
-        private void HidePanel()
+        private void HidePanelFromBackButton()
         {
-            view.rectTransform.localScale = Vector3.one;
-            view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(() => view.gameObject.SetActive(false));
+            view.panelAnimator.SetTrigger(TO_RIGHT);
+            view.CanvasGroup.interactable = false;
+            view.CanvasGroup.blocksRaycasts = false;
+        }
+
+        public void HidePanel()
+        {
+            view.panelAnimator.SetTrigger(OUT);
+            view.CanvasGroup.interactable = false;
+            view.CanvasGroup.blocksRaycasts = false;
         }
     }
 }

@@ -48,6 +48,8 @@ using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
+using System.Text.RegularExpressions;
+using UnityEngine;
 using System.Collections.Generic;
 using DCL.LOD.Systems;
 using System.Text.RegularExpressions;
@@ -66,9 +68,9 @@ namespace Global.Dynamic
         public MVCManager MvcManager { get; private set; } = null!;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
-        
+
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
-        
+
         public LODContainer LODContainer { get; private set; } = null!;
 
         public IRealmController RealmController { get; private set; } = null!;
@@ -132,7 +134,7 @@ namespace Global.Dynamic
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             var realmData = new RealmData();
-            
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init itself
@@ -164,8 +166,8 @@ namespace Global.Dynamic
             var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
             container.ParcelServiceContainer = parcelServiceContainer;
 
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, placesAPIService, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
@@ -302,7 +304,6 @@ namespace Global.Dynamic
                     container.MvcManager,
                     mapRendererContainer,
                     placesAPIService,
-                    parcelServiceContainer.TeleportController,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
                     wearableCatalog,
@@ -311,6 +312,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
                     webBrowser,
+                    dclInput,
                     emotesCache,
                     realmNavigator),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
