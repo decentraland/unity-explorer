@@ -18,5 +18,6 @@ namespace DCL.LOD
         [field: SerializeField] public bool IsColorDebuging { get; set; }
         [field: SerializeField] public Color[] LODDebugColors { get; set; } = { Color.green, Color.yellow, Color.red };
         [field: SerializeField] public FaillingLODCube FaillingCube { get; set; }
+        [field: SerializeField] public bool EnableLODStreaming { get; set; }
     }
 }

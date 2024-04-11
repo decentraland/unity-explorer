@@ -210,6 +210,11 @@
 
         public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
 
+        /// <summary>
+        ///     Fetch requests initiated from the Scene side through the fetch API
+        /// </summary>
+        public const string SCENE_FETCH_REQUEST = nameof(SCENE_FETCH_REQUEST);
+
         public const string MVC = nameof(MVC);
 
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
