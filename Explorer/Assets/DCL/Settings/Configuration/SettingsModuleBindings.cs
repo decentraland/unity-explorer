@@ -113,11 +113,12 @@ namespace DCL.Settings.Configuration
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
+            var settingsDataStore = new SettingsDataStore();
 
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance, Config.defaultOptionIndex);
+                    return new GraphicsQualitySettingsController(viewInstance, settingsDataStore, Config.defaultOptionIndex, null); // TODO: We have to inject the RealmPartitionSettingsAsset here!!
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
                     return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
