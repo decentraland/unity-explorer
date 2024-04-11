@@ -31,6 +31,8 @@ namespace DCL.Multiplayer.SDK.Systems
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
+        // private ISceneFacade lastCurrentSceneFacade;
+
         public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
         {
             this.scenesCache = scenesCache;
@@ -39,13 +41,20 @@ namespace DCL.Multiplayer.SDK.Systems
 
         protected override void Update(float t)
         {
-            UpdatePlayerIdentityDataQuery(World);
-            UpdatePlayerEntitiesThatLeftSceneQuery(World);
+            // update current scene and clear reserved entities if it changed.
+            /*scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterObject.Transform.position), out ISceneFacade currentSceneFacade);
+            if (lastCurrentSceneFacade != currentSceneFacade)
+                ClearReservedEntities();
+            lastCurrentSceneFacade = currentSceneFacade;*/
+
+            RemovePlayerIdentityDataQuery(World);
+
+            AddPlayerIdentityDataQuery(World);
         }
 
         [Query]
         [None(typeof(PlayerIdentityDataComponent))]
-        private void UpdatePlayerIdentityData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
+        private void AddPlayerIdentityData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
@@ -61,7 +70,7 @@ namespace DCL.Multiplayer.SDK.Systems
             using (sceneFacade.EcsExecutor.Sync.GetScope())
             {
                 var crdtEntityComponent = new CRDTEntity(crdtEntityId);
-                Debug.Log($"PRAVS - UpdatePlayerIdentityDataQuery() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}");
+                Debug.Log($"PRAVS - UpdatePlayerIdentityDataQuery() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}; CRDTExecutor: {sceneFacade.EcsExecutor.World.Id}");
 
                 var playerIdentityData = new PlayerIdentityDataComponent
                 {
@@ -78,11 +87,12 @@ namespace DCL.Multiplayer.SDK.Systems
         }
 
         [Query]
-        private void UpdatePlayerEntitiesThatLeftScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerIdentityDataComponent playerIdentityDataComponent)
+        private void RemovePlayerIdentityData(in Entity entity, ref CharacterTransform characterTransform, ref PlayerIdentityDataComponent playerIdentityDataComponent)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
 
+            // Only target entities outside the current scene
             if (sceneFacade.SceneStateProvider.IsCurrent) return;
 
             // External world access should be always synchronized (Global World calls into Scene World)
@@ -97,7 +107,7 @@ namespace DCL.Multiplayer.SDK.Systems
                 currentSceneFacade.EcsExecutor.World.Remove<PlayerIdentityDataComponent>(entity);
             }
 
-            FreeEntity(playerIdentityDataComponent.CRDTEntity.Id);
+            FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
         }
 
         // TODO: Optimize
@@ -120,16 +130,16 @@ namespace DCL.Multiplayer.SDK.Systems
             return -1;
         }
 
-        public void FreeEntity(int entityId)
+        public void FreeReservedEntity(int entityId)
         {
             entityId -= SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
-            if (entityId >= reservedEntities.Length) return;
+            if (entityId >= reservedEntities.Length || entityId < 0) return;
 
             reservedEntities[entityId] = false;
             currentReservedEntitiesCount--;
         }
 
-        public void Clear()
+        public void ClearReservedEntities()
         {
             for (var i = 0; i < reservedEntities.Length; i++) { reservedEntities[i] = false; }
 

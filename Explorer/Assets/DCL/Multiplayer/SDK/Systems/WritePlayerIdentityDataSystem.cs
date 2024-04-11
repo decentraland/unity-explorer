@@ -26,10 +26,8 @@ namespace DCL.Multiplayer.SDK.Systems
 
         protected override void Update(float t)
         {
-            // RemovePlayerIdentityDataQuery(World);
+            RemovePlayerIdentityDataQuery(World);
             CreatePlayerIdentityDataQuery(World);
-
-            // DebugggQuery(World);
         }
 
         // 'PlayerIdentityDataComponent' is put on this scene world entities from the GLOBAL WORLD PlayerComponentsHandlerSystem
@@ -52,12 +50,6 @@ namespace DCL.Multiplayer.SDK.Systems
                 IsGuest = playerIdentityDataComponent.IsGuest,
             }, playerIdentityDataComponent.CRDTEntity);
         }
-
-        // [Query]
-        // private void Debuggg(in Entity entity, PlayerIdentityDataComponent playerIdentityDataComponent, PBPlayerIdentityData pbPlayerIdentityData, CRDTEntity crdtEntity)
-        // {
-        //     Debug.Log($"PRAVS - Debuggg() - Entity: {entity.Id}; CRDTEntity-1: {playerIdentityDataComponent.CRDTEntity.Id}; CRDTEntity-2: {crdtEntity.Id}; Address: {playerIdentityDataComponent.Address}");
-        // }
 
         [Query]
         [All(typeof(PBPlayerIdentityData))]
