@@ -55,16 +55,5 @@ namespace DCL.CharacterMotion.Animation
                        _ => 0,
                    };
         }
-
-        public static int GetMovementBlendId(MovementKind speedState)
-        {
-            return speedState switch
-                   {
-                       MovementKind.Walk => 1,
-                       MovementKind.Jog => 2,
-                       MovementKind.Run => 3,
-                       _ => 0,
-                   };
-        }
     }
 }
