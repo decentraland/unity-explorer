@@ -4,6 +4,6 @@ namespace SceneRuntime
 {
     public interface IJsApiWrapper : IDisposable
     {
-        void OnSceneBecameCurrent() { }
+        void OnSceneIsCurrentChanged(bool isCurrent) { }
     }
 }

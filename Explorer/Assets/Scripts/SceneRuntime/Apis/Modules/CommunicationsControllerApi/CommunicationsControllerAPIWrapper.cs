@@ -34,9 +34,9 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        public void OnSceneBecameCurrent()
+        public void OnSceneIsCurrentChanged(bool isCurrent)
         {
-            api.OnSceneBecameCurrent();
+            api.OnSceneIsCurrentChanged(isCurrent);
         }
 
         [UsedImplicitly]

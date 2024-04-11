@@ -8,6 +8,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
     {
         object SendBinary(IReadOnlyList<PoolableByteArray> data);
 
-        void OnSceneBecameCurrent();
+        void OnSceneIsCurrentChanged(bool isCurrent);
     }
 }

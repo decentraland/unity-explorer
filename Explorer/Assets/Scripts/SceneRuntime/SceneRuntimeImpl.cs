@@ -97,9 +97,9 @@ namespace SceneRuntime
             jsApiBunch.Dispose();
         }
 
-        public void OnSceneBecameCurrent()
+        public void OnSceneIsCurrentChanged(bool isCurrent)
         {
-            jsApiBunch.OnSceneBecameCurrent();
+            jsApiBunch.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public void Register<T>(string itemName, T target) where T: IJsApiWrapper

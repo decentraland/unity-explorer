@@ -9,6 +9,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         void SetSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage);
 
+        void RemoveSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage);
+
         void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct);
     }
 }

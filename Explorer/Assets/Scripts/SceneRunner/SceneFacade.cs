@@ -203,8 +203,7 @@ namespace SceneRunner
         public void SetIsCurrent(bool isCurrent)
         {
             sceneStateProvider.IsCurrent = isCurrent;
-            if (isCurrent)
-                runtimeInstance.OnSceneBecameCurrent();
+            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public async UniTask DisposeAsync()

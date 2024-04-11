@@ -20,10 +20,10 @@ namespace SceneRuntime
             wraps.Add(target);
         }
 
-        public void OnSceneBecameCurrent()
+        public void OnSceneIsCurrentChanged(bool isCurrent)
         {
             foreach (IJsApiWrapper wrap in wraps)
-                wrap.OnSceneBecameCurrent();
+                wrap.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public void Dispose()

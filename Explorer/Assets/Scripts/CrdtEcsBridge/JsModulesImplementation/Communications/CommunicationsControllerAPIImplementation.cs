@@ -32,6 +32,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
+        private readonly Action<ReceivedMessage<Scene>> onMessageReceivedCached;
+
         public CommunicationsControllerAPIImplementation(
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
@@ -44,6 +46,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.jsOperations = jsOperations;
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneStateProvider = sceneStateProvider;
+
+            onMessageReceivedCached = OnMessageReceived;
         }
 
         public void Dispose()
@@ -54,9 +58,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             cancellationTokenSource.Dispose();
         }
 
-        public void OnSceneBecameCurrent()
+        public void OnSceneIsCurrentChanged(bool isCurrent)
         {
-            messagePipesHub.SetSceneMessageHandler(OnMessageReceived);
+            if (isCurrent)
+                messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
+            else
+                messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
         }
 
         public object SendBinary(IReadOnlyList<PoolableByteArray> data)

@@ -40,7 +40,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             sceneStateProvider.IsCurrent.Returns(true);
 
             api = new CommunicationsControllerAPIImplementation(sceneData, communicationControllerHub, jsOperations = Substitute.For<IJsOperations>(), crdtMemoryAllocator, sceneStateProvider);
-            api.OnSceneBecameCurrent();
+            api.OnSceneIsCurrentChanged(true);
         }
 
         [Test]
@@ -109,6 +109,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             public void SetSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
             {
                 this.onSceneMessage = onSceneMessage;
+            }
+
+            public void RemoveSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
+            {
+
             }
 
             public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)

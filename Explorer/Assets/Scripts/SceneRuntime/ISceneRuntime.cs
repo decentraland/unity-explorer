@@ -32,7 +32,7 @@ namespace SceneRuntime
 
         void SetIsDisposing();
 
-        void OnSceneBecameCurrent();
+        void OnSceneIsCurrentChanged(bool isCurrent);
     }
 
     public static class SceneRuntimeExtensions
