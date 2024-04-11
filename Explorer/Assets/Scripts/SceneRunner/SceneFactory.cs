@@ -231,6 +231,7 @@ namespace SceneRunner
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             var webSocketAipImplementation = new WebSocketApiImplementation();
             var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
+            var simpleFetchApiImplementation = new SimpleFetchApiImplementation();
 
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
 
@@ -246,7 +247,8 @@ namespace SceneRunner
                 webSocketAipImplementation,
                 identityCache,
                 communicationsControllerAPI,
-                instancePoolsProvider);
+                instancePoolsProvider,
+                simpleFetchApiImplementation);
 
             sceneRuntime.ExecuteSceneJson();
 
