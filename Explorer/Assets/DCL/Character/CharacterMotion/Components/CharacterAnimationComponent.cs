@@ -13,6 +13,7 @@ namespace DCL.CharacterMotion.Components
     public struct AnimationAudioState
     {
         public bool IsFalling;
+        public int LastSoundFrame;
     }
 
     // buffer values for animation states

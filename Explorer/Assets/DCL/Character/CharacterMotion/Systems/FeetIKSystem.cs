@@ -146,7 +146,7 @@ namespace DCL.CharacterMotion.Systems
             float ikWeightBasedOnAnimation = !feetComponent.IsGrounded ? 0 : 1f - ((rightLegPosition.y - settings.FeetHeightCorrection) / settings.FeetHeightDisableIkDistance);
             ikWeightBasedOnAnimation = feetComponent.IsInsideMesh ? 1 : ikWeightBasedOnAnimation;
 
-            if (ikWeightBasedOnAnimation > 1)
+            if (ikWeightBasedOnAnimation > 0.9f)
             {
                 feetComponent.WasLifted = true;
             }

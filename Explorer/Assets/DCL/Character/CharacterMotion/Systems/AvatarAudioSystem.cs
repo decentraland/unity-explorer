@@ -14,17 +14,25 @@ namespace DCL.CharacterMotion.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class AvatarAudioSystem : BaseUnityLoopSystem
     {
+        private SingleInstanceEntity fixedTick;
 
         private AvatarAudioSystem(World world) : base(world) { }
 
+        public override void Initialize()
+        {
+            base.Initialize();
+            fixedTick = World.CachePhysicsTick();
+        }
+
         protected override void Update(float t)
         {
-           MonitorIKDataAndSendAudioEventsQuery(World);
+           MonitorIKDataAndSendAudioEventsQuery(World, fixedTick.GetPhysicsTickComponent(World).Tick);
         }
 
         [Query]
         private void MonitorIKDataAndSendAudioEvents(
-            ref AvatarBase audioPlaybackController,
+            [Data] int physicsTick,
+            ref IAvatarView audioPlaybackController,
             ref CharacterAnimationComponent animationComponent,
             ref FeetIKComponent feetIKComponent,
             in CharacterRigidTransform rigidTransform,
@@ -32,7 +40,7 @@ namespace DCL.CharacterMotion.Systems
         )
         {
             if (feetIKComponent.IsDisabled) return;
-            
+
             if (rigidTransform.JustJumped)
             {
                 audioPlaybackController.GetAvatarAudioPlaybackController().PlayJumpSound();
@@ -47,29 +55,34 @@ namespace DCL.CharacterMotion.Systems
                 }
                 else
                 {
-                    if (feetIKComponent.Left.IsGrounded && feetIKComponent.Left.WasLifted)
+                    if (physicsTick - animationComponent.AudioState.LastSoundFrame > 20)
                     {
-                        feetIKComponent.Left.WasLifted = false;
-                        audioPlaybackController.GetAvatarAudioPlaybackController().PlayStepSound();
-                    }
-                    else if (feetIKComponent.Right.IsGrounded && feetIKComponent.Right.WasLifted)
-                    {
-                        feetIKComponent.Right.WasLifted = false;
-                        audioPlaybackController.GetAvatarAudioPlaybackController().PlayStepSound();
+                        if (feetIKComponent.Left is { IsGrounded: true, WasLifted: true })
+                        {
+                            animationComponent.AudioState.LastSoundFrame = physicsTick;
+                            feetIKComponent.Left.WasLifted = false;
+                            audioPlaybackController.GetAvatarAudioPlaybackController().PlayStepSound();
+                        }
+                        else if (feetIKComponent.Right is { IsGrounded: true, WasLifted: true })
+                        {
+                            animationComponent.AudioState.LastSoundFrame = physicsTick;
+                            feetIKComponent.Right.WasLifted = false;
+                            audioPlaybackController.GetAvatarAudioPlaybackController().PlayStepSound();
+                        }
                     }
                 }
             }
             else
             {
-                float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
-                animationComponent.AudioState.IsFalling = true;
+                if (physicsTick - animationComponent.AudioState.LastSoundFrame  > 5)
+                {
+                    animationComponent.AudioState.LastSoundFrame = physicsTick;
 
-                if (verticalVelocity < settings.AnimationLongFallSpeed)
-                {
-                    audioPlaybackController.GetAvatarAudioPlaybackController().PlayLongFallSound();
-                } else
-                {
-                    audioPlaybackController.GetAvatarAudioPlaybackController().PlayShortFallSound();
+                    float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
+                    animationComponent.AudioState.IsFalling = true;
+
+                    if (verticalVelocity < settings.AnimationLongFallSpeed) { audioPlaybackController.GetAvatarAudioPlaybackController().PlayLongFallSound(); }
+                    else { audioPlaybackController.GetAvatarAudioPlaybackController().PlayShortFallSound(); }
                 }
             }
         }

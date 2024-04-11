@@ -16,5 +16,7 @@ namespace DCL.CharacterMotion.Components
         ///     Run
         /// </summary>
         Run = 3,
+
+        None,
     }
 }

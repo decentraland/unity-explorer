@@ -3598,6 +3598,7 @@ MonoBehaviour:
   AvatarAudioSource: {fileID: 3644099486969308128}
   AvatarAnimator: {fileID: 6654053651110562472}
   AvatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
+  test: {fileID: 3432961403439695165, guid: fd7a03dc1c1f6fa42b3dab19d46acec3, type: 3}
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0

@@ -36,44 +36,24 @@ namespace DCL.Audio
                 case MovementKind.Run:
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
                     break;
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private MovementKind GetMovementState()
-        {
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Jog)
-            {
-                return MovementKind.Run;
-            }
-            else if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold &&
-                     AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) <= (int)(MovementKind.Walk))
-            {
-                return MovementKind.Walk;
-            }
-            else
-            {
-                return MovementKind.Jog;
             }
         }
 
         public void PlayStepSound()
         {
-            if (AvatarAnimator.GetBool(AnimationHashes.GROUNDED))
+            if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
+
+            switch (GetMovementState())
             {
-                switch (GetMovementState())
-                {
-                    case MovementKind.Walk:
-                        PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
-                        break;
-                    case MovementKind.Jog:
-                        PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
-                        break;
-                    case MovementKind.Run:
-                        PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
-                        break;
-                    default: throw new ArgumentOutOfRangeException();
-                }
+                case MovementKind.Walk:
+                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
+                    break;
+                case MovementKind.Jog:
+                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
+                    break;
+                case MovementKind.Run:
+                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
+                    break;
             }
         }
 
@@ -90,7 +70,6 @@ namespace DCL.Audio
                 case MovementKind.Run:
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
                     break;
-                default: throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -116,5 +95,26 @@ namespace DCL.Audio
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
             AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex], clipConfig.RelativeVolume);
         }
+
+        private MovementKind GetMovementState()
+        {
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Jog)
+            {
+                return MovementKind.Run;
+            }
+
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)(MovementKind.Walk))
+            {
+                return MovementKind.Jog;
+            }
+
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > blendThreshold)
+            {
+                return MovementKind.Walk;
+            }
+
+            return MovementKind.None;
+        }
+
     }
 }
