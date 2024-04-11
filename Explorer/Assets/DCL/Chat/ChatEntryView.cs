@@ -9,6 +9,7 @@ namespace DCL.Chat
     public class ChatEntryView : MonoBehaviour
     {
         private const float BACKGROUND_HEIGHT_OFFSET = 56;
+        private const float MAX_ENTRY_WIDTH = 246;
 
         [field: SerializeField]
         internal RectTransform backgroundRectTransform { get; private set; }
@@ -61,8 +62,7 @@ namespace DCL.Chat
                 ? $"{username.Substring(0, walletIdIndexOf)}"
                 : username;
 
-            walletIdText.text = $"#{walletId.Substring(walletId.Length - 4)}";
-
+            walletIdText.text = walletIdIndexOf == -1 ? string.Empty : $"#{walletId.Substring(walletId.Length - 4)}";
             walletIdText.gameObject.SetActive(walletIdIndexOf != -1);
             verifiedIcon.gameObject.SetActive(walletIdIndexOf == -1);
         }
@@ -82,9 +82,20 @@ namespace DCL.Chat
             contentSizeFitter.SetLayoutVertical();
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + BACKGROUND_HEIGHT_OFFSET);
-
+            backgroundSize.x = CalculatePreferredWidth(data.Message);
             backgroundRectTransform.sizeDelta = backgroundSize;
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, backgroundSize.y);
+        }
+
+        private float CalculatePreferredWidth(string messageContent)
+        {
+            if (playerName.text.Length + walletIdText.text.Length > messageContent.Length)
+                return playerName.preferredWidth + walletIdText.preferredWidth + BACKGROUND_HEIGHT_OFFSET;
+
+            if(entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x < MAX_ENTRY_WIDTH)
+                return entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x + BACKGROUND_HEIGHT_OFFSET;
+
+            return MAX_ENTRY_WIDTH;
         }
     }
 }
