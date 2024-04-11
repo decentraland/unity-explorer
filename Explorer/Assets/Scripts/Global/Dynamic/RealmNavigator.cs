@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Landscape;
@@ -10,12 +11,17 @@ using DCL.ParcelsService;
 using DCL.PluginSystem.Global;
 using DCL.Roads.Systems;
 using DCL.SceneLoadingScreens;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
+using Utility;
 
 namespace Global.Dynamic
 {
@@ -54,6 +60,25 @@ namespace Global.Dynamic
 
             await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
                 realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct), ct);
+
+            if (realm != genesisDomain)
+            {
+                var scenePointers = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity);
+                await UniTask.WaitUntil(() => scenePointers.AllPromisesResolved, cancellationToken: ct);
+
+                List<int2> decodedParcels = new List<int2>();
+
+                foreach (var promise in scenePointers.Promises)
+                foreach (var parcel in promise.Result.Value.Asset.metadata.scene.DecodedParcels)
+                    decodedParcels.Add(parcel.ToInt2());
+
+                var ownedParcels = new NativeParallelHashSet<int2>(decodedParcels.Count, AllocatorManager.Persistent);
+
+                foreach (int2 parcel in decodedParcels)
+                    ownedParcels.Add(parcel);
+
+                await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, cancellationToken: ct);
+            }
 
             return true;
         }
