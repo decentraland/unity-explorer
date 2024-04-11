@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using LiveKit.Rooms;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
@@ -13,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         void Start();
 
-        void Stop();
+        UniTask StopAsync();
 
         State CurrentState();
 
@@ -26,10 +27,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 //ignore
             }
 
-            public void Stop()
-            {
-                //ignore
-            }
+            public UniTask StopAsync() =>
+                UniTask.CompletedTask;
 
             public State CurrentState() =>
                 State.Sleep;
@@ -47,9 +46,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 room.Start();
         }
 
-        public static void Reconnect(this IConnectiveRoom room)
+        public static async UniTask ReconnectAsync(this IConnectiveRoom room)
         {
-            room.Stop();
+            await room.StopAsync();
             room.Start();
         }
 

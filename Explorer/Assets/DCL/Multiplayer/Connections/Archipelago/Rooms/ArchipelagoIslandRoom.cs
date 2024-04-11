@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
-                    new ClientWebSocket(),
+                    () => new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Shared!)
                 ).WithLog(),
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
@@ -63,17 +63,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.characterObject = characterObject;
             this.aboutUrl = aboutUrl;
 
-            connectiveRoom = new ConnectiveRoom(
-                PrewarmAsync,
-                SendHeartbeatAsync
+            connectiveRoom = new RenewableConnectiveRoom(
+                () => new ConnectiveRoom(
+                    PrewarmAsync,
+                    SendHeartbeatAsync
+                )
             );
         }
 
         public void Start() =>
             connectiveRoom.Start();
 
-        public void Stop() =>
-            connectiveRoom.Stop();
+        public UniTask StopAsync() =>
+            connectiveRoom.StopAsync();
 
         public IConnectiveRoom.State CurrentState() =>
             connectiveRoom.CurrentState();
@@ -93,7 +95,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             await UniTask.SwitchToMainThread(token);
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
-            await signFlow.SendHeartbeatAsync(position, token);
+
+            try { await signFlow.SendHeartbeatAsync(position, token); }
+            catch (ConnectionClosedException)
+            {
+                //ignore
+                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, "Cannot send heartbeat, connection is closed");
+            }
         }
 
         private void OnNewConnectionString(string connectionString, CancellationToken token)
@@ -114,7 +122,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
-            await signFlow.ConnectAsync(adapterUrl, token);
+            await signFlow.EnsureConnectedAsync(adapterUrl, token);
             string ethereumAddress = identity.Address;
             string messageForSign = await signFlow.MessageForSignAsync(ethereumAddress, token);
             string signedMessage = identity.Sign(messageForSign).ToJson();

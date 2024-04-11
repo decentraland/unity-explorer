@@ -14,6 +14,7 @@ using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
@@ -68,11 +69,15 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             RunAsync().Forget();
         }
 
-        public void Stop()
+        public async UniTask StopAsync()
         {
+            if (CurrentState() is IConnectiveRoom.State.Sleep)
+                throw new InvalidOperationException("Room is already stopped");
+
             roomState.Set(IConnectiveRoom.State.Sleep);
-            cancellationTokenSource?.Cancel();
-            cancellationTokenSource?.Dispose();
+            await room.DisconnectAsync(cancellationTokenSource?.Token ?? CancellationToken.None);
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = null;
         }
 
         public IConnectiveRoom.State CurrentState() =>
@@ -81,16 +86,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IRoom Room() =>
             room;
 
-        private CancellationToken CancellationToken()
+        private async UniTask<CancellationToken> NewCancellationTokenAsync()
         {
-            Stop();
+            await StopAsync();
             cancellationTokenSource = new CancellationTokenSource();
             return cancellationTokenSource.Token;
         }
 
         private async UniTaskVoid RunAsync()
         {
-            CancellationToken token = CancellationToken();
+            CancellationToken token = await NewCancellationTokenAsync();
             roomState.Set(IConnectiveRoom.State.Starting);
             await prewarmAsync(token);
 

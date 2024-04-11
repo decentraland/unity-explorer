@@ -1,6 +1,5 @@
 using DCL.Multiplayer.Connections.Rooms;
 using LiveKit.Rooms;
-using System;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {

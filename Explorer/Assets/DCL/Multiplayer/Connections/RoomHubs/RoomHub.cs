@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 
@@ -22,8 +23,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public void Reconnect()
         {
-            archipelagoIslandRoom.Reconnect();
-            gateKeeperSceneRoom.Reconnect();
+            archipelagoIslandRoom.ReconnectAsync().Forget();
+            gateKeeperSceneRoom.ReconnectAsync().Forget();
         }
     }
 }

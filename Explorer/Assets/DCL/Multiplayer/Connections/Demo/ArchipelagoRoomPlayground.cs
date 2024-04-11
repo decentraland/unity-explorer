@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.Connections.Demo
             IArchipelagoSignFlow signFlow = new LiveConnectionArchipelagoSignFlow(
                 new LogArchipelagoLiveConnection(
                     new WebSocketArchipelagoLiveConnection(
-                        new ClientWebSocket(),
+                        () => new ClientWebSocket(),
                         memoryPool
                     )
                 ).WithLog(),

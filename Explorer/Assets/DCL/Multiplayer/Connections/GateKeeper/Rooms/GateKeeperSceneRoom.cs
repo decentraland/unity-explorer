@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
-using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
@@ -28,17 +27,19 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             this.metaDataSource = metaDataSource;
             this.sceneHandleUrl = sceneHandleUrl;
 
-            connectiveRoom = new ConnectiveRoom(
-                _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync
+            connectiveRoom = new RenewableConnectiveRoom(
+                () => new ConnectiveRoom(
+                    _ => UniTask.CompletedTask,
+                    RunConnectCycleStepAsync
+                )
             );
         }
 
         public void Start() =>
             connectiveRoom.Start();
 
-        public void Stop() =>
-            connectiveRoom.Stop();
+        public UniTask StopAsync() =>
+            connectiveRoom.StopAsync();
 
         public IConnectiveRoom.State CurrentState() =>
             connectiveRoom.CurrentState();

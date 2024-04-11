@@ -31,83 +31,115 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             this.multiPool = multiPool;
         }
 
-        public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>
-            connection.ConnectAsync(adapterUrl, token);
+        public async UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token)
+        {
+            try
+            {
+                if (connection.IsConnected)
+                    await connection.DisconnectAsync(token);
+
+                await connection.ConnectAsync(adapterUrl, token);
+                await UniTask.WaitUntil(() => connection.IsConnected, cancellationToken: token);
+            }
+            catch (Exception e) { throw new Exception($"Cannot ensure connection {adapterUrl}", e); }
+        }
 
         public async UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token)
         {
-            using SmartWrap<ChallengeRequestMessage> challenge = multiPool.TempResource<ChallengeRequestMessage>();
-            challenge.value.Address = ethereumAddress;
-            using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
-            clientPacket.value.ClearMessage();
-            clientPacket.value.ChallengeRequest = challenge.value;
-            using MemoryWrap response = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
-            using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
-            using var challengeResponse = new SmartWrap<ChallengeResponseMessage>(serverPacket.value.ChallengeResponse!, multiPool);
-            return challengeResponse.value.ChallengeToSign!;
+            try
+            {
+                using SmartWrap<ChallengeRequestMessage> challenge = multiPool.TempResource<ChallengeRequestMessage>();
+                challenge.value.Address = ethereumAddress;
+                using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
+                clientPacket.value.ClearMessage();
+                clientPacket.value.ChallengeRequest = challenge.value;
+                using MemoryWrap response = await connection.SendAndReceiveAsync(clientPacket.value, memoryPool, token);
+                using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+                using var challengeResponse = new SmartWrap<ChallengeResponseMessage>(serverPacket.value.ChallengeResponse!, multiPool);
+                return challengeResponse.value.ChallengeToSign!;
+            }
+            catch (Exception e) { throw new Exception($"Cannot message for sign for address {ethereumAddress}", e); }
         }
 
         public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
         {
-            using SmartWrap<SignedChallengeMessage> signedMessage = multiPool.TempResource<SignedChallengeMessage>();
-            signedMessage.value.AuthChainJson = signedMessageAuthChainJson;
-
-            using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
-            clientPacket.value.ClearMessage();
-            clientPacket.value.SignedChallenge = signedMessage.value;
-
-            var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
-
-            (bool hasResultLeft, MemoryWrap result) result = await UniTask.WhenAny(
-                connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
-                connection.WaitDisconnectAsync(linkedToken.Token)
-            );
-
-            linkedToken.Cancel();
-
-            if (result.hasResultLeft)
+            try
             {
-                using MemoryWrap response = result.result;
-                using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
-                using var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome!, multiPool);
-                return welcomeMessage.value.PeerId.AsSuccess();
-            }
+                using SmartWrap<SignedChallengeMessage> signedMessage = multiPool.TempResource<SignedChallengeMessage>();
+                signedMessage.value.AuthChainJson = signedMessageAuthChainJson;
 
-            return LightResult<string>.FAILURE;
+                using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
+                clientPacket.value.ClearMessage();
+                clientPacket.value.SignedChallenge = signedMessage.value;
+
+                var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource().Token, token);
+
+                (bool hasResultLeft, MemoryWrap result) result = await UniTask.WhenAny(
+                    connection.SendAndReceiveAsync(clientPacket.value, memoryPool, linkedToken.Token),
+                    connection.WaitDisconnectAsync(linkedToken.Token)
+                );
+
+                linkedToken.Cancel();
+
+                if (result.hasResultLeft)
+                {
+                    using MemoryWrap response = result.result;
+                    using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+                    using var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome!, multiPool);
+                    return welcomeMessage.value.PeerId.AsSuccess();
+                }
+
+                return LightResult<string>.FAILURE;
+            }
+            catch (Exception e) { throw new Exception($"Cannot welcome peer id for signed message {signedMessageAuthChainJson}", e); }
         }
 
         public async UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
         {
-            using SmartWrap<Position> position = multiPool.TempResource<Position>();
-            position.value.X = playerPosition.x;
-            position.value.Y = playerPosition.y;
-            position.value.Z = playerPosition.z;
+            try
+            {
+                using SmartWrap<Position> position = multiPool.TempResource<Position>();
+                position.value.X = playerPosition.x;
+                position.value.Y = playerPosition.y;
+                position.value.Z = playerPosition.z;
 
-            using SmartWrap<Heartbeat> heartbeat = multiPool.TempResource<Heartbeat>();
-            heartbeat.value.Position = position.value;
+                using SmartWrap<Heartbeat> heartbeat = multiPool.TempResource<Heartbeat>();
+                heartbeat.value.Position = position.value;
 
-            using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
-            clientPacket.value.ClearMessage();
-            clientPacket.value.Heartbeat = heartbeat.value;
+                using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
+                clientPacket.value.ClearMessage();
+                clientPacket.value.Heartbeat = heartbeat.value;
 
-            await connection.SendAsync(clientPacket.value, memoryPool, token);
+                await connection.SendAsync(clientPacket.value, memoryPool, token);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Cannot send heartbeat for position {playerPosition}", e);
+            }
         }
 
         public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
         {
-            await ExecuteOnThreadPoolScope.NewScopeAsync();
-
-            while (token.IsCancellationRequested == false)
+            try
             {
-                MemoryWrap response = await connection.ReceiveAsync(token);
-                using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+                await ExecuteOnThreadPoolScope.NewScopeAsync();
 
-                if (serverPacket.value.MessageCase is ServerPacket.MessageOneofCase.IslandChanged)
+                while (token.IsCancellationRequested == false)
                 {
-                    using var islandChanged = new SmartWrap<IslandChangedMessage>(serverPacket.value.IslandChanged!, multiPool);
-                    onNewConnectionString(islandChanged.value.ConnStr);
+                    if (connection.IsConnected == false)
+                        throw new InvalidOperationException("Connection is not established");
+
+                    MemoryWrap response = await connection.ReceiveAsync(token);
+                    using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
+
+                    if (serverPacket.value.MessageCase is ServerPacket.MessageOneofCase.IslandChanged)
+                    {
+                        using var islandChanged = new SmartWrap<IslandChangedMessage>(serverPacket.value.IslandChanged!, multiPool);
+                        onNewConnectionString(islandChanged.value.ConnStr);
+                    }
                 }
             }
+            catch (Exception e) { throw new Exception("Cannot listen for connection string", e); }
         }
     }
 }
