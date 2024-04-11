@@ -33,5 +33,9 @@ namespace DCL.WebRequests
 
         public static GenericPutArguments CreateJsonOrDefault(string? putData) =>
             putData == null ? Empty : CreateJson(putData);
+
+        public static GenericPutArguments Create(string postData, string contentType) =>
+            new (postData, contentType);
+
     }
 }
