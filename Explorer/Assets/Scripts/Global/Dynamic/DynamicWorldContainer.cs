@@ -48,6 +48,8 @@ using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
+using System.Text.RegularExpressions;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -158,8 +160,8 @@ namespace Global.Dynamic
             var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
             container.ParcelServiceContainer = parcelServiceContainer;
 
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, placesAPIService, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
@@ -315,6 +317,7 @@ namespace Global.Dynamic
                     equippedWearables,
                     equippedEmotes,
                     webBrowser,
+                    dclInput,
                     emotesCache,
                     realmNavigator
                 ),

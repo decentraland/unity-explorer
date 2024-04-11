@@ -48,7 +48,9 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableCatalog wearableCatalog;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
+        private readonly DCLInput dclInput;
         private readonly IRealmNavigator realmNavigator;
+        private NavmapController navmapController;
         private readonly IEmoteCache emoteCache;
         private readonly IWebRequestController webRequestController;
 
@@ -71,6 +73,7 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
+            DCLInput dclInput,
             IEmoteCache emoteCache,
             IRealmNavigator realmNavigator)
         {
@@ -89,6 +92,7 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
+            this.dclInput = dclInput;
             this.realmNavigator = realmNavigator;
             this.emoteCache = emoteCache;
         }
@@ -116,9 +120,6 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, realmNavigator);
-            await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
-
             var settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
             PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
@@ -126,6 +127,8 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
+                navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, mvcManager,webBrowser, dclInput, builder.World, arguments.PlayerEntity, realmNavigator);
+                navmapController.InitialiseAssetsAsync(assetsProvisioner, ct).Forget();
                 backpackInitialization.Invoke(ref builder, arguments);
 
                 mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,

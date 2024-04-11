@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Navmap
@@ -13,6 +14,7 @@ namespace DCL.Navmap
         private const float MOUSE_WHEEL_THRESHOLD = 0.04f;
 
         private readonly NavmapZoomView view;
+        private readonly DCLInput dclInput;
 
         private AnimationCurve normalizedCurve;
         private int zoomSteps;
@@ -27,10 +29,10 @@ namespace DCL.Navmap
 
         private IMapCameraController cameraController;
 
-        public NavmapZoomController(NavmapZoomView view)
+        public NavmapZoomController(NavmapZoomView view, DCLInput dclInput)
         {
             this.view = view;
-            Initialize();
+            this.dclInput = dclInput;
 
             normalizedCurve = view.normalizedZoomCurve;
             zoomSteps = normalizedCurve.length;
@@ -38,18 +40,13 @@ namespace DCL.Navmap
             CurveClamp01();
         }
 
-
-        private void Initialize()
+        private void MouseWheel(InputAction.CallbackContext obj)
         {
-            view.zoomVerticalRange = new Vector2Int(view.zoomVerticalRange.x, 40);
+            if (obj.ReadValue<Vector2>().y == 0 || Mathf.Abs(obj.ReadValue<Vector2>().y) < MOUSE_WHEEL_THRESHOLD)
+                return;
 
-            normalizedCurve = new AnimationCurve();
-            normalizedCurve.AddKey(0, 0);
-            normalizedCurve.AddKey(1, 0.25f);
-            normalizedCurve.AddKey(2, 0.5f);
-            normalizedCurve.AddKey(3, 0.75f);
-            normalizedCurve.AddKey(4, 1);
-            zoomSteps = normalizedCurve.length;
+            bool zoomAction = obj.ReadValue<Vector2>().y > 0;
+            Zoom(zoomAction);
         }
 
         public void Dispose()
@@ -99,6 +96,7 @@ namespace DCL.Navmap
 
                 Deactivate();
             }
+            dclInput.UI.ScrollWheel.performed += MouseWheel;
 
             cts = new CancellationTokenSource();
 
@@ -115,6 +113,7 @@ namespace DCL.Navmap
         {
             if (!active) return;
 
+            dclInput.UI.ScrollWheel.performed -= MouseWheel;
             cts.Cancel();
             cts.Dispose();
             cts = null;
