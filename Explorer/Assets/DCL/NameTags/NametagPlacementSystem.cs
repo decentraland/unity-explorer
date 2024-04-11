@@ -9,6 +9,7 @@ using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Systems;
+using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -73,7 +74,7 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(NametagView), typeof(PlayerComponent))]
-        private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform)) return;
 
@@ -81,7 +82,7 @@ namespace DCL.Nametags
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
-            nametagView.SetUsername($"{avatarShape.Name}<color=#76717E>#{avatarShape.ID.Substring(avatarShape.ID.Length - 4)}</color>");
+            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName);
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);

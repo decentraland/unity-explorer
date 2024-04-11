@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.DemoScripts.Components;
@@ -24,6 +25,7 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -35,6 +37,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.PriorityQueue;
+using Avatar = DCL.Profiles.Avatar;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -283,16 +286,14 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             characterController.slopeLimit = 50f;
             characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
 
-            var avatarShape = new PBAvatarShape
-            {
-                Id = StringUtils.GenerateRandomString(5),
-                Name = StringUtils.GenerateRandomString(5),
-                BodyShape = bodyShape,
-                Wearables = { wearables },
-                SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
-                HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
-                EyeColor = WearablesConstants.DefaultColors.GetRandomEyesColor3()
-            };
+            HashSet<URN> wearablesURN = new HashSet<URN>();
+            foreach (string wearable in wearables)
+                wearablesURN.Add(new URN(wearable));
+
+            var avatarShape = new Profile(
+                StringUtils.GenerateRandomString(5),
+                StringUtils.GenerateRandomString(5),
+                new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
             World.Create(avatarShape,
                 transformComp,
