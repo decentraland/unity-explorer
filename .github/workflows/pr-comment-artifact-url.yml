@@ -39,7 +39,8 @@ jobs:
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            .id | first")
+            select(.name==\"Build-StandaloneWindows64\") |
+            .id")
           
           echo "Artifact ID: $ARTIFACT_ID"
           echo "ARTIFACT_ID=$ARTIFACT_ID" >> "$GITHUB_ENV"
@@ -89,4 +90,3 @@ jobs:
             | Built on | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
-
