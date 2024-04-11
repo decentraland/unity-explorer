@@ -56,7 +56,7 @@ namespace DCL.Landscape
         {
             if (rootGo != null)
             {
-                if(!isVisible)
+                if (!isVisible)
                 {
                     emptyParcels.Dispose();
                     emptyParcelHeights.Dispose();
@@ -73,7 +73,11 @@ namespace DCL.Landscape
 
             this.worldSeed = worldSeed;
             var worldModel = new WorldModel(ownedParcels);
-            var terrainModel = new TerrainModel(worldModel, 3);
+            var terrainModel = new TerrainModel(worldModel, 2 + Mathf.RoundToInt(0.1f * (worldModel.sizeInParcels.x + worldModel.sizeInParcels.y) / 2f));
+
+            GenerateCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
+            SpawnMiscAsync();
+            GenerateBorderColliders(terrainModel);
 
             // Extract empty parcels
             {
@@ -193,10 +197,40 @@ namespace DCL.Landscape
                 await UniTask.Yield();
             }
 
-            GenerateCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
-            SpawnMiscAsync();
-
             ownedParcels.Dispose();
+        }
+
+        private void GenerateBorderColliders(TerrainModel terrainModel)
+        {
+            var collidersRoot = new GameObject("BorderColliders");
+            collidersRoot.transform.SetParent(rootGo.transform);
+
+            var height = 50.0f; // Height of the collider
+            var thickness = 10.0f; // Thickness of the collider
+
+            // Offsets are 21 units beyond the cliff
+            var offset = 21.0f;
+            // Extend the colliders slightly to ensure corners are fully closed
+            float extension = offset + (thickness / 2);
+
+            // Create colliders along each side of the terrain
+            AddCollider(terrainModel.minInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "North Border Collider", 0);
+            // AddCollider(terrainModel.minInUnits.x - extension, terrainModel.maxInUnits.y + offset, terrainModel.maxInUnits.x - terrainModel.minInUnits.x + (2 * extension), colliderHeight, colliderThickness, "South Border Collider", 0);
+            // AddCollider(terrainModel.minInUnits.x - offset, terrainModel.minInUnits.y - extension, terrainModel.maxInUnits.y - terrainModel.minInUnits.y + (2 * extension), colliderHeight, colliderThickness, "East Border Collider", 90);
+            // AddCollider(terrainModel.maxInUnits.x + offset, terrainModel.minInUnits.y - extension, terrainModel.maxInUnits.y - terrainModel.minInUnits.y + (2 * extension), colliderHeight, colliderThickness, "West Border Collider", 90);
+
+            void AddCollider(float posX, float posY, float length, string name, float rotation)
+            {
+                var colliderGo = new GameObject(name);
+                colliderGo.transform.SetParent(collidersRoot.transform);
+                BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
+
+                collider.size = new Vector3(length, height, thickness);
+                collider.center = new Vector3(posX + (length / 2), height / 2, posY + (thickness / 2) - 26);
+
+                // Set rotation
+                colliderGo.transform.rotation = Quaternion.Euler(0, rotation, 0);
+            }
         }
 
         private async UniTask SetHeightsAsync(TerrainModel terrainModel, int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed,
@@ -330,7 +364,8 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask SetTreesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed, int2 minParcel,
+        private async UniTask SetTreesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
+            int2 minParcel,
             CancellationToken cancellationToken)
         {
             {
