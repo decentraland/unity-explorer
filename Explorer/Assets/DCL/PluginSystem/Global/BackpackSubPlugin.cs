@@ -51,7 +51,8 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteCache emoteCache,
-            IReadOnlyCollection<URN> embeddedEmotes
+            IReadOnlyCollection<URN> embeddedEmotes,
+            ICollection<string> forceRender
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -71,6 +72,7 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 equippedWearables,
                 selfProfile,
+                forceRender,
                 ProvideEcsContext
             );
         }

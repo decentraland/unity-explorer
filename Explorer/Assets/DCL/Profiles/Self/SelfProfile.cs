@@ -23,6 +23,7 @@ namespace DCL.Profiles.Self
         private readonly IWearableCatalog wearableCatalog;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
+        private readonly IReadOnlyList<string> forceRender;
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
@@ -31,7 +32,8 @@ namespace DCL.Profiles.Self
             IEquippedWearables equippedWearables,
             IWearableCatalog wearableCatalog,
             IEmoteCache emoteCache,
-            IEquippedEmotes equippedEmotes
+            IEquippedEmotes equippedEmotes,
+            IReadOnlyList<string> forceRender
         )
         {
             this.profileRepository = profileRepository;
@@ -40,6 +42,7 @@ namespace DCL.Profiles.Self
             this.wearableCatalog = wearableCatalog;
             this.emoteCache = emoteCache;
             this.equippedEmotes = equippedEmotes;
+            this.forceRender = forceRender;
         }
 
         public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
@@ -70,6 +73,7 @@ namespace DCL.Profiles.Self
             profile = profileBuilder.From(profile)
                                     .WithWearables(uniqueWearables)
                                     .WithEmotes(uniqueEmotes)
+                                    .WithForceRender(forceRender)
                                     .Build();
 
             profile.UserId = web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!;

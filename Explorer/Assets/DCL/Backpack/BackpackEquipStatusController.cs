@@ -22,7 +22,7 @@ namespace DCL.Backpack
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
 
-        private readonly List<string> forceRender = new ();
+        private readonly ICollection<string> forceRender;
 
         private World? world;
         private Entity? playerEntity;
@@ -33,6 +33,7 @@ namespace DCL.Backpack
             IEquippedEmotes equippedEmotes,
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
+            ICollection<string> forceRender,
             Func<(World, Entity)> ecsContextProvider
         )
         {
@@ -41,6 +42,7 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
             this.selfProfile = selfProfile;
+            this.forceRender = forceRender;
             backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
             backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
             backpackEventBus.PublishProfileEvent += PublishProfile;
@@ -64,7 +66,9 @@ namespace DCL.Backpack
         private void SetForceRender(IReadOnlyCollection<string> categories)
         {
             forceRender.Clear();
-            forceRender.AddRange(categories);
+
+            foreach (string category in categories)
+                forceRender.Add(category);
         }
 
         private void PublishProfile()
