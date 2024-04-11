@@ -36,12 +36,19 @@ namespace DCL.Landscape
             ownedParcels = parcelData.GetOwnedParcels();
             emptyParcels = parcelData.GetEmptyParcels();
 
-            gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
-            await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails, true);
+            if (genData.terrainSize == 1)
+            {
+                var wGen = new WorldTerrainGenerator(genData);
+                await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
+            }
+            else
+            {
+                gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
+                await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails, true);
+            }
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();
         }
-
     }
 }

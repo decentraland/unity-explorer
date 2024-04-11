@@ -6,23 +6,25 @@ using Unity.Mathematics;
 namespace DCL.Landscape.Jobs
 {
     /// <summary>
-    /// This jobs checks every pixel from the terrain heightmap and set's up its noise value based on the EmptyParcelData as well
+    ///     This jobs checks every pixel from the terrain heightmap and set's up its noise value based on the EmptyParcelData as well
     ///     it also checks the sides and corners so the height variation blends in
     /// </summary>
     [BurstCompile]
     public struct ModifyTerrainHeightJob : IJobParallelFor
     {
-        private NativeArray<float> heights;
-        [ReadOnly] private NativeArray<float> terrainNoise;
-        [ReadOnly] private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelNeighborData;
-        [ReadOnly] private NativeParallelHashMap<int2, int> emptyParcelHeight;
         [ReadOnly] private readonly int terrainWidth;
         [ReadOnly] private readonly int offsetX;
         [ReadOnly] private readonly int offsetZ;
         [ReadOnly] private readonly int maxHeight;
+        [ReadOnly] private readonly int2 minWorldParcel;
+        [ReadOnly] private readonly int parcelSize;
         [ReadOnly] private readonly float edgeRadius;
         [ReadOnly] private readonly float minHeight;
         [ReadOnly] private readonly float pondDepth;
+        private NativeArray<float> heights;
+        [ReadOnly] private NativeArray<float> terrainNoise;
+        [ReadOnly] private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelNeighborData;
+        [ReadOnly] private NativeParallelHashMap<int2, int> emptyParcelHeight;
 
         public ModifyTerrainHeightJob(
             ref NativeArray<float> heights,
@@ -35,7 +37,9 @@ namespace DCL.Landscape.Jobs
             int resolution,
             int offsetX,
             int offsetZ,
-            int maxHeightIndex) : this()
+            int maxHeightIndex,
+            int2 minWorldParcel,
+            int parcelSize) : this()
         {
             this.heights = heights;
             this.emptyParcelNeighborData = emptyParcelNeighborData;
@@ -49,6 +53,8 @@ namespace DCL.Landscape.Jobs
             this.offsetX = offsetX;
             this.offsetZ = offsetZ;
             maxHeight = maxHeightIndex;
+            this.minWorldParcel = minWorldParcel;
+            this.parcelSize = parcelSize;
         }
 
         public void Execute(int index)
@@ -62,10 +68,10 @@ namespace DCL.Landscape.Jobs
             int worldX = x + offsetX;
             int worldZ = z + offsetZ;
 
-            int parcelX = worldX / 16;
-            int parcelZ = worldZ / 16;
+            int parcelX = worldX / parcelSize;
+            int parcelZ = worldZ / parcelSize;
 
-            var coord = new int2(-150 + parcelX, -150 + parcelZ);
+            var coord = new int2(minWorldParcel.x + parcelX, minWorldParcel.y + parcelZ);
 
             if (emptyParcelNeighborData.TryGetValue(coord, out EmptyParcelNeighborData data))
             {
@@ -73,8 +79,8 @@ namespace DCL.Landscape.Jobs
                 float currentHeight = emptyParcelHeight[coord];
 
                 // get the pixel position within the parcel coords
-                float lx = x % 16 / 16f;
-                float lz = z % 16 / 16f;
+                float lx = x % parcelSize / (float)parcelSize;
+                float lz = z % parcelSize / (float)parcelSize;
 
                 float lxRight = (lx - radius) * 2;
                 float lxLeft = lx * 2;

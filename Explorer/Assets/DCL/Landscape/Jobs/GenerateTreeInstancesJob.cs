@@ -9,7 +9,7 @@ using Random = Unity.Mathematics.Random;
 namespace DCL.Landscape.Jobs
 {
     /// <summary>
-    /// This job gathers the treeNoise result from other job and does additional checks like:
+    ///     This job gathers the treeNoise result from other job and does additional checks like:
     ///     - Is there a neighbour owned parcel that overlaps with my asset radius?
     ///     - Is there another asset of the same type within my radius?
     /// </summary>
@@ -18,6 +18,7 @@ namespace DCL.Landscape.Jobs
     {
         private NativeParallelHashMap<int2, TreeInstance>.ParallelWriter treeInstances;
         private NativeArray<Random> randoms;
+        private readonly bool useRandomSpawnChance;
 
         [ReadOnly] private NativeArray<float>.ReadOnly treeNoise;
         [ReadOnly] private ObjectRandomization treeRandomization;
@@ -28,6 +29,7 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly int offsetZ;
         [ReadOnly] private readonly int chunkSize;
         [ReadOnly] private readonly int chunkDensity;
+        [ReadOnly] private readonly int2 minWorldParcel;
 
         private readonly int2 UP;
         private readonly int2 RIGHT;
@@ -45,7 +47,9 @@ namespace DCL.Landscape.Jobs
             int offsetZ,
             int chunkSize,
             int chunkDensity,
-            NativeArray<Random> randoms)
+            in int2 minWorldParcel,
+            NativeArray<Random> randoms,
+            bool useRandomSpawnChance = true)
         {
             this.treeNoise = treeNoise;
             this.treeInstances = treeInstances;
@@ -57,7 +61,9 @@ namespace DCL.Landscape.Jobs
             this.offsetZ = offsetZ;
             this.chunkSize = chunkSize;
             this.chunkDensity = chunkDensity;
+            this.minWorldParcel = minWorldParcel;
             this.randoms = randoms;
+            this.useRandomSpawnChance = useRandomSpawnChance;
 
             UP = new int2(0, 1);
             RIGHT = new int2(1, 0);
@@ -71,7 +77,7 @@ namespace DCL.Landscape.Jobs
             int y = index % chunkDensity;
 
             float value = treeNoise[index];
-            var random = randoms[index];
+            Random random = randoms[index];
 
             float3 randomness = treeRandomization.GetRandomizedPositionOffset(ref random) / chunkDensity;
             float3 positionWithinTheChunk = new float3((float)x / chunkDensity, 0, (float)y / chunkDensity) + randomness;
@@ -114,10 +120,14 @@ namespace DCL.Landscape.Jobs
                 lightmapColor = Color.white,
             };
 
-            // we check the chances of this object to spawn
-            bool canAssetSpawn = random.NextFloat(value * 100, 100) > 80;
+            if (useRandomSpawnChance)
+            {
+                bool canAssetSpawn = random.NextFloat(value * 100, 100) > 80; // we check the chances of this object to spawn
 
-            if (canAssetSpawn)
+                if (canAssetSpawn)
+                    treeInstances.TryAdd(new int2(x, y), treeInstance);
+            }
+            else
                 treeInstances.TryAdd(new int2(x, y), treeInstance);
         }
 
@@ -125,13 +135,13 @@ namespace DCL.Landscape.Jobs
         {
             var parcelX = (int)math.floor(worldPos.x / 16f);
             var parcelZ = (int)math.floor(worldPos.z / 16f);
-            return new int2(-150 + parcelX, -150 + parcelZ);
+            return new int2(minWorldParcel.x + parcelX, minWorldParcel.y + parcelZ);
         }
 
         private float3 ParcelToWorld(int2 parcel)
         {
-            int posX = (parcel.x + 150) * 16;
-            int posZ = (parcel.y + 150) * 16;
+            int posX = (parcel.x - minWorldParcel.x) * 16;
+            int posZ = (parcel.y - minWorldParcel.y) * 16;
             return new float3(posX, 0, posZ);
         }
 

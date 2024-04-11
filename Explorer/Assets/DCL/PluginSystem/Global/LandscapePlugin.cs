@@ -56,7 +56,7 @@ namespace DCL.PluginSystem.Global
             ownedParcels = parcelData.Value.GetOwnedParcels();
 
             TerrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
-            WorldTerrainGenerator = new WorldTerrainGenerator(landscapeData.Value.terrainData, ref ownedParcels);
+            WorldTerrainGenerator = new WorldTerrainGenerator(landscapeData.Value.worldsTerrainData);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

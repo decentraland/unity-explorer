@@ -293,10 +293,12 @@ namespace DCL.Landscape
                 emptyParcelHeights = new NativeParallelHashMap<int2, int>(emptyParcels.Length, Allocator.Persistent);
                 emptyParcelNeighborData = new NativeParallelHashMap<int2, EmptyParcelNeighborData>(emptyParcels.Length, Allocator.Persistent);
 
-                var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelHeights.AsParallelWriter(), terrainGenData.heightScaleNerf);
+                var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelHeights.AsParallelWriter(),
+                    terrainGenData.heightScaleNerf, new int2(-150, -150), new int2(150, 150));
                 JobHandle handle = job.Schedule(emptyParcels.Length, 32);
 
-                var job2 = new CalculateEmptyParcelNeighbourHeights(in emptyParcels, in ownedParcels, emptyParcelNeighborData.AsParallelWriter(), emptyParcelHeights.AsReadOnly());
+                var job2 = new CalculateEmptyParcelNeighbourHeights(in emptyParcels, in ownedParcels, emptyParcelNeighborData.AsParallelWriter(),
+                    emptyParcelHeights.AsReadOnly(), new int2(-150, -150), new int2(150, 150));
                 JobHandle handle2 = job2.Schedule(emptyParcels.Length, 32, handle);
 
                 await handle2.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
@@ -665,7 +667,9 @@ namespace DCL.Landscape
                     resolution,
                     offsetX,
                     offsetZ,
-                    maxHeightIndex);
+                    maxHeightIndex,
+                    new int2(-150,-150),
+                    16);
 
                 JobHandle jobHandle = modifyJob.Schedule(heights.Length, 64, handle);
 
@@ -775,6 +779,7 @@ namespace DCL.Landscape
                             offsetZ,
                             chunkSize,
                             chunkSize,
+                            new int2(-150, -150),
                             treeParallelRandoms);
 
                         instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, randomizerHandle);
