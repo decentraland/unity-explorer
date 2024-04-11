@@ -26,6 +26,7 @@ namespace SceneRunner.EmptyScene
 
         private Args args;
 
+        public ISceneStateProvider SceneStateProvider { get; }
         public SceneEcsExecutor EcsExecutor { get; }
         public SceneShortInfo Info => args.ShortInfo;
 

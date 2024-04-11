@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Systems;
@@ -12,30 +13,34 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
+    // Currently implemented to track reserved entities only on the CURRENT SCENE
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_COMPONENTS_HANDLER)]
     public partial class PlayerComponentsHandlerSystem : BaseUnityLoopSystem
     {
         private readonly IScenesCache scenesCache;
+        private readonly ICharacterObject characterObject;
 
-        // TODO: Clear somehow disposed scenes...
-        private readonly IDictionary<Vector2Int, SceneReservedCRDTEntitiesData> scenesReservedEntities = new Dictionary<Vector2Int, SceneReservedCRDTEntitiesData>();
+        // TODO: Clear when current scene changes before populating the new one
+        private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
+        private int currentReservedEntitiesCount;
 
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache) : base(world)
+        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
         {
             this.scenesCache = scenesCache;
+            this.characterObject = characterObject;
         }
 
         protected override void Update(float t)
         {
             UpdatePlayerIdentityDataQuery(World);
+            UpdatePlayerEntitiesThatLeftSceneQuery(World);
         }
 
         [Query]
@@ -45,15 +50,11 @@ namespace DCL.Multiplayer.SDK.Systems
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
 
-            if (!scenesReservedEntities.TryGetValue(sceneFacade.Info.BaseParcel, out SceneReservedCRDTEntitiesData sceneReservedCRDTEntitiesData))
-            {
-                sceneReservedCRDTEntitiesData = new SceneReservedCRDTEntitiesData(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
-                scenesReservedEntities.Add(sceneFacade.Info.BaseParcel, sceneReservedCRDTEntitiesData);
-            }
+            if (!sceneFacade.SceneStateProvider.IsCurrent) return;
 
-            int crdtEntityId = sceneReservedCRDTEntitiesData.ReserveNextFreeEntity();
+            int crdtEntityId = ReserveNextFreeEntity();
 
-            // All reserved entities are taken
+            // All reserved entities for that scene are taken
             if (crdtEntityId == -1) return;
 
             // External world access should be always synchronized (Global World calls into Scene World)
@@ -61,8 +62,6 @@ namespace DCL.Multiplayer.SDK.Systems
             {
                 var crdtEntityComponent = new CRDTEntity(crdtEntityId);
                 Debug.Log($"PRAVS - UpdatePlayerIdentityDataQuery() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}");
-
-                World sceneWorld = sceneFacade.EcsExecutor.World;
 
                 var playerIdentityData = new PlayerIdentityDataComponent
                 {
@@ -73,43 +72,68 @@ namespace DCL.Multiplayer.SDK.Systems
 
                 World.Add(entity, playerIdentityData);
 
-                // sceneWorld.Add(entity, playerIdentityData, crdtEntityComponent);
-                sceneWorld.Add(entity, playerIdentityData);
+                // sceneFacade.EcsExecutor.World.Add(entity, playerIdentityData, crdtEntityComponent);
+                sceneFacade.EcsExecutor.World.Add(entity, playerIdentityData);
             }
         }
 
-        private struct SceneReservedCRDTEntitiesData
+        [Query]
+        private void UpdatePlayerEntitiesThatLeftScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerIdentityDataComponent playerIdentityDataComponent)
         {
-            private readonly bool[] reservedEntities;
+            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+                return;
 
-            public SceneReservedCRDTEntitiesData(int entitiesAmount)
+            if (sceneFacade.SceneStateProvider.IsCurrent) return;
+
+            // External world access should be always synchronized (Global World calls into Scene World)
+            using (sceneFacade.EcsExecutor.Sync.GetScope())
             {
-                reservedEntities = new bool[entitiesAmount];
+                Debug.Log($"PRAVS - UpdatePlayerEntitiesThatLeftTheScene() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; scene parcel: {sceneFacade.Info.BaseParcel}");
+
+                World.Remove<PlayerIdentityDataComponent>(entity);
+
+                // Remove from current scene (not that player's scene) entities
+                scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterObject.Transform.position), out ISceneFacade currentSceneFacade);
+                currentSceneFacade.EcsExecutor.World.Remove<PlayerIdentityDataComponent>(entity);
             }
 
-            // TODO: Optimize
-            public int ReserveNextFreeEntity()
-            {
-                for (var i = 0; i < reservedEntities.Length; i++)
-                {
-                    if (!reservedEntities[i])
-                    {
-                        reservedEntities[i] = true;
-                        return SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i;
-                    }
-                }
+            FreeEntity(playerIdentityDataComponent.CRDTEntity.Id);
+        }
 
-                // All reserved entities are taken
+        // TODO: Optimize
+        private int ReserveNextFreeEntity()
+        {
+            // All reserved entities are taken
+            if (currentReservedEntitiesCount == reservedEntities.Length)
                 return -1;
-            }
 
-            public void ClearReservedEntity(int entityId)
+            for (var i = 0; i < reservedEntities.Length; i++)
             {
-                entityId = entityId - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
-                if (entityId >= reservedEntities.Length) return;
-
-                reservedEntities[entityId] = false;
+                if (!reservedEntities[i])
+                {
+                    reservedEntities[i] = true;
+                    currentReservedEntitiesCount++;
+                    return SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i;
+                }
             }
+
+            return -1;
+        }
+
+        public void FreeEntity(int entityId)
+        {
+            entityId -= SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
+            if (entityId >= reservedEntities.Length) return;
+
+            reservedEntities[entityId] = false;
+            currentReservedEntitiesCount--;
+        }
+
+        public void Clear()
+        {
+            for (var i = 0; i < reservedEntities.Length; i++) { reservedEntities[i] = false; }
+
+            currentReservedEntitiesCount = 0;
         }
     }
 }

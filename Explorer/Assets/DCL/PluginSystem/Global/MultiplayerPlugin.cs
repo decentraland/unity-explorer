@@ -32,17 +32,17 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
-        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-        private readonly IRoomHub roomHub;
-        private readonly IMessagePipesHub messagePipesHub;
-        private readonly IProfileRepository profileRepository;
-        private readonly IProfileBroadcast profileBroadcast;
+        private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
         private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IMessagePipesHub messagePipesHub;
+        private readonly IProfileBroadcast profileBroadcast;
+        private readonly IProfileRepository profileRepository;
+        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemotePoses remotePoses;
-        private readonly ICharacterObject characterObject;
+        private readonly IRoomHub roomHub;
         private readonly IScenesCache scenesCache;
 
         public MultiplayerPlugin(
@@ -110,7 +110,7 @@ namespace DCL.PluginSystem.Global
                 realFlowLoadingStatus
             );
 
-            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache);
+            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
 #endif
         }
     }

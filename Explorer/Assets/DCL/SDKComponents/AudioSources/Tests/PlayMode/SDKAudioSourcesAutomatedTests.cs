@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             yield return new WaitUntil(() => currentScene != null);
 
             var scene = currentScene as SceneFacade;
-            yield return new WaitUntil(() => scene!.sceneStateProvider.State == SceneState.Running);
+            yield return new WaitUntil(() => scene!.SceneStateProvider.State == SceneState.Running);
 
             AudioClipsCache clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
 
@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             yield return new WaitUntil(() => clipsCache.OngoingRequests.Count == 0);
             Assert.That(clipsCache.cache.Count, Is.EqualTo(1));
 
-            var audioSources = Object.FindObjectsOfType<AudioSource>();
+            AudioSource[]? audioSources = Object.FindObjectsOfType<AudioSource>();
             Assert.That(audioSources.Length, Is.EqualTo(1));
             Assert.That(audioSources[0].isPlaying);
         }
