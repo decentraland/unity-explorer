@@ -7,7 +7,7 @@ namespace SceneRuntime.Apis.Modules
 {
     public interface ISimpleFetchApi : IDisposable
     {
-        public UniTask<object> Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
+        public UniTask<object> FetchAsync(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout, IWebRequestController webController, CancellationToken ct);
 
     }

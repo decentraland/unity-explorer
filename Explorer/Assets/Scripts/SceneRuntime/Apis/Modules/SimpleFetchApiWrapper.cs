@@ -34,7 +34,7 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                return api.Fetch(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).AsTask().ToPromise();
+                return api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).ToPromise();
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }

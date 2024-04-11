@@ -1,19 +1,12 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
-using Nethereum.Contracts;
-using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace CrdtEcsBridge.Engine
@@ -34,7 +27,7 @@ namespace CrdtEcsBridge.Engine
 
         public void Dispose() { }
 
-        public async UniTask<object> Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
+        public async UniTask<object> FetchAsync(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout, IWebRequestController webController, CancellationToken ct)
         {
 
