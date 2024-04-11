@@ -95,6 +95,17 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithForceRender(IEnumerable<string> categories)
+        {
+            forceRender ??= new HashSet<string>();
+            forceRender.Clear();
+
+            foreach (string category in categories)
+                forceRender.Add(category);
+
+            return this;
+        }
+
         public Profile Build()
         {
             var profile = new Profile();

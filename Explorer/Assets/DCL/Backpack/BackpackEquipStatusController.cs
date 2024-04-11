@@ -22,6 +22,8 @@ namespace DCL.Backpack
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
 
+        private readonly List<string> forceRender = new ();
+
         private World? world;
         private Entity? playerEntity;
         private CancellationTokenSource? publishProfileCts;
@@ -44,6 +46,8 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+
+            backpackEventBus.ForceRenderEvent += SetForceRender;
         }
 
         public void Dispose()
@@ -53,13 +57,21 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+            backpackEventBus.ForceRenderEvent -= SetForceRender;
             publishProfileCts?.SafeCancelAndDispose();
+        }
+
+        private void SetForceRender(IReadOnlyCollection<string> categories)
+        {
+            forceRender.Clear();
+            forceRender.AddRange(categories);
         }
 
         private void PublishProfile()
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
+                //TODO forceRender
                 await selfProfile.PublishAsync(ct);
                 var profile = await selfProfile.ProfileAsync(ct);
 
