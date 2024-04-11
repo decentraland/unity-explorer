@@ -94,7 +94,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                        });
 
             ref CursorComponent cc = ref world.Get<CursorComponent>(cameraEntity);
-            cc.CursorIsLocked = true;
+            cc.CursorState = CursorState.Locked;
 
             system.Update(0);
 

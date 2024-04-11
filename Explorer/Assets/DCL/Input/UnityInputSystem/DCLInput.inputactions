@@ -783,17 +783,6 @@
                 },
                 {
                     "name": "",
-                    "id": "4a369ce6-4b91-4669-9785-33e86e053c70",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "MultiTap",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Lock",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "b3508dda-328c-4d7b-89dd-abcc86f65324",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",

@@ -7,6 +7,7 @@ using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
 using DCL.Input.Crosshair;
 using DCL.Interaction.PlayerOriginated.Components;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace DCL.Input.Systems
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private const int MOUSE_BOUNDS_OFFSET = 10;
+        private static readonly Vector2 CURSOR_OFFSET = new (20, -20);
+
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
         private readonly ICrosshairView crosshairCanvas;
@@ -37,6 +40,7 @@ namespace DCL.Input.Systems
         private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
         private readonly Dictionary<VisualElement, bool> uiToolkitInteractionCache = new ();
         private readonly List<VisualElement> visualElementPickCache = new ();
+        private readonly Mouse mouseDevice;
 
         internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
@@ -45,6 +49,7 @@ namespace DCL.Input.Systems
             this.crosshairCanvas = crosshairCanvas;
             cameraActions = dclInput.Camera;
             uiActions = dclInput.UI;
+            mouseDevice = InputSystem.GetDevice<Mouse>();
         }
 
         protected override void Update(float t)
@@ -64,39 +69,50 @@ namespace DCL.Input.Systems
         [Query]
         private void UpdateCursor(ref CursorComponent cursorComponent)
         {
-            Vector2 mousePos = Mouse.current.position.value;
+            Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
             IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
 
-            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults);
             UpdateCursorVisualState(ref cursorComponent, raycastResults);
-
-            crosshairCanvas.SetDisplayed(cursorComponent.CursorIsLocked);
+            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorVisualState(ref CursorComponent cursorComponent, IReadOnlyList<RaycastResult> raycastResults)
         {
             CursorStyle cursorStyle = CursorStyle.Normal;
-            cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
 
-            if (isHoveringAnInteractable)
-                cursorStyle = CursorStyle.Interaction;
-
-            for (var i = 0; i < raycastResults.Count; i++)
+            switch (cursorComponent.CursorState)
             {
-                GameObject? obj = raycastResults[i].gameObject;
+                case CursorState.Free:
+                {
+                    cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
 
-                if (obj == null)
-                    continue;
+                    if (isHoveringAnInteractable)
+                        cursorStyle = CursorStyle.Interaction;
 
-                bool isInteractable = IsInteractableCached(obj, cursorComponent.Position);
+                    for (var i = 0; i < raycastResults.Count; i++)
+                    {
+                        GameObject? obj = raycastResults[i].gameObject;
 
-                if (!isInteractable)
-                    continue;
-                cursorStyle = CursorStyle.Interaction;
-                break;
+                        if (obj == null)
+                            continue;
+
+                        bool isInteractable = IsInteractableCached(obj, cursorComponent.Position);
+
+                        if (!isInteractable)
+                            continue;
+
+                        cursorStyle = CursorStyle.Interaction;
+                        break;
+                    }
+
+                    break;
+                }
+                case CursorState.Panning:
+                    cursorStyle = CursorStyle.CameraPan;
+                    break;
             }
 
             cursor.SetStyle(cursorStyle);
@@ -163,63 +179,88 @@ namespace DCL.Input.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults)
         {
-            if (cursorComponent.IsOverUI)
-            {
-                if (cursorComponent.CursorIsLocked)
-                    UnlockCursor(ref cursorComponent);
+            CursorState nextState = cursorComponent.CursorState;
 
-                cursorComponent.AllowCameraMovement = false;
-                return;
-            }
+            if (cursorComponent is { IsOverUI: true, CursorState: CursorState.Locked })
+                nextState = CursorState.Free;
 
             bool isMouseOutOfBounds = mousePos.x < MOUSE_BOUNDS_OFFSET || mousePos.x > Screen.width - MOUSE_BOUNDS_OFFSET ||
                                       mousePos.y < MOUSE_BOUNDS_OFFSET || mousePos.y > Screen.height - MOUSE_BOUNDS_OFFSET;
 
             bool inputWantsToLock = cameraActions.Lock.WasReleasedThisFrame();
             bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
-            bool justStoppedTemporalLock = cameraActions.TemporalLock.WasReleasedThisFrame();
+            bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
-            if (inputWantsToLock && !isMouseOutOfBounds && cursorComponent is { CursorIsLocked: false, CancelCursorLock: false })
+            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {
-                    cursorComponent.CursorIsLocked = true;
-                    cursor.Lock();
+                    nextState = CursorState.Locked;
                 }
             }
-            else if (inputWantsToUnlock && cursorComponent.CursorIsLocked)
-                UnlockCursor(ref cursorComponent);
+            else if (inputWantsToUnlock && cursorComponent is { CursorState: CursorState.Locked })
+                nextState = CursorState.Free;
 
             // in case the cursor was unlocked externally
-            if (!cursor.IsLocked() && cursorComponent.CursorIsLocked)
-                UnlockCursor(ref cursorComponent);
+            if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
+                nextState = CursorState.Free;
 
-            cursorComponent.AllowCameraMovement = !isMouseOutOfBounds && (cameraActions.TemporalLock.IsPressed() || cursorComponent.CursorIsLocked);
+            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true })
+                nextState = CursorState.Panning;
 
-            if (justStoppedTemporalLock)
-                cursorComponent.CancelCursorLock = false;
+            if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
+                nextState = CursorState.Free;
 
-            void UnlockCursor(ref CursorComponent cursorComponent)
+            UpdateState(ref cursorComponent, nextState);
+
+            if (cursorComponent.CursorState != CursorState.Panning)
+                cursorComponent.PositionIsDirty = false;
+        }
+
+        private void UpdateState(ref CursorComponent cursorComponent, CursorState nextState)
+        {
+            if (cursorComponent.CursorState == nextState) return;
+
+            switch (nextState)
             {
-                cursorComponent.CursorIsLocked = false;
-                cursor.Unlock();
+                case CursorState.Free:
+                    crosshairCanvas.SetDisplayed(false);
+                    cursor.SetVisibility(true);
+                    cursor.Unlock();
+                    break;
 
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+                case CursorState.Locked:
+                    crosshairCanvas.SetDisplayed(true);
+                    cursor.Lock();
+                    cursor.SetVisibility(false);
+                    break;
 
-                //cursorComponent.Position = mousePos;
+                case CursorState.Panning:
+                    crosshairCanvas.SetDisplayed(true);
+                    cursor.SetVisibility(false);
+                    break;
             }
+
+            cursorComponent.CursorState = nextState;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
         {
-            if (cursorComponent.AllowCameraMovement)
-            {
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
-                return;
-            }
+            bool isPanning = cursorComponent.CursorState == CursorState.Panning;
 
-            if (cursorComponent.CursorIsLocked)
+            if (isPanning)
+            {
+                Vector2 pos = cursorComponent.Position + CURSOR_OFFSET;
+                pos.x = pos.x / Screen.width * 100f;
+                pos.y = pos.y / Screen.height * 100f;
+                crosshairCanvas.SetPosition(pos);
+                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+            }
+            else
+                crosshairCanvas.ResetPosition();
+
+            if (isPanning)
                 return;
 
             if (controllerDelta.sqrMagnitude > 0)

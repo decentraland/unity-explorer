@@ -42,7 +42,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
         [Query]
         private void GetCursorState(in CursorComponent cursorComponent)
         {
-            if (!cursorComponent.CursorIsLocked)
+            if (cursorComponent.CursorState == CursorState.Free)
             {
                 // 0,0 is the center of the screen
                 cursorPositionPercent.x = (cursorComponent.Position.x - (Screen.width * 0.5f)) / Screen.width * 100f;

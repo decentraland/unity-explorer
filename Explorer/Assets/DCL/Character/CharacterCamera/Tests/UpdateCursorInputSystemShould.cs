@@ -64,7 +64,7 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void DontLockCursorWhenOverUI()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
 
             eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () });
 
@@ -72,27 +72,27 @@ namespace DCL.CharacterCamera.Tests
 
             system.Update(0);
 
-            Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
             cursor.DidNotReceive().Lock();
         }
 
         [Test]
         public void LockCursorWhenNotClickingUI()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(true);
             PressAndRelease(mouse.rightButton);
 
             system.Update(0);
 
-            Assert.IsTrue(world.Get<CursorComponent>(entity).CursorIsLocked);
+            Assert.AreEqual(CursorState.Locked, world.Get<CursorComponent>(entity).CursorState);
             cursor.Received(1).Lock();
         }
 
         [Test]
         public void SetCursorToInteractableWhenHoveringOverClickableUI()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
             eventSystem.IsPointerOverGameObject().Returns(true);
 
@@ -116,7 +116,7 @@ namespace DCL.CharacterCamera.Tests
             world.Set(hoverEntity, new HoverStateComponent
                 { IsAtDistance = isAtDistance, IsHoverOver = false, HasCollider = true });
 
-            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
             eventSystem.IsPointerOverGameObject().Returns(false);
 
@@ -129,7 +129,7 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void SetCursorToNormalWhenHoveringOverNotClickableUI()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
             eventSystem.IsPointerOverGameObject().Returns(true);
 
@@ -149,13 +149,13 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void UnlockCursor()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = true });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Locked });
 
             Press(keyboard.escapeKey);
 
             system.Update(0);
 
-            Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
             cursor.Received(1).Unlock();
         }
 
@@ -163,7 +163,7 @@ namespace DCL.CharacterCamera.Tests
         public void AllowCameraMovementWithTemporalLock()
         {
             //setup press
-            world.Set(entity, new CursorComponent { CursorIsLocked = false });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
 
             Press(mouse.rightButton);
 
@@ -171,8 +171,7 @@ namespace DCL.CharacterCamera.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(world.Get<CursorComponent>(entity).AllowCameraMovement);
-            Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
+            Assert.AreEqual(CursorState.Panning, world.Get<CursorComponent>(entity).CursorState);
 
             // setup release
             Release(mouse.rightButton);
@@ -180,19 +179,18 @@ namespace DCL.CharacterCamera.Tests
 
             system.Update(0);
 
-            Assert.IsFalse(world.Get<CursorComponent>(entity).AllowCameraMovement);
-            Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
         }
 
         [Test]
         public void AutomaticallyUnlockCursorByExternalUnlock()
         {
-            world.Set(entity, new CursorComponent { CursorIsLocked = true });
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Locked });
             cursor.IsLocked().Returns(false);
 
             system.Update(0);
 
-            Assert.IsFalse(world.Get<CursorComponent>(entity).CursorIsLocked);
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
             cursor.Received(1).Unlock();
         }
     }

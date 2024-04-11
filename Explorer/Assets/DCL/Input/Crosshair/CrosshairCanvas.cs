@@ -6,28 +6,54 @@ namespace DCL.Input.Crosshair
 {
     public class CrosshairCanvas : VisualElement, ICrosshairView
     {
-        private bool initialized;
         private VisualElement crossHairElement;
         private Sprite crossHair;
         private Sprite crossHairInteractable;
+        private Sprite crosshairPan;
+        private Length leftLength;
+        private Length bottomLength;
         private CursorStyle currentState;
+        private bool initialized;
 
-        public void Initialize(Sprite crossHair, Sprite crossHairInteractable)
+        public void Initialize(Sprite crosshair, Sprite crosshairInteractable, Sprite crosshairPan)
         {
-            this.crossHairInteractable = crossHairInteractable;
-            this.crossHair = crossHair;
+            this.crosshairPan = crosshairPan;
+            crossHairInteractable = crosshairInteractable;
+            crossHair = crosshair;
             if (initialized) return;
 
             crossHairElement = this.Query<VisualElement>("Crosshair").First();
 
             initialized = true;
+            leftLength = new Length(0, LengthUnit.Percent);
+            bottomLength = new Length(0, LengthUnit.Percent);
             SetCursorStyle(CursorStyle.Interaction);
+        }
+
+        public void SetPosition(Vector2 newPosition)
+        {
+            leftLength.value = newPosition.x;
+            bottomLength.value = newPosition.y;
+
+            style.left = leftLength;
+            style.bottom = bottomLength;
+        }
+
+        public void ResetPosition()
+        {
+            SetPosition(new Vector2(50, 50));
         }
 
         public void SetCursorStyle(CursorStyle style)
         {
             if (currentState == style) return;
-            Sprite sprite = style == CursorStyle.Interaction ? crossHairInteractable : crossHair;
+
+            Sprite sprite = style switch
+                            {
+                                CursorStyle.Interaction => crossHairInteractable,
+                                CursorStyle.CameraPan => crosshairPan,
+                                _ => crossHair,
+                            };
 
             StyleBackground styleBackground = crossHairElement.style.backgroundImage;
             Background background = styleBackground.value;

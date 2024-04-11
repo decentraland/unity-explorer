@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.Input
 {
@@ -8,6 +7,7 @@ namespace DCL.Input
         None,
         Normal,
         Interaction,
+        CameraPan,
     }
     public class DCLCursor : ICursor
     {
@@ -38,6 +38,11 @@ namespace DCL.Input
             Cursor.visible = true;
         }
 
+        public void SetVisibility(bool visible)
+        {
+            Cursor.visible = visible;
+        }
+
         public void SetStyle(CursorStyle style)
         {
             if (cursorStyle == style) return;
@@ -65,6 +70,8 @@ namespace DCL.Input
         void Lock();
 
         void Unlock();
+
+        void SetVisibility(bool visible);
 
         void SetStyle(CursorStyle style);
     }

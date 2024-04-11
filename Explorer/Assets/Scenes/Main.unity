@@ -353,7 +353,7 @@ MonoBehaviour:
   showSplash: 1
   showAuthentication: 1
   showLoading: 1
-  enableLandscape: 1
+  enableLandscape: 0
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
@@ -428,8 +428,18 @@ MonoBehaviour:
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
+    <NormalCursor>k__BackingField:
+      m_AssetGUID: bf22911f490866b45b81ddea869255f2
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <InteractionCursor>k__BackingField:
+      m_AssetGUID: 23dcf75316411d344be316dc2cb0e41f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
     <EmbeddedEmotes>k__BackingField:
-      m_AssetGUID: 
+      m_AssetGUID: 2a58c49334237a24781cae8b1e3fa351
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

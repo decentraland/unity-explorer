@@ -47,10 +47,12 @@ namespace DCL.CharacterCamera.Systems
             cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
                                   || cameraActions.ZoomOut.WasPressedThisFrame();
 
-            cameraInput.Delta = cursorComponent.CursorIsLocked || cursorComponent.AllowCameraMovement ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
+            Vector2 currentDelta = cameraActions.Delta.ReadValue<Vector2>();
 
-            if (cameraInput.Delta.sqrMagnitude > 2f)
-                cursorComponent.CancelCursorLock = true;
+            if (currentDelta.sqrMagnitude > 1f)
+                cursorComponent.PositionIsDirty = true;
+
+            cameraInput.Delta = cursorComponent.CursorState != CursorState.Free ? currentDelta : Vector2.zero;
 
             cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
 

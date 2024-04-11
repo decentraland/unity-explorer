@@ -262,6 +262,12 @@ MonoBehaviour:
           m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
           m_EditorAssetChanged: 1
+        <CrossHairCameraPan>k__BackingField:
+          m_AssetGUID: 25a27c814a51d4a67a7ebd0b3b672284
+          m_SubObjectName: CursorDragCamera
+          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+          m_EditorAssetChanged: 1
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

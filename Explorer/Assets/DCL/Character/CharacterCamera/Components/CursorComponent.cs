@@ -1,13 +1,20 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.CharacterCamera.Components
 {
+    public enum CursorState
+    {
+        Free,
+        Locked,
+        Panning,
+    }
+
     public struct CursorComponent
     {
         public bool IsOverUI;
-        public bool CursorIsLocked;
-        public bool AllowCameraMovement;
-        public bool CancelCursorLock;
+        public CursorState CursorState;
+        public bool PositionIsDirty;
         public Vector2 Position;
     }
 }
