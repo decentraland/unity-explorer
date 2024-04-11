@@ -351,7 +351,6 @@ namespace DCL.Chat
                 emojiSuggestionPanelController.OnEmojiSelected -= AddEmojiFromSuggestion;
 
             dclInput.UI.Submit.performed -= OnSubmitAction;
-            emojiPanelController.Dispose();
             cts.SafeCancelAndDispose();
             commandCts.SafeCancelAndDispose();
         }
