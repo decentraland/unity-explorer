@@ -89,7 +89,7 @@ namespace DCL.Chat
 
         private float CalculatePreferredWidth(string messageContent)
         {
-            if (playerName.text.Length + walletIdText.text.Length > messageContent.Length)
+            if (playerName.text.Length + walletIdText.text.Length > entryText.GetParsedText().Length)
                 return playerName.preferredWidth + walletIdText.preferredWidth + BACKGROUND_HEIGHT_OFFSET;
 
             if(entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x < MAX_ENTRY_WIDTH)
