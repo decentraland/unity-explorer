@@ -1,10 +1,8 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Ipfs;
 using DCL.Landscape;
-using DCL.Landscape.Settings;
-using DCL.LOD;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
 using DCL.ParcelsService;
@@ -14,6 +12,8 @@ using DCL.SceneLoadingScreens;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -51,6 +51,7 @@ namespace Global.Dynamic
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+
             if (!await realmController.IsReachableAsync(realm, ct))
                 return false;
 
@@ -58,36 +59,42 @@ namespace Global.Dynamic
 
             SwitchMiscVisibility(realm == genesisDomain);
 
-            await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
-                realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct), ct);
+            await ShowLoadingScreenAndExecuteTaskAsync(ct,
+                async loadReport =>
+                {
+                    await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
 
-            if (realm != genesisDomain)
-            {
-                var scenePointers = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity);
-                await UniTask.WaitUntil(() => scenePointers.AllPromisesResolved, cancellationToken: ct);
-
-                List<int2> decodedParcels = new List<int2>();
-
-                foreach (var promise in scenePointers.Promises)
-                foreach (var parcel in promise.Result.Value.Asset.metadata.scene.DecodedParcels)
-                    decodedParcels.Add(parcel.ToInt2());
-
-                var ownedParcels = new NativeParallelHashSet<int2>(decodedParcels.Count, AllocatorManager.Persistent);
-
-                foreach (int2 parcel in decodedParcels)
-                    ownedParcels.Add(parcel);
-
-                await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, cancellationToken: ct);
-            }
+                    if (realm != genesisDomain)
+                        await GenerateWorldTerrain(ct);
+                });
 
             return true;
+        }
+
+        private async UniTask GenerateWorldTerrain(CancellationToken ct)
+        {
+            FixedScenePointers scenePointers = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity);
+            await UniTask.WaitUntil(() => scenePointers.AllPromisesResolved, cancellationToken: ct);
+
+            var decodedParcels = new List<int2>();
+
+            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in scenePointers.Promises)
+            foreach (Vector2Int parcel in promise.Result.Value.Asset.metadata.scene.DecodedParcels)
+                decodedParcels.Add(parcel.ToInt2());
+
+            var ownedParcels = new NativeParallelHashSet<int2>(decodedParcels.Count, AllocatorManager.Persistent);
+
+            foreach (int2 parcel in decodedParcels)
+                ownedParcels.Add(parcel);
+
+            await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, cancellationToken: ct);
         }
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            await ShowLoadingScreenAndExecuteTaskAsync(async loadReport =>
+            await ShowLoadingScreenAndExecuteTaskAsync(ct, async loadReport =>
             {
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
@@ -99,18 +106,22 @@ namespace Global.Dynamic
 
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
-            }, ct);
+            });
         }
 
         private void SwitchMiscVisibility(bool isVisible)
         {
+            // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
             landscapePlugin.TerrainGenerator.SwitchVisibility(isVisible);
             landscapePlugin.landscapeData.Value.showSatelliteView = isVisible;
             roadsPlugin.RoadAssetPool.SwitchVisibility(isVisible);
+
+            // is NOT visible
+            landscapePlugin.WorldTerrainGenerator.SwitchVisibility(!isVisible);
         }
 
-        private async UniTask ShowLoadingScreenAndExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
+        private async UniTask ShowLoadingScreenAndExecuteTaskAsync(CancellationToken ct, params Func<AsyncLoadProcessReport, UniTask>[] operations)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -122,9 +133,14 @@ namespace Global.Dynamic
                                                                new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
                                                       .AttachExternalCancellation(ct);
 
-            UniTask operationTask = operation(loadReport);
+            var operationTasks = new UniTask[operations.Length + 1];
 
-            await UniTask.WhenAll(showLoadingScreenTask, operationTask);
+            for (var index = 0; index < operations.Length; index++)
+                operationTasks[index] = operations[index](loadReport);
+
+            operationTasks[operations.Length] = showLoadingScreenTask;
+
+            await UniTask.WhenAll(operationTasks);
         }
     }
 }

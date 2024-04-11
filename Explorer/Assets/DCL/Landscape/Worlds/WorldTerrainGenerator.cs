@@ -37,8 +37,6 @@ namespace DCL.Landscape
 
         private GameObject rootGo;
 
-        private NativeParallelHashSet<int2> ownedParcels;
-
         private int maxHeightIndex;
         private uint worldSeed;
         private TreePrototype[] treePrototypes;
@@ -52,6 +50,21 @@ namespace DCL.Landscape
         public WorldTerrainGenerator(TerrainGenerationData terrainGenData)
         {
             this.terrainGenData = terrainGenData;
+        }
+
+        public void SwitchVisibility(bool isVisible)
+        {
+            if (rootGo != null)
+            {
+                if(!isVisible)
+                {
+                    emptyParcels.Dispose();
+                    emptyParcelHeights.Dispose();
+                    emptyParcelNeighborHeightsData.Dispose();
+                }
+
+                rootGo.SetActive(isVisible);
+            }
         }
 
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
@@ -182,6 +195,8 @@ namespace DCL.Landscape
 
             GenerateCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
             SpawnMiscAsync();
+
+            ownedParcels.Dispose();
         }
 
         private async UniTask SetHeightsAsync(TerrainModel terrainModel, int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed,
