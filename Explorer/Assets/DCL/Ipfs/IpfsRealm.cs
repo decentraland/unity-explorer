@@ -83,7 +83,7 @@ namespace DCL.Ipfs
         {
             string entityJson = JsonUtility.ToJson(entity);
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
-            string entityId = entityFile.IpfsHashV1();
+            string entityId = GetFileHash(entityFile);
             using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
             var form = new WWWForm();
