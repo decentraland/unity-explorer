@@ -96,7 +96,7 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public async UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
 
@@ -125,11 +125,11 @@ namespace DCL.PlacesAPIService
             }
 
             using PlacesData.IPlacesAPIResponse serverFavorites = await serverFavoritesCompletionSource.Task.AttachExternalCancellation(ct);
+            PoolExtensions.Scope<List<PlacesData.PlaceInfo>> rentedPlaces = PlacesData.PLACE_INFO_LIST_POOL.AutoScope();
+            List<PlacesData.PlaceInfo> places = rentedPlaces.Value;
 
             if (!composedFavoritesDirty)
-                return composedFavorites;
-
-            composedFavorites.Clear();
+                return rentedPlaces;
 
             foreach (PlacesData.PlaceInfo serverFavorite in serverFavorites.Data)
             {
@@ -137,7 +137,7 @@ namespace DCL.PlacesAPIService
                 if (localFavorites.ContainsKey(serverFavorite.id))
                     continue;
 
-                composedFavorites.Add(serverFavorite);
+                places.Add(serverFavorite);
             }
 
             foreach ((string placeUUID, bool isFavorite) in localFavorites)
@@ -146,12 +146,11 @@ namespace DCL.PlacesAPIService
                     continue;
 
                 if (placesById.TryGetValue(placeUUID, out PlacesData.PlaceInfo place))
-                    composedFavorites.Add(place);
+                    places.Add(place);
             }
 
             composedFavoritesDirty = false;
-
-            return composedFavorites;
+            return rentedPlaces;
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)

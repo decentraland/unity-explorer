@@ -28,10 +28,6 @@ namespace DCL.MapRenderer.CoordsUtils
 
         Vector3 CoordsToPosition(Vector2Int coords);
 
-        IEnumerable<Vector2Int> ConvertToVector2Int(IEnumerable<string> coordinatesList);
-
         Vector3 CoordsToPositionWithOffset(Vector2 coords);
-
-        Vector2Int StringToCoords(string coords);
     }
 }

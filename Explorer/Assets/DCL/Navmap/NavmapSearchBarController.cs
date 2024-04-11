@@ -14,6 +14,7 @@ namespace DCL.Navmap
     public class NavmapSearchBarController : IDisposable
     {
         private const string PREVIOUS_SEARCHES_KEY = "previous_searches";
+        private const int MAX_PREVIOUS_SEARCHES = 5;
 
         public event Action<string> OnResultClicked;
         public event Action OnSearchTextChanged;
@@ -134,11 +135,12 @@ namespace DCL.Navmap
         {
             playerPrefsPreviousSearches = PlayerPrefs.GetString(PREVIOUS_SEARCHES_KEY);
             previousSearches = string.IsNullOrEmpty(playerPrefsPreviousSearches) ? Array.Empty<string>() : playerPrefsPreviousSearches.Split('|');
+
             switch (previousSearches.Length)
             {
                 case > 0 when previousSearches[0] == searchToAdd:
                     return;
-                case < 5:
+                case < MAX_PREVIOUS_SEARCHES:
                     PlayerPrefs.SetString(PREVIOUS_SEARCHES_KEY, previousSearches.Length > 0 ? searchToAdd + "|" + string.Join("|", previousSearches) : searchToAdd);
                     break;
                 default:

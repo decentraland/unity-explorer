@@ -19,7 +19,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo> GetPlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false);
 
-        UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
+        UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
 
@@ -36,9 +36,9 @@ namespace DCL.PlacesAPIService
     {
         public static async UniTask<bool> IsFavoritePlaceAsync(this IPlacesAPIService placesAPIService, PlacesData.PlaceInfo placeInfo, CancellationToken ct, bool renewCache = false)
         {
-            IReadOnlyList<PlacesData.PlaceInfo> favorites = await placesAPIService.GetFavoritesAsync(-1, -1, ct, renewCache);
+            using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> favorites = await placesAPIService.GetFavoritesAsync(-1, -1, ct, renewCache);
 
-            foreach (PlacesData.PlaceInfo favorite in favorites)
+            foreach (PlacesData.PlaceInfo favorite in favorites.Value)
                 if (favorite.id == placeInfo.id)
                     return true;
 
@@ -47,12 +47,12 @@ namespace DCL.PlacesAPIService
 
         public static async UniTask<bool> IsFavoritePlaceAsync(this IPlacesAPIService placesAPIService, Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
-            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(
+            (PlacesData.PlaceInfo placeInfo, PoolExtensions.Scope<List<PlacesData.PlaceInfo>> favorites) = await UniTask.WhenAll(
                 placesAPIService.GetPlaceAsync(coords, ct, renewCache),
                 placesAPIService.GetFavoritesAsync(0, 1000, ct, renewCache)
             );
 
-            foreach (PlacesData.PlaceInfo favorite in favorites)
+            foreach (PlacesData.PlaceInfo favorite in favorites.Value)
                 if (favorite.id == placeInfo.id)
                     return true;
 
@@ -61,12 +61,12 @@ namespace DCL.PlacesAPIService
 
         public static async UniTask<bool> IsFavoritePlaceAsync(this IPlacesAPIService placesAPIService, string placeUUID, CancellationToken ct, bool renewCache = false)
         {
-            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(
+            (PlacesData.PlaceInfo placeInfo, PoolExtensions.Scope<List<PlacesData.PlaceInfo>> favorites) = await UniTask.WhenAll(
                 placesAPIService.GetPlaceAsync(placeUUID, ct, renewCache),
                 placesAPIService.GetFavoritesAsync(0, 1000, ct, renewCache)
             );
 
-            foreach (PlacesData.PlaceInfo favorite in favorites)
+            foreach (PlacesData.PlaceInfo favorite in favorites.Value)
                 if (favorite.id == placeInfo.id)
                     return true;
 

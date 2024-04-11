@@ -64,21 +64,7 @@ namespace DCL.MapRenderer.CoordsUtils
         public Vector3 CoordsToPosition(Vector2Int coords) =>
             (Vector2)(coords * ParcelSize);
 
-        public IEnumerable<Vector2Int> ConvertToVector2Int(IEnumerable<string> coordinatesList)
-        {
-            foreach (string coordinates in coordinatesList)
-            {
-                string[] parts = coordinates.Split(',');
-
-                if (int.TryParse(parts[0], out int x) && int.TryParse(parts[1], out int y))
-                    yield return new Vector2Int(x, y);
-            }
-        }
-
         public Vector3 CoordsToPositionWithOffset(Vector2 coords) =>
             (coords * ParcelSize) - new Vector2(ParcelSize / 2f, ParcelSize / 2f);
-
-        public Vector2Int StringToCoords(string coords) =>
-            new (int.Parse(coords.Split(',')[0]), int.Parse(coords.Split(',')[1]));
     }
 }

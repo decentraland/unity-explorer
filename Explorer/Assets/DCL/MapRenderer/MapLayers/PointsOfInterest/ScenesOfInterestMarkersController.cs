@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
 using DCL.PlacesAPIService;
 using System;
@@ -25,6 +26,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private readonly IPlacesAPIService placesAPIService;
 
         private readonly Dictionary<PlacesData.PlaceInfo, ISceneOfInterestMarker> markers = new ();
+        private readonly List<Vector2Int> vectorCoords = new ();
+        private Vector2Int decodePointer;
 
         private bool isEnabled;
 
@@ -45,7 +48,11 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
             IReadOnlyList<string> pointsOfInterestCoordsAsync = await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken);
-            using var placesByCoordsListAsync = await placesAPIService.GetPlacesByCoordsListAsync(coordsUtils.ConvertToVector2Int(pointsOfInterestCoordsAsync), cancellationToken, true);
+            vectorCoords.Clear();
+            foreach (var s in pointsOfInterestCoordsAsync)
+                vectorCoords.Add(IpfsHelper.DecodePointer(s));
+
+            using var placesByCoordsListAsync = await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true);
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
             foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
             {
