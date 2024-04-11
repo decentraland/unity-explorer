@@ -57,7 +57,6 @@ namespace DCL.Backpack
                 SortContentDeselectable.SelectElement();
                 CanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
-
         }
     }
 }

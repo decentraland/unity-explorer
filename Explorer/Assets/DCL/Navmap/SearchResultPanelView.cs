@@ -1,20 +1,25 @@
 using DCL.AssetsProvision;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.Navmap
 {
     public class SearchResultPanelView : MonoBehaviour
     {
         [field: SerializeField]
-        public GameObject LoadingContainer { get; private set; }
+        public GameObject NoResultsContainer { get; private set; }
 
         [field: SerializeField]
         public ResultAssetReference ResultRef { get; private set; }
 
         [field: SerializeField]
         public RectTransform searchResultsContainer;
+
+        [field: SerializeField]
+        public CanvasGroup CanvasGroup { get; private set; }
+
+        [field: SerializeField]
+        public Animator panelAnimator;
 
         [Serializable]
         public class ResultAssetReference : ComponentReference<FullSearchResultsView>
