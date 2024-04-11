@@ -166,6 +166,21 @@ MonoBehaviour:
         - tektonik
         - tik
         - confettipopper
+        <LODSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RealmPartitionSettings>k__BackingField:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <LandscapeData>k__BackingField:
+          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
