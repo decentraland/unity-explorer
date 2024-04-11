@@ -15,7 +15,8 @@ namespace DCL.Backpack
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
         private const float ANIMATION_TIME = 0.1f;
 
-        public event Action<string> OnSelectItem;
+        public event Action<string>? OnSelectItem;
+        public event Action<string>? OnEquip;
 
         [field: SerializeField]
         public string ItemId { get; set; }
@@ -57,6 +58,11 @@ namespace DCL.Backpack
         public bool IsEquipped { get; set; }
 
         private CancellationTokenSource cts;
+
+        private void Awake()
+        {
+            EquipButton.onClick.AddListener(() => OnEquip?.Invoke(ItemId));
+        }
 
         public void SetEquipButtonsState()
         {
@@ -100,10 +106,18 @@ namespace DCL.Backpack
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (string.IsNullOrEmpty(ItemId))
-                return;
+            if (string.IsNullOrEmpty(ItemId)) return;
+            if (eventData.button != PointerEventData.InputButton.Left) return;
 
-            OnSelectItem?.Invoke(ItemId);
+            switch (eventData.clickCount)
+            {
+                case 1:
+                    OnSelectItem?.Invoke(ItemId);
+                    break;
+                case 2:
+                    OnEquip?.Invoke(ItemId);
+                    break;
+            }
         }
     }
 }
