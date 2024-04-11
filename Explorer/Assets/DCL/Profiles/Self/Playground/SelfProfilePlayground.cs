@@ -9,6 +9,7 @@ using DCL.Ipfs;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -51,7 +52,8 @@ namespace DCL.Profiles.Self.Playground
                 new EquippedWearables(),
                 new WearableCatalog(),
                 new MemoryEmotesCache(),
-                new EquippedEmotes()
+                new EquippedEmotes(),
+                new List<string>()
             );
 
             var profile = await profiles.ProfileAsync(ct);
