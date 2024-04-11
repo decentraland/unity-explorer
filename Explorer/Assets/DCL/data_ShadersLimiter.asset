@@ -1,0 +1,3286 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a37d1063797b3aa44b147bd056641d62, type: 3}
+  m_Name: data_ShadersLimiter
+  m_EditorClassIdentifier: 
+  shouldStripShaders: 1
+  maxVisibleKeywords: 10
+  stripAllShadersForFirstBuild: 0
+  deleteComputeShadersCache: 0
+  printUsageLogs: 1
+  printCompiledShadersLogs: 0
+  printStrippedShaderLogs: 0
+  displayOrder: 0
+  visibility: -1
+  strippedShaderColor: {r: 0.6901961, g: 0.3294118, b: 0.3294118, a: 1}
+  notStrippedShaderColor: {r: 0.2784314, g: 0.6235294, b: 0.2784314, a: 1}
+  someKeywordsStrippedColor: {r: 0.8490566, g: 0.8034721, b: 0.252314, a: 1}
+  compileOnlySpecifiedColor: {r: 0.1677643, g: 0.3720466, b: 0.5471698, a: 1}
+  allShaders:
+  - shaderReference: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+    shaderShortName: Lit
+    shaderPath: Universal Render Pipeline/Lit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: e6e9a19c3678ded42a3bc431ebef7dbd, type: 3}
+    shaderShortName: FallbackError
+    shaderPath: Hidden/Universal Render Pipeline/FallbackError
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: b9d29dfa1474148e792ac720cbd45122, type: 3}
+    shaderShortName: glTF-pbrMetallicRoughness
+    shaderPath: Shader Graphs/glTF-pbrMetallicRoughness
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: _EMISSIVE
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS_VERTEX
+      isStripped: 0
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_OFF
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: _SCREEN_SPACE_OCCLUSION
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _GBUFFER_NORMALS_OCT
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: da07703fcc09f8d4799221050659bd55, type: 3}
+    shaderShortName: FallbackError
+    shaderPath: Hidden/Shader Graph/FallbackError
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: 1f1a6a17110491b47bc8ce03f1009606, type: 3}
+    shaderShortName: SatelliteView
+    shaderPath: Shader Graphs/SatelliteView
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+    shaderShortName: Stylized Grass
+    shaderPath: Universal Render Pipeline/Nature/Stylized Grass
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: _ADVANCED_LIGHTING
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: _CLUSTERED_RENDERING
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _FADING
+      isStripped: 0
+    - keywordName: _SPECULARHIGHLIGHTS_OFF
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: 9920c1f1781549a46ba081a2a15a16ec, type: 3}
+    shaderShortName: SpeedTree8_PBRLit
+    shaderPath: Universal Render Pipeline/Nature/SpeedTree8_PBRLit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: _WINDQUALITY_NONE
+      isStripped: 1
+    - keywordName: BACKFACE_NORMAL_MODE_FLIP
+      isStripped: 0
+    - keywordName: _WINDQUALITY_BEST
+      isStripped: 0
+    - keywordName: BACKFACE_NORMAL_MODE_MIRROR
+      isStripped: 0
+    - keywordName: _WINDQUALITY_FASTEST
+      isStripped: 1
+    - keywordName: EFFECT_BILLBOARD
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 1
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 1
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 1
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: d521bfc19653b9c4f9408f8aba861c7d, type: 3}
+    shaderShortName: Rock
+    shaderPath: Shader Graphs/Rock
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: 4c0071f1ad885644bb08c4d69a1de235, type: 3}
+    shaderShortName: Cliff
+    shaderPath: Shader Graphs/Cliff
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+    shaderShortName: Unlit
+    shaderPath: Universal Render Pipeline/Unlit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _SURFACE_TYPE_TRANSPARENT
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 4375464fae6230e48abab9e9669b9614, type: 3}
+    shaderShortName: FlipBook (Cutout)
+    shaderPath: UnityLibrary/Sprites/FlipBook (Cutout)
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+    shaderShortName: Scene
+    shaderPath: DCL/Scene
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 1
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 861f58cc229a5f449b2494095122257f, type: 3}
+    shaderShortName: Unlit
+    shaderPath: DCL/Universal Render Pipeline/Unlit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 21322c8b137c66e49b86085d3c8161f6, type: 3}
+    shaderShortName: Lit (Base Pass)
+    shaderPath: Hidden/Universal Render Pipeline/Terrain/Lit (Base Pass)
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 8fbe92a9edfe6074e841d6dd1509bc59, type: 3}
+    shaderShortName: Lit (Basemap Gen)
+    shaderPath: Hidden/Universal Render Pipeline/Terrain/Lit (Basemap Gen)
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _TERRAIN_BLEND_HEIGHT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 0a7e590f3cf1d4ee8a8fab5b6eff09ef, type: 3}
+    shaderShortName: Lit (Add Pass)
+    shaderPath: Hidden/Universal Render Pipeline/Terrain/Lit (Add Pass)
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _TERRAIN_BLEND_HEIGHT
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 36e335017ad71d54fbb10842863188ae, type: 3}
+    shaderShortName: FallbackError
+    shaderPath: Hidden/Core/FallbackError
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: 5d5e932e2940cf64f9e1d096e5d30910, type: 3}
+    shaderShortName: GenesisSky
+    shaderPath: Shader Graphs/GenesisSky
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 1d1870faec500c446a59e746823c3838, type: 3}
+    shaderShortName: TerrainAlbedoAdd
+    shaderPath: Hidden/TerrainAlbedoAdd
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 69c1f799e772cb6438f56c23efccb782, type: 3}
+    shaderShortName: Lit
+    shaderPath: Universal Render Pipeline/Terrain/Lit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _TERRAIN_BLEND_HEIGHT
+      isStripped: 0
+    - keywordName: _MIXED_LIGHTING_SUBTRACTIVE
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 97d1632355d56c14fb963d128feac8d8, type: 3}
+    shaderShortName: TerrainSplatmask
+    shaderPath: Hidden/TerrainSplatmask
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
+    shaderShortName: S_LoadingSpinner
+    shaderPath: S_LoadingSpinner
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: ENUM_173FCA8E617C4725B6502C6FBE756CEC_SHARP
+      isStripped: 0
+    - keywordName: ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 71bfc7caf99844aaf8be12500224136b, type: 3}
+    shaderShortName: Waves
+    shaderPath: DCL/UI/Waves
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
+    shaderShortName: Distance Field
+    shaderPath: TextMeshPro/Distance Field
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: UNDERLAY_ON
+      isStripped: 0
+    - keywordName: UNITY_UI_ALPHACLIP
+      isStripped: 0
+    - keywordName: UNITY_UI_CLIP_RECT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 28d453dc10844f4418372200603a88e5, type: 3}
+    shaderShortName: TerrainAlbedo
+    shaderPath: Hidden/TerrainAlbedo
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: -6465566751694194690, guid: d7b0192b9bf19c949900035fa781fdc4, type: 3}
+    shaderShortName: Standard
+    shaderPath: Stylized Water 2/Standard
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: _WAVES
+      isStripped: 0
+    - keywordName: _FLAT_SHADING
+      isStripped: 0
+    - keywordName: _RECEIVE_SHADOWS_OFF
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: _CLUSTERED_RENDERING
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADVANCED_SHADING
+      isStripped: 0
+    - keywordName: _TRANSLUCENCY
+      isStripped: 0
+    - keywordName: _SHARP_INERSECTION
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: fe393ace9b354375a9cb14cdbbc28be4, type: 3}
+    shaderShortName: Distance Field
+    shaderPath: TextMeshPro/Mobile/Distance Field
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: UNDERLAY_ON
+      isStripped: 0
+    - keywordName: OUTLINE_ON
+      isStripped: 0
+    - keywordName: UNITY_UI_ALPHACLIP
+      isStripped: 0
+    - keywordName: UNITY_UI_CLIP_RECT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: ccf99be97dbda744981e8b0ec1ef8faf, type: 3}
+    shaderShortName: Avatar_CelShading
+    shaderPath: DCL/Avatar_CelShading
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: _CLUSTERED_RENDERING
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: c66b10f85c3065c47bae66386821456a, type: 3}
+    shaderShortName: DCL_Avatar_Facial_Features
+    shaderPath: DCL/DCL_Avatar_Facial_Features
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 39a0f13973a45b74e9491c428916d9c2, type: 3}
+    shaderShortName: DCL_Toon
+    shaderPath: DCL/DCL_Toon
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _IS_OUTLINE_CLIPPING_NO
+      isStripped: 0
+    - keywordName: _OUTLINE_NML
+      isStripped: 0
+    - keywordName: _OUTLINE_POS
+      isStripped: 1
+    - keywordName: _IS_OUTLINE_CLIPPING_YES
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: _IS_CLIPPING_OFF
+      isStripped: 0
+    - keywordName: _IS_CLIPPING_TRANSMODE
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: INSTANCING_ON
+      isStripped: 0
+    - keywordName: _IS_CLIPPING_MODE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: cf81c85f95fe47e1a27f6ae460cf182c, type: 3}
+    shaderShortName: Sprite
+    shaderPath: TextMeshPro/Sprite
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: UNITY_UI_ALPHACLIP
+      isStripped: 0
+    - keywordName: UNITY_UI_CLIP_RECT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9100, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-UIRDefault
+    shaderPath: Hidden/Internal-UIRDefault
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9101, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-UIRAtlasBlitCopy
+    shaderPath: Hidden/Internal-UIRAtlasBlitCopy
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9102, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-UIRDefaultWorld
+    shaderPath: Hidden/Internal-UIRDefaultWorld
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Default
+    shaderPath: Sprites/Default
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: PIXELSNAP_ON
+      isStripped: 0
+    - keywordName: ETC1_EXTERNAL_ALPHA
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 106, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Procedural
+    shaderPath: Skybox/Procedural
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _SUNDISK_NONE
+      isStripped: 0
+    - keywordName: _SUNDISK_SIMPLE
+      isStripped: 0
+    - keywordName: _SUNDISK_HIGH_QUALITY
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9103, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: EditorUIE
+    shaderPath: Hidden/UIElements/EditorUIE
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 04c410c9937594faa893a11dceb85f7e, type: 3}
+    shaderShortName: Sampling
+    shaderPath: Hidden/Universal Render Pipeline/Sampling
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+    shaderShortName: ScreenSpaceAmbientOcclusion
+    shaderPath: Hidden/Universal Render Pipeline/ScreenSpaceAmbientOcclusion
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _INTERLEAVED_GRADIENT
+      isStripped: 0
+    - keywordName: _SOURCE_DEPTH_LOW
+      isStripped: 0
+    - keywordName: _SAMPLE_COUNT_LOW
+      isStripped: 0
+    - keywordName: _ORTHOGRAPHIC
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 1121bb4e615ca3c48b214e79e841e823, type: 3}
+    shaderShortName: Stop NaN
+    shaderPath: Hidden/Universal Render Pipeline/Stop NaN
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 131f1b93a4ebd459ba87b6bad055fb33, type: 3}
+    shaderShortName: TemporalAA
+    shaderPath: Hidden/Universal Render Pipeline/TemporalAA
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _USE_DRAW_PROCEDURAL
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 1edcd131364091c46a17cbff0b1de97a, type: 3}
+    shaderShortName: CameraMotionBlur
+    shaderPath: Hidden/Universal Render Pipeline/CameraMotionBlur
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 21662b9e8e564a849eadfd251398bec6, type: 3}
+    shaderShortName: Outline
+    shaderPath: Avatar/Outline
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 2aed67ad60045d54ba3a00c91e2d2631, type: 3}
+    shaderShortName: BokehDepthOfField
+    shaderPath: Hidden/Universal Render Pipeline/BokehDepthOfField
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 3b75227de96217540aae9be81fbd99f6, type: 3}
+    shaderShortName: Lit
+    shaderPath: DCL/Universal Render Pipeline/Lit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _CLUSTERED_RENDERING
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _CASTING_PUNCTUAL_LIGHT_SHADOW
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    - keywordName: _LIGHT_COOKIES
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 4431b1f1f743fbf4eb310a967890cbea, type: 3}
+    shaderShortName: XROcclusionMesh
+    shaderPath: Hidden/Universal Render Pipeline/XR/XROcclusionMesh
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 562b7ae4f629f144aa97780546fce7c6, type: 3}
+    shaderShortName: Edge Adaptive Spatial Upsampling
+    shaderPath: Hidden/Universal Render Pipeline/Edge Adaptive Spatial Upsampling
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
+    shaderShortName: HDRDebugView
+    shaderPath: Hidden/Universal/HDRDebugView
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 5e7134d6e63e0bc47a1dd2669cedb379, type: 3}
+    shaderShortName: GaussianDepthOfField
+    shaderPath: Hidden/Universal Render Pipeline/GaussianDepthOfField
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _HIGH_QUALITY_SAMPLING
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 5f1864addb451f54bae8c86d230f736e, type: 3}
+    shaderShortName: Bloom
+    shaderPath: Hidden/Universal Render Pipeline/Bloom
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _BLOOM_HQ
+      isStripped: 0
+    - keywordName: _USE_RGBM
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 5fd9a8feb75a4b5894c241777f519d4e, type: 3}
+    shaderShortName: MaterialError
+    shaderPath: Hidden/Universal Render Pipeline/MaterialError
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 63eaba0ebfb82cc43bde059b4a8c65f6, type: 3}
+    shaderShortName: SubpixelMorphologicalAntialiasing
+    shaderPath: Hidden/Universal Render Pipeline/SubpixelMorphologicalAntialiasing
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _SMAA_PRESET_LOW
+      isStripped: 0
+    - keywordName: _SMAA_PRESET_MEDIUM
+      isStripped: 0
+    - keywordName: _SMAA_PRESET_HIGH
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 65df88701913c224d95fc554db28381a, type: 3}
+    shaderShortName: LutBuilderLdr
+    shaderPath: Hidden/Universal Render Pipeline/LutBuilderLdr
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 6cda457ac28612740adb23da5d39ea92, type: 3}
+    shaderShortName: LensFlareDataDriven
+    shaderPath: Hidden/Universal Render Pipeline/LensFlareDataDriven
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FLARE_HAS_OCCLUSION
+      isStripped: 0
+    - keywordName: FLARE_INVERSE_SDF
+      isStripped: 0
+    - keywordName: FLARE_CIRCLE
+      isStripped: 0
+    - keywordName: FLARE_POLYGON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 7b3ede40266cd49a395def176e1bc486, type: 3}
+    shaderShortName: ObjectMotionVectors
+    shaderPath: Hidden/Universal Render Pipeline/ObjectMotionVectors
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _FOVEATED_RENDERING_NON_UNIFORM_RASTER
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 7f888aff2ac86494babad1c2c5daeee2, type: 3}
+    shaderShortName: FallbackLoading
+    shaderPath: Hidden/Universal Render Pipeline/FallbackLoading
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 83f1a74da0594f2439500e813fc6108b, type: 3}
+    shaderShortName: Grass Bend Mesh
+    shaderPath: Hidden/Nature/Grass Bend Mesh
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _TRAIL
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 93446b5c5339d4f00b85c159e1159b7c, type: 3}
+    shaderShortName: CoreBlit
+    shaderPath: Hidden/Universal/CoreBlit
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DISABLE_TEXTURE2D_X_ARRAY
+      isStripped: 0
+    - keywordName: BLIT_DECODE_HDR
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: a15b78cf8ca26ca4fb2090293153c62c, type: 3}
+    shaderShortName: PaniniProjection
+    shaderPath: Hidden/Universal Render Pipeline/PaniniProjection
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _GENERIC
+      isStripped: 0
+    - keywordName: _UNIT_DISTANCE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: a89bee29cffa951418fc1e2da94d1959, type: 3}
+    shaderShortName: BlitHDROverlay
+    shaderPath: Hidden/Universal/BlitHDROverlay
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DISABLE_TEXTURE2D_X_ARRAY
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: c17132b1f77d20942aa75f8429c0f8bc, type: 3}
+    shaderShortName: Blit
+    shaderPath: Hidden/Universal Render Pipeline/Blit
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _LINEAR_TO_SRGB_CONVERSION
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: c49e63ed1bbcb334780a3bd19dfed403, type: 3}
+    shaderShortName: FinalPost
+    shaderPath: Hidden/Universal Render Pipeline/FinalPost
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _LINEAR_TO_SRGB_CONVERSION
+      isStripped: 0
+    - keywordName: _DITHERING
+      isStripped: 0
+    - keywordName: _FILM_GRAIN
+      isStripped: 0
+    - keywordName: _FXAA
+      isStripped: 0
+    - keywordName: _POINT_SAMPLING
+      isStripped: 0
+    - keywordName: _RCAS
+      isStripped: 0
+    - keywordName: _EASU_RCAS_AND_HDR_INPUT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: c56b7e0d4c7cb484e959caeeedae9bbf, type: 3}
+    shaderShortName: CameraMotionVectors
+    shaderPath: Hidden/Universal Render Pipeline/CameraMotionVectors
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _FOVEATED_RENDERING_NON_UNIFORM_RASTER
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
+    shaderShortName: DebugReplacement
+    shaderPath: Hidden/Universal Render Pipeline/Debug/DebugReplacement
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: d104b2fc1ca6445babb8e90b0758136b, type: 3}
+    shaderShortName: CoreBlitColorAndDepth
+    shaderPath: Hidden/Universal/CoreBlitColorAndDepth
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DISABLE_TEXTURE2D_X_ARRAY
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: d5a307c014552314b9f560906d708772, type: 3}
+    shaderShortName: XRMirrorView
+    shaderPath: Hidden/Universal Render Pipeline/XR/XRMirrorView
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: d6dae50ee9e1bfa4db75f19f99355220, type: 3}
+    shaderShortName: CopyDepth
+    shaderPath: Hidden/Universal Render Pipeline/CopyDepth
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _OUTPUT_DEPTH
+      isStripped: 0
+    - keywordName: _DEPTH_MSAA_2
+      isStripped: 0
+    - keywordName: _DEPTH_MSAA_4
+      isStripped: 0
+    - keywordName: _DEPTH_MSAA_8
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: e7857e9d0c934dc4f83f270f8447b006, type: 3}
+    shaderShortName: UberPost
+    shaderPath: Hidden/Universal Render Pipeline/UberPost
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _GAMMA_20
+      isStripped: 0
+    - keywordName: _LINEAR_TO_SRGB_CONVERSION
+      isStripped: 0
+    - keywordName: _DITHERING
+      isStripped: 0
+    - keywordName: _FILM_GRAIN
+      isStripped: 0
+    - keywordName: _HDR_GRADING
+      isStripped: 0
+    - keywordName: _TONEMAP_ACES
+      isStripped: 0
+    - keywordName: _TONEMAP_NEUTRAL
+      isStripped: 0
+    - keywordName: _BLOOM_LQ
+      isStripped: 0
+    - keywordName: _BLOOM_HQ
+      isStripped: 0
+    - keywordName: _BLOOM_LQ_DIRT
+      isStripped: 0
+    - keywordName: _BLOOM_HQ_DIRT
+      isStripped: 0
+    - keywordName: _CHROMATIC_ABERRATION
+      isStripped: 0
+    - keywordName: _DISTORTION
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: e8ee25143a34b8c4388709ea947055d1, type: 3}
+    shaderShortName: Scaling Setup
+    shaderPath: Hidden/Universal Render Pipeline/Scaling Setup
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _GAMMA_20
+      isStripped: 0
+    - keywordName: _GAMMA_20_AND_HDR_INPUT
+      isStripped: 0
+    - keywordName: _FXAA
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: e9155b26e1bc55942a41e518703fe304, type: 3}
+    shaderShortName: StencilDeferred
+    shaderPath: Hidden/Universal Render Pipeline/StencilDeferred
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _SPOT
+      isStripped: 0
+    - keywordName: _POINT
+      isStripped: 0
+    - keywordName: _DIRECTIONAL
+      isStripped: 0
+    - keywordName: _FOG
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _CLEAR_STENCIL_PARTIAL
+      isStripped: 0
+    - keywordName: _SSAO_ONLY
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: ec9fec698a3456d4fb18cf8bacb7a2bc, type: 3}
+    shaderShortName: LutBuilderHdr
+    shaderPath: Hidden/Universal Render Pipeline/LutBuilderHdr
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _TONEMAP_ACES
+      isStripped: 0
+    - keywordName: _TONEMAP_NEUTRAL
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 482279110045391116, guid: d7b0192b9bf19c949900035fa781fdc4, type: 3}
+    shaderShortName: Standard (Tessellation)
+    shaderPath: Stylized Water 2/Standard (Tessellation)
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: _MAIN_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHTS
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: _CLUSTERED_RENDERING
+      isStripped: 0
+    - keywordName: _MAIN_LIGHT_SHADOWS_CASCADE
+      isStripped: 0
+    - keywordName: _ADDITIONAL_LIGHT_SHADOWS
+      isStripped: 0
+    - keywordName: _SHADOWS_SOFT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 018fe741dec71f14bb43801a31a07303, type: 3}
+    shaderShortName: Stereo
+    shaderPath: AVProVideo/Internal/UI/Stereo
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: MONOSCOPIC
+      isStripped: 0
+    - keywordName: FORCEEYE_NONE
+      isStripped: 0
+    - keywordName: USE_YPCBCR
+      isStripped: 0
+    - keywordName: STEREO_DEBUG
+      isStripped: 0
+    - keywordName: APPLY_GAMMA
+      isStripped: 0
+    - keywordName: FORCEEYE_LEFT
+      isStripped: 0
+    - keywordName: FORCEEYE_RIGHT
+      isStripped: 0
+    - keywordName: STEREO_TOP_BOTTOM
+      isStripped: 0
+    - keywordName: STEREO_LEFT_RIGHT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 1df272a1da1d6814eb2be42cad7516f2, type: 3}
+    shaderShortName: Preview
+    shaderPath: AVProVideo/Internal/Preview
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 698a57138fc7d844da1f0cac92fa8e36, type: 3}
+    shaderShortName: Resolve
+    shaderPath: AVProVideo/Internal/Resolve
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: MONOSCOPIC
+      isStripped: 0
+    - keywordName: ALPHAPACK_NONE
+      isStripped: 0
+    - keywordName: USE_HSBC
+      isStripped: 0
+    - keywordName: USE_YPCBCR
+      isStripped: 0
+    - keywordName: APPLY_GAMMA
+      isStripped: 0
+    - keywordName: ALPHAPACK_TOP_BOTTOM
+      isStripped: 0
+    - keywordName: ALPHAPACK_LEFT_RIGHT
+      isStripped: 0
+    - keywordName: STEREO_TOP_BOTTOM
+      isStripped: 0
+    - keywordName: STEREO_LEFT_RIGHT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 73f378cafe7b4a745907b70e76bb3259, type: 3}
+    shaderShortName: Transition
+    shaderPath: AVProVideo/Internal/Transition
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: LERP_NONE
+      isStripped: 0
+    - keywordName: LERP_FADE
+      isStripped: 0
+    - keywordName: LERP_BLACK
+      isStripped: 0
+    - keywordName: LERP_WHITE
+      isStripped: 0
+    - keywordName: LERP_TRANSP
+      isStripped: 0
+    - keywordName: LERP_HORIZ
+      isStripped: 0
+    - keywordName: LERP_HORIZ_MIRROR
+      isStripped: 0
+    - keywordName: LERP_VERT
+      isStripped: 0
+    - keywordName: LERP_VERT_MIRROR
+      isStripped: 0
+    - keywordName: LERP_DIAG
+      isStripped: 0
+    - keywordName: LERP_DIAG_MIRROR
+      isStripped: 0
+    - keywordName: LERP_CIRCLE
+      isStripped: 0
+    - keywordName: LERP_SCROLL_VERT
+      isStripped: 0
+    - keywordName: LERP_SCROLL_HORIZ
+      isStripped: 0
+    - keywordName: LERP_DIAMOND
+      isStripped: 0
+    - keywordName: LERP_BLINDS
+      isStripped: 0
+    - keywordName: LERP_RECTS_VERT
+      isStripped: 0
+    - keywordName: LERP_ARROW
+      isStripped: 0
+    - keywordName: LERP_SLIDE_HORIZ
+      isStripped: 0
+    - keywordName: LERP_SLIDE_VERT
+      isStripped: 0
+    - keywordName: LERP_ZOOM_FADE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: 8ebaafdbf44b0b9489f20bc27374d187, type: 3}
+    shaderShortName: BlendFrames
+    shaderPath: AVProVideo/Internal/BlendFrames
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: cc82d5ef8f3834ab78b36ba88e35ae65, type: 3}
+    shaderShortName: Blit
+    shaderPath: AVProVideo/Internal/Blit
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: d1085d25f9ef09b4c91188f9f99f37a2, type: 3}
+    shaderShortName: Texture Transparent
+    shaderPath: AVProVideo/Internal/IMGUI/Texture Transparent
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: ALPHAPACK_NONE
+      isStripped: 0
+    - keywordName: USE_YPCBCR
+      isStripped: 0
+    - keywordName: APPLY_GAMMA
+      isStripped: 0
+    - keywordName: ALPHAPACK_TOP_BOTTOM
+      isStripped: 0
+    - keywordName: ALPHAPACK_LEFT_RIGHT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 4800000, guid: f32079bbb2560394abb63e40e1d53da7, type: 3}
+    shaderShortName: Transparent Packed (stereo)
+    shaderPath: AVProVideo/Internal/UI/Transparent Packed (stereo)
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: ALPHAPACK_NONE
+      isStripped: 0
+    - keywordName: MONOSCOPIC
+      isStripped: 0
+    - keywordName: FORCEEYE_NONE
+      isStripped: 0
+    - keywordName: USE_YPCBCR
+      isStripped: 0
+    - keywordName: STEREO_DEBUG
+      isStripped: 0
+    - keywordName: APPLY_GAMMA
+      isStripped: 0
+    - keywordName: FORCEEYE_LEFT
+      isStripped: 0
+    - keywordName: FORCEEYE_RIGHT
+      isStripped: 0
+    - keywordName: STEREO_TOP_BOTTOM
+      isStripped: 0
+    - keywordName: STEREO_LEFT_RIGHT
+      isStripped: 0
+    - keywordName: ALPHAPACK_TOP_BOTTOM
+      isStripped: 0
+    - keywordName: ALPHAPACK_LEFT_RIGHT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 3, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Specular
+    shaderPath: Legacy Shaders/Specular
+    shaderType: 4
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 6, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: VertexLit
+    shaderPath: Legacy Shaders/VertexLit
+    shaderType: 4
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 7, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Diffuse
+    shaderPath: Legacy Shaders/Diffuse
+    shaderType: 4
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 19, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-StencilWrite
+    shaderPath: Hidden/Internal-StencilWrite
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 50, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: VertexLit
+    shaderPath: Legacy Shaders/Transparent/Cutout/VertexLit
+    shaderType: 4
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 62, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-DepthNormalsTexture
+    shaderPath: Hidden/Internal-DepthNormalsTexture
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 64, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-ScreenSpaceShadows
+    shaderPath: Hidden/Internal-ScreenSpaceShadows
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: SHADOWS_SPLIT_SPHERES
+      isStripped: 0
+    - keywordName: SHADOWS_SINGLE_CASCADE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 65, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-CombineDepthNormals
+    shaderPath: Hidden/Internal-CombineDepthNormals
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 66, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitCopy
+    shaderPath: Hidden/BlitCopy
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 67, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitCopyDepth
+    shaderPath: Hidden/BlitCopyDepth
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 68, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: ConvertTexture
+    shaderPath: Hidden/ConvertTexture
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 69, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-DeferredShading
+    shaderPath: Hidden/Internal-DeferredShading
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 74, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-DeferredReflections
+    shaderPath: Hidden/Internal-DeferredReflections
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 75, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-MotionVectors
+    shaderPath: Hidden/Internal-MotionVectors
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 102, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-Flare
+    shaderPath: Hidden/Internal-Flare
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 105, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-Halo
+    shaderPath: Hidden/Internal-Halo
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 107, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitCopyWithDepth
+    shaderPath: Hidden/BlitCopyWithDepth
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 109, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitToDepth
+    shaderPath: Hidden/BlitToDepth
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 110, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitToDepth_MSAA
+    shaderPath: Hidden/BlitToDepth_MSAA
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 111, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitCopyHDRTonemap
+    shaderPath: Hidden/BlitCopyHDRTonemap
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 113, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-DebugPattern
+    shaderPath: Hidden/Internal-DebugPattern
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9000, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-GUITextureClip
+    shaderPath: Hidden/Internal-GUITextureClip
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9001, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-GUITextureClipText
+    shaderPath: Hidden/Internal-GUITextureClipText
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9002, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-GUITexture
+    shaderPath: Hidden/Internal-GUITexture
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9003, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-GUITextureBlit
+    shaderPath: Hidden/Internal-GUITextureBlit
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9004, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-GUIRoundedRect
+    shaderPath: Hidden/Internal-GUIRoundedRect
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 9007, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-GUIRoundedRectWithColorPerBorder
+    shaderPath: Hidden/Internal-GUIRoundedRectWithColorPerBorder
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10500, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Vertexlit
+    shaderPath: Hidden/TerrainEngine/Details/Vertexlit
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10501, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: WavingDoublePass
+    shaderPath: Hidden/TerrainEngine/Details/WavingDoublePass
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10502, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BillboardWavingDoublePass
+    shaderPath: Hidden/TerrainEngine/Details/BillboardWavingDoublePass
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10503, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Diffuse-AddPass
+    shaderPath: Hidden/TerrainEngine/Splatmap/Diffuse-AddPass
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10504, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Diffuse-Base
+    shaderPath: Hidden/TerrainEngine/Splatmap/Diffuse-Base
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10505, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Diffuse
+    shaderPath: Nature/Terrain/Diffuse
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10506, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Diffuse-BaseGen
+    shaderPath: Hidden/TerrainEngine/Splatmap/Diffuse-BaseGen
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10507, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BillboardTree
+    shaderPath: Hidden/TerrainEngine/BillboardTree
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10620, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Specular
+    shaderPath: Nature/Terrain/Specular
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10621, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Specular-AddPass
+    shaderPath: Hidden/TerrainEngine/Splatmap/Specular-AddPass
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10622, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Specular-Base
+    shaderPath: Hidden/TerrainEngine/Splatmap/Specular-Base
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10623, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Standard
+    shaderPath: Nature/Terrain/Standard
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10624, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Standard-AddPass
+    shaderPath: Hidden/TerrainEngine/Splatmap/Standard-AddPass
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: _NORMALMAP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10625, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Standard-Base
+    shaderPath: Hidden/TerrainEngine/Splatmap/Standard-Base
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: _ALPHATEST_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10626, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Standard-BaseGen
+    shaderPath: Hidden/TerrainEngine/Splatmap/Standard-BaseGen
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10757, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Mask
+    shaderPath: Sprites/Mask
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: PIXELSNAP_ON
+      isStripped: 0
+    - keywordName: ETC1_EXTERNAL_ALPHA
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Default
+    shaderPath: UI/Default
+    shaderType: 1
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: UNITY_UI_ALPHACLIP
+      isStripped: 0
+    - keywordName: UNITY_UI_CLIP_RECT
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 14000, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: SpeedTree
+    shaderPath: Nature/SpeedTree
+    shaderType: 1
+    stripWholeShader: 1
+    availableKeywords:
+    - keywordName: LOD_FADE_PERCENTAGE
+      isStripped: 0
+    - keywordName: GEOM_TYPE_BRANCH
+      isStripped: 0
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: EFFECT_HUE_VARIATION
+      isStripped: 0
+    - keywordName: EFFECT_BUMP
+      isStripped: 0
+    - keywordName: GEOM_TYPE_BRANCH_DETAIL
+      isStripped: 0
+    - keywordName: GEOM_TYPE_FROND
+      isStripped: 0
+    - keywordName: GEOM_TYPE_LEAF
+      isStripped: 0
+    - keywordName: GEOM_TYPE_MESH
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_SOFT
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 14001, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: SpeedTree Billboard
+    shaderPath: Nature/SpeedTree Billboard
+    shaderType: 1
+    stripWholeShader: 1
+    availableKeywords:
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: EFFECT_HUE_VARIATION
+      isStripped: 0
+    - keywordName: EFFECT_BUMP
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: BILLBOARD_FACE_CAMERA_POS
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 14002, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: SpeedTree8
+    shaderPath: Nature/SpeedTree8
+    shaderType: 1
+    stripWholeShader: 1
+    availableKeywords:
+    - keywordName: LOD_FADE_PERCENTAGE
+      isStripped: 0
+    - keywordName: _WINDQUALITY_NONE
+      isStripped: 0
+    - keywordName: DIRECTIONAL
+      isStripped: 0
+    - keywordName: LIGHTPROBE_SH
+      isStripped: 0
+    - keywordName: SHADOWS_SCREEN
+      isStripped: 0
+    - keywordName: VERTEXLIGHT_ON
+      isStripped: 0
+    - keywordName: EFFECT_EXTRA_TEX
+      isStripped: 0
+    - keywordName: EFFECT_BUMP
+      isStripped: 0
+    - keywordName: EFFECT_SUBSURFACE
+      isStripped: 0
+    - keywordName: EFFECT_HUE_VARIATION
+      isStripped: 0
+    - keywordName: EFFECT_BILLBOARD
+      isStripped: 0
+    - keywordName: _WINDQUALITY_FASTEST
+      isStripped: 0
+    - keywordName: _WINDQUALITY_FAST
+      isStripped: 0
+    - keywordName: _WINDQUALITY_BETTER
+      isStripped: 0
+    - keywordName: _WINDQUALITY_BEST
+      isStripped: 0
+    - keywordName: _WINDQUALITY_PALM
+      isStripped: 0
+    - keywordName: FOG_LINEAR
+      isStripped: 0
+    - keywordName: FOG_EXP
+      isStripped: 0
+    - keywordName: FOG_EXP2
+      isStripped: 0
+    - keywordName: LOD_FADE_CROSSFADE
+      isStripped: 0
+    - keywordName: POINT
+      isStripped: 0
+    - keywordName: SPOT
+      isStripped: 0
+    - keywordName: POINT_COOKIE
+      isStripped: 0
+    - keywordName: DIRECTIONAL_COOKIE
+      isStripped: 0
+    - keywordName: UNITY_HDR_ON
+      isStripped: 0
+    - keywordName: SHADOWS_DEPTH
+      isStripped: 0
+    - keywordName: SHADOWS_CUBE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15104, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: CubeBlur
+    shaderPath: Hidden/CubeBlur
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15105, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: CubeCopy
+    shaderPath: Hidden/CubeCopy
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15106, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: CubeBlend
+    shaderPath: Hidden/CubeBlend
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15304, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitTexArraySlice
+    shaderPath: Hidden/VR/BlitTexArraySlice
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15308, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-ODSWorldTexture
+    shaderPath: Hidden/Internal-ODSWorldTexture
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15309, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Internal-CubemapToEquirect
+    shaderPath: Hidden/Internal-CubemapToEquirect
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 15312, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: BlitFromTex2DToTexArraySlice
+    shaderPath: Hidden/VR/BlitFromTex2DToTexArraySlice
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 16000, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: VideoComposite
+    shaderPath: Hidden/VideoComposite
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 16001, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: VideoDecode
+    shaderPath: Hidden/VideoDecode
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords:
+    - keywordName: ADJUST_TO_LINEARSPACE
+      isStripped: 0
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 17000, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Compositing
+    shaderPath: Hidden/Compositing
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  - shaderReference: {fileID: 19011, guid: 0000000000000000f000000000000000, type: 0}
+    shaderShortName: Distance Field SSD
+    shaderPath: Hidden/TextCore/Distance Field SSD
+    shaderType: 2
+    stripWholeShader: 0
+    availableKeywords: []
+    compileOnlySpecifiedVariants: 0
+    variantsCollections: []
+    availableVariants: []
+    variantsOrderData: []
+    forcePrintLogsOnCompile: 0
+    forcePrintLogsOnStrip: 0
+  globallyStrippedKeywords:
+  - FOG_LINEAR
+  - FOG_EXP2
+  - _LIGHT_COOKIES
+  uniqueKeywords:
+  - _MAIN_LIGHT_SHADOWS
+  - FOG_LINEAR
+  - FOG_EXP
+  - FOG_EXP2
+  - _FORWARD_PLUS
+  - _ADDITIONAL_LIGHTS
+  - _MAIN_LIGHT_SHADOWS_CASCADE
+  - _CASTING_PUNCTUAL_LIGHT_SHADOW
+  - _EMISSIVE
+  - _MIXED_LIGHTING_SUBTRACTIVE
+  - _ADDITIONAL_LIGHTS_VERTEX
+  - DIRECTIONAL
+  - LIGHTPROBE_SH
+  - SHADOWS_SCREEN
+  - VERTEXLIGHT_ON
+  - _SHADOWS_SOFT
+  - _ADDITIONAL_LIGHT_SHADOWS
+  - _ADDITIONAL_OFF
+  - _MAIN_LIGHT_SHADOWS_SCREEN
+  - _SCREEN_SPACE_OCCLUSION
+  - POINT
+  - SPOT
+  - POINT_COOKIE
+  - DIRECTIONAL_COOKIE
+  - SHADOWS_DEPTH
+  - SHADOWS_SOFT
+  - SHADOWS_CUBE
+  - UNITY_HDR_ON
+  - _GBUFFER_NORMALS_OCT
+  - INSTANCING_ON
+  - _ADVANCED_LIGHTING
+  - _CLUSTERED_RENDERING
+  - LOD_FADE_CROSSFADE
+  - _WINDQUALITY_NONE
+  - BACKFACE_NORMAL_MODE_FLIP
+  - _WINDQUALITY_BEST
+  - BACKFACE_NORMAL_MODE_MIRROR
+  - _WINDQUALITY_FASTEST
+  - EFFECT_BILLBOARD
+  - _TERRAIN_BLEND_HEIGHT
+  - _NORMALMAP
+  - ENUM_173FCA8E617C4725B6502C6FBE756CEC_SHARP
+  - ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED
+  - UNDERLAY_ON
+  - UNITY_UI_ALPHACLIP
+  - UNITY_UI_CLIP_RECT
+  - _WAVES
+  - _FLAT_SHADING
+  - _RECEIVE_SHADOWS_OFF
+  - OUTLINE_ON
+  - _IS_OUTLINE_CLIPPING_NO
+  - _OUTLINE_NML
+  - _OUTLINE_POS
+  - _IS_OUTLINE_CLIPPING_YES
+  - _IS_CLIPPING_OFF
+  - _IS_CLIPPING_TRANSMODE
+  - PIXELSNAP_ON
+  - ETC1_EXTERNAL_ALPHA
+  - _SUNDISK_NONE
+  - _SUNDISK_SIMPLE
+  - _SUNDISK_HIGH_QUALITY
+  - _USE_DRAW_PROCEDURAL
+  - _IS_CLIPPING_MODE
+  - _HIGH_QUALITY_SAMPLING
+  - _BLOOM_HQ
+  - _USE_RGBM
+  - _SMAA_PRESET_LOW
+  - _SMAA_PRESET_MEDIUM
+  - _SMAA_PRESET_HIGH
+  - FLARE_HAS_OCCLUSION
+  - DISABLE_TEXTURE2D_X_ARRAY
+  - BLIT_DECODE_HDR
+  - _GENERIC
+  - _UNIT_DISTANCE
+  - _OUTPUT_DEPTH
+  - _DEPTH_MSAA_2
+  - _DEPTH_MSAA_4
+  - _DEPTH_MSAA_8
+  - _SPOT
+  - _POINT
+  - _DIRECTIONAL
+  - _FOG
+  - _CLEAR_STENCIL_PARTIAL
+  - _SSAO_ONLY
+  - _TONEMAP_ACES
+  - _TONEMAP_NEUTRAL
+  - MONOSCOPIC
+  - FORCEEYE_NONE
+  - USE_YPCBCR
+  - STEREO_DEBUG
+  - APPLY_GAMMA
+  - FORCEEYE_LEFT
+  - FORCEEYE_RIGHT
+  - STEREO_TOP_BOTTOM
+  - STEREO_LEFT_RIGHT
+  - ALPHAPACK_NONE
+  - USE_HSBC
+  - ALPHAPACK_TOP_BOTTOM
+  - ALPHAPACK_LEFT_RIGHT
+  - LERP_NONE
+  - LERP_FADE
+  - LERP_BLACK
+  - LERP_WHITE
+  - LERP_TRANSP
+  - LERP_HORIZ
+  - LERP_HORIZ_MIRROR
+  - LERP_VERT
+  - LERP_VERT_MIRROR
+  - LERP_DIAG
+  - LERP_DIAG_MIRROR
+  - LERP_CIRCLE
+  - LERP_SCROLL_VERT
+  - LERP_SCROLL_HORIZ
+  - LERP_DIAMOND
+  - LERP_BLINDS
+  - LERP_RECTS_VERT
+  - LERP_ARROW
+  - LERP_SLIDE_HORIZ
+  - LERP_SLIDE_VERT
+  - LERP_ZOOM_FADE
+  - SHADOWS_SPLIT_SPHERES
+  - SHADOWS_SINGLE_CASCADE
+  - LOD_FADE_PERCENTAGE
+  - GEOM_TYPE_BRANCH
+  - EFFECT_HUE_VARIATION
+  - EFFECT_BUMP
+  - GEOM_TYPE_BRANCH_DETAIL
+  - GEOM_TYPE_FROND
+  - GEOM_TYPE_LEAF
+  - GEOM_TYPE_MESH
+  - BILLBOARD_FACE_CAMERA_POS
+  - EFFECT_EXTRA_TEX
+  - EFFECT_SUBSURFACE
+  - _WINDQUALITY_FAST
+  - _WINDQUALITY_BETTER
+  - _WINDQUALITY_PALM
+  - ADJUST_TO_LINEARSPACE
+  - _ALPHATEST_ON
+  - _LIGHT_COOKIES
+  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  - _ADVANCED_SHADING
+  - _TRANSLUCENCY
+  - _SHARP_INERSECTION
+  - _FADING
+  - _SPECULARHIGHLIGHTS_OFF
+  - _SURFACE_TYPE_TRANSPARENT
+  - _INTERLEAVED_GRADIENT
+  - _SOURCE_DEPTH_LOW
+  - _SAMPLE_COUNT_LOW
+  - _ORTHOGRAPHIC
+  - FLARE_INVERSE_SDF
+  - FLARE_CIRCLE
+  - FLARE_POLYGON
+  - _FOVEATED_RENDERING_NON_UNIFORM_RASTER
+  - _TRAIL
+  - _LINEAR_TO_SRGB_CONVERSION
+  - _DITHERING
+  - _FILM_GRAIN
+  - _FXAA
+  - _POINT_SAMPLING
+  - _RCAS
+  - _EASU_RCAS_AND_HDR_INPUT
+  - _GAMMA_20
+  - _GAMMA_20_AND_HDR_INPUT
+  - _HDR_GRADING
+  - _BLOOM_LQ
+  - _BLOOM_LQ_DIRT
+  - _BLOOM_HQ_DIRT
+  - _CHROMATIC_ABERRATION
+  - _DISTORTION
+  keywordDescriptions:
+  - {fileID: 11400000, guid: b59ac19236bff4a4ba10a2e3791fdaeb, type: 2}
+  - {fileID: 11400000, guid: fd5f7604f2a67544caee7044d4fe22e7, type: 2}
+  - {fileID: 11400000, guid: 30fafe76ee9a1f24fa29c98b0a2a197f, type: 2}
+  - {fileID: 11400000, guid: f0a75636390038d4b889200e8ccd0118, type: 2}
+  - {fileID: 11400000, guid: 696eb0265d9c53144b77f5a66cf8fc50, type: 2}
+  - {fileID: 11400000, guid: ef19f125bd2f6f540aeeffccc68e2948, type: 2}
+  - {fileID: 11400000, guid: 377a6acf5a28b0442987dbfbd40438d2, type: 2}
+  - {fileID: 11400000, guid: 3029bb6a42ec0944894224b436934b9c, type: 2}
+  - {fileID: 11400000, guid: f6ca4792267c0dd4f9c153838266082a, type: 2}
+  - {fileID: 11400000, guid: 33478d1bc71da7b44b8d9629ccb04a58, type: 2}
+  - {fileID: 11400000, guid: ae8dc4f51a2f4dc4eaa70e7855cafd10, type: 2}
+  - {fileID: 11400000, guid: 19a397a38b608544cadad59cc1afc453, type: 2}
+  - {fileID: 11400000, guid: 33b45a0e64fc97a4c8af9563b516f909, type: 2}
+  - {fileID: 11400000, guid: d1fdeef4952ec7b448c1675e3823bfad, type: 2}
+  - {fileID: 11400000, guid: 77b48c761945325408e96dcf1a29ea87, type: 2}
+  - {fileID: 11400000, guid: 7f193631a8e85e749ab45c8194aa5f9b, type: 2}
+  - {fileID: 11400000, guid: ce1b5a7c408045d47b91a2193f8db7bd, type: 2}
+  - {fileID: 11400000, guid: dff81ed560cfdb44a959dd6fc93cfc39, type: 2}
+  - {fileID: 11400000, guid: a71f8a9ad2ae28c4390ad69748c5f056, type: 2}
+  - {fileID: 11400000, guid: 842301adc073b3f4b9190af4fcd174cf, type: 2}
+  - {fileID: 11400000, guid: b64d8ab86eaa7b4489aa563eee3f9d63, type: 2}
+  - {fileID: 11400000, guid: a79f5dfdb2d923e4299bf314bf918ed2, type: 2}
+  - {fileID: 11400000, guid: b4df83017bb6e5b4c9d5749a8d09e1b0, type: 2}
+  - {fileID: 11400000, guid: 183b51c4242cc5943be9db553037d140, type: 2}
+  - {fileID: 11400000, guid: a5e4549828c9a59408a89077d2ec00a6, type: 2}
+  - {fileID: 11400000, guid: 79725ed1de7f68849976c596043c9b62, type: 2}
+  - {fileID: 11400000, guid: f3e5327e6f74a8b4a9322e250aedf46e, type: 2}
+  - {fileID: 11400000, guid: 2af2761fe34fa384caa7734049b4e70b, type: 2}
+  - {fileID: 11400000, guid: 3dc58c75f8dcd2640918c10cfb37a45f, type: 2}
+  - {fileID: 11400000, guid: 1fa674daf0a9c9e4eaf362cce20d0356, type: 2}
+  - {fileID: 11400000, guid: 9c8fd39a2ff1ba64ab750ea5769bf999, type: 2}
+  - {fileID: 11400000, guid: 33a8f027eb8bf6f449d2bf557e17ada5, type: 2}
+  - {fileID: 11400000, guid: 71c78c00be53cc6429ea8b11a21011d8, type: 2}
+  - {fileID: 11400000, guid: 6a64de92e576f174a8d2ec3954873cc5, type: 2}
+  - {fileID: 11400000, guid: ba13238079f3055498710f28e04ef1bf, type: 2}
+  - {fileID: 11400000, guid: 593cecba2535a8f4db04ee75d40c215b, type: 2}
+  - {fileID: 11400000, guid: 4258f8996fef17742bbcc3eb5957ce88, type: 2}
+  - {fileID: 11400000, guid: a192eafc45bd4b5438350d3e2a14d7ff, type: 2}

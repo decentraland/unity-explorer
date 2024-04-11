@@ -542,7 +542,7 @@ Shader "DCL/DCL_Toon"
             #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
             //#pragma multi_compile_instancing
             //#pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             // Outline is implemented in UniversalToonOutline.hlsl.
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -559,7 +559,7 @@ Shader "DCL/DCL_Toon"
             Tags{"LightMode" = "UniversalForward"}
             ZWrite[_ZWriteMode]
             Cull[_CullMode]
-            Blend[_SrcBlend][_DstBlend], [_AlphaSrcBlend][_AlphaDstBlend]
+            Blend SrcAlpha OneMinusSrcAlpha
             Stencil {
 
                 Ref[_StencilNo]
@@ -580,8 +580,8 @@ Shader "DCL/DCL_Toon"
             // Lightweight Pipeline keywords
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile _ _FORWARD_PLUS
 
             //#pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
@@ -593,9 +593,9 @@ Shader "DCL/DCL_Toon"
             // #pragma multi_compile _ LIGHTMAP_ON
             // #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile_fog
-            #pragma multi_compile_instancing
+
             #pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             //#define _IS_PASS_FWDBASE
             // DoubleShadeWithFeather and ShadingGradeMap use different fragment shader.  
@@ -611,7 +611,7 @@ Shader "DCL/DCL_Toon"
             // used in Shadow calculation 
             //#pragma shader_feature_local _ UTS_USE_RAYTRACING_SHADOW
             // used in DoubleShadeWithFeather
-            #pragma shader_feature_local _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
+            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
 
             #define _EMISSIVE_SIMPLE
             //#pragma shader_feature _EMISSIVE_SIMPLE// _EMISSIVE_ANIMATION
@@ -642,7 +642,7 @@ Shader "DCL/DCL_Toon"
 
             #pragma multi_compile_instancing
             //#pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
@@ -711,7 +711,7 @@ Shader "DCL/DCL_Toon"
             #pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
