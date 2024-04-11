@@ -55,7 +55,7 @@ namespace DCL.CharacterMotion.Systems
                 }
                 else
                 {
-                    if (physicsTick - animationComponent.AudioState.LastSoundFrame > 20)
+                    if (physicsTick - animationComponent.AudioState.LastSoundFrame > 15)
                     {
                         if (feetIKComponent.Left is { IsGrounded: true, WasLifted: true })
                         {
