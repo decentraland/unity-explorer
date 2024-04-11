@@ -1,6 +1,7 @@
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
+using TMPro;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -14,6 +15,9 @@ namespace DCL.Navmap
         public SearchResultPanelView SearchBarResultPanel;
 
         [field: SerializeField]
+        public HistoryRecordPanelView HistoryRecordPanelView;
+
+        [field: SerializeField]
         public FloatingPanelView floatingPanelView;
 
         [field: SerializeField]
@@ -21,6 +25,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public NavmapZoomView zoomView;
+
+        [field: SerializeField]
+        public NavmapLocationView LocationView { get; private set; }
 
         [field: SerializeField]
         public NavmapPanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; }
