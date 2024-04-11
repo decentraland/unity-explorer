@@ -1,4 +1,3 @@
-using DCL.Audio;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,7 +8,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
         [SerializeField] private Animator avatarAnimator;
-        [SerializeField] private AvatarAudioPlaybackController audioPlaybackController;
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
         [field: Header("Feet IK")]
@@ -61,11 +59,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
 
-        public AvatarAudioPlaybackController GetAvatarAudioPlaybackController ()
-        {
-            return audioPlaybackController;
-        }
-
         private AnimatorOverrideController overrideController;
         private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
@@ -74,8 +67,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             if (!avatarAnimator)
                 return;
-
-            avatarAnimator.fireEvents = false;
 
             overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
@@ -127,7 +118,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
     public interface IAvatarView
     {
-        AvatarAudioPlaybackController GetAvatarAudioPlaybackController();
         Transform GetTransform();
         void SetAnimatorFloat(int hash, float value);
 

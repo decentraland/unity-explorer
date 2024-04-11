@@ -25,9 +25,7 @@ namespace DCL.PluginSystem.Global
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            AvatarAudioSystem.InjectToWorld(ref builder);
-        }
+        { }
 
         public async UniTask InitializeAsync(AudioPluginSettings settings, CancellationToken ct)
         {

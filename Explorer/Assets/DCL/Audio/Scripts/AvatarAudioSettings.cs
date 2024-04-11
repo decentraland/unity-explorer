@@ -50,6 +50,7 @@ namespace DCL.Audio
             JumpLandWalk,
             LongFall,
             ShortFall,
+            HardLanding
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
-using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -71,6 +70,12 @@ namespace DCL.Audio
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
                     break;
             }
+        }
+
+        public void PlayHardLandingSound()
+        {
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
+
         }
 
         public void PlayLongFallSound()
