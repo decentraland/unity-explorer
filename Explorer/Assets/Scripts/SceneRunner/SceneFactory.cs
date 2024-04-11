@@ -223,6 +223,7 @@ namespace SceneRunner
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             var webSocketAipImplementation = new WebSocketApiImplementation();
+            var simpleFetchApiImplementation = new SimpleFetchApiImplementation();
 
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
 
@@ -236,7 +237,8 @@ namespace SceneRunner
                 runtimeImplementation,
                 ethereumApi,
                 webSocketAipImplementation,
-                identityCache
+                identityCache,
+                simpleFetchApiImplementation
             );
 
             return new SceneFacade(

@@ -26,6 +26,7 @@ namespace DCL.Backpack
         private readonly Dictionary<string, IWearable?> equippedWearables = new ();
         private readonly IEmote?[] equippedEmotes = new IEmote[10];
         private readonly ProfileBuilder profileBuilder = new ();
+        private readonly List<string> forceRender = new ();
 
         private World? world;
         private Entity? playerEntity;
@@ -48,9 +49,16 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
+            backpackEventBus.ForceRenderEvent += SetForceRender;
 
             foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
                 equippedWearables.Add(category, null);
+        }
+
+        private void SetForceRender(IReadOnlyCollection<string> categories)
+        {
+            forceRender.Clear();
+            forceRender.AddRange(categories);
         }
 
         private void PublishProfile()
@@ -68,6 +76,7 @@ namespace DCL.Backpack
                 profile = profileBuilder.From(profile!)
                                         .WithWearables(uniqueWearables)
                                         .WithEmotes(uniqueEmotes)
+                                        .WithForceRender(forceRender)
                                         .Build();
 
                 HashSetPool<URN>.Release(uniqueWearables);
