@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 
-namespace DCL.CharacterCamera.Components
+namespace DCL.Character.CharacterCamera.Components
 {
     public enum CursorState
     {

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
@@ -36,11 +37,13 @@ namespace DCL.Input.Systems
         private bool hasHoverCollider;
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
+        private bool wantsToUnlockForced;
         private readonly Dictionary<GameObject, bool> interactionCache = new ();
         private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
         private readonly Dictionary<VisualElement, bool> uiToolkitInteractionCache = new ();
         private readonly List<VisualElement> visualElementPickCache = new ();
         private readonly Mouse mouseDevice;
+        private readonly DCLInput.ShortcutsActions shortcuts;
 
         internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
@@ -49,7 +52,29 @@ namespace DCL.Input.Systems
             this.crosshairCanvas = crosshairCanvas;
             cameraActions = dclInput.Camera;
             uiActions = dclInput.UI;
+            shortcuts = dclInput.Shortcuts;
             mouseDevice = InputSystem.GetDevice<Mouse>();
+        }
+
+        public override void Initialize()
+        {
+            shortcuts.Backpack.performed += OnShortcutUnlock;
+            shortcuts.Map.performed += OnShortcutUnlock;
+            shortcuts.Settings.performed += OnShortcutUnlock;
+            shortcuts.MainMenu.performed += OnShortcutUnlock;
+        }
+
+        public override void Dispose()
+        {
+            shortcuts.Backpack.performed -= OnShortcutUnlock;
+            shortcuts.Map.performed -= OnShortcutUnlock;
+            shortcuts.Settings.performed -= OnShortcutUnlock;
+            shortcuts.MainMenu.performed -= OnShortcutUnlock;
+        }
+
+        private void OnShortcutUnlock(InputAction.CallbackContext obj)
+        {
+            wantsToUnlockForced = true;
         }
 
         protected override void Update(float t)
@@ -190,7 +215,7 @@ namespace DCL.Input.Systems
             bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
-            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: false, IsOverUI: false })
+            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, IsOverUI: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {
@@ -209,6 +234,12 @@ namespace DCL.Input.Systems
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
                 nextState = CursorState.Free;
+
+            if (wantsToUnlockForced)
+            {
+                nextState = CursorState.Free;
+                wantsToUnlockForced = false;
+            }
 
             UpdateState(ref cursorComponent, nextState);
 

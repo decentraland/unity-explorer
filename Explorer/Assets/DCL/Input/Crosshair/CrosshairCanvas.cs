@@ -9,20 +9,20 @@ namespace DCL.Input.Crosshair
         private VisualElement crossHairElement;
         private Sprite crossHair;
         private Sprite crossHairInteractable;
-        private Sprite crosshairPan;
         private Length leftLength;
         private Length bottomLength;
         private CursorStyle currentState;
         private bool initialized;
+        private VisualElement cursorElement;
 
-        public void Initialize(Sprite crosshair, Sprite crosshairInteractable, Sprite crosshairPan)
+        public void Initialize(Sprite crosshair, Sprite crosshairInteractable)
         {
-            this.crosshairPan = crosshairPan;
             crossHairInteractable = crosshairInteractable;
             crossHair = crosshair;
             if (initialized) return;
 
             crossHairElement = this.Query<VisualElement>("Crosshair").First();
+            cursorElement = this.Query<VisualElement>("Cursor").First();
 
             initialized = true;
             leftLength = new Length(0, LengthUnit.Percent);
@@ -46,12 +46,15 @@ namespace DCL.Input.Crosshair
 
         public void SetCursorStyle(CursorStyle style)
         {
-            if (currentState == style) return;
+            if (currentState == style)
+                return;
+
+            cursorElement.visible = style == CursorStyle.CameraPan;
+            crossHairElement.visible = style != CursorStyle.CameraPan;
 
             Sprite sprite = style switch
                             {
                                 CursorStyle.Interaction => crossHairInteractable,
-                                CursorStyle.CameraPan => crosshairPan,
                                 _ => crossHair,
                             };
 

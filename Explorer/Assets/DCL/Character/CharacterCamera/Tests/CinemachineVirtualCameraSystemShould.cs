@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cinemachine;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;

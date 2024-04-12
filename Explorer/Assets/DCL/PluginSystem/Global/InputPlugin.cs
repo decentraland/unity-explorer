@@ -27,7 +27,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceVisualTreeAsset CrosshairCanvasAsset { get; set; }
         [field: SerializeField] public AssetReferenceSprite CrossHairNormal { get; set; }
         [field: SerializeField] public AssetReferenceSprite CrossHairInteraction { get; set; }
-        [field: SerializeField] public AssetReferenceSprite CrossHairCameraPan { get; set; }
     }
 
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
@@ -68,9 +67,8 @@ namespace DCL.PluginSystem.Global
             // if these sprites count is more than 3, please turn this into an array of (CursorStyle, Sprite)
             Sprite crosshair = (await assetsProvisioner.ProvideMainAssetAsync(settings.CrossHairNormal, ct)).Value;
             Sprite crosshairInteractable = (await assetsProvisioner.ProvideMainAssetAsync(settings.CrossHairInteraction, ct)).Value;
-            Sprite crosshairCameraPan = (await assetsProvisioner.ProvideMainAssetAsync(settings.CrossHairCameraPan, ct)).Value;
 
-            crosshairCanvas.Initialize(crosshair, crosshairInteractable, crosshairCameraPan);
+            crosshairCanvas.Initialize(crosshair, crosshairInteractable);
             canvas.rootVisualElement.Add(crosshairCanvas);
             crosshairCanvas.SetDisplayed(false);
         }

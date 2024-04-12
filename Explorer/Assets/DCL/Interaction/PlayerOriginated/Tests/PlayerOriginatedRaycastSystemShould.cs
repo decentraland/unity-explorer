@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Physics;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Interaction.PlayerOriginated.Components;

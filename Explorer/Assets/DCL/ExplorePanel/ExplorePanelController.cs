@@ -140,13 +140,14 @@ namespace DCL.ExplorePanel
 
         private void RegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed += OnMainMenuHotkeyPressed;
+            dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
+            dclInput.UI.Close.performed += OnCloseMainMenu;
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
         }
 
-        private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj)
+        private void OnCloseMainMenu(InputAction.CallbackContext obj)
         {
             // tell the mvc manager bout this
             isControlClosing = true;
@@ -154,17 +155,26 @@ namespace DCL.ExplorePanel
 
         private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
         {
-            ShowSection(ExploreSections.Navmap);
+            if (lastShownSection != ExploreSections.Navmap)
+                ShowSection(ExploreSections.Navmap);
+            else
+                isControlClosing = true;
         }
 
         private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
         {
-            ShowSection(ExploreSections.Settings);
+            if (lastShownSection != ExploreSections.Settings)
+                ShowSection(ExploreSections.Settings);
+            else
+                isControlClosing = true;
         }
 
         private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
         {
-            ShowSection(ExploreSections.Backpack);
+            if (lastShownSection != ExploreSections.Backpack)
+                ShowSection(ExploreSections.Backpack);
+            else
+                isControlClosing = true;
         }
 
         private void ShowSection(ExploreSections section)
@@ -186,7 +196,8 @@ namespace DCL.ExplorePanel
 
         private void UnRegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed -= OnMainMenuHotkeyPressed;
+            dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
+            dclInput.UI.Close.performed -= OnCloseMainMenu;
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
