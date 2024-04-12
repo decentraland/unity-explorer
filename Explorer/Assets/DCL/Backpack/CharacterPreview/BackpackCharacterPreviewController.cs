@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -11,15 +12,15 @@ namespace DCL.Backpack.CharacterPreview
     public class BackpackCharacterPreviewController : CharacterPreviewControllerBase
     {
         private readonly BackpackEventBus backpackEventBus;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IEquippedEmotes equippedEmotes;
 
         public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory,
             BackpackEventBus backpackEventBus, World world,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IEquippedEmotes equippedEmotes)
             : base(view, previewFactory, world)
         {
             this.backpackEventBus = backpackEventBus;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedEmotes = equippedEmotes;
             backpackEventBus.EquipWearableEvent += OnWearableEquipped;
             backpackEventBus.UnEquipWearableEvent += OnWearableUnequipped;
             backpackEventBus.EquipEmoteEvent += OnEmoteEquipped;
@@ -96,7 +97,7 @@ namespace DCL.Backpack.CharacterPreview
 
         private void OnEmoteSlotSelected(int slot)
         {
-            IEmote? emote = backpackEquipStatusController.GetEquippedEmote(slot);
+            IEmote? emote = equippedEmotes.EmoteInSlot(slot);
             if (emote == null) return;
             PlayEmote(emote.GetUrn().Shorten());
         }

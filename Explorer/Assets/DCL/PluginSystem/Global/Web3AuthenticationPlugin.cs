@@ -5,8 +5,7 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
-using DCL.Optimization.Pools;
-using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS;
@@ -23,7 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MVCManager mvcManager;
-        private readonly IProfileRepository profileRepository;
+        private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
@@ -37,7 +36,7 @@ namespace DCL.PluginSystem.Global
             IWeb3VerifiedAuthenticator web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
             MVCManager mvcManager,
-            IProfileRepository profileRepository,
+            ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
@@ -47,7 +46,7 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.debugContainerBuilder = debugContainerBuilder;
             this.mvcManager = mvcManager;
-            this.profileRepository = profileRepository;
+            this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.realmData = realmData;
             this.storedIdentityProvider = storedIdentityProvider;
@@ -62,7 +61,7 @@ namespace DCL.PluginSystem.Global
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository, webBrowser, storedIdentityProvider, characterPreviewFactory);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory);
             mvcManager.RegisterController(authenticationScreenController);
         }
 

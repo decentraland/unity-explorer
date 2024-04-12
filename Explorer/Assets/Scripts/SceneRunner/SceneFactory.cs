@@ -96,17 +96,18 @@ namespace SceneRunner
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var sceneDefinition = new SceneEntityDefinition();
-
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl[(lastSlash + 1)..];
             var baseUrl = URLDomain.FromString(jsCodeUrl[..(lastSlash + 1)]);
 
-            sceneDefinition.metadata = new SceneMetadata
-            {
-                main = mainScenePath,
-                runtimeVersion = "7",
-            };
+            var sceneDefinition = new SceneEntityDefinition(
+                string.Empty,
+                new SceneMetadata
+                {
+                    main = mainScenePath,
+                    runtimeVersion = "7",
+                }
+            );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
@@ -127,11 +128,7 @@ namespace SceneRunner
 
             SceneMetadata sceneMetadata = JsonUtility.FromJson<SceneMetadata>(request.downloadHandler.text);
 
-            var sceneDefinition = new SceneEntityDefinition
-            {
-                id = directoryName,
-                metadata = sceneMetadata,
-            };
+            var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
