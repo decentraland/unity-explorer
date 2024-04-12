@@ -50,19 +50,19 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Hardness: -0.41
-    - _Radius: -0.13
+    - _Hardness: -1.41
+    - _Radius: -1.09
     - _Speed: 5
     - _Twist: 15
     - _Wave_Scale: 2.4
     - _Wave_Strength: 27.08
     - _Wave_Tiling: 5.3
     m_Colors:
-    - _Center: {r: 0.78, g: 0.47, b: 0, a: 0}
-    - _Inner_Color: {r: 0.9333334, g: 0.18431373, b: 0.8941177, a: 0}
-    - _Offset: {r: -0.03, g: 0, b: 0, a: 0}
+    - _Center: {r: 0.59, g: -0.13, b: 0, a: 0}
+    - _Inner_Color: {r: 1, g: 0, b: 0.94764376, a: 0}
+    - _Offset: {r: -0.56, g: -0.85, b: 0, a: 0}
     - _Outer_Color: {r: 0.34901962, g: 0.08627451, b: 0.5058824, a: 0}
     - _Radius: {r: 0.46, g: 0.5, b: 0, a: 0}
-    - _Tiling: {r: 0.99, g: 0.86, b: 0, a: 0}
+    - _Tiling: {r: 0.97, g: 1.4, b: 0, a: 0}
     - _Twirl_Speed: {r: 1, g: 0.2, b: 0, a: 0}
   m_BuildTextureStacks: []
