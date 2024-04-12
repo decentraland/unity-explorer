@@ -214,7 +214,7 @@ namespace DCL.Backpack.EmotesSection
                 usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipEmoteCommand(backpackItemView.ItemId)));
+                backpackItemView.OnEquip += EquipItem;
                 backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipEmoteCommand(backpackItemView.ItemId)));
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
@@ -232,6 +232,9 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        private void EquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId));
 
         private void OnFilterCategory(string category)
         {
@@ -273,7 +276,7 @@ namespace DCL.Backpack.EmotesSection
         {
             foreach (KeyValuePair<URN, BackpackEmoteGridItemView> backpackItemView in usedPoolItems)
             {
-                backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.OnEquip -= EquipItem;
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
