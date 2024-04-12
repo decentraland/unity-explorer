@@ -2,7 +2,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
@@ -11,9 +13,9 @@ using DCL.ExplorePanel;
 using DCL.Landscape.Settings;
 using DCL.LOD;
 using DCL.Navmap;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.Settings;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -23,6 +25,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -40,6 +43,9 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly IProfileRepository profileRepository;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly ISelfProfile selfProfile;
+        private readonly IEquippedWearables equippedWearables;
+        private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWearableCatalog wearableCatalog;
@@ -55,7 +61,8 @@ namespace DCL.PluginSystem.Global
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
-        private BackpackSubPlugin backpackSubPlugin;
+        private BackpackSubPlugin backpackSubPlugin = null!;
+        private readonly ICollection<string> forceRender;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -69,10 +76,15 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
+            ISelfProfile selfProfile,
+            IEquippedWearables equippedWearables,
+            IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             DCLInput dclInput,
             IEmoteCache emoteCache,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ICollection<string> forceRender
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -85,9 +97,13 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.selfProfile = selfProfile;
+            this.equippedWearables = equippedWearables;
+            this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
             this.dclInput = dclInput;
             this.realmNavigator = realmNavigator;
+            this.forceRender = forceRender;
             this.emoteCache = emoteCache;
         }
 
@@ -100,7 +116,18 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            backpackSubPlugin = new BackpackSubPlugin(assetsProvisioner, web3IdentityCache, characterPreviewFactory, wearableCatalog, profileRepository, emoteCache, settings.EmbeddedEmotes.Select(s => new URN(s)).ToArray());
+            backpackSubPlugin = new BackpackSubPlugin(
+                assetsProvisioner,
+                web3IdentityCache,
+                characterPreviewFactory,
+                wearableCatalog,
+                selfProfile,
+                equippedWearables,
+                equippedEmotes,
+                emoteCache,
+                settings.EmbeddedEmotesAsURN(),
+                forceRender
+            );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
@@ -121,7 +148,7 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
-                navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, mvcManager,webBrowser, dclInput, builder.World, arguments.PlayerEntity, realmNavigator);
+                navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, mvcManager, webBrowser, dclInput, builder.World, arguments.PlayerEntity, realmNavigator);
                 navmapController.InitialiseAssetsAsync(assetsProvisioner, ct).Forget();
                 backpackInitialization.Invoke(ref builder, arguments);
 
@@ -166,6 +193,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
+            
+            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
+                EmbeddedEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }
