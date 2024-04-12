@@ -20,6 +20,5 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceTexture2D NormalCursor { get; private set; }
         [field: SerializeField] public AssetReferenceTexture2D InteractionCursor { get; private set; }
-        [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; private set; }
     }
 }

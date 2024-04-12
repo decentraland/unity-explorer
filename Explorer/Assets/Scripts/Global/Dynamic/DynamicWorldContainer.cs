@@ -3,7 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -12,7 +14,7 @@ using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
-using DCL.LOD;
+using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -51,10 +53,10 @@ using System.Buffers;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using System.Collections.Generic;
-using DCL.LOD.Systems;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using DCL.Profiles.Self;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -84,13 +86,15 @@ namespace Global.Dynamic
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
 
-        public ParcelServiceContainer ParcelServiceContainer { get; private set; }
+        public ParcelServiceContainer ParcelServiceContainer { get; private set; } = null!;
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
         public IEmotesMessageBus EmotesMessageBus { get; private set; } = null!;
+
+        public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
@@ -115,14 +119,8 @@ namespace Global.Dynamic
         {
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
-                                      evt =>
-                                      {
-                                          realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget();
-                                      }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm =>
-                                  {
-                                      realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget();
-                                  });
+                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -157,7 +155,7 @@ namespace Global.Dynamic
             ProvidedAsset<Texture2D> normalCursorAsset = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.InteractionCursor, ct);
 
-            var unityEventSystem = new UnityEventSystem(EventSystem.current);
+            var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
 
             var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
@@ -179,12 +177,14 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             var webBrowser = new UnityAppWebBrowser();
-            ChatEntryConfigurationSO? chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
-            NametagsData? nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
+            ChatEntryConfigurationSO chatEntryConfiguration = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            NametagsData nametagsData = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache);
+            container.ProfileRepository = new LogProfileRepository(
+                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache)
+            );
 
             var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
@@ -192,16 +192,25 @@ namespace Global.Dynamic
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
 
+            var emotesCache = new MemoryEmotesCache();
+            staticContainer.CacheCleaner.Register(emotesCache);
+            var equippedWearables = new EquippedWearables();
+            var equippedEmotes = new EquippedEmotes();
+            var forceRender = new List<string>();
+            var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
+
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
                 realFlowLoadingStatus,
                 parcelServiceContainer.TeleportController,
                 container.MvcManager,
-                identityCache,
-                container.ProfileRepository, dynamicWorldParams.StartParcel,
+                selfProfile,
+                dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                dynamicWorldParams.EnableLandscape, landscapePlugin);
+                dynamicWorldParams.EnableLandscape,
+                landscapePlugin
+            );
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
 
@@ -218,9 +227,9 @@ namespace Global.Dynamic
                 realmData,
                 staticContainer.ScenesCache);
 
-
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
+            container.MessagePipesHub = messagePipesHub;
 
             var entityParticipantTable = new EntityParticipantTable();
 
@@ -233,16 +242,16 @@ namespace Global.Dynamic
                 debugBuilder
             );
 
-            var emotesCache = new MemoryEmotesCache();
-            staticContainer.CacheCleaner.Register(emotesCache);
-
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: x => x.Clear()
             );
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
-                new ProfileBroadcast(messagePipesHub)
+                new EnsureSelfPublishedProfileBroadcast(
+                    new ProfileBroadcast(messagePipesHub),
+                    selfProfile
+                )
             );
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, identityCache);
@@ -315,13 +324,18 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
+                    selfProfile,
+                    equippedWearables,
+                    equippedEmotes,
                     webBrowser,
                     emotesCache,
                     realmNavigator,
-                    dclInput),
+                    forceRender,
+                    dclInput
+                ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, container.ProfileRepository, webBrowser, realmData, identityCache, characterPreviewFactory),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, realmData, identityCache, characterPreviewFactory),
                 new StylizedSkyboxPlugin(staticContainer.AssetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, dclCursor),
@@ -351,7 +365,8 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                multiplayerEmotesMessageBus);
+                multiplayerEmotesMessageBus,
+                messagePipesHub);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);

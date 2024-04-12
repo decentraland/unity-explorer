@@ -105,8 +105,14 @@ namespace Global.Dynamic
             {
                 splashRoot.SetActive(showSplash);
 
-                identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+                identityCache = new LogWeb3IdentityCache(
+                    new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                        )
+                    )
+                );
 
 #if !UNITY_EDITOR
                 string authServerUrl = Debug.isDebugBuild
@@ -163,20 +169,17 @@ namespace Global.Dynamic
                     }, ct
                 );
 
-                var webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
-                var roomHub = dynamicWorldContainer!.RoomHub;
-
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm());
-
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
-                    dynamicWorldContainer!.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm());
+                var webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
+                var roomHub = dynamicWorldContainer!.RoomHub;
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
+                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
 
                 // Initialize global plugins
                 var anyFailure = false;

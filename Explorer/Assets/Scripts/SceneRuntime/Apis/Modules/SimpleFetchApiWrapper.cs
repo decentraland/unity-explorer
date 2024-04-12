@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class SimpleFetchApiWrapper : IDisposable
+    public class SimpleFetchApiWrapper : IJsApiWrapper
     {
         private readonly ISimpleFetchApi api;
         private readonly CancellationTokenSource cancellationTokenSource;

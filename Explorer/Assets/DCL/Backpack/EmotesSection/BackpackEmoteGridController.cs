@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -29,7 +30,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IEquippedEmotes equippedEmotes;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackEmoteGridItemView> usedPoolItems;
         private readonly BackpackEmoteGridItemView?[] loadingResults = new BackpackEmoteGridItemView[CURRENT_PAGE_SIZE];
@@ -52,7 +53,7 @@ namespace DCL.Backpack.EmotesSection
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IBackpackEquipStatusController backpackEquipStatusController,
+            IEquippedEmotes equippedEmotes,
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView,
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
@@ -65,7 +66,7 @@ namespace DCL.Backpack.EmotesSection
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedEmotes = equippedEmotes;
             this.gridItemsPool = gridItemsPool;
             this.emoteProvider = emoteProvider;
             this.embeddedEmoteIds = embeddedEmoteIds;
@@ -221,7 +222,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(EMOTE_CATEGORY);
 
-                int equippedSlot = backpackEquipStatusController.GetEmoteEquippedSlot(emotes[i]);
+                int equippedSlot = equippedEmotes.SlotOf(emotes[i]);
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
