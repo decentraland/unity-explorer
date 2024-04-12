@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 {
-    public class RestrictedActionsAPIWrapper : IDisposable
+    public class RestrictedActionsAPIWrapper : IJsApiWrapper
     {
         private readonly IRestrictedActionsAPI api;
 

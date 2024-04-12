@@ -42,8 +42,11 @@ namespace DCL.Profiles
         private URLAddress? bodySnapshotUrl;
         private URLAddress? faceSnapshotUrl;
 
-        public ProfileBuilder From(Profile profile)
+        public ProfileBuilder From(Profile? profile)
         {
+            if (profile == null)
+                return From(Build());
+
             wearables = profile.Avatar.wearables;
             bodyShape = profile.Avatar.BodyShape;
             eyesColor = profile.Avatar.EyesColor;
@@ -155,8 +158,8 @@ namespace DCL.Profiles
             avatar.HairColor = hairColor;
             avatar.SkinColor = skinColor;
             avatar.EyesColor = eyesColor;
-            avatar.BodySnapshotUrl = bodySnapshotUrl ?? new URLAddress();
-            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? new URLAddress();
+            avatar.BodySnapshotUrl = bodySnapshotUrl ?? URLAddress.EMPTY;
+            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
 
             return profile;
         }
