@@ -92,7 +92,7 @@ namespace DCL.Nametags
             ResetElement();
             isClaimedName = hasClaimedName;
             VerifiedIcon.gameObject.SetActive(hasClaimedName);
-            Username.text = hasClaimedName ? username : $"{username}<color=#FFFFFF66>#{walletId}</color>";
+            Username.text = hasClaimedName ? username : $"{username}<color=#FFFFFF66><font=\"LiberationSans SDF\">#{walletId}</font></color>";
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + chatBubbleConfiguration.nametagMarginOffsetHeight);
             MessageContent.color = startingTextColor;
 
