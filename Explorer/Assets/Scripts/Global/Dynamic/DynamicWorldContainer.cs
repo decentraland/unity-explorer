@@ -87,6 +87,7 @@ namespace Global.Dynamic
 
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
+        // TODO move multiplayer related dependencies to a separate container
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
         public IEmotesMessageBus EmotesMessageBus { get; private set; } = null!;
@@ -97,6 +98,8 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; }
 
+        public IMessagePipesHub MessagePipesHub { get; private set; }
+
         public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
 
         public void Dispose()
@@ -104,6 +107,7 @@ namespace Global.Dynamic
             MvcManager.Dispose();
             ChatMessagesBus.Dispose();
             ProfileBroadcast.Dispose();
+            MessagePipesHub.Dispose();
         }
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
@@ -116,7 +120,7 @@ namespace Global.Dynamic
         {
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
-                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
+                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty, -1), null)
                                  .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
@@ -219,14 +223,14 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache);
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            var messagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
+            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
             container.MessagePipesHub = messagePipesHub;
 
             var entityParticipantTable = new EntityParticipantTable();
 
             container.ChatMessagesBus = new DebugPanelChatMessageBus(
                 new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(messagePipesHub, container.ProfileRepository, new MessageDeduplication<double>()),
+                    new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>()),
                     identityCache,
                     container.ProfileRepository
                 ),
@@ -240,12 +244,12 @@ namespace Global.Dynamic
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
-                    new ProfileBroadcast(messagePipesHub),
+                    new ProfileBroadcast(container.MessagePipesHub),
                     selfProfile
                 )
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, entityParticipantTable, identityCache);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub, entityParticipantTable, identityCache);
 
             var remotePoses = new DebounceRemotePoses(
                 new RemotePoses(container.RoomHub)
@@ -274,7 +278,7 @@ namespace Global.Dynamic
                     realFlowLoadingStatus,
                     entityParticipantTable,
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                    messagePipesHub,
+                    container.MessagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
                     queuePoolFullMovementMessage
@@ -341,7 +345,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 landscapePlugin,
-                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable)),
+                new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable)),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin
             };
