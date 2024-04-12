@@ -15,13 +15,10 @@ namespace DCL.DebugUtilities
 
         public readonly string Label;
 
-        public readonly int DefaultIndex;
-
-        public DebugDropdownDef(List<string> choices, ElementBinding<string> binding, string label, int defaultIndex = 0)
+        public DebugDropdownDef(List<string> choices, ElementBinding<string> binding, string label)
         {
             Binding = binding;
             Label = label;
-            DefaultIndex = defaultIndex;
             Choices = choices;
         }
     }

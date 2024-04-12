@@ -118,8 +118,8 @@ namespace Global.Dynamic
         private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
             debugContainerBuilder.AddWidget("Realm")
-                                 .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(realms[0],
-                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty, -1), null)
+                                 .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(string.Empty,
+                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
                                  .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
