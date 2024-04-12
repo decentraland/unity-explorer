@@ -124,6 +124,14 @@ MonoBehaviour:
       m_LinearFogEnd: 0
     lensFlareEnabled: 1
     lensFlareComponent: {fileID: 8521501152378314052, guid: cfb1111e6759c9046956190dd1f2b0bf, type: 3}
+    environmentSettings:
+      sceneLoadRadius: 20
+      lod1Threshold: 1
+      lod2Threshold: 1
+      terrainLODBias: 50
+      detailDensity: 30
+      grassDistance: 75
+      chunkCullDistance: 1000
   - volumeProfile: {fileID: -4880458653563171804}
     fogSettings:
       m_Fog: 1
@@ -134,6 +142,14 @@ MonoBehaviour:
       m_LinearFogEnd: 0
     lensFlareEnabled: 0
     lensFlareComponent: {fileID: 4642727729545981125, guid: 771c68288bf78564cb5301f95b69811d, type: 3}
+    environmentSettings:
+      sceneLoadRadius: 50
+      lod1Threshold: 1
+      lod2Threshold: 3
+      terrainLODBias: 150
+      detailDensity: 70
+      grassDistance: 150
+      chunkCullDistance: 3000
   - volumeProfile: {fileID: 8971067228855834029}
     fogSettings:
       m_Fog: 0
@@ -144,12 +160,19 @@ MonoBehaviour:
       m_LinearFogEnd: 0
     lensFlareEnabled: 0
     lensFlareComponent: {fileID: 2726953631672280614, guid: 91fed6d77ceea8246b3d136a8e67a12c, type: 3}
+    environmentSettings:
+      sceneLoadRadius: 150
+      lod1Threshold: 2
+      lod2Threshold: 4
+      terrainLODBias: 250
+      detailDensity: 100
+      grassDistance: 300
+      chunkCullDistance: 7000
   allRendererFeatures:
   - {fileID: -2846649767180898789, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: -7778234019364369118, guid: 8fcac0d7d22effc45a7f7b4f87116a61, type: 2}
   - {fileID: -5135254060917694649, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -2287974757364210156, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
-  - {fileID: 1885962108893512382, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   updateInEditor: 1
 --- !u!114 &627882838885633079
 MonoBehaviour:

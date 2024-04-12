@@ -1,14 +1,20 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Landscape.Settings;
+using DCL.LOD;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
+using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 #nullable disable
@@ -18,6 +24,9 @@ namespace DCL.Quality
     public class QualityContainer : IDisposable
     {
         private readonly List<Action> onDebugViewUpdate = new (50);
+        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
+        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private ProvidedAsset<LandscapeData> landscapeData;
 
         public IRendererFeaturesCache RendererFeaturesCache { get; init; }
 
@@ -26,12 +35,21 @@ namespace DCL.Quality
         public Plugin CreatePlugin() =>
             new (onDebugViewUpdate);
 
-        public static QualityContainer Create(IPluginSettingsContainer pluginSettingsContainer)
+        public static async UniTask<QualityContainer> Create(IPluginSettingsContainer pluginSettingsContainer, IAssetsProvisioner assetsProvisioner)
         {
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
+            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, CancellationToken.None);
+            var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
+            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
+
             var rendererFeaturesCache = new RendererFeaturesCache();
-            IQualityLevelController controller = QualityRuntimeFactory.Create(rendererFeaturesCache, settings.QualitySettings);
+            IQualityLevelController controller = QualityRuntimeFactory.Create(
+                rendererFeaturesCache,
+                settings.QualitySettings,
+                realmPartitionSettings.Value,
+                lodSettingsAsset.Value,
+                landscapeData.Value);
 
             return new QualityContainer
             {
@@ -89,6 +107,15 @@ namespace DCL.Quality
             [field: Header(nameof(QualityContainer))]
             [field: SerializeField]
             public QualitySettingsAsset QualitySettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
+
+            [field: SerializeField]
+            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
         }
     }
 }

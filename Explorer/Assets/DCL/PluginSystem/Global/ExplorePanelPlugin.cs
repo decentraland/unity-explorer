@@ -10,8 +10,6 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
-using DCL.Landscape.Settings;
-using DCL.LOD;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -21,7 +19,6 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -55,9 +52,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteCache emoteCache;
         private readonly IWebRequestController webRequestController;
-        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
-        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
-        private ProvidedAsset<LandscapeData> landscapeData;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -132,15 +126,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
-            lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, ct);
-            landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-
-            settingsController = new SettingsController(
-                explorePanelView.GetComponentInChildren<SettingsView>(),
-                realmPartitionSettings.Value,
-                lodSettingsAsset.Value,
-                landscapeData.Value);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
 
             PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
@@ -185,15 +171,6 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public string[] EmbeddedEmotes { get; private set; }
 
-            [field: SerializeField]
-            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
-
-            [field: SerializeField]
-            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
-
-            [field: SerializeField]
-            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
-            
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();
         }

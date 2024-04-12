@@ -1,8 +1,5 @@
-﻿using DCL.Landscape.Settings;
-using DCL.LOD;
-using DCL.Settings.ModuleControllers;
+﻿using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
-using ECS.Prioritization;
 using System;
 using UnityEngine;
 
@@ -14,11 +11,7 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public abstract class SettingsModuleBindingBase
     {
-        public abstract SettingsFeatureController CreateModule(
-            Transform parent,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            ILODSettingsAsset lodSettingsAsset,
-            LandscapeData landscapeData);
+        public abstract SettingsFeatureController CreateModule(Transform parent);
     }
 
     [Serializable]
@@ -46,10 +39,7 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(Transform parent,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            ILODSettingsAsset lodSettingsAsset,
-            LandscapeData landscapeData)
+        public override SettingsFeatureController CreateModule(Transform parent)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -80,10 +70,7 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(Transform parent,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            ILODSettingsAsset lodSettingsAsset,
-            LandscapeData landscapeData)
+        public override SettingsFeatureController CreateModule(Transform parent)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -122,10 +109,7 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(Transform parent,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            ILODSettingsAsset lodSettingsAsset,
-            LandscapeData landscapeData)
+        public override SettingsFeatureController CreateModule(Transform parent)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -134,7 +118,7 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance, settingsDataStore, Config.defaultOptionIndex, realmPartitionSettingsAsset, lodSettingsAsset, landscapeData);
+                    return new GraphicsQualitySettingsController(viewInstance, settingsDataStore, Config.defaultOptionIndex);
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
                     return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
