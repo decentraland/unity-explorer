@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         internal readonly int arrayID;
         internal readonly int textureID;
 
-        private readonly Dictionary<int, TextureArraySlotHandler> handlersByResolution;
+        private readonly Dictionary<Vector2Int, TextureArraySlotHandler> handlersByResolution;
         private readonly int minArraySize;
         private readonly int initialCapacityForEachResolution;
         private readonly TextureFormat textureFormat;
@@ -38,13 +38,14 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
 
-            handlersByResolution = new Dictionary<int, TextureArraySlotHandler>(defaultResolutions.Count);
+            handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(defaultResolutions.Count);
 
+            //Default resolutions are always squared
             for (var i = 0; i < defaultResolutions.Count; i++)
-                CreateHandler(defaultResolutions[i]);
+                CreateHandler(new Vector2Int(defaultResolutions[i], defaultResolutions[i]));
         }
 
-        private TextureArraySlotHandler CreateHandler(int resolution)
+        private TextureArraySlotHandler CreateHandler(Vector2Int resolution)
         {
             var slotHandler = new TextureArraySlotHandler(resolution, minArraySize, initialCapacityForEachResolution, textureFormat);
             handlersByResolution[resolution] = slotHandler;
@@ -59,10 +60,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return slotHandler;
         }
 
-        internal TextureArraySlotHandler GetOrCreateSlotHandler(int resolution) =>
-            handlersByResolution.TryGetValue(resolution, out var slotHandler) ? slotHandler : CreateHandler(resolution);
+        internal TextureArraySlotHandler GetOrCreateSlotHandler(Vector2Int resolution)
+        {
+            return handlersByResolution.TryGetValue(resolution, out var slotHandler) ? slotHandler : CreateHandler(resolution);
+        }
 
-        public TextureArraySlot SetTexture(Material material, Texture2D texture, int resolution)
+        public TextureArraySlot SetTexture(Material material, Texture2D texture, Vector2Int resolution)
         {
             TextureArraySlot slot = GetOrCreateSlotHandler(resolution).GetNextFreeSlot();
             var mipLevel = 0;
@@ -77,13 +80,16 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             return slot;
         }
 
-        internal Texture2DArray GetDefaultTextureArray(int resolution) => GetOrCreateSlotHandler(resolution).arrays[DEFAULT_SLOT_INDEX];
+        internal Texture2DArray GetDefaultTextureArray(Vector2Int resolution)
+        {
+            return GetOrCreateSlotHandler(resolution).arrays[DEFAULT_SLOT_INDEX];
+        }
 
         public void SetDefaultTexture(Material material, int resolution)
         {
             // Default slot is always zero
-
-            var defaultSlotArray = GetDefaultTextureArray(resolution);
+            // Default textures are always squared
+            var defaultSlotArray = GetDefaultTextureArray(new Vector2Int(resolution, resolution));
 
             material.SetInteger(arrayID, DEFAULT_SLOT_INDEX);
             material.SetTexture(textureID, defaultSlotArray);
