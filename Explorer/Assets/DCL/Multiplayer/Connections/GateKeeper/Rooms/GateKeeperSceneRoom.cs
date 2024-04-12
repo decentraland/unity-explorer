@@ -27,13 +27,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             this.metaDataSource = metaDataSource;
             this.sceneHandleUrl = sceneHandleUrl;
 
-            // connectiveRoom = new RenewableConnectiveRoom(
-            //     () => new ConnectiveRoom(
-            //         static _ => UniTask.CompletedTask,
-            //         RunConnectCycleStepAsync
-            //     )
-            // );
-
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
                 RunConnectCycleStepAsync
