@@ -1277,6 +1277,8 @@ GameObject:
   - component: {fileID: 4392543827313620798}
   - component: {fileID: 8235211841819826033}
   - component: {fileID: 3028253586195266069}
+  - component: {fileID: 5077809305301030404}
+  - component: {fileID: 9170972586690210485}
   m_Layer: 5
   m_Name: ExplorePanelUI
   m_TagString: Untagged
@@ -1392,6 +1394,39 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 4259832855745683082}
   <ProfileWidget>k__BackingField: {fileID: 6577566074449924958}
   <SystemMenu>k__BackingField: {fileID: 4430083555923337431}
+--- !u!95 &5077809305301030404
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8178171541332435676}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a678a366ccccccc409299c0761c85c62, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!225 &9170972586690210485
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8178171541332435676}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &131271445653635954
 PrefabInstance:
   m_ObjectHideFlags: 0
