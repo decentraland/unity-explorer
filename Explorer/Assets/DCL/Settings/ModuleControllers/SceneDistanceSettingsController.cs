@@ -1,5 +1,4 @@
-﻿using DCL.Landscape.Settings;
-using DCL.Settings.ModuleViews;
+﻿using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 
 namespace DCL.Settings.ModuleControllers
