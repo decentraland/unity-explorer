@@ -33,8 +33,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
 
         public ArchipelagoIslandRoom(ICharacterObject characterObject, IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool) : this(
-            new RefinedAdapterAddresses(
-                new WebRequestsAdapterAddresses(webRequestController)
+            new LogAdapterAddresses(
+                new RefinedAdapterAddresses(
+                    new WebRequestsAdapterAddresses(webRequestController)
+                ),
+                ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log
             ),
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
