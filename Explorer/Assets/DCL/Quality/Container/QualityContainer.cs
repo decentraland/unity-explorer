@@ -29,7 +29,7 @@ namespace DCL.Quality
         public Plugin CreatePlugin() =>
             new (onDebugViewUpdate);
 
-        public static async UniTask<QualityContainer> Create(IPluginSettingsContainer pluginSettingsContainer, IAssetsProvisioner assetsProvisioner)
+        public static async UniTask<QualityContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer, IAssetsProvisioner assetsProvisioner)
         {
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
