@@ -10,10 +10,14 @@
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:d414ef88f3b15f746a4b97636b50dfb4",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:6697a6ad5be048c7af6ba886783b5250",
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:275e22790c04e9b47a5085d7b0c4432a",
-        "GUID:5ab29fa8ae5769b49ab29e390caca7a4"
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:875a5d5129614170bd769ed012c2eb3d",
+        "GUID:3c7b57a14671040bd8c549056adc04f5",
+        "GUID:e25ef972de004615a22937e739de2def",
+        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
+        "GUID:702f733b4deb246808c6ce84d93b5c9c"
     ],
     "includePlatforms": [
         "Editor"
@@ -24,7 +28,7 @@
     "precompiledReferences": [
         "nunit.framework.dll",
         "NSubstitute.dll",
-        "Arch.SystemGroups.dll"
+        "Google.Protobuf.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

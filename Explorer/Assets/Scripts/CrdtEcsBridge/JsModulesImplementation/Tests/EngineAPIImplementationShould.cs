@@ -16,7 +16,7 @@ using System.Linq;
 using System.Threading;
 using Utility.Multithreading;
 
-namespace CrdtEcsBridge.Engine.Tests
+namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
     public class EngineAPIImplementationShould
     {
@@ -106,7 +106,7 @@ namespace CrdtEcsBridge.Engine.Tests
             crdtWorldSynchronizer.GetSyncCommandBuffer().Returns(_ => worldSyncCommandBuffer = Substitute.For<IWorldSyncCommandBuffer>());
 
             instancePoolsProvider.GetDeserializationMessagesPool().Returns(_ => new List<CRDTMessage>());
-            sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+            sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), sharedPoolsProvider.ReleaseSerializedStateBytesPool));
             sharedPoolsProvider.GetSerializationCrdtMessagesPool(Arg.Any<int>()).Returns(c => new ProcessedCRDTMessage[c.Arg<int>()]);
 
             outgoingCrtdMessagesProvider.GetSerializationSyncBlock()
