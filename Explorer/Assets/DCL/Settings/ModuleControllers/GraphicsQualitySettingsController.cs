@@ -6,25 +6,24 @@ namespace DCL.Settings.ModuleControllers
 {
     public class GraphicsQualitySettingsController : SettingsFeatureController
     {
+        private const int DEFAULT_QUALITY_LEVEL_INDEX = 1;
         private const string GRAPHICS_QUALITY_DATA_STORE_KEY = "Settings_GraphicsQuality";
 
         private readonly SettingsDropdownModuleView view;
-        private readonly ISettingsDataStore settingsDataStore;
 
-        public GraphicsQualitySettingsController(
-            SettingsDropdownModuleView view,
-            ISettingsDataStore settingsDataStore,
-            int defaultQualityLevel)
+        public GraphicsQualitySettingsController(SettingsDropdownModuleView view)
         {
             this.view = view;
-            this.settingsDataStore = settingsDataStore;
 
             // Clean current options loaded from the settings menu configuration and load names from QualitySettings
             view.DropdownView.Dropdown.options.Clear();
             foreach (string option in QualitySettings.names)
                 view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
 
-            view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(GRAPHICS_QUALITY_DATA_STORE_KEY, defaultQualityLevel);
+            view.DropdownView.Dropdown.value = settingsDataStore.HasKey(GRAPHICS_QUALITY_DATA_STORE_KEY) ?
+                settingsDataStore.GetDropdownValue(GRAPHICS_QUALITY_DATA_STORE_KEY) :
+                DEFAULT_QUALITY_LEVEL_INDEX;
+
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetGraphicsQualitySettings);
             SetGraphicsQualitySettings(view.DropdownView.Dropdown.value);
         }

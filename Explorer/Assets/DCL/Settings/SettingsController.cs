@@ -1,7 +1,9 @@
 using DCL.Diagnostics;
+using DCL.Landscape.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.UI;
+using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,12 +14,16 @@ namespace DCL.Settings
     public class SettingsController : ISection, IDisposable
     {
         private readonly SettingsView view;
+        private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
+        private readonly LandscapeData landscapeData;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
 
-        public SettingsController(SettingsView view)
+        public SettingsController(SettingsView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData)
         {
             this.view = view;
+            this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
+            this.landscapeData = landscapeData;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -66,7 +72,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData));
             }
         }
 

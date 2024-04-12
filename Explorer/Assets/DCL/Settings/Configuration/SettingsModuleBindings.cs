@@ -1,5 +1,7 @@
-﻿using DCL.Settings.ModuleControllers;
+﻿using DCL.Landscape.Settings;
+using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
+using ECS.Prioritization;
 using System;
 using UnityEngine;
 
@@ -11,7 +13,10 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public abstract class SettingsModuleBindingBase
     {
-        public abstract SettingsFeatureController CreateModule(Transform parent);
+        public abstract SettingsFeatureController CreateModule(
+            Transform parent,
+            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            LandscapeData landscapeData);
     }
 
     [Serializable]
@@ -39,7 +44,10 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(Transform parent)
+        public override SettingsFeatureController CreateModule(
+            Transform parent,
+            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            LandscapeData landscapeData)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -70,7 +78,10 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(Transform parent)
+        public override SettingsFeatureController CreateModule(
+            Transform parent,
+            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            LandscapeData landscapeData)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -78,9 +89,9 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case SliderFeatures.SCENE_DISTANCE_FEATURE:
-                    return new SceneDistanceSettingsController(viewInstance);
+                    return new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset);
                 case SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE:
-                    return new EnvironmentDistanceSettingsController(viewInstance);
+                    return new EnvironmentDistanceSettingsController(viewInstance, landscapeData);
                 case SliderFeatures.MOUSE_SENSITIVITY_FEATURE:
                     return new MouseSensitivitySettingsController(viewInstance);
                 case SliderFeatures.MASTER_VOLUME_FEATURE:
@@ -109,16 +120,18 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(Transform parent)
+        public override SettingsFeatureController CreateModule(
+            Transform parent,
+            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            LandscapeData landscapeData)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
-            var settingsDataStore = new SettingsDataStore();
 
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance, settingsDataStore, Config.defaultOptionIndex);
+                    return new GraphicsQualitySettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
                     return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:

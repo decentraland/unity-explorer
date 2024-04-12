@@ -19,6 +19,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -126,7 +127,9 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), realmPartitionSettings.Value, landscapeData.Value);
 
             PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
@@ -170,6 +173,12 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public string[] EmbeddedEmotes { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

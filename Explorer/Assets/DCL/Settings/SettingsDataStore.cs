@@ -1,9 +1,13 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Settings
 {
     public class SettingsDataStore : ISettingsDataStore
     {
+        public bool HasKey(string key) =>
+            PlayerPrefs.HasKey(key);
+
         public void SetToggleValue(string key, bool value, bool save = false)
         {
             PlayerPrefs.SetInt(key, value ? 1 : 0);
@@ -12,8 +16,8 @@ namespace DCL.Settings
                 PlayerPrefs.Save();
         }
 
-        public bool GetToggleValue(string key, bool defaultValue) =>
-            PlayerPrefs.GetInt(key, defaultValue ? 1 : 0) == 1;
+        public bool GetToggleValue(string key) =>
+            PlayerPrefs.GetInt(key) == 1;
 
         public void SetSliderValue(string key, float value, bool save = false)
         {
@@ -23,8 +27,8 @@ namespace DCL.Settings
                 PlayerPrefs.Save();
         }
 
-        public float GetSliderValue(string key, float defaultValue) =>
-            PlayerPrefs.GetFloat(key, defaultValue);
+        public float GetSliderValue(string key) =>
+            PlayerPrefs.GetFloat(key);
 
         public void SetDropdownValue(string key, int value, bool save = false)
         {
@@ -34,8 +38,8 @@ namespace DCL.Settings
                 PlayerPrefs.Save();
         }
 
-        public int GetDropdownValue(string key, int defaultValue) =>
-            PlayerPrefs.GetInt(key, defaultValue);
+        public int GetDropdownValue(string key) =>
+            PlayerPrefs.GetInt(key);
 
         public void Save()
         {

@@ -4,13 +4,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Landscape.Settings;
-using DCL.LOD;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
-using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +21,6 @@ namespace DCL.Quality
     public class QualityContainer : IDisposable
     {
         private readonly List<Action> onDebugViewUpdate = new (50);
-        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
-        private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
-        private ProvidedAsset<LandscapeData> landscapeData;
 
         public IRendererFeaturesCache RendererFeaturesCache { get; init; }
 
