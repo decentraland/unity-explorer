@@ -7,14 +7,14 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : IDisposable
+    public class EngineApiWrapper : IJsApiWrapper
     {
         internal readonly IEngineApi api;
 
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
-        private byte[] lastInput;
+        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
         {
@@ -26,10 +26,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         public void Dispose()
         {
             // Dispose the last input buffer
-            if (lastInput != null)
-                instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
-
-            lastInput = null;
+            lastInput.ReleaseAndDispose();
 
             // Dispose the engine API Implementation
             // It will dispose its buffers
@@ -43,25 +40,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
 
-                var intLength = (int)data.Length;
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 
-                if (lastInput == null || lastInput.Length < intLength)
-                {
-                    // Release the old one
-                    if (lastInput != null)
-                        instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
-
-                    // Rent a new one
-                    lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
-                }
-
-                // V8ScriptItem does not support zero length
-                if (data.Length > 0)
-
-                    // otherwise use the existing one
-                    data.Read(0, data.Length, lastInput, 0);
-
-                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
+                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
                 Profiler.EndThreadProfiling();
 
