@@ -33,4 +33,6 @@ MonoBehaviour:
     value: {fileID: 21300000, guid: dfe2025b3e81f42c5888a2a938ac6706, type: 3}
   - key: base
     value: {fileID: 21300000, guid: abde833615c88424dac272e56b6c5cee, type: 3}
+  - key: exotic
+    value: {fileID: 21300000, guid: 2c7f6680a997d457d840ad57fe292e6e, type: 3}
   defaultIcon: {fileID: 21300000, guid: abde833615c88424dac272e56b6c5cee, type: 3}
