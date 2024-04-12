@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PluginSystem;
 using DCL.Profiles;
 using DCL.Web3;
@@ -136,7 +136,8 @@ namespace Global.Static
                 profileRepository,
                 webRequestController,
                 new IRoomHub.Fake(),
-                null
+                null,
+                new IMessagePipesHub.Fake()
             );
 
             return (staticContainer, sceneSharedContainer);

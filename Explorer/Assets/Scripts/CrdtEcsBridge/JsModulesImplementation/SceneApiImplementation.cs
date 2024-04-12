@@ -1,11 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.SceneApi;
-using System.Threading;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SceneApiImplementation : ISceneApi
     {

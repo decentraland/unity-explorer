@@ -12,7 +12,16 @@ namespace Utility
 
             if (index >= totalLength) { throw new ArgumentOutOfRangeException(nameof(index)); }
 
-            return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source, (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
+            return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.AsReadOnlySpan(), (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
+        }
+
+        public static int Write<T>(this ITypedArray<T> clearScriptArray, Memory<byte> source, ulong length, ulong index)
+        {
+            ulong totalLength = clearScriptArray.Length;
+
+            if (index >= totalLength) { throw new ArgumentOutOfRangeException(nameof(index)); }
+
+            return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory((ReadOnlySpan<byte>)source.Span, (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
         }
 
         private static IntPtr GetPtrWithIndex<T>(this ITypedArray<T> clearScriptArray, IntPtr pData, ulong index)
@@ -21,13 +30,13 @@ namespace Utility
             return new IntPtr(unchecked((long)checked(baseAddr + (index * (clearScriptArray.Size / clearScriptArray.Length)))));
         }
 
-        private static unsafe int WriteByteArrayToUnmanagedMemory<T>(NativeArray<T>.ReadOnly sourceArray, int length, IntPtr pDestination) where T: unmanaged
+        private static unsafe int WriteByteArrayToUnmanagedMemory<T>(ReadOnlySpan<T> sourceArray, int length, IntPtr pDestination) where T: unmanaged
         {
             int sourceLength = sourceArray.Length;
             length = Math.Min(length, sourceLength);
 
             var targetSpan = new Span<T>(pDestination.ToPointer(), length);
-            sourceArray.AsReadOnlySpan().CopyTo(targetSpan);
+            sourceArray.CopyTo(targetSpan);
 
             return length;
         }
