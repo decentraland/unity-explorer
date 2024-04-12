@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections.Generic;
@@ -21,8 +22,9 @@ namespace DCL.Backpack
         private const int ITEMS_PER_ROW = 3;
 
         private readonly HideCategoryGridView view;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IReadOnlyEquippedWearables equippedWearables;
         private readonly NftTypeIconSO categoryIcons;
+
         private readonly List<HideCategoryRowView> usedRows = new (MAX_HIDE_ROWS);
         private readonly List<HideCategoryView> usedHides = new (MAX_HIDE_CATEGORIES);
         private readonly HashSet<string> hidingList = new (MAX_HIDE_CATEGORIES);
@@ -33,11 +35,11 @@ namespace DCL.Backpack
         public HideCategoriesController(
             HideCategoryGridView view,
             IBackpackEventBus backpackEventBus,
-            IBackpackEquipStatusController backpackEquipStatusController,
+            IReadOnlyEquippedWearables equippedWearables,
             NftTypeIconSO categoryIcons)
         {
             this.view = view;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedWearables = equippedWearables;
             this.categoryIcons = categoryIcons;
 
             backpackEventBus.SelectWearableEvent += SetHideCategories;
@@ -85,7 +87,7 @@ namespace DCL.Backpack
 
             ClearPools();
 
-            IWearable? bodyShapeWearable = backpackEquipStatusController.GetEquippedWearableForCategory(WearablesConstants.Categories.BODY_SHAPE);
+            IWearable? bodyShapeWearable = equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE);
 
             if (bodyShapeWearable == null)
             {

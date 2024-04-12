@@ -3,14 +3,12 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Landscape.Interface;
 using DCL.ParcelsService;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens;
 using DCL.Utilities;
-using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using MVC;
@@ -18,7 +16,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Avatar = DCL.Profiles.Avatar;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 namespace DCL.UserInAppInitializationFlow
@@ -27,8 +24,7 @@ namespace DCL.UserInAppInitializationFlow
     {
         private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly ISelfProfile selfProfile;
         private readonly Vector2Int startParcel;
         private readonly bool enableLandscape;
         private readonly ILandscapeInitialization landscapeInitialization;
@@ -43,16 +39,18 @@ namespace DCL.UserInAppInitializationFlow
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             ITeleportController teleportController,
             IMVCManager mvcManager,
-            IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository,
+            ISelfProfile selfProfile,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            ObjectProxy<Entity> cameraEntity, CameraSamplingData cameraSamplingData, bool enableLandscape, ILandscapeInitialization landscapeInitialization)
+            ObjectProxy<Entity> cameraEntity,
+            CameraSamplingData cameraSamplingData,
+            bool enableLandscape,
+            ILandscapeInitialization landscapeInitialization
+        )
         {
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
-            this.web3IdentityCache = web3IdentityCache;
-            this.profileRepository = profileRepository;
+            this.selfProfile = selfProfile;
             this.startParcel = startParcel;
             this.enableLandscape = enableLandscape;
             this.landscapeInitialization = landscapeInitialization;
@@ -83,7 +81,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask LoadCharacterAndWorldAsync(World world, Entity ownPlayerEntity, CancellationToken ct)
         {
-            Profile ownProfile = await GetOwnProfileAsync(ct);
+            Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
 
             loadReport!.ProgressCounter.Value = loadingStatus.SetStage(ProfileLoaded);
 
@@ -127,23 +125,6 @@ namespace DCL.UserInAppInitializationFlow
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately
             return UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
         }
-
-        private async UniTask<Profile> GetOwnProfileAsync(CancellationToken ct)
-        {
-            if (web3IdentityCache.Identity == null) return CreateRandomProfile();
-
-            return await profileRepository.GetAsync(web3IdentityCache.Identity.Address, 0, ct)
-                   ?? CreateRandomProfile();
-        }
-
-        private Profile CreateRandomProfile() =>
-            new (web3IdentityCache.Identity?.Address ?? IProfileRepository.GUEST_RANDOM_ID,  IProfileRepository.PLAYER_RANDOM_ID,
-                new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
         private async UniTask TeleportToSpawnPointAsync(World world, CancellationToken ct)
         {
