@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using Utility;
-using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 using DG.Tweening;
 using System;
@@ -11,6 +9,9 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
+        private const float DISTANCE_THRESHOLD = 0.1f;
+        private const float DEFAULT_HEIGHT = 0.3f;
+
         [field: SerializeField]
         public TMP_Text Username { get; private set; }
 
@@ -57,7 +58,6 @@ namespace DCL.Nametags
 
         private float alpha;
         private float previousDistance;
-        private const float DISTANCE_THRESHOLD = 0.1f;
 
         private readonly Color startingTextColor = new (1,1,1,0);
         private Color textColor = new (1,1,1,1);
@@ -74,9 +74,6 @@ namespace DCL.Nametags
 
         public void ResetElement()
         {
-            usernameFinalPosition = Vector2.zero;
-            verifiedIconFinalPosition = Vector2.zero;
-            verifiedIconInitialPosition = Vector2.zero;
             preferredSize = Vector2.zero;
             backgroundFinalSize = Vector2.zero;
             textContentInitialPosition = Vector2.zero;
@@ -93,7 +90,7 @@ namespace DCL.Nametags
             isClaimedName = hasClaimedName;
             VerifiedIcon.gameObject.SetActive(hasClaimedName);
             Username.text = hasClaimedName ? username : $"{username}<color=#FFFFFF66><font=\"LiberationSans SDF\">#{walletId}</font></color>";
-            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, Username.preferredHeight + chatBubbleConfiguration.nametagMarginOffsetHeight);
+            Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
             MessageContent.color = startingTextColor;
 
             if (hasClaimedName)

@@ -82,7 +82,7 @@ namespace DCL.Chat
             //Force mesh is needed otherwise entryText.GetParsedText() in CalculatePreferredWidth will return the original text
             //of the previous frame
             entryText.ForceMeshUpdate();
-            
+
             contentSizeFitter.SetLayoutVertical();
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(textRectTransform.sizeDelta.y + BACKGROUND_HEIGHT_OFFSET);
