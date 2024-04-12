@@ -10,15 +10,19 @@ namespace CrdtEcsBridge.PoolsProviders
 
         public readonly byte[] Array;
         public readonly int Length;
-        public readonly ISharedPoolsProvider PoolsProvider;
+        public readonly Action<byte[]> ReleaseFunc;
 
-        public PoolableByteArray(byte[] array, int length, ISharedPoolsProvider poolsProvider)
+        public PoolableByteArray(byte[] array, int length, Action<byte[]> releaseFunc)
         {
             Array = array;
             Length = length;
-            PoolsProvider = poolsProvider;
+            ReleaseFunc = releaseFunc;
             IsDisposed = false;
         }
+
+        public Span<byte> Span => new(Array, 0, Length);
+
+        public Memory<byte> Memory => Array.AsMemory(0, Length);
 
         public bool IsDisposed { get; private set; }
 
@@ -28,7 +32,7 @@ namespace CrdtEcsBridge.PoolsProviders
         {
             if (IsEmpty || IsDisposed) return;
 
-            PoolsProvider.ReleaseSerializedStateBytesPool(Array);
+            ReleaseFunc(Array);
 
             IsDisposed = true;
         }

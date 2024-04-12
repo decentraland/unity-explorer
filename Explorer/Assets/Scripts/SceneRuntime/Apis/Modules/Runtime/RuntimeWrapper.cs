@@ -8,7 +8,7 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.Runtime
 {
-    public class RuntimeWrapper : IDisposable
+    public class RuntimeWrapper : IJsApiWrapper
     {
         internal readonly IRuntime api;
 
