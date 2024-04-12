@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Networking;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
@@ -22,7 +23,7 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
-        private readonly byte[] whiteTexturePng = Texture2D.whiteTexture.EncodeToPNG();
+        private readonly byte[] whiteTexturePng = Texture2D.whiteTexture!.EncodeToPNG()!;
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
@@ -35,6 +36,9 @@ namespace DCL.Profiles
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(profile.UserId))
+                throw new ArgumentException("Can't set a profile with an empty UserId");
+
             IIpfsRealm ipfs = realm.Ipfs;
 
             // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
@@ -44,24 +48,8 @@ namespace DCL.Profiles
             string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
             string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
 
-            using var profileDto = GetProfileJsonRootDto.Create();
-            profileDto.CopyFrom(profile);
-            profileDto.avatars[0].avatar.snapshots.body = bodyHash;
-            profileDto.avatars[0].avatar.snapshots.face256 = faceHash;
-
-            var entity = new IpfsProfileEntity
-            {
-                version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new List<ContentDefinition>
-                {
-                    new () { file = "body.png", hash = bodyHash },
-                    new () { file = "face256.png", hash = faceHash },
-                },
-                pointers = new List<string> { profile.UserId },
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                type = IpfsRealmEntityType.Profile.ToEntityString(),
-                metadata = profileDto,
-            };
+            using var profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
+            var entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
 
             files.Clear();
             files[bodyHash] = bodySnapshotTextureFile;
@@ -72,46 +60,58 @@ namespace DCL.Profiles
                 await ipfs.PublishAsync(entity, ct, files);
                 profileCache.Set(profile.UserId, profile);
             }
-            finally
-            {
-                files.Clear();
-            }
+            finally { files.Clear(); }
         }
+
+        private static GetProfileJsonRootDto NewProfileJsonRootDto(Profile profile, string bodyHash, string faceHash)
+        {
+            var profileDto = GetProfileJsonRootDto.Create();
+            profileDto.CopyFrom(profile);
+            profileDto.avatars[0]!.avatar.snapshots.body = bodyHash;
+            profileDto.avatars[0]!.avatar.snapshots.face256 = faceHash;
+            return profileDto;
+        }
+
+        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, GetProfileJsonRootDto profileJsonRootDto, string bodyHash, string faceHash) =>
+            new (string.Empty, profileJsonRootDto)
+            {
+                version = IpfsProfileEntity.DEFAULT_VERSION,
+                content = new List<ContentDefinition>
+                {
+                    new () { file = "body.png", hash = bodyHash },
+                    new () { file = "face256.png", hash = faceHash },
+                },
+                pointers = new List<string> { profile.UserId },
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                type = IpfsRealmEntityType.Profile.ToEntityString(),
+            };
 
         public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(id)) return null;
-
-            Profile? profileInCache = profileCache.Get(id);
-
-            if (profileInCache?.Version > version)
-                return profileInCache;
+            if (TryProfileFromCache(id, version, out var profileInCache)) return profileInCache;
 
             Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
 
-            IIpfsRealm ipfs = realm.Ipfs;
-
-            urlBuilder.Clear();
-
-            urlBuilder.AppendDomain(ipfs.LambdasBaseUrl)
-                      .AppendPath(URLPath.FromString($"profiles/{id}"))
-                      .AppendParameter(new URLParameter("version", version.ToString()));
-
-            URLAddress url = urlBuilder.Build();
-
             try
             {
-                GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct);
+                URLAddress url = Url(id, version);
+                GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
+
+                if (response.UnityWebRequest.result is not UnityWebRequest.Result.Success)
+                    return null;
 
                 using GetProfileJsonRootDto root = await response.CreateFromNewtonsoftJsonAsync<GenericGetRequest, GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
                     serializerSettings: SERIALIZER_SETTINGS);
 
-                if (root.avatars == null) return null;
-                if (root.avatars.Count == 0) return null;
+                var profileDto = root.FirstProfileDto();
+
+                if (profileDto is null)
+                    return null;
 
                 Profile profile = profileInCache ?? new Profile();
-                root.avatars[0].CopyTo(profile);
+                profileDto.CopyTo(profile);
                 profileCache.Set(id, profile);
 
                 return profile;
@@ -123,11 +123,27 @@ namespace DCL.Profiles
 
                 throw;
             }
-            finally
-            {
-                urlBuilder.Clear();
-                //TODO here is no reason to clean it double time, it's cleaned every time in prerequest on 90's line
-            }
+        }
+
+        private URLAddress Url(string id, int version)
+        {
+            urlBuilder.Clear();
+
+            urlBuilder.AppendDomain(realm.Ipfs.LambdasBaseUrl)
+                      .AppendPath(URLPath.FromString($"profiles/{id}"))
+                      .AppendParameter(new URLParameter("version", version.ToString()));
+
+            return urlBuilder.Build();
+        }
+
+        private bool TryProfileFromCache(string id, int version, out Profile? profile)
+        {
+            profile = profileCache.Get(id);
+
+            if (profile == null)
+                return false;
+
+            return profile.Version > version;
         }
     }
 }

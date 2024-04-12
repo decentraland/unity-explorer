@@ -101,13 +101,18 @@ namespace Global.Dynamic
             enableLandscape = true;
 #endif
 
-
             try
             {
                 splashRoot.SetActive(showSplash);
 
-                identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+                identityCache = new LogWeb3IdentityCache(
+                    new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                        )
+                    )
+                );
 
 #if !UNITY_EDITOR
                 string authServerUrl = Debug.isDebugBuild

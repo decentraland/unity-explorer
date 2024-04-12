@@ -17,7 +17,7 @@ namespace DCL.WebRequests.Analytics
                                                                         .AddTrackedMetric<BandwidthDown>()
                                                                         .AddTrackedMetric<BandwidthUp>();
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider);
+            var webRequestController = new LogWebRequestController(new WebRequestController(analyticsContainer, web3IdentityProvider));
             return new WebRequestsContainer { WebRequestController = webRequestController, AnalyticsContainer = analyticsContainer };
         }
     }
