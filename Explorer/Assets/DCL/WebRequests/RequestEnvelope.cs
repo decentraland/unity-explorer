@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace DCL.WebRequests
         private readonly TWebRequestArgs args;
         private readonly WebRequestHeadersInfo? headersInfo;
         private readonly WebRequestSignInfo? signInfo;
+        private readonly ISet<long>? responseCodeIgnores;
 
         private const string NONE = "NONE";
 
@@ -27,7 +29,8 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory,
             WebRequestHeadersInfo? headersInfo,
-            WebRequestSignInfo? signInfo
+            WebRequestSignInfo? signInfo,
+            ISet<long>? responseCodeIgnores = null
         )
         {
             this.initializeRequest = initializeRequest;
@@ -37,6 +40,7 @@ namespace DCL.WebRequests
             this.ReportCategory = reportCategory;
             this.headersInfo = headersInfo;
             this.signInfo = signInfo;
+            this.responseCodeIgnores = responseCodeIgnores;
         }
 
         public override string ToString() =>
@@ -65,6 +69,14 @@ namespace DCL.WebRequests
         public void Dispose()
         {
             headersInfo?.Dispose();
+        }
+
+        public bool ShouldIgnoreResponseError(UnityWebRequest webRequest)
+        {
+            if (webRequest.result is UnityWebRequest.Result.Success)
+                return true;
+
+            return responseCodeIgnores?.Contains(webRequest.responseCode) ?? false;
         }
 
         private void AssignHeaders(UnityWebRequest unityWebRequest, IWeb3IdentityCache web3IdentityCache)

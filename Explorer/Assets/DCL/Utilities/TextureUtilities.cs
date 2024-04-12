@@ -10,6 +10,6 @@ public static class TextureUtilities
         if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
             return GraphicsFormat.A2R10G10B10_UNormPack32;
 
-        return GraphicsFormat.R32G32B32A32_SInt;
+        return GraphicsFormat.R32G32B32A32_SFloat;
     }
 }
