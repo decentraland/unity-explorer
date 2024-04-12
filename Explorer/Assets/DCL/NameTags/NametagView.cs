@@ -148,6 +148,12 @@ namespace DCL.Nametags
             BubblePeak.gameObject.SetActive(true);
             isBubbleExpanded = true;
 
+            //Set message content and calculate the preferred size of the background with the addition of a margin
+            MessageContent.text = messageContent;
+            //Force mesh is needed otherwise entryText.GetParsedText() in CalculatePreferredWidth will return the original text
+            //of the previous frame
+            MessageContent.ForceMeshUpdate();
+
             //Calculate message content preferred size with fixed width
             preferredSize = MessageContent.GetPreferredValues(messageContent, MaxWidth, 0);
             preferredSize.x =  CalculatePreferredWidth(messageContent);
@@ -157,9 +163,6 @@ namespace DCL.Nametags
             textContentInitialPosition.x = preferredSize.x / 2;
             textContentInitialPosition.y = -preferredSize.y;
             MessageContentRectTransform.anchoredPosition = textContentInitialPosition;
-
-            //Set message content and calculate the preferred size of the background with the addition of a margin
-            MessageContent.text = messageContent;
 
             preferredSize.x = MessageContentRectTransform.sizeDelta.x + chatBubbleConfiguration.bubbleMarginOffsetWidth;
             preferredSize.y += chatBubbleConfiguration.bubbleMarginOffsetHeight;
@@ -208,7 +211,7 @@ namespace DCL.Nametags
 
         private float CalculatePreferredWidth(string messageContent)
         {
-            if (Username.GetParsedText().Length > messageContent.Length)
+            if (Username.GetParsedText().Length > (GetEmojisCount(messageContent) > 0 ? MessageContent.GetParsedText().Length + GetEmojisCount(messageContent) : MessageContent.GetParsedText().Length))
                 return Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth;
 
             if(MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x < MaxWidth)
@@ -216,6 +219,9 @@ namespace DCL.Nametags
 
             return MaxWidth;
         }
+
+        private int GetEmojisCount(string message) =>
+            message.Split("\\U0").Length - 1;
 
     }
 }
