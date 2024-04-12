@@ -14,7 +14,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace SceneRuntime.Apis.Modules.Players
 {
-    public class PlayersWrap : IDisposable
+    public class PlayersWrap : IJsApiWrapper
     {
         private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;

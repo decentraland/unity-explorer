@@ -1,204 +1,111 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
-using DCL.Web3.Identities;
+using DCL.Profiles.Self;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Backpack
 {
-    public class BackpackEquipStatusController : IBackpackEquipStatusController
+    public class BackpackEquipStatusController : IDisposable
     {
-        private readonly IProfileRepository profileRepository;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWearableCatalog wearableCatalog;
-        private readonly IEmoteCache emoteCache;
         private readonly Func<(World, Entity)> ecsContextProvider;
-        private readonly Dictionary<string, IWearable?> equippedWearables = new ();
-        private readonly IEmote?[] equippedEmotes = new IEmote[10];
-        private readonly ProfileBuilder profileBuilder = new ();
+        private readonly IBackpackEventBus backpackEventBus;
+        private readonly IEquippedEmotes equippedEmotes;
+        private readonly IEquippedWearables equippedWearables;
+        private readonly ISelfProfile selfProfile;
+
+        private readonly ICollection<string> forceRender;
 
         private World? world;
         private Entity? playerEntity;
         private CancellationTokenSource? publishProfileCts;
 
-        public BackpackEquipStatusController(IBackpackEventBus backpackEventBus,
-            IProfileRepository profileRepository,
-            IWeb3IdentityCache web3IdentityCache,
-            IWearableCatalog wearableCatalog,
-            IEmoteCache emoteCache,
-            Func<(World, Entity)> ecsContextProvider)
+        public BackpackEquipStatusController(
+            IBackpackEventBus backpackEventBus,
+            IEquippedEmotes equippedEmotes,
+            IEquippedWearables equippedWearables,
+            ISelfProfile selfProfile,
+            ICollection<string> forceRender,
+            Func<(World, Entity)> ecsContextProvider
+        )
         {
-            this.profileRepository = profileRepository;
-            this.web3IdentityCache = web3IdentityCache;
-            this.wearableCatalog = wearableCatalog;
-            this.emoteCache = emoteCache;
+            this.backpackEventBus = backpackEventBus;
+            this.equippedEmotes = equippedEmotes;
+            this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
-            backpackEventBus.EquipWearableEvent += SetWearableForCategory;
-            backpackEventBus.UnEquipWearableEvent += RemoveWearableForCategory;
+            this.selfProfile = selfProfile;
+            this.forceRender = forceRender;
+            backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
+            backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
             backpackEventBus.PublishProfileEvent += PublishProfile;
-            backpackEventBus.EquipEmoteEvent += EquipEmote;
-            backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
+            backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
 
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
-                equippedWearables.Add(category, null);
+            backpackEventBus.ForceRenderEvent += SetForceRender;
+        }
+
+        public void Dispose()
+        {
+            backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
+            backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
+            backpackEventBus.PublishProfileEvent += PublishProfile;
+            backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+            backpackEventBus.ForceRenderEvent -= SetForceRender;
+            publishProfileCts?.SafeCancelAndDispose();
+        }
+
+        private void SetForceRender(IReadOnlyCollection<string> categories)
+        {
+            forceRender.Clear();
+
+            foreach (string category in categories)
+                forceRender.Add(category);
         }
 
         private void PublishProfile()
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
-                Profile? profile = await profileRepository.GetAsync(web3IdentityCache.Identity!.Address, 0, CancellationToken.None);
-
-                HashSet<URN> uniqueWearables = HashSetPool<URN>.Get();
-                var uniqueEmotes = new URN[profile!.Avatar.Emotes.Count];
-
-                ConvertEquippedWearablesIntoUniqueUrns(profile!, uniqueWearables);
-                ConvertEquippedEmotesIntoUniqueUrns(profile!, uniqueEmotes);
-
-                profile = profileBuilder.From(profile!)
-                                        .WithWearables(uniqueWearables)
-                                        .WithEmotes(uniqueEmotes)
-                                        .Build();
-
-                HashSetPool<URN>.Release(uniqueWearables);
-
-                await profileRepository.SetAsync(profile, ct);
+                //TODO forceRender
+                await selfProfile.PublishAsync(ct);
+                var profile = await selfProfile.ProfileAsync(ct);
 
                 // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
-                UpdateAvatarInWorld(profile);
+                UpdateAvatarInWorld(profile!);
             }
 
             publishProfileCts = publishProfileCts.SafeRestart();
             PublishProfileAsync(publishProfileCts.Token).Forget();
         }
 
-        public IWearable? GetEquippedWearableForCategory(string category) =>
-            equippedWearables[category];
-
-        public IEmote? GetEquippedEmote(int slot) =>
-            equippedEmotes[slot];
-
-        public int GetEmoteEquippedSlot(string id)
-        {
-            for (var i = 0; i < equippedEmotes.Length; i++)
-                if (equippedEmotes[i]?.GetUrn() == id)
-                    return i;
-
-            return -1;
-        }
-
-        public bool IsWearableEquipped(IWearable wearable) =>
-            equippedWearables[wearable.GetCategory()] == wearable;
-
-        public bool IsEmoteEquipped(IEmote emote)
-        {
-            foreach (IEmote? equippedEmote in equippedEmotes)
-            {
-                if (equippedEmote == null) continue;
-                if (equippedEmote == emote) return true;
-            }
-
-            return false;
-        }
-
-        public int GetEmoteEquippedSlot(IEmote emote)
-        {
-            for (var i = 0; i < equippedEmotes.Length; i++)
-                if (equippedEmotes[i] == emote)
-                    return i;
-
-            return -1;
-        }
-
         //This will retrieve the list of default hides for the current equipped wearables
+
         //Manual hide override will be a separate task
+
         //TODO retrieve logic from old renderer
+
         public List<string> GetCurrentWearableHides()
         {
             List<string> hides = new List<string>();
 
             foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
             {
-                IWearable? wearable = equippedWearables[category];
+                IWearable? wearable = equippedWearables.Wearable(category);
 
                 if (wearable == null)
                     continue;
             }
 
             return hides;
-        }
-
-        private void RemoveWearableForCategory(IWearable wearable) =>
-            equippedWearables[wearable.GetCategory()] = null;
-
-        private void SetWearableForCategory(IWearable wearable) =>
-            equippedWearables[wearable.GetCategory()] = wearable;
-
-        private void EquipEmote(int slot, IEmote emote) =>
-            equippedEmotes[slot] = emote;
-
-        private void UnEquipEmote(int slot, IEmote? emote) =>
-            equippedEmotes[slot] = null;
-
-        private void ConvertEquippedEmotesIntoUniqueUrns(Profile profile, IList<URN> uniqueEmotes)
-        {
-            for (var i = 0; i < equippedEmotes.Length; i++)
-            {
-                IEmote? w = equippedEmotes[i];
-
-                if (w == null) continue;
-
-                URN uniqueUrn = w.GetUrn();
-
-                if (!uniqueUrn.IsExtended())
-                {
-                    if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN urn in profile.Avatar.Emotes)
-                            if (urn.Shorten() == uniqueUrn)
-                                uniqueUrn = urn;
-                    }
-                }
-
-                uniqueEmotes[i] = uniqueUrn;
-            }
-        }
-
-        private void ConvertEquippedWearablesIntoUniqueUrns(Profile profile, HashSet<URN> uniqueWearables)
-        {
-            foreach ((string category, IWearable? w) in equippedWearables)
-            {
-                if (w == null) continue;
-                if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
-
-                URN uniqueUrn = w.GetUrn();
-
-                if (!uniqueUrn.IsExtended())
-                {
-                    if (wearableCatalog.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN profileWearable in profile.Avatar.Wearables)
-                            if (profileWearable.Shorten() == uniqueUrn)
-                                uniqueUrn = profileWearable;
-                    }
-                }
-
-                uniqueWearables.Add(uniqueUrn);
-            }
         }
 
         private void UpdateAvatarInWorld(Profile profile)
@@ -219,20 +126,5 @@ namespace DCL.Backpack
             else
                 world.Add(playerEntity.Value, profile);
         }
-    }
-
-    public interface IBackpackEquipStatusController
-    {
-        IWearable? GetEquippedWearableForCategory(string category);
-
-        IEmote? GetEquippedEmote(int slot);
-
-        int GetEmoteEquippedSlot(string id);
-
-        bool IsWearableEquipped(IWearable wearable);
-
-        bool IsEmoteEquipped(IEmote emote);
-
-        int GetEmoteEquippedSlot(IEmote emote);
     }
 }

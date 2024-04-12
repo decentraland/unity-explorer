@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.UserActions
 {
-    public class UserActionsWrap : IDisposable
+    public class UserActionsWrap : IJsApiWrapper
     {
         private readonly IRestrictedActionsAPI restrictedActionsAPI;
         private readonly Action<string> logWarning;
