@@ -42,12 +42,18 @@ namespace DCL.WebRequests
                 }
                 catch (UnityWebRequestException exception)
                 {
+                    if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
+                        return request;
+
                     exceptionThrown = true;
                     attemptsLeft--;
 
                     // Print verbose
-                    ReportHub.LogError(envelope.ReportCategory, $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL}.\n"
-                                                       + $"Attempt Left: {attemptsLeft}");
+                    ReportHub.LogError(
+                        envelope.ReportCategory,
+                        $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
+                        + $"Attempt Left: {attemptsLeft}"
+                    );
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;
