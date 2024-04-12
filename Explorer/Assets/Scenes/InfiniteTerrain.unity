@@ -19,7 +19,7 @@ RenderSettings:
   m_FogMode: 1
   m_FogDensity: 0.5
   m_LinearFogStart: 0
-  m_LinearFogEnd: 0.01
+  m_LinearFogEnd: 0
   m_AmbientSkyColor: {r: 0.41429335, g: 0.49538925, b: 0.6603774, a: 1}
   m_AmbientEquatorColor: {r: 0.48940903, g: 0.735849, b: 0.6355583, a: 1}
   m_AmbientGroundColor: {r: 0.4197065, g: 0.745283, b: 0.35506406, a: 1}
@@ -465,8 +465,8 @@ MonoBehaviour:
   centerTerrain: 1
   hideTrees: 0
   hideDetails: 0
-  genData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
-  parcelData: {fileID: 11400000, guid: 86bf0204cf3bb75429342452a2a460af, type: 2}
+  genData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
+  parcelData: {fileID: 11400000, guid: 45cecc148a9fbf148864f180a3dcdcc9, type: 2}
 --- !u!4 &1359845491
 Transform:
   m_ObjectHideFlags: 0
@@ -563,7 +563,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0

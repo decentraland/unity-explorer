@@ -139,7 +139,7 @@ namespace DCL.Landscape
                 chunkModel.TerrainData.SetDetailResolution(terrainModel.ChunkSizeInUnits, 32);
 
                 // SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
-                SetTreesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, terrainModel.minParcel, cancellationToken).Forget();
+                // SetTreesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, terrainModel.minParcel, cancellationToken).Forget();
                 SetDetailsAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetTexturesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
 
@@ -205,31 +205,31 @@ namespace DCL.Landscape
             var collidersRoot = new GameObject("BorderColliders");
             collidersRoot.transform.SetParent(rootGo.transform);
 
-            var height = 50.0f; // Height of the collider
-            var thickness = 10.0f; // Thickness of the collider
-
-            // Offsets are 21 units beyond the cliff
-            var offset = 21.0f;
-            // Extend the colliders slightly to ensure corners are fully closed
-            float extension = offset + (thickness / 2);
+            const float HEIGHT = 50.0f; // Height of the collider
+            const float THICKNESS = 10.0f; // Thickness of the collider
 
             // Create colliders along each side of the terrain
-            AddCollider(terrainModel.minInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "North Border Collider", 0);
-            // AddCollider(terrainModel.minInUnits.x - extension, terrainModel.maxInUnits.y + offset, terrainModel.maxInUnits.x - terrainModel.minInUnits.x + (2 * extension), colliderHeight, colliderThickness, "South Border Collider", 0);
-            // AddCollider(terrainModel.minInUnits.x - offset, terrainModel.minInUnits.y - extension, terrainModel.maxInUnits.y - terrainModel.minInUnits.y + (2 * extension), colliderHeight, colliderThickness, "East Border Collider", 90);
-            // AddCollider(terrainModel.maxInUnits.x + offset, terrainModel.minInUnits.y - extension, terrainModel.maxInUnits.y - terrainModel.minInUnits.y + (2 * extension), colliderHeight, colliderThickness, "West Border Collider", 90);
+            AddCollider(terrainModel.minInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "South Border Collider", new int2(0, -1), 0);
+            AddCollider(terrainModel.minInUnits.x, terrainModel.maxInUnits.y, terrainModel.sizeInUnits.x, "North Border Collider", new int2(0, 1), 0);
+            AddCollider(terrainModel.minInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "West Border Collider", new int2(-1, 0), 90);
+            AddCollider(terrainModel.maxInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "East Border Collider", new int2(1, 0), 90);
+            return;
 
-            void AddCollider(float posX, float posY, float length, string name, float rotation)
+            void AddCollider(float posX, float posY, float length, string name, int2 dir,
+                float rotation)
             {
                 var colliderGo = new GameObject(name);
                 colliderGo.transform.SetParent(collidersRoot.transform);
                 BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
 
-                collider.size = new Vector3(length, height, thickness);
-                collider.center = new Vector3(posX + (length / 2), height / 2, posY + (thickness / 2) - 26);
+                collider.size = new Vector3(length, HEIGHT, THICKNESS);
 
-                // Set rotation
-                colliderGo.transform.rotation = Quaternion.Euler(0, rotation, 0);
+                float xShift = dir.x == 0? (length / 2) : (((THICKNESS / 2) + PARCEL_SIZE) * dir.x);
+                float yShift = dir.y == 0? (length / 2) : (((THICKNESS / 2) + PARCEL_SIZE) * dir.y);
+
+                colliderGo.transform.SetPositionAndRotation(
+                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift),
+                    rotation: Quaternion.Euler(0, rotation, 0));
             }
         }
 
@@ -552,6 +552,7 @@ namespace DCL.Landscape
 
             Transform cliffsRoot = new GameObject("Cliffs").transform;
             cliffsRoot.SetParent(rootGo.transform);
+            cliffsRoot.localPosition = Vector3.zero;
 
             CreateCliffCornerAt(new Vector3(terrainModel.minInUnits.x, 0, terrainModel.minInUnits.y), Quaternion.Euler(0, 180, 0));
             CreateCliffCornerAt(new Vector3(terrainModel.maxInUnits.x, 0, terrainModel.maxInUnits.y), Quaternion.identity);
@@ -594,7 +595,6 @@ namespace DCL.Landscape
                 cliffs.Add(side);
             }
 
-            cliffsRoot.localPosition = Vector3.zero;
             return;
 
             void CreateCliffCornerAt(Vector3 position, Quaternion rotation)
