@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw new InvalidOperationException("Room is already stopped");
 
             roomState.Set(IConnectiveRoom.State.Stopping);
-            await AssignNewRoomAndReleasePrevious(NullRoom.INSTANCE, CancellationToken.None);
+            await AssignNewRoomAndReleasePreviousAsync(NullRoom.INSTANCE, CancellationToken.None);
             roomState.Set(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
@@ -123,11 +123,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 return;
             }
 
-            await AssignNewRoomAndReleasePrevious(newRoom, token);
+            await AssignNewRoomAndReleasePreviousAsync(newRoom, token);
             roomState.Set(IConnectiveRoom.State.Running);
         }
 
-        private async UniTask AssignNewRoomAndReleasePrevious(IRoom newRoom, CancellationToken token)
+        private async UniTask AssignNewRoomAndReleasePreviousAsync(IRoom newRoom, CancellationToken token)
         {
             room.Assign(newRoom, out IRoom? previous);
 
