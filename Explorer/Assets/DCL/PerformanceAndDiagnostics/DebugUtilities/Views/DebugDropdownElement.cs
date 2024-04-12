@@ -9,6 +9,7 @@ namespace DCL.DebugUtilities.Views
             DropdownField dropdown = this.Q<DropdownField>();
             dropdown.choices = definition.Choices;
             dropdown.label = definition.Label;
+            dropdown.index = definition.DefaultIndex;
 
             definition.Binding.Connect(this.Q<DropdownField>());
         }
