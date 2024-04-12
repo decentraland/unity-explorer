@@ -16,6 +16,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
 
             public IMessagePipe IslandPipe() =>
                 IMessagePipe.Null.INSTANCE;
+
+            public void Dispose()
+            {
+            }
         }
     }
 }

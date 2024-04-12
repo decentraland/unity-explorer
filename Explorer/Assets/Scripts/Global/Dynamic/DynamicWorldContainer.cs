@@ -98,7 +98,6 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; }
 
-        public IMessagePipesHub MessagePipesHub { get; private set; }
 
         public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
 
@@ -224,7 +223,6 @@ namespace Global.Dynamic
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
-            container.MessagePipesHub = messagePipesHub;
 
             var entityParticipantTable = new EntityParticipantTable();
 
@@ -362,7 +360,7 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 multiplayerEmotesMessageBus,
-                messagePipesHub);
+                container.MessagePipesHub);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
