@@ -1,9 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.SceneApi;
-using System.Threading;
+using System;
 
 namespace CrdtEcsBridge.Engine
 {
@@ -19,12 +17,11 @@ namespace CrdtEcsBridge.Engine
         public void Dispose() { }
 
         public ISceneApi.GetSceneResponse GetSceneInfo() =>
-            new ()
-            {
-                baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
-                contents = sceneData.SceneEntityDefinition.content,
-                cid = sceneData.SceneEntityDefinition.id,
-                metadata = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
-            };
+            new (
+                cid: sceneData.SceneEntityDefinition.id,
+                contents: sceneData.SceneEntityDefinition.content ?? throw new InvalidOperationException("Scene content is null"),
+                metadata: JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
+                baseUrl: sceneData.SceneContent.ContentBaseUrl.Value
+            );
     }
 }
