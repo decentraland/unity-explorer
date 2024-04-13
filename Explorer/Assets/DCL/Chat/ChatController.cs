@@ -246,7 +246,12 @@ namespace DCL.Chat
                     if(profile.ProfilePicture != null)
                         itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
                 }
-                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender);
+                //temporary approach to extract the username without the walledId, will be refactored
+                //once we have the proper integration of the profile retrieval
+                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
+                    ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
+                    : itemData.Sender);
+
                 itemScript.SetItemData(itemData);
 
                 //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
