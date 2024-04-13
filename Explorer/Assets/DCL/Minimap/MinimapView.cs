@@ -22,7 +22,7 @@ namespace DCL.Minimap
         internal Button sideMenuButton { get; private set; }
 
         [field: SerializeField]
-        internal GameObject sideMenu { get; private set; }
+        internal CanvasGroup SideMenuCanvasGroup { get; private set; }
 
         [field: SerializeField]
         internal PixelPerfectMapRendererTextureProvider pixelPerfectMapRendererTextureProvider { get; private set; }

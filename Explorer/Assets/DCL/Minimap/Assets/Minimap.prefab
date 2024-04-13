@@ -1483,15 +1483,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 0f85301a9211845c8b8d39b4a4b05762, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2584,7 +2584,7 @@ MonoBehaviour:
   <mapRendererTargetImage>k__BackingField: {fileID: 6221276209546346655}
   <minimapRendererButton>k__BackingField: {fileID: 7182984698585332529}
   <sideMenuButton>k__BackingField: {fileID: 4843367397424901149}
-  <sideMenu>k__BackingField: {fileID: 2525560023605866206}
+  <SideMenuCanvasGroup>k__BackingField: {fileID: 3561821593630048208}
   <pixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 4908126872230381769}
   <mapRendererVisibleParcels>k__BackingField: 6
   <expandMinimapButton>k__BackingField: {fileID: 2913232251365639464}
@@ -3180,9 +3180,9 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
---- !u!1 &2525560023605866206 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1219915090820484222, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+--- !u!225 &3561821593630048208 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 183720576499080560, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
   m_PrefabInstance: {fileID: 3738714717775602336}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &8345986520417290339 stripped
@@ -3190,7 +3190,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4625324082896956099, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
   m_PrefabInstance: {fileID: 3738714717775602336}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2525560023605866206}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f498ec23c0d60499f90af4b4a9798250, type: 3}

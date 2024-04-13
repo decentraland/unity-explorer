@@ -13,6 +13,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace DCL.Minimap
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker;
+        private const float ANIMATION_TIME = 0.2f;
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
@@ -63,7 +65,8 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-            viewInstance.sideMenu.SetActive(false);
+            viewInstance.SideMenuCanvasGroup.alpha = 0;
+            viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
         }
 
@@ -83,8 +86,18 @@ namespace DCL.Minimap
             viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
         }
 
-        private void OpenSideMenu() =>
-            viewInstance.sideMenu.SetActive(!viewInstance.sideMenu.activeSelf);
+        private void OpenSideMenu()
+        {
+            if (viewInstance.SideMenuCanvasGroup.gameObject.activeInHierarchy)
+            {
+                viewInstance.SideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(false));
+            }
+            else
+            {
+                viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(true);
+                viewInstance.SideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
+            }
+        }
 
         [All(typeof(PlayerComponent))]
         [Query]
