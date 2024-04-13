@@ -13,7 +13,6 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using ECS.Unity.Transforms.Components;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -150,7 +149,7 @@ namespace DCL.Minimap
                     viewInstance.placeNameText.text = placeInfo.title;
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
-                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString(); }
+                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
             }
         }
 
