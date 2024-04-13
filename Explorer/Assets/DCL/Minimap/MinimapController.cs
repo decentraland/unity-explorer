@@ -37,6 +37,8 @@ namespace DCL.Minimap
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
+        private static readonly int EXPAND = Animator.StringToHash("Expand");
+        private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -59,24 +61,31 @@ namespace DCL.Minimap
         protected override void OnViewInstantiated()
         {
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
-            viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
+            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
             viewInstance.sideMenu.SetActive(false);
+            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
         }
 
         private void ExpandMinimap()
         {
-            GameObject gameObject;
-            (gameObject = viewInstance.minimapContainer.gameObject).SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
-            viewInstance.arrowDown.SetActive(!gameObject.activeSelf);
-            viewInstance.arrowUp.SetActive(gameObject.activeSelf);
-            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
+            viewInstance.collapseMinimapButton.gameObject.SetActive(true);
+            viewInstance.expandMinimapButton.gameObject.SetActive(false);
+            viewInstance.minimapRendererButton.gameObject.SetActive(true);
+            viewInstance.minimapAnimator.SetTrigger(EXPAND);
         }
 
-        private void OpenSideMenu()
+        private void CollapseMinimap()
         {
-            viewInstance.sideMenu.SetActive(!viewInstance.sideMenu.activeSelf);
+            viewInstance.collapseMinimapButton.gameObject.SetActive(false);
+            viewInstance.expandMinimapButton.gameObject.SetActive(true);
+            viewInstance.minimapRendererButton.gameObject.SetActive(false);
+            viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
         }
+
+        private void OpenSideMenu() =>
+            viewInstance.sideMenu.SetActive(!viewInstance.sideMenu.activeSelf);
 
         [All(typeof(PlayerComponent))]
         [Query]
