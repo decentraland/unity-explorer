@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
@@ -43,7 +44,7 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IReadOnlyEquippedWearables equippedWearables;
 
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
@@ -68,7 +69,7 @@ namespace DCL.Backpack
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IBackpackEquipStatusController backpackEquipStatusController,
+            IReadOnlyEquippedWearables equippedWearables,
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView, IObjectPool<BackpackItemView> gridItemsPool, World world)
         {
@@ -78,7 +79,7 @@ namespace DCL.Backpack
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedWearables = equippedWearables;
             this.world = world;
             this.gridItemsPool = gridItemsPool;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
@@ -148,14 +149,14 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId)));
+                backpackItemView.OnEquip += EquipItem;
                 backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId)));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
-                backpackItemView.EquippedIcon.SetActive(backpackEquipStatusController.IsWearableEquipped(gridWearables[i]));
-                backpackItemView.IsEquipped = backpackEquipStatusController.IsWearableEquipped(gridWearables[i]);
+                backpackItemView.EquippedIcon.SetActive(equippedWearables.IsEquipped(gridWearables[i]));
+                backpackItemView.IsEquipped = equippedWearables.IsEquipped(gridWearables[i]);
 
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
@@ -173,6 +174,9 @@ namespace DCL.Backpack
 
             AwaitWearablesPromiseForSizeAsync(wearablesPromise, cts.Token).Forget();
         }
+
+        private void EquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
 
         private void BuildRequestParameters(string pageNumber, string pageSize)
         {
@@ -280,8 +284,8 @@ namespace DCL.Backpack
         {
             foreach (KeyValuePair<URN, BackpackItemView> backpackItemView in usedPoolItems)
             {
-                backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.OnEquip -= EquipItem;
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;

@@ -39,6 +39,9 @@ namespace DCL.Profiles
             EyesColor = eyesColor;
             HairColor = hairColor;
             SkinColor = skinColor;
+
+            FaceSnapshotUrl = URLAddress.EMPTY;
+            BodySnapshotUrl = URLAddress.EMPTY;
         }
     }
 }

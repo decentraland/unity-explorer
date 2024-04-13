@@ -5,6 +5,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.AudioClips;
 using DCL.WebRequests.GenericHead;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility.Times;
 
@@ -21,6 +22,8 @@ namespace DCL.WebRequests
                 new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
             )
         );
+
+        public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { 404 };
     }
 
     public static class WebRequestControllerExtensions
@@ -41,7 +44,8 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null
+            WebRequestSignInfo? signInfo = null,
+            ISet<long>? ignoreErrorCodes = null
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest =>
@@ -53,7 +57,8 @@ namespace DCL.WebRequests
                     ct,
                     reportCategory,
                     headersInfo,
-                    signInfo
+                    signInfo,
+                    ignoreErrorCodes
                 )
             );
 
@@ -92,8 +97,10 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            controller.SendAsync(GET_GENERIC, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null,
+            ISet<long>? ignoreErrorCodes = null
+        ) =>
+            controller.SendAsync(GET_GENERIC, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
 
         public static UniTask<GenericPostRequest> PostAsync(
             this IWebRequestController controller,
