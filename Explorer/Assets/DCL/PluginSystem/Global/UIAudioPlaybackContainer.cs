@@ -10,7 +10,7 @@ namespace DCL.PluginSystem.Global
     public class UIAudioPlaybackContainer : DCLContainer<UIAudioPlaybackContainer.AudioPluginSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private ProvidedAsset<UIAudioPlaybackController> uiAudioPlaybackController;
+        private UIAudioPlaybackController uiAudioPlaybackController;
 
         public UIAudioPlaybackContainer(IAssetsProvisioner assetsProvisioner)
         {
@@ -33,8 +33,8 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask InitializeInternalAsync(AudioPluginSettings settings, CancellationToken ct)
         {
-            uiAudioPlaybackController = await assetsProvisioner.ProvideMainAssetAsync(settings.UIAudioPlaybackControllerReference, ct: ct);
-            uiAudioPlaybackController.Value.Initialize();
+            uiAudioPlaybackController = (await assetsProvisioner.ProvideInstanceAsync(settings.UIAudioPlaybackControllerReference, ct: ct)).Value;
+            uiAudioPlaybackController.Initialize();
         }
 
         public class AudioPluginSettings : IDCLPluginSettings
