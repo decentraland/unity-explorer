@@ -146,6 +146,11 @@ namespace DCL.LOD.Systems
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
                     sceneLODInfo.SetCurrentLOD(newLod);
+                    if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
+                    {
+                        scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                        CheckSceneReadiness(sceneDefinitionComponent);
+                    }
                     sceneLODInfo.IsDirty = false;
                 }
 

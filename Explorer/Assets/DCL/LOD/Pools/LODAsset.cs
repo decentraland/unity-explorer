@@ -148,6 +148,7 @@ namespace DCL.LOD
             //For some reason, the instantiation async is not holding the LOD parent reference. Maybe a Unity bug
             Root.transform.SetParent(lodsParent);
             Root.gameObject.SetActive(true);
+            //(Juani) I have removed the scene delimitation of materials to the asset bundle converter to save hiccups.
             //ConfigureSceneMaterial.EnableSceneBounds(Root, in SceneCircumscribedPlanes);
             State = LOD_STATE.SUCCESS;
         }
