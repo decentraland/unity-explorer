@@ -10,7 +10,7 @@ namespace DCL.PluginSystem.Global
     public class UIAudioPlaybackContainer : DCLContainer<UIAudioPlaybackContainer.AudioPluginSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private ProvidedAsset<UIAudioPlaybackController> UIAudioPlaybackController;
+        private ProvidedAsset<UIAudioPlaybackController> uiAudioPlaybackController;
 
         public UIAudioPlaybackContainer(IAssetsProvisioner assetsProvisioner)
         {
@@ -23,20 +23,19 @@ namespace DCL.PluginSystem.Global
             CancellationToken ct)
         {
             var container = new UIAudioPlaybackContainer(assetsProvisioner);
-            return await container.InitializeContainerAsync<UIAudioPlaybackContainer, UIAudioPlaybackContainer.AudioPluginSettings>(settingsContainer, ct, c => UniTask.CompletedTask);
+            return await container.InitializeContainerAsync<UIAudioPlaybackContainer, AudioPluginSettings>(settingsContainer, ct, c => UniTask.CompletedTask);
         }
 
         public override void Dispose()
         {
-            UIAudioPlaybackController.Dispose();
+            uiAudioPlaybackController.Dispose();
         }
 
         protected override async UniTask InitializeInternalAsync(AudioPluginSettings settings, CancellationToken ct)
         {
-            UIAudioPlaybackController = await assetsProvisioner.ProvideMainAssetAsync(settings.UIAudioPlaybackControllerReference, ct: ct);
-            UIAudioPlaybackController.Value.Initialize();
+            uiAudioPlaybackController = await assetsProvisioner.ProvideMainAssetAsync(settings.UIAudioPlaybackControllerReference, ct: ct);
+            uiAudioPlaybackController.Value.Initialize();
         }
-
 
         public class AudioPluginSettings : IDCLPluginSettings
         {
