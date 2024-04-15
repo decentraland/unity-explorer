@@ -265,9 +265,12 @@ namespace DCL.Chat
             return item;
         }
 
+        private bool isChatClosed = false;
+
         private void CloseChat()
         {
-            //TODO: will add logic for the panel closing once it's defined
+            isChatClosed = true;
+            viewInstance.ToggleChat(false);
         }
 
         private void OnInputDeselected(string inputText)
@@ -279,6 +282,12 @@ namespace DCL.Chat
 
         private void OnInputSelected(string inputText)
         {
+            if (isChatClosed)
+            {
+                isChatClosed = false;
+                viewInstance.ToggleChat(true);
+            }
+
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
             world.AddOrGet(playerEntity, new MovementBlockerComponent());
