@@ -39,5 +39,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 onMessageReceived(rm);
             });
         }
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

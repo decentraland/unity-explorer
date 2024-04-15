@@ -23,6 +23,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
 
+        private bool isDisposed;
+
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool) : this(
             dataPipe,
             multiPool,
@@ -47,6 +49,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         ~MessagePipe()
         {
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed) return;
+
+            isDisposed = true;
             dataPipe.DataReceived -= OnDataReceived;
         }
 
