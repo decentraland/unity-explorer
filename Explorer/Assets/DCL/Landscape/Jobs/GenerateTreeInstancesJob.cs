@@ -19,6 +19,7 @@ namespace DCL.Landscape.Jobs
         private NativeParallelHashMap<int2, TreeInstance>.ParallelWriter treeInstances;
         private NativeArray<Random> randoms;
         private readonly bool useRandomSpawnChance;
+        private readonly bool useValidations;
 
         [ReadOnly] private NativeArray<float>.ReadOnly treeNoise;
         [ReadOnly] private ObjectRandomization treeRandomization;
@@ -49,7 +50,8 @@ namespace DCL.Landscape.Jobs
             int chunkDensity,
             in int2 minWorldParcel,
             NativeArray<Random> randoms,
-            bool useRandomSpawnChance = true)
+            bool useRandomSpawnChance = true,
+            bool useValidations = true)
         {
             this.treeNoise = treeNoise;
             this.treeInstances = treeInstances;
@@ -64,6 +66,7 @@ namespace DCL.Landscape.Jobs
             this.minWorldParcel = minWorldParcel;
             this.randoms = randoms;
             this.useRandomSpawnChance = useRandomSpawnChance;
+            this.useValidations = useValidations;
 
             UP = new int2(0, 1);
             RIGHT = new int2(1, 0);
@@ -85,25 +88,30 @@ namespace DCL.Landscape.Jobs
             int2 parcelCoord = WorldToParcelCoord(worldPosition);
             float3 parcelWorldPos = ParcelToWorld(parcelCoord);
 
-            if (!(value > 0) || !emptyParcelResult.TryGetValue(parcelCoord, out EmptyParcelNeighborData item)) return;
+            if (!(value > 0)) return;
 
             Vector2 randomScale = treeRandomization.randomScale;
             float scale = Mathf.Lerp(randomScale.x, randomScale.y, random.NextInt(0, 100) / 100f);
 
-            float radius = treeRadius * scale * value;
+            if (useValidations)
+            {
+                if(!emptyParcelResult.TryGetValue(parcelCoord, out EmptyParcelNeighborData item)) return;
 
-            // We check nearby boundaries (there has to be a simpler way)
-            bool u = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, UP, 0, radius);
-            bool ur = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, UP + RIGHT, 0, radius);
-            bool r = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, RIGHT, 0, radius);
-            bool rd = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, RIGHT + DOWN, 0, radius);
-            bool d = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, DOWN, 0, radius);
-            bool dl = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, DOWN + LEFT, 0, radius);
-            bool l = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, LEFT, 0, radius);
-            bool lu = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, LEFT + UP, 0, radius);
+                float radius = treeRadius * scale * value;
 
-            if (!u || !ur || !r || !rd || !d || !dl || !l || !lu)
-                return;
+                // We check nearby boundaries (there has to be a simpler way)
+                bool u = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, UP, 0, radius);
+                bool ur = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, UP + RIGHT, 0, radius);
+                bool r = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, RIGHT, 0, radius);
+                bool rd = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, RIGHT + DOWN, 0, radius);
+                bool d = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, DOWN, 0, radius);
+                bool dl = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, DOWN + LEFT, 0, radius);
+                bool l = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, LEFT, 0, radius);
+                bool lu = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, LEFT + UP, 0, radius);
+
+                if (!u || !ur || !r || !rd || !d || !dl || !l || !lu)
+                    return;
+            }
 
             Vector2 randomRotation = treeRandomization.randomRotationY * Mathf.Deg2Rad;
             float rotation = Mathf.Lerp(randomRotation.x, randomRotation.y, random.NextInt(0, 100) / 100f);
