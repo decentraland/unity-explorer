@@ -176,10 +176,10 @@ namespace DCL.Landscape
                 };
 
                 chunkModel.TerrainData.SetDetailResolution(terrainModel.ChunkSizeInUnits, 32);
-                SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, worldSeed, cancellationToken).Forget();
+                SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetTexturesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
+                SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, worldSeed, cancellationToken).Forget();
                 SetTreesAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
-                // SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
 
                 // Dig Holes
                 {
@@ -527,8 +527,6 @@ namespace DCL.Landscape
                 return;
 
             Transform cliffsRoot = new GameObject("Cliffs").transform;
-            cliffsRoot.SetParent(rootGo.transform);
-            cliffsRoot.localPosition = Vector3.zero;
 
             CreateCliffCornerAt(new Vector3(terrainModel.minInUnits.x, 0, terrainModel.minInUnits.y), Quaternion.Euler(0, 180, 0));
             CreateCliffCornerAt(new Vector3(terrainModel.maxInUnits.x, 0, terrainModel.maxInUnits.y), Quaternion.identity);
@@ -570,6 +568,9 @@ namespace DCL.Landscape
                 side.SetParent(cliffsRoot, true);
                 cliffs.Add(side);
             }
+
+            cliffsRoot.SetParent(rootGo.transform);
+            cliffsRoot.localPosition = Vector3.zero;
 
             return;
 
