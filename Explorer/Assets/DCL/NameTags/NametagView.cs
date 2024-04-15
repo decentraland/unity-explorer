@@ -143,14 +143,14 @@ namespace DCL.Nametags
         private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage)
         {
             if (isAnimatingIn || isWaiting)
-                await AnimateOut();
+                await AnimateOutAsync();
 
-            await AnimateIn(chatMessage);
+            await AnimateInAsync(chatMessage);
             isAnimatingIn = false;
             isWaiting = true;
             await UniTask.Delay(chatBubbleConfiguration.bubbleIdleTime + AdditionalMessageVisibilityTimeMs(chatMessage), cancellationToken: cts.Token);
             isWaiting = false;
-            await AnimateOut();
+            await AnimateOutAsync();
             isAnimatingOut = false;
         }
 
@@ -158,7 +158,7 @@ namespace DCL.Nametags
             chatMessage.Length * chatBubbleConfiguration.additionalMsPerCharacter;
 
         //TODO: jobify this to improve the performance
-        private async UniTask AnimateIn(string messageContent)
+        private async UniTask AnimateInAsync(string messageContent)
         {
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
@@ -203,7 +203,7 @@ namespace DCL.Nametags
                 );
         }
 
-        private async UniTask AnimateOut()
+        private async UniTask AnimateOutAsync()
         {
             isAnimatingOut = true;
             BubblePeak.gameObject.SetActive(false);
