@@ -146,7 +146,11 @@ namespace DCL.LOD
         public void Dispose()
         {
             foreach (var keyValuePair in SceneLODInfoDebugContents)
+            {
                 ClearContent(keyValuePair.Value);
+                foreach (var debugCubes in DebugCubes)
+                    UnityObjectUtils.SafeDestroy(debugCubes);
+            }
         }
     }
 }
