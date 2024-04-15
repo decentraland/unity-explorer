@@ -57,6 +57,10 @@ namespace DCL.Backpack
         [field: SerializeField]
         public bool IsEquipped { get; set; }
 
+        [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
+
+        public bool IsCompatibleWithBodyShape { get; set; }
+
         private CancellationTokenSource cts;
 
         private void Awake()
@@ -67,6 +71,7 @@ namespace DCL.Backpack
         public void SetEquipButtonsState()
         {
             EquipButton.gameObject.SetActive(!IsEquipped);
+            EquipButton.interactable = IsCompatibleWithBodyShape;
             UnEquipButton.gameObject.SetActive(IsEquipped);
         }
 
@@ -77,6 +82,33 @@ namespace DCL.Backpack
 
             if (IsEquipped)
                 EquippedIcon.gameObject.SetActive(false);
+
+            incompatibleWithBodyShapeContainer.SetActive(!IsCompatibleWithBodyShape);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            AnimateExit();
+            EquippedIcon.gameObject.SetActive(IsEquipped);
+            incompatibleWithBodyShapeContainer.SetActive(false);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (string.IsNullOrEmpty(ItemId)) return;
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
+            switch (eventData.clickCount)
+            {
+                case 1:
+                    OnSelectItem?.Invoke(ItemId);
+                    break;
+                case 2:
+                    if (IsCompatibleWithBodyShape)
+                        OnEquip?.Invoke(ItemId);
+
+                    break;
+            }
         }
 
         private void AnimateHover()
@@ -96,28 +128,6 @@ namespace DCL.Backpack
             ContainerTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
             HoverBackgroundTransform.DOScale(Vector3.zero, ANIMATION_TIME).SetEase(Ease.Flash)
                                     .OnComplete(()=>HoverBackgroundTransform.gameObject.SetActive(false)).ToUniTask(cancellationToken: cts.Token);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            AnimateExit();
-            EquippedIcon.gameObject.SetActive(IsEquipped);
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (string.IsNullOrEmpty(ItemId)) return;
-            if (eventData.button != PointerEventData.InputButton.Left) return;
-
-            switch (eventData.clickCount)
-            {
-                case 1:
-                    OnSelectItem?.Invoke(ItemId);
-                    break;
-                case 2:
-                    OnEquip?.Invoke(ItemId);
-                    break;
-            }
         }
     }
 }

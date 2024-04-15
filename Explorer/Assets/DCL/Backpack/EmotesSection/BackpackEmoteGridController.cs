@@ -226,6 +226,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
 
@@ -282,6 +283,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;
+                backpackItemView.Value.IsCompatibleWithBodyShape = false;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }
