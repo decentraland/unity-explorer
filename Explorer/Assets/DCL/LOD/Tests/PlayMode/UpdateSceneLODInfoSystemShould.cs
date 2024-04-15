@@ -76,7 +76,7 @@ namespace DCL.LOD.Tests
             system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform,
                 textureArrayContainerFactory.Create(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
                 {
-                    256
+                    new TextureArrayResolutionDescriptor(256, 500)
                 }, TextureFormat.BC7, 20));
         }
 

@@ -44,6 +44,44 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 CreateHandler(defaultResolutions[i]);
         }
 
+        public TextureArrayHandler(
+            int minArraySize,
+            IReadOnlyList<TextureArrayResolutionDescriptor> textureArrayResolutionDescriptors,
+            int arrayID,
+            int textureID,
+            TextureFormat textureFormat,
+            IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures,
+            int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+        {
+            this.minArraySize = minArraySize;
+            this.arrayID = arrayID;
+            this.textureID = textureID;
+            this.textureFormat = textureFormat;
+            this.defaultTextures = defaultTextures;
+            this.initialCapacityForEachResolution = initialCapacityForEachResolution;
+
+            handlersByResolution = new Dictionary<int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
+
+            for (int i = 0; i < textureArrayResolutionDescriptors.Count; i++)
+                CreateHandler(textureArrayResolutionDescriptors[i].Resolution,
+                    textureArrayResolutionDescriptors[i].ArraySize);
+        }
+
+        private TextureArraySlotHandler CreateHandler(int resolution, int arraySize)
+        {
+            var slotHandler = new TextureArraySlotHandler(resolution, arraySize, initialCapacityForEachResolution, textureFormat);
+            handlersByResolution[resolution] = slotHandler;
+
+            // When the handler is created initialize the default texture
+            if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution), out var defaultTexture))
+            {
+                var defaultSlot = slotHandler.GetNextFreeSlot();
+                Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+            }
+
+            return slotHandler;
+        }
+
         private TextureArraySlotHandler CreateHandler(int resolution)
         {
             var slotHandler = new TextureArraySlotHandler(resolution, minArraySize, initialCapacityForEachResolution, textureFormat);

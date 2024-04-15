@@ -13,12 +13,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.defaultTextures = defaultTextures;
         }
 
-        private TextureArrayContainer CreateSceneLOD(int minArraySize, TextureFormat textureFormat, IReadOnlyList<int> defaultResolution)
+        private TextureArrayContainer CreateSceneLOD(int minArraySize, TextureFormat textureFormat, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutionAndSizes)
         {
             return new TextureArrayContainer( new TextureArrayMapping[]
             {
-                new (new TextureArrayHandler(minArraySize, BASE_MAP_TEX_ARR_INDEX, BASE_MAP_TEX_ARR,
-                        defaultResolution, textureFormat, new Dictionary<TextureArrayKey, Texture>()),
+                new (new TextureArrayHandler(minArraySize, defaultResolutionAndSizes, BASE_MAP_TEX_ARR_INDEX, BASE_MAP_TEX_ARR,
+                        textureFormat, new Dictionary<TextureArrayKey, Texture>()),
                     MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION)
             });
         }
@@ -69,12 +69,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             };
         }
 
-        public TextureArrayContainer Create(string shaderName, IReadOnlyList<int> defaultResolutions, TextureFormat format, int minArraySize)
+        public TextureArrayContainer Create(string shaderName, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutions, TextureFormat format, int minArraySize)
         {
             return shaderName switch
             {
                 SCENE_TEX_ARRAY_SHADER => CreateSceneLOD(minArraySize, format, defaultResolutions),
-                _ => CreatePBR(defaultResolutions)
+                _ => CreatePBR(new []
+                {
+                    256
+                })
             };
         }
 

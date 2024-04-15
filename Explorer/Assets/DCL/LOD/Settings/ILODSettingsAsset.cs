@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using UnityEngine;
 
 namespace DCL.LOD
@@ -9,10 +10,11 @@ namespace DCL.LOD
         //Threshold for bucket partition (inclusive) 
         public int[] LodPartitionBucketThresholds { get; set; }
 
-        //Texture array settings
-        public int TextureArrayMinSize { get; }
-        int[] DefaultTextureArrayResolutions { get;  }
+        //Texture array settings. Default resolutions and their default sizes
+        TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get;  }
+        public int DefaultArraySize { get; set; }
 
+        
         //Debug features        
         public bool IsColorDebuging { get; set; }
         public Color[] LODDebugColors { get; set; }
