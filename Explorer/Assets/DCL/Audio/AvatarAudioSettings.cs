@@ -27,15 +27,15 @@ namespace DCL.Audio
 
         public void OnBeforeSerialize()
         {
+        }
+
+        public void OnAfterDeserialize()
+        {
             audioClipConfigs.Clear();
             foreach (var clipConfig in audioClipConfigsList)
             {
                 if (clipConfig.Value != null) { audioClipConfigs.Add(clipConfig.Key, clipConfig.Value); }
             }
-        }
-
-        public void OnAfterDeserialize()
-        {
         }
 
         [Serializable]
