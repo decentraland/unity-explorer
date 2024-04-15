@@ -29,7 +29,7 @@ namespace SceneRuntime.Tests
         {
             sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
             poolsProvider = Substitute.For<IInstancePoolsProvider>();
-            poolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+            poolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
         }
 
         [UnityTest]
@@ -50,6 +50,7 @@ namespace SceneRuntime.Tests
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
+                sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
 
                 engineApi.Received().CrdtGetState();
@@ -74,8 +75,8 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-
                 sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
+                sceneRuntime.ExecuteSceneJson();
 
                 var testOk = new TestUtilCheckOk();
                 sceneRuntime.engine.AddHostObject("test", testOk);
@@ -112,7 +113,7 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-
+                sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
 
                 // hot
@@ -141,6 +142,7 @@ namespace SceneRuntime.Tests
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
+                sceneRuntime.ExecuteSceneJson();
 
                 await sceneRuntime.StartScene();
 

@@ -10,7 +10,7 @@ namespace CrdtEcsBridge.PoolsProviders
     {
         ProcessedCRDTMessage[] GetSerializationCrdtMessagesPool(int size);
 
-        byte[] GetSerializedStateBytesPool(int size);
+        PoolableByteArray GetSerializedStateBytesPool(int size);
 
         void ReleaseSerializationCrdtMessagesPool(ProcessedCRDTMessage[] messages);
 

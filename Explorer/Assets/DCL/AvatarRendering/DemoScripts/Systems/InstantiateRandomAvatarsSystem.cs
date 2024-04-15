@@ -33,6 +33,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -68,6 +69,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private int avatarIndex;
 
         private bool requestDone;
+        private int lastIndexInstantiated;
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
 
         internal InstantiateRandomAvatarsSystem(
@@ -94,6 +96,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
                         .AddSingleButton("Destroy Random Amount of Avatars", DestroyRandomAmountOfAvatars)
                         .AddSingleButton("Randomize Wearables of Avatars", RandomizeWearablesOfAvatars);
+
+            debugBuilder.AddWidget("Avatar Creator")
+                .AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
+                .AddStringFieldsWithConfirmation(3, "Instantiate Female", InstantiateFemaleAvatar);
         }
 
         public override void Initialize()
@@ -101,6 +107,22 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             camera = World.CacheCamera();
             defaultWearableState = World.CacheDefaultWearablesState();
             settings = World.CacheCharacterSettings();
+        }
+
+        private void InstantiateMaleAvatar(string[] urn)
+        {
+            var cameraPosition = camera.GetCameraComponent(World).Camera.transform.position;
+            CreateAvatar(settings.GetCharacterSettings(World), cameraPosition.x, cameraPosition.z, urn.Where(s => !string.IsNullOrEmpty(s)).ToList(),
+                BodyShape.MALE, lastIndexInstantiated, 1);
+            lastIndexInstantiated++;
+        }
+
+        private void InstantiateFemaleAvatar(string[] urn)
+        {
+            var cameraPosition = camera.GetCameraComponent(World).Camera.transform.position;
+            CreateAvatar(settings.GetCharacterSettings(World), cameraPosition.x, cameraPosition.z, urn.Where(s => !string.IsNullOrEmpty(s)).ToList(),
+                BodyShape.FEMALE, lastIndexInstantiated, 1);
+            lastIndexInstantiated++;
         }
 
         private void SetDebugViewActivity()
