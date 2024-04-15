@@ -10,6 +10,10 @@ namespace DCL.Profiling
 
         ulong HiccupCountInBuffer { get; }
 
+        long MinFrameTimeValueInNS { get; }
+
+        long MaxFrameTimeValueInNS { get; }
+
         void CheckHiccup();
     }
 }
