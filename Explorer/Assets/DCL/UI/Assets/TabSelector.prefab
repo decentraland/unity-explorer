@@ -109,15 +109,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -315,13 +317,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccba16ac233d430cae9f8130065c01d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  section: 0
   <TabSelectorToggle>k__BackingField: {fileID: 145861463570281605}
   <SelectedBackground>k__BackingField: {fileID: 8947677506439260397}
   <UnselectedImage>k__BackingField: {fileID: 7260612469130449532}
   <SelectedImage>k__BackingField: {fileID: 782066126112996038}
   <UnselectedText>k__BackingField: {fileID: 3388056574719437513}
   <SelectedText>k__BackingField: {fileID: 85566942900833079}
+  TabClickAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &3388056574719437513
 GameObject:
   m_ObjectHideFlags: 0
@@ -431,15 +433,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0

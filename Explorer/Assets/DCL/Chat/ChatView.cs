@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Emoji;
 using DCL.UI;
 using MVC;
@@ -55,6 +56,19 @@ namespace DCL.Chat
 
         [field: SerializeField]
         public Button CloseChatButton { get; private set; }
+
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig AddEmojiAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig OpenEmojiPanelAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ChatSendMessageAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ChatInputTextAudio { get; private set; }
 
         private CancellationTokenSource cts;
 

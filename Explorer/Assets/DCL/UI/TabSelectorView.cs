@@ -1,3 +1,5 @@
+using DCL.Audio;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,5 +24,25 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject SelectedText { get; private set; }
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig TabClickAudio { get; private set; }
+
+
+        private void OnEnable()
+        {
+            TabSelectorToggle.onValueChanged.AddListener(OnToggle);
+        }
+
+        private void OnDisable()
+        {
+            TabSelectorToggle.onValueChanged.RemoveListener(OnToggle);
+        }
+
+        private void OnToggle(bool toggle)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
+        }
     }
 }
