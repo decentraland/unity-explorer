@@ -695,17 +695,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             ""bindings"": [
                 {
                     ""name"": """",
-                    ""id"": ""50f885b0-d8b8-495c-9540-69caaee35ddc"",
-                    ""path"": ""<Keyboard>/numpadMinus"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ZoomOut"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""eada956f-dc86-4f10-a3d7-d619e2d92dec"",
                     ""path"": ""<Gamepad>/dpad/down"",
                     ""interactions"": """",
@@ -734,17 +723,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": ""NormalizeVector2"",
                     ""groups"": """",
                     ""action"": ""Zoom"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""4ed60f4f-b125-41d6-820f-4cdc66b576ce"",
-                    ""path"": ""<Keyboard>/numpadPlus"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ZoomIn"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -797,17 +775,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""id"": ""4b0f106f-7c48-4cb3-ace2-977e83ec55a0"",
                     ""path"": ""<XInputController>/rightStickPress"",
                     ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Lock"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""4569dfa2-a88b-4f2e-bbe3-6d7152e46ac9"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": ""MultiTap"",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Lock"",
@@ -1525,7 +1492,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""9e67da5b-8eaa-4e21-9ef3-29c1e6603e89"",
-                    ""path"": ""*/{Submit}"",
+                    ""path"": ""<Keyboard>/enter"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse;Gamepad;Touch;Joystick;XR"",

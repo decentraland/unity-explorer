@@ -27,7 +27,7 @@ namespace DCL.Input.Systems
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private const int MOUSE_BOUNDS_OFFSET = 10;
-        private static readonly Vector2 CURSOR_OFFSET = new (20, -20);
+        private static readonly Vector2 CURSOR_OFFSET = new (0, 15);
 
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
