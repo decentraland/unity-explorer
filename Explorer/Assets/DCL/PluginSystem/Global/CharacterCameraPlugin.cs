@@ -9,9 +9,11 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
+using DCL.DebugUtilities;
 using ECS.Prioritization.Components;
 using System.Threading;
 using UnityEngine;
+using ApplyCinemachineSettingsSystem = DCL.Character.CharacterCamera.Systems.ApplyCinemachineSettingsSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -22,14 +24,16 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly DebugContainerBuilder debugBuilder;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
 
-        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, ExposedCameraData exposedCameraData)
+        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, ExposedCameraData exposedCameraData, DebugContainerBuilder debugBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmSamplingData = realmSamplingData;
             this.exposedCameraData = exposedCameraData;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose()
@@ -76,6 +80,7 @@ namespace DCL.PluginSystem.Global
             ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
+            ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder);
         }
     }
 }
