@@ -78,7 +78,14 @@ namespace ECS.Unity.Transforms.Systems
                 return;
             }
 
-            TransformComponent parentComponent = World.Get<TransformComponent>(parentEntity);
+            ref TransformComponent parentComponent = ref World.TryGetRef<TransformComponent>(parentEntity, out bool success);
+
+            if (!success)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntityReference.Entity} to parent {parentEntity} that doesn't have a TransformComponent");
+                return;
+            }
+
             childComponent.Transform.SetParent(parentComponent.Transform, true);
             childComponent.Parent = World.Reference(parentEntity);
             parentComponent.Children.Add(childEntityReference);

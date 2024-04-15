@@ -16,12 +16,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(UITransformSortingSystem))]
     [LogCategory(ReportCategory.SCENE_UI)]
-    [ThrottlingEnabled]
     public partial class UITransformUpdateSystem : BaseUnityLoopSystem
     {
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
-        private bool? lastIsCurrentScene;
 
         public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
         {
@@ -33,11 +31,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             UpdateUITransformQuery(World);
 
-            if (lastIsCurrentScene != sceneStateProvider.IsCurrent)
-            {
-                lastIsCurrentScene = sceneStateProvider.IsCurrent;
-                CheckUITransformOutOfSceneQuery(World);
-            }
+            CheckUITransformOutOfSceneQuery(World);
         }
 
         [Query]
