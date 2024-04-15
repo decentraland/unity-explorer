@@ -4,7 +4,6 @@ using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.LifeCycle.Components;
@@ -125,6 +124,9 @@ namespace SceneRunner.EmptyScene
 
         UniTask ISceneFacade.Tick(float dt) =>
             UniTask.CompletedTask;
+
+        public bool Contains(Vector2Int parcel) =>
+            args.ShortInfo.BaseParcel == parcel;
 
         public static EmptySceneFacade Create(Args args)
         {
