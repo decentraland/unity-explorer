@@ -86,7 +86,7 @@ namespace DCL.LOD.Systems
             {
                 if (sceneLODInfo.GetCurrentLOD().TryFinalizeInstantiation(sceneDefinitionComponent.Definition.id,
                         sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
-                        lodTextureArrayContainer))
+                        lodTextureArrayContainer, lodsTransformParent))
                 {
                     sceneLODInfo.InstantiatedCurrentLOD();
                     scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);

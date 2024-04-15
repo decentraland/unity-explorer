@@ -122,12 +122,14 @@ namespace DCL.LOD
             State = LOD_STATE.WAITING_FINALIZATION;
         }
 
-        public bool TryFinalizeInstantiation(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
+        public bool TryFinalizeInstantiation(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer, Transform lodTransformParent)
         {
             if (!AsyncInstantiation.isDone)
                 return false;
 
             Root = AsyncInstantiation.Result[0];
+            //NOTE: For some reason, the parent is lost on the async instantiation. Looks like a Unity bug
+            Root.transform.SetParent(lodTransformParent);
             if (!LodKey.Level.Equals(0))
                 Slots = LODUtils.ApplyTextureArrayToLOD(sceneID,
                     parcelCoord, Root, lodTextureArrayContainer);
