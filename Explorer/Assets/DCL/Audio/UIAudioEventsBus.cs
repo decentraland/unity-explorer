@@ -16,6 +16,7 @@ namespace DCL.Audio
 
         public event Action<AudioClipConfig> PlayUIAudioEvent;
         public event Action<AudioClipConfig, bool> PlayLoopingUIAudioEvent;
+        public event Action<float> PlayDefaultAudioEvent;
 
 
         public void Dispose() { }
@@ -33,6 +34,11 @@ namespace DCL.Audio
         public void SendStopPlayingLoopingAudioEvent(AudioClipConfig audioClipConfig)
         {
             if (audioClipConfig != null) { PlayLoopingUIAudioEvent?.Invoke(audioClipConfig, false); }
+        }
+
+        public void SendPlayWorldAudioEvent(float volume)
+        {
+            PlayDefaultAudioEvent?.Invoke(volume);
         }
     }
 }

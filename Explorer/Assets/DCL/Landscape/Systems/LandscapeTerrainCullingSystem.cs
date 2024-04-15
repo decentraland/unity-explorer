@@ -14,6 +14,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
+using DCL.Audio;
 
 namespace DCL.Landscape.Systems
 {
@@ -115,9 +116,19 @@ namespace DCL.Landscape.Systems
 
                 IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
 
+                if (terrainVisibilities[0].IsAtDistance)
+                {
+                    var distance = Mathf.Clamp(terrainVisibilities[0].SqrDistance, 0, 100);
+                    float volume = 1f - Mathf.InverseLerp(0, 100, distance);
+
+                    UIAudioEventsBus.Instance.SendPlayWorldAudioEvent(volume);
+                }
+
                 for (var i = 0; i < terrainVisibilities.Length; i++)
                 {
                     VisibleBounds visibility = terrainVisibilities[i];
+
+
 
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
@@ -150,6 +161,7 @@ namespace DCL.Landscape.Systems
                 jobHandle = job.Schedule(terrainVisibilities.Length, 32, jobHandle);
                 Profiler.EndSample();
             }
+
         }
 
         private Bounds GetTerrainBoundsInWorldSpace(Terrain terrain)

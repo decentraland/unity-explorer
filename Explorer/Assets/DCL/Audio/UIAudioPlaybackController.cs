@@ -20,6 +20,8 @@ namespace DCL.Audio
         private float fadeDuration = 1.5f;
         [SerializeField]
         private AudioSettings audioSettings;
+        [SerializeField]
+        private AudioSource TestWorldAudioSource;
 
 
         private Tweener loopingAudioTweener;
@@ -38,6 +40,16 @@ namespace DCL.Audio
         {
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayLoopingUIAudioEvent += OnPlayLoopingUIAudioEvent;
+            UIAudioEventsBus.Instance.PlayDefaultAudioEvent += OnPlayDefaultAudio;
+        }
+
+        private void OnPlayDefaultAudio(float volume)
+        {
+            TestWorldAudioSource.volume = volume;
+            if (!TestWorldAudioSource.isPlaying)
+            {
+                TestWorldAudioSource.Play();
+            }
         }
 
         private void OnPlayLoopingUIAudioEvent(AudioClipConfig audioClipConfig, bool startLoop)
