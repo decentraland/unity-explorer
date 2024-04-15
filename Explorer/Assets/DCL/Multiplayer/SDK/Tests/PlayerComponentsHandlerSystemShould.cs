@@ -25,6 +25,7 @@ namespace DCL.Multiplayer.SDK.Tests
         private Entity entity;
         private ISceneStateProvider sceneStateProvider;
         private Transform fakeCharacterUnityTransform;
+        private Transform fakeMainCharacterUnityTransform;
         private World sceneWorld;
 
         [SetUp]
@@ -44,11 +45,13 @@ namespace DCL.Multiplayer.SDK.Tests
             sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
             scenesCache.Add(sceneFacade, new[] { sceneFacade.Info.BaseParcel });
 
-            ICharacterObject characterObject = Substitute.For<ICharacterObject>();
-            system = new PlayerComponentsHandlerSystem(world, scenesCache, characterObject);
-
             fakeCharacterUnityTransform = new GameObject("fake-character").transform;
-            fakeCharacterUnityTransform.position = Vector3.one;
+            fakeMainCharacterUnityTransform = new GameObject("fake-main-character").transform;
+            ICharacterObject characterObject = Substitute.For<ICharacterObject>();
+            characterObject.Transform.Returns(fakeMainCharacterUnityTransform.transform);
+            fakeMainCharacterUnityTransform.transform.position = Vector3.one;
+
+            system = new PlayerComponentsHandlerSystem(world, scenesCache, characterObject);
 
             entity = world.Create();
             AddTransformToEntity(entity);
@@ -65,6 +68,7 @@ namespace DCL.Multiplayer.SDK.Tests
         public void SetupPlayerIdentityDataForPlayerInsideScene()
         {
             sceneStateProvider.IsCurrent.Returns(true);
+            fakeCharacterUnityTransform.position = Vector3.one;
 
             world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
                     BodyShape.MALE,
@@ -75,18 +79,66 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out playerIdentityDataComponent));
+            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
             Assert.AreEqual(playerIdentityDataComponent.Address, FAKE_USER_ID);
             Assert.IsNotNull(playerIdentityDataComponent.CRDTEntity);
             Assert.IsTrue(sceneWorld.TryGet(playerIdentityDataComponent.SceneWorldEntity, out playerIdentityDataComponent));
         }
 
-        // NotSetupPlayerIdentityDataForPlayersOutsideScene
-        // RemovePlayerIdentityDataForPlayersLeavingScene
+        [Test]
+        public void NotSetupPlayerIdentityDataForPlayersOutsideScene()
+        {
+            sceneStateProvider.IsCurrent.Returns(true);
+            fakeCharacterUnityTransform.position = Vector3.one * 17;
+
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+        }
+
+        [Test]
+        public void RemovePlayerIdentityDataForPlayersLeavingScene()
+        {
+            sceneStateProvider.IsCurrent.Returns(true);
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.Has<PlayerIdentityDataComponent>(entity));
+
+            // Move player transform outside scene
+            fakeCharacterUnityTransform.position = Vector3.one * 17;
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+        }
+
         // RemovePlayerIdentityDataForPlayersOnPreviousScene
         // TrackReservedEntitiesCorrectly
     }
