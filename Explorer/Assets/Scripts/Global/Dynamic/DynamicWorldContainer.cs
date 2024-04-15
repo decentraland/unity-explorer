@@ -15,6 +15,7 @@ using DCL.Input;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -199,23 +200,26 @@ namespace Global.Dynamic
                 landscapePlugin
             );
 
+            var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
+            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
+
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.WebRequestsContainer.WebRequestController, realmData);
 
             var archipelagoIslandRoom = new RenewableArchipelagoIslandRoom(
                 () => new ForkArchipelagoIslandRoom(
                     currentAdapterAddress,
-                    (url) => new ArchipelagoIslandRoom(
+                    _ => new ArchipelagoIslandRoom(
                         staticContainer.CharacterContainer.CharacterObject,
                         identityCache,
                         multiPool,
                         currentAdapterAddress
                     ),
-                    (url) => throw new NotImplementedException($"https:// not implemented: {url}")
+                    _ => new FixedConnectiveRoom(
+                        staticContainer.WebRequestsContainer.WebRequestController,
+                        currentAdapterAddress
+                    )
                 )
             );
-
-            var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
-            var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
             container.RealmController = new RealmController(
                 identityCache,
