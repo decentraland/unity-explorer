@@ -35,7 +35,6 @@ namespace DCL.Backpack
 
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
-        private bool initialLoadingIsDone;
         private BackpackSections currentSection = BackpackSections.Avatar;
 
         public BackpackController(
@@ -152,17 +151,12 @@ namespace DCL.Backpack
                 if (avatarEmote.IsNullOrEmpty()) continue;
                 backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i));
             }
-
-            initialLoadingIsDone = true;
         }
 
         public void Activate()
         {
-            if (!initialLoadingIsDone)
-            {
-                profileLoadingCts = new CancellationTokenSource();
-                AwaitForProfileAsync(profileLoadingCts).Forget();
-            }
+            profileLoadingCts = new CancellationTokenSource();
+            AwaitForProfileAsync(profileLoadingCts).Forget();
 
             backpackSections[currentSection].Activate();
 
@@ -172,10 +166,8 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            if (!initialLoadingIsDone)
-                profileLoadingCts.SafeCancelAndDispose();
-            else
-                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
+            profileLoadingCts.SafeCancelAndDispose();
+            backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
 
             foreach (ISection backpackSectionsValue in backpackSections.Values)
                 backpackSectionsValue.Deactivate();
