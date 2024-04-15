@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -25,15 +26,15 @@ namespace DCL.Audio
 
         public void OnBeforeSerialize()
         {
+        }
+
+        public void OnAfterDeserialize()
+        {
             audioCategorySettingsDictionary.Clear();
             foreach (var audioCategory in audioCategorySettings)
             {
                 if (audioCategory.value != null) { audioCategorySettingsDictionary.Add(audioCategory.key, audioCategory.value); }
             }
-        }
-
-        public void OnAfterDeserialize()
-        {
         }
     }
 
