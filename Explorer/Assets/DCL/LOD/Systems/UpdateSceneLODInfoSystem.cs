@@ -82,9 +82,9 @@ namespace DCL.LOD.Systems
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            if (sceneLODInfo.GetCurrentLOD()!.State == LODAsset.LOD_STATE.WAITING_FINALIZATION)
+            if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_FINALIZATION)
             {
-                if (sceneLODInfo.GetCurrentLOD()!.TryFinalizeInstantiation(sceneDefinitionComponent.Definition.id,
+                if (sceneLODInfo.GetCurrentLOD().TryFinalizeInstantiation(sceneDefinitionComponent.Definition.id,
                         sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
                         lodTextureArrayContainer))
                 {
@@ -105,8 +105,8 @@ namespace DCL.LOD.Systems
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            if (sceneLODInfo.GetCurrentLOD()!.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION)
-                sceneLODInfo.GetCurrentLOD()!.EnableInstationFinalization();
+            if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_INSTANTIATION)
+                sceneLODInfo.GetCurrentLOD().EnableInstationFinalization();
         }
 
         [Query]
@@ -162,6 +162,8 @@ namespace DCL.LOD.Systems
             byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+
+            //TODO (Juani) : Remove this hardcoded number once we have only two lod levels
             sceneLODInfo.CurrentLODLevel = (byte)(sceneLODCandidate > 0 ? 3 : 0);
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
@@ -185,23 +187,22 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
                 sceneLODInfo.IsDirty = false;
                 CheckSceneReadiness(sceneDefinitionComponent);
+                return;
             }
-            else
-            {
-                string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-                var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-                var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
-                    platformLODKey,
-                    permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
-                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                    manifest: manifest);
+            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-                sceneLODInfo.CurrentLODPromise =
-                    Promise.Create(World, assetBundleIntention, partitionComponent);
+            var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
+                platformLODKey,
+                permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
+                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                manifest: manifest);
 
-                sceneLODInfo.IsDirty = true;
-            }
+            sceneLODInfo.CurrentLODPromise =
+                Promise.Create(World, assetBundleIntention, partitionComponent);
+
+            sceneLODInfo.IsDirty = true;
         }
 
         private void CheckSceneReadiness(SceneDefinitionComponent sceneDefinitionComponent)

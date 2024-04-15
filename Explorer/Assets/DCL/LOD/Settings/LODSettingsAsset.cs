@@ -13,6 +13,7 @@ namespace DCL.LOD
 
         [field: SerializeField] public int DefaultArraySize { get; set; } = 100;
 
+        //TODO (Juani): No textures higher than should arrive. Check in AB converter
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {
             new (256, 500), new (512, 100), new (1024, 100)

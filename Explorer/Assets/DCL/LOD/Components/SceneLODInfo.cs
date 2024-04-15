@@ -12,11 +12,10 @@ namespace DCL.LOD.Components
     public struct SceneLODInfo
     {
         public byte CurrentLODLevel;
-        internal LODAsset? CurrentLOD;
-        internal LODAsset? LastSuccessfulLOD;
+        internal LODAsset CurrentLOD;
+        internal LODAsset LastSuccessfulLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
-        
         
         public void Dispose(World world)
         {
@@ -39,24 +38,25 @@ namespace DCL.LOD.Components
 
         public void SetCurrentLOD(LODAsset newLod)
         {
-            if (newLod.State == LODAsset.LOD_STATE.FAILED)
-                ProfilingCounters.Failling_LOD_Amount.Value++;
-
             CurrentLOD = newLod;
+            InstantiatedCurrentLOD();
         }
 
         public void InstantiatedCurrentLOD()
         {
-            LastSuccessfulLOD?.Release();
-            LastSuccessfulLOD = CurrentLOD;
+            if (CurrentLOD.State == LODAsset.LOD_STATE.SUCCESS)
+            {
+                LastSuccessfulLOD?.Release();
+                LastSuccessfulLOD = CurrentLOD;
+            }
         }
 
-        public LODAsset? GetCurrentLOD()
+        public LODAsset GetCurrentLOD()
         {
             return CurrentLOD;
         }
 
-        public LODAsset? GetCurrentSuccessfulLOD()
+        public LODAsset GetCurrentSuccessfulLOD()
         {
             return LastSuccessfulLOD;
         }
@@ -65,8 +65,6 @@ namespace DCL.LOD.Components
         {
             CurrentLOD = LastSuccessfulLOD;
         }
-
-
     }
 
 }
