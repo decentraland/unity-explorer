@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -32,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
 
-        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool) : this(
+        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, IRealmData realmData) : this(
             new LogAdapterAddresses(
                 new RefinedAdapterAddresses(
                     new WebRequestsAdapterAddresses(webRequestController)
@@ -45,6 +46,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                     () => new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Shared!)
                 ).WithLog(),
+                realmData,
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
                 multiPool
             ).WithLog(),

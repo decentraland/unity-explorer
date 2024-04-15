@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.Typing;
 using Decentraland.Common;
 using Decentraland.Kernel.Comms.V3;
+using ECS;
 using LiveKit.client_sdk_unity.Runtime.Scripts.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -21,12 +22,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
     public class LiveConnectionArchipelagoSignFlow : IArchipelagoSignFlow
     {
         private readonly IArchipelagoLiveConnection connection;
+        private readonly IRealmData realmData;
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
 
-        public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IMemoryPool memoryPool, IMultiPool multiPool)
+        public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IRealmData realmData, IMemoryPool memoryPool, IMultiPool multiPool)
         {
             this.connection = connection;
+            this.realmData = realmData;
             this.memoryPool = memoryPool;
             this.multiPool = multiPool;
         }
@@ -105,6 +108,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                 using SmartWrap<Heartbeat> heartbeat = multiPool.TempResource<Heartbeat>();
                 heartbeat.value.Position = position.value;
+                //TODO fix
+                heartbeat.value.DesiredRoom = realmData.CommsAdapter;
 
                 using SmartWrap<ClientPacket> clientPacket = multiPool.TempResource<ClientPacket>();
                 clientPacket.value.ClearMessage();

@@ -206,7 +206,8 @@ namespace Global.Dynamic
                     staticContainer.CharacterContainer.CharacterObject,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
-                    multiPool
+                    multiPool,
+                    realmData
                 )
             );
 
@@ -259,7 +260,7 @@ namespace Global.Dynamic
 
             IRealmNavigator realmNavigator = new ChangeRoomsRealmNavigator(
                 new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController),
-                container.RoomHub.Reconnect
+                () => { } //container.RoomHub.Reconnect TODO
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>

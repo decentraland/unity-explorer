@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.Systems;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
@@ -65,6 +66,7 @@ namespace DCL.Multiplayer.Connections.Demo
                         memoryPool
                     )
                 ).WithLog(),
+                new IRealmData.Fake(),
                 memoryPool,
                 multiPool
             ).WithLog();
