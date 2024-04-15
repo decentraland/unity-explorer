@@ -2,6 +2,7 @@ using Cinemachine;
 using DG.Tweening;
 using System;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace DCL.CharacterPreview
 {
@@ -29,6 +30,14 @@ namespace DCL.CharacterPreview
             transform.position = new Vector3(0, 5000, 0);
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
+
+#if UNITY_STANDALONE_OSX
+            camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
+            if (cameraData)
+            {
+                cameraData.renderPostProcessing = false;
+            }
+#endif
         }
 
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)

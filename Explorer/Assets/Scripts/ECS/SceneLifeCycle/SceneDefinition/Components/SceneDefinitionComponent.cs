@@ -49,17 +49,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IsEmpty = true;
             IpfsPath = new IpfsPath(id, URLDomain.EMPTY);
 
-            Definition = new SceneEntityDefinition
-            {
-                id = id,
-                metadata = new SceneMetadata
+            Definition = new SceneEntityDefinition(
+                id,
+                new SceneMetadata
                 {
                     main = "bin/game.js",
                     scene = EMPTY_METADATA,
-                },
-
+                }
                 // content will be filled by the loading system
-            };
+            );
+
             //No runtime version in metadata
             IsSDK7 = false;
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);

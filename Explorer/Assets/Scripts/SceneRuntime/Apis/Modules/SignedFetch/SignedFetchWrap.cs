@@ -11,7 +11,7 @@ using Utility.Times;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch
 {
-    public class SignedFetchWrap : IDisposable
+    public class SignedFetchWrap : IJsApiWrapper
     {
         private readonly IWebRequestController webController;
         private readonly CancellationTokenSource cancellationTokenSource = new ();

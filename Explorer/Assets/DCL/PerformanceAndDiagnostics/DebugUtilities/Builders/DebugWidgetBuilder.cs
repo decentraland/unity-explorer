@@ -15,8 +15,8 @@ namespace DCL.DebugUtilities
 
         internal readonly string name;
 
-        private List<ElementPlacement> placements;
-        [CanBeNull] private DebugWidgetVisibilityBinding visibilityBinding;
+        private List<ElementPlacement>? placements;
+        private DebugWidgetVisibilityBinding? visibilityBinding;
 
         public DebugWidgetBuilder(string name)
         {
@@ -31,10 +31,10 @@ namespace DCL.DebugUtilities
         /// <param name="right">Right can be null if left is not null</param>
         /// <param name="debugHintDef">Can be null</param>
         /// <returns></returns>
-        public DebugWidgetBuilder AddControl(IDebugElementDef left, IDebugElementDef right, [CanBeNull] DebugHintDef debugHintDef = null)
+        public DebugWidgetBuilder AddControl(IDebugElementDef left, IDebugElementDef right, DebugHintDef? debugHintDef = null)
         {
             placements ??= DEF_POOL.Get();
-            placements.Add(new ElementPlacement(left, right, debugHintDef));
+            placements!.Add(new ElementPlacement(left, right, debugHintDef));
             return this;
         }
 
@@ -120,9 +120,9 @@ namespace DCL.DebugUtilities
         {
             public readonly IDebugElementDef Left;
             public readonly IDebugElementDef Right;
-            [CanBeNull] public readonly DebugHintDef HintDef;
+            public readonly DebugHintDef? HintDef;
 
-            public ElementPlacement(IDebugElementDef left, IDebugElementDef right, [CanBeNull] DebugHintDef hintDef)
+            public ElementPlacement(IDebugElementDef left, IDebugElementDef right, DebugHintDef? hintDef)
             {
                 Left = left;
                 Right = right;

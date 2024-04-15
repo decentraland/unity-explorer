@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -48,7 +49,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
             EmotePromise emotePromise = CreateEmotePromise(pbAvatarShape, partition);
             pbAvatarShape.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, emotePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor(), pbAvatarShape.EyeColor.ToUnityColor()));
+
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, emotePromise,
+                pbAvatarShape.GetSkinColor().ToUnityColor(),
+                pbAvatarShape.GetHairColor().ToUnityColor(),
+                pbAvatarShape.GetEyeColor().ToUnityColor()));
         }
 
         [Query]
@@ -78,6 +83,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.WearablePromise = newPromise;
             avatarShapeComponent.EmotePromise = CreateEmotePromise(pbAvatarShape, partition);
             avatarShapeComponent.BodyShape = pbAvatarShape;
+            avatarShapeComponent.HairColor = pbAvatarShape.GetHairColor().ToUnityColor();
+            avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
+            avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
             pbAvatarShape.IsDirty = false;
         }

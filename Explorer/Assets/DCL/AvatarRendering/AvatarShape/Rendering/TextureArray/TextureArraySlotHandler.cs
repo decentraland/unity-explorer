@@ -8,11 +8,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         internal readonly List<Texture2DArray> arrays;
         internal readonly Stack<TextureArraySlot> freeSlots;
         private readonly int minArraySize;
-        private readonly int resolution;
+        private readonly Vector2Int resolution;
         private int nextFreeIndex;
         private TextureFormat textureFormat;
 
-        public TextureArraySlotHandler(int resolution, int minArraySize, int initialCapacity, TextureFormat textureFormat)
+        public TextureArraySlotHandler(Vector2Int resolution, int minArraySize, int initialCapacity, TextureFormat textureFormat)
         {
             this.minArraySize = minArraySize;
             this.resolution = resolution;
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private Texture2DArray CreateTexture2DArray()
         {
-            var texture2DArray = new Texture2DArray(resolution, resolution, minArraySize, textureFormat, false, false);
+            var texture2DArray = new Texture2DArray(resolution.x, resolution.y, minArraySize, textureFormat, false, false);
             texture2DArray.filterMode = FilterMode.Bilinear;
             texture2DArray.wrapMode = TextureWrapMode.Repeat;
             texture2DArray.anisoLevel = 9;

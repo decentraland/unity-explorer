@@ -171,6 +171,10 @@ namespace DCL.Landscape.Systems
             Camera camera = cameraComponent.Camera;
             cameraPosition = camera.transform.position;
 
+            var wind = terrainGenerator.GetWind();
+            if(wind.parent == null)
+                wind.parent = camera.transform;
+
             GeometryUtility.CalculateFrustumPlanes(camera.cullingMatrix, frustumPlanes);
 
             for (var i = 0; i < frustumPlanes.Length; i++)

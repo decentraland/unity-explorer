@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -25,21 +26,24 @@ namespace ECS.Unity.EngineInfo
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
-        protected override void Update(float t)
+        public override void Initialize()
         {
-            PropagateToSceneQuery(World);
+            PropagateToScene();
         }
 
-        [Query]
-        [All(typeof(SceneRootComponent))]
-        private void PropagateToScene(ref CRDTEntity sdkEntity)
+        protected override void Update(float t)
+        {
+            PropagateToScene();
+        }
+
+        private void PropagateToScene()
         {
             ecsToCRDTWriter.PutMessage<PBEngineInfo, ISceneStateProvider>(static (component, provider) =>
             {
                 component.TickNumber = provider.TickNumber;
                 component.FrameNumber = (uint)(MultithreadingUtility.FrameCount - provider.EngineStartInfo.FrameNumber);
                 component.TotalRuntime = (float)(DateTime.Now - provider.EngineStartInfo.Timestamp).TotalSeconds;
-            }, sdkEntity, sceneStateProvider);
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, sceneStateProvider);
         }
     }
 }
