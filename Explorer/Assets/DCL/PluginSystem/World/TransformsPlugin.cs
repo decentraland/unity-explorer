@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry.AddGameObjectPool<Transform>();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();

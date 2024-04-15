@@ -204,6 +204,7 @@ namespace SceneRunner
         {
             sceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
+            ecsWorldFacade.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public async UniTask DisposeAsync()

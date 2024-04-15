@@ -279,8 +279,8 @@ namespace Global.Dynamic
                     container.MessagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
-                    queuePoolFullMovementMessage
-                ),
+                    queuePoolFullMovementMessage,
+                    realmData),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput, multiplayerEmotesMessageBus, eventSystem),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),

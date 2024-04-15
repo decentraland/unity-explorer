@@ -20,6 +20,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
 
         private Vector2Int lastParcelProcessed;
+        private Vector2Int? pendingParcel;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, Entity playerEntity) : base(world)
         {
@@ -45,19 +46,29 @@ namespace ECS.SceneLifeCycle.Systems
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
 
+            // If the scene was not cached but it's pending
+            if (parcel == pendingParcel && scenesCache.TryGetByParcel(parcel, out ISceneFacade sceneFacade))
+            {
+                sceneFacade.SetIsCurrent(true);
+                pendingParcel = null;
+            }
+
             if (lastParcelProcessed == parcel) return;
 
             // Reset the previous current scene, it's ok if it's not cached (already)
-            if (scenesCache.TryGetByParcel(lastParcelProcessed, out ISceneFacade sceneFacade))
+            if (scenesCache.TryGetByParcel(lastParcelProcessed, out sceneFacade))
                 sceneFacade.SetIsCurrent(false);
 
             if (scenesCache.TryGetByParcel(parcel, out sceneFacade))
             {
                 sceneFacade.SetIsCurrent(true);
-                lastParcelProcessed = parcel;
+                pendingParcel = null;
             }
+            else
+                pendingParcel = parcel;
 
-            // if scene was not in cache yet don't set lastParcelProcessed so the cache will be polled again
+            lastParcelProcessed = parcel;
+
         }
     }
 }

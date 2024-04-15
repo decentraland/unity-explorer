@@ -38,6 +38,8 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (AudioSource != null)
                 AudioSource.clip = null;
+
+            AudioSource = null;
         }
     }
 }

@@ -88,8 +88,9 @@ namespace CRDT.Protocol
                 // Effectively it is the same logic that updates the LWW set, the only difference is in Data presence
                 // For DELETE_COMPONENT it is "Empty"
                 case CRDTMessageType.PUT_COMPONENT:
+                    return UpdateLWWState(in message, CRDTReconciliationEffect.ComponentAdded);
                 case CRDTMessageType.DELETE_COMPONENT:
-                    return UpdateLWWState(in message);
+                    return UpdateLWWState(in message, CRDTReconciliationEffect.NoChanges); // if there was no component before, "delete" has no effect
             }
 
             throw new NotSupportedException($"Message type {message.Type} is not supported");
@@ -107,7 +108,12 @@ namespace CRDT.Protocol
         public ProcessedCRDTMessage CreateDeleteMessage(CRDTEntity entity, int componentId) =>
             crdtState.CreateDeleteMessage(entity, componentId);
 
-        public CRDTReconciliationResult UpdateLWWState(in CRDTMessage message)
+        public void EnforceLWWState(in CRDTMessage message)
+        {
+            UpdateLWWState(in message, CRDTReconciliationEffect.NoChanges); // the second argument is irrelevant
+        }
+
+        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message, CRDTReconciliationEffect newComponentEffect)
         {
             bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
                 out bool componentExists, out EntityComponentData storedData);
@@ -118,7 +124,7 @@ namespace CRDT.Protocol
                 UpdateLWWState(innerSetExists, componentExists, inner, in message, ref storedData);
 
                 return new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedTimestamp,
-                    componentExists ? CRDTReconciliationEffect.ComponentModified : CRDTReconciliationEffect.ComponentAdded);
+                    componentExists ? CRDTReconciliationEffect.ComponentModified : newComponentEffect);
             }
 
             // Outdated Message. The client state will be resent
