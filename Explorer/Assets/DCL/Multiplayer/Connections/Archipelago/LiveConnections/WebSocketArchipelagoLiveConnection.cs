@@ -37,7 +37,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         public async UniTask ConnectAsync(string adapterUrl, CancellationToken token)
         {
             TryUpdateWebSocket();
-            await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token).AsUniTask(false);
+
+            try { await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token).AsUniTask(false); }
+            catch (Exception e) { throw new Exception($"Cannot connect to adapter url: {adapterUrl}", e); }
         }
 
         public UniTask DisconnectAsync(CancellationToken token)
