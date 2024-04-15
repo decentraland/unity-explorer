@@ -32,6 +32,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 6697045577537945602
+  - m_Id: 65668131220086784
+    m_Localized: Incompatible with current body shape.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
