@@ -27,8 +27,6 @@ namespace DCL.Multiplayer.SDK.Systems
     {
         private readonly IScenesCache scenesCache;
         private readonly ICharacterObject characterObject;
-
-        // TODO: Clear when current scene changes before populating the new one
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
