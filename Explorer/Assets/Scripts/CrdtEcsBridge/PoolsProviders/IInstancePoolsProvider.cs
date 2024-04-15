@@ -9,9 +9,7 @@ namespace CrdtEcsBridge.PoolsProviders
     /// </summary>
     public interface IInstancePoolsProvider : IDisposable
     {
-        public byte[] GetCrdtRawDataPool(int size);
-
-        public void ReleaseCrdtRawDataPool(byte[] bytes);
+        PoolableByteArray GetCrdtRawDataPool(int size);
 
         List<CRDTMessage> GetDeserializationMessagesPool();
 

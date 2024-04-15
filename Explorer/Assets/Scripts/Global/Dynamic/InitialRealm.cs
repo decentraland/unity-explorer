@@ -6,5 +6,6 @@ namespace Global.Dynamic
         SDK,
         World,
         Localhost,
+        Custom,
     }
 }
