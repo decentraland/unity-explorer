@@ -62,6 +62,8 @@ namespace DCL.LOD.Systems
         {
             UpdateLODLevelQuery(World);
             ResolveCurrentLODPromiseQuery(World);
+            InstantiateCurrentLODQuery(World);
+            FinalizeInstantiationCurrentLODQuery(World);
         }
 
         [Query]
@@ -74,9 +76,42 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
+        private void FinalizeInstantiationCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (!sceneLODInfo.IsDirty || sceneLODInfo.GetCurrentLOD() == null) return;
+
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+
+            if (sceneLODInfo.GetCurrentLOD()!.State == LODAsset.LOD_STATE.WAITING_FINALIZATION)
+            {
+                sceneLODInfo.GetCurrentLOD()!.Instantiate(sceneDefinitionComponent.Definition.id,
+                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
+                    lodTextureArrayContainer);
+                sceneLODInfo.InstantiateCurrentLOD();
+                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                CheckSceneReadiness(sceneDefinitionComponent);
+                sceneLODInfo.IsDirty = false;
+            }
+        }
+
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (!sceneLODInfo.IsDirty || sceneLODInfo.GetCurrentLOD() == null) return;
+
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+
+            if (sceneLODInfo.GetCurrentLOD()!.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION)
+                sceneLODInfo.GetCurrentLOD()!.EnableInstationFinalization();
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!sceneLODInfo.IsDirty) return;
+            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLODPromise.IsConsumed) return;
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
@@ -85,35 +120,25 @@ namespace DCL.LOD.Systems
                 LODAsset newLod = default;
                 if (result.Succeeded)
                 {
-                    var instantiatedLOD = Object.Instantiate(result.Asset?.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
-                        Quaternion.identity, lodsTransformParent)!;
+                    var asyncInstantiateOperation =
+                        Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),
+                            lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
 
-                    if (!sceneLODInfo.CurrentLODLevel.Equals(0))
-                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer));
-                    else
-                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache);
-
-                    ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
-                        in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                        lodCache, result.Asset, asyncInstantiateOperation);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
+                    sceneLODInfo.SetCurrentLOD(newLod);
+                    sceneLODInfo.IsDirty = false;
                 }
 
                 sceneLODInfo.SetCurrentLOD(newLod);
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                CheckSceneReadiness(sceneDefinitionComponent);
-                sceneLODInfo.IsDirty = false;
             }
         }
-
-
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -135,7 +160,7 @@ namespace DCL.LOD.Systems
             byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-            sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
+            sceneLODInfo.CurrentLODLevel = (byte)(sceneLODCandidate > 0 ? 3 : 0);
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
@@ -151,7 +176,6 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.ResetToCurrentSuccesfullLOD();
                 return;
             }
-                
 
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {

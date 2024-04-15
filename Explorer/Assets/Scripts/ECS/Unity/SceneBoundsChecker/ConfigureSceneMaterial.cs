@@ -37,8 +37,8 @@ namespace ECS.Unity.SceneBoundsChecker
         /// <summary>
         ///     Enables Scene Bounds Checking for GameObjects
         /// </summary>
-        internal static void EnableSceneBounds(in GameObject asset,
-            in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
+        public static void EnableSceneBounds(GameObject asset, in
+            ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes)
         {
             var vector = new Vector4(sceneCircumscribedPlanes.MinX, sceneCircumscribedPlanes.MaxX,
                 sceneCircumscribedPlanes.MinZ, sceneCircumscribedPlanes.MaxZ);

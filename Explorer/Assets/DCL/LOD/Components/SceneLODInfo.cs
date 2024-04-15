@@ -2,6 +2,7 @@
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using System;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Profiling;
 using UnityEngine;
 using Utility;
@@ -16,16 +17,15 @@ namespace DCL.LOD.Components
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
         
+        
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
-
             if (CurrentLOD != null)
             {
-                if (CurrentLOD.Value.LoadingFailed)
+                if (CurrentLOD.State == LODAsset.LOD_STATE.FAILED)
                     LastSuccessfulLOD?.Release();
-                else
-                    CurrentLOD?.Release();
+                CurrentLOD?.Release();
                 CurrentLOD = null;
             }
 
@@ -39,18 +39,16 @@ namespace DCL.LOD.Components
 
         public void SetCurrentLOD(LODAsset newLod)
         {
-            if (newLod.LoadingFailed)
+            if (newLod.State == LODAsset.LOD_STATE.FAILED)
                 ProfilingCounters.Failling_LOD_Amount.Value++;
-            else
-            {
-                if (!newLod.LodKey.Equals(LastSuccessfulLOD))
-                {
-                    LastSuccessfulLOD?.Release();
-                    LastSuccessfulLOD = newLod;
-                }
-            }
 
             CurrentLOD = newLod;
+        }
+
+        public void InstantiateCurrentLOD()
+        {
+            LastSuccessfulLOD?.Release();
+            LastSuccessfulLOD = CurrentLOD;
         }
 
         public LODAsset? GetCurrentLOD()
@@ -67,6 +65,8 @@ namespace DCL.LOD.Components
         {
             CurrentLOD = LastSuccessfulLOD;
         }
+
+
     }
 
 }

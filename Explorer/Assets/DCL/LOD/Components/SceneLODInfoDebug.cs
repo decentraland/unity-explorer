@@ -68,7 +68,7 @@ namespace DCL.LOD
         private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents(IReadOnlyList<Vector2Int> parcels, LODAsset lodAsset, ILODSettingsAsset lodSettingsAsset)
         {
             SceneLODInfoDebugContent sceneLODInfoDebugContents;
-            if (lodAsset.LoadingFailed)
+            if (lodAsset.State == LODAsset.LOD_STATE.FAILED)
             {
                 var faillingCubes =  new FaillingLODCube[parcels.Count];
                 for (int i = 0; i < parcels.Count; i++)

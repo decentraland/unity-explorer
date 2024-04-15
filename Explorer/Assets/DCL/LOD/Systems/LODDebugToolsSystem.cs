@@ -31,13 +31,18 @@ namespace DCL.LOD.Systems
             this.lodSettingsAsset = lodSettingsAsset;
             this.missingSceneParent = missingSceneParent;
             lodSettingsAsset.IsColorDebuging = false;
-            debugBuilder.AddWidget("LOD")
-                .AddSingleButton("LOD Debugging", ToggleLODColor)
-                .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, false)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold",  newValue => SetLOD(newValue, 0))
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold",  newValue => SetLOD(newValue, 1))
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[2], "LOD 3 Threshold",  newValue => SetLOD(newValue, 2));
 
+            var debugWidgetBuilder = debugBuilder.AddWidget("LOD");
+            debugWidgetBuilder
+                .AddSingleButton("LOD Debugging", ToggleLODColor)
+                .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, false);
+
+            for (int i = 0; i < lodSettingsAsset.LodPartitionBucketThresholds.Length; i++)
+            {
+                int index = i;
+                debugWidgetBuilder
+                    .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[i], $"LOD {i + 1} Threshold",  newValue => SetLOD(newValue, index));
+            }
         }
 
         private void SetLOD(int newValue, int i)
@@ -99,7 +104,7 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.GetCurrentLOD() == null) return;
 
-            var lodAsset = sceneLODInfo.GetCurrentLOD()!.Value;
+            var lodAsset = sceneLODInfo.GetCurrentLOD()!;
             if (!lodAsset.LodKey.Level.Equals(sceneLODInfoDebug.CurrentLODLevel))
                 sceneLODInfoDebug.Update(sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, lodAsset, lodSettingsAsset);
         }

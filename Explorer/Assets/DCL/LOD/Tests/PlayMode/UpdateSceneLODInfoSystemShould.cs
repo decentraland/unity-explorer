@@ -120,8 +120,8 @@ namespace DCL.LOD.Tests
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
             Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
-            Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD.Value.LodKey);
-            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.Value.AssetBundleReference);
+            Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
+            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
         }
 
         [Test]

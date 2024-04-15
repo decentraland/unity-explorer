@@ -4,7 +4,6 @@ using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
 using System.Linq;
 using UnityEngine;
@@ -29,10 +28,10 @@ namespace DCL.LOD
         private static readonly List<Material> TEMP_MATERIALS = new (3);
 
 
-        public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
+        public static TextureArraySlot?[] ApplyTextureArrayToLOD(string sceneID, Vector2Int baseCoordinate, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
             var newSlots = TEXTURE_ARRAY_SLOTS.Get();
-            using (PoolExtensions.Scope<List<Renderer>> pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
+            using (var pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
             {
                 for (int i = 0; i < pooledList.Value.Count; i++)
                 {
@@ -43,13 +42,13 @@ namespace DCL.LOD
                         {
                             if (TEMP_MATERIALS[j].mainTexture.width != TEMP_MATERIALS[j].mainTexture.height)
                             {
-                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}");
+                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneID} {baseCoordinate}");
                                 continue;
                             }
 
                             if (TEMP_MATERIALS[j].shader.name != LOD_SHADER)
                             {
-                                ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}. " +
+                                ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneID} {baseCoordinate}. " +
                                                                          $"It has {pooledList.Value[i].materials[j].shader} while it should be {LOD_SHADER}. Please check the AB Converter");
                                 continue;
                             }

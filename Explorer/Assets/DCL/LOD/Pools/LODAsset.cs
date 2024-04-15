@@ -1,65 +1,73 @@
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using System;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
+using ECS.Unity.SceneBoundsChecker;
+using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Networking;
 using Utility;
 
 namespace DCL.LOD
 {
-    public struct LODAsset : IDisposable
+    public class LODAsset : IDisposable
     {
-
+        public LOD_STATE State;
         public readonly LODKey LodKey;
-        public readonly GameObject Root;
-        public AssetBundleData AssetBundleReference;
-        public readonly bool LoadingFailed;
+
+        public GameObject Root;
+        public AsyncInstantiateOperation<GameObject> AsyncInstantiation;
+        public  TextureArraySlot?[] Slots;
+        
         private readonly ILODAssetsPool Pool;
-        private readonly TextureArraySlot?[] Slots;
+        internal AssetBundleData AssetBundleReference;
 
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool, TextureArraySlot?[] slots)
+        public enum LOD_STATE
         {
-            LodKey = lodKey;
-            Root = root;
-            AssetBundleReference = assetBundleReference;
-            LoadingFailed = false;
-            Pool = pool;
-            Slots = slots;
-
-            ProfilingCounters.LODAssetAmount.Value++;
-            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
+            UNINTIALIZED,
+            FAILED,
+            SUCCESS,
+            WAITING_INSTANTIATION,
+            WAITING_FINALIZATION
         }
 
-        //Constructor for LOD_0 which uses the default Scene Material (No texture array)
-        public LODAsset(LODKey lodKey, GameObject root, AssetBundleData assetBundleReference, ILODAssetsPool pool)
+
+        public LODAsset(LODKey lodKey, ILODAssetsPool pool, AssetBundleData assetBundleData, AsyncInstantiateOperation<GameObject> asyncInstantiation)
         {
             LodKey = lodKey;
-            Root = root;
-            AssetBundleReference = assetBundleReference;
-            LoadingFailed = false;
             Pool = pool;
+            Root = null;
             Slots = Array.Empty<TextureArraySlot?>();
+            AsyncInstantiation = asyncInstantiation;
+            asyncInstantiation.allowSceneActivation = false;
+            AssetBundleReference = assetBundleData;
 
+            State = LOD_STATE.WAITING_INSTANTIATION;
+            
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
-        public LODAsset(LODKey lodKey)
+        public LODAsset(LODKey lodKey, ILODAssetsPool pool)
         {
+            State = LOD_STATE.FAILED;
+            LodKey = lodKey;
+            Pool = pool;
+
+            Slots = Array.Empty<TextureArraySlot?>();
+            Root = null;
+            AsyncInstantiation = null;
+            AssetBundleReference = null;
+
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.Failling_LOD_Amount.Value++;
-            LodKey = lodKey;
-            Slots = Array.Empty<TextureArraySlot?>();
-            LoadingFailed = true;
-            Root = null;
-            AssetBundleReference = null;
-            Pool = null;
         }
 
         public void Dispose()
         {
-            if (LoadingFailed) return;
+            if (State == LOD_STATE.FAILED) return;
 
             AssetBundleReference.Dereference();
             AssetBundleReference = null;
@@ -70,8 +78,9 @@ namespace DCL.LOD
                     Slots[i]?.FreeSlot();
             }
 
-
-            UnityObjectUtils.SafeDestroy(Root);
+            AsyncInstantiation.Cancel();
+            if (State == LOD_STATE.SUCCESS)
+                UnityObjectUtils.SafeDestroy(Root);
 
             ProfilingCounters.LODAssetAmount.Value--;
             ProfilingCounters.LODInstantiatedInCache.Value--;
@@ -79,27 +88,57 @@ namespace DCL.LOD
 
         public void EnableAsset()
         {
-            ProfilingCounters.LODInstantiatedInCache.Value--;
-            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
-            Root.SetActive(true);
+            if (State == LOD_STATE.FAILED)
+                return;
+
+            if (State == LOD_STATE.SUCCESS)
+            {
+                Root.SetActive(true);
+                ProfilingCounters.LODInstantiatedInCache.Value--;
+                ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
+            }
+
         }
 
         public void DisableAsset()
         {
-            if (LoadingFailed) return;
-
-            ProfilingCounters.LODInstantiatedInCache.Value++;
-            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value--;
-
+            if (State == LOD_STATE.FAILED)
+                return;
+            
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            Root.SetActive(false);
+            if (State == LOD_STATE.SUCCESS)
+            {
+                Root.SetActive(false);
+                ProfilingCounters.LODInstantiatedInCache.Value++;
+                ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value--;
+            }
+        }
+
+        public void EnableInstationFinalization()
+        {
+            AsyncInstantiation.allowSceneActivation = true;
+            State = LOD_STATE.WAITING_FINALIZATION;
+        }
+
+        public void Instantiate(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
+        {
+            if (!AsyncInstantiation.isDone)
+                return;
+
+            Root = AsyncInstantiation.Result[0];
+            if (!LodKey.Level.Equals(0))
+                Slots = LODUtils.ApplyTextureArrayToLOD(sceneID,
+                    parcelCoord, Root, lodTextureArrayContainer);
+            //ConfigureSceneMaterial.EnableSceneBounds(Root, in SceneCircumscribedPlanes);
+            State = LOD_STATE.SUCCESS;
         }
 
         public void Release()
         {
             Pool.Release(LodKey, this);
         }
+
     }
 }
