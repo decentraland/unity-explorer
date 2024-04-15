@@ -11,7 +11,7 @@ namespace DCL.Profiling
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000;
         private const int HICCUP_BUFFER_SIZE = 1_000;
 
-        private readonly LinealBufferHiccupCounter hiccupBufferCounter = new (HICCUP_BUFFER_SIZE, HICCUP_THRESHOLD_IN_NS);
+        private readonly LinearBufferHiccupCounter hiccupBufferCounter = new (HICCUP_BUFFER_SIZE, HICCUP_THRESHOLD_IN_NS);
 
         private readonly ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private readonly ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
@@ -20,14 +20,16 @@ namespace DCL.Profiling
 
         public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.CurrentValue;
 
-        public double AverageFrameTimeValueInNS => GetRecorderFPSAverage(mainThreadTimeRecorder);
+        public double AverageFrameTimeValueInNS => GetRecorderAverage(mainThreadTimeRecorder);
+        public long MinFrameTimeValueInNS => hiccupBufferCounter.MaxFrameTimeInNS;
+        public long MaxFrameTimeValueInNS => hiccupBufferCounter.MinFrameTimeInNS;
 
         public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
 
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
 
-        private static double GetRecorderFPSAverage(ProfilerRecorder recorder)
+        private static double GetRecorderAverage(ProfilerRecorder recorder)
         {
             int samplesCount = recorder.Capacity;
 
