@@ -44,6 +44,9 @@ namespace DCL.LOD.Systems
 
         private readonly TextureArrayContainer lodTextureArrayContainer;
 
+        private int lodsWaitingForFinalization;
+        private readonly int LODS_WAITING_FOR_FINALIZATION_LIMIT = 10;
+
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
             Transform lodsTransformParent, TextureArrayContainer lodTextureArrayContainer) : base(world)
@@ -56,6 +59,7 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
+            lodsWaitingForFinalization = 0;
         }
 
         protected override void Update(float t)
@@ -80,22 +84,24 @@ namespace DCL.LOD.Systems
         {
             if (!sceneLODInfo.IsDirty || sceneLODInfo.GetCurrentLOD() == null) return;
 
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
-
             if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_FINALIZATION)
             {
-                if (sceneLODInfo.GetCurrentLOD().TryFinalizeInstantiation(sceneDefinitionComponent.Definition.id,
-                        sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
-                        lodTextureArrayContainer, lodsTransformParent))
+                if (sceneLODInfo.GetCurrentLOD().AsyncInstantiation.isDone)
                 {
+                    lodsWaitingForFinalization--;
+
+                    sceneLODInfo.GetCurrentLOD().CompleteInstantiation(lodsTransformParent);
                     sceneLODInfo.InstantiatedCurrentLOD();
-                    scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                    CheckSceneReadiness(sceneDefinitionComponent);
                     sceneLODInfo.IsDirty = false;
+
+                    if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
+                    {
+                        scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                        CheckSceneReadiness(sceneDefinitionComponent);
+                    }
                 }
             }
         }
-
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -105,8 +111,13 @@ namespace DCL.LOD.Systems
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
+            if (lodsWaitingForFinalization >= LODS_WAITING_FOR_FINALIZATION_LIMIT) return;
+
             if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_INSTANTIATION)
-                sceneLODInfo.GetCurrentLOD().EnableInstationFinalization();
+            {
+                sceneLODInfo.GetCurrentLOD().EnableInstationFinalization(sceneDefinitionComponent.Definition.id, sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, lodTextureArrayContainer);
+                lodsWaitingForFinalization++;
+            }
         }
 
         [Query]
@@ -162,7 +173,7 @@ namespace DCL.LOD.Systems
             byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-
+            
             //TODO (Juani) : Remove this hardcoded number once we have only two lod levels
             sceneLODInfo.CurrentLODLevel = (byte)(sceneLODCandidate > 0 ? 3 : 0);
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
@@ -186,7 +197,8 @@ namespace DCL.LOD.Systems
                 //If its cached, no need to make a new promise
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
                 sceneLODInfo.IsDirty = false;
-                CheckSceneReadiness(sceneDefinitionComponent);
+                if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
+                    CheckSceneReadiness(sceneDefinitionComponent);
                 return;
             }
 

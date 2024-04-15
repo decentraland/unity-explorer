@@ -97,7 +97,6 @@ namespace DCL.LOD
                 ProfilingCounters.LODInstantiatedInCache.Value--;
                 ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
             }
-
         }
 
         public void DisableAsset()
@@ -116,32 +115,44 @@ namespace DCL.LOD
             }
         }
 
-        public void EnableInstationFinalization()
+        public void EnableInstationFinalization(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
         {
+            this.sceneID = sceneID;
+            this.parcelCoord = parcelCoord;
+            this.lodTextureArrayContainer = lodTextureArrayContainer;
+            AsyncInstantiation.completed += CompletedInstantiation;
             AsyncInstantiation.allowSceneActivation = true;
             State = LOD_STATE.WAITING_FINALIZATION;
         }
 
-        public bool TryFinalizeInstantiation(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer, Transform lodTransformParent)
+        private void CompletedInstantiation(AsyncOperation obj)
         {
-            if (!AsyncInstantiation.isDone)
-                return false;
-
             Root = AsyncInstantiation.Result[0];
-            //NOTE: For some reason, the parent is lost on the async instantiation. Looks like a Unity bug
-            Root.transform.SetParent(lodTransformParent);
-            if (!LodKey.Level.Equals(0))
-                Slots = LODUtils.ApplyTextureArrayToLOD(sceneID,
-                    parcelCoord, Root, lodTextureArrayContainer);
-            //ConfigureSceneMaterial.EnableSceneBounds(Root, in SceneCircumscribedPlanes);
-            State = LOD_STATE.SUCCESS;
-            return true;
+            Root.gameObject.SetActive(false);
+            AsyncInstantiation.completed -= CompletedInstantiation;
         }
+
+        private string sceneID;
+        private Vector2Int parcelCoord;
+        private TextureArrayContainer lodTextureArrayContainer;
+
 
         public void Release()
         {
             Pool.Release(LodKey, this);
         }
 
+        public void CompleteInstantiation(Transform lodsParent)
+        {
+            if (!LodKey.Level.Equals(0))
+                Slots = LODUtils.ApplyTextureArrayToLOD(sceneID,
+                    parcelCoord, Root, lodTextureArrayContainer);
+
+            //For some reason, the instantiation async is not holding the LOD parent reference. Maybe a Unity bug
+            Root.transform.SetParent(lodsParent);
+            Root.gameObject.SetActive(true);
+            //ConfigureSceneMaterial.EnableSceneBounds(Root, in SceneCircumscribedPlanes);
+            State = LOD_STATE.SUCCESS;
+        }
     }
 }
