@@ -11,7 +11,7 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.UserIdentityApi
 {
-    public partial class UserIdentityApiWrapper : IDisposable
+    public partial class UserIdentityApiWrapper : IJsApiWrapper
     {
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;

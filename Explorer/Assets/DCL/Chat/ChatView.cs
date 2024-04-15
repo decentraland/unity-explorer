@@ -58,17 +58,17 @@ namespace DCL.Chat
         public Button CloseChatButton { get; private set; }
 
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig AddEmojiAudio;
+        public AudioClipConfig AddEmojiAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig OpenEmojiPanelAudio;
+        public AudioClipConfig OpenEmojiPanelAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig ChatSendMessageAudio;
+        public AudioClipConfig ChatSendMessageAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig ChatReceiveMessageAudio;
+        public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig ChatInputTextAudio;
+        public AudioClipConfig ChatInputTextAudio { get; private set; }
 
         private CancellationTokenSource cts;
 

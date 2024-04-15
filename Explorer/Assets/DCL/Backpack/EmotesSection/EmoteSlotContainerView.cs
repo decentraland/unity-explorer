@@ -48,15 +48,15 @@ namespace DCL.Backpack
         public Button UnEquipButton { get; private set; }
 
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig EquipAudio;
+        public AudioClipConfig EquipAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig UnEquipAudio;
+        public AudioClipConfig UnEquipAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig HoverAudio;
+        public AudioClipConfig HoverAudio { get; private set; }
 
-        
+
         public event Action<EmoteSlotContainerView>? OnSlotButtonPressed;
 
         private void Start()

@@ -14,11 +14,11 @@ namespace DCL.UI
 
         private Tween loadingTween;
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig LoadingStartedAudio;
+        public AudioClipConfig LoadingStartedAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig LoadingFinishedAudio;
+        public AudioClipConfig LoadingFinishedAudio { get; private set; }
 
 
         public void StartLoadingAnimation(GameObject loadingHide)
