@@ -28,7 +28,7 @@ namespace DCL.Audio
             audioCategorySettingsDictionary.Clear();
             foreach (var audioCategory in audioCategorySettings)
             {
-                audioCategorySettingsDictionary.Add(audioCategory.key, audioCategory.value);
+                if (audioCategory.value != null) { audioCategorySettingsDictionary.Add(audioCategory.key, audioCategory.value); }
             }
         }
 

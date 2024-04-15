@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Audio
 {
     [CreateAssetMenu(fileName = "AvatarAudioSettings", menuName = "SO/Audio/AvatarAudioSettings")]
-    public class AvatarAudioSettings : AudioCategorySettings
+    public class AvatarAudioSettings : AudioCategorySettings, ISerializationCallbackReceiver
     {
         /// <summary>
         ///     This threshold indicates at what point in the animation movement blend we stop producing sounds.
@@ -21,13 +21,21 @@ namespace DCL.Audio
 
         public AudioClipConfig GetAudioClipConfigForType(AvatarAudioClipType type)
         {
-            if (!audioClipConfigs.TryGetValue(type, out AudioClipConfig clipConfig))
-            {
-                clipConfig = audioClipConfigsList.Find(c => c.Key == type).Value;
-                audioClipConfigs.Add(type, clipConfig);
-            }
-
+            audioClipConfigs.TryGetValue(type, out AudioClipConfig clipConfig);
             return clipConfig;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            audioClipConfigs.Clear();
+            foreach (var clipConfig in audioClipConfigsList)
+            {
+                if (clipConfig.Value != null) { audioClipConfigs.Add(clipConfig.Key, clipConfig.Value); }
+            }
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
 
         [Serializable]
