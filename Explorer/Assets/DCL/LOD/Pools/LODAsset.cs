@@ -72,11 +72,8 @@ namespace DCL.LOD
             AssetBundleReference.Dereference();
             AssetBundleReference = null;
 
-            if (!LodKey.Level.Equals(0))
-            {
-                for (int i = 0; i < Slots.Length; i++)
-                    Slots[i]?.FreeSlot();
-            }
+            for (int i = 0; i < Slots.Length; i++)
+                Slots[i]?.FreeSlot();
 
             AsyncInstantiation.Cancel();
             if (State == LOD_STATE.SUCCESS)
