@@ -62,14 +62,14 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
 
-            handlersByResolution = new Dictionary<int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
+            handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
 
             for (int i = 0; i < textureArrayResolutionDescriptors.Count; i++)
-                CreateHandler(textureArrayResolutionDescriptors[i].Resolution,
+                CreateHandler(new Vector2Int(textureArrayResolutionDescriptors[i].Resolution, textureArrayResolutionDescriptors[i].Resolution),
                     textureArrayResolutionDescriptors[i].ArraySize);
         }
 
-        private TextureArraySlotHandler CreateHandler(int resolution, int arraySize)
+        private TextureArraySlotHandler CreateHandler(Vector2Int resolution, int arraySize)
         {
             var slotHandler = new TextureArraySlotHandler(resolution, arraySize, initialCapacityForEachResolution, textureFormat);
             handlersByResolution[resolution] = slotHandler;
