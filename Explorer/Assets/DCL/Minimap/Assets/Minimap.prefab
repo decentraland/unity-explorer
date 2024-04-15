@@ -2586,7 +2586,7 @@ MonoBehaviour:
   <sideMenuButton>k__BackingField: {fileID: 4843367397424901149}
   <SideMenuCanvasGroup>k__BackingField: {fileID: 3561821593630048208}
   <pixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 4908126872230381769}
-  <mapRendererVisibleParcels>k__BackingField: 6
+  <mapRendererVisibleParcels>k__BackingField: 8
   <expandMinimapButton>k__BackingField: {fileID: 2913232251365639464}
   <collapseMinimapButton>k__BackingField: {fileID: 4185186173191747787}
   <placeNameText>k__BackingField: {fileID: 4063614386487697017}
