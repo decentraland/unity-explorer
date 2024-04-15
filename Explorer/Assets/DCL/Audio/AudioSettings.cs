@@ -7,7 +7,7 @@ using UnityEngine.Audio;
 namespace DCL.Audio
 {
     [CreateAssetMenu(fileName = "AudioSettings", menuName = "SO/Audio/AudioSettings")]
-    public class AudioSettings : ScriptableObject
+    public class AudioSettings : ScriptableObject, ISerializationCallbackReceiver
     {
         [SerializeField] private List<AudioCategorySettingsKeyValuePair> audioCategorySettings = new ();
         [SerializeField] private float masterVolume = 1;
@@ -20,13 +20,21 @@ namespace DCL.Audio
 
         public AudioCategorySettings GetSettingsForCategory(AudioCategory category)
         {
-            if (!audioCategorySettingsDictionary.TryGetValue(category, out AudioCategorySettings settings))
-            {
-                settings = audioCategorySettings.Find(s => s.key == category).value;
-                audioCategorySettingsDictionary.Add(category, settings);
-            }
-
+            audioCategorySettingsDictionary.TryGetValue(category, out AudioCategorySettings settings);
             return settings;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            audioCategorySettingsDictionary.Clear();
+            foreach (var audioCategory in audioCategorySettings)
+            {
+                audioCategorySettingsDictionary.Add(audioCategory.key, audioCategory.value);
+            }
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 
