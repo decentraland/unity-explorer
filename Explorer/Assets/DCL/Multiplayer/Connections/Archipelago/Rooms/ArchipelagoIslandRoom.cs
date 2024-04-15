@@ -1,15 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
+using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
-using ECS;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -24,49 +22,39 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public class ArchipelagoIslandRoom : IArchipelagoIslandRoom
     {
-        private readonly IAdapterAddresses adapterAddresses;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IArchipelagoSignFlow signFlow;
         private readonly ICharacterObject characterObject;
         private readonly IConnectiveRoom connectiveRoom;
-        private readonly string aboutUrl;
+        private readonly ICurrentAdapterAddress currentAdapterAddress;
 
         private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
 
-        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, IRealmData realmData) : this(
-            new LogAdapterAddresses(
-                new RefinedAdapterAddresses(
-                    new WebRequestsAdapterAddresses(webRequestController)
-                ),
-                ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log
-            ),
+        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, ICurrentAdapterAddress currentAdapterAddress) : this(
             web3IdentityCache,
             new LiveConnectionArchipelagoSignFlow(
                 new WebSocketArchipelagoLiveConnection(
                     () => new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Shared!)
                 ).WithLog(),
-                realmData,
                 new ArrayMemoryPool(ArrayPool<byte>.Shared!),
                 multiPool
             ).WithLog(),
             characterObject,
-            "https://realm-provider.decentraland.zone/main/about"
+            currentAdapterAddress
         ) { }
 
         public ArchipelagoIslandRoom(
-            IAdapterAddresses adapterAddresses,
             IWeb3IdentityCache web3IdentityCache,
             IArchipelagoSignFlow signFlow,
             ICharacterObject characterObject,
-            string aboutUrl
+            ICurrentAdapterAddress currentAdapterAddress
         )
         {
-            this.adapterAddresses = adapterAddresses;
             this.web3IdentityCache = web3IdentityCache;
             this.signFlow = signFlow;
             this.characterObject = characterObject;
-            this.aboutUrl = aboutUrl;
+            this.currentAdapterAddress = currentAdapterAddress;
 
             connectiveRoom = new RenewableConnectiveRoom(
                 () => new ConnectiveRoom(
@@ -118,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
-            string adapterUrl = await adapterAddresses.AdapterUrlAsync(aboutUrl, token);
+            string adapterUrl = await currentAdapterAddress.AdapterUrlAsync(token);
             LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
         }

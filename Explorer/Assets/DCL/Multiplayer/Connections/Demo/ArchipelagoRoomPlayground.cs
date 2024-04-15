@@ -1,7 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.Multiplayer.Connections.Archipelago.AdapterAddress;
+using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
@@ -24,7 +24,6 @@ namespace DCL.Multiplayer.Connections.Demo
 {
     public class ArchipelagoRoomPlayground : MonoBehaviour
     {
-        [SerializeField] private string aboutUrl = string.Empty;
         [SerializeField] private LoonCharacterObject loonCharacterObject = new ();
 
         private BaseUnityLoopSystem system = null!;
@@ -41,17 +40,6 @@ namespace DCL.Multiplayer.Connections.Demo
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
-            var adapterAddresses = new LogAdapterAddresses(
-                new RefinedAdapterAddresses(
-                    new WebRequestsAdapterAddresses(
-                        new LogWebRequestController(
-                            IWebRequestController.DEFAULT
-                        )
-                    )
-                ),
-                Debug.Log
-            );
-
             var memoryPool = new ArrayMemoryPool();
 
             var multiPool = new LogMultiPool(
@@ -66,13 +54,18 @@ namespace DCL.Multiplayer.Connections.Demo
                         memoryPool
                     )
                 ).WithLog(),
-                new IRealmData.Fake(),
                 memoryPool,
                 multiPool
             ).WithLog();
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(adapterAddresses, identityCache, signFlow, loonCharacterObject, aboutUrl);
+
+            var archipelagoIslandRoom = new ArchipelagoIslandRoom(
+                identityCache,
+                signFlow,
+                loonCharacterObject,
+                ICurrentAdapterAddress.NewDefault(IWebRequestController.DEFAULT, new IRealmData.Fake())
+            );
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
             realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
             system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);

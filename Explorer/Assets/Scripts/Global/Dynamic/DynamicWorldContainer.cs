@@ -13,6 +13,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -49,9 +50,7 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using DCL.Profiles.Self;
 using UnityEngine.EventSystems;
@@ -97,7 +96,6 @@ namespace Global.Dynamic
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; }
-
 
         public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
 
@@ -201,13 +199,18 @@ namespace Global.Dynamic
                 landscapePlugin
             );
 
+            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.WebRequestsContainer.WebRequestController, realmData);
+
             var archipelagoIslandRoom = new RenewableArchipelagoIslandRoom(
-                () => new ArchipelagoIslandRoom(
-                    staticContainer.CharacterContainer.CharacterObject,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    identityCache,
-                    multiPool,
-                    realmData
+                () => new ForkArchipelagoIslandRoom(
+                    currentAdapterAddress,
+                    (url) => new ArchipelagoIslandRoom(
+                        staticContainer.CharacterContainer.CharacterObject,
+                        identityCache,
+                        multiPool,
+                        currentAdapterAddress
+                    ),
+                    (url) => throw new NotImplementedException($"https:// not implemented: {url}")
                 )
             );
 
@@ -260,7 +263,7 @@ namespace Global.Dynamic
 
             IRealmNavigator realmNavigator = new ChangeRoomsRealmNavigator(
                 new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController),
-                () => { } //container.RoomHub.Reconnect TODO
+                container.RoomHub.Reconnect //() => { } //container.RoomHub.Reconnect TODO
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
