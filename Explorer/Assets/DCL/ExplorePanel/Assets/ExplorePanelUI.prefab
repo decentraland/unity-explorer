@@ -5813,6 +5813,14 @@ PrefabInstance:
       propertyPath: m_Spacing
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 441697096494996439, guid: 79a00622173a201488c494bd7fe8e9c9, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+    - target: {fileID: 441697096494996439, guid: 79a00622173a201488c494bd7fe8e9c9, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2772458613686380464, guid: 79a00622173a201488c494bd7fe8e9c9, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
