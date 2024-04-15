@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -39,7 +40,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             UITransformComponent newTransform = transformsPool.Get();
             newTransform.Initialize(COMPONENT_NAME, entity, ref sdkModel);
-            canvas.rootVisualElement.Add(newTransform.Transform);
+
+            if (sdkModel.Parent == SpecialEntitiesID.SCENE_ROOT_ENTITY)
+                canvas.rootVisualElement.Add(newTransform.Transform);
+            
             World.Add(entity, newTransform);
         }
     }
