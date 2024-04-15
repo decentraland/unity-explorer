@@ -57,7 +57,7 @@ namespace DCL.Audio
             if (!CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
-            if (!settings.AudioEnabled) return;
+            if (settings == null || !settings.AudioEnabled) return;
 
             AudioSource audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
 

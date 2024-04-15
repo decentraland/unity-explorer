@@ -78,6 +78,12 @@ namespace DCL.Chat
             ScrollbarCanvasGroup.alpha = 0;
         }
 
+        public void ToggleChat(bool isOn)
+        {
+            PanelBackgroundCanvasGroup.gameObject.SetActive(isOn);
+            LoopList.gameObject.SetActive(isOn);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             OnChatViewPointerEnter?.Invoke();
