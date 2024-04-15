@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.CharacterPreview;
 using DCL.Profiles.Self;
@@ -152,7 +153,6 @@ namespace DCL.PluginSystem.Global
                     rarityInfoPanelBackgroundsMapping,
                     backpackCommandBus,
                     backpackEventBus,
-                    characterPreviewFactory,
                     gridController,
                     wearableInfoPanelController,
                     emoteInfoPanelController,
@@ -161,7 +161,7 @@ namespace DCL.PluginSystem.Global
                     emoteGridController,
                     avatarView.GetComponentsInChildren<AvatarSlotView>().EnsureNotNull(),
                     emotesController,
-                    equippedEmotes
+                    new BackpackCharacterPreviewController(view.CharacterPreviewView, characterPreviewFactory, backpackEventBus, world, equippedEmotes)
                 );
             };
         }
