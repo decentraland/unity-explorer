@@ -58,10 +58,21 @@ namespace DCL.Backpack
         public bool IsEquipped { get; set; }
 
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
+        [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
-        public bool IsCompatibleWithBodyShape { get; set; }
+        public bool IsCompatibleWithBodyShape
+        {
+            get => isCompatibleWithBodyShape;
+
+            set
+            {
+                incompatibleWithBodyShapeContainer.SetActive(!value);
+                isCompatibleWithBodyShape = value;
+            }
+        }
 
         private CancellationTokenSource cts;
+        private bool isCompatibleWithBodyShape;
 
         private void Awake()
         {
@@ -83,14 +94,14 @@ namespace DCL.Backpack
             if (IsEquipped)
                 EquippedIcon.gameObject.SetActive(false);
 
-            incompatibleWithBodyShapeContainer.SetActive(!IsCompatibleWithBodyShape);
+            incompatibleWithBodyShapeHoverContainer.SetActive(!IsCompatibleWithBodyShape);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             AnimateExit();
             EquippedIcon.gameObject.SetActive(IsEquipped);
-            incompatibleWithBodyShapeContainer.SetActive(false);
+            incompatibleWithBodyShapeHoverContainer.SetActive(false);
         }
 
         public void OnPointerClick(PointerEventData eventData)
