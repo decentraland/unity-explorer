@@ -74,11 +74,11 @@ namespace DCL.Backpack
         [field: SerializeField]
         public AvatarWearableCategoryEnum CategoryEnum;
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig ClickAudio;
+        public AudioClipConfig ClickAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig HoverAudio;
+        public AudioClipConfig HoverAudio { get; private set; }
 
 
         public void Start()
