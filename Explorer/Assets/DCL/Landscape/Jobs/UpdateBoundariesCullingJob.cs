@@ -11,6 +11,7 @@ namespace DCL.Landscape.Jobs
         public bool IsVisible;
         public bool IsAtDistance;
         public bool IsDirty;
+        public float SqrDistance;
     }
 
     [BurstCompile]
@@ -35,11 +36,8 @@ namespace DCL.Landscape.Jobs
             bool isVisible = TestPlanesAABB(terrain.Bounds);
             var isAtDistance = true;
 
-            if (isVisible)
-            {
-                float sqrDist = terrain.Bounds.DistanceSq(cameraPosition);
-                isAtDistance = sqrDist < detailDistanceSqr;
-            }
+            terrain.SqrDistance = terrain.Bounds.DistanceSq(cameraPosition);
+            isAtDistance = terrain.SqrDistance < detailDistanceSqr;
 
             terrain.IsDirty = terrain.IsVisible != isVisible || terrain.IsAtDistance != isAtDistance;
             terrain.IsVisible = isVisible;
