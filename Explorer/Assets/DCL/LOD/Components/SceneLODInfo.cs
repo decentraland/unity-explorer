@@ -45,7 +45,7 @@ namespace DCL.LOD.Components
             CurrentLOD = newLod;
         }
 
-        public void InstantiateCurrentLOD()
+        public void InstantiatedCurrentLOD()
         {
             LastSuccessfulLOD?.Release();
             LastSuccessfulLOD = CurrentLOD;

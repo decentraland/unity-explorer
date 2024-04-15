@@ -122,10 +122,10 @@ namespace DCL.LOD
             State = LOD_STATE.WAITING_FINALIZATION;
         }
 
-        public void Instantiate(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
+        public bool TryFinalizeInstantiation(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
         {
             if (!AsyncInstantiation.isDone)
-                return;
+                return false;
 
             Root = AsyncInstantiation.Result[0];
             if (!LodKey.Level.Equals(0))
@@ -133,6 +133,7 @@ namespace DCL.LOD
                     parcelCoord, Root, lodTextureArrayContainer);
             //ConfigureSceneMaterial.EnableSceneBounds(Root, in SceneCircumscribedPlanes);
             State = LOD_STATE.SUCCESS;
+            return true;
         }
 
         public void Release()

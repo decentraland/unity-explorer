@@ -84,13 +84,15 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.GetCurrentLOD()!.State == LODAsset.LOD_STATE.WAITING_FINALIZATION)
             {
-                sceneLODInfo.GetCurrentLOD()!.Instantiate(sceneDefinitionComponent.Definition.id,
-                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
-                    lodTextureArrayContainer);
-                sceneLODInfo.InstantiateCurrentLOD();
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                CheckSceneReadiness(sceneDefinitionComponent);
-                sceneLODInfo.IsDirty = false;
+                if (sceneLODInfo.GetCurrentLOD()!.TryFinalizeInstantiation(sceneDefinitionComponent.Definition.id,
+                        sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
+                        lodTextureArrayContainer))
+                {
+                    sceneLODInfo.InstantiatedCurrentLOD();
+                    scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                    CheckSceneReadiness(sceneDefinitionComponent);
+                    sceneLODInfo.IsDirty = false;
+                }
             }
         }
 
