@@ -67,9 +67,52 @@ namespace DCL.Landscape
             }
         }
 
+        private async UniTask SetHeightsAsync(TerrainModel terrainModel, int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed,
+            CancellationToken cancellationToken)
+        {
+            {
+                int resolution = terrainModel.ChunkSizeInUnits + 1;
+                var heightArray = new float[resolution,resolution];
+                terrainData.SetHeights(0, 0, heightArray);
+
+                var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
+
+                INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
+                var noiseDataPointer = new NoiseDataPointer(resolution, offsetX, offsetZ);
+                JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
+
+                NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
+
+                var modifyJob = new ModifyTerrainHeightJob(
+                    ref heights,
+                    in emptyParcelNeighborHeightsData, in emptyParcelHeights,
+                    in terrainNoise,
+                    terrainGenData.terrainHoleEdgeSize,
+                    terrainGenData.minHeight,
+                    terrainGenData.pondDepth,
+                    resolution,
+                    offsetX,
+                    offsetZ,
+                    maxHeightIndex,
+                    terrainModel.minParcel,
+                    PARCEL_SIZE
+                );
+
+                JobHandle jobHandle = modifyJob.Schedule(heights.Length, 64, handle);
+
+                try
+                {
+                    await jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+
+                }
+                finally { heights.Dispose(); }
+            }
+        }
+
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
         {
             rootGo = InstantiateSingletonTerrainRoot();
+            rootGo.transform.position = new Vector3(0, -0.1f, 0); // hack for not clipping with scene (potential) floor
 
             this.worldSeed = worldSeed;
             var worldModel = new WorldModel(ownedParcels);
@@ -122,6 +165,8 @@ namespace DCL.Landscape
                         maxHeightIndex = emptyParcelHeight.Value;
             }
 
+            Debug.Log($"VVV {maxHeightIndex}");
+
             // Generate TerrainData's
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
@@ -135,12 +180,11 @@ namespace DCL.Landscape
                     treePrototypes = GetTreePrototypes(),
                     detailPrototypes = GetDetailPrototypes(),
                 };
-
                 chunkModel.TerrainData.SetDetailResolution(terrainModel.ChunkSizeInUnits, 32);
 
                 // SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 // SetTreesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, terrainModel.minParcel, cancellationToken).Forget();
-                SetDetailsAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
+                SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetTexturesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
 
                 // Dig Holes
@@ -151,16 +195,16 @@ namespace DCL.Landscape
                     for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
                         holes[x, y] = true;
 
-                    if (chunkModel.OccupiedParcels.Count > 0)
-                        foreach (int2 parcel in chunkModel.OccupiedParcels)
-                        {
-                            int x = (parcel.x - chunkModel.MinParcel.x) * PARCEL_SIZE;
-                            int y = (parcel.y - chunkModel.MinParcel.y) * PARCEL_SIZE;
-
-                            for (int i = x; i < x + PARCEL_SIZE; i++)
-                            for (int j = y; j < y + PARCEL_SIZE; j++)
-                                holes[j, i] = false;
-                        }
+                    // if (chunkModel.OccupiedParcels.Count > 0)
+                    //     foreach (int2 parcel in chunkModel.OccupiedParcels)
+                    //     {
+                    //         int x = (parcel.x - chunkModel.MinParcel.x) * PARCEL_SIZE;
+                    //         int y = (parcel.y - chunkModel.MinParcel.y) * PARCEL_SIZE;
+                    //
+                    //         for (int i = x; i < x + PARCEL_SIZE; i++)
+                    //         for (int j = y; j < y + PARCEL_SIZE; j++)
+                    //             holes[j, i] = false;
+                    //     }
 
                     if (chunkModel.OutOfTerrainParcels.Count > 0)
                         foreach (int2 parcel in chunkModel.OutOfTerrainParcels)
@@ -233,49 +277,6 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask SetHeightsAsync(TerrainModel terrainModel, int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken)
-        {
-            {
-                int resolution = terrainModel.ChunkSizeInUnits + 1;
-                var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
-
-                INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
-                var noiseDataPointer = new NoiseDataPointer(resolution, offsetX, offsetZ);
-                JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
-
-                NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
-
-                var modifyJob = new ModifyTerrainHeightJob(
-                    ref heights,
-                    in emptyParcelNeighborHeightsData, in emptyParcelHeights,
-                    in terrainNoise,
-                    terrainGenData.terrainHoleEdgeSize,
-                    terrainGenData.minHeight,
-                    terrainGenData.pondDepth,
-                    resolution,
-                    offsetX,
-                    offsetZ,
-                    maxHeightIndex,
-                    terrainModel.minParcel,
-                    PARCEL_SIZE
-                );
-
-                JobHandle jobHandle = modifyJob.Schedule(heights.Length, 64, handle);
-
-                try
-                {
-                    await jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-
-                    {
-                        float[,] heightArray = ConvertTo2DArray(heights, resolution, resolution);
-                        terrainData.SetHeights(0, 0, heightArray);
-                    }
-                }
-                finally { heights.Dispose(); }
-            }
-        }
-
         private async UniTask SetTexturesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
             CancellationToken cancellationToken)
         {
@@ -306,8 +307,8 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask SetDetailsAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken)
+        private async UniTask SetDetailsAsync(ChunkModel chunkModel, int offsetX, int offsetZ, int chunkSize,
+            TerrainData terrainData, uint baseSeed, CancellationToken cancellationToken)
         {
             terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
 
@@ -353,10 +354,15 @@ namespace DCL.Landscape
                         for (var x = 0; x < chunkSize; x++)
                         {
                             int f = terrainGenData.detailScatterMode == DetailScatterMode.CoverageMode ? UNITY_MAX_COVERAGE_VALUE : UNITY_MAX_INSTANCE_COUNT;
-                            int index = x + (y * chunkSize);
-                            float value = result[index];
+                            float value = result[x + (y * chunkSize)];
+
                             detailLayer[y, x] = Mathf.FloorToInt(value * f);
                         }
+
+                        foreach (var parcel in chunkModel.OccupiedParcels)
+                            for (int y = (-chunkModel.MinParcel.y + parcel.y) * PARCEL_SIZE; y < (-chunkModel.MinParcel.y + parcel.y + 1)*PARCEL_SIZE; y++)
+                            for (int x = (-chunkModel.MinParcel.x + parcel.x) * PARCEL_SIZE; x < (-chunkModel.MinParcel.x + parcel.x + 1)*PARCEL_SIZE; x++)
+                                detailLayer[y, x] = 0;
 
                         terrainData.SetDetailLayer(0, 0, i, detailLayer);
                     }
