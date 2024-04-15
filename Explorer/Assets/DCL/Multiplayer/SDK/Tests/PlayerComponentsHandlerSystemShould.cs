@@ -13,6 +13,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility.Multithreading;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Multiplayer.SDK.Tests
@@ -21,21 +22,26 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-        // private ISceneFacade sceneFacade;
         private Entity entity;
         private ISceneStateProvider sceneStateProvider;
         private Transform fakeCharacterUnityTransform;
+        private World sceneWorld;
 
         [SetUp]
         public void Setup()
         {
-            IScenesCache scenesCache = Substitute.For<IScenesCache>();
+            var scenesCache = new ScenesCache();
             ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
             var sceneShortInfo = new SceneShortInfo(new Vector2Int(0, 0), "fake-scene");
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneShortInfo.Returns(sceneShortInfo);
             sceneFacade.Info.Returns(sceneShortInfo);
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
             sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
+            sceneWorld = World.Create();
+            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
+            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
             scenesCache.Add(sceneFacade, new[] { sceneFacade.Info.BaseParcel });
 
             ICharacterObject characterObject = Substitute.For<ICharacterObject>();
@@ -52,12 +58,12 @@ namespace DCL.Multiplayer.SDK.Tests
         public void TearDown()
         {
             Object.DestroyImmediate(fakeCharacterUnityTransform.gameObject);
+            sceneWorld.Dispose();
         }
 
         [Test]
         public void SetupPlayerIdentityDataForPlayerInsideScene()
         {
-            // sceneFacade.SceneStateProvider.IsCurrent.Returns(true);
             sceneStateProvider.IsCurrent.Returns(true);
 
             world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
@@ -69,11 +75,14 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
+            Assert.IsFalse(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(world.TryGet(entity, out playerIdentityDataComponent));
             Assert.AreEqual(playerIdentityDataComponent.Address, FAKE_USER_ID);
             Assert.IsNotNull(playerIdentityDataComponent.CRDTEntity);
+            Assert.IsTrue(sceneWorld.TryGet(playerIdentityDataComponent.SceneWorldEntity, out playerIdentityDataComponent));
         }
 
         // NotSetupPlayerIdentityDataForPlayersOutsideScene
