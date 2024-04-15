@@ -1,8 +1,9 @@
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using System;
 
 namespace DCL.Multiplayer.Connections.Messaging.Hubs
 {
-    public interface IMessagePipesHub
+    public interface IMessagePipesHub : IDisposable
     {
         IMessagePipe ScenePipe();
 
@@ -15,6 +16,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
 
             public IMessagePipe IslandPipe() =>
                 IMessagePipe.Null.INSTANCE;
+
+            public void Dispose()
+            {
+            }
         }
     }
 }
