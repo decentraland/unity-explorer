@@ -254,7 +254,12 @@ namespace DCL.Chat
                     if(profile.ProfilePicture != null)
                         itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
                 }
-                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender);
+                //temporary approach to extract the username without the walledId, will be refactored
+                //once we have the proper integration of the profile retrieval
+                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
+                    ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
+                    : itemData.Sender);
+
                 itemScript.SetItemData(itemData);
 
                 //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
@@ -268,9 +273,12 @@ namespace DCL.Chat
             return item;
         }
 
+        private bool isChatClosed = false;
+
         private void CloseChat()
         {
-            //TODO: will add logic for the panel closing once it's defined
+            isChatClosed = true;
+            viewInstance.ToggleChat(false);
         }
 
         private void OnInputDeselected(string inputText)
@@ -282,6 +290,12 @@ namespace DCL.Chat
 
         private void OnInputSelected(string inputText)
         {
+            if (isChatClosed)
+            {
+                isChatClosed = false;
+                viewInstance.ToggleChat(true);
+            }
+
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
             world.AddOrGet(playerEntity, new MovementBlockerComponent());

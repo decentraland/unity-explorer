@@ -1155,10 +1155,10 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0, g: 0, b: 0, a: 0.5882353}
-    m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0.8627451}
-    m_PressedColor: {r: 0, g: 0, b: 0, a: 0.9019608}
-    m_SelectedColor: {r: 0, g: 0, b: 0, a: 0.78431374}
+    m_NormalColor: {r: 0, g: 0, b: 0, a: 0.69803923}
+    m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0.9019608}
+    m_PressedColor: {r: 0, g: 0, b: 0, a: 1}
+    m_SelectedColor: {r: 0, g: 0, b: 0, a: 0.69803923}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -1693,7 +1693,7 @@ MonoBehaviour:
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
-  m_ScrollSensitivity: 1
+  m_ScrollSensitivity: 8
   m_Viewport: {fileID: 5228216496232371159}
   m_HorizontalScrollbar: {fileID: 0}
   m_VerticalScrollbar: {fileID: 243621710923428424}
@@ -2549,6 +2549,14 @@ PrefabInstance:
     - target: {fileID: 1221512481949695350, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1497621006241594475, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      propertyPath: m_Pivot.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1497621006241594475, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 245.99994
       objectReference: {fileID: 0}
     - target: {fileID: 5142822092447765915, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
       propertyPath: m_ActiveFontFeatures.Array.data[0]
