@@ -1,5 +1,6 @@
 ﻿using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -96,7 +97,19 @@ namespace DCL.Audio
 
             AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
 
-            if (clipConfig == null || clipConfig.RelativeVolume == 0) return;
+            if (clipConfig == null)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio for {clipType} as it has no AudioClipConfig Assigned");
+                return;
+            }
+
+            if (clipConfig.AudioClips.Length == 0)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no Audio Clips Assigned");
+                return;
+            }
+
+            if (clipConfig.RelativeVolume == 0) {return;}
 
             AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
