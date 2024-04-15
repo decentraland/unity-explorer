@@ -149,7 +149,7 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId)));
+                backpackItemView.OnEquip += EquipItem;
                 backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId)));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
@@ -174,6 +174,9 @@ namespace DCL.Backpack
 
             AwaitWearablesPromiseForSizeAsync(wearablesPromise, cts.Token).Forget();
         }
+
+        private void EquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
 
         private void BuildRequestParameters(string pageNumber, string pageSize)
         {
@@ -281,8 +284,8 @@ namespace DCL.Backpack
         {
             foreach (KeyValuePair<URN, BackpackItemView> backpackItemView in usedPoolItems)
             {
-                backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.OnEquip -= EquipItem;
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;
