@@ -10,9 +10,9 @@ namespace DCL.UI
         [field: SerializeField]
         public Slider Slider { get; private set; }
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig SliderValueChanged;
+        public AudioClipConfig SliderValueChanged { get; private set; }
 
         private void OnEnable()
         {

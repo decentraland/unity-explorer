@@ -15,9 +15,9 @@ namespace DCL.UI
         [field: SerializeField]
         internal GameObject buttonImageOutline { get; private set; }
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig ButtonPressedAudio;
+        public AudioClipConfig ButtonPressedAudio { get; private set; }
 
         private void OnEnable()
         {

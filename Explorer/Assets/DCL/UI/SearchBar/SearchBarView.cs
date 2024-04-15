@@ -16,13 +16,13 @@ namespace DCL.UI
         public Button clearSearchButton;
 
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig InputTextAudio;
+        public AudioClipConfig InputTextAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig ClearTextAudio;
+        public AudioClipConfig ClearTextAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig SubmitAudio;
+        public AudioClipConfig SubmitAudio { get; private set; }
 
         private void OnEnable()
         {

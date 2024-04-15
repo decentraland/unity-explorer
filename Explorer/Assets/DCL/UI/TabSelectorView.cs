@@ -25,9 +25,9 @@ namespace DCL.UI
         [field: SerializeField]
         public GameObject SelectedText { get; private set; }
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        private AudioClipConfig TabClickAudio;
+        public AudioClipConfig TabClickAudio { get; private set; }
 
 
         private void OnEnable()

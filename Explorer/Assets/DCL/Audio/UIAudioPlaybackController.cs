@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DG.Tweening;
 using System;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace DCL.Audio
         [SerializeField]
         private float fadeDuration = 1.5f;
         [SerializeField]
-        private DCLAudioSettings audioSettings;
+        private AudioSettings audioSettings;
 
 
         private Tweener loopingAudioTweener;
@@ -41,7 +42,7 @@ namespace DCL.Audio
 
         private void OnPlayLoopingUIAudioEvent(AudioClipConfig audioClipConfig, bool startLoop)
         {
-            if (!CheckAudioCategory(audioClipConfig.Category)) return;
+            if (!CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;
@@ -68,7 +69,7 @@ namespace DCL.Audio
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (!CheckAudioCategory(audioClipConfig.Category)) return;
+            if ( CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;
@@ -76,10 +77,27 @@ namespace DCL.Audio
             PlaySingleAudio(audioClipConfig);
         }
 
-        private bool CheckAudioCategory(AudioCategory category)
+        private bool CheckAudioClips(AudioClipConfig audioClipConfig)
         {
-            if (category is not (AudioCategory.Chat or AudioCategory.Music or AudioCategory.UI))
-            { //We can only play UI sounds through this bus. Other sounds are discarded -> maybe add a log here?
+            if (audioClipConfig.AudioClips.Length == 0)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+
+        private bool CheckAudioCategory(AudioClipConfig audioClipConfig)
+        {
+            //We can only play UI sounds through this bus. Other sounds are discarded
+            if (audioClipConfig.Category is not (AudioCategory.Chat or AudioCategory.Music or AudioCategory.UI))
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it is from category {audioClipConfig.Category} and this bus only supports Chat, Music or UI");
                 return false;
             }
 

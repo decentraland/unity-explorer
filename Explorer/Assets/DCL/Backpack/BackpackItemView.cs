@@ -60,17 +60,15 @@ namespace DCL.Backpack
         public bool IsEquipped { get; set; }
 
 
-        [FormerlySerializedAs("EquipWearableAudioClipConfig")]
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig EquipWearableAudio;
-        [FormerlySerializedAs("UnEquipWearableAudioClipConfig")]
+        public AudioClipConfig EquipWearableAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig UnEquipWearableAudio;
+        public AudioClipConfig UnEquipWearableAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig HoverAudio;
+        public AudioClipConfig HoverAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig ClickAudio;
+        public AudioClipConfig ClickAudio { get; private set; }
 
         private CancellationTokenSource cts;
 

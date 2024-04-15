@@ -16,11 +16,11 @@ namespace DCL.UI
         public Transform PagesContainer { get; private set; }
 
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig NextButtonPressed;
+        public AudioClipConfig NextButtonPressed { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig PreviousButtonPressed;
+        public AudioClipConfig PreviousButtonPressed { get; private set; }
 
         private void OnEnable()
         {

@@ -10,9 +10,9 @@ namespace DCL.UI
         [field: SerializeField]
         public Button Button { get; private set;}
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig ButtonPressedAudio;
+        public AudioClipConfig ButtonPressedAudio { get; private set; }
 
         private void OnEnable()
         {

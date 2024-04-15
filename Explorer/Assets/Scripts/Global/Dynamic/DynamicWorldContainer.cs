@@ -74,6 +74,8 @@ namespace Global.Dynamic
 
         public LODContainer LODContainer { get; private set; } = null!;
 
+        public UIAudioPlaybackContainer UIAudioPlaybackContainer { get; private set; } = null!;
+
         public IRealmController RealmController { get; private set; } = null!;
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
@@ -142,6 +144,7 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
+                container.UIAudioPlaybackContainer = await UIAudioPlaybackContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
             }
 
             try
@@ -307,7 +310,6 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new UIAudioPlaybackPlugin(staticContainer.AssetsProvisioner),
                 new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem, chatCommandsFactory),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,

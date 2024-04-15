@@ -10,9 +10,9 @@ namespace DCL.UI
         public TMP_Dropdown Dropdown { get; private set; }
 
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig DropDownInteractedAudio;
+        public AudioClipConfig DropDownInteractedAudio { get; private set; }
 
         private void OnEnable()
         {

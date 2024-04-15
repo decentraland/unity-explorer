@@ -16,11 +16,11 @@ namespace DCL.UI
         [field: SerializeField]
         public GameObject OffImage { get; private set; }
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig ToggleOnAudio;
+        public AudioClipConfig ToggleOnAudio { get; private set; }
         [field: SerializeField]
-        public AudioClipConfig ToggleOffAudio;
+        public AudioClipConfig ToggleOffAudio { get; private set; }
 
         private void OnEnable()
         {

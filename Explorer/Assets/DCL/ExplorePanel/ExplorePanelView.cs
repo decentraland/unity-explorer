@@ -28,13 +28,13 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public SystemMenuView SystemMenu { get; private set; } = null!;
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig BackgroundMusic;
+        public AudioClipConfig BackgroundMusic { get; private set; }
         [field: SerializeField]
-        public AudioMixerSnapshot MuteSoundsSnapshot;
+        public AudioMixerSnapshot MuteSoundsSnapshot { get; private set; }
         [field: SerializeField]
-        public AudioMixerSnapshot RestoreSoundsSnapShot;
+        public AudioMixerSnapshot RestoreSoundsSnapShot { get; private set; }
 
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
