@@ -1538,6 +1538,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 6987495798773304990}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 7b6fe3a7507b38b4cb27bf406f7d6d23, type: 2}
+  <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 60845438e94f40140920775f272f9ca3, type: 2}
 --- !u!1 &4936345567603315831
 GameObject:
   m_ObjectHideFlags: 0
@@ -2292,6 +2294,7 @@ GameObject:
   - component: {fileID: 3133125966391906415}
   - component: {fileID: 5886802745040834356}
   - component: {fileID: 4843367397424901149}
+  - component: {fileID: 5059067825194965793}
   m_Layer: 5
   m_Name: MenuButton
   m_TagString: Untagged
@@ -2401,6 +2404,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5059067825194965793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124026131035464715}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4843367397424901149}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &9152785347356188261
 GameObject:
   m_ObjectHideFlags: 0
@@ -2625,10 +2642,18 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 24
       objectReference: {fileID: 0}
+    - target: {fileID: 2301638907023502333, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 2318659590435797685, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 2886492361444090652, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 2988628187126395309, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
@@ -3109,6 +3134,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 57.9
       objectReference: {fileID: 0}
+    - target: {fileID: 9007011967924448020, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+    - target: {fileID: 9017803013713818890, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
     - target: {fileID: 9082897965483361553, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 104.2

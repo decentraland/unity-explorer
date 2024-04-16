@@ -15,10 +15,12 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Settings;
+using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -52,10 +54,11 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteCache emoteCache;
         private readonly IWebRequestController webRequestController;
-        private readonly ICollection<string> forceRender;
 
         private NavmapController? navmapController;
+        private SettingsController? settingsController;
         private BackpackSubPlugin backpackSubPlugin = null!;
+        private readonly ICollection<string> forceRender;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -103,6 +106,7 @@ namespace DCL.PluginSystem.Global
         public override void Dispose()
         {
             navmapController?.Dispose();
+            settingsController?.Dispose();
             backpackSubPlugin.Dispose();
         }
 
@@ -124,7 +128,11 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            var settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+            var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
+            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, realmPartitionSettings.Value, landscapeData.Value);
+
             PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
@@ -167,6 +175,15 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public string[] EmbeddedEmotes { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<SettingsMenuConfiguration> SettingsMenuConfiguration { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();
