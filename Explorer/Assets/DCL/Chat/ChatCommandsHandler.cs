@@ -6,7 +6,7 @@ namespace DCL.Chat
 {
     internal class ChatCommandsHandler
     {
-        public const char CHAT_COMMAND_CHAR = '/';
+        public const string CHAT_COMMAND_CHAR = "/";
 
         private readonly Dictionary<Regex, IChatCommand> commandsCache = new ();
         private readonly IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory;
@@ -38,6 +38,9 @@ namespace DCL.Chat
         }
 
         public bool StartsLikeCommand(string message) =>
-            message.TrimStart()!.StartsWith(CHAT_COMMAND_CHAR);
+            message
+               .AsSpan()
+               .Trim()
+               .StartsWith(CHAT_COMMAND_CHAR);
     }
 }
