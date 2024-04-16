@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -57,6 +59,17 @@ namespace DCL.Backpack
         [field: SerializeField]
         public bool IsEquipped { get; set; }
 
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig EquipWearableAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig UnEquipWearableAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio { get; private set; }
+
         private CancellationTokenSource cts;
 
         private void Awake()
@@ -73,6 +86,7 @@ namespace DCL.Backpack
         public void OnPointerEnter(PointerEventData eventData)
         {
             AnimateHover();
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             SetEquipButtonsState();
 
             if (IsEquipped)
@@ -109,13 +123,16 @@ namespace DCL.Backpack
             if (string.IsNullOrEmpty(ItemId)) return;
             if (eventData.button != PointerEventData.InputButton.Left) return;
 
+
             switch (eventData.clickCount)
             {
                 case 1:
                     OnSelectItem?.Invoke(ItemId);
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
                     break;
                 case 2:
                     OnEquip?.Invoke(ItemId);
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
                     break;
             }
         }
