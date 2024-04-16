@@ -364,10 +364,10 @@ namespace DCL.Landscape
                 var treeRadiusMap = new NativeHashMap<int, float>(terrainGenData.treeAssets.Length, Allocator.Persistent);
                 var treeParallelRandoms = new NativeArray<Random>(chunkSize * chunkSize, Allocator.Persistent);
 
+                JobHandle instancingHandle = default;
+
                 try
                 {
-                    var instancingHandle = default(JobHandle);
-
                     for (var treeAssetIndex = 0; treeAssetIndex < terrainGenData.treeAssets.Length; treeAssetIndex++)
                     {
                         LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
@@ -377,7 +377,7 @@ namespace DCL.Landscape
 
                         INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
                         var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkModel.MinParcel.x, chunkModel.MinParcel.y);
-                        JobHandle generatorHandle = generator.Schedule(noiseDataPointer, instancingHandle);
+                        JobHandle generatorHandle = generator.Schedule(noiseDataPointer, default);
 
                         var randomizer = new SetupRandomForParallelJobs(treeParallelRandoms, (int)worldSeed);
                         JobHandle randomizerHandle = randomizer.Schedule(generatorHandle);
@@ -401,12 +401,19 @@ namespace DCL.Landscape
                             useValidations: false);
 
                         instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, randomizerHandle);
+
+                        generatorHandle.Complete();
+                        randomizerHandle.Complete();
+                        instancingHandle.Complete();
                     }
 
                     await instancingHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                    instancingHandle.Complete();
 
                     var invalidationJob = new InvalidateTreesJob(treeInstances.AsReadOnly(), treeInvalidationMap.AsParallelWriter(), treeRadiusMap.AsReadOnly(), chunkSize);
-                    await invalidationJob.Schedule(chunkSize * chunkSize, 8).ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                    JobHandle invalidationHandle = invalidationJob.Schedule(chunkSize * chunkSize, 8);
+                    await invalidationHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                    invalidationHandle.Complete();
 
                     var array = new List<TreeInstance>();
 
@@ -431,6 +438,8 @@ namespace DCL.Landscape
                 catch (Exception e) { }
                 finally
                 {
+                    instancingHandle.Complete();
+
                     treeInstances.Dispose();
                     treeInvalidationMap.Dispose();
                     treeRadiusMap.Dispose();
