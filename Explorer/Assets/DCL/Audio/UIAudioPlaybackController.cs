@@ -61,6 +61,7 @@ namespace DCL.Audio
             {
                 int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+                audioSource.loop = true;
                 audioSource.Play();
                 audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration);
             }
