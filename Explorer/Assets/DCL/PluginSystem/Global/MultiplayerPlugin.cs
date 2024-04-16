@@ -110,7 +110,7 @@ namespace DCL.PluginSystem.Global
                 realFlowLoadingStatus
             );
 
-            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache);
 #endif
         }
     }

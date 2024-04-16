@@ -15,6 +15,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Multithreading;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -23,35 +24,29 @@ namespace DCL.Multiplayer.SDK.Tests
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
         private Entity entity;
-        private ISceneStateProvider sceneStateProvider;
         private Transform fakeCharacterUnityTransform;
-        private Transform fakeMainCharacterUnityTransform;
-        private World sceneWorld;
+        private World scene1World;
+        private World scene2World;
+        private ISceneFacade scene1Facade;
+        private ISceneFacade scene2Facade;
 
         [SetUp]
         public void Setup()
         {
             var scenesCache = new ScenesCache();
-            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
-            var sceneShortInfo = new SceneShortInfo(new Vector2Int(0, 0), "fake-scene");
-            ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.SceneShortInfo.Returns(sceneShortInfo);
-            sceneFacade.Info.Returns(sceneShortInfo);
-            sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneStateProvider.IsCurrent.Returns(true);
-            sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
-            sceneWorld = World.Create();
-            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
-            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
-            scenesCache.Add(sceneFacade, new[] { sceneFacade.Info.BaseParcel });
+            scene1World = World.Create();
+            scene1Facade = CreateTestSceneFacade(Vector2Int.zero, scene1World);
+            scenesCache.Add(scene1Facade, new[] { scene1Facade.Info.BaseParcel });
+            scene2World = World.Create();
+            scene2Facade = CreateTestSceneFacade(Vector2Int.one, scene2World);
+            scenesCache.Add(scene2Facade, new[] { scene2Facade.Info.BaseParcel });
 
             fakeCharacterUnityTransform = new GameObject("fake-character").transform;
-            fakeMainCharacterUnityTransform = new GameObject("fake-main-character").transform;
-            ICharacterObject characterObject = Substitute.For<ICharacterObject>();
-            characterObject.Transform.Returns(fakeMainCharacterUnityTransform.transform);
-            fakeMainCharacterUnityTransform.transform.position = Vector3.one;
 
-            system = new PlayerComponentsHandlerSystem(world, scenesCache, characterObject);
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
+
+            system = new PlayerComponentsHandlerSystem(world, scenesCache);
 
             entity = world.Create();
             AddTransformToEntity(entity);
@@ -61,13 +56,16 @@ namespace DCL.Multiplayer.SDK.Tests
         public void TearDown()
         {
             Object.DestroyImmediate(fakeCharacterUnityTransform.gameObject);
-            sceneWorld.Dispose();
+            scene1World.Dispose();
+            scene2World.Dispose();
+            world.Dispose();
         }
 
         [Test]
         public void SetupPlayerIdentityDataForPlayerInsideScene()
         {
-            sceneStateProvider.IsCurrent.Returns(true);
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
             world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
@@ -86,13 +84,14 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
             Assert.AreEqual(playerIdentityDataComponent.Address, FAKE_USER_ID);
             Assert.IsNotNull(playerIdentityDataComponent.CRDTEntity);
-            Assert.IsTrue(sceneWorld.TryGet(playerIdentityDataComponent.SceneWorldEntity, out playerIdentityDataComponent));
+            Assert.IsTrue(scene1World.TryGet(playerIdentityDataComponent.SceneWorldEntity, out playerIdentityDataComponent));
         }
 
         [Test]
         public void NotSetupPlayerIdentityDataForPlayersOutsideScene()
         {
-            sceneStateProvider.IsCurrent.Returns(true);
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one * 17;
 
             world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
@@ -114,7 +113,8 @@ namespace DCL.Multiplayer.SDK.Tests
         [Test]
         public void RemovePlayerIdentityDataForPlayersLeavingScene()
         {
-            sceneStateProvider.IsCurrent.Returns(true);
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
             world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
@@ -139,7 +139,51 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
         }
 
-        // RemovePlayerIdentityDataForPlayersOnPreviousScene
+        [Test]
+        public void RemovePlayerIdentityDataForPlayersOnPreviousScene()
+        {
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.Has<PlayerIdentityDataComponent>(entity));
+
+            // Change the current scene
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(false);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(true);
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+        }
+
+        // RemovePlayerIdentityDataForOnPlayersDisconnection
         // TrackReservedEntitiesCorrectly
+
+        private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
+        {
+            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
+            var sceneShortInfo = new SceneShortInfo(baseCoords, "fake-scene");
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneShortInfo.Returns(sceneShortInfo);
+            sceneFacade.Info.Returns(sceneShortInfo);
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
+            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
+            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
+            return sceneFacade;
+        }
     }
 }

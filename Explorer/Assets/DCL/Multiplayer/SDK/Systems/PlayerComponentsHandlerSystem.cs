@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
-using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Systems;
@@ -26,30 +25,16 @@ namespace DCL.Multiplayer.SDK.Systems
     public partial class PlayerComponentsHandlerSystem : BaseUnityLoopSystem
     {
         private readonly IScenesCache scenesCache;
-        private readonly ICharacterObject mainCharacterObject;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
-        private ISceneFacade currentSceneFacade;
 
-        // private ISceneFacade lastCurrentSceneFacade;
-
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
+        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache) : base(world)
         {
             this.scenesCache = scenesCache;
-            mainCharacterObject = characterObject;
         }
 
         protected override void Update(float t)
         {
-            // Keep current scene updated
-            scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(mainCharacterObject.Transform.position), out currentSceneFacade);
-
-            // update current scene and clear reserved entities if it changed.
-            /*scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(mainCharacterObject.Transform.position), out ISceneFacade currentSceneFacade);
-            if (lastCurrentSceneFacade != currentSceneFacade)
-                ClearReservedEntities();
-            lastCurrentSceneFacade = currentSceneFacade;*/
-
             RemovePlayerIdentityDataOnOutsideCurrentSceneQuery(World);
 
             HandlePlayerDisconnectQuery(World);
@@ -80,6 +65,7 @@ namespace DCL.Multiplayer.SDK.Systems
 
                 var playerIdentityData = new PlayerIdentityDataComponent
                 {
+                    SceneFacade = sceneFacade,
                     SceneWorldEntity = sceneWorldEntity,
                     CRDTEntity = crdtEntityComponent,
                     Address = profile.UserId,
@@ -98,15 +84,17 @@ namespace DCL.Multiplayer.SDK.Systems
             if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
                 && sceneFacade.SceneStateProvider.IsCurrent) return;
 
+            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
+
             // External world access should be always synchronized (Global World calls into Scene World)
-            using (currentSceneFacade.EcsExecutor.Sync.GetScope())
+            using (sceneEcsExecutor.Sync.GetScope())
             {
                 Debug.Log($"PRAVS - RemovePlayerIdentityDataOnOutsideCurrentScene() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; scene parcel: {sceneFacade?.Info.BaseParcel}");
 
                 World.Remove<PlayerIdentityDataComponent>(entity);
 
-                // Remove from current scene (not that player's scene) entities
-                currentSceneFacade.EcsExecutor.World.Remove<PlayerIdentityDataComponent>(playerIdentityDataComponent.SceneWorldEntity);
+                // Remove from whichever scene it was added
+                sceneEcsExecutor.World.Remove<PlayerIdentityDataComponent>(playerIdentityDataComponent.SceneWorldEntity);
             }
 
             FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
@@ -120,15 +108,17 @@ namespace DCL.Multiplayer.SDK.Systems
                 || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
+            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
+
             // External world access should be always synchronized (Global World calls into Scene World)
-            using (currentSceneFacade.EcsExecutor.Sync.GetScope())
+            using (sceneEcsExecutor.Sync.GetScope())
             {
                 Debug.Log($"PRAVS - HandlePlayerDisconnect() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; scene parcel: {sceneFacade.Info.BaseParcel}");
 
                 World.Remove<PlayerIdentityDataComponent>(entity);
 
-                // Remove from current scene entities
-                currentSceneFacade.EcsExecutor.World.Remove<PlayerIdentityDataComponent>(playerIdentityDataComponent.SceneWorldEntity);
+                // Remove from whichever scene it was added
+                sceneEcsExecutor.World.Remove<PlayerIdentityDataComponent>(playerIdentityDataComponent.SceneWorldEntity);
             }
 
             FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
