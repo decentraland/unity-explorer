@@ -41,11 +41,8 @@ namespace DCL.LOD.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private readonly Transform lodsTransformParent;
-
         private readonly TextureArrayContainer lodTextureArrayContainer;
 
-        private int lodsWaitingForFinalization;
-        private readonly int LODS_WAITING_FOR_FINALIZATION_LIMIT = 10;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
@@ -59,7 +56,8 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
-            lodsWaitingForFinalization = 0;
+
+            AsyncInstantiateOperation.SetIntegrationTimeMS(33);
         }
 
         protected override void Update(float t)
@@ -67,7 +65,6 @@ namespace DCL.LOD.Systems
             UpdateLODLevelQuery(World);
             ResolveCurrentLODPromiseQuery(World);
             InstantiateCurrentLODQuery(World);
-            FinalizeInstantiationCurrentLODQuery(World);
         }
 
         [Query]
@@ -78,30 +75,6 @@ namespace DCL.LOD.Systems
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void FinalizeInstantiationCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!sceneLODInfo.IsDirty || sceneLODInfo.GetCurrentLOD() == null) return;
-
-            if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_FINALIZATION)
-            {
-                if (sceneLODInfo.GetCurrentLOD().AsyncInstantiation.isDone)
-                {
-                    lodsWaitingForFinalization--;
-
-                    sceneLODInfo.GetCurrentLOD().CompleteInstantiation(lodsTransformParent);
-                    sceneLODInfo.InstantiatedCurrentLOD();
-                    sceneLODInfo.IsDirty = false;
-
-                    if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
-                    {
-                        scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                        CheckSceneReadiness(sceneDefinitionComponent);
-                    }
-                }
-            }
-        }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -111,12 +84,18 @@ namespace DCL.LOD.Systems
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            if (lodsWaitingForFinalization >= LODS_WAITING_FOR_FINALIZATION_LIMIT) return;
-
-            if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_INSTANTIATION)
+            if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
+                sceneLODInfo.GetCurrentLOD().AsyncInstantiation.IsWaitingForSceneActivation())
             {
-                sceneLODInfo.GetCurrentLOD().EnableInstationFinalization(sceneDefinitionComponent.Definition.id, sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, lodTextureArrayContainer);
-                lodsWaitingForFinalization++;
+                sceneLODInfo.GetCurrentLOD().FinalizeInstantiation();
+                sceneLODInfo.UpdateLastSuccessfullLOD();
+                if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
+                {
+                    scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                    CheckSceneReadiness(sceneDefinitionComponent);
+                }
+
+                sceneLODInfo.IsDirty = false;
             }
         }
 
@@ -130,30 +109,25 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                LODAsset newLod = default;
+                LODAsset newLod = null;
                 if (result.Succeeded)
                 {
-                    var asyncInstantiateOperation =
-                        Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),
-                            lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
-
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        lodCache, result.Asset, asyncInstantiateOperation);
+                        lodCache, result.Asset, lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
+                        sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, lodTextureArrayContainer);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
-                    sceneLODInfo.SetCurrentLOD(newLod);
-                    if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
+                    if (newLod.LodKey.Level == 0)
                     {
                         scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
                         CheckSceneReadiness(sceneDefinitionComponent);
                     }
                     sceneLODInfo.IsDirty = false;
                 }
-
                 sceneLODInfo.SetCurrentLOD(newLod);
             }
         }
@@ -192,8 +166,8 @@ namespace DCL.LOD.Systems
 
             if (newLODKey.Equals(sceneLODInfo.GetCurrentSuccessfulLOD()))
             {
-                sceneLODInfo.IsDirty = false;
                 sceneLODInfo.ResetToCurrentSuccesfullLOD();
+                sceneLODInfo.IsDirty = false;
                 return;
             }
 

@@ -39,10 +39,10 @@ namespace DCL.LOD.Components
         public void SetCurrentLOD(LODAsset newLod)
         {
             CurrentLOD = newLod;
-            InstantiatedCurrentLOD();
+            UpdateLastSuccessfullLOD();
         }
 
-        public void InstantiatedCurrentLOD()
+        public void UpdateLastSuccessfullLOD()
         {
             if (CurrentLOD.State == LODAsset.LOD_STATE.SUCCESS)
             {

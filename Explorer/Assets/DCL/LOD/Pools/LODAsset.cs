@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.LOD
 {
@@ -24,6 +25,10 @@ namespace DCL.LOD
         private readonly ILODAssetsPool Pool;
         internal AssetBundleData AssetBundleReference;
 
+        private readonly string SceneID;
+        private readonly Vector2Int ParcelCoord;
+        private readonly TextureArrayContainer LodTextureArrayContainer;
+
         public enum LOD_STATE
         {
             UNINTIALIZED,
@@ -34,15 +39,24 @@ namespace DCL.LOD
         }
 
 
-        public LODAsset(LODKey lodKey, ILODAssetsPool pool, AssetBundleData assetBundleData, AsyncInstantiateOperation<GameObject> asyncInstantiation)
+        public LODAsset(LODKey lodKey, ILODAssetsPool pool, AssetBundleData assetBundleData,
+            Transform lodsTransformParent, Vector3 baseParcelPosition,
+            Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
         {
             LodKey = lodKey;
             Pool = pool;
-            Root = null;
             Slots = Array.Empty<TextureArraySlot?>();
-            AsyncInstantiation = asyncInstantiation;
-            asyncInstantiation.allowSceneActivation = false;
             AssetBundleReference = assetBundleData;
+            SceneID = LodKey.Hash;
+            ParcelCoord = parcelCoord;
+            LodTextureArrayContainer = lodTextureArrayContainer;
+
+            AsyncInstantiation =
+                Object.InstantiateAsync(AssetBundleReference.GetMainAsset<GameObject>(),
+                    lodsTransformParent, baseParcelPosition, Quaternion.identity);
+            AsyncInstantiation.allowSceneActivation = false;
+
+            Root = null;
 
             State = LOD_STATE.WAITING_INSTANTIATION;
             
@@ -112,45 +126,23 @@ namespace DCL.LOD
             }
         }
 
-        public void EnableInstationFinalization(string sceneID, Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
+        public void FinalizeInstantiation()
         {
-            this.sceneID = sceneID;
-            this.parcelCoord = parcelCoord;
-            this.lodTextureArrayContainer = lodTextureArrayContainer;
-            AsyncInstantiation.completed += CompletedInstantiation;
             AsyncInstantiation.allowSceneActivation = true;
-            State = LOD_STATE.WAITING_FINALIZATION;
-        }
 
-        private void CompletedInstantiation(AsyncOperation obj)
-        {
+            AsyncInstantiation.WaitForCompletion();
+
             Root = AsyncInstantiation.Result[0];
-            Root.gameObject.SetActive(false);
-            AsyncInstantiation.completed -= CompletedInstantiation;
+            if (!LodKey.Level.Equals(0))
+                Slots = LODUtils.ApplyTextureArrayToLOD(SceneID,
+                    ParcelCoord, Root, LodTextureArrayContainer);
+
+            State = LOD_STATE.SUCCESS;
         }
-
-        private string sceneID;
-        private Vector2Int parcelCoord;
-        private TextureArrayContainer lodTextureArrayContainer;
-
 
         public void Release()
         {
             Pool.Release(LodKey, this);
-        }
-
-        public void CompleteInstantiation(Transform lodsParent)
-        {
-            if (!LodKey.Level.Equals(0))
-                Slots = LODUtils.ApplyTextureArrayToLOD(sceneID,
-                    parcelCoord, Root, lodTextureArrayContainer);
-
-            //For some reason, the instantiation async is not holding the LOD parent reference. Maybe a Unity bug
-            Root.transform.SetParent(lodsParent);
-            Root.gameObject.SetActive(true);
-            //(Juani) I have removed the scene delimitation of materials to the asset bundle converter to save hiccups.
-            //ConfigureSceneMaterial.EnableSceneBounds(Root, in SceneCircumscribedPlanes);
-            State = LOD_STATE.SUCCESS;
         }
     }
 }
