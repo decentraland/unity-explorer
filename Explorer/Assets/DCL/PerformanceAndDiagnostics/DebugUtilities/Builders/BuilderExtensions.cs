@@ -43,6 +43,26 @@ namespace DCL.DebugUtilities
             return builder;
         }
 
+        public static DebugWidgetBuilder AddStringFieldsWithConfirmation(this DebugWidgetBuilder builder, int amountOfField, string buttonName, Action<string[]> onClick)
+        {
+            var bindings = new ElementBinding<string>[amountOfField];
+
+            for (int i = 0; i < amountOfField; i++)
+            {
+                var binding = new ElementBinding<string>("");
+                var textFieldDef = new DebugTextFieldDef(binding);
+                bindings[i] = binding;
+                builder.AddControl(null, textFieldDef);
+            }
+
+            var buttonDef = new DebugButtonDef(buttonName, () =>
+            {
+                onClick?.Invoke(Array.ConvertAll(bindings, x => x.Value));
+            });
+            builder.AddControl(null, buttonDef);
+            return builder;
+        }
+        
         public static DebugWidgetBuilder AddFloatField(this DebugWidgetBuilder builder, string labelName, ElementBinding<float> elementBinding)
         {
             var label = new DebugConstLabelDef(labelName);

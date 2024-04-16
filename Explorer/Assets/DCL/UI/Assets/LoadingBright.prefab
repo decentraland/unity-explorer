@@ -182,3 +182,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <referenceParent>k__BackingField: {fileID: 3066730706478737799}
   <loadingBrightObject>k__BackingField: {fileID: 8147157649779008060}
+  LoadingStartedAudio: {fileID: 11400000, guid: e15bfc30e2deba44d8b1e2024c26c980, type: 2}
+  LoadingFinishedAudio: {fileID: 11400000, guid: d59e1dfedfbcc3942ba177285397b7ee, type: 2}

@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
-    public interface IMessagePipe
+    public interface IMessagePipe : IDisposable
     {
         MessageWrap<T> NewMessage<T>() where T: class, IMessage, new();
 
@@ -21,6 +21,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             {
                 //ignore
             }
+
+            public void Dispose() { }
         }
     }
 

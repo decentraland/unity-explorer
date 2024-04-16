@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Emoji;
 using DCL.UI;
 using MVC;
@@ -56,12 +57,31 @@ namespace DCL.Chat
         [field: SerializeField]
         public Button CloseChatButton { get; private set; }
 
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig AddEmojiAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig OpenEmojiPanelAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ChatSendMessageAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ChatInputTextAudio { get; private set; }
+
         private CancellationTokenSource cts;
 
         private void Start()
         {
             PanelBackgroundCanvasGroup.alpha = 0;
             ScrollbarCanvasGroup.alpha = 0;
+        }
+
+        public void ToggleChat(bool isOn)
+        {
+            PanelBackgroundCanvasGroup.gameObject.SetActive(isOn);
+            LoopList.gameObject.SetActive(isOn);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

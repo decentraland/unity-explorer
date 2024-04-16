@@ -787,6 +787,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Dropdown>k__BackingField: {fileID: 4393135781987986162}
+  DropDownInteractedAudio: {fileID: 11400000, guid: 1f73c26d770f4214f8cbe56fd6930df9, type: 2}
 --- !u!1 &5482399107006373554
 GameObject:
   m_ObjectHideFlags: 0
