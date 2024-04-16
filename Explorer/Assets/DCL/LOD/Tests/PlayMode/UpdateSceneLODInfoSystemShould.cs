@@ -31,7 +31,6 @@ namespace DCL.LOD.Tests
 
         private const string fakeHash = "FAKE_HASH";
 
-
         [SetUp]
         public void Setup()
         {
@@ -42,6 +41,7 @@ namespace DCL.LOD.Tests
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
+            
             var frameCapBudget = Substitute.For<IPerformanceBudget>();
             frameCapBudget.TrySpendBudget().Returns(true);
 
@@ -82,12 +82,13 @@ namespace DCL.LOD.Tests
 
 
         [Test]
+        //Note: Test modified due to LOD level always defaulting to 3 while we rebuild all of them
         [TestCase(0, 0)]
         [TestCase(1, 0)]
-        [TestCase(2, 1)]
-        [TestCase(3, 1)]
-        [TestCase(4, 2)]
-        [TestCase(10, 2)]
+        [TestCase(2, 3)]
+        [TestCase(3, 3)]
+        [TestCase(4, 3)]
+        [TestCase(10, 3)]
         public void ResolveLODLevel(byte bucket, int expectedLODLevel)
         {
             //Arrange
@@ -97,15 +98,14 @@ namespace DCL.LOD.Tests
 
             //Act
             system.Update(0);
-
-
+            
             //Assert
             Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
         }
 
 
         [Test]
-        public void ResolveLODPromise()
+        public void ResolvePromiseAndInstantiate()
         {
             //Arrange
             var promiseGenerated = GenerateLODPromise();
@@ -119,7 +119,36 @@ namespace DCL.LOD.Tests
 
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
+            Assert.IsFalse(sceneLODInfoRetrieved.IsDirty);
             Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
+            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.LastSuccessfulLOD);
+            Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
+            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
+        }
+        
+        [Test]
+        public void ResolvePromiseAndDontInstantiate()
+        {
+            var frameCapBudget = Substitute.For<IPerformanceBudget>();
+            frameCapBudget.TrySpendBudget().Returns(true, false);
+
+            system.frameCapBudget = frameCapBudget;
+
+            //Arrange
+            var promiseGenerated = GenerateLODPromise();
+            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
+            sceneLODInfo.CurrentLODLevel = 1;
+            sceneLODInfo.IsDirty = true;
+            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
+            Assert.IsTrue(sceneLODInfoRetrieved.IsDirty);
+            Assert.Null(sceneLODInfoRetrieved.CurrentLOD?.Root);
+            Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.LastSuccessfulLOD);
             Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
             Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
         }

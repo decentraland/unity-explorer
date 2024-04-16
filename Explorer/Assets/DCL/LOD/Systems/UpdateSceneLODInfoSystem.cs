@@ -34,11 +34,12 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-        private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly IPerformanceBudget frameCapBudget;
+        private readonly ILODSettingsAsset lodSettingsAsset; 
         private readonly IPerformanceBudget memoryBudget;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        internal IPerformanceBudget frameCapBudget;
+
 
         private readonly Transform lodsTransformParent;
         private readonly TextureArrayContainer lodTextureArrayContainer;
@@ -80,16 +81,17 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!sceneLODInfo.IsDirty || sceneLODInfo.GetCurrentLOD() == null) return;
+            var currentLOD = sceneLODInfo.GetCurrentLOD();
+            if (!sceneLODInfo.IsDirty || currentLOD == null) return;
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            if (sceneLODInfo.GetCurrentLOD().State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
-                sceneLODInfo.GetCurrentLOD().AsyncInstantiation.IsWaitingForSceneActivation())
+            if (currentLOD.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
+                currentLOD.AsyncInstantiation.IsWaitingForSceneActivation())
             {
-                sceneLODInfo.GetCurrentLOD().FinalizeInstantiation();
+                currentLOD.FinalizeInstantiation();
                 sceneLODInfo.UpdateLastSuccessfullLOD();
-                if (sceneLODInfo.GetCurrentLOD().LodKey.Level == 0)
+                if (currentLOD.LodKey.Level == 0)
                 {
                     scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
                     CheckSceneReadiness(sceneDefinitionComponent);

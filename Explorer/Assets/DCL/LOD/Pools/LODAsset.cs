@@ -51,8 +51,9 @@ namespace DCL.LOD
             ParcelCoord = parcelCoord;
             LodTextureArrayContainer = lodTextureArrayContainer;
 
+            //NOTE: Using the count API since the one without count does not parent correctly.
             AsyncInstantiation =
-                Object.InstantiateAsync(AssetBundleReference.GetMainAsset<GameObject>(),
+                Object.InstantiateAsync(AssetBundleReference.GetMainAsset<GameObject>(), 1,
                     lodsTransformParent, baseParcelPosition, Quaternion.identity);
             AsyncInstantiation.allowSceneActivation = false;
 
