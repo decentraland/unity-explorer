@@ -25,6 +25,8 @@ namespace DCL.Landscape.Systems
         private readonly ElementBinding<int> detailDistance;
         private readonly ElementBinding<int> cullDistance;
 
+        private int lastCullDistanceApplied;
+
         public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
@@ -81,7 +83,11 @@ namespace DCL.Landscape.Systems
             if (Math.Abs(QualitySettings.terrainDetailDistance - tempDistance) > 0.005f)
                 QualitySettings.terrainDetailDistance = tempDistance;
 
-            landscapeData.detailDistance = cullDistance.Value;
+            if (lastCullDistanceApplied != cullDistance.Value)
+            {
+                landscapeData.detailDistance = cullDistance.Value;
+                lastCullDistanceApplied = cullDistance.Value;
+            }
         }
     }
 }

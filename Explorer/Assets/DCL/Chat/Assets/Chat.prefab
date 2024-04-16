@@ -243,6 +243,7 @@ GameObject:
   - component: {fileID: 4900303807565527031}
   - component: {fileID: 5657801177157900856}
   - component: {fileID: 8143675807956903832}
+  - component: {fileID: 7766280323894119974}
   m_Layer: 5
   m_Name: EmojiButton
   m_TagString: Untagged
@@ -351,6 +352,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7766280323894119974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1914636636247234566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8143675807956903832}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &3268495668302202766
 GameObject:
   m_ObjectHideFlags: 0
@@ -499,6 +514,7 @@ GameObject:
   - component: {fileID: 7800101219505979238}
   - component: {fileID: 6631066638794408311}
   - component: {fileID: 1104092725699042680}
+  - component: {fileID: 2014780182272450642}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -608,6 +624,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2014780182272450642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3547355538937434515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 1104092725699042680}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
 --- !u!1 &3553545222316724595
 GameObject:
   m_ObjectHideFlags: 0
@@ -2173,11 +2203,11 @@ MonoBehaviour:
   <LoopList>k__BackingField: {fileID: 6671003195211882300}
   <EmojiPanelButton>k__BackingField: {fileID: 8143675807956903832}
   <CloseChatButton>k__BackingField: {fileID: 1104092725699042680}
-  AddEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-  OpenEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
-  ChatSendMessageAudio: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
-  ChatReceiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
-  ChatInputTextAudio: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  <AddEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
+  <OpenEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
+  <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
+  <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
+  <ChatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
 --- !u!1001 &1618022358711868011
 PrefabInstance:
   m_ObjectHideFlags: 0
