@@ -26,6 +26,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly List<string> tempRemoveAll = new ();
         private IComponentPool<Transform> transformPool = null!;
 
         public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
@@ -64,7 +65,9 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         public void ForceRemoveAll(World world)
         {
-            foreach (string wallet in entityParticipantTable.Wallets()) TryRemove(wallet, world);
+            tempRemoveAll.Clear();
+            tempRemoveAll.AddRange(entityParticipantTable.Wallets());
+            foreach (string wallet in tempRemoveAll) TryRemove(wallet, world);
         }
 
         private void TryRemove(string walletId, World world)
