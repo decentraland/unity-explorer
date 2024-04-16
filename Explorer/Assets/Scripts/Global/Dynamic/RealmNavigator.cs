@@ -1,10 +1,14 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
@@ -21,18 +25,32 @@ namespace Global.Dynamic
         private readonly IRealmController realmController;
         private readonly ITeleportController teleportController;
         private readonly IRoomHub roomHub;
+        private readonly IRemoteEntities remoteEntities;
+        private readonly ObjectProxy<World> globalWorldProxy;
 
-        public RealmNavigator(ILoadingScreen loadingScreen, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController, IRoomHub roomHub)
+        public RealmNavigator(
+            ILoadingScreen loadingScreen,
+            IMapRenderer mapRenderer,
+            IRealmController realmController,
+            ITeleportController teleportController,
+            IRoomHub roomHub,
+            IRemoteEntities remoteEntities,
+            ObjectProxy<World> globalWorldProxy
+        )
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
             this.roomHub = roomHub;
+            this.remoteEntities = remoteEntities;
+            this.globalWorldProxy = globalWorldProxy;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
+            var world = globalWorldProxy.Object.EnsureNotNull();
+
             ct.ThrowIfCancellationRequested();
 
             if (!await realmController.IsReachableAsync(realm, ct))
@@ -43,6 +61,7 @@ namespace Global.Dynamic
 
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
                 {
+                    remoteEntities.ForceRemoveAll(world);
                     await roomHub.StopAsync();
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
                     await roomHub.StartAsync();

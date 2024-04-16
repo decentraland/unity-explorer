@@ -25,6 +25,7 @@ using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -228,6 +229,18 @@ namespace Global.Dynamic
 
             var entityParticipantTable = new EntityParticipantTable();
 
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+                actionOnRelease: x => x.Clear()
+            );
+
+            var remoteEntities = new RemoteEntities(
+                container.RoomHub,
+                entityParticipantTable,
+                staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                queuePoolFullMovementMessage
+            );
+
             ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
 
             IRealmNavigator realmNavigator = new RealmNavigator(
@@ -235,7 +248,9 @@ namespace Global.Dynamic
                 mapRendererContainer.MapRenderer,
                 container.RealmController,
                 parcelServiceContainer.TeleportController,
-                container.RoomHub
+                container.RoomHub,
+                remoteEntities,
+                staticContainer.GlobalWorldProxy
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
@@ -249,11 +264,6 @@ namespace Global.Dynamic
                                        .WithSelfResend(identityCache, container.ProfileRepository)
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
-
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
-                actionOnRelease: x => x.Clear()
-            );
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
@@ -282,11 +292,10 @@ namespace Global.Dynamic
                     debugBuilder,
                     realFlowLoadingStatus,
                     entityParticipantTable,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     container.MessagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
-                    queuePoolFullMovementMessage
+                    remoteEntities
                 ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput, multiplayerEmotesMessageBus, eventSystem),
