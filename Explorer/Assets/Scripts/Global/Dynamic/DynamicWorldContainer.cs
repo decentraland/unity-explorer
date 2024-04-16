@@ -258,7 +258,8 @@ namespace Global.Dynamic
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
                     new ProfileBroadcast(container.MessagePipesHub),
-                    selfProfile
+                    selfProfile,
+                    realmData
                 )
             );
 
