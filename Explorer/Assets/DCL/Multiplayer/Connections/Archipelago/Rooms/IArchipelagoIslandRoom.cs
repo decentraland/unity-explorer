@@ -23,14 +23,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             new RenewableArchipelagoIslandRoom(
                 () => new ForkArchipelagoIslandRoom(
                     currentAdapterAddress,
-
-                    // () => new ArchipelagoIslandRoom(
-                    //     characterObject,
-                    //     identityCache,
-                    //     multiPool,
-                    //     currentAdapterAddress
-                    // ),
-                    () => new IConnectiveRoom.Fake(),
+                    () => new ArchipelagoIslandRoom(
+                        characterObject,
+                        identityCache,
+                        multiPool,
+                        currentAdapterAddress
+                    ),
                     () => new FixedConnectiveRoom(
                         webRequestController,
                         currentAdapterAddress
