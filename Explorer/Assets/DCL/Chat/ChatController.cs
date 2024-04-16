@@ -243,9 +243,16 @@ namespace DCL.Chat
                 }
                 //temporary approach to extract the username without the walledId, will be refactored
                 //once we have the proper integration of the profile retrieval
-                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
+                Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
                     ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
                     : itemData.Sender);
+
+                itemScript.playerName.color = playerNameColor;
+                itemScript.ProfileBackground.color = playerNameColor;
+                playerNameColor.r += 0.3f;
+                playerNameColor.g += 0.3f;
+                playerNameColor.b += 0.3f;
+                itemScript.ProfileOutline.color = playerNameColor;
 
                 itemScript.SetItemData(itemData);
 
