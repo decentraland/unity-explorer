@@ -34,6 +34,7 @@
     "com.unity.toolchain.win-x86_64-linux-x86_64": "2.0.6",
     "com.unity.toonshader": "0.9.5-preview",
     "com.unity.ugui": "1.0.0",
+    "com.unity.visualeffectgraph": "14.0.10",
     "com.unity.visualscripting": "1.8.0",
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#1.6.0",
