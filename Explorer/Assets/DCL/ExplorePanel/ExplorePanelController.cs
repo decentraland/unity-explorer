@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Backpack;
 using DCL.CharacterMotion.Components;
 using DCL.Navmap;
@@ -75,6 +76,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
             };
+
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 

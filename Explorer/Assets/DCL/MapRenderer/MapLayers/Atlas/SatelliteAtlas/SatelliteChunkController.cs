@@ -35,6 +35,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.transform.localPosition = chunkLocalPosition;
             atlasChunk.LoadingSpriteRenderer.sortingOrder = drawOrder;
             atlasChunk.MainSpriteRenderer.sortingOrder = drawOrder;
+            atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(true);
 
 #if UNITY_EDITOR
             atlasChunk.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";

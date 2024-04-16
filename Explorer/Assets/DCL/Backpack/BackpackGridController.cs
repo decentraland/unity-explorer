@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -149,8 +150,8 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId)));
-                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId)));
+                backpackItemView.EquipButton.onClick.AddListener(() => OnEquipButtonClicked(backpackItemView));
+                backpackItemView.UnEquipButton.onClick.AddListener(() => OnUnEquipButtonClicked(backpackItemView));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
@@ -161,6 +162,18 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
+        }
+
+        private void OnEquipButtonClicked(BackpackItemView backpackItemView)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(backpackItemView.EquipWearableAudio);
+            commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId));
+        }
+
+        private void OnUnEquipButtonClicked(BackpackItemView backpackItemView)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(backpackItemView.UnEquipWearableAudio);
+            commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId));
         }
 
         public void RequestTotalNumber()
@@ -174,6 +187,9 @@ namespace DCL.Backpack
 
             AwaitWearablesPromiseForSizeAsync(wearablesPromise, cts.Token).Forget();
         }
+
+        private void EquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
 
         private void BuildRequestParameters(string pageNumber, string pageSize)
         {
@@ -281,8 +297,8 @@ namespace DCL.Backpack
         {
             foreach (KeyValuePair<URN, BackpackItemView> backpackItemView in usedPoolItems)
             {
-                backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.OnEquip -= EquipItem;
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;

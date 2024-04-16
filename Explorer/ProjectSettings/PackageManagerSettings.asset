@@ -35,6 +35,7 @@ MonoBehaviour:
     - com.atteneder.draco
     - com.madsbangh.easybuttons
     - com.brunomikoski
+    - com.mackysoft
     m_IsDefault: 0
     m_Capabilities: 0
     m_ConfigSource: 4

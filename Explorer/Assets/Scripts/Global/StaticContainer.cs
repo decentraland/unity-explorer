@@ -162,7 +162,7 @@ namespace Global
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
-            container.QualityContainer = QualityContainer.Create(settingsContainer);
+            container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
