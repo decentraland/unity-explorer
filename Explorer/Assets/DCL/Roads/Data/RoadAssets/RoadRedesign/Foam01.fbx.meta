@@ -1,14 +1,9 @@
 fileFormatVersion: 2
-guid: 7a6c9e87b01b5f94bb28e74c58d938f9
+guid: e24b40cb11f3d324aa6f83f1bc459d35
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: HedgeLeaf
-    second: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

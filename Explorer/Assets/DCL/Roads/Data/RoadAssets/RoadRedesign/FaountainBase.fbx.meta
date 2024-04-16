@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 7a6c9e87b01b5f94bb28e74c58d938f9
+guid: 2afff092fdd28f64f98e318d5f618ce2
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -7,8 +7,23 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: HedgeLeaf
-    second: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+      name: FountainBlue_mat
+    second: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: FountainBlue_mat.001
+    second: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: FountainGray_mat.001
+    second: {fileID: 2100000, guid: 2167a1a68188959489807267257fc5a9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Soil_mat.001
+    second: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
