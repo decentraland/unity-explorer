@@ -35,6 +35,7 @@ RectTransform:
   - {fileID: 1418718318171290836}
   - {fileID: 7131983642897523197}
   m_Father: {fileID: 6191178829782708942}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -119,6 +120,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6688881527368166260}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -196,6 +198,7 @@ RectTransform:
   m_Children:
   - {fileID: 935931886502892071}
   m_Father: {fileID: 6277681107258076082}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
@@ -314,6 +317,7 @@ RectTransform:
   m_Children:
   - {fileID: 3463856215897462373}
   m_Father: {fileID: 853824088663753992}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -354,6 +358,7 @@ RectTransform:
   - {fileID: 1803802998661314173}
   - {fileID: 5451300101634722521}
   m_Father: {fileID: 2618566666506401498}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
@@ -431,6 +436,7 @@ RectTransform:
   - {fileID: 853824088663753992}
   - {fileID: 3484647002523162272}
   m_Father: {fileID: 816873455510436537}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -469,6 +475,7 @@ RectTransform:
   m_Children:
   - {fileID: 6191178829782708942}
   m_Father: {fileID: 6277681107258076082}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -547,6 +554,7 @@ RectTransform:
   - {fileID: 2530213049308707183}
   - {fileID: 4111320052069756940}
   m_Father: {fileID: 6277681107258076082}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -622,6 +630,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6191178829782708942}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
@@ -696,6 +705,7 @@ RectTransform:
   m_Children:
   - {fileID: 8669957748370081513}
   m_Father: {fileID: 853824088663753992}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -732,6 +742,7 @@ RectTransform:
   m_Children:
   - {fileID: 757801810306234827}
   m_Father: {fileID: 853824088663753992}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -772,6 +783,7 @@ RectTransform:
   m_Children:
   - {fileID: 6277681107258076082}
   m_Father: {fileID: 0}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -866,9 +878,6 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 4259832855745683082}
   <ProfileWidget>k__BackingField: {fileID: 6577566074449924958}
   <SystemMenu>k__BackingField: {fileID: 4430083555923337431}
-  BackgroundMusic: {fileID: 0}
-  MuteSoundsSnapshot: {fileID: -1473976123031914414, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
-  RestoreSoundsSnapShot: {fileID: 24500006, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
 --- !u!1001 &131271445653635954
 PrefabInstance:
   m_ObjectHideFlags: 0
