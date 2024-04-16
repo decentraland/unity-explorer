@@ -13,6 +13,8 @@ namespace DCL.Multiplayer.Profiles.Entities
         void TryCreate(IReadOnlyCollection<RemoteProfile> list, World world);
 
         void Remove(IReadOnlyCollection<RemoveIntention> list, World world);
+
+        void ForceRemoveAll(World world);
     }
 
     public static class RemoteEntitiesExtensions
