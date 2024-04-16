@@ -28,10 +28,10 @@ namespace DCL.Landscape
             GenerateAsync().Forget();
         }
 
-        private void OnValidate()
-        {
-            wGen = new WorldTerrainGenerator(genData);
-        }
+        // private void OnValidate()
+        // {
+        //     wGen = new WorldTerrainGenerator(genData);
+        // }
 
         public TerrainGenerator GetGenerator() =>
             gen;
@@ -43,7 +43,10 @@ namespace DCL.Landscape
             emptyParcels = parcelData.GetEmptyParcels();
 
             if (genData.terrainSize == 1)
+            {
+                wGen = new WorldTerrainGenerator(genData);
                 await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
+            }
             else
             {
                 gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);

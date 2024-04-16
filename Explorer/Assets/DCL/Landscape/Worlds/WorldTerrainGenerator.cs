@@ -28,11 +28,10 @@ namespace DCL.Landscape
         private const int UNITY_MAX_INSTANCE_COUNT = 16;
 
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
+        private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
         private readonly TerrainGenerationData terrainGenData;
         private readonly NoiseGeneratorCache noiseGenCache = new ();
-        private readonly List<Terrain> terrains = new ();
-        private readonly List<Transform> cliffs = new ();
 
         private GameObject rootGo;
 
@@ -44,7 +43,7 @@ namespace DCL.Landscape
         private NativeParallelHashMap<int2, int> emptyParcelHeights;
         private NativeArray<int2> emptyParcels;
 
-        public Transform Ocean { get; private set; }
+        private Transform ocean;
 
         public WorldTerrainGenerator(TerrainGenerationData terrainGenData)
         {
@@ -107,7 +106,7 @@ namespace DCL.Landscape
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
         {
             rootGo = InstantiateSingletonTerrainRoot();
-            rootGo.transform.position = new Vector3(0, -0.1f, 0); // hack for not clipping with scene (potential) floor
+            rootGo.transform.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
             this.worldSeed = worldSeed;
             var worldModel = new WorldModel(ownedParcels);
@@ -154,7 +153,7 @@ namespace DCL.Landscape
 
                 await handle2.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
 
-                // Calculate this outside the jobs since they are Parallel
+                // Calculate this outside the jobs since they Items = {List<Pair<int2, int>>} Count = 32 are Parallel
                 foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelHeights)
                     if (emptyParcelHeight.Value > maxHeightIndex)
                         maxHeightIndex = emptyParcelHeight.Value;
@@ -220,7 +219,6 @@ namespace DCL.Landscape
                 terrain.transform.position = new Vector3(chunkModel.MinParcel.x * PARCEL_SIZE, 0f, chunkModel.MinParcel.y * PARCEL_SIZE);
                 terrain.transform.SetParent(rootGo.transform, false);
 
-                terrains.Add(terrain);
                 await UniTask.Yield();
             }
         }
@@ -398,7 +396,7 @@ namespace DCL.Landscape
                             minWorldParcel: new int2(terrainModel.MinParcel.x, terrainModel.MinParcel.y),
                             randoms: treeParallelRandoms,
                             useRandomSpawnChance: false,
-                            useValidations: false);
+                            useValidations: true);
 
                         instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, randomizerHandle);
 
@@ -557,7 +555,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(terrainModel.MaxInUnits.x, 0, i + PARCEL_SIZE);
                 side.rotation = Quaternion.Euler(0, 90, 0);
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             for (int i = terrainModel.MinInUnits.x; i < terrainModel.MaxInUnits.x; i += PARCEL_SIZE)
@@ -566,7 +563,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(i, 0, terrainModel.MaxInUnits.y);
                 side.rotation = Quaternion.identity;
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             for (int i = terrainModel.MinInUnits.y; i < terrainModel.MaxInUnits.y; i += PARCEL_SIZE)
@@ -575,7 +571,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(terrainModel.MinInUnits.x, 0, i);
                 side.rotation = Quaternion.Euler(0, 270, 0);
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             for (int i = terrainModel.MinInUnits.x; i < terrainModel.MaxInUnits.x; i += PARCEL_SIZE)
@@ -584,7 +579,6 @@ namespace DCL.Landscape
                 side.position = new Vector3(i + PARCEL_SIZE, 0, terrainModel.MinInUnits.y);
                 side.rotation = Quaternion.Euler(0, 180, 0);
                 side.SetParent(cliffsRoot, true);
-                cliffs.Add(side);
             }
 
             cliffsRoot.SetParent(rootGo.transform);
@@ -598,32 +592,13 @@ namespace DCL.Landscape
                 neCorner.position = position;
                 neCorner.rotation = rotation;
                 neCorner.SetParent(cliffsRoot, true);
-                cliffs.Add(neCorner);
             }
         }
 
         private void SpawnMiscAsync()
         {
-            Ocean = Object.Instantiate(terrainGenData.ocean).transform;
-            Ocean.SetParent(rootGo.transform, true);
-
-            Transform wind = Object.Instantiate(terrainGenData.wind).transform;
-            wind.SetParent(rootGo.transform, true);
-        }
-
-        // Convert flat NativeArray to a 2D array (is there another way?)
-        private static float[,] ConvertTo2DArray(NativeArray<float> array, int width, int height)
-        {
-            var result = new float[width, height];
-
-            for (var i = 0; i < array.Length; i++)
-            {
-                int x = i % width;
-                int z = i / width;
-                result[z, x] = array[i];
-            }
-
-            return result;
+            ocean = Object.Instantiate(terrainGenData.ocean).transform;
+            ocean.SetParent(rootGo.transform, true);
         }
     }
 }
