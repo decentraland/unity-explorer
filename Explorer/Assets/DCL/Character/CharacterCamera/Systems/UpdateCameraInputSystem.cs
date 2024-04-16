@@ -13,6 +13,8 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateCameraInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
+        private const float CURSOR_DIRTY_THRESHOLD = 1f;
+
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.FreeCameraActions freeCameraActions;
 
@@ -50,7 +52,7 @@ namespace DCL.CharacterCamera.Systems
 
             Vector2 currentDelta = cameraActions.Delta.ReadValue<Vector2>();
 
-            if (currentDelta.sqrMagnitude > 1f)
+            if (currentDelta.sqrMagnitude > CURSOR_DIRTY_THRESHOLD)
                 cursorComponent.PositionIsDirty = true;
 
             cameraInput.Delta = cursorComponent.CursorState != CursorState.Free ? currentDelta : Vector2.zero;

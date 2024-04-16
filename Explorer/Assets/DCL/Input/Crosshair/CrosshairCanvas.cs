@@ -12,19 +12,16 @@ namespace DCL.Input.Crosshair
         private Length leftLength;
         private Length bottomLength;
         private CursorStyle currentState;
-        private bool initialized;
         private VisualElement cursorElement;
 
         public void Initialize(Sprite crosshair, Sprite crosshairInteractable)
         {
             crossHairInteractable = crosshairInteractable;
             crossHair = crosshair;
-            if (initialized) return;
 
             crossHairElement = this.Query<VisualElement>("Crosshair").First();
             cursorElement = this.Query<VisualElement>("Cursor").First();
 
-            initialized = true;
             leftLength = new Length(0, LengthUnit.Percent);
             bottomLength = new Length(0, LengthUnit.Percent);
             SetCursorStyle(CursorStyle.Interaction);

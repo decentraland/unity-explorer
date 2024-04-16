@@ -7,17 +7,13 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
 using DCL.Input.Crosshair;
+using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
-using Button = UnityEngine.UIElements.Button;
-using Toggle = UnityEngine.UIElements.Toggle;
 
 namespace DCL.Input.Systems
 {
@@ -38,12 +34,10 @@ namespace DCL.Input.Systems
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
         private bool wantsToUnlockForced;
-        private readonly Dictionary<GameObject, bool> interactionCache = new ();
-        private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
-        private readonly Dictionary<VisualElement, bool> uiToolkitInteractionCache = new ();
-        private readonly List<VisualElement> visualElementPickCache = new ();
+
         private readonly Mouse mouseDevice;
         private readonly DCLInput.ShortcutsActions shortcuts;
+        private readonly InteractionCache interactionCache;
 
         internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
@@ -54,6 +48,7 @@ namespace DCL.Input.Systems
             uiActions = dclInput.UI;
             shortcuts = dclInput.Shortcuts;
             mouseDevice = InputSystem.GetDevice<Mouse>();
+            interactionCache = new InteractionCache();
         }
 
         public override void Initialize()
@@ -123,7 +118,7 @@ namespace DCL.Input.Systems
                         if (obj == null)
                             continue;
 
-                        bool isInteractable = IsInteractableCached(obj, cursorComponent.Position);
+                        bool isInteractable = interactionCache.IsInteractable(obj, cursorComponent.Position);
 
                         if (!isInteractable)
                             continue;
@@ -146,60 +141,6 @@ namespace DCL.Input.Systems
         // We check if the gameObject is interactable or not, at least once.
         // For UI Elements we do a PickAll and check its results by using the same logic
         // we have to check if we can avoid doing a PickAll every frame, it seems that its not slow at least
-        private bool IsInteractableCached(GameObject gameObject, Vector2 pointerPosition)
-        {
-            if (uiToolkitPanel.TryGetValue(gameObject, out PanelEventHandler? panelEventHandler))
-            {
-                // we need to convert screen coord to panel coord, since uiElement panel anchor is top-left coordinate we flip the y axis
-                Vector2 localCoord = pointerPosition;
-                localCoord.y = Screen.height - pointerPosition.y;
-                localCoord = RuntimePanelUtils.ScreenToPanel(panelEventHandler.panel, localCoord);
-
-                panelEventHandler.panel.PickAll(localCoord, visualElementPickCache);
-
-                for (var i = 0; i < visualElementPickCache.Count; i++)
-                {
-                    VisualElement? visualElement = visualElementPickCache[i];
-
-                    if (uiToolkitInteractionCache.TryGetValue(visualElement, out bool isInteractable))
-                    {
-                        if (isInteractable)
-                            return true;
-
-                        continue;
-                    }
-
-                    bool canBeInteracted = visualElement is Button or Toggle;
-                    uiToolkitInteractionCache.Add(visualElement, canBeInteracted);
-
-                    if (canBeInteracted)
-                        return true;
-                }
-
-                return false;
-            }
-
-            if (interactionCache.TryGetValue(gameObject, out bool result))
-                return result;
-
-            // In theory Selectable should cover UnityEngine.UI.Toggle but it does not, weird
-            Selectable? isCanvasButton = gameObject.GetComponent<Selectable>();
-
-            if (isCanvasButton)
-            {
-                interactionCache.Add(gameObject, true);
-                return true;
-            }
-
-            PanelEventHandler? eventHandler = gameObject.GetComponent<PanelEventHandler>();
-
-            if (eventHandler)
-                uiToolkitPanel.Add(gameObject, eventHandler);
-
-            interactionCache.Add(gameObject, false);
-            return false;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults)
         {
@@ -247,6 +188,7 @@ namespace DCL.Input.Systems
                 cursorComponent.PositionIsDirty = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateState(ref CursorComponent cursorComponent, CursorState nextState)
         {
             if (cursorComponent.CursorState == nextState) return;

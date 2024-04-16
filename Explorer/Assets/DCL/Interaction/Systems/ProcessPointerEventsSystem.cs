@@ -8,14 +8,11 @@ using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.PlayerOriginated.Utility;
+using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
-using ECS.Unity.PrimitiveRenderer.Components;
-using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.Interaction.Systems
 {
@@ -25,24 +22,19 @@ namespace DCL.Interaction.Systems
     public partial class ProcessPointerEventsSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
-        private readonly Material hoverMaterial;
-        private readonly Material hoverOorMaterial;
         private readonly IEventSystem eventSystem;
         private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
-        private readonly Dictionary<EntityReference, Dictionary<EntityReference, Material[]>> originalMaterialsByEntity = new ();
-        private readonly Dictionary<EntityReference, Material> materialOnUseByEntity = new ();
+        private readonly QueryDescription highlightQuery = new QueryDescription().WithAll<HighlightComponent>();
 
         internal ProcessPointerEventsSystem(World world,
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            Material hoverMaterial,
-            Material hoverOorMaterial,
+
             IEventSystem eventSystem) : base(world)
         {
             this.sdkInputActionsMap = sdkInputActionsMap;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
-            this.hoverMaterial = hoverMaterial;
-            this.hoverOorMaterial = hoverOorMaterial;
+
             this.eventSystem = eventSystem;
         }
 
@@ -63,8 +55,7 @@ namespace DCL.Interaction.Systems
         }
 
         [Query]
-        private void ProcessRaycastResult(ref PlayerOriginRaycastResult raycastResult, ref HoverFeedbackComponent hoverFeedbackComponent,
-            ref HoverStateComponent hoverStateComponent)
+        private void ProcessRaycastResult(ref PlayerOriginRaycastResult raycastResult, ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
         {
             // Process all PBPointerEvents components to see if any of them is qualified
             hoverFeedbackComponent.Tooltips.Clear();
@@ -107,22 +98,29 @@ namespace DCL.Interaction.Systems
                         bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 
                         hoverStateComponent.IsAtDistance = isAtDistance;
-                        Material materialToUse = isAtDistance ? hoverMaterial : hoverOorMaterial;
 
-                        if (!materialOnUseByEntity.ContainsKey(entityRef))
+                        int count = world.CountEntities(highlightQuery);
+
+                        if (count > 0)
                         {
-                            materialOnUseByEntity.TryAdd(entityRef, materialToUse);
-                            originalMaterialsByEntity.TryAdd(entityRef, new Dictionary<EntityReference, Material[]>());
-
-                            TryAddHoverMaterialToComponentSiblings(materialToUse, world, entityRef);
+                            world.Query(highlightQuery, e =>
+                            {
+                                ref HighlightComponent highlightComponent = ref world.TryGetRef<HighlightComponent>(e, out bool exists);
+                                if (!exists) return;
+                                highlightComponent.IsEnabled = true;
+                                highlightComponent.IsAtDistance = isAtDistance;
+                                highlightComponent.NextEntity = entityRef;
+                            });
                         }
                         else
                         {
-                            if (materialOnUseByEntity[entityRef] != materialToUse)
+                            world.Create(new HighlightComponent
                             {
-                                // remove material, its going to be properly added next frame
-                                TryRemoveHoverMaterials(entityInfo);
-                            }
+                                NextEntity = entityRef,
+                                CurrentEntity = entityRef,
+                                IsEnabled = true,
+                                IsAtDistance = isAtDistance,
+                            });
                         }
                     }
                 }
@@ -132,73 +130,21 @@ namespace DCL.Interaction.Systems
             {
                 hoverStateComponent.IsHoverOver = true;
 
-                TryRemoveHoverMaterials(previousEntityInfo);
+                World world = previousEntityInfo.EcsExecutor.World;
 
-                HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousEntityInfo);
-            }
-        }
-
-        private void TryRemoveHoverMaterials(GlobalColliderEntityInfo entityInfo)
-        {
-            World world = entityInfo.EcsExecutor.World;
-            EntityReference entity = entityInfo.ColliderEntityInfo.EntityReference;
-
-            if (materialOnUseByEntity.ContainsKey(entity))
-            {
-                using (entityInfo.EcsExecutor.Sync.GetScope())
+                using (previousEntityInfo.EcsExecutor.Sync.GetScope())
                 {
-                    if (entity.IsAlive(world)) { TryRemoveHoverMaterialFromComponentSiblings(world, entity); }
+                    world.Query(highlightQuery, e =>
+                    {
+                        ref HighlightComponent highlightComponent = ref world.TryGetRef<HighlightComponent>(e, out bool exists);
+                        if (!exists) return;
+                        highlightComponent.IsEnabled = false;
+                        highlightComponent.IsAtDistance = false;
+                        highlightComponent.NextEntity = EntityReference.Null;
+                    });
                 }
 
-                materialOnUseByEntity.Remove(entity);
-            }
-        }
-
-        private void TryRemoveHoverMaterialFromComponentSiblings(World world, EntityReference entityRef)
-        {
-            if (!world.TryGet(entityRef, out TransformComponent transformComponent)) return;
-            if (!world.TryGet(transformComponent.Parent, out TransformComponent parentTransform)) return;
-
-            Dictionary<EntityReference, Material[]> materialDict = originalMaterialsByEntity[entityRef];
-
-            foreach (EntityReference brother in parentTransform.Children)
-            {
-                if (!world.TryGet(brother, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
-                    continue;
-
-                if (!materialDict.ContainsKey(brother)) continue;
-
-                primitiveMeshRendererComponent.MeshRenderer.sharedMaterials = materialDict[brother];
-                materialDict.Remove(brother);
-            }
-        }
-
-        private void TryAddHoverMaterialToComponentSiblings(Material targetMaterial, World world, EntityReference entityRef)
-        {
-            if (!world.TryGet(entityRef, out TransformComponent transformComponent)) return;
-            if (!world.TryGet(transformComponent.Parent, out TransformComponent parentTransform)) return;
-
-            Dictionary<EntityReference, Material[]> materialDict = originalMaterialsByEntity[entityRef];
-
-            foreach (EntityReference brother in parentTransform.Children)
-            {
-                // TODO: we should support other rendereables like gltf
-                if (!world.TryGet(brother, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
-                    continue;
-
-                if (materialDict.ContainsKey(brother))
-                    continue;
-
-                List<Material> materials = ListPool<Material>.Get();
-                MeshRenderer renderer = primitiveMeshRendererComponent.MeshRenderer;
-                materialDict.Add(brother, renderer.sharedMaterials);
-
-                // override materials
-                renderer.GetMaterials(materials);
-                materials.Add(targetMaterial);
-                renderer.SetMaterials(materials);
-
-                ListPool<Material>.Release(materials);
+                HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousEntityInfo);
             }
         }
 

@@ -27,11 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dbfb7e67a438449f9a887f820f733868
-    m_Address: PopupCloser
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b55e2970d2dc94295ad8af70cb9d09f4
     m_Address: PersistentExploreOpener
     m_ReadOnly: 0

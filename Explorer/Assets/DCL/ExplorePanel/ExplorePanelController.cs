@@ -9,7 +9,6 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -17,12 +16,6 @@ namespace DCL.ExplorePanel
 {
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
-        // Is there another way?
-        private static ExploreSections lastShownSection;
-
-        public static ExploreSections GetLastShownSection() =>
-            lastShownSection;
-
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
@@ -39,6 +32,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? systemMenuCts;
         private TabSelectorView previousSelector;
+        private ExploreSections lastShownSection;
 
         private bool isControlClosing;
 
@@ -149,7 +143,6 @@ namespace DCL.ExplorePanel
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
         {
-            // tell the mvc manager bout this
             isControlClosing = true;
         }
 

@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private BackpackSubPlugin backpackSubPlugin = null!;
         private PersistentExploreOpenerView? exploreOpener;
         private PersistentExplorePanelOpenerController explorePanelOpener;
+        private ExplorePanelInputHandler inputHandler;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -106,6 +107,7 @@ namespace DCL.PluginSystem.Global
         {
             navmapController?.Dispose();
             backpackSubPlugin.Dispose();
+            inputHandler.Dispose();
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -148,36 +150,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(explorePanelOpener
                 );
 
-                RegisterHotkeys();
+                inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };
-        }
-
-        private void RegisterHotkeys()
-        {
-            dclInput.Shortcuts.MainMenu.performed += OnMainMenuHotkeyPressed;
-            dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
-            dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
-            dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
-        }
-
-        private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj)
-        {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExplorePanelController.GetLastShownSection())));
-        }
-
-        private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
-        {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
-        }
-
-        private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
-        {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
-        }
-
-        private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
-        {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
