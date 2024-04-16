@@ -14,6 +14,7 @@ using LiveKit.Rooms.Tracks.Factory;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
@@ -31,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
-        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Sleep);
+        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
             () => new LogRoom(
                 new Room(
@@ -61,18 +62,23 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public void Start()
         {
-            if (CurrentState() is not IConnectiveRoom.State.Sleep)
+            if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync().Forget();
         }
 
-        public void Stop()
+        public async UniTask StopAsync()
         {
-            roomState.Set(IConnectiveRoom.State.Sleep);
-            cancellationTokenSource?.Cancel();
-            cancellationTokenSource?.Dispose();
+            if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
+                throw new InvalidOperationException("Room is already stopped");
+
+            roomState.Set(IConnectiveRoom.State.Stopping);
+            await AssignNewRoomAndReleasePreviousAsync(NullRoom.INSTANCE, CancellationToken.None);
+            roomState.Set(IConnectiveRoom.State.Stopped);
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = null;
         }
 
         public IConnectiveRoom.State CurrentState() =>
@@ -81,16 +87,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IRoom Room() =>
             room;
 
-        private CancellationToken CancellationToken()
+        private async UniTask<CancellationToken> NewCancellationTokenAsync()
         {
-            Stop();
+            if (cancellationTokenSource != null)
+                await StopAsync();
+
             cancellationTokenSource = new CancellationTokenSource();
             return cancellationTokenSource.Token;
         }
 
         private async UniTaskVoid RunAsync()
         {
-            CancellationToken token = CancellationToken();
+            CancellationToken token = await NewCancellationTokenAsync();
             roomState.Set(IConnectiveRoom.State.Starting);
             await prewarmAsync(token);
 
@@ -115,6 +123,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 return;
             }
 
+            await AssignNewRoomAndReleasePreviousAsync(newRoom, token);
+            roomState.Set(IConnectiveRoom.State.Running);
+        }
+
+        private async UniTask AssignNewRoomAndReleasePreviousAsync(IRoom newRoom, CancellationToken token)
+        {
             room.Assign(newRoom, out IRoom? previous);
 
             if (previous is not null)
@@ -122,8 +136,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 await previous.DisconnectAsync(token);
                 roomPool.Release(previous);
             }
-
-            roomState.Set(IConnectiveRoom.State.Running);
         }
     }
 }

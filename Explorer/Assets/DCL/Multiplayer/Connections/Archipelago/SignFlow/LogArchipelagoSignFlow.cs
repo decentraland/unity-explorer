@@ -24,10 +24,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             this.log = log;
         }
 
-        public async UniTask ConnectAsync(string adapterUrl, CancellationToken token)
+        public async UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token)
         {
             log($"{PREFIX} Connect start for {adapterUrl}");
-            await origin.ConnectAsync(adapterUrl, token);
+            await origin.EnsureConnectedAsync(adapterUrl, token);
             log($"{PREFIX} Connect finish for {adapterUrl}");
         }
 
@@ -65,6 +65,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 },
                 token
             );
+        }
+
+        public async UniTask DisconnectAsync(CancellationToken token)
+        {
+            log($"{PREFIX} DisconnectAsync start");
+            await origin.DisconnectAsync(token);
+            log($"{PREFIX} DisconnectAsync finish");
         }
     }
 }
