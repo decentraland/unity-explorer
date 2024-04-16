@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 
 namespace ECS
@@ -55,5 +56,11 @@ namespace ECS
                 CommsAdapter = commsAdapter;
             }
         }
+    }
+
+    public static class RealmDataExtensions
+    {
+        public static UniTask WaitConfiguredAsync(this IRealmData realmData) =>
+            UniTask.WaitUntil(() => realmData.Configured);
     }
 }
