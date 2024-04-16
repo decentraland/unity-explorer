@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
@@ -218,7 +217,7 @@ namespace DCL.Landscape
                 terrain.drawTreesAndFoliage = true;
 
                 // height can not be 0
-                terrain.transform.position = new Vector3(chunkModel.MinParcel.x * PARCEL_SIZE, 0.1f, chunkModel.MinParcel.y * PARCEL_SIZE);
+                terrain.transform.position = new Vector3(chunkModel.MinParcel.x * PARCEL_SIZE, 0f, chunkModel.MinParcel.y * PARCEL_SIZE);
                 terrain.transform.SetParent(rootGo.transform, false);
 
                 terrains.Add(terrain);
