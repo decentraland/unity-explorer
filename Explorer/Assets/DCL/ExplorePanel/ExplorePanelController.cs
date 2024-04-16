@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Backpack;
 using DCL.Navmap;
 using DCL.Settings;
@@ -60,6 +61,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
             };
+
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 

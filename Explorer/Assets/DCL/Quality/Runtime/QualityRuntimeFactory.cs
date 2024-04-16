@@ -1,3 +1,6 @@
+using DCL.Landscape.Settings;
+using DCL.LOD;
+using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +13,19 @@ namespace DCL.Quality.Runtime
 {
     public static class QualityRuntimeFactory
     {
-        public static IQualityLevelController Create(IRendererFeaturesCache rendererFeaturesCache, QualitySettingsAsset settingsAsset)
+        public static IQualityLevelController Create(
+            IRendererFeaturesCache rendererFeaturesCache,
+            QualitySettingsAsset settingsAsset,
+            RealmPartitionSettingsAsset? realmPartitionSettings = null,
+            ILODSettingsAsset? lodSettingsAsset = null,
+            LandscapeData? landscapeData = null)
         {
             var runtimes = new List<IQualitySettingRuntime>();
 
             runtimes.Add(CreateFogRuntime());
             runtimes.Add(CreateLensFlareRuntime());
             runtimes.Add(CreateGlobalVolume());
+            runtimes.Add(CreateEnvironmentRuntime(realmPartitionSettings, lodSettingsAsset, landscapeData));
             CreateRendererFeaturesRuntimes(rendererFeaturesCache, settingsAsset, runtimes);
 
             return new QualityLevelController(runtimes, settingsAsset.customSettings);
@@ -27,6 +36,12 @@ namespace DCL.Quality.Runtime
 
         private static IQualitySettingRuntime CreateFogRuntime() =>
             new FogQualitySettingRuntime();
+
+        private static IQualitySettingRuntime CreateEnvironmentRuntime(
+            RealmPartitionSettingsAsset? realmPartitionSettings,
+            ILODSettingsAsset? lodSettingsAsset,
+            LandscapeData? landscapeData) =>
+            new EnvironmentSettingsRuntime(realmPartitionSettings, lodSettingsAsset, landscapeData);
 
         /// <summary>
         ///     Create a separate class for every renderer feature type possibly available

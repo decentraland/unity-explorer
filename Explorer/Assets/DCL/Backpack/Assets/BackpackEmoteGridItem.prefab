@@ -328,6 +328,10 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 7949186732838869541}
   <FullBackpackItem>k__BackingField: {fileID: 7977896227215181824}
   <IsEquipped>k__BackingField: 0
+  EquipWearableAudio: {fileID: 11400000, guid: 16df4e18c957e3e459b249626190c33b, type: 2}
+  UnEquipWearableAudio: {fileID: 11400000, guid: 4867c9a3edd8d5f438baccbc70ef12da, type: 2}
+  HoverAudio: {fileID: 11400000, guid: 3c26ccf99795a344b8096b9efae467b0, type: 2}
+  ClickAudio: {fileID: 11400000, guid: 9e9656842cc977c428b43d0deec094de, type: 2}
   <EquippedSlotLabel>k__BackingField: {fileID: 5288614257337647360}
 --- !u!224 &5337782633102568864 stripped
 RectTransform:
