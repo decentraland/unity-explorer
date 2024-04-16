@@ -206,20 +206,12 @@ namespace Global.Dynamic
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.WebRequestsContainer.WebRequestController, realmData);
 
-            var archipelagoIslandRoom = new RenewableArchipelagoIslandRoom(
-                () => new ForkArchipelagoIslandRoom(
-                    currentAdapterAddress,
-                    _ => new ArchipelagoIslandRoom(
-                        staticContainer.CharacterContainer.CharacterObject,
-                        identityCache,
-                        multiPool,
-                        currentAdapterAddress
-                    ),
-                    _ => new FixedConnectiveRoom(
-                        staticContainer.WebRequestsContainer.WebRequestController,
-                        currentAdapterAddress
-                    )
-                )
+            var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
+                identityCache,
+                multiPool,
+                staticContainer.CharacterContainer.CharacterObject,
+                currentAdapterAddress,
+                staticContainer.WebRequestsContainer.WebRequestController
             );
 
             container.RealmController = new RealmController(
