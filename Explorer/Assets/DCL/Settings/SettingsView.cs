@@ -7,9 +7,6 @@ namespace DCL.Settings
 {
     public class SettingsView : MonoBehaviour
     {
-        [field: Header("Configuration")]
-        [field: SerializeField] public SettingsMenuConfiguration Configuration { get; private set; }
-
         [field: Header("Containers")]
         [field: SerializeField] public Transform GeneralSectionContainer { get; private set; }
         [field: SerializeField] public Transform GraphicsSectionContainer { get; private set; }

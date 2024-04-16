@@ -15,6 +15,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Settings;
+using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -127,9 +128,10 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
+            var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
             var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), realmPartitionSettings.Value, landscapeData.Value);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, realmPartitionSettings.Value, landscapeData.Value);
 
             PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
@@ -173,6 +175,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public string[] EmbeddedEmotes { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<SettingsMenuConfiguration> SettingsMenuConfiguration { get; private set; }
 
             [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }

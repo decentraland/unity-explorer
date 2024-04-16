@@ -166,6 +166,11 @@ MonoBehaviour:
         - tektonik
         - tik
         - confettipopper
+        <SettingsMenuConfiguration>k__BackingField:
+          m_AssetGUID: b47b66eab8da46b4cbcc30100e4194e0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
