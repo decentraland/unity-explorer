@@ -1,4 +1,6 @@
+using DCL.Diagnostics;
 using System;
+using UnityEngine;
 
 namespace DCL.Audio
 {
