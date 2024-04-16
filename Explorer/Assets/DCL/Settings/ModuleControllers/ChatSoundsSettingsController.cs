@@ -6,7 +6,7 @@ namespace DCL.Settings.ModuleControllers
     {
         public ChatSoundsSettingsController(SettingsToggleModuleView view)
         {
-
+            // TODO (Santi): Implement this...
         }
 
         public override void Dispose()

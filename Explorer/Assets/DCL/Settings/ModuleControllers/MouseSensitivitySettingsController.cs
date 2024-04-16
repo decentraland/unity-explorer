@@ -6,7 +6,7 @@ namespace DCL.Settings.ModuleControllers
     {
         public MouseSensitivitySettingsController(SettingsSliderModuleView view)
         {
-
+            // TODO (Santi): Implement this...
         }
 
         public override void Dispose()

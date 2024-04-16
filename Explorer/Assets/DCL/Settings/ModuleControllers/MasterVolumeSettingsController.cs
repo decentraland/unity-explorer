@@ -6,7 +6,7 @@ namespace DCL.Settings.ModuleControllers
     {
         public MasterVolumeSettingsController(SettingsSliderModuleView view)
         {
-
+            // TODO (Santi): Implement this...
         }
 
         public override void Dispose()

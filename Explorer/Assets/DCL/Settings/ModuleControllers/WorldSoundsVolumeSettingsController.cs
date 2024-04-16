@@ -6,7 +6,7 @@ namespace DCL.Settings.ModuleControllers
     {
         public WorldSoundsVolumeSettingsController(SettingsSliderModuleView view)
         {
-
+            // TODO (Santi): Implement this...
         }
 
         public override void Dispose()
