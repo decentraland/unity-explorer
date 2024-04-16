@@ -61,9 +61,6 @@ namespace SceneRunner
             SceneData = sceneData;
             EcsExecutor = ecsExecutor;
             SceneStateProvider = sceneStateProvider;
-
-            if (sceneStateProvider == null)
-                Debug.Log($"PRAVS - SceneFacade() - SCENE STATE PROVIDER IN NULL!!! BASE-PARCEL: {sceneData.SceneShortInfo.BaseParcel}");
         }
 
         public ISceneData SceneData { get; }
