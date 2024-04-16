@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token);
 
         UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token);
+
+        UniTask DisconnectAsync(CancellationToken token);
     }
 
     public static class ArchipelagoSignFlowExtensions

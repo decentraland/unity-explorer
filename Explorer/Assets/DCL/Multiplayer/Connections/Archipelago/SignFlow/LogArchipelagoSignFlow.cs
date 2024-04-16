@@ -66,5 +66,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 token
             );
         }
+
+        public async UniTask DisconnectAsync(CancellationToken token)
+        {
+            log($"{PREFIX} DisconnectAsync start");
+            await origin.DisconnectAsync(token);
+            log($"{PREFIX} DisconnectAsync finish");
+        }
     }
 }

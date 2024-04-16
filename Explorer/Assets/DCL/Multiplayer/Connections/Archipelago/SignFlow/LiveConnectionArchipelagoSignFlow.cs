@@ -138,5 +138,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             }
             catch (Exception e) { throw new Exception("Cannot listen for connection string", e); }
         }
+
+        public UniTask DisconnectAsync(CancellationToken token) =>
+            connection.DisconnectAsync(token);
     }
 }
