@@ -35,7 +35,6 @@ namespace DCL.LOD
             FAILED,
             SUCCESS,
             WAITING_INSTANTIATION,
-            WAITING_FINALIZATION
         }
 
 
