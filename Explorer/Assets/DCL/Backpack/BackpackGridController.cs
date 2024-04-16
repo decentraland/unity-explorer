@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -149,8 +150,8 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.OnEquip += EquipItem;
-                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId)));
+                backpackItemView.EquipButton.onClick.AddListener(() => OnEquipButtonClicked(backpackItemView));
+                backpackItemView.UnEquipButton.onClick.AddListener(() => OnUnEquipButtonClicked(backpackItemView));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
@@ -165,6 +166,18 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
+        }
+
+        private void OnEquipButtonClicked(BackpackItemView backpackItemView)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(backpackItemView.EquipWearableAudio);
+            commandBus.SendCommand(new BackpackEquipWearableCommand(backpackItemView.ItemId));
+        }
+
+        private void OnUnEquipButtonClicked(BackpackItemView backpackItemView)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(backpackItemView.UnEquipWearableAudio);
+            commandBus.SendCommand(new BackpackUnEquipWearableCommand(backpackItemView.ItemId));
         }
 
         public void RequestTotalNumber()

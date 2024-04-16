@@ -97,6 +97,8 @@ MonoBehaviour:
   <NextPage>k__BackingField: {fileID: 804860302255169224}
   <PreviousPage>k__BackingField: {fileID: 7588964123315412853}
   <PagesContainer>k__BackingField: {fileID: 3576930520628333720}
+  NextButtonPressed: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  PreviousButtonPressed: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &5140497791659050409
 GameObject:
   m_ObjectHideFlags: 0

@@ -22,7 +22,7 @@ namespace DCL.CharacterMotion.Animation
             in MovementInputComponent movementInput,
             in IAvatarView view)
         {
-            var velocity = rigidTransform.MoveVelocity.Velocity;
+            Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
             float maxVelocity = SpeedLimit.Get(settings, movementInput.Kind);
 
             int movementBlendId = GetMovementBlendId(velocity, movementInput.Kind);

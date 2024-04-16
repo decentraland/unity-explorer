@@ -210,6 +210,8 @@
 
         public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
 
+        public const string AUDIO = nameof(AUDIO);
+
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
         /// </summary>

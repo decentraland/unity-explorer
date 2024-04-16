@@ -31,6 +31,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7150489433940370041}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -327,8 +328,10 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 7949186732838869541}
   <FullBackpackItem>k__BackingField: {fileID: 7977896227215181824}
   <IsEquipped>k__BackingField: 0
-  incompatibleWithBodyShapeContainer: {fileID: 7120286008578351896}
-  incompatibleWithBodyShapeHoverContainer: {fileID: 6245689452173806630}
+  EquipWearableAudio: {fileID: 11400000, guid: 16df4e18c957e3e459b249626190c33b, type: 2}
+  UnEquipWearableAudio: {fileID: 11400000, guid: 4867c9a3edd8d5f438baccbc70ef12da, type: 2}
+  HoverAudio: {fileID: 11400000, guid: 3c26ccf99795a344b8096b9efae467b0, type: 2}
+  ClickAudio: {fileID: 11400000, guid: 9e9656842cc977c428b43d0deec094de, type: 2}
   <EquippedSlotLabel>k__BackingField: {fileID: 5288614257337647360}
 --- !u!224 &5337782633102568864 stripped
 RectTransform:
@@ -346,19 +349,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &6245689452173806630 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5366668224896894559, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
-  m_PrefabInstance: {fileID: 2078157404631091833}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &6749943394813585919 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4718511162805314438, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
-  m_PrefabInstance: {fileID: 2078157404631091833}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &7120286008578351896 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9081314311021619553, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}
 --- !u!224 &7150489433940370041 stripped

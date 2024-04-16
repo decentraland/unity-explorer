@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -60,6 +62,16 @@ namespace DCL.Backpack
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig EquipWearableAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig UnEquipWearableAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio { get; private set; }
+
         public bool IsCompatibleWithBodyShape
         {
             get => isCompatibleWithBodyShape;
@@ -89,6 +101,7 @@ namespace DCL.Backpack
         public void OnPointerEnter(PointerEventData eventData)
         {
             AnimateHover();
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             SetEquipButtonsState();
 
             if (IsEquipped)
@@ -113,11 +126,14 @@ namespace DCL.Backpack
             {
                 case 1:
                     OnSelectItem?.Invoke(ItemId);
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
                     break;
                 case 2:
                     if (IsCompatibleWithBodyShape)
+                    {
                         OnEquip?.Invoke(ItemId);
-
+                        UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
+                    }
                     break;
             }
         }

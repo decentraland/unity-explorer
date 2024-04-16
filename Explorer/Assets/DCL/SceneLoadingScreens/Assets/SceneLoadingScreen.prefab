@@ -912,6 +912,8 @@ MonoBehaviour:
   <Background>k__BackingField: {fileID: 8773633707120184609}
   breadcrumbPrefab: {fileID: 2727173850900605172, guid: 888d117b70e6142cab40978c1e26d4d9, type: 3}
   breadcrumbParent: {fileID: 7125623147794855959}
+  BackgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
+  FadeDuration: 2
 --- !u!225 &8917684428663623926
 CanvasGroup:
   m_ObjectHideFlags: 0
