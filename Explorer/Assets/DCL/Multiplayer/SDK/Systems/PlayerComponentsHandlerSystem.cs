@@ -31,6 +31,7 @@ namespace DCL.Multiplayer.SDK.Systems
         public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache) : base(world)
         {
             this.scenesCache = scenesCache;
+            ClearReservedEntities();
         }
 
         protected override void Update(float t)
@@ -43,7 +44,7 @@ namespace DCL.Multiplayer.SDK.Systems
         }
 
         [Query]
-        [None(typeof(PlayerIdentityDataComponent))]
+        [None(typeof(PlayerIdentityDataComponent), typeof(DeleteEntityIntention))]
         private void AddPlayerIdentityData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
@@ -56,12 +57,14 @@ namespace DCL.Multiplayer.SDK.Systems
             // All reserved entities for that scene are taken
             if (crdtEntityId == -1) return;
 
+            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
+
             // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneFacade.EcsExecutor.Sync.GetScope())
+            using (sceneEcsExecutor.Sync.GetScope())
             {
-                Entity sceneWorldEntity = sceneFacade.EcsExecutor.World.Create();
+                Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
                 var crdtEntityComponent = new CRDTEntity(crdtEntityId);
-                Debug.Log($"PRAVS - AddPlayerIdentityData() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}; CRDTExecutor: {sceneFacade.EcsExecutor.World.Id}");
+                Debug.Log($"PRAVS - AddPlayerIdentityData() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}; Profile name: {profile.Name}");
 
                 var playerIdentityData = new PlayerIdentityDataComponent
                 {
@@ -72,7 +75,7 @@ namespace DCL.Multiplayer.SDK.Systems
                     IsGuest = !profile.HasConnectedWeb3, // TODO: check if this assumption is correct
                 };
 
-                sceneFacade.EcsExecutor.World.Add(sceneWorldEntity, playerIdentityData);
+                sceneEcsExecutor.World.Add(sceneWorldEntity, playerIdentityData);
                 World.Add(entity, playerIdentityData);
             }
         }
@@ -124,7 +127,7 @@ namespace DCL.Multiplayer.SDK.Systems
             FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
         }
 
-        // TODO: Optimize
+        // TODO: Optimize?
         private int ReserveNextFreeEntity()
         {
             // All reserved entities are taken
@@ -137,6 +140,7 @@ namespace DCL.Multiplayer.SDK.Systems
                 {
                     reservedEntities[i] = true;
                     currentReservedEntitiesCount++;
+                    Debug.Log($"PRAVS - Reserving entity id: {SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i}");
                     return SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i;
                 }
             }

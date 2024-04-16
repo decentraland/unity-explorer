@@ -1,12 +1,13 @@
 using Arch.Core;
+using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
 using DCL.Profiles;
+using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
 using NSubstitute;
@@ -30,6 +31,13 @@ namespace DCL.Multiplayer.SDK.Tests
         private ISceneFacade scene1Facade;
         private ISceneFacade scene2Facade;
 
+        private Avatar CreateTestAvatar() =>
+            new (BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
+
         [SetUp]
         public void Setup()
         {
@@ -47,9 +55,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
 
             system = new PlayerComponentsHandlerSystem(world, scenesCache);
-
             entity = world.Create();
-            AddTransformToEntity(entity);
         }
 
         [TearDown]
@@ -68,12 +74,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -84,7 +85,8 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
             Assert.AreEqual(playerIdentityDataComponent.Address, FAKE_USER_ID);
             Assert.IsNotNull(playerIdentityDataComponent.CRDTEntity);
-            Assert.IsTrue(scene1World.TryGet(playerIdentityDataComponent.SceneWorldEntity, out playerIdentityDataComponent));
+            Assert.IsTrue(scene1World.TryGet(playerIdentityDataComponent.SceneWorldEntity, out PlayerIdentityDataComponent scenePlayerIdentityDataComponent));
+            Assert.AreEqual(playerIdentityDataComponent, scenePlayerIdentityDataComponent);
         }
 
         [Test]
@@ -94,12 +96,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one * 17;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -117,12 +114,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -130,28 +122,25 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
 
             // Move player transform outside scene
             fakeCharacterUnityTransform.position = Vector3.one * 17;
             system.Update(0);
 
             Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
         }
 
         [Test]
-        public void RemovePlayerIdentityDataForPlayersOnPreviousScene()
+        public void RemovePlayerIdentityDataForPlayersOnNoLongerCurrentScene()
         {
             scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor())),
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -159,7 +148,8 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
 
             // Change the current scene
             scene1Facade.SceneStateProvider.IsCurrent.Returns(false);
@@ -167,10 +157,83 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
         }
 
-        // RemovePlayerIdentityDataForOnPlayersDisconnection
-        // TrackReservedEntitiesCorrectly
+        [Test]
+        public void RemovePlayerIdentityDataForOnPlayersDisconnection()
+        {
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+
+            // "Disconnect" player
+            world.Add(entity, new DeleteEntityIntention());
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+        }
+
+        [Test]
+        public void TrackReservedCRDTEntityIdsCorrectly()
+        {
+            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
+            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, new Profile(FAKE_USER_ID, "fake user 1", CreateTestAvatar()),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerIdentityDataComponent.CRDTEntity.Id);
+
+            // Add 2 more players
+            Entity entity2 = world.Create(new Profile(FAKE_USER_ID, "fake user 2", CreateTestAvatar()),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity2, out playerIdentityDataComponent));
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerIdentityDataComponent.CRDTEntity.Id);
+
+            Entity entity3 = world.Create(new Profile(FAKE_USER_ID, "fake user 3", CreateTestAvatar()),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity3, out playerIdentityDataComponent));
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 2, playerIdentityDataComponent.CRDTEntity.Id);
+
+            // "Disconnect" 2nd player
+            world.Add(entity2, new DeleteEntityIntention());
+            system.Update(0);
+
+            // Add 4th different player and check it's assigned with the disconnected player CRDT id
+            Entity entity4 = world.Create(new Profile(FAKE_USER_ID, "fake user 4", CreateTestAvatar()),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity4, out playerIdentityDataComponent));
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerIdentityDataComponent.CRDTEntity.Id);
+        }
 
         private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
         {
