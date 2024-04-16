@@ -37,9 +37,16 @@ namespace DCL.ExplorePanel
         public AudioMixerSnapshot RestoreSoundsSnapShot { get; private set; }
 
 
+        private bool snapshotsPresent;
+
+        private void Awake()
+        {
+            snapshotsPresent = MuteSoundsSnapshot != null && RestoreSoundsSnapShot != null;
+        }
+
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
-            MuteSoundsSnapshot.TransitionTo(2);
+            if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
             AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
@@ -47,7 +54,7 @@ namespace DCL.ExplorePanel
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
-            RestoreSoundsSnapShot.TransitionTo(2);
+            if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
             AnimationTransform.anchoredPosition = Vector2.zero;
             return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);

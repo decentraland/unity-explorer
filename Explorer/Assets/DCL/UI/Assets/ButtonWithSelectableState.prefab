@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 596702907866863807}
   - component: {fileID: 2609096750127201198}
   - component: {fileID: 6606272585209996661}
+  - component: {fileID: 2623635561916000528}
   m_Layer: 5
   m_Name: ButtonWithSelectableState
   m_TagString: Untagged
@@ -143,6 +144,20 @@ MonoBehaviour:
   <UnselectedBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
   <SelectedTextColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
   <UnselectedTextColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
+--- !u!114 &2623635561916000528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127410955035292441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 2609096750127201198}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &2693366963542867831
 GameObject:
   m_ObjectHideFlags: 0
