@@ -42,7 +42,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public async Task PartitionNewEntity([Values(true, false)] bool isDirty)
+        public void PartitionNewEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
             samplingData.Forward.Returns(Vector3.forward);
@@ -60,8 +60,8 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0);
 
-            // we wait until the job finishes, it should be fast but we dont want race conditions to generate flaky tests
-            await UniTask.Delay(TimeSpan.FromSeconds(0.1f));
+            system.ForceCompleteJob();
+
             system.Update(0);
 
             Assert.That(world.TryGet(e, out PartitionComponent partitionComponent), Is.True);
@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public async Task PartitionExistingEntity([Values(true, false)] bool isDirty)
+        public void PartitionExistingEntity([Values(true, false)] bool isDirty)
         {
             samplingData.IsDirty.Returns(isDirty);
             samplingData.Forward.Returns(Vector3.forward);
@@ -92,8 +92,8 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0);
 
-            // we wait until the job finishes, it should be fast but we dont want race conditions to generate flaky tests
-            await UniTask.Delay(TimeSpan.FromSeconds(0.1f));
+            system.ForceCompleteJob();
+
             system.Update(0);
 
             Assert.That(world.TryGet(e, out PartitionComponent partitionComponent), Is.True);
@@ -106,7 +106,7 @@ namespace ECS.SceneLifeCycle.Tests
     public class PartitionSceneEntitiesSystemMock : PartitionSceneEntitiesSystem
     {
         internal PartitionSceneEntitiesSystemMock([NotNull] World world,
-            [NotNull] [ItemNotNull] IComponentPool<PartitionComponent> partitionComponentPool,
+            [NotNull] IComponentPool<PartitionComponent> partitionComponentPool,
             [NotNull] IPartitionSettings partitionSettings,
             [NotNull] IReadOnlyCameraSamplingData readOnlyCameraSamplingData) : base(world, partitionComponentPool, partitionSettings, readOnlyCameraSamplingData) { }
 

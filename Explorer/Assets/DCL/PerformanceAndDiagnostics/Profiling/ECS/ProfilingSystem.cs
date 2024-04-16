@@ -14,6 +14,8 @@ namespace DCL.Profiling.ECS
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class ProfilingSystem : BaseUnityLoopSystem
     {
+        private const float NANO_SECONDS_TO_SECONDS =  1e-9f;
+
         private readonly IProfilingProvider profilingProvider;
         private readonly FrameTimeCapBudget frameTimeBudget;
         private readonly MemoryBudget memoryBudget;
@@ -23,6 +25,8 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<ulong> hiccups;
         private ElementBinding<string> fps;
+        private ElementBinding<string> minfps;
+        private ElementBinding<string> maxfps;
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> memoryCheckpoints;
 
@@ -44,8 +48,10 @@ namespace DCL.Profiling.ECS
                 debugBuilder.AddWidget("Performance")
                             .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
-                            .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
-                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+                            .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Max FPS last 1k frames:", maxfps = new ElementBinding<string>(string.Empty))
+                            .AddMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
 
                 debugBuilder.AddWidget("Memory")
                             .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -80,18 +86,20 @@ namespace DCL.Profiling.ECS
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
 
-            SetFPS();
+            SetFPS(fps, (long)profilingProvider.AverageFrameTimeValueInNS);
+            SetFPS(minfps, profilingProvider.MinFrameTimeValueInNS);
+            SetFPS(maxfps, profilingProvider.MaxFrameTimeValueInNS);
             return;
 
-            void SetFPS()
+            void SetFPS(ElementBinding<string> elementBinding, long value)
             {
-                float averageFrameTimeInSeconds = (float)profilingProvider.AverageFrameTimeValueInNS * 1e-9f;
+                float averageFrameTimeInSeconds = value * NANO_SECONDS_TO_SECONDS;
 
                 float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
                 float frameRate = 1 / averageFrameTimeInSeconds;
 
                 string fpsColor = frameTimeBudget.TrySpendBudget() ? "green" : "red";
-                fps.Value = $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
+                elementBinding.Value = $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
             }
 
             string GetMemoryUsageColor()

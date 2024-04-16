@@ -32,7 +32,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
                 [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture
             };
-            textureArrayContainer = TextureArrayContainerFactory.Create(targetShader, DEFAULT_RESOLUTIONS, defaultTextures);
+            var factory = new TextureArrayContainerFactory(defaultTextures);
+            textureArrayContainer = factory.Create(targetShader, DEFAULT_RESOLUTIONS);
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
 
             foreach (TextureArrayMapping textureArrayMapping in textureArrayContainer.mappings)
@@ -59,7 +60,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             foreach (var textureArrayMapping in textureArrayContainer.mappings)
             {
                 Assert.AreEqual(TextureArrayHandler.DEFAULT_SLOT_INDEX, testTargetMaterial.GetInteger(textureArrayMapping.Handler.arrayID));
-                Assert.AreEqual(textureArrayMapping.Handler.GetDefaultTextureArray(TEST_RESOLUTION), testTargetMaterial.GetTexture(textureArrayMapping.Handler.textureID));
+                Assert.AreEqual(textureArrayMapping.Handler.GetDefaultTextureArray(new Vector2Int(TEST_RESOLUTION, TEST_RESOLUTION)), testTargetMaterial.GetTexture(textureArrayMapping.Handler.textureID));
             }
         }
 
@@ -77,7 +78,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 TextureArraySlot slotVal = slot.Value;
 
                 Assert.AreEqual(slotVal.UsedSlotIndex, 1);
-                Assert.AreEqual(slotVal.TextureArray, textureArrayContainer.mappings[i].Handler.GetOrCreateSlotHandler(TEST_RESOLUTION).arrays[0]);
+                Assert.AreEqual(slotVal.TextureArray, textureArrayContainer.mappings[i].Handler.GetOrCreateSlotHandler(new Vector2Int(TEST_RESOLUTION, TEST_RESOLUTION)).arrays[0]);
             }
         }
 
@@ -94,7 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
                 slot.Value.FreeSlot();
 
-                Assert.AreEqual(textureArrayContainer.mappings[i].Handler.GetOrCreateSlotHandler(TEST_RESOLUTION).freeSlots.Count, 1);
+                Assert.AreEqual(textureArrayContainer.mappings[i].Handler.GetOrCreateSlotHandler(new Vector2Int(TEST_RESOLUTION, TEST_RESOLUTION)).freeSlots.Count, 1);
             }
 
             var replacedSlots = textureArrayContainer.SetTexturesFromOriginalMaterial(testSourceMaterial, testTargetMaterial);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -43,7 +44,34 @@ namespace DCL.WebRequests
         public static GenericPostArguments CreateWWWForm(WWWForm form) =>
             new (form);
 
+        public static GenericPostArguments Create(string postData, string contentType) =>
+            new (postData, contentType);
+
         public static GenericPostArguments CreateJson(string postData) =>
             new (postData, "application/json");
+
+        public static GenericPostArguments CreateJsonOrDefault(string? postData) =>
+            postData == null ? Empty : CreateJson(postData);
+
+        public override string ToString() =>
+            "GenericPostArguments:"
+            + $"\nMultipartFormSections: {MultipartFormSections}"
+            + $"\nWWWForm: {WebFormToString(WWWForm)}"
+            + $"\nPostData: {PostData}"
+            + $"\nContentType: {ContentType}";
+
+        private static readonly IReadOnlyDictionary<string, string> EMPTY_DICTIONARY = new Dictionary<string, string>();
+
+        private static string WebFormToString(WWWForm? wwwForm)
+        {
+            if (wwwForm == null) return "Empty web form";
+
+            var sb = new StringBuilder();
+
+            foreach ((string? key, string? value) in wwwForm.headers ?? EMPTY_DICTIONARY)
+                sb.Append($"{key} : {value} \t");
+
+            return sb.ToString();
+        }
     }
 }

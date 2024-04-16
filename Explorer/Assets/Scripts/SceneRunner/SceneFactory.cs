@@ -5,10 +5,11 @@ using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
-using CrdtEcsBridge.CommunicationsController;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.JsModulesImplementation;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
@@ -19,9 +20,11 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Time;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -54,14 +57,15 @@ namespace SceneRunner
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebRequestController webRequestController;
+        private readonly IRoomHub roomHub;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
+        private readonly ICommunicationControllerHub messagePipesHub;
+
         private IGlobalWorldActions globalWorldActions = null!;
-        private IMessagePipesHub messagePipesHub;
-        private IRoomHub roomHub;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -76,8 +80,9 @@ namespace SceneRunner
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
             IWebRequestController webRequestController,
-            IRealmData? realmData
-        )
+            IRoomHub roomHub,
+            IRealmData? realmData,
+            ICommunicationControllerHub messagePipesHub)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -91,22 +96,25 @@ namespace SceneRunner
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
             this.webRequestController = webRequestController;
+            this.roomHub = roomHub;
             this.realmData = realmData;
+            this.messagePipesHub = messagePipesHub;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var sceneDefinition = new SceneEntityDefinition();
-
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl[(lastSlash + 1)..];
             var baseUrl = URLDomain.FromString(jsCodeUrl[..(lastSlash + 1)]);
 
-            sceneDefinition.metadata = new SceneMetadata
-            {
-                main = mainScenePath,
-                runtimeVersion = "7",
-            };
+            var sceneDefinition = new SceneEntityDefinition(
+                string.Empty,
+                new SceneMetadata
+                {
+                    main = mainScenePath,
+                    runtimeVersion = "7",
+                }
+            );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
@@ -127,11 +135,7 @@ namespace SceneRunner
 
             SceneMetadata sceneMetadata = JsonUtility.FromJson<SceneMetadata>(request.downloadHandler.text);
 
-            var sceneDefinition = new SceneEntityDefinition
-            {
-                id = directoryName,
-                metadata = sceneMetadata,
-            };
+            var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
@@ -147,11 +151,6 @@ namespace SceneRunner
             globalWorldActions = actions;
         }
 
-        public void SetMultiplayerReferences(IMessagePipesHub messagePipes)
-        {
-            this.messagePipesHub = messagePipes;
-        }
-
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
@@ -159,15 +158,15 @@ namespace SceneRunner
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
-            var instancePoolsProvider = InstancePoolsProvider.Create();
-            var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
+            InstancePoolsProvider instancePoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
+            CRDTPooledMemoryAllocator crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var outgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, crdtProtocol, crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(outgoingCRDTMessagesProvider);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
             var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
-            var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
+            SceneExceptionsHandler exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var worldTimeProvider = new WorldTimeProvider();
 
             /* Pass dependencies here if they are needed by the systems */
@@ -176,7 +175,8 @@ namespace SceneRunner
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
-            SceneEcsExecutor ecsExecutor = new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync);
+            var ecsExecutor = new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync);
+
             entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, ecsExecutor);
 
             URLAddress sceneCodeUrl;
@@ -191,7 +191,7 @@ namespace SceneRunner
 
             SceneRuntimeImpl sceneRuntime;
 
-            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, exceptionsHandler, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (ScriptEngineException e)
             {
                 // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
@@ -225,27 +225,29 @@ namespace SceneRunner
                 exceptionsHandler,
                 ecsMutexSync);
 
-            sceneRuntime.RegisterEngineApi(engineAPI);
-
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
-            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
-            sceneRuntime.RegisterUserActions(restrictedActionsAPI);
-
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
-            sceneRuntime.RegisterRuntime(runtimeImplementation);
-
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
-            sceneRuntime.RegisterSceneApi(sceneApiImplementation);
-
             var webSocketAipImplementation = new WebSocketApiImplementation();
-            sceneRuntime.RegisterWebSocketApi(webSocketAipImplementation);
+            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
+            var simpleFetchApiImplementation = new SimpleFetchApiImplementation();
 
-            sceneRuntime.RegisterSignedFetch(webRequestController);
-            sceneRuntime.RegisterEthereumApi(ethereumApi);
-            sceneRuntime.RegisterUserIdentityApi(profileRepository, identityCache);
+            sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
 
-            var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
-            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI);
+            sceneRuntime.RegisterAll(
+                exceptionsHandler,
+                roomHub,
+                profileRepository,
+                sceneApiImplementation,
+                webRequestController,
+                restrictedActionsAPI,
+                runtimeImplementation,
+                ethereumApi,
+                webSocketAipImplementation,
+                identityCache,
+                communicationsControllerAPI,
+                instancePoolsProvider,
+                simpleFetchApiImplementation);
 
             sceneRuntime.ExecuteSceneJson();
 

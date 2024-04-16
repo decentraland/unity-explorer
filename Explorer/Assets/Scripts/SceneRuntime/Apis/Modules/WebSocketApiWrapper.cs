@@ -1,19 +1,18 @@
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
-using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class WebSocketApiWrapper : IDisposable
+    public class WebSocketApiWrapper : IJsApiWrapper
     {
         private readonly IWebSocketApi api;
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public WebSocketApiWrapper(IWebSocketApi api, ISceneExceptionsHandler exceptionsHandler)
+        public WebSocketApiWrapper(IWebSocketApi api)
         {
             this.api = api;
             cancellationTokenSource = new CancellationTokenSource();

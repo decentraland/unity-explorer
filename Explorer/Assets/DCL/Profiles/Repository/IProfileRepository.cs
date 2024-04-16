@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,6 +11,9 @@ namespace DCL.Profiles
 {
     public interface IProfileRepository
     {
+        public const string GUEST_RANDOM_ID = "fakeUserId";
+        public const string PLAYER_RANDOM_ID = "Player";
+
         UniTask SetAsync(Profile profile, CancellationToken ct);
 
         UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct);
@@ -61,5 +65,14 @@ namespace DCL.Profiles
                 }
             }
         }
+    }
+
+    public static class ProfileRepositoryExtensions
+    {
+        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct) =>
+            profileRepository.GetAsync(id, 0, ct);
+
+        public static async UniTask<Profile> EnsuredProfileAsync(this IProfileRepository profileRepository, string id, CancellationToken ct) =>
+            (await profileRepository.GetAsync(id, ct)).EnsureNotNull();
     }
 }

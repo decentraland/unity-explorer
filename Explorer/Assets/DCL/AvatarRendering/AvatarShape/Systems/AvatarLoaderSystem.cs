@@ -2,7 +2,10 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -11,9 +14,11 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
-using Entity = Arch.Core.Entity;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
+using System.Collections.Generic;
+using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -24,7 +29,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        internal AvatarLoaderSystem(World world) : base(world) { }
+        internal AvatarLoaderSystem(World world) : base(world)
+        {
+        }
 
         protected override void Update(float t)
         {
@@ -39,18 +46,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [None(typeof(AvatarShapeComponent), typeof(Profile))]
         private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
-            Promise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
+            WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
+            EmotePromise emotePromise = CreateEmotePromise(pbAvatarShape, partition);
             pbAvatarShape.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor(), pbAvatarShape.EyeColor.ToUnityColor()));
+
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, emotePromise,
+                pbAvatarShape.GetSkinColor().ToUnityColor(),
+                pbAvatarShape.GetHairColor().ToUnityColor(),
+                pbAvatarShape.GetEyeColor().ToUnityColor()));
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape))]
         private void CreateAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
-            Promise wearablePromise = CreateWearablePromise(profile, partition);
+            WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
+            EmotePromise emotePromise = CreateEmotePromise(profile, partition);
             profile.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
+            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, emotePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
         }
 
         [Query]
@@ -63,10 +76,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
-            Promise newPromise = CreateWearablePromise(pbAvatarShape, partition);
-            avatarShapeComponent.WearablePromise = newPromise;
+            if (!avatarShapeComponent.EmotePromise.IsConsumed)
+                avatarShapeComponent.EmotePromise.ForgetLoading(World);
 
+            WearablePromise newPromise = CreateWearablePromise(pbAvatarShape, partition);
+            avatarShapeComponent.WearablePromise = newPromise;
+            avatarShapeComponent.EmotePromise = CreateEmotePromise(pbAvatarShape, partition);
             avatarShapeComponent.BodyShape = pbAvatarShape;
+            avatarShapeComponent.HairColor = pbAvatarShape.GetHairColor().ToUnityColor();
+            avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
+            avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
             pbAvatarShape.IsDirty = false;
         }
@@ -81,25 +100,33 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
-            Promise newPromise = CreateWearablePromise(profile, partition);
-            avatarShapeComponent.WearablePromise = newPromise;
+            if (!avatarShapeComponent.EmotePromise.IsConsumed)
+                avatarShapeComponent.EmotePromise.ForgetLoading(World);
 
+            WearablePromise newPromise = CreateWearablePromise(profile, partition);
+            avatarShapeComponent.WearablePromise = newPromise;
+            avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
             avatarShapeComponent.IsDirty = true;
             profile.IsDirty = false;
         }
 
-        private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
-            Promise.Create(World,
+        private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
+            WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
-        private Promise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
-
+        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
             // there is not need to convert
-            Promise.Create(World,
+            WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
+
+        private EmotePromise CreateEmotePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
+            EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(pbAvatarShape, pbAvatarShape.Emotes), partition);
+
+        private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition) =>
+            EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Emotes), partition);
     }
 }

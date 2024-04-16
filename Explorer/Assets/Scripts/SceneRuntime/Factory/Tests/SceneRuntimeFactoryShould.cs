@@ -39,9 +39,10 @@ namespace SceneRuntime.Factory.Tests
 
                 // Act
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
-                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, sceneExceptionsHandler, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert
@@ -62,10 +63,10 @@ namespace SceneRuntime.Factory.Tests
                 // Act
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
-                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, sceneExceptionsHandler, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.RegisterEngineApi(engineApi);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert

@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Diagnostics;
@@ -11,7 +12,6 @@ using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -31,6 +31,7 @@ namespace Global.Dynamic
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
         private Vector2Int targetScene;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = "https://peer.decentraland.org";
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -45,6 +46,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
+        [SerializeField] private AudioClipConfig backgroundMusic;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -102,17 +104,35 @@ namespace Global.Dynamic
             enableLandscape = true;
 #endif
 
-
             try
             {
                 splashRoot.SetActive(showSplash);
 
-                identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+                identityCache = new LogWeb3IdentityCache(
+                    new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()
+                        )
+                    )
+                );
+
+#if !UNITY_EDITOR
+                string authServerUrl = Debug.isDebugBuild
+                    ? settings.AuthWebSocketUrlDev
+                    : settings.AuthWebSocketUrl;
+
+                string authSignatureUrl = Debug.isDebugBuild
+                    ? settings.AuthSignatureUrlDev
+                    : settings.AuthSignatureUrl;
+#else
+                string authServerUrl = settings.AuthWebSocketUrl;
+                string authSignatureUrl = settings.AuthSignatureUrl;
+#endif
 
                 web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
-                    settings.AuthWebSocketUrl,
-                    settings.AuthSignatureUrl,
+                    authServerUrl,
+                    authSignatureUrl,
                     identityCache,
                     new HashSet<string>(settings.Web3WhitelistMethods));
 
@@ -150,19 +170,17 @@ namespace Global.Dynamic
                     }, ct
                 );
 
-                var webRequestController = IWebRequestController.DEFAULT;
-
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, dynamicWorldContainer.RealmController.GetRealm());
-
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer.MvcManager, identityCache,
-                    dynamicWorldContainer!.ProfileRepository, webRequestController, dynamicWorldContainer.RealmController.GetRealm());
+                var webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
+                var roomHub = dynamicWorldContainer!.RoomHub;
+
+                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
+                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -182,6 +200,8 @@ namespace Global.Dynamic
                     return;
                 }
 
+                UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
+
                 Entity playerEntity;
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
@@ -200,6 +220,7 @@ namespace Global.Dynamic
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);
 
+                UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)
@@ -222,6 +243,7 @@ namespace Global.Dynamic
                                 InitialRealm.SDK => "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest",
                                 InitialRealm.World => "https://worlds-content-server.decentraland.org/world/" + targetWorld,
                                 InitialRealm.Localhost => "http://127.0.0.1:8000",
+                                InitialRealm.Custom => customRealm,
                                 _ => startingRealm,
                             };
 

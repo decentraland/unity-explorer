@@ -4,74 +4,17 @@ using System.Collections.Generic;
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     [Serializable]
-    public struct WearableDTO
+    public class WearableDTO : AvatarAttachmentDTO<WearableDTO.WearableMetadataDto>
     {
-        public string version;
-
-        //hash
-        public string id;
-        public string type;
-        public string[] pointers;
-        public long timestamp;
-
-        public WearableMetadataDto metadata;
-        public WearableContentDto[] content;
-
         [Serializable]
-        public struct WearableContentDto
-        {
-            public string file;
-            public string hash;
-        }
-
-        [Serializable]
-        public struct WearableMetadataDto
+        public class WearableMetadataDto : AvatarAttachmentDTO.MetadataBase
         {
             public DataDto data;
-
-            //urn
-            public string id;
-            public string name;
-
-            public I18n[] i18n;
-            public string thumbnail;
-
-            public string rarity;
-            public string description;
+            public override AvatarAttachmentDTO.DataBase AbstractData => data;
 
             [Serializable]
-            public class I18n
+            public class DataDto : AvatarAttachmentDTO.DataBase
             {
-                public string code;
-                public string text;
-            }
-
-            [Serializable]
-            public class Representation
-            {
-                public string[] bodyShapes;
-                public string mainFile;
-                public string[] contents;
-                public string[] overrideHides;
-                public string[] overrideReplaces;
-            }
-
-            [Serializable]
-            public struct RepresentationContentsDto
-            {
-                public string key;
-                public string url;
-            }
-
-            [Serializable]
-            public class DataDto
-            {
-                public Representation[] representations;
-                public string category;
-                public string[] tags;
-                public string[] replaces;
-                public string[] hides;
-                public string[] removesDefaultHiding;
             }
         }
 

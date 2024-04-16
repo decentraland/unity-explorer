@@ -51,15 +51,9 @@ namespace SceneRunner
         UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct);
 
         /// <summary>
-        /// Used for passing actions from the global world to the scene world
+        ///     Used for passing actions from the global world to the scene world
         /// </summary>
         /// <param name="actions"></param>
         void SetGlobalWorldActions(IGlobalWorldActions actions);
-
-        /// <summary>
-        /// Used for passing references from the global world to the scene world
-        /// </summary>
-        /// <param name="messagePipes"></param>
-        void SetMultiplayerReferences(IMessagePipesHub messagePipes);
     }
 }

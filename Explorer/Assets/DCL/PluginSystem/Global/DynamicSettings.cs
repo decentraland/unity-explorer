@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Emotes;
 using DCL.Backpack;
 using DCL.Chat;
 using DCL.MapRenderer;
@@ -28,6 +29,5 @@ namespace DCL.PluginSystem.Global
 
         [field: SerializeField]
         public AssetReferenceT<NametagsData> NametagsData { get; private set; }
-
     }
 }

@@ -14,7 +14,7 @@ namespace DCL.Profiles
         private Color eyesColor;
         private Color hairColor;
         private Color skinColor;
-        private Dictionary<string, Emote>? emotes;
+        private IReadOnlyCollection<URN>? emotes;
         private HashSet<string>? forceRender;
         private HashSet<string>? blocked;
         private List<string>? interests;
@@ -42,8 +42,11 @@ namespace DCL.Profiles
         private URLAddress? bodySnapshotUrl;
         private URLAddress? faceSnapshotUrl;
 
-        public ProfileBuilder From(Profile profile)
+        public ProfileBuilder From(Profile? profile)
         {
+            if (profile == null)
+                return From(Build());
+
             wearables = profile.Avatar.wearables;
             bodyShape = profile.Avatar.BodyShape;
             eyesColor = profile.Avatar.EyesColor;
@@ -86,6 +89,23 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithEmotes(IReadOnlyCollection<URN> emotes)
+        {
+            this.emotes = emotes;
+            return this;
+        }
+
+        public ProfileBuilder WithForceRender(IEnumerable<string> categories)
+        {
+            forceRender ??= new HashSet<string>();
+            forceRender.Clear();
+
+            foreach (string category in categories)
+                forceRender.Add(category);
+
+            return this;
+        }
+
         public Profile Build()
         {
             var profile = new Profile();
@@ -124,8 +144,12 @@ namespace DCL.Profiles
             avatar.BodyShape = bodyShape;
 
             if (emotes != null)
-                foreach ((string? emoteId, Emote emote) in emotes)
-                    avatar.emotes[emoteId] = emote;
+            {
+                var i = 0;
+
+                foreach (URN urn in emotes)
+                    avatar.emotes[i++] = urn;
+            }
 
             if (forceRender != null)
                 foreach (string s in forceRender)
@@ -134,8 +158,8 @@ namespace DCL.Profiles
             avatar.HairColor = hairColor;
             avatar.SkinColor = skinColor;
             avatar.EyesColor = eyesColor;
-            avatar.BodySnapshotUrl = bodySnapshotUrl ?? new URLAddress();
-            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? new URLAddress();
+            avatar.BodySnapshotUrl = bodySnapshotUrl ?? URLAddress.EMPTY;
+            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
 
             return profile;
         }

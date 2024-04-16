@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
@@ -78,7 +79,6 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewShow()
         {
             base.OnViewShow();
-
             viewInstance.RootCanvasGroup.alpha = 1f;
             viewInstance.ContentCanvasGroup.alpha = 1f;
         }
@@ -86,7 +86,6 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewClose()
         {
             base.OnViewClose();
-
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
         }

@@ -50,21 +50,21 @@ namespace DCL.Multiplayer.SDK.Systems
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
 
-            if (!sceneFacade.SceneStateProvider.IsCurrent) return;
+            if (sceneFacade.SceneStateProvider == null || !sceneFacade.SceneStateProvider.IsCurrent)
+                return;
 
             int crdtEntityId = ReserveNextFreeEntity();
 
             // All reserved entities for that scene are taken
             if (crdtEntityId == -1) return;
 
-            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
+            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor!.Value;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
                 Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
                 var crdtEntityComponent = new CRDTEntity(crdtEntityId);
-                Debug.Log($"PRAVS - AddPlayerIdentityData() - Entity: {entity.Id}; CRDTEntity: {crdtEntityComponent.Id}; Address: {profile.UserId}; scene parcel: {sceneFacade.Info.BaseParcel}; Profile name: {profile.Name}");
 
                 var playerIdentityData = new PlayerIdentityDataComponent
                 {
@@ -85,15 +85,13 @@ namespace DCL.Multiplayer.SDK.Systems
         {
             // Only target entities outside the current scene
             if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
-                && sceneFacade.SceneStateProvider.IsCurrent) return;
+                && sceneFacade.SceneStateProvider != null && sceneFacade.SceneStateProvider.IsCurrent) return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
+            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor!.Value;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                Debug.Log($"PRAVS - RemovePlayerIdentityDataOnOutsideCurrentScene() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; scene parcel: {sceneFacade?.Info.BaseParcel}");
-
                 World.Remove<PlayerIdentityDataComponent>(entity);
 
                 // Remove from whichever scene it was added
@@ -111,13 +109,11 @@ namespace DCL.Multiplayer.SDK.Systems
                 || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
+            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor!.Value;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                Debug.Log($"PRAVS - HandlePlayerDisconnect() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; scene parcel: {sceneFacade.Info.BaseParcel}");
-
                 World.Remove<PlayerIdentityDataComponent>(entity);
 
                 // Remove from whichever scene it was added
@@ -127,7 +123,6 @@ namespace DCL.Multiplayer.SDK.Systems
             FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
         }
 
-        // TODO: Optimize?
         private int ReserveNextFreeEntity()
         {
             // All reserved entities are taken
@@ -140,7 +135,6 @@ namespace DCL.Multiplayer.SDK.Systems
                 {
                     reservedEntities[i] = true;
                     currentReservedEntitiesCount++;
-                    Debug.Log($"PRAVS - Reserving entity id: {SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i}");
                     return SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i;
                 }
             }

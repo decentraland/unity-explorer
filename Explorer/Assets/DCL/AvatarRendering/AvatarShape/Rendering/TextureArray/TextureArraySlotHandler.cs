@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
@@ -8,11 +8,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         internal readonly List<Texture2DArray> arrays;
         internal readonly Stack<TextureArraySlot> freeSlots;
         private readonly int minArraySize;
-        private readonly int resolution;
+        private readonly Vector2Int resolution;
         private int nextFreeIndex;
         private TextureFormat textureFormat;
 
-        public TextureArraySlotHandler(int resolution, int minArraySize, int initialCapacity, TextureFormat textureFormat)
+        public TextureArraySlotHandler(Vector2Int resolution, int minArraySize, int initialCapacity, TextureFormat textureFormat)
         {
             this.minArraySize = minArraySize;
             this.resolution = resolution;
@@ -26,10 +26,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         public TextureArraySlot GetNextFreeSlot()
         {
-            if (freeSlots.TryPop(out TextureArraySlot freeSlot)) { return freeSlot; }
+            if (freeSlots.TryPop(out var freeSlot)) { return freeSlot; }
 
             int arrayIndex = nextFreeIndex / minArraySize;
-            int slotIndex = nextFreeIndex - (minArraySize * arrayIndex);
+            int slotIndex = nextFreeIndex - minArraySize * arrayIndex;
 
             if (arrays.Count <= arrayIndex)
                 arrays.Add(CreateTexture2DArray());
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private Texture2DArray CreateTexture2DArray()
         {
-            var texture2DArray = new Texture2DArray(resolution, resolution, minArraySize, textureFormat, false, false);
+            var texture2DArray = new Texture2DArray(resolution.x, resolution.y, minArraySize, textureFormat, false, false);
             texture2DArray.filterMode = FilterMode.Bilinear;
             texture2DArray.wrapMode = TextureWrapMode.Repeat;
             texture2DArray.anisoLevel = 9;

@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -7,6 +8,7 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.Pools;
+using DCL.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -101,10 +103,12 @@ namespace DCL.Multiplayer.Profiles.Entities
                 profile.Profile,
                 transformComp,
                 new CharacterAnimationComponent(),
+                new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );
+            ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
 
             entityParticipantTable.Register(profile.WalletId, entity);
         }

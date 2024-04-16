@@ -1,12 +1,16 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Emoji;
+using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -20,8 +24,10 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
+        private readonly DCLInput dclInput;
         private ChatController chatController;
-        private DCLInput dclInput;
+        private readonly IEventSystem eventSystem;
+        private readonly Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -29,7 +35,9 @@ namespace DCL.PluginSystem.Global
             IChatMessagesBus chatMessagesBus,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            IEventSystem eventSystem,
+            Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -37,6 +45,8 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
+            this.eventSystem = eventSystem;
+            this.chatCommandsFactory = chatCommandsFactory;
         }
 
         public void Dispose() { }
@@ -67,7 +77,9 @@ namespace DCL.PluginSystem.Global
                     emojiSuggestionPrefab,
                     builder.World,
                     arguments.PlayerEntity,
-                    dclInput
+                    dclInput,
+                    eventSystem,
+                    chatCommandsFactory
                 );
 
                 mvcManager.RegisterController(chatController);

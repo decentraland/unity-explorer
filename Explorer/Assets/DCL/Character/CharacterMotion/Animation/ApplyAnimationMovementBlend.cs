@@ -1,4 +1,5 @@
 ﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
@@ -21,7 +22,7 @@ namespace DCL.CharacterMotion.Animation
             in MovementInputComponent movementInput,
             in IAvatarView view)
         {
-            var velocity = rigidTransform.MoveVelocity.Velocity;
+            Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
             float maxVelocity = SpeedLimit.Get(settings, movementInput.Kind);
 
             int movementBlendId = GetMovementBlendId(velocity, movementInput.Kind);

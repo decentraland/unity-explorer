@@ -31,6 +31,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.memoryPool = memoryPool;
         }
 
+        ~WebSocketArchipelagoLiveConnection()
+        {
+            webSocket.Dispose();
+        }
+
         public UniTask ConnectAsync(string adapterUrl, CancellationToken token) =>
             webSocket.ConnectAsync(new Uri(adapterUrl), token)!.AsUniTask(false);
 

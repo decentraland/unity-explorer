@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
@@ -123,7 +125,8 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, IWebRequestController.DEFAULT, Substitute.For<IRealmData>());
+                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, IWebRequestController.DEFAULT, new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(), new IMessagePipesHub.Fake());
 
             return (staticContainer, sceneSharedContainer);
         }

@@ -1,5 +1,8 @@
 using CRDT.Serializer;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using MVC;
 using DCL.Profiles;
@@ -25,7 +28,9 @@ namespace Global
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            IRealmData? realmData)
+            IRoomHub roomHub,
+            IRealmData? realmData,
+            IMessagePipesHub messagePipesHub)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -52,7 +57,9 @@ namespace Global
                     profileRepository,
                     web3IdentityCache,
                     webRequestController,
-                    realmData
+                    roomHub,
+                    realmData,
+                    new CommunicationControllerHub(messagePipesHub)
                 ),
             };
         }

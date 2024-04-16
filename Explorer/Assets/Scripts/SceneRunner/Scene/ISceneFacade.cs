@@ -2,14 +2,15 @@
 using DCL.Diagnostics;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace SceneRunner.Scene
 {
     public interface ISceneFacade : IUniTaskAsyncDisposable, IDisposable
     {
         SceneShortInfo Info { get; }
-        ISceneStateProvider SceneStateProvider { get; }
-        SceneEcsExecutor EcsExecutor { get; }
+        ISceneStateProvider? SceneStateProvider { get; }
+        SceneEcsExecutor? EcsExecutor { get; }
 
         /// <summary>
         ///     Start an update loop with a given FPS
@@ -28,5 +29,7 @@ namespace SceneRunner.Scene
         internal UniTask StartScene();
 
         internal UniTask Tick(float dt);
+
+        bool Contains(Vector2Int parcel);
     }
 }

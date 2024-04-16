@@ -1,4 +1,5 @@
 using UnityEngine;
+using Utility.Storage;
 
 namespace DCL.Quality.Runtime
 {

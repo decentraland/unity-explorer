@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public WearableRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData) : base(assetBundleData)
+        public WearableRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData) : base(assetBundleData)
         {
             MainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
@@ -77,11 +77,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public abstract class WearableAssetBase : IDisposable
     {
-        private readonly AssetBundleData assetBundleData;
+        private readonly AssetBundleData? assetBundleData;
 
         private bool disposed;
 
-        protected WearableAssetBase(AssetBundleData assetBundleData)
+        protected WearableAssetBase(AssetBundleData? assetBundleData)
         {
             this.assetBundleData = assetBundleData;
         }

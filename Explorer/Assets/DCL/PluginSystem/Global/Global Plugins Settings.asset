@@ -29,7 +29,6 @@ MonoBehaviour:
   - rid: 1841402216112979969
   - rid: 4340256219339423747
   - rid: 4340256301410942981
-  - rid: 7249412338407702528
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
@@ -37,6 +36,7 @@ MonoBehaviour:
   - rid: 7162477752737071106
   - rid: 7162477796324278274
   - rid: 3836309668583964676
+  - rid: 6697045322133929986
   references:
     version: 2
     RefIds:
@@ -144,6 +144,28 @@ MonoBehaviour:
             m_SubObjectName: 
             m_SubObjectType: 
             m_EditorAssetChanged: 0
+        <EmbeddedEmotes>k__BackingField:
+        - wave
+        - fistpump
+        - dance
+        - raiseHand
+        - clap
+        - money
+        - kiss
+        - shrug
+        - headexplode
+        - cry
+        - dab
+        - disco
+        - dontsee
+        - hammer
+        - handsair
+        - hohoho
+        - robot
+        - snowfall
+        - tektonik
+        - tik
+        - confettipopper
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -292,46 +314,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <DefaultMain256>k__BackingField:
-          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultMain512>k__BackingField:
-          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultNormal256>k__BackingField:
-          m_AssetGUID: 2df144b808932744487656f89a42fb11
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultNormal512>k__BackingField:
-          m_AssetGUID: 4428c33e669492748afd75828965504b
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultEmmisive256>k__BackingField:
-          m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultEmmisive512>k__BackingField:
-          m_AssetGUID: f3fd7329d073f964aaec82eb9acc9ed3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultMask256>k__BackingField:
-          m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <DefaultMask512>k__BackingField:
-          m_AssetGUID: f3fd7329d073f964aaec82eb9acc9ed3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         defaultMaterialCapacity: 100
         <ChatBubbleConfiguration>k__BackingField:
           m_AssetGUID: b028edf69a2c54c9194c4ce6524befff
@@ -366,6 +348,19 @@ MonoBehaviour:
       data:
         <spatialStateSettings>k__BackingField:
           m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6697045322133929986
+      type: {class: EmotePlugin/EmoteSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <EmbeddedEmotes>k__BackingField:
+          m_AssetGUID: 2a58c49334237a24781cae8b1e3fa351
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmoteAudioSource>k__BackingField:
+          m_AssetGUID: 62f68ba25f6c905428b36a081b072566
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -432,14 +427,6 @@ MonoBehaviour:
       data:
         ChangeRealmPromptPrefab:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 7249412338407702528
-      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
-      data:
-        <LodSettingAsset>k__BackingField:
-          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

@@ -1,7 +1,5 @@
-﻿using Arch.Core;
-using CRDT.Memory;
+﻿using CRDT.Memory;
 using CRDT.Protocol;
-using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
@@ -17,27 +15,25 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using Utility.Multithreading;
+using Debug = UnityEngine.Debug;
 
 namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
-        internal readonly ISceneRuntime runtimeInstance;
-        internal readonly ECSWorldFacade ecsWorldFacade;
-        internal readonly ICRDTProtocol crdtProtocol;
-        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
-        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        internal readonly ICRDTProtocol crdtProtocol;
+        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
+        internal readonly ECSWorldFacade ecsWorldFacade;
         internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        internal readonly ISceneData sceneData;
+        internal readonly IInstancePoolsProvider instancePoolsProvider;
+        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
+        internal readonly ISceneRuntime runtimeInstance;
+        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
         private int intervalMS;
-        public ISceneStateProvider SceneStateProvider { get; }
-        public SceneEcsExecutor EcsExecutor { get; }
-        public SceneShortInfo Info => sceneData.SceneShortInfo;
 
         public SceneFacade(
             ISceneRuntime runtimeInstance,
@@ -62,10 +58,19 @@ namespace SceneRunner
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
-            this.sceneData = sceneData;
+            SceneData = sceneData;
             EcsExecutor = ecsExecutor;
             SceneStateProvider = sceneStateProvider;
+
+            if (sceneStateProvider == null)
+                Debug.Log($"PRAVS - SceneFacade() - SCENE STATE PROVIDER IN NULL!!! BASE-PARCEL: {sceneData.SceneShortInfo.BaseParcel}");
         }
+
+        public ISceneData SceneData { get; }
+        public ISceneStateProvider? SceneStateProvider { get; }
+        public SceneEcsExecutor? EcsExecutor { get; }
+
+        public SceneShortInfo Info => SceneData.SceneShortInfo;
 
         public void Dispose()
         {
@@ -90,6 +95,17 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
+        public bool Contains(Vector2Int parcel)
+        {
+            foreach (Vector2Int sceneParcel in SceneData.Parcels)
+            {
+                if (sceneParcel != parcel) continue;
+                return true;
+            }
+
+            return false;
+        }
+
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
             AssertMainThread(nameof(StartUpdateLoopAsync));
@@ -98,8 +114,8 @@ namespace SceneRunner
                 throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
 
             // Process "main.crdt" first
-            if (sceneData.StaticSceneMessages.Data.Length > 0)
-                runtimeInstance.ApplyStaticMessages(sceneData.StaticSceneMessages.Data);
+            if (SceneData.StaticSceneMessages.Data.Length > 0)
+                runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
 
             SceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 
@@ -165,6 +181,28 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
+        public void SetIsCurrent(bool isCurrent)
+        {
+            SceneStateProvider.IsCurrent = isCurrent;
+            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
+        }
+
+        public async UniTask DisposeAsync()
+        {
+            // Because of multithreading Disposing is not synced with the update loop
+            // so just mark it as disposed and let the update loop handle the disposal
+            SceneStateProvider.State = SceneState.Disposing;
+
+            // TODO do it better
+            runtimeInstance.SetIsDisposing();
+
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+
+            DisposeInternal();
+
+            SceneStateProvider.State = SceneState.Disposed;
+        }
+
         private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
@@ -200,27 +238,6 @@ namespace SceneRunner
         {
             if (PlayerLoopHelper.IsMainThread != isMainThread)
                 throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
-        }
-
-        public void SetIsCurrent(bool isCurrent)
-        {
-            SceneStateProvider.IsCurrent = isCurrent;
-        }
-
-        public async UniTask DisposeAsync()
-        {
-            // Because of multithreading Disposing is not synced with the update loop
-            // so just mark it as disposed and let the update loop handle the disposal
-            SceneStateProvider.State = SceneState.Disposing;
-
-            // TODO do it better
-            runtimeInstance.SetIsDisposing();
-
-            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-
-            DisposeInternal();
-
-            SceneStateProvider.State = SceneState.Disposed;
         }
 
         private void DisposeInternal()

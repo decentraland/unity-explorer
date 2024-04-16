@@ -1,15 +1,17 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -24,7 +26,7 @@ namespace DCL.Navmap
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters  { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter {BackgroundIsActive = true} } };
         private const MapLayer ACTIVE_MAP_LAYERS =
-            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight;
+            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
@@ -38,27 +40,35 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
+        private readonly NavmapLocationController navmapLocationController;
 
         public NavmapController(
             NavmapView navmapView,
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
-            ITeleportController teleportController,
             IWebRequestController webRequestController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IWebBrowser webBrowser,
+            DCLInput dclInput,
+            World world,
+            Entity playerEntity,
+            IRealmNavigator realmNavigator)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
-            zoomController = new NavmapZoomController(navmapView.zoomView);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController, webRequestController, mvcManager);
-            filterController = new NavmapFilterController(this.navmapView.filterView);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, navmapView.floatingPanelView);
+            zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
+            filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
+
             searchBarController.OnResultClicked += OnResultClicked;
-            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
+            searchBarController.OnSearchTextChanged += floatingPanelController.HidePanel;
+            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
 
             mapSections = new ()
             {
@@ -91,12 +101,12 @@ namespace DCL.Navmap
         private void OnResultClicked(string coordinates)
         {
             VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
-            floatingPanelController.HandlePanelVisibility(result, false);
+            floatingPanelController.HandlePanelVisibility(result, true);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
-            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel);
+            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, false);
         }
 
         public void Activate()
@@ -112,6 +122,7 @@ namespace DCL.Navmap
                 ));
             satelliteController.InjectCameraController(cameraController);
             streetViewController.InjectCameraController(cameraController);
+            navmapLocationController.InjectCameraController(cameraController);
             mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);
         }

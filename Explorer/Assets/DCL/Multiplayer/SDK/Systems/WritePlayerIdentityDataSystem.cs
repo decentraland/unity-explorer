@@ -38,8 +38,6 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
         private void CreatePlayerIdentityData(in Entity entity, PlayerIdentityDataComponent playerIdentityDataComponent)
         {
-            Debug.Log($"PRAVS - CreatePlayerIdentityDataQuery() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; Address: {playerIdentityDataComponent.Address}");
-
             ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PlayerIdentityDataComponent>(static (pbPlayerIdentityData, playerIdentityDataComponent) =>
             {
                 pbPlayerIdentityData.Address = playerIdentityDataComponent.Address;

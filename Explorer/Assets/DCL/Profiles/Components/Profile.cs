@@ -1,11 +1,16 @@
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.Profiles
 {
     public class Profile
     {
+        public StreamableLoadingResult<Sprite>? ProfilePicture { get; set; }
         private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
 
         private string userId;
@@ -103,5 +108,18 @@ namespace DCL.Profiles
 
             return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
         }
+
+        public static Profile NewRandomProfile(string? userId) =>
+            new (
+                userId ?? IProfileRepository.GUEST_RANDOM_ID,
+                IProfileRepository.PLAYER_RANDOM_ID,
+                new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor()
+                )
+            );
     }
 }

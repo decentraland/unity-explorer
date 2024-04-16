@@ -18,13 +18,13 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private readonly Dictionary<int, PoolMaterialSetup> materialDictionary;
 
-        public AvatarMaterialPoolHandler(List<Material> materials, int defaultMaterialCapacity, Dictionary<TextureArrayKey, Texture> defaultTextures)
+        public AvatarMaterialPoolHandler(List<Material> materials, int defaultMaterialCapacity, TextureArrayContainerFactory textureArrayContainerFactory)
         {
             materialDictionary = new Dictionary<int, PoolMaterialSetup>();
 
             foreach (Material material in materials)
             {
-                TextureArrayContainer textureArrayContainer = TextureArrayContainerFactory.Create(material.shader, DEFAULT_RESOLUTIONS, defaultTextures);
+                var textureArrayContainer = textureArrayContainerFactory.Create(material.shader, DEFAULT_RESOLUTIONS);
 
                 //Create the pool
                 IExtendedObjectPool<Material> pool = new ExtendedObjectPool<Material>(

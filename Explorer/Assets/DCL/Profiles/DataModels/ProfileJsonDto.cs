@@ -1,4 +1,4 @@
-#nullable disable
+#nullable enable
 
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 
 namespace DCL.Profiles
 {
@@ -16,15 +15,6 @@ namespace DCL.Profiles
     {
         public int slot;
         public string urn;
-
-        public Emote ToEmote() =>
-            new (slot, urn);
-
-        public void CopyFrom(Emote emote)
-        {
-            slot = emote.Slot;
-            urn = emote.Urn;
-        }
     }
 
     [Serializable]
@@ -117,7 +107,9 @@ namespace DCL.Profiles
             avatar.wearables.UnionWith(wearableUrns!);
 
             avatar.BodyShape = BodyShape.FromStringSafe(bodyShape);
-            emotes.AlignWithDictionary(avatar.emotes, static dto => dto.urn, static dto => dto.ToEmote());
+
+            foreach (EmoteJsonDto emoteJsonDto in emotes)
+                avatar.emotes[emoteJsonDto.slot] = emoteJsonDto.urn;
 
             avatar.FaceSnapshotUrl = URLAddress.FromString(snapshots!.face256);
             avatar.BodySnapshotUrl = URLAddress.FromString(snapshots.body);
@@ -146,10 +138,16 @@ namespace DCL.Profiles
             emotes ??= new List<EmoteJsonDto>();
             emotes.Clear();
 
-            foreach ((string urn, Emote emote) in avatar.emotes)
+            for (var i = 0; i < avatar.emotes.Length; i++)
             {
-                var emoteDto = new EmoteJsonDto();
-                emoteDto.CopyFrom(emote);
+                URN urn = avatar.emotes[i];
+                if (urn.IsNullOrEmpty()) continue;
+
+                var emoteDto = new EmoteJsonDto
+                {
+                    slot = i,
+                    urn = urn,
+                };
                 emotes.Add(emoteDto);
             }
 
@@ -380,7 +378,7 @@ namespace DCL.Profiles
     {
         private static readonly ThreadSafeObjectPool<GetProfileJsonRootDto> POOL = new (() => new GetProfileJsonRootDto());
 
-        public List<ProfileJsonDto> avatars;
+        public List<ProfileJsonDto>? avatars;
 
         private GetProfileJsonRootDto() { }
 
@@ -408,5 +406,16 @@ namespace DCL.Profiles
             profileDto.CopyFrom(profile);
             avatars.Add(profileDto);
         }
+
+        private bool AnyAvatarInList()
+        {
+            if (avatars == null) return false;
+            if (avatars.Count == 0) return false;
+
+            return true;
+        }
+
+        public ProfileJsonDto? FirstProfileDto() =>
+            AnyAvatarInList() ? avatars[0] : null;
     }
 }

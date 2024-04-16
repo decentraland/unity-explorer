@@ -1,16 +1,23 @@
 using System;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
     public readonly struct TextureArrayKey : IEquatable<TextureArrayKey>
     {
         public readonly int Id;
-        public readonly int Resolution;
+        public readonly Vector2Int Resolution;
 
-        public TextureArrayKey(int id, int resolution)
+        public TextureArrayKey(int id, Vector2Int resolution)
         {
             Id = id;
             Resolution = resolution;
+        }
+
+        public TextureArrayKey(int id, int squareResolution)
+        {
+            Id = id;
+            Resolution = new Vector2Int(squareResolution, squareResolution);
         }
 
         public bool Equals(TextureArrayKey other) =>

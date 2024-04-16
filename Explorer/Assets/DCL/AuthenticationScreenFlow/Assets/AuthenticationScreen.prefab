@@ -406,6 +406,7 @@ GameObject:
   - component: {fileID: 7702360773112794650}
   - component: {fileID: 9033864795988027910}
   - component: {fileID: 7578292249645083079}
+  - component: {fileID: 713033331353133368}
   m_Layer: 0
   m_Name: BackButton
   m_TagString: Untagged
@@ -517,6 +518,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &713033331353133368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 690367867981535852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 7578292249645083079}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &823388781594039178
 GameObject:
   m_ObjectHideFlags: 0
@@ -2422,6 +2437,7 @@ GameObject:
   - component: {fileID: 2278062931054429844}
   - component: {fileID: 4825286214349294601}
   - component: {fileID: 7852304133369695916}
+  - component: {fileID: 5536585910350651795}
   m_Layer: 0
   m_Name: CodeInfoButton
   m_TagString: Untagged
@@ -2531,6 +2547,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5536585910350651795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4202055988028168317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 7852304133369695916}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &4248285066503852938
 GameObject:
   m_ObjectHideFlags: 0
@@ -3419,6 +3449,7 @@ GameObject:
   - component: {fileID: 7726502526887811093}
   - component: {fileID: 50357040590464783}
   - component: {fileID: 1710274344204595558}
+  - component: {fileID: 3260056356706075930}
   m_Layer: 0
   m_Name: DiscordButton
   m_TagString: Untagged
@@ -3531,6 +3562,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3260056356706075930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5320285189117423790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 1710274344204595558}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &5339241425948155178
 GameObject:
   m_ObjectHideFlags: 0
@@ -3747,6 +3792,8 @@ MonoBehaviour:
   <VerificationCodeHintContainer>k__BackingField: {fileID: 45180935525606365}
   <DiscordButton>k__BackingField: {fileID: 1710274344204595558}
   <CharacterPreviewView>k__BackingField: {fileID: 8398316715096862839}
+  BackgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
+  FadeDuration: 1
 --- !u!1 &5399791853786771784
 GameObject:
   m_ObjectHideFlags: 0
@@ -3950,6 +3997,7 @@ GameObject:
   - component: {fileID: 8389673711702691545}
   - component: {fileID: 6319799229115273851}
   - component: {fileID: 4828106312302719395}
+  - component: {fileID: 3685603352095806431}
   m_Layer: 0
   m_Name: UseAnotherAccountButton
   m_TagString: Untagged
@@ -4061,6 +4109,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3685603352095806431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5609746862316879584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4828106312302719395}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &6302728689054732172
 GameObject:
   m_ObjectHideFlags: 0
@@ -4349,6 +4411,7 @@ GameObject:
   - component: {fileID: 7327401095768751964}
   - component: {fileID: 3159600912255300349}
   - component: {fileID: 4708745492529117082}
+  - component: {fileID: 6849899580318634646}
   m_Layer: 0
   m_Name: StartButton
   m_TagString: Untagged
@@ -4460,6 +4523,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6849899580318634646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6351262394580509030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4708745492529117082}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &6558392808739463091
 GameObject:
   m_ObjectHideFlags: 0
@@ -5326,6 +5403,7 @@ GameObject:
   - component: {fileID: 3176439600514569765}
   - component: {fileID: 2803467788014236035}
   - component: {fileID: 8577423537029511}
+  - component: {fileID: 4446799014871806851}
   m_Layer: 0
   m_Name: JumpIntoWorld
   m_TagString: Untagged
@@ -5437,6 +5515,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4446799014871806851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7900844224099123466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8577423537029511}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &7955526012718410760
 GameObject:
   m_ObjectHideFlags: 0

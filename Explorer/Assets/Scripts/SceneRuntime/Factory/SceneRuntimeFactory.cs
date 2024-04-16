@@ -1,12 +1,12 @@
 using CommunicationData.URLHelpers;
-using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
@@ -24,6 +24,9 @@ namespace SceneRuntime.Factory
         private readonly JsCodeResolver codeContentResolver;
         private readonly Dictionary<string, string> sourceCodeCache;
 
+        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
+        private readonly IJsSceneSourceCode jsSceneSourceCode = new IJsSceneSourceCode.Default();
+
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
             codeContentResolver = new JsCodeResolver(webRequestController);
@@ -33,9 +36,8 @@ namespace SceneRuntime.Factory
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
+        internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
             string sourceCode,
-            ISceneExceptionsHandler sceneExceptionsHandler,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
@@ -43,7 +45,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            (string initSourceCode, Dictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionaryAsync(ct));
+            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -51,15 +53,15 @@ namespace SceneRuntime.Factory
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-
-            return new SceneRuntimeImpl(sceneExceptionsHandler, WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
+            string wrappedSource = jsSceneSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? WrapInModuleCommonJs(sourceCode);
+            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateByPathAsync(URLAddress path,
-            ISceneExceptionsHandler sceneExceptionsHandler,
+        public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
+            URLAddress path,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
@@ -68,7 +70,7 @@ namespace SceneRuntime.Factory
             AssertCalledOnTheMainThread();
 
             string sourceCode = await LoadJavaScriptSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, sceneExceptionsHandler, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
         private void AssertCalledOnTheMainThread()
@@ -77,39 +79,35 @@ namespace SceneRuntime.Factory
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
         }
 
-        private UniTask<string> GetJsInitSourceCode(CancellationToken ct) =>
-            LoadJavaScriptSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"), ct);
+        private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
+        {
+            string validateCode = await LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
+                ct
+            );
+
+            string initCode = await LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
+                ct
+            );
+
+            return (validateCode, initCode);
+        }
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
 
-        private async UniTask<Dictionary<string, string>> GetJsModuleDictionaryAsync(CancellationToken ct)
+        private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
         {
             var moduleDictionary = new Dictionary<string, string>();
-
-            await AddModuleAsync("EngineApi.js", moduleDictionary, ct);
-            await AddModuleAsync("CommsApi.js", moduleDictionary, ct);
-            await AddModuleAsync("EthereumController.js", moduleDictionary, ct);
-            await AddModuleAsync("Players.js", moduleDictionary, ct);
-            await AddModuleAsync("PortableExperiences.js", moduleDictionary, ct);
-            await AddModuleAsync("RestrictedActions.js", moduleDictionary, ct);
-            await AddModuleAsync("Runtime.js", moduleDictionary, ct);
-            await AddModuleAsync("Scene.js", moduleDictionary, ct);
-            await AddModuleAsync("SignedFetch.js", moduleDictionary, ct);
-            await AddModuleAsync("Testing.js", moduleDictionary, ct);
-            await AddModuleAsync("UserIdentity.js", moduleDictionary, ct);
-            await AddModuleAsync("CommunicationsController.js", moduleDictionary, ct);
-            await AddModuleAsync("WebSocketApi.js", moduleDictionary, ct);
-            await AddModuleAsync("EnvironmentApi.js", moduleDictionary, ct);
-            await AddModuleAsync("UserActionModule.js", moduleDictionary, ct);
+            foreach (string name in names) await AddModuleAsync(name, moduleDictionary, ct);
             return moduleDictionary;
         }
 
         private async UniTask<string> LoadJavaScriptSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
-            if (sourceCodeCache.TryGetValue(path, out string value)) return value;
+            if (sourceCodeCache.TryGetValue(path, out string value)) return value!;
 
             string sourceCode = await codeContentResolver.GetCodeContent(path, ct);
 

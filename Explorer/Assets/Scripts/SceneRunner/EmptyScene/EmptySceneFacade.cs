@@ -4,7 +4,6 @@ using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.LifeCycle.Components;
@@ -26,16 +25,16 @@ namespace SceneRunner.EmptyScene
 
         private Args args;
 
-        public ISceneStateProvider SceneStateProvider { get; }
-        public SceneEcsExecutor EcsExecutor { get; }
-        public SceneShortInfo Info => args.ShortInfo;
+        private EmptySceneFacade() { }
 
         internal Entity sceneRoot { get; private set; } = Entity.Null;
 
         //internal Entity grass { get; private set; } = Entity.Null;
         internal Entity environment { get; private set; } = Entity.Null;
+        public SceneEcsExecutor? EcsExecutor { get; } = null;
 
-        private EmptySceneFacade() { }
+        public ISceneStateProvider? SceneStateProvider { get; } = null;
+        public SceneShortInfo Info => args.ShortInfo;
 
         public void Dispose()
         {
@@ -128,6 +127,9 @@ namespace SceneRunner.EmptyScene
         UniTask ISceneFacade.Tick(float dt) =>
             UniTask.CompletedTask;
 
+        public bool Contains(Vector2Int parcel) =>
+            args.ShortInfo.BaseParcel == parcel;
+
         public static EmptySceneFacade Create(Args args)
         {
             EmptySceneFacade f = POOL.Get();
@@ -137,16 +139,17 @@ namespace SceneRunner.EmptyScene
 
         public readonly struct Args
         {
+            public readonly Vector3 BasePosition;
+            public readonly IComponentPoolsRegistry ComponentPools;
+
             // Map is needed for ParentingTransformSystem
             public readonly IDictionary<CRDTEntity, Entity> EntitiesMap;
-            public readonly World SharedWorld;
             public readonly World GlobalWorld;
             public readonly EmptySceneMapping Mapping;
-            public readonly IComponentPoolsRegistry ComponentPools;
-            public readonly Vector3 BasePosition;
-            public readonly SceneShortInfo ShortInfo;
-            public readonly IPartitionComponent ParentPartition;
             public readonly MutexSync MutexSync;
+            public readonly IPartitionComponent ParentPartition;
+            public readonly World SharedWorld;
+            public readonly SceneShortInfo ShortInfo;
 
             public Args(
                 IDictionary<CRDTEntity, Entity> entitiesMap,
