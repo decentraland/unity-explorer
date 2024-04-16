@@ -69,7 +69,7 @@ namespace DCL.Audio
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if ( CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
+            if (!CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;

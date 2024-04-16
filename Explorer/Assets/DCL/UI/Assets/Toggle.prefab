@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8038834335027227982}
-  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -108,7 +107,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8038834335027227982}
-  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -196,7 +194,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2224212902183062667}
-  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -274,7 +271,6 @@ RectTransform:
   - {fileID: 8038834335027227982}
   - {fileID: 2224212902183062667}
   m_Father: {fileID: 0}
-  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -344,8 +340,8 @@ MonoBehaviour:
   <Toggle>k__BackingField: {fileID: 7625753975028379600}
   <OnImage>k__BackingField: {fileID: 8806659310530846726}
   <OffImage>k__BackingField: {fileID: 9008524825783389075}
-  ToggleOnAudio: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
-  ToggleOffAudio: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
+  <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
+  <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
 --- !u!1 &8806659310530846726
 GameObject:
   m_ObjectHideFlags: 0
@@ -377,7 +373,6 @@ RectTransform:
   - {fileID: 1077106969170330393}
   - {fileID: 1908148230064730244}
   m_Father: {fileID: 6521834947971461802}
-  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -416,7 +411,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2224212902183062667}
-  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -504,7 +498,6 @@ RectTransform:
   - {fileID: 6905730236257994858}
   - {fileID: 8835051055064169428}
   m_Father: {fileID: 6521834947971461802}
-  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
