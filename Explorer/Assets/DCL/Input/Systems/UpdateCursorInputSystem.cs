@@ -152,8 +152,8 @@ namespace DCL.Input.Systems
             bool isMouseOutOfBounds = mousePos.x < MOUSE_BOUNDS_OFFSET || mousePos.x > Screen.width - MOUSE_BOUNDS_OFFSET ||
                                       mousePos.y < MOUSE_BOUNDS_OFFSET || mousePos.y > Screen.height - MOUSE_BOUNDS_OFFSET;
 
-            bool inputWantsToLock = cameraActions.Lock.WasReleasedThisFrame();
-            bool inputWantsToUnlock = cameraActions.Unlock.WasReleasedThisFrame();
+            bool inputWantsToLock = cameraActions.Lock.WasPressedThisFrame();
+            bool inputWantsToUnlock = cameraActions.Unlock.WasPressedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
             if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, IsOverUI: false })

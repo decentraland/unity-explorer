@@ -1,6 +1,6 @@
-using DCL.AvatarRendering.Emotes;
 using DCL.Backpack;
 using DCL.Chat;
+using DCL.Input;
 using DCL.MapRenderer;
 using DCL.Nametags;
 using System;
@@ -18,7 +18,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public BackpackSettings BackpackSettings { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
-        [field: SerializeField] public AssetReferenceTexture2D NormalCursor { get; private set; }
-        [field: SerializeField] public AssetReferenceTexture2D InteractionCursor { get; private set; }
+        [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
     }
 }

@@ -69,8 +69,8 @@ namespace DCL.PluginSystem.Global
             Sprite crosshairInteractable = (await assetsProvisioner.ProvideMainAssetAsync(settings.CrossHairInteraction, ct)).Value;
 
             crosshairCanvas.Initialize(crosshair, crosshairInteractable);
-            canvas.rootVisualElement.Add(crosshairCanvas);
             crosshairCanvas.SetDisplayed(false);
+            canvas.rootVisualElement.Add(crosshairCanvas);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

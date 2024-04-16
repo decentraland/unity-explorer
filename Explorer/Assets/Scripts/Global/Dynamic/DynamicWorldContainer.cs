@@ -159,8 +159,9 @@ namespace Global.Dynamic
                 return (null, false);
             }
 
-            ProvidedAsset<Texture2D> normalCursorAsset = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NormalCursor, ct);
-            ProvidedAsset<Texture2D> interactionCursorAsset = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.InteractionCursor, ct);
+            CursorSettings cursorSettings = (await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
+            ProvidedAsset<Texture2D> normalCursorAsset = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
+            ProvidedAsset<Texture2D> interactionCursorAsset = await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
