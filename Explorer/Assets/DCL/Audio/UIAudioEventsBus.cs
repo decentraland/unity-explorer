@@ -35,10 +35,5 @@ namespace DCL.Audio
         {
             if (audioClipConfig != null) { PlayLoopingUIAudioEvent?.Invoke(audioClipConfig, false); }
         }
-
-        public void SendPlayWorldAudioEvent(float volume)
-        {
-            PlayDefaultAudioEvent?.Invoke(volume);
-        }
     }
 }

@@ -7,9 +7,6 @@ namespace DCL.Audio
 {
     public class UIAudioPlaybackController : MonoBehaviour, IDisposable
     {
-        //We need different Audio Sources to handle the different volume configurations each category can have.
-        //So we could have for example silenced UI audio, max out music and 50% on Chat sounds.
-
         [SerializeField]
         private AudioSource UiAudioSource;
         [SerializeField]

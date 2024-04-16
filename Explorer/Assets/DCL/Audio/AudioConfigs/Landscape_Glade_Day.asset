@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
+  m_Name: Landscape_Glade_Day
+  m_EditorClassIdentifier: 
+  audioClips:
+  - {fileID: 8300000, guid: 806a17ec8e2547140bd72945aae59b9b, type: 3}
+  - {fileID: 8300000, guid: 1edd566143518b4499e1fea474b0a670, type: 3}
+  - {fileID: 8300000, guid: 9006812327657f54f80edc065b164e32, type: 3}
+  - {fileID: 8300000, guid: 085fefadd3bd3c64691d270a82214706, type: 3}
+  - {fileID: 8300000, guid: 2695acb15c8b25f42b2fa932624f8dea, type: 3}
+  relativeVolume: 1
+  audioCategory: 2
+  pitchVariation: 0
+  clipSelectionMode: 0
