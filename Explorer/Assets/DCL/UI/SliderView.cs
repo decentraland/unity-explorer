@@ -10,6 +10,12 @@ namespace DCL.UI
         [field: SerializeField]
         public Slider Slider { get; private set; }
 
+        [field: SerializeField]
+        public Button DecreaseButton { get; private set; }
+
+        [field: SerializeField]
+        public Button IncreaseButton { get; private set; }
+        
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig SliderValueChanged { get; private set; }
