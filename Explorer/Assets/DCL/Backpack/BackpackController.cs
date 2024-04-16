@@ -36,6 +36,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private bool initialLoadingIsDone;
+        private BackpackSections currentSection = BackpackSections.Avatar;
 
         public BackpackController(
             BackpackView view,
@@ -87,12 +88,17 @@ namespace DCL.Backpack
             {
                 tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
+                BackpackSections section = tabSelector.Section;
+
                 tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token).Forget();
+
+                        if (isOn)
+                            currentSection = section;
                     });
             }
 
@@ -157,7 +163,8 @@ namespace DCL.Backpack
                 profileLoadingCts = new CancellationTokenSource();
                 AwaitForProfileAsync(profileLoadingCts).Forget();
             }
-            backpackSections[BackpackSections.Avatar].Activate();
+
+            backpackSections[currentSection].Activate();
 
             view.gameObject.SetActive(true);
             backpackCharacterPreviewController.OnShow();

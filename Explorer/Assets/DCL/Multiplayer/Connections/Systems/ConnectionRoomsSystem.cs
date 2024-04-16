@@ -16,6 +16,8 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IReadOnlyRealFlowLoadingStatus loadingStatus;
 
+        private bool alreadyStarted;
+
         public ConnectionRoomsSystem(
             World world,
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -30,10 +32,11 @@ namespace DCL.Multiplayer.Connections.Systems
         protected override void Update(float t)
         {
             // Don't connect to the rooms until the loading process has finished
-            if (loadingStatus.CurrentStage != RealFlowLoadingStatus.Stage.Completed) return;
+            if (loadingStatus.CurrentStage != RealFlowLoadingStatus.Stage.Completed || alreadyStarted) return;
 
             archipelagoIslandRoom.StartIfNot();
             gateKeeperSceneRoom.StartIfNot();
+            alreadyStarted = true;
         }
     }
 }

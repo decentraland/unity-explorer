@@ -131140,14 +131140,14 @@ AnimationClip:
   m_HasMotionFloatCurves: 0
   m_Events:
   - time: 0.06666667
-    functionName: OnRunFootHitGround
+    functionName: PlayStepSound
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
   - time: 0.16666667
-    functionName: OnRunJumpStart
+    functionName: PlayJumpSound
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -68,8 +67,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             if (!avatarAnimator)
                 return;
-
-            avatarAnimator.fireEvents = false;
 
             overrideController = new AnimatorOverrideController(avatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
