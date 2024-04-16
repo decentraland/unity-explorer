@@ -26,7 +26,8 @@ namespace DCL.Multiplayer.SDK.Systems
 
         protected override void Update(float t)
         {
-            RemovePlayerIdentityDataQuery(World);
+            HandleEntityDeletionQuery(World);
+            HandleComponentRemovalQuery(World);
             CreatePlayerIdentityDataQuery(World);
         }
 
@@ -53,12 +54,20 @@ namespace DCL.Multiplayer.SDK.Systems
 
         [Query]
         [All(typeof(PBPlayerIdentityData))]
-        [None(typeof(PlayerIdentityDataComponent))]
-        private void RemovePlayerIdentityData(in Entity entity, ref CRDTEntity crdtEntity)
+        [None(typeof(PlayerIdentityDataComponent), typeof(DeleteEntityIntention))]
+        private void HandleComponentRemoval(in Entity entity, ref CRDTEntity crdtEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
-
+            World.Remove<PBPlayerIdentityData>(entity);
             World.Add(entity, new DeleteEntityIntention());
+        }
+
+        [Query]
+        [All(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
+        private void HandleEntityDeletion(in Entity entity, ref CRDTEntity crdtEntity)
+        {
+            ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
+            World.Remove<PBPlayerIdentityData>(entity);
         }
     }
 }
