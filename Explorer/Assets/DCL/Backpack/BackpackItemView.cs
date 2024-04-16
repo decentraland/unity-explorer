@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -19,6 +18,7 @@ namespace DCL.Backpack
 
         public event Action<string>? OnSelectItem;
         public event Action<string>? OnEquip;
+        public event Action<string>? OnUnequip;
 
         [field: SerializeField]
         public string ItemId { get; set; }
@@ -88,13 +88,22 @@ namespace DCL.Backpack
 
         private void Awake()
         {
-            EquipButton.onClick.AddListener(() => OnEquip?.Invoke(ItemId));
+            EquipButton.onClick.AddListener(() =>
+            {
+                OnEquip?.Invoke(ItemId);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
+            });
+
+            UnEquipButton.onClick.AddListener(() =>
+            {
+                OnUnequip?.Invoke(ItemId);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(UnEquipWearableAudio);
+            });
         }
 
         public void SetEquipButtonsState()
         {
-            EquipButton.gameObject.SetActive(!IsEquipped);
-            EquipButton.interactable = IsCompatibleWithBodyShape;
+            EquipButton.gameObject.SetActive(!IsEquipped && IsCompatibleWithBodyShape);
             UnEquipButton.gameObject.SetActive(IsEquipped);
         }
 

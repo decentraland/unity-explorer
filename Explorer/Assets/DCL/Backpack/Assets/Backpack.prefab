@@ -5334,7 +5334,7 @@ MonoBehaviour:
   <BackpackSortView>k__BackingField: {fileID: 6128057872158891546}
   <TipsButton>k__BackingField: {fileID: 8027559671807818544}
   <TipsPanelDeselectable>k__BackingField: {fileID: 8484032604503467888}
-  <characterPreviewView>k__BackingField: {fileID: 4359593439648312558}
+  <CharacterPreviewView>k__BackingField: {fileID: 4359593439648312558}
 --- !u!1 &8581277015346495855
 GameObject:
   m_ObjectHideFlags: 0
