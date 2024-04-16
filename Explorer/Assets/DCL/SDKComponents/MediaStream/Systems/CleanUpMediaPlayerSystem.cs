@@ -72,6 +72,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent)
         {
+            mediaPlayerComponent.MediaPlayer.CloseCurrentStream();
             mediaPlayerPool.Release(mediaPlayerComponent.MediaPlayer);
             mediaPlayerComponent.Dispose();
         }
