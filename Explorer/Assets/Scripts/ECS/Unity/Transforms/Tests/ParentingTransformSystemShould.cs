@@ -1,6 +1,7 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
@@ -48,7 +49,7 @@ namespace ECS.Unity.Transforms.Tests
                 { childCRDTEntity, childEntity },
             };
 
-            system = new ParentingTransformSystem(world, crdtToEntityDict, world.Reference(rootEntity));
+            system = new ParentingTransformSystem(world, crdtToEntityDict, world.Reference(rootEntity), new SceneShortInfo(Vector2Int.zero, "TEST"));
         }
 
         private SDKTransform parentSDKTransform;
