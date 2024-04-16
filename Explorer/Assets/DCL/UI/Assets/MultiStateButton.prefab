@@ -215,6 +215,7 @@ MonoBehaviour:
   <button>k__BackingField: {fileID: 947405624935425770}
   <buttonImageFill>k__BackingField: {fileID: 1840454018195773827}
   <buttonImageOutline>k__BackingField: {fileID: 7055321457839100139}
+  ButtonPressedAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &7055321457839100139
 GameObject:
   m_ObjectHideFlags: 0

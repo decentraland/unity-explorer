@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
+  m_Name: Minimap_Click_On_Map
+  m_EditorClassIdentifier: 
+  audioClips:
+  - {fileID: 8300000, guid: a88730e96ac6c2540aa95607339fa6ed, type: 3}
+  relativeVolume: 1
+  audioCategory: 0
+  pitchVariation: 0.2
+  clipSelectionMode: 0
