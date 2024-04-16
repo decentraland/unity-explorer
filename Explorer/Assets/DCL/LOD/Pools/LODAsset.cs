@@ -138,6 +138,8 @@ namespace DCL.LOD
                 Slots = LODUtils.ApplyTextureArrayToLOD(SceneID,
                     ParcelCoord, Root, LodTextureArrayContainer);
 
+            //Note (Juani): Scene boundaries will be moved to the asset bundle converter time to avoid hiccups
+
             State = LOD_STATE.SUCCESS;
         }
 
