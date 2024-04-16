@@ -113,7 +113,7 @@ namespace DCL.Chat
             emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
             emojiSuggestionPanelController.OnEmojiSelected += AddEmojiFromSuggestion;
 
-            viewInstance.EmojiPanelButton.onClick.AddListener(ToggleEmojiPanel);
+            viewInstance.EmojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
@@ -166,6 +166,7 @@ namespace DCL.Chat
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
+            viewInstance.EmojiPanelButton.SetState(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
             emojiSuggestionPanelController!.SetPanelVisibility(false);
             ToggleEmojiPanelAsync(emojiPanelCts.Token).Forget();
         }
@@ -275,6 +276,7 @@ namespace DCL.Chat
 
         private void OnInputDeselected(string inputText)
         {
+            viewInstance.EmojiPanelButton.SetColor(false);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
             world.Remove<MovementBlockerComponent>(playerEntity);
@@ -289,6 +291,7 @@ namespace DCL.Chat
                 viewInstance.LoopList.MovePanelToItemIndex(0, 0);
             }
 
+            viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
             world.AddOrGet(playerEntity, new MovementBlockerComponent());
