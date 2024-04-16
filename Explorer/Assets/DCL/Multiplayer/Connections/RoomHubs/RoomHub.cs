@@ -21,10 +21,17 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IRoom SceneRoom() =>
             gateKeeperSceneRoom.Room();
 
-        public void Reconnect()
+        public UniTask StartAsync()
         {
-            archipelagoIslandRoom.ReconnectAsync().Forget();
-            gateKeeperSceneRoom.ReconnectAsync().Forget();
+            archipelagoIslandRoom.Start();
+            gateKeeperSceneRoom.Start();
+            return UniTask.CompletedTask;
         }
+
+        public UniTask StopAsync() =>
+            UniTask.WhenAll(
+                archipelagoIslandRoom.StopAsync(),
+                gateKeeperSceneRoom.StopAsync()
+            );
     }
 }

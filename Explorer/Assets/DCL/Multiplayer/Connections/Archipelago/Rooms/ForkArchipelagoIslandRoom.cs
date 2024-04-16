@@ -11,17 +11,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
     public class ForkArchipelagoIslandRoom : IArchipelagoIslandRoom
     {
         private readonly ICurrentAdapterAddress currentAdapterAddress;
-        private readonly Func<string, IConnectiveRoom> urlToWssRoomFactory;
-        private readonly Func<string, IConnectiveRoom> urlToHttpsRoomFactory;
+        private readonly Func<IConnectiveRoom> wssRoomFactory;
+        private readonly Func<IConnectiveRoom> httpsRoomFactory;
 
         private readonly InteriorRoom interiorRoom = new ();
         private IConnectiveRoom? current;
 
-        public ForkArchipelagoIslandRoom(ICurrentAdapterAddress currentAdapterAddress, Func<string, IConnectiveRoom> urlToWssRoomFactory, Func<string, IConnectiveRoom> urlToHttpsRoomFactory)
+        public ForkArchipelagoIslandRoom(ICurrentAdapterAddress currentAdapterAddress, Func<IConnectiveRoom> wssRoomFactory, Func<IConnectiveRoom> httpsRoomFactory)
         {
             this.currentAdapterAddress = currentAdapterAddress;
-            this.urlToWssRoomFactory = urlToWssRoomFactory;
-            this.urlToHttpsRoomFactory = urlToHttpsRoomFactory;
+            this.wssRoomFactory = wssRoomFactory;
+            this.httpsRoomFactory = httpsRoomFactory;
         }
 
         public void Start()
@@ -34,14 +34,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             if (current != null && current.CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("First stop previous room before starting a new one");
 
-            string aboutUrl = await currentAdapterAddress.AdapterUrlAsync(CancellationToken.None);
+            string adapterUrl = await currentAdapterAddress.AdapterUrlAsync(CancellationToken.None);
 
-            if (aboutUrl.Contains("wss://"))
-                current = urlToWssRoomFactory(aboutUrl);
-            else if (aboutUrl.Contains("https://"))
-                current = urlToHttpsRoomFactory(aboutUrl);
+            if (adapterUrl.Contains("wss://"))
+                current = wssRoomFactory();
+            else if (adapterUrl.Contains("https://"))
+                current = httpsRoomFactory();
             else
-                throw new InvalidOperationException($"Cannot determine the protocol from the about url: {aboutUrl}");
+                throw new InvalidOperationException($"Cannot determine the protocol from the about url: {adapterUrl}");
 
             current!.Start();
             interiorRoom.Assign(current.Room(), out _);

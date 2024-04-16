@@ -43,8 +43,9 @@ namespace Global.Dynamic
 
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
                 {
-                    roomHub.Reconnect();
+                    await roomHub.StopAsync();
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
+                    await roomHub.StartAsync();
                 },
                 ct
             );
