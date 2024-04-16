@@ -68,7 +68,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             connectiveRoom.Start();
 
         public UniTask StopAsync() =>
-            connectiveRoom.StopAsync();
+            UniTask.WhenAll(
+                //signFlow.DisconnectAsync(CancellationToken.None),
+                connectiveRoom.StopAsync()
+            );
 
         public IConnectiveRoom.State CurrentState() =>
             connectiveRoom.CurrentState();
