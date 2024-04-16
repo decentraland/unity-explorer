@@ -25,62 +25,38 @@ namespace DCL.Landscape
 
         public void ProcessOverlap(in int2 overlap)
         {
-            if (overlap.x < 0) // Overlap to the right
-                CutRight(Mathf.Abs(overlap.x));
-            else if (overlap.x > 0) // Overlap to the left
-                CutLeft(Mathf.Abs(overlap.x));
+            if (overlap.x != 0)
+                CutHorizontally(overlap.x);
 
-            if (overlap.y < 0) // Overlap at the top
-                CutTop(Mathf.Abs(overlap.y));
-            else if (overlap.y > 0)
-                CutBottom(Mathf.Abs(overlap.y));
+            if (overlap.y != 0)
+                CutVertically(overlap.y);
         }
 
-        private void CutLeft(int amount)
+        private void CutHorizontally(int overlap)
         {
-            for (int i = 0; i < amount; i++)
+            bool fromRight = overlap < 0;
+            int amount = Mathf.Abs(overlap);
+
+            for (var i = 0; i < amount; i++)
             {
-                int xPosition = MinParcel.x + i;
+                int xPosition = fromRight? MaxParcel.x - i : MinParcel.x + i;
+
                 for (int y = MinParcel.y; y <= MaxParcel.y; y++)
-                {
                     OutOfTerrainParcels.Add(new int2(xPosition, y));
-                }
             }
         }
 
-        private void CutRight(int amount)
+        private void CutVertically(int overlap)
         {
-            for (int i = 0; i < amount; i++)
-            {
-                int xPosition = MaxParcel.x - i;
-                for (int y = MinParcel.y; y <= MaxParcel.y; y++)
-                {
-                    OutOfTerrainParcels.Add(new int2(xPosition, y));
-                }
-            }
-        }
+            bool fromTop = overlap < 0;
+            int amount = Mathf.Abs(overlap);
 
-        private void CutTop(int amount)
-        {
-            for (int i = 0; i < amount; i++)
+            for (var i = 0; i < amount; i++)
             {
-                int yPosition = MaxParcel.y - i;
+                int yPosition = fromTop? MaxParcel.y - i : MinParcel.y + i;
+
                 for (int x = MinParcel.x; x <= MaxParcel.x; x++)
-                {
                     OutOfTerrainParcels.Add(new int2(x, yPosition));
-                }
-            }
-        }
-
-        private void CutBottom(int amount)
-        {
-            for (int i = 0; i < amount; i++)
-            {
-                int yPosition = MinParcel.y + i;
-                for (int x = MinParcel.x; x <= MaxParcel.x; x++)
-                {
-                    OutOfTerrainParcels.Add(new int2(x, yPosition));
-                }
             }
         }
     }

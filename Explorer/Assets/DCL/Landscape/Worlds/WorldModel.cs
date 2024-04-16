@@ -7,23 +7,26 @@ namespace DCL.Landscape
 {
     public struct WorldModel
     {
-        public readonly bool IsEmpty;
+        public readonly int2 SizeInParcels;
+        public readonly int2 CenterInParcels;
 
-        public readonly int2 minParcel;
-        public readonly int2 maxParcel;
-        public readonly int2 sizeInParcels;
-        public readonly int2 centerInParcels;
+        public readonly NativeParallelHashSet<int2> Parcels;
 
-        public readonly NativeParallelHashSet<int2> ownedParcels;
-
-        public WorldModel(NativeParallelHashSet<int2> ownedParcels)
+        public WorldModel(NativeParallelHashSet<int2> parcels)
         {
-            this.ownedParcels = ownedParcels;
+            this.Parcels = parcels;
 
-            IsEmpty = ownedParcels.Count() == 0;
+            (int2 minParcel, int2 maxParcel) = CalculateMinMaxParcels(parcels);
 
-            minParcel = new int2(int.MaxValue, int.MaxValue);
-            maxParcel = new int2(int.MinValue, int.MinValue);
+            // +1 to include both the starting and ending points.
+            SizeInParcels = new int2(maxParcel.x - minParcel.x + 1, maxParcel.y - minParcel.y + 1);
+            CenterInParcels = minParcel + (SizeInParcels / 2);
+        }
+
+        private static (int2 min,int2 max) CalculateMinMaxParcels(NativeParallelHashSet<int2> ownedParcels)
+        {
+            var minParcel = new int2(int.MaxValue, int.MaxValue);
+            var maxParcel = new int2(int.MinValue, int.MinValue);
 
             foreach (int2 parcel in ownedParcels)
             {
@@ -34,9 +37,7 @@ namespace DCL.Landscape
                 else if (parcel.y > maxParcel.y) maxParcel.y = parcel.y;
             }
 
-            // +1 to include both the starting and ending points.
-            sizeInParcels = new int2(maxParcel.x - minParcel.x + 1, maxParcel.y - minParcel.y + 1);
-            centerInParcels = minParcel + (sizeInParcels / 2);
+            return (minParcel, maxParcel);
         }
     }
 }

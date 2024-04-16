@@ -93,7 +93,7 @@ namespace DCL.Landscape
                     offsetX,
                     offsetZ,
                     maxHeightIndex,
-                    terrainModel.minParcel,
+                    terrainModel.MinParcel,
                     PARCEL_SIZE
                 );
 
@@ -111,7 +111,7 @@ namespace DCL.Landscape
 
             this.worldSeed = worldSeed;
             var worldModel = new WorldModel(ownedParcels);
-            var terrainModel = new TerrainModel(worldModel, 2 + Mathf.RoundToInt(0.1f * (worldModel.sizeInParcels.x + worldModel.sizeInParcels.y) / 2f));
+            var terrainModel = new TerrainModel(worldModel, 2 + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
 
             GenerateCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
             SpawnMiscAsync();
@@ -121,8 +121,8 @@ namespace DCL.Landscape
             {
                 var tempEmptyParcels = new List<int2>();
 
-                for (int x = terrainModel.minParcel.x; x <= terrainModel.maxParcel.x; x++)
-                for (int y = terrainModel.minParcel.y; y <= terrainModel.maxParcel.y; y++)
+                for (int x = terrainModel.MinParcel.x; x <= terrainModel.MaxParcel.x; x++)
+                for (int y = terrainModel.MinParcel.y; y <= terrainModel.MaxParcel.y; y++)
                 {
                     var currentParcel = new int2(x, y);
 
@@ -143,12 +143,12 @@ namespace DCL.Landscape
                 emptyParcelNeighborHeightsData = new NativeParallelHashMap<int2, EmptyParcelNeighborData>(emptyParcels.Length, Allocator.Persistent);
 
                 var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelHeights.AsParallelWriter(),
-                    terrainGenData.heightScaleNerf, terrainModel.minParcel, terrainModel.maxParcel);
+                    terrainGenData.heightScaleNerf, terrainModel.MinParcel, terrainModel.MaxParcel);
 
                 JobHandle handle = job.Schedule(emptyParcels.Length, 32);
 
                 var job2 = new CalculateEmptyParcelNeighbourHeights(in emptyParcels, in ownedParcels, emptyParcelNeighborHeightsData.AsParallelWriter(),
-                    emptyParcelHeights.AsReadOnly(), terrainModel.minParcel, terrainModel.maxParcel);
+                    emptyParcelHeights.AsReadOnly(), terrainModel.MinParcel, terrainModel.MaxParcel);
 
                 JobHandle handle2 = job2.Schedule(emptyParcels.Length, 32, handle);
 
@@ -234,10 +234,10 @@ namespace DCL.Landscape
             const float THICKNESS = 10.0f; // Thickness of the collider
 
             // Create colliders along each side of the terrain
-            AddCollider(terrainModel.minInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "South Border Collider", new int2(0, -1), 0);
-            AddCollider(terrainModel.minInUnits.x, terrainModel.maxInUnits.y, terrainModel.sizeInUnits.x, "North Border Collider", new int2(0, 1), 0);
-            AddCollider(terrainModel.minInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "West Border Collider", new int2(-1, 0), 90);
-            AddCollider(terrainModel.maxInUnits.x, terrainModel.minInUnits.y, terrainModel.sizeInUnits.x, "East Border Collider", new int2(1, 0), 90);
+            AddCollider(terrainModel.MinInUnits.x, terrainModel.MinInUnits.y, terrainModel.SizeInUnits.x, "South Border Collider", new int2(0, -1), 0);
+            AddCollider(terrainModel.MinInUnits.x, terrainModel.MaxInUnits.y, terrainModel.SizeInUnits.x, "North Border Collider", new int2(0, 1), 0);
+            AddCollider(terrainModel.MinInUnits.x, terrainModel.MinInUnits.y, terrainModel.SizeInUnits.x, "West Border Collider", new int2(-1, 0), 90);
+            AddCollider(terrainModel.MaxInUnits.x, terrainModel.MinInUnits.y, terrainModel.SizeInUnits.x, "East Border Collider", new int2(1, 0), 90);
             return;
 
             void AddCollider(float posX, float posY, float length, string name, int2 dir,
@@ -395,7 +395,7 @@ namespace DCL.Landscape
                             offsetZ: chunkModel.MinParcel.y,
                             chunkSize: chunkSize,
                             chunkDensity: chunkSize,
-                            minWorldParcel: new int2(terrainModel.minParcel.x, terrainModel.minParcel.y),
+                            minWorldParcel: new int2(terrainModel.MinParcel.x, terrainModel.MinParcel.y),
                             randoms: treeParallelRandoms,
                             useRandomSpawnChance: false,
                             useValidations: false);
@@ -546,42 +546,42 @@ namespace DCL.Landscape
 
             Transform cliffsRoot = new GameObject("Cliffs").transform;
 
-            CreateCliffCornerAt(new Vector3(terrainModel.minInUnits.x, 0, terrainModel.minInUnits.y), Quaternion.Euler(0, 180, 0));
-            CreateCliffCornerAt(new Vector3(terrainModel.maxInUnits.x, 0, terrainModel.maxInUnits.y), Quaternion.identity);
-            CreateCliffCornerAt(new Vector3(terrainModel.maxInUnits.x, 0, terrainModel.minInUnits.y), Quaternion.Euler(0, 90, 0));
-            CreateCliffCornerAt(new Vector3(terrainModel.minInUnits.x, 0, terrainModel.maxInUnits.y), Quaternion.Euler(0, 270, 0));
+            CreateCliffCornerAt(new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 180, 0));
+            CreateCliffCornerAt(new Vector3(terrainModel.MaxInUnits.x, 0, terrainModel.MaxInUnits.y), Quaternion.identity);
+            CreateCliffCornerAt(new Vector3(terrainModel.MaxInUnits.x, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 90, 0));
+            CreateCliffCornerAt(new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MaxInUnits.y), Quaternion.Euler(0, 270, 0));
 
-            for (int i = terrainModel.minInUnits.y; i < terrainModel.maxInUnits.y; i += PARCEL_SIZE)
+            for (int i = terrainModel.MinInUnits.y; i < terrainModel.MaxInUnits.y; i += PARCEL_SIZE)
             {
                 Transform side = Object.Instantiate(cliffSide).transform;
-                side.position = new Vector3(terrainModel.maxInUnits.x, 0, i + PARCEL_SIZE);
+                side.position = new Vector3(terrainModel.MaxInUnits.x, 0, i + PARCEL_SIZE);
                 side.rotation = Quaternion.Euler(0, 90, 0);
                 side.SetParent(cliffsRoot, true);
                 cliffs.Add(side);
             }
 
-            for (int i = terrainModel.minInUnits.x; i < terrainModel.maxInUnits.x; i += PARCEL_SIZE)
+            for (int i = terrainModel.MinInUnits.x; i < terrainModel.MaxInUnits.x; i += PARCEL_SIZE)
             {
                 Transform side = Object.Instantiate(cliffSide).transform;
-                side.position = new Vector3(i, 0, terrainModel.maxInUnits.y);
+                side.position = new Vector3(i, 0, terrainModel.MaxInUnits.y);
                 side.rotation = Quaternion.identity;
                 side.SetParent(cliffsRoot, true);
                 cliffs.Add(side);
             }
 
-            for (int i = terrainModel.minInUnits.y; i < terrainModel.maxInUnits.y; i += PARCEL_SIZE)
+            for (int i = terrainModel.MinInUnits.y; i < terrainModel.MaxInUnits.y; i += PARCEL_SIZE)
             {
                 Transform side = Object.Instantiate(cliffSide).transform;
-                side.position = new Vector3(terrainModel.minInUnits.x, 0, i);
+                side.position = new Vector3(terrainModel.MinInUnits.x, 0, i);
                 side.rotation = Quaternion.Euler(0, 270, 0);
                 side.SetParent(cliffsRoot, true);
                 cliffs.Add(side);
             }
 
-            for (int i = terrainModel.minInUnits.x; i < terrainModel.maxInUnits.x; i += PARCEL_SIZE)
+            for (int i = terrainModel.MinInUnits.x; i < terrainModel.MaxInUnits.x; i += PARCEL_SIZE)
             {
                 Transform side = Object.Instantiate(cliffSide).transform;
-                side.position = new Vector3(i + PARCEL_SIZE, 0, terrainModel.minInUnits.y);
+                side.position = new Vector3(i + PARCEL_SIZE, 0, terrainModel.MinInUnits.y);
                 side.rotation = Quaternion.Euler(0, 180, 0);
                 side.SetParent(cliffsRoot, true);
                 cliffs.Add(side);
