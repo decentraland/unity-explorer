@@ -179,7 +179,7 @@ namespace DCL.Landscape
                 SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetTexturesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, worldSeed, cancellationToken).Forget();
-                SetTreesAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
+                SetTreesAsync(terrainModel, chunkModel, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
 
                 // Dig Holes
                 {
@@ -217,7 +217,8 @@ namespace DCL.Landscape
                 terrain.drawHeightmap = true; // forced to true for the color map renderer
                 terrain.drawTreesAndFoliage = true;
 
-                terrain.transform.position = new Vector3(chunkModel.MinParcel.x * PARCEL_SIZE, -terrainGenData.minHeight, chunkModel.MinParcel.y * PARCEL_SIZE);
+                // height can not be 0
+                terrain.transform.position = new Vector3(chunkModel.MinParcel.x * PARCEL_SIZE, 0.1f, chunkModel.MinParcel.y * PARCEL_SIZE);
                 terrain.transform.SetParent(rootGo.transform, false);
 
                 terrains.Add(terrain);
@@ -351,11 +352,13 @@ namespace DCL.Landscape
             }
         }
 
-         private async UniTask SetTreesAsync(TerrainModel terrainModel, int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
+        private async UniTask SetTreesAsync(TerrainModel terrainModel, ChunkModel chunkModel, TerrainData terrainData, uint baseSeed,
             CancellationToken cancellationToken)
         {
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                int chunkSize = terrainModel.ChunkSizeInUnits;
 
                 var treeInstances = new NativeParallelHashMap<int2, TreeInstance>(chunkSize * chunkSize, Allocator.Persistent);
                 var treeInvalidationMap = new NativeParallelHashMap<int2, bool>(chunkSize * chunkSize, Allocator.Persistent);
@@ -374,22 +377,23 @@ namespace DCL.Landscape
                         treeRadiusMap.Add(treeAssetIndex, treeAsset.radius);
 
                         INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
-                        var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
+                        var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkModel.MinParcel.x, chunkModel.MinParcel.y);
                         JobHandle generatorHandle = generator.Schedule(noiseDataPointer, instancingHandle);
 
                         var randomizer = new SetupRandomForParallelJobs(treeParallelRandoms, (int)worldSeed);
                         JobHandle randomizerHandle = randomizer.Schedule(generatorHandle);
 
                         NativeArray<float> resultReference = generator.GetResult(noiseDataPointer);
+
                         var treeInstancesJob = new GenerateTreeInstancesJob(
                             treeNoise: resultReference.AsReadOnly(),
                             treeInstances: treeInstances.AsParallelWriter(),
-                            emptyParcelResult:  emptyParcelNeighborHeightsData.AsReadOnly(),
+                            emptyParcelResult: emptyParcelNeighborHeightsData.AsReadOnly(),
                             treeRandomization: in treeAsset.randomization,
                             treeRadius: treeAsset.radius,
                             treeIndex: treeAssetIndex,
-                            offsetX: offsetX,
-                            offsetZ: offsetZ,
+                            offsetX: chunkModel.MinParcel.x,
+                            offsetZ: chunkModel.MinParcel.y,
                             chunkSize: chunkSize,
                             chunkDensity: chunkSize,
                             minWorldParcel: new int2(terrainModel.minParcel.x, terrainModel.minParcel.y),
@@ -411,6 +415,12 @@ namespace DCL.Landscape
                     {
                         // if its marked as invalid, do not use this tree
                         if (!treeInvalidationMap.TryGetValue(treeInstance.Key, out bool isInvalid)) continue;
+
+                        foreach (int2 parcel in chunkModel.OccupiedParcels)
+                            if (treeInstance.Key.x >= (-chunkModel.MinParcel.x + parcel.x) * PARCEL_SIZE && treeInstance.Key.x < (-chunkModel.MinParcel.x + parcel.x + 1) * PARCEL_SIZE &&
+                                treeInstance.Key.y >= (-chunkModel.MinParcel.y + parcel.y) * PARCEL_SIZE && treeInstance.Key.y < (-chunkModel.MinParcel.y + parcel.y + 1) * PARCEL_SIZE)
+                                isInvalid = true;
+
                         if (isInvalid) continue;
 
                         array.Add(treeInstance.Value);
@@ -419,7 +429,7 @@ namespace DCL.Landscape
                     TreeInstance[] instances = array.ToArray();
                     terrainData.SetTreeInstances(instances, true);
                 }
-                catch (Exception e) {  }
+                catch (Exception e) { }
                 finally
                 {
                     treeInstances.Dispose();
