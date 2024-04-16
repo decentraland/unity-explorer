@@ -1,0 +1,212 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87ac801ee21e47668f593a1d5e2272ee, type: 3}
+  m_Name: SettingsMenuConfiguration
+  m_EditorClassIdentifier: 
+  <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
+  <GeneralSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField: []
+  <GraphicsSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: Graphics Quality
+      <Modules>k__BackingField:
+      - rid: 5242998342527483906
+    - <GroupTitle>k__BackingField: Environment
+      <Modules>k__BackingField:
+      - rid: 5242998342527483909
+      - rid: 5242998342527483910
+  <SoundSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: Volume
+      <Modules>k__BackingField:
+      - rid: 5242998342527483917
+      - rid: 5242998342527483918
+      - rid: 5242998342527483919
+      - rid: 5242998342527483920
+      - rid: 5242998342527483921
+    - <GroupTitle>k__BackingField: Chat
+      <Modules>k__BackingField:
+      - rid: 5242998342527483922
+  <ControlsSectionConfig>k__BackingField:
+    <SettingsGroups>k__BackingField:
+    - <GroupTitle>k__BackingField: Mouse
+      <Modules>k__BackingField:
+      - rid: 5242998342527483914
+    - <GroupTitle>k__BackingField: Camera
+      <Modules>k__BackingField:
+      - rid: 5242998342527483915
+      - rid: 5242998342527483916
+  references:
+    version: 2
+    RefIds:
+    - rid: 5242998342527483906
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Quality
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
+          defaultOptionIndex: 1
+        <Feature>k__BackingField: 0
+    - rid: 5242998342527483909
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Scene Distance
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 10
+          maxValue: 80
+          wholeNumbers: 1
+          defaultValue: 40
+        <Feature>k__BackingField: 0
+    - rid: 5242998342527483910
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Environment Distance
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 160
+          maxValue: 5000
+          wholeNumbers: 1
+          defaultValue: 4000
+        <Feature>k__BackingField: 1
+    - rid: 5242998342527483914
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Mouse Sensitivity
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 1
+          minValue: 1
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 60
+        <Feature>k__BackingField: 2
+    - rid: 5242998342527483915
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Camera Lock
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Left Click
+          - Right Click
+          defaultOptionIndex: 1
+        <Feature>k__BackingField: 1
+    - rid: 5242998342527483916
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Shoulder
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Left
+          - Right
+          defaultOptionIndex: 1
+        <Feature>k__BackingField: 2
+    - rid: 5242998342527483917
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Master
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 1
+          minValue: 0
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 100
+        <Feature>k__BackingField: 3
+    - rid: 5242998342527483918
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: World SFX
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 1
+          minValue: 0
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 100
+        <Feature>k__BackingField: 4
+    - rid: 5242998342527483919
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Avatar SFX
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 1
+          minValue: 0
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 100
+        <Feature>k__BackingField: 5
+    - rid: 5242998342527483920
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: UI SFX
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 1
+          minValue: 0
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 100
+        <Feature>k__BackingField: 5
+    - rid: 5242998342527483921
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: UI SFX
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 1
+          minValue: 0
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 100
+        <Feature>k__BackingField: 6
+    - rid: 5242998342527483922
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Chat Sounds
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 0

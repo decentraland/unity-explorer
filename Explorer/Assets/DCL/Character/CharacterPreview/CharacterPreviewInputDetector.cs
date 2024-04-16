@@ -1,15 +1,17 @@
+using Cysharp.Threading.Tasks.Triggers;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace DCL.CharacterPreview
 {
-    public class CharacterPreviewInputDetector : MonoBehaviour,IDragHandler, IScrollHandler, IPointerUpHandler, IPointerDownHandler
+    public class CharacterPreviewInputDetector : MonoBehaviour,IDragHandler, IScrollHandler, IPointerUpHandler, IPointerDownHandler, IPointerMoveHandler
     {
         public event Action<PointerEventData> OnDraggingEvent;
         public event Action<PointerEventData> OnScrollEvent;
         public event Action<PointerEventData> OnPointerUpEvent;
         public event Action<PointerEventData> OnPointerDownEvent;
+        public event Action<PointerEventData> OnPointerMoveEvent;
 
         public void OnPointerUp(PointerEventData eventData)
         {
@@ -25,5 +27,11 @@ namespace DCL.CharacterPreview
         {
             OnPointerDownEvent?.Invoke(eventData);
         }
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            OnPointerMoveEvent?.Invoke(eventData);
+        }
+
     }
 }

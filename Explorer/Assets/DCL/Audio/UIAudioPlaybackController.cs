@@ -61,6 +61,7 @@ namespace DCL.Audio
             {
                 int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+                audioSource.loop = true;
                 audioSource.Play();
                 audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration);
             }
@@ -69,7 +70,7 @@ namespace DCL.Audio
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if ( CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
+            if (!CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;

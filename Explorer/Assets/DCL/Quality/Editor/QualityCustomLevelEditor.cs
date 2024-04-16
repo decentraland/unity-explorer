@@ -12,9 +12,13 @@ namespace DCL.Quality
         {
             SerializedProperty volumeSettings = property.FindPropertyRelative(nameof(QualitySettingsAsset.QualityCustomLevel.volumeProfile));
             SerializedProperty fogSettings = property.FindPropertyRelative(nameof(QualitySettingsAsset.QualityCustomLevel.fogSettings));
+            SerializedProperty environmentSettings = property.FindPropertyRelative(nameof(QualitySettingsAsset.QualityCustomLevel.environmentSettings));
 
             var fsprop = new PropertyField(fogSettings, "Fog Settings");
             fsprop.Bind(property.serializedObject);
+
+            var environmentSettingsProp = new PropertyField(environmentSettings, "Environment Settings");
+            environmentSettingsProp.Bind(property.serializedObject);
 
             var container = new VisualElement();
 
@@ -32,6 +36,10 @@ namespace DCL.Quality
 
             container.Add(CreateHeader("Fog"));
             container.Add(fsprop);
+
+            container.Add(CreateHeader("Environment"));
+            container.Add(environmentSettingsProp);
+
             return container;
         }
 
