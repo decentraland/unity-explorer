@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -111,6 +112,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewClose();
 
+
             CancelLoginProcess();
             CancelVerificationCountdown();
         }
@@ -142,6 +144,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
+
                     viewInstance.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 

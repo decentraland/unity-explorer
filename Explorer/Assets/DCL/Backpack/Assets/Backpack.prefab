@@ -9934,6 +9934,10 @@ PrefabInstance:
       propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542
       objectReference: {fileID: 0}
+    - target: {fileID: 8047893772912595873, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
+      propertyPath: openDropDownAudio
+      value: 
+      objectReference: {fileID: 11400000, guid: 1f73c26d770f4214f8cbe56fd6930df9, type: 2}
     - target: {fileID: 8110157067893375718, guid: f14ef4b9a685146a3b0fef13c9925ec6, type: 3}
       propertyPath: m_ActiveFontFeatures.Array.data[0]
       value: 1801810542

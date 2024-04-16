@@ -998,6 +998,10 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 8252342816705450076}
   <FullBackpackItem>k__BackingField: {fileID: 8241648339715965561}
   <IsEquipped>k__BackingField: 0
+  EquipWearableAudio: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
+  UnEquipWearableAudio: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
+  HoverAudio: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}
+  ClickAudio: {fileID: 11400000, guid: 34a2137250badd542944f35e2f80cad2, type: 2}
 --- !u!1 &7257904519296327889
 GameObject:
   m_ObjectHideFlags: 0
