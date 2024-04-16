@@ -1,3 +1,4 @@
+using DCL.Browser;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
@@ -9,24 +10,35 @@ namespace DCL.Navmap
 {
     public class SatelliteController : ISection
     {
+        private const string GENESIS_CITY_LINK = "https://genesis.city/";
+
         private readonly SatelliteView view;
         private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
         private readonly RectTransform rectTransform;
         private readonly IMapRenderer mapRenderer;
+        private readonly IWebBrowser webBrowser;
 
         private IMapCameraController cameraController;
 
         public SatelliteController(
             SatelliteView view,
             MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData,
-            IMapRenderer mapRenderer)
+            IMapRenderer mapRenderer,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.mapCameraDragBehaviorData = mapCameraDragBehaviorData;
             this.mapRenderer = mapRenderer;
+            this.webBrowser = webBrowser;
 
             rectTransform = view.GetComponent<RectTransform>();
             view.SatelliteRenderImage.EmbedMapCameraDragBehavior(mapCameraDragBehaviorData);
+            view.OnClickedGenesisCityLink += OnClickedGenesisCityLink;
+        }
+
+        private void OnClickedGenesisCityLink()
+        {
+            webBrowser.OpenUrl(GENESIS_CITY_LINK);
         }
 
         public void InjectCameraController(IMapCameraController controller)

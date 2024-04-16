@@ -350,10 +350,10 @@ MonoBehaviour:
   initialRealm: 0
   targetScene: {x: 0, y: 0}
   targetWorld: MetadyneLabs.dcl.eth
-  showSplash: 1
-  showAuthentication: 1
-  showLoading: 1
-  enableLandscape: 1
+  showSplash: 0
+  showAuthentication: 0
+  showLoading: 0
+  enableLandscape: 0
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
@@ -389,6 +389,21 @@ MonoBehaviour:
         m_EditorAssetChanged: 0
       <PlayerMarker>k__BackingField:
         m_AssetGUID: 0ae66608be2735a4f96e0f1aa9b3a75b
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <SceneOfInterestMarker>k__BackingField:
+        m_AssetGUID: 1f557ed079be146f9aeb090104c115c9
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <FavoriteMarker>k__BackingField:
+        m_AssetGUID: 5f2c1af519efc4b82b87b887f93077fc
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <UserMarker>k__BackingField:
+        m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
@@ -428,13 +443,9 @@ MonoBehaviour:
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
-    <EmbeddedEmotes>k__BackingField:
-      m_AssetGUID: 
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_EditorAssetChanged: 0
   splashRoot: {fileID: 7722564697705550552}
   splashAnimation: {fileID: 4327321310632415857}
+  backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
 --- !u!1 &704497306
 GameObject:
   m_ObjectHideFlags: 0
@@ -1184,7 +1195,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 90ef2b6beb57a4ed8897038afddeb21c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f85301a9211845c8b8d39b4a4b05762, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

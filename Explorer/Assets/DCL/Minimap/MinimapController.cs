@@ -13,7 +13,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using ECS.Unity.Transforms.Components;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -25,7 +25,8 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers;
+        private const float ANIMATION_TIME = 0.2f;
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
@@ -37,6 +38,8 @@ namespace DCL.Minimap
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
+        private static readonly int EXPAND = Animator.StringToHash("Expand");
+        private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -59,23 +62,41 @@ namespace DCL.Minimap
         protected override void OnViewInstantiated()
         {
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
-            viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
+            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-            viewInstance.sideMenu.SetActive(false);
+            viewInstance.SideMenuCanvasGroup.alpha = 0;
+            viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
+            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
         }
 
         private void ExpandMinimap()
         {
-            GameObject gameObject;
-            (gameObject = viewInstance.minimapContainer.gameObject).SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
-            viewInstance.arrowDown.SetActive(!gameObject.activeSelf);
-            viewInstance.arrowUp.SetActive(gameObject.activeSelf);
-            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
+            viewInstance.collapseMinimapButton.gameObject.SetActive(true);
+            viewInstance.expandMinimapButton.gameObject.SetActive(false);
+            viewInstance.minimapRendererButton.gameObject.SetActive(true);
+            viewInstance.minimapAnimator.SetTrigger(EXPAND);
+        }
+
+        private void CollapseMinimap()
+        {
+            viewInstance.collapseMinimapButton.gameObject.SetActive(false);
+            viewInstance.expandMinimapButton.gameObject.SetActive(true);
+            viewInstance.minimapRendererButton.gameObject.SetActive(false);
+            viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
         }
 
         private void OpenSideMenu()
         {
-            viewInstance.sideMenu.SetActive(!viewInstance.sideMenu.activeSelf);
+            if (viewInstance.SideMenuCanvasGroup.gameObject.activeInHierarchy)
+            {
+                viewInstance.SideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(false));
+            }
+            else
+            {
+                viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(true);
+                viewInstance.SideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
+            }
         }
 
         [All(typeof(PlayerComponent))]
@@ -141,7 +162,7 @@ namespace DCL.Minimap
                     viewInstance.placeNameText.text = placeInfo.title;
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
-                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString(); }
+                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
             }
         }
 

@@ -49,10 +49,8 @@ globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
 globalThis.require = require;
 globalThis.console = console;
 globalThis.WebSocket = require('~system/WebSocketApi').WebSocket;
+globalThis.fetch = require('~system/FetchApi').fetch;
 
-globalThis.fetch = () => { //TODO
-    throw new Error('fetch is not implemented yet, please add it to init.js')
-}
 
 // disable WebAssembly
 globalThis.WebAssembly.Instance = function () {

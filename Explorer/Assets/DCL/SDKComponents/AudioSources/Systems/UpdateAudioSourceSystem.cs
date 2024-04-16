@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Audio;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
@@ -30,9 +31,10 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IDereferencableCache<AudioClip, GetAudioClipIntention> cache;
+        private readonly AudioMixerGroup audioMixerGroup;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry, IPerformanceBudget frameTimeBudgetProvider,
-            IPerformanceBudget memoryBudgetProvider) : base(world)
+            IPerformanceBudget memoryBudgetProvider, AudioMixerGroup audioMixerGroup) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
@@ -40,6 +42,7 @@ namespace DCL.SDKComponents.AudioSources
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
+            this.audioMixerGroup = audioMixerGroup;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>();
         }
@@ -59,7 +62,7 @@ namespace DCL.SDKComponents.AudioSources
                 return;
 
             if (!audioSourceComponent.AudioSourceAssigned)
-                audioSourceComponent.SetAudioSource(audioSourcesPool.Get());
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
 
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(audioSourceComponent.PBAudioSource, clip: promiseResult.Asset);
 

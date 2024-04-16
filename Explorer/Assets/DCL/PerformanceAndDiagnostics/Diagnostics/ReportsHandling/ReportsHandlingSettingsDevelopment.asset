@@ -60,8 +60,6 @@ MonoBehaviour:
       Severity: 4
     - Category: ASSET_BUNDLES
       Severity: 4
-    - Category: TEXTURES
-      Severity: 4
     - Category: GLTF_CONTAINER
       Severity: 4
     - Category: MATERIALS
@@ -150,8 +148,6 @@ MonoBehaviour:
       Severity: 0
     - Category: ASSET_BUNDLES
       Severity: 0
-    - Category: TEXTURES
-      Severity: 0
     - Category: GLTF_CONTAINER
       Severity: 0
     - Category: MATERIALS
@@ -207,6 +203,10 @@ MonoBehaviour:
     - Category: TWEEN
       Severity: 0
     - Category: TWEEN
+      Severity: 4
+    - Category: MVC
+      Severity: 0
+    - Category: MVC
       Severity: 4
   sentryMatrix:
     entries:
