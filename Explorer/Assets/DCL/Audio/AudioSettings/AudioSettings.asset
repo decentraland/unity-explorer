@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d26d247b34147599fd534fd57448300, type: 3}
+  m_Script: {fileID: 11500000, guid: 895fab1b0e87a1041931a9ff0f8bd516, type: 3}
   m_Name: AudioSettings
   m_EditorClassIdentifier: DCL.Audio:DCL.Audio:AudioSettings
   audioCategorySettings:
@@ -20,7 +20,7 @@ MonoBehaviour:
   - key: 2
     value: {fileID: 11400000, guid: 1a76cc0768d0ed84399a1cad6713a56e, type: 2}
   - key: 3
-    value: {fileID: 11400000, guid: d2b5c5e0420358a42899ee3be4ce5423, type: 2}
+    value: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
   - key: 4
     value: {fileID: 11400000, guid: 85e839c6ed2a0974b950f9ee7cc784c8, type: 2}
   masterVolume: 1

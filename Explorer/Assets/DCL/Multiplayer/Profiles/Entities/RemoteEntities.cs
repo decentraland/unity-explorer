@@ -26,6 +26,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly List<string> tempRemoveAll = new ();
         private IComponentPool<Transform> transformPool = null!;
 
         public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
@@ -55,20 +56,32 @@ namespace DCL.Multiplayer.Profiles.Entities
             {
                 string walletId = removeIntention.WalletId;
 
-                if (entityParticipantTable.Has(walletId) == false)
-                    continue;
-
                 if (DoesStillExist(walletId))
-                    continue;
+                    return;
 
-                var entity = entityParticipantTable.Entity(walletId);
-
-                if (world.Has<RemotePlayerMovementComponent>(entity))
-                    world.Get<RemotePlayerMovementComponent>(entity).Dispose();
-
-                world.Add(entity, new DeleteEntityIntention());
-                entityParticipantTable.Release(walletId);
+                TryRemove(walletId, world);
             }
+        }
+
+        public void ForceRemoveAll(World world)
+        {
+            tempRemoveAll.Clear();
+            tempRemoveAll.AddRange(entityParticipantTable.Wallets());
+            foreach (string wallet in tempRemoveAll) TryRemove(wallet, world);
+        }
+
+        private void TryRemove(string walletId, World world)
+        {
+            if (entityParticipantTable.Has(walletId) == false)
+                return;
+
+            var entity = entityParticipantTable.Entity(walletId);
+
+            if (world.Has<RemotePlayerMovementComponent>(entity))
+                world.Get<RemotePlayerMovementComponent>(entity).Dispose();
+
+            world.Add(entity, new DeleteEntityIntention());
+            entityParticipantTable.Release(walletId);
         }
 
         private bool DoesStillExist(string wallet)
@@ -108,6 +121,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );
+
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
 
             entityParticipantTable.Register(profile.WalletId, entity);
