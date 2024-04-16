@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Emoji;
@@ -42,17 +43,14 @@ namespace DCL.Chat
         private readonly List<EmojiData> keysWithPrefix = new ();
         private readonly IEventSystem eventSystem;
         private readonly World world;
+        private readonly Entity playerEntity;
 
         private string currentMessage = string.Empty;
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
-        private readonly Entity playerEntity;
         private SingleInstanceEntity cameraEntity;
         private readonly DCLInput dclInput;
 
-        private readonly ChatCommandsHandler commandsHandler;
-        private (IChatCommand command, Match param) chatCommand;
-        private CancellationTokenSource commandCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -70,8 +68,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
-            IEventSystem eventSystem,
-            Dictionary<Regex, Func<IChatCommand>> commandsFactory
+            IEventSystem eventSystem
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -87,8 +84,6 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
-
-            commandsHandler = new ChatCommandsHandler(commandsFactory);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             // Adding two elements to count as top and bottom padding
@@ -132,9 +127,10 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode)
         {
-            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
             viewInstance.InputField.text = viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode);
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
@@ -149,7 +145,9 @@ namespace DCL.Chat
 
         private void AddEmojiToInput(string emoji)
         {
-            if(viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
+
+            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
 
             int caretPosition = viewInstance.InputField.stringPosition;
@@ -162,6 +160,7 @@ namespace DCL.Chat
 
         private void ToggleEmojiPanel()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.OpenEmojiPanelAudio);
             emojiPanelCts.SafeCancelAndDispose();
             emojiPanelCts = new CancellationTokenSource();
             viewInstance.EmojiPanel.gameObject.SetActive(!viewInstance.EmojiPanel.gameObject.activeInHierarchy);
@@ -203,6 +202,7 @@ namespace DCL.Chat
                 return;
             }
 
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatSendMessageAudio);
             string messageToSend = currentMessage;
 
             currentMessage = string.Empty;
@@ -210,19 +210,7 @@ namespace DCL.Chat
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
-            if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
-                ExecuteChatCommandAsync(chatCommand.command, chatCommand.param).Forget();
-            else
-                chatMessagesBus.Send(messageToSend);
-        }
-
-        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
-        {
-            commandCts = commandCts.SafeRestart();
-            string? response = await command.ExecuteAsync(param, commandCts.Token);
-
-            if (!string.IsNullOrEmpty(response))
-                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true, false));
+            chatMessagesBus.Send(messageToSend);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -232,7 +220,8 @@ namespace DCL.Chat
 
             ChatMessage itemData = chatMessages[index];
             LoopListViewItem2 item;
-            if(itemData.IsPaddingElement)
+
+            if (itemData.IsPaddingElement)
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
             else
             {
@@ -246,7 +235,12 @@ namespace DCL.Chat
                     if(profile.ProfilePicture != null)
                         itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
                 }
-                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender);
+                //temporary approach to extract the username without the walledId, will be refactored
+                //once we have the proper integration of the profile retrieval
+                itemScript.playerName.color = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
+                    ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
+                    : itemData.Sender);
+
                 itemScript.SetItemData(itemData);
 
                 //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
@@ -260,9 +254,12 @@ namespace DCL.Chat
             return item;
         }
 
+        private bool isChatClosed = false;
+
         private void CloseChat()
         {
-            //TODO: will add logic for the panel closing once it's defined
+            isChatClosed = true;
+            viewInstance.ToggleChat(false);
         }
 
         private void OnInputDeselected(string inputText)
@@ -274,6 +271,12 @@ namespace DCL.Chat
 
         private void OnInputSelected(string inputText)
         {
+            if (isChatClosed)
+            {
+                isChatClosed = false;
+                viewInstance.ToggleChat(true);
+            }
+
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
             world.AddOrGet(playerEntity, new MovementBlockerComponent());
@@ -282,6 +285,7 @@ namespace DCL.Chat
         private void OnInputChanged(string inputText)
         {
             HandleEmojiSearch(inputText);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatInputTextAudio);
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
@@ -320,8 +324,9 @@ namespace DCL.Chat
         {
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
             {
-                var entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
             }
 
             viewInstance.ResetChatEntriesFadeout();
@@ -352,7 +357,6 @@ namespace DCL.Chat
 
             dclInput.UI.Submit.performed -= OnSubmitAction;
             cts.SafeCancelAndDispose();
-            commandCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

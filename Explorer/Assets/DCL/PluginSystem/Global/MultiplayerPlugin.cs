@@ -8,7 +8,6 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems;
-using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -17,13 +16,10 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
-using UnityEngine.Pool;
-using Utility.PriorityQueue;
 
 namespace DCL.PluginSystem.Global
 {
@@ -51,11 +47,10 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
-            IComponentPoolsRegistry componentPoolsRegistry,
             IMessagePipesHub messagePipesHub,
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
-            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool
+            IRemoteEntities remoteEntities
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -69,13 +64,7 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
             this.remotePoses = remotePoses;
             this.characterObject = characterObject;
-
-            remoteEntities = new RemoteEntities(
-                roomHub,
-                entityParticipantTable,
-                componentPoolsRegistry,
-                queuePool
-            );
+            this.remoteEntities = remoteEntities;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)

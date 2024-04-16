@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 895fab1b0e87a1041931a9ff0f8bd516, type: 3}
+  m_Name: AudioSettings
+  m_EditorClassIdentifier: DCL.Audio:DCL.Audio:AudioSettings
+  audioCategorySettings:
+  - key: 0
+    value: {fileID: 11400000, guid: 0e39bf2b1fcb9dd4f9f04f8cac8d6b5a, type: 2}
+  - key: 1
+    value: {fileID: 11400000, guid: 2bf6b42bc497a2b40a3165ca9e4318af, type: 2}
+  - key: 2
+    value: {fileID: 11400000, guid: 1a76cc0768d0ed84399a1cad6713a56e, type: 2}
+  - key: 3
+    value: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
+  - key: 4
+    value: {fileID: 11400000, guid: 85e839c6ed2a0974b950f9ee7cc784c8, type: 2}
+  masterVolume: 1
+  masterAudioMixer: {fileID: 24100000, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}

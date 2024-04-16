@@ -6,6 +6,5 @@ namespace DCL.Nametags
     {
         public bool showNameTags;
         public bool showChatBubbles;
-        public float maxDistance;
     }
 }
