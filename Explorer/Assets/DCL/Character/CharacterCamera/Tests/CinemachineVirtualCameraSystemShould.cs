@@ -64,7 +64,8 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
 
-            system = new ControlCinemachineVirtualCameraSystem(world);
+            DCLInput dclInput = Substitute.For<DCLInput>();
+            system = new ControlCinemachineVirtualCameraSystem(world, dclInput);
             world.Create(new InputMapComponent());
 
             inputMap = world.CacheInputMap();

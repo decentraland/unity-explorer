@@ -25,15 +25,22 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ExposedCameraData exposedCameraData;
         private readonly DebugContainerBuilder debugBuilder;
+        private readonly DCLInput input;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
 
-        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, ExposedCameraData exposedCameraData, DebugContainerBuilder debugBuilder)
+        public CharacterCameraPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            RealmSamplingData realmSamplingData,
+            ExposedCameraData exposedCameraData,
+            DebugContainerBuilder debugBuilder,
+            DCLInput input)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmSamplingData = realmSamplingData;
             this.exposedCameraData = exposedCameraData;
             this.debugBuilder = debugBuilder;
+            this.input = input;
         }
 
         public void Dispose()
@@ -76,7 +83,7 @@ namespace DCL.PluginSystem.Global
             exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
             // Register systems
-            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
+            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, input);
             ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);

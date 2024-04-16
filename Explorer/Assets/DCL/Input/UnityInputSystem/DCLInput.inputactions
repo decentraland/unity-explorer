@@ -668,6 +668,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "SwitchState",
+                    "type": "Button",
+                    "id": "35e9217b-165d-43f7-b6e5-ac78cea73300",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -910,6 +919,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "TemporalLock",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d8c1e2df-a407-4c51-b671-e22c363784e5",
+                    "path": "<Keyboard>/v",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchState",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "236c63c2-73a8-4f9a-a955-051e35f959a4",
+                    "path": "<XInputController>/rightStick/down",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchState",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

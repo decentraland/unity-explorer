@@ -203,19 +203,19 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4115714836209283951}
   thirdPersonCameraData:
     zoomInOrbitThreshold:
-    - m_Height: 9
-      m_Radius: 2.2
+    - m_Height: 5
+      m_Radius: 1.2
     - m_Height: 1
-      m_Radius: 6.4
+      m_Radius: 3.5
     - m_Height: -0.75
-      m_Radius: 2.4
+      m_Radius: 1
     zoomOutOrbitThreshold:
-    - m_Height: 16
-      m_Radius: 4.4
-    - m_Height: 2
-      m_Radius: 12.8
-    - m_Height: -0.75
-      m_Radius: 4.8
+    - m_Height: 15
+      m_Radius: 5
+    - m_Height: 1
+      m_Radius: 12
+    - m_Height: -2
+      m_Radius: 8
     <ZoomSensitivity>k__BackingField: 0.04
     <Camera>k__BackingField: {fileID: 1829658356799049534}
   freeCameraData:
@@ -291,7 +291,7 @@ MonoBehaviour:
     m_SensorSize: {x: 1, y: 1}
   m_Transitions:
     m_BlendHint: 0
-    m_InheritPosition: 0
+    m_InheritPosition: 1
     m_OnCameraLive:
       m_PersistentCalls:
         m_Calls: []
@@ -443,7 +443,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 4
-  m_FollowOffset: {x: 0, y: 1.5, z: -6.4}
+  m_FollowOffset: {x: 0, y: 1, z: -3.5}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -658,7 +658,7 @@ MonoBehaviour:
   m_PivotOffset: {x: 0, y: 0, z: 0}
   m_AmplitudeGain: 0
   m_FrequencyGain: 1
-  mNoiseOffsets: {x: 0, y: 0, z: 0}
+  mNoiseOffsets: {x: -819.07007, y: -449.81396, z: 905.7562}
 --- !u!1 &4708074778744885137
 GameObject:
   m_ObjectHideFlags: 0
@@ -789,12 +789,12 @@ MonoBehaviour:
   m_BindingMode: 4
   m_SplineCurvature: 0
   m_Orbits:
-  - m_Height: 12
-    m_Radius: 2.2
-  - m_Height: 1.5
-    m_Radius: 6.4
-  - m_Height: -0.75
+  - m_Height: 5
+    m_Radius: 1.2
+  - m_Height: 1
     m_Radius: 3.5
+  - m_Height: -0.75
+    m_Radius: 1
   m_LegacyHeadingBias: 3.4028235e+38
   m_Rigs:
   - {fileID: -7685394487040195817}
@@ -889,7 +889,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 4
-  m_FollowOffset: {x: 0, y: 1.5, z: -6.4}
+  m_FollowOffset: {x: 0, y: 1, z: -3.5}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -1286,7 +1286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 4
-  m_FollowOffset: {x: 0, y: 1.5, z: -6.4}
+  m_FollowOffset: {x: 0, y: 1, z: -3.5}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1

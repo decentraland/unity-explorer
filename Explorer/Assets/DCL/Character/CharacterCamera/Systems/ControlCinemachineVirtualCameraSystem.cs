@@ -7,8 +7,10 @@ using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -19,15 +21,25 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
+        private readonly DCLInput input;
         private SingleInstanceEntity inputMap;
+        private bool wantsToSwitchState;
 
-        internal ControlCinemachineVirtualCameraSystem(World world) : base(world) { }
+        internal ControlCinemachineVirtualCameraSystem(World world, DCLInput input) : base(world)
+        {
+            this.input = input;
+            input.Camera.SwitchState.performed += OnSwitchState;
+        }
+
+        private void OnSwitchState(InputAction.CallbackContext obj)
+        {
+            wantsToSwitchState = true;
+        }
 
         public override void Initialize()
         {
             inputMap = World.CacheInputMap();
 
-            // Resolve default state
             ApplyDefaultCameraModeQuery(World);
         }
 
@@ -45,6 +57,17 @@ namespace DCL.CharacterCamera.Systems
         protected override void Update(float t)
         {
             HandleZoomingQuery(World);
+            HandleSwitchStateQuery(World);
+        }
+
+        [Query]
+        private void HandleSwitchState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
+        {
+            if (!wantsToSwitchState) return;
+            wantsToSwitchState = false;
+
+            CameraMode nextCameraState = cameraComponent.Mode == CameraMode.ThirdPerson ? CameraMode.FirstPerson : CameraMode.ThirdPerson;
+            SwitchCamera(nextCameraState, ref cinemachinePreset, ref cameraComponent, ref state);
         }
 
         private static void SetActiveCamera(ref CinemachineCameraState cameraState, CinemachineVirtualCameraBase camera)
@@ -108,6 +131,8 @@ namespace DCL.CharacterCamera.Systems
         {
             if (cameraComponent.CameraInputChangeEnabled)
             {
+                UpdateZoomValue(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity);
+
                 if (input.ZoomOut)
                 {
                     switch (cameraComponent.Mode)
@@ -123,14 +148,6 @@ namespace DCL.CharacterCamera.Systems
                             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
                         case CameraMode.ThirdPerson:
-                            // Zoom out according to sensitivity
-                            if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, 1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
-                            {
-                                SwitchCamera(CameraMode.Free, ref cinemachinePreset, ref cameraComponent, ref state);
-                                SetDefaultFreeCameraPosition(in cinemachinePreset);
-                                return;
-                            }
-
                             // Set a freshly assigned value
                             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
@@ -141,13 +158,6 @@ namespace DCL.CharacterCamera.Systems
                     switch (cameraComponent.Mode)
                     {
                         case CameraMode.ThirdPerson:
-                            // If we exceed the zoom more than by twice the previous value, switch to FP
-                            if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
-                            {
-                                SwitchCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
-                                return;
-                            }
-
                             // Set a freshly assigned value
                             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
@@ -181,7 +191,7 @@ namespace DCL.CharacterCamera.Systems
         ///     Apply zoom and check if scrolling was enough to switch to another mode
         /// </summary>
         /// <returns></returns>
-        private static bool TrySwitchToAnotherMode(ref float zoomValue, int direction, float zoomSensitivity)
+        private void UpdateZoomValue(ref float zoomValue, int direction, float zoomSensitivity)
         {
             float previousZoomValue = zoomValue;
             float targetUnclampedValue = zoomValue + (zoomSensitivity * direction);
@@ -189,16 +199,15 @@ namespace DCL.CharacterCamera.Systems
             if (direction < 0)
             {
                 if (targetUnclampedValue < 0 && -targetUnclampedValue > previousZoomValue)
-                    return true;
+                    return;
             }
             else
             {
                 if (targetUnclampedValue > 1 && targetUnclampedValue - previousZoomValue > zoomSensitivity / 2f)
-                    return true;
+                    return;
             }
 
             zoomValue = Mathf.Clamp01(targetUnclampedValue);
-            return false;
         }
 
         private static void SetThirdPersonZoom(float normValue, in ICinemachinePreset cinemachinePreset)

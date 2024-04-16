@@ -55,9 +55,12 @@ namespace DCL.Character.CharacterCamera.Systems
         [Query]
         private void UpdateCameraSettings(ref ICinemachinePreset cinemachinePreset)
         {
-            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = currentSens / 100f;
-            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = currentSens / 100f;
+            float mMaxSpeed = currentSens / 100f;
+            cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = mMaxSpeed;
+            cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = mMaxSpeed;
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
+            cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed;
+            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.m_MaxSpeed = mMaxSpeed / 100f;
         }
     }
 }

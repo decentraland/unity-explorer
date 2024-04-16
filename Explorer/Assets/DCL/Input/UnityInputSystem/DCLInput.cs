@@ -690,6 +690,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwitchState"",
+                    ""type"": ""Button"",
+                    ""id"": ""35e9217b-165d-43f7-b6e5-ac78cea73300"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -932,6 +941,28 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""TemporalLock"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d8c1e2df-a407-4c51-b671-e22c363784e5"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchState"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""236c63c2-73a8-4f9a-a955-051e35f959a4"",
+                    ""path"": ""<XInputController>/rightStick/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchState"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2200,6 +2231,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_Unlock = m_Camera.FindAction("Unlock", throwIfNotFound: true);
         m_Camera_Delta = m_Camera.FindAction("Delta", throwIfNotFound: true);
         m_Camera_TemporalLock = m_Camera.FindAction("TemporalLock", throwIfNotFound: true);
+        m_Camera_SwitchState = m_Camera.FindAction("SwitchState", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
@@ -2467,6 +2499,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_Unlock;
     private readonly InputAction m_Camera_Delta;
     private readonly InputAction m_Camera_TemporalLock;
+    private readonly InputAction m_Camera_SwitchState;
     public struct CameraActions
     {
         private @DCLInput m_Wrapper;
@@ -2479,6 +2512,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Unlock => m_Wrapper.m_Camera_Unlock;
         public InputAction @Delta => m_Wrapper.m_Camera_Delta;
         public InputAction @TemporalLock => m_Wrapper.m_Camera_TemporalLock;
+        public InputAction @SwitchState => m_Wrapper.m_Camera_SwitchState;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2512,6 +2546,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @TemporalLock.started += instance.OnTemporalLock;
             @TemporalLock.performed += instance.OnTemporalLock;
             @TemporalLock.canceled += instance.OnTemporalLock;
+            @SwitchState.started += instance.OnSwitchState;
+            @SwitchState.performed += instance.OnSwitchState;
+            @SwitchState.canceled += instance.OnSwitchState;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -2540,6 +2577,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @TemporalLock.started -= instance.OnTemporalLock;
             @TemporalLock.performed -= instance.OnTemporalLock;
             @TemporalLock.canceled -= instance.OnTemporalLock;
+            @SwitchState.started -= instance.OnSwitchState;
+            @SwitchState.performed -= instance.OnSwitchState;
+            @SwitchState.canceled -= instance.OnSwitchState;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -2917,6 +2957,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnUnlock(InputAction.CallbackContext context);
         void OnDelta(InputAction.CallbackContext context);
         void OnTemporalLock(InputAction.CallbackContext context);
+        void OnSwitchState(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
     {
