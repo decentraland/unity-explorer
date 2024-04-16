@@ -3719,6 +3719,8 @@ GameObject:
   - component: {fileID: 6162744691669823357}
   - component: {fileID: 2110952359374055602}
   - component: {fileID: 7401651196273128636}
+  - component: {fileID: 770359724653195720}
+  - component: {fileID: 1500005638052355107}
   m_Layer: 5
   m_Name: NftPrompt
   m_TagString: Untagged
@@ -3838,6 +3840,44 @@ MonoBehaviour:
   <ButtonCancel>k__BackingField: {fileID: 2493130869277956874}
   <ButtonOpenMarket>k__BackingField: {fileID: 4323582271544481263}
   <TextOpenMarketButton>k__BackingField: {fileID: 2304872227765874808}
+--- !u!222 &770359724653195720
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9152785347356188261}
+  m_CullTransparentMesh: 1
+--- !u!114 &1500005638052355107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9152785347356188261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.69803923}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1001 &2344514825722558477
 PrefabInstance:
   m_ObjectHideFlags: 0
