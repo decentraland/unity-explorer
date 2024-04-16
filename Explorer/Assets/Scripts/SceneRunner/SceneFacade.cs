@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using CRDT.Memory;
+﻿using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
@@ -16,6 +15,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace SceneRunner
@@ -87,6 +87,17 @@ namespace SceneRunner
 
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
+
+        public bool Contains(Vector2Int parcel)
+        {
+            foreach (Vector2Int sceneParcel in SceneData.Parcels)
+            {
+                if (sceneParcel != parcel) continue;
+                return true;
+            }
+
+            return false;
+        }
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {

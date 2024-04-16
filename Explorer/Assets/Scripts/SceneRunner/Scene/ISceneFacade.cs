@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace SceneRunner.Scene
 {
@@ -26,5 +27,7 @@ namespace SceneRunner.Scene
         internal UniTask StartScene();
 
         internal UniTask Tick(float dt);
+
+        bool Contains(Vector2Int parcel);
     }
 }
