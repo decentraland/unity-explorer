@@ -57,7 +57,7 @@ namespace DCL.Landscape
         {
             this.worldSeed = worldSeed;
 
-            rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+            rootGo = TerrainFactory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.transform.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
             factory.CreateOcean(rootGo.transform);
@@ -66,7 +66,7 @@ namespace DCL.Landscape
             var terrainModel = new TerrainModel(worldModel, 2 + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
 
             GenerateCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
-            GenerateBorderColliders(terrainModel);
+            GenerateBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
 
             // Extract empty parcels
             {
@@ -227,36 +227,28 @@ namespace DCL.Landscape
             }
         }
 
-        private void GenerateBorderColliders(TerrainModel terrainModel)
+        private void GenerateBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
         {
-            var collidersRoot = new GameObject("BorderColliders");
-            collidersRoot.transform.SetParent(rootGo.transform);
+            var collidersRoot = TerrainFactory.CreateCollidersRoot(rootGo.transform);
 
             const float HEIGHT = 50.0f; // Height of the collider
             const float THICKNESS = 10.0f; // Thickness of the collider
 
             // Create colliders along each side of the terrain
-            AddCollider(terrainModel.MinInUnits.x, terrainModel.MinInUnits.y, terrainModel.SizeInUnits.x, "South Border Collider", new int2(0, -1), 0);
-            AddCollider(terrainModel.MinInUnits.x, terrainModel.MaxInUnits.y, terrainModel.SizeInUnits.x, "North Border Collider", new int2(0, 1), 0);
-            AddCollider(terrainModel.MinInUnits.x, terrainModel.MinInUnits.y, terrainModel.SizeInUnits.x, "West Border Collider", new int2(-1, 0), 90);
-            AddCollider(terrainModel.MaxInUnits.x, terrainModel.MinInUnits.y, terrainModel.SizeInUnits.x, "East Border Collider", new int2(1, 0), 90);
+            AddCollider(minInUnits.x, minInUnits.y, sidesLength.x, "South Border Collider", new int2(0, -1), 0);
+            AddCollider(minInUnits.x, maxInUnits.y, sidesLength.x, "North Border Collider", new int2(0, 1), 0);
+            AddCollider(minInUnits.x, minInUnits.y, sidesLength.y, "West Border Collider", new int2(-1, 0), 90);
+            AddCollider(maxInUnits.x, minInUnits.y, sidesLength.y, "East Border Collider", new int2(1, 0), 90);
             return;
 
-            void AddCollider(float posX, float posY, float length, string name, int2 dir,
-                float rotation)
+            void AddCollider(float posX, float posY, float length, string name, int2 dir, float rotation)
             {
-                var colliderGo = new GameObject(name);
-                colliderGo.transform.SetParent(collidersRoot.transform);
-                BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
-
-                collider.size = new Vector3(length, HEIGHT, THICKNESS);
-
                 float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.x;
                 float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.y;
 
-                colliderGo.transform.SetPositionAndRotation(
-                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift),
-                    rotation: Quaternion.Euler(0, rotation, 0));
+                TerrainFactory.CreateBorderCollider(name, collidersRoot,
+                    size: new Vector3(length, HEIGHT, THICKNESS),
+                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
             }
         }
 
@@ -494,7 +486,7 @@ namespace DCL.Landscape
             if (cliffSide == null || cliffCorner == null)
                 return;
 
-            var cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
+            var cliffsRoot = TerrainFactory.CreateCliffsRoot(rootGo.transform);
 
             factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 180, 0));
             factory.CreateCliffCorner(cliffsRoot,new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MaxInUnits.y), Quaternion.Euler(0, 270, 0));

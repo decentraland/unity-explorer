@@ -118,17 +118,17 @@ namespace DCL.Landscape
             try
             {
                 timeProfiler.StartMeasure();
-                rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+
+                rootGo = TerrainFactory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
 
                 timeProfiler.StartMeasure();
-
                 Ocean = factory.CreateOcean(rootGo.transform);
                 Wind = factory.CreateWind();
 
                 GenerateCliffs();
 
-                if (centerTerrain)
-                    rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
+                GenerateBorderColliders(new int2(-150, -150)*PARCEL_SIZE, new int2(160,160)*PARCEL_SIZE, new int2(310,310)*PARCEL_SIZE)
+                   .position = new Vector3(terrainGenData.terrainSize / 2f, 0, terrainGenData.terrainSize / 2f);
 
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Misc & Cliffs"));
 
@@ -182,6 +182,9 @@ namespace DCL.Landscape
 
                 if (processReport != null) processReport.ProgressCounter.Value = 1f;
 
+                if (centerTerrain)
+                    rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
+
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {t / 1000f:F2} seconds"));
             }
             catch (OperationCanceledException)
@@ -221,7 +224,7 @@ namespace DCL.Landscape
             if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
                 return;
 
-            var cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
+            var cliffsRoot = TerrainFactory.CreateCliffsRoot(rootGo.transform);
 
             factory.CreateCliffCorner(cliffsRoot,new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
             factory.CreateCliffCorner(cliffsRoot,new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
@@ -239,6 +242,32 @@ namespace DCL.Landscape
 
             for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
                 Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i + PARCEL_SIZE, 0, 0), Quaternion.Euler(0, 180, 0)));
+        }
+
+        private Transform GenerateBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
+        {
+            var collidersRoot = TerrainFactory.CreateCollidersRoot(rootGo.transform);
+
+            const float HEIGHT = 50.0f; // Height of the collider
+            const float THICKNESS = 10.0f; // Thickness of the collider
+
+            // Create colliders along each side of the terrain
+            AddCollider(minInUnits.x, minInUnits.y, sidesLength.x, "South Border Collider", new int2(0, -1), 0);
+            AddCollider(minInUnits.x, maxInUnits.y, sidesLength.x, "North Border Collider", new int2(0, 1), 0);
+            AddCollider(minInUnits.x, minInUnits.y, sidesLength.y, "West Border Collider", new int2(-1, 0), 90);
+            AddCollider(maxInUnits.x, minInUnits.y, sidesLength.y, "East Border Collider", new int2(1, 0), 90);
+
+            return collidersRoot;
+
+            void AddCollider(float posX, float posY, float length, string name, int2 dir, float rotation)
+            {
+                float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.x;
+                float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.y;
+
+                TerrainFactory.CreateBorderCollider(name, collidersRoot,
+                    size: new Vector3(length, HEIGHT, THICKNESS),
+                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
+            }
         }
 
         private async UniTask SetupEmptyParcelDataAsync(CancellationToken cancellationToken)
