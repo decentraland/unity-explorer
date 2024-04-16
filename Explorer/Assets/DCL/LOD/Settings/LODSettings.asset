@@ -22,3 +22,4 @@ MonoBehaviour:
   - {r: 1, g: 0, b: 0, a: 1}
   - {r: 0, g: 0, b: 0, a: 1}
   <FaillingCube>k__BackingField: {fileID: 8255452435763093729, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
+  <EnableLODStreaming>k__BackingField: 1
