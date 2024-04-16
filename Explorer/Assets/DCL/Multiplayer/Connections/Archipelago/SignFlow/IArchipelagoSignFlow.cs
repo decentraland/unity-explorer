@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
     public interface IArchipelagoSignFlow
     {
-        UniTask ConnectAsync(string adapterUrl, CancellationToken token);
+        UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token);
 
         UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token);
 
@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token);
 
         UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token);
+
+        UniTask DisconnectAsync(CancellationToken token);
     }
 
     public static class ArchipelagoSignFlowExtensions
