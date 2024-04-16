@@ -112,7 +112,7 @@ namespace DCL.Landscape.Systems
 
         private void InitializeMiscVisibility()
         {
-            IReadOnlyList<Transform> cliffs = terrainGenerator.GetCliffs();
+            IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
             cliffsBoundaries = new NativeArray<VisibleBounds>(cliffs.Count * 3, Allocator.Persistent);
 
             for (var i = 0; i < cliffs.Count; i++)
@@ -141,7 +141,7 @@ namespace DCL.Landscape.Systems
 
         private void InitializeWaterVisibility()
         {
-            Transform ocean = terrainGenerator.GetOcean();
+            Transform ocean = terrainGenerator.Ocean;
             MeshRenderer[] renderers = ocean.GetComponentsInChildren<MeshRenderer>();
 
             // some water chunks are disabled on purpose, we dont want to re-enable them
@@ -171,7 +171,7 @@ namespace DCL.Landscape.Systems
             Camera camera = cameraComponent.Camera;
             cameraPosition = camera.transform.position;
 
-            var wind = terrainGenerator.GetWind();
+            var wind = terrainGenerator.Wind;
             if(wind.parent == null)
                 wind.parent = camera.transform;
 
