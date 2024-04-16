@@ -1555,10 +1555,10 @@ MonoBehaviour:
   <SoundSectionButton>k__BackingField: {fileID: 5115524558328477098}
   <ControlsSectionButton>k__BackingField: {fileID: 2390285050870492323}
   <BackgroundImage>k__BackingField: {fileID: 2373645135137386318}
-  <GeneralSectionBackground>k__BackingField: {fileID: 21300000, guid: 90ef2b6beb57a4ed8897038afddeb21c, type: 3}
-  <GraphicsSectionBackground>k__BackingField: {fileID: 21300000, guid: 90ef2b6beb57a4ed8897038afddeb21c, type: 3}
-  <SoundSectionBackground>k__BackingField: {fileID: 21300000, guid: 90ef2b6beb57a4ed8897038afddeb21c, type: 3}
-  <ControlsSectionBackground>k__BackingField: {fileID: 21300000, guid: 90ef2b6beb57a4ed8897038afddeb21c, type: 3}
+  <GeneralSectionBackground>k__BackingField: {fileID: 0}
+  <GraphicsSectionBackground>k__BackingField: {fileID: 0}
+  <SoundSectionBackground>k__BackingField: {fileID: 0}
+  <ControlsSectionBackground>k__BackingField: {fileID: 0}
   <ContentScrollRect>k__BackingField: {fileID: 8443518669722437240}
 --- !u!1001 &318211450818095839
 PrefabInstance:
