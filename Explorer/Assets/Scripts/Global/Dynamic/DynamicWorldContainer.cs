@@ -15,7 +15,6 @@ using DCL.Input;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -229,14 +228,27 @@ namespace Global.Dynamic
 
             var entityParticipantTable = new EntityParticipantTable();
 
-            container.ChatMessagesBus = new DebugPanelChatMessageBus(
-                new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>()),
-                    identityCache,
-                    container.ProfileRepository
-                ),
-                debugBuilder
+            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
+
+            IRealmNavigator realmNavigator = new RealmNavigator(
+                loadingScreen,
+                mapRendererContainer.MapRenderer,
+                container.RealmController,
+                parcelServiceContainer.TeleportController,
+                container.RoomHub
             );
+
+            var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
+            {
+                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
+                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
+                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
+            };
+
+            container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+                                       .WithSelfResend(identityCache, container.ProfileRepository)
+                                       .WithCommands(chatCommandsFactory)
+                                       .WithDebugPanel(debugBuilder);
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
@@ -257,23 +269,6 @@ namespace Global.Dynamic
             );
 
             var eventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
-
-            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
-
-            IRealmNavigator realmNavigator = new RealmNavigator(
-                loadingScreen,
-                mapRendererContainer.MapRenderer,
-                container.RealmController,
-                parcelServiceContainer.TeleportController,
-                container.RoomHub
-            );
-
-            var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
-            {
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
-                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
-            };
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -317,7 +312,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem, chatCommandsFactory),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,

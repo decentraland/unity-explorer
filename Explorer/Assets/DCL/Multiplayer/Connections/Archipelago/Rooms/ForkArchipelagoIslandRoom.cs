@@ -31,6 +31,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTaskVoid StartAsync()
         {
+            if (current != null && current.CurrentState() is not IConnectiveRoom.State.Stopped)
+                throw new InvalidOperationException("First stop previous room before starting a new one");
+
             string aboutUrl = await currentAdapterAddress.AdapterUrlAsync(CancellationToken.None);
 
             if (aboutUrl.Contains("wss://"))

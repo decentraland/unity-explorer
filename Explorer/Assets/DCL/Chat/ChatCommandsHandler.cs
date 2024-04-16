@@ -6,19 +6,19 @@ namespace DCL.Chat
 {
     internal class ChatCommandsHandler
     {
-        private const char CHAT_COMMAND_CHAR = '/';
+        public const char CHAT_COMMAND_CHAR = '/';
 
         private readonly Dictionary<Regex, IChatCommand> commandsCache = new ();
-        private readonly Dictionary<Regex, Func<IChatCommand>> commandsFactory;
+        private readonly IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory;
 
-        public ChatCommandsHandler(Dictionary<Regex, Func<IChatCommand>> commandsFactory)
+        public ChatCommandsHandler(IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory)
         {
             this.commandsFactory = commandsFactory;
         }
 
         public bool TryGetChatCommand(in string message, ref (IChatCommand command, Match match) commandTuple)
         {
-            if (!message.StartsWith(CHAT_COMMAND_CHAR)) return false;
+            if (StartsLikeCommand(message) == false) return false;
 
             foreach (Regex? commandRegex in commandsFactory.Keys)
             {
@@ -36,5 +36,8 @@ namespace DCL.Chat
 
             return false;
         }
+
+        public bool StartsLikeCommand(string message) =>
+            message.TrimStart()!.StartsWith(CHAT_COMMAND_CHAR);
     }
 }

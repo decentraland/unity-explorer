@@ -50,10 +50,6 @@ namespace DCL.Chat
         private SingleInstanceEntity cameraEntity;
         private readonly DCLInput dclInput;
 
-        private readonly ChatCommandsHandler commandsHandler;
-        private (IChatCommand command, Match param) chatCommand;
-        private CancellationTokenSource commandCts = new ();
-
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public ChatController(
@@ -70,8 +66,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
-            IEventSystem eventSystem,
-            Dictionary<Regex, Func<IChatCommand>> commandsFactory
+            IEventSystem eventSystem
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -87,8 +82,6 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
-
-            commandsHandler = new ChatCommandsHandler(commandsFactory);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             // Adding two elements to count as top and bottom padding
@@ -210,19 +203,7 @@ namespace DCL.Chat
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
-            if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
-                ExecuteChatCommandAsync(chatCommand.command, chatCommand.param).Forget();
-            else
-                chatMessagesBus.Send(messageToSend);
-        }
-
-        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
-        {
-            commandCts = commandCts.SafeRestart();
-            string? response = await command.ExecuteAsync(param, commandCts.Token);
-
-            if (!string.IsNullOrEmpty(response))
-                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true, false));
+            chatMessagesBus.Send(messageToSend);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -366,7 +347,6 @@ namespace DCL.Chat
 
             dclInput.UI.Submit.performed -= OnSubmitAction;
             cts.SafeCancelAndDispose();
-            commandCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
