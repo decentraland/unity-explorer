@@ -166,7 +166,7 @@ namespace DCL.CharacterCamera.Tests
             //setup press
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
 
-            Press(mouse.rightButton);
+            Press(mouse.leftButton);
 
             cursor.IsLocked().Returns(false);
 
@@ -175,7 +175,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.AreEqual(CursorState.Panning, world.Get<CursorComponent>(entity).CursorState);
 
             // setup release
-            Release(mouse.rightButton);
+            Release(mouse.leftButton);
             cursor.IsLocked().Returns(false);
 
             system.Update(0);
