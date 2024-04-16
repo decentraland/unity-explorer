@@ -7,15 +7,17 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using UnityEngine;
+using Query = Arch.Core.Query;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
-    public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
+    public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -40,7 +42,6 @@ namespace DCL.Multiplayer.SDK.Systems
 
             ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PlayerIdentityDataComponent>(static (pbPlayerIdentityData, playerIdentityDataComponent) =>
             {
-                // pbPlayerIdentityData.IsDirty = true;
                 pbPlayerIdentityData.Address = playerIdentityDataComponent.Address;
                 pbPlayerIdentityData.IsGuest = playerIdentityDataComponent.IsGuest;
             }, playerIdentityDataComponent.CRDTEntity, playerIdentityDataComponent);
@@ -70,6 +71,19 @@ namespace DCL.Multiplayer.SDK.Systems
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
             World.Remove<PBPlayerIdentityData>(entity);
             World.Remove<CRDTEntity>(entity);
+        }
+
+        [Query]
+        [All(typeof(PBPlayerIdentityData), typeof(CRDTEntity))]
+        private void FinalizeComponents(in Entity entity)
+        {
+            World.Remove<PBPlayerIdentityData>(entity);
+            World.Remove<CRDTEntity>(entity);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeComponentsQuery(World);
         }
     }
 }
