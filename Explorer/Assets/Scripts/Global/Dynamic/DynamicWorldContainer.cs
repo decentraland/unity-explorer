@@ -54,6 +54,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -265,9 +266,14 @@ namespace Global.Dynamic
 
             var eventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
 
-            IRealmNavigator realmNavigator = new ChangeRoomsRealmNavigator(
-                new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController),
-                container.RoomHub.Reconnect //() => { } //container.RoomHub.Reconnect TODO
+            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
+
+            IRealmNavigator realmNavigator = new RealmNavigator(
+                loadingScreen,
+                mapRendererContainer.MapRenderer,
+                container.RealmController,
+                parcelServiceContainer.TeleportController,
+                container.RoomHub
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>

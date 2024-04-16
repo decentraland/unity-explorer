@@ -1,14 +1,12 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.ParcelsService;
-using DCL.SceneLoadingScreens;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
-using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -18,30 +16,38 @@ namespace Global.Dynamic
     {
         private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
 
-        private readonly MVCManager mvcManager;
+        private readonly ILoadingScreen loadingScreen;
         private readonly IMapRenderer mapRenderer;
         private readonly IRealmController realmController;
         private readonly ITeleportController teleportController;
+        private readonly IRoomHub roomHub;
 
-        public RealmNavigator(MVCManager mvcManager, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController)
+        public RealmNavigator(ILoadingScreen loadingScreen, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController, IRoomHub roomHub)
         {
-            this.mvcManager = mvcManager;
+            this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
+            this.roomHub = roomHub;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+
             if (!await realmController.IsReachableAsync(realm, ct))
                 return false;
 
             ct.ThrowIfCancellationRequested();
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, realm == genesisDomain);
 
-            await ShowLoadingScreenAndExecuteTaskAsync(loadReport =>
-                realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct), ct);
+            await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
+                {
+                    roomHub.Reconnect();
+                    await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
+                },
+                ct
+            );
 
             return true;
         }
@@ -50,7 +56,7 @@ namespace Global.Dynamic
         {
             ct.ThrowIfCancellationRequested();
 
-            await ShowLoadingScreenAndExecuteTaskAsync(async loadReport =>
+            await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
             {
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
@@ -63,23 +69,6 @@ namespace Global.Dynamic
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
-        }
-
-        private async UniTask ShowLoadingScreenAndExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var timeout = TimeSpan.FromSeconds(30);
-            var loadReport = AsyncLoadProcessReport.Create();
-
-            UniTask showLoadingScreenTask = mvcManager.ShowAsync(
-                                                           SceneLoadingScreenController.IssueCommand(
-                                                               new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
-                                                      .AttachExternalCancellation(ct);
-
-            UniTask operationTask = operation(loadReport);
-
-            await UniTask.WhenAll(showLoadingScreenTask, operationTask);
         }
     }
 }
