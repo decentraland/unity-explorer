@@ -16,7 +16,7 @@ namespace DCL.Settings.ModuleControllers
             this.landscapeData = landscapeData;
 
             if (settingsDataStore.HasKey(ENVIRONMENT_DISTANCE_DATA_STORE_KEY))
-                view.SliderView.Slider.value = settingsDataStore.GetDropdownValue(ENVIRONMENT_DISTANCE_DATA_STORE_KEY);
+                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(ENVIRONMENT_DISTANCE_DATA_STORE_KEY);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
             SetEnvironmentDistanceSettings(view.SliderView.Slider.value);
