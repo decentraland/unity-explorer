@@ -21,8 +21,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly MVCManager mvcManager;
         private readonly IRealmData realmData;
-        private CancellationTokenSource? cancellationTokenSource;
         private readonly DebugWidgetVisibilityBinding widgetVisibility;
+        private CancellationTokenSource? cancellationTokenSource;
 
         public LoginFromDebugPanelSystem(World world,
             IDebugContainerBuilder debugContainerBuilder,
