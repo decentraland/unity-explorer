@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.SDK.Systems
 
         // 'PlayerIdentityDataComponent' is put on this scene world entities from the GLOBAL WORLD PlayerComponentsHandlerSystem
         [Query]
-        [None(typeof(PBPlayerIdentityData))]
+        [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
         private void CreatePlayerIdentityData(in Entity entity, PlayerIdentityDataComponent playerIdentityDataComponent)
         {
             Debug.Log($"PRAVS - CreatePlayerIdentityDataQuery() - Entity: {entity.Id}; CRDTEntity: {playerIdentityDataComponent.CRDTEntity.Id}; Address: {playerIdentityDataComponent.Address}");
@@ -59,6 +59,7 @@ namespace DCL.Multiplayer.SDK.Systems
         {
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
             World.Remove<PBPlayerIdentityData>(entity);
+            World.Remove<CRDTEntity>(entity);
             World.Add(entity, new DeleteEntityIntention());
         }
 
@@ -68,6 +69,7 @@ namespace DCL.Multiplayer.SDK.Systems
         {
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
             World.Remove<PBPlayerIdentityData>(entity);
+            World.Remove<CRDTEntity>(entity);
         }
     }
 }
