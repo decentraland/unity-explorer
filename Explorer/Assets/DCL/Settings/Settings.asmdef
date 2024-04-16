@@ -2,7 +2,13 @@
     "name": "Settings",
     "rootNamespace": "",
     "references": [
-        "GUID:e169fa6683c924c7e99a85981a91d953"
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:49b49c76ee64f6b41bf28ef951cb0e50",
+        "GUID:9e314663ce958b746873cb22d57ede55",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:21c2e77c042a2d34d8cfbf58f8217053"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
