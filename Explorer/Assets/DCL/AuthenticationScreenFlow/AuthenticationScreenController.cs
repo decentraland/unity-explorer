@@ -1,9 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -28,7 +30,8 @@ namespace DCL.AuthenticationScreenFlow
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
-        private readonly IProfileRepository profileRepository;
+        //private readonly IProfileRepository profileRepository;
+        private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -42,16 +45,17 @@ namespace DCL.AuthenticationScreenFlow
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
-        public AuthenticationScreenController(ViewFactoryMethod viewFactory,
+        public AuthenticationScreenController(
+            ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            IProfileRepository profileRepository,
+            ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
-            this.profileRepository = profileRepository;
+            this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -108,6 +112,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewClose();
 
+
             CancelLoginProcess();
             CancelVerificationCountdown();
         }
@@ -122,7 +127,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();
-                await FetchProfileAsync(storedIdentity, loginCancellationToken.Token);
+                await FetchProfileAsync(loginCancellationToken.Token);
 
                 SwitchState(ViewState.Finalize);
             }
@@ -139,6 +144,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
+
                     viewInstance.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
@@ -146,7 +152,7 @@ namespace DCL.AuthenticationScreenFlow
 
                     SwitchState(ViewState.Loading);
 
-                    await FetchProfileAsync(web3Identity, ct);
+                    await FetchProfileAsync(ct);
 
                     SwitchState(ViewState.Finalize);
                 }
@@ -162,14 +168,11 @@ namespace DCL.AuthenticationScreenFlow
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
         }
 
-        private async UniTask FetchProfileAsync(IWeb3Identity web3Identity, CancellationToken ct)
+        private async UniTask FetchProfileAsync(CancellationToken ct)
         {
-            // TODO: get latest profile version from storage if any (?)
-            Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
-            profileNameLabel!.Value = profile?.Name;
-
-            if (profile != null)
-                characterPreviewController!.Initialize(profile.Avatar);
+            Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            profileNameLabel!.Value = profile.Name;
+            characterPreviewController!.Initialize(profile.Avatar);
         }
 
         private void ChangeAccount()

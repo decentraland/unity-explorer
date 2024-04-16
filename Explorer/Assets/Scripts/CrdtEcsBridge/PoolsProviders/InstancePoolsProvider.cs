@@ -1,6 +1,7 @@
 ﻿using CRDT.Protocol;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -19,8 +20,13 @@ namespace CrdtEcsBridge.PoolsProviders
 
         private readonly ArrayPool<byte> crdtRawDataPool = ArrayPool<byte>.Create(16_777_216, 8); // 16 MB, 8 buckets, if the requested array is more than 16 mb than a new instance is simply returned
 
+        private readonly Action<byte[]> releaseFuncCached;
+
         // Forbid creating instances of this class outside of the pool
-        private InstancePoolsProvider() { }
+        private InstancePoolsProvider()
+        {
+            releaseFuncCached = ReleaseCrdtRawDataPool;
+        }
 
         public void Dispose()
         {
@@ -30,10 +36,10 @@ namespace CrdtEcsBridge.PoolsProviders
         public static InstancePoolsProvider Create() =>
             POOL.Get();
 
-        public byte[] GetCrdtRawDataPool(int size) =>
-            crdtRawDataPool.Rent(size);
+        public PoolableByteArray GetCrdtRawDataPool(int size) =>
+            new (crdtRawDataPool.Rent(size), size, releaseFuncCached);
 
-        public void ReleaseCrdtRawDataPool(byte[] bytes)
+        private void ReleaseCrdtRawDataPool(byte[] bytes)
         {
             crdtRawDataPool.Return(bytes);
         }

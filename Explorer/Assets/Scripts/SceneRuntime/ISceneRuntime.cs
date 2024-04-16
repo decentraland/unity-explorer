@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CrdtEcsBridge.PoolsProviders;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.Web3;
@@ -6,6 +7,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.Players;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -20,7 +22,7 @@ namespace SceneRuntime
 {
     public interface ISceneRuntime : IDisposable
     {
-        void Register<T>(string itemName, T target) where T: IDisposable;
+        void Register<T>(string itemName, T target) where T: IJsApiWrapper;
 
         UniTask StartScene();
 
@@ -29,12 +31,13 @@ namespace SceneRuntime
         void ApplyStaticMessages(ReadOnlyMemory<byte> data);
 
         void SetIsDisposing();
+
+        void OnSceneIsCurrentChanged(bool isCurrent);
     }
 
     public static class SceneRuntimeExtensions
     {
-        public static void RegisterAll(
-            this ISceneRuntime sceneRuntime,
+        public static void RegisterAll(this ISceneRuntime sceneRuntime,
             ISceneExceptionsHandler exceptionsHandler,
             IRoomHub roomHub,
             IProfileRepository profileRepository,
@@ -44,7 +47,10 @@ namespace SceneRuntime
             IRuntime runtime,
             IEthereumApi ethereumApi,
             IWebSocketApi webSocketApi,
-            IWeb3IdentityCache web3IdentityCache
+            IWeb3IdentityCache web3IdentityCache,
+            ICommunicationsControllerAPI communicationsControllerAPI,
+            IInstancePoolsProvider instancePoolsProvider,
+            ISimpleFetchApi simpleFetchApi
         )
         {
             sceneRuntime.RegisterPlayers(roomHub, profileRepository);
@@ -56,6 +62,8 @@ namespace SceneRuntime
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
+            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
@@ -100,7 +108,18 @@ namespace SceneRuntime
 
         private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi));
         }
+
+        private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider)
+        {
+            sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api, instancePoolsProvider));
+        }
+
+        private static void RegisterSimpleFetchApi(this ISceneRuntime sceneRuntime, ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController)
+        {
+            sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
+        }
+
     }
 }

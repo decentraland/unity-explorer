@@ -2,7 +2,6 @@
 using Arch.SystemGroups;
 using DCL.Character.Components;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
@@ -47,17 +46,18 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (lastParcelProcessed == parcel) return;
 
-            // Reset the previous current scene, it's ok if it's not cached (already)
-            if (scenesCache.TryGetByParcel(lastParcelProcessed, out ISceneFacade sceneFacade))
-                sceneFacade.SetIsCurrent(false);
+            scenesCache.TryGetByArea(lastParcelProcessed, out ISceneFacade? lastProcessedScene);
+            scenesCache.TryGetByArea(parcel, out ISceneFacade? currentScene);
 
-            if (scenesCache.TryGetByParcel(parcel, out sceneFacade))
+            if (lastProcessedScene != currentScene)
             {
-                sceneFacade.SetIsCurrent(true);
-                lastParcelProcessed = parcel;
+                lastProcessedScene?.SetIsCurrent(false);
+                currentScene?.SetIsCurrent(true);
             }
+            else
+                currentScene?.SetIsCurrent(true);
 
-            // if scene was not in cache yet don't set lastParcelProcessed so the cache will be polled again
+            lastParcelProcessed = parcel;
         }
     }
 }

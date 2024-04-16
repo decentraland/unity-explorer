@@ -575,6 +575,9 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 4008276168584097628}
   <NftContainer>k__BackingField: {fileID: 7624615643822437495}
   <UnEquipButton>k__BackingField: {fileID: 155857996371196772}
+  EquipAudio: {fileID: 11400000, guid: 16df4e18c957e3e459b249626190c33b, type: 2}
+  UnEquipAudio: {fileID: 11400000, guid: 4867c9a3edd8d5f438baccbc70ef12da, type: 2}
+  HoverAudio: {fileID: 11400000, guid: 3c26ccf99795a344b8096b9efae467b0, type: 2}
 --- !u!1 &2858845489573109950
 GameObject:
   m_ObjectHideFlags: 0

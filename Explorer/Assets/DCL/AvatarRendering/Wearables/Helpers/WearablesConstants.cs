@@ -1,3 +1,5 @@
+#nullable enable
+
 using CommunicationData.URLHelpers;
 using Decentraland.Common;
 using System.Collections.Generic;
@@ -158,13 +160,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             };
 
             public static HashSet<URN> GetDefaultWearablesForBodyShape(string bodyShapeId) =>
-                DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => new URN(x.Value)).ToHashSet();
+                DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => new URN(x.Value!)).ToHashSet();
 
             public static string GetDefaultWearable(BodyShape bodyShapeId, string category)
             {
                 if (!DEFAULT_WEARABLES.ContainsKey((bodyShapeId, category)))
                     return EMPTY_DEFAULT_WEARABLE;
-                return DEFAULT_WEARABLES[(bodyShapeId, category)];
+                return DEFAULT_WEARABLES[(bodyShapeId, category)]!;
             }
         }
     }
