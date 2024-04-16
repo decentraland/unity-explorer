@@ -15,6 +15,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -26,6 +27,7 @@ using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -51,11 +53,10 @@ using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -102,7 +103,6 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; }
 
-
         public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
 
         public void Dispose()
@@ -142,20 +142,15 @@ namespace Global.Dynamic
             {
                 // Init itself
                 await settingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
+
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
                 container.UIAudioPlaybackContainer = await UIAudioPlaybackContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
             }
 
-            try
-            {
-                await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct);
-            }
-            catch (Exception)
-            {
-                return (null, false);
-            }
+            try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
+            catch (Exception) { return (null, false); }
 
             var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
@@ -211,10 +206,18 @@ namespace Global.Dynamic
                 landscapePlugin
             );
 
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(staticContainer.CharacterContainer.CharacterObject, staticContainer.WebRequestsContainer.WebRequestController, identityCache, multiPool);
-
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
+
+            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.WebRequestsContainer.WebRequestController, realmData);
+
+            var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
+                identityCache,
+                multiPool,
+                staticContainer.CharacterContainer.CharacterObject,
+                currentAdapterAddress,
+                staticContainer.WebRequestsContainer.WebRequestController
+            );
 
             container.RealmController = new RealmController(
                 identityCache,
@@ -231,24 +234,47 @@ namespace Global.Dynamic
 
             var entityParticipantTable = new EntityParticipantTable();
 
-            container.ChatMessagesBus = new DebugPanelChatMessageBus(
-                new SelfResendChatMessageBus(
-                    new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>()),
-                    identityCache,
-                    container.ProfileRepository
-                ),
-                debugBuilder
-            );
-
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: x => x.Clear()
             );
 
+            var remoteEntities = new RemoteEntities(
+                container.RoomHub,
+                entityParticipantTable,
+                staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                queuePoolFullMovementMessage
+            );
+
+            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
+
+            IRealmNavigator realmNavigator = new RealmNavigator(
+                loadingScreen,
+                mapRendererContainer.MapRenderer,
+                container.RealmController,
+                parcelServiceContainer.TeleportController,
+                container.RoomHub,
+                remoteEntities,
+                staticContainer.GlobalWorldProxy
+            );
+
+            var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
+            {
+                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
+                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
+                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
+            };
+
+            container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+                                       .WithSelfResend(identityCache, container.ProfileRepository)
+                                       .WithCommands(chatCommandsFactory)
+                                       .WithDebugPanel(debugBuilder);
+
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
                     new ProfileBroadcast(container.MessagePipesHub),
-                    selfProfile
+                    selfProfile,
+                    realmData
                 )
             );
 
@@ -259,15 +285,6 @@ namespace Global.Dynamic
             );
 
             var eventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
-
-            IRealmNavigator realmNavigator = new RealmNavigator(container.MvcManager, mapRendererContainer.MapRenderer, container.RealmController, parcelServiceContainer.TeleportController);
-
-            var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
-            {
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
-                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
-            };
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -280,11 +297,10 @@ namespace Global.Dynamic
                     debugBuilder,
                     realFlowLoadingStatus,
                     entityParticipantTable,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     container.MessagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
-                    queuePoolFullMovementMessage
+                    remoteEntities
                 ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput, multiplayerEmotesMessageBus, eventSystem),
@@ -311,7 +327,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem, chatCommandsFactory),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, eventSystem),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
