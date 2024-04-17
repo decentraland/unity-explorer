@@ -98,7 +98,7 @@ Material:
     - _Blend: 0
     - _BumpScale: 1
     - _ColorMapHeight: 0
-    - _ColorMapStrength: 0.199
+    - _ColorMapStrength: 0.15
     - _Cull: 0
     - _Cutoff: 0.5
     - _Darkening: 0.487
@@ -152,7 +152,7 @@ Material:
     - _WindObjectRand: 1
     - _WindQuality: 0
     - _WindRandSpeed: 1
-    - _WindRandStrength: 1
+    - _WindRandStrength: 0.5
     - _WindSpeed: 3.44
     - _WindStr: 0.067
     - _WindStrength: 0.128
