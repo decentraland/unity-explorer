@@ -14,6 +14,9 @@ namespace DCL.ExplorePanel
     public class ExplorePanelView : ViewBase, IView
     {
         [field: SerializeField]
+        public CanvasGroup CanvasGroup { get; private set; } = null!;
+
+        [field: SerializeField]
         public RectTransform AnimationTransform { get; private set; } = null!;
 
         [field: SerializeField]
@@ -46,18 +49,17 @@ namespace DCL.ExplorePanel
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
+            CanvasGroup.alpha = 0;
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
-            AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
-            return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
+            return CanvasGroup.DOFade(1, 0.1f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
-            AnimationTransform.anchoredPosition = Vector2.zero;
-            return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
+            return CanvasGroup.DOFade(0, 0.1f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
     }
 
