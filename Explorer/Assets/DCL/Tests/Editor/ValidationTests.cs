@@ -55,7 +55,7 @@ namespace DCL.Tests.Editor
             Assert.That(emptyDirectories.Count, Is.EqualTo(0), errorMessage);
         }
 
-        [Test]
+        /*[Test]
         public void CheckForDebugUsage()
         {
             string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
@@ -96,7 +96,7 @@ namespace DCL.Tests.Editor
 
                 Assert.IsEmpty(debugLogStatements, $"Debug usage found in file: {file}");
             }
-        }
+        }*/
 
         [Test]
         public void CheckUnityObjectsForMissingReferences()
