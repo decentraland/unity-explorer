@@ -1,8 +1,6 @@
-using DCL.Multiplayer.Connections.Archipelago.Rooms;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
-using System;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {
@@ -22,5 +20,18 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom SceneRoom() =>
             gateKeeperSceneRoom.Room();
+
+        public UniTask StartAsync()
+        {
+            archipelagoIslandRoom.Start();
+            gateKeeperSceneRoom.Start();
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask StopAsync() =>
+            UniTask.WhenAll(
+                archipelagoIslandRoom.StopAsync(),
+                gateKeeperSceneRoom.StopAsync()
+            );
     }
 }

@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,10 +48,7 @@ namespace DCL.Backpack
 
         private void OnSortDropdownClick()
         {
-            if (SortContentDeselectable.gameObject.activeInHierarchy)
-            {
-                CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false));
-            }
+            if (SortContentDeselectable.gameObject.activeInHierarchy) { CanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => SortContentDeselectable.gameObject.SetActive(false)); }
             else
             {
                 SortContentDeselectable.gameObject.SetActive(true);

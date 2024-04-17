@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Audio;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,7 +30,7 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
-
+            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
             inputEventBus = new CharacterPreviewInputEventBus();
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
         }
@@ -73,7 +74,13 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
+            view.CharacterPreviewInputDetector.OnPointerMoveEvent -= OnPointerMove;
             cursorController.Dispose();
+        }
+
+        private void OnPointerMove(PointerEventData pointerEventData)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.HoverAudio);
         }
 
         private void OnPointerUp(PointerEventData pointerEventData)
@@ -89,11 +96,33 @@ namespace DCL.CharacterPreview
         private void OnScroll(PointerEventData pointerEventData)
         {
             inputEventBus.OnScroll(pointerEventData);
+
+            if (pointerEventData.scrollDelta.y > 0)
+            {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.ZoomInAudio);
+            }
+            else
+            {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.ZoomOutAudio);
+            }
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
             inputEventBus.OnDrag(pointerEventData);
+
+            if (pointerEventData.button != PointerEventData.InputButton.Middle)
+            {
+                switch (pointerEventData.button)
+                {
+                    case PointerEventData.InputButton.Right:
+                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
+                        break;
+                    case PointerEventData.InputButton.Left:
+                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
+                        break;
+                }
+            }
         }
 
         public void OnShow()

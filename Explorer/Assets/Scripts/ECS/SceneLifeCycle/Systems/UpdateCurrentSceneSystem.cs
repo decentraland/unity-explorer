@@ -2,7 +2,6 @@
 using Arch.SystemGroups;
 using DCL.Character.Components;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
@@ -20,7 +19,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
 
         private Vector2Int lastParcelProcessed;
-        private Vector2Int? pendingParcel;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, Entity playerEntity) : base(world)
         {
@@ -46,29 +44,20 @@ namespace ECS.SceneLifeCycle.Systems
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
 
-            // If the scene was not cached but it's pending
-            if (parcel == pendingParcel && scenesCache.TryGetByParcel(parcel, out ISceneFacade sceneFacade))
-            {
-                sceneFacade.SetIsCurrent(true);
-                pendingParcel = null;
-            }
-
             if (lastParcelProcessed == parcel) return;
 
-            // Reset the previous current scene, it's ok if it's not cached (already)
-            if (scenesCache.TryGetByParcel(lastParcelProcessed, out sceneFacade))
-                sceneFacade.SetIsCurrent(false);
+            scenesCache.TryGetByArea(lastParcelProcessed, out ISceneFacade? lastProcessedScene);
+            scenesCache.TryGetByArea(parcel, out ISceneFacade? currentScene);
 
-            if (scenesCache.TryGetByParcel(parcel, out sceneFacade))
+            if (lastProcessedScene != currentScene)
             {
-                sceneFacade.SetIsCurrent(true);
-                pendingParcel = null;
+                lastProcessedScene?.SetIsCurrent(false);
+                currentScene?.SetIsCurrent(true);
             }
             else
-                pendingParcel = parcel;
+                currentScene?.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
-
         }
     }
 }

@@ -77,6 +77,7 @@ namespace DCL.Profiles.Self
                                     .Build();
 
             profile.UserId = web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!;
+
             await profileRepository.SetAsync(profile, ct);
         }
 
