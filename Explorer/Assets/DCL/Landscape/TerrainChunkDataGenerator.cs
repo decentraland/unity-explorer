@@ -162,7 +162,8 @@ namespace DCL.Landscape
         }
 
         public async UniTask SetTreesAsync(int2 minTerrainParcel, int offsetX, int offsetZ, int chunkSize, TerrainData terrainData,
-            uint baseSeed, CancellationToken cancellationToken, bool useCache = true)
+            uint baseSeed, CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, List<int2> chunkOccupiedParcels = null,
+            bool useCache = true)
         {
             if (useCache && localCache.IsValid())
             {
@@ -242,6 +243,15 @@ namespace DCL.Landscape
                         {
                             // if its marked as invalid, do not use this tree
                             if (!treeInvalidationMap.TryGetValue(treeInstance.Key, out bool isInvalid)) continue;
+
+                            if (nullifyDetailsOnOwned)
+                            {
+                                foreach (int2 parcel in chunkOccupiedParcels)
+                                    if (treeInstance.Key.x >= (-chunkMinParcel.x + parcel.x) * parcelSize && treeInstance.Key.x < (-chunkMinParcel.x + parcel.x + 1) * parcelSize &&
+                                        treeInstance.Key.y >= (-chunkMinParcel.y + parcel.y) * parcelSize && treeInstance.Key.y < (-chunkMinParcel.y + parcel.y + 1) * parcelSize)
+                                        isInvalid = true;
+                            }
+
                             if (isInvalid) continue;
 
                             array.Add(treeInstance.Value);
