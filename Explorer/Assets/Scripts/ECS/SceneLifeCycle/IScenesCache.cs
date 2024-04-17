@@ -23,8 +23,6 @@ namespace ECS.SceneLifeCycle
 
         bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade);
 
-        bool TryGetByArea(Vector2Int parcel, out ISceneFacade sceneFacade);
-
         void Clear();
     }
 
@@ -74,21 +72,6 @@ namespace ECS.SceneLifeCycle
 
         public bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade) =>
             scenesByParcels.TryGetValue(parcel, out sceneFacade);
-
-        public bool TryGetByArea(Vector2Int parcel, out ISceneFacade sceneFacade)
-        {
-            if (TryGetByParcel(parcel, out sceneFacade)) return true;
-
-            // TODO it seems redundant
-            foreach (ISceneFacade scene in Scenes)
-            {
-                if (!scene.Contains(parcel)) continue;
-                sceneFacade = scene;
-                return true;
-            }
-
-            return false;
-        }
 
         public void Clear()
         {
