@@ -38,9 +38,9 @@ namespace ECS.Unity.Transforms.Tests
                 ParentId = parentCRDTEntity,
             };
 
-            rootEntity = world.Create(sceneRoot);
-            parentEntity = world.Create(parentSDKTransform, parentTransformComponent);
-            childEntity = world.Create(childSDKTransform, childTransformComponent);
+            rootEntity = world.Create(sceneRoot, sceneRootCRDT);
+            parentEntity = world.Create(parentSDKTransform, parentTransformComponent, parentCRDTEntity);
+            childEntity = world.Create(childSDKTransform, childTransformComponent, childCRDTEntity);
 
             crdtToEntityDict = new Dictionary<CRDTEntity, Entity>
             {
