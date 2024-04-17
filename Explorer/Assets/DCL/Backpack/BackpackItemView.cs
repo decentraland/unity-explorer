@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
@@ -19,6 +18,7 @@ namespace DCL.Backpack
 
         public event Action<string>? OnSelectItem;
         public event Action<string>? OnEquip;
+        public event Action<string>? OnUnequip;
 
         [field: SerializeField]
         public string ItemId { get; set; }
@@ -59,6 +59,8 @@ namespace DCL.Backpack
         [field: SerializeField]
         public bool IsEquipped { get; set; }
 
+        [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
+        [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -70,16 +72,38 @@ namespace DCL.Backpack
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
 
+        public bool IsCompatibleWithBodyShape
+        {
+            get => isCompatibleWithBodyShape;
+
+            set
+            {
+                incompatibleWithBodyShapeContainer.SetActive(!value);
+                isCompatibleWithBodyShape = value;
+            }
+        }
+
         private CancellationTokenSource cts;
+        private bool isCompatibleWithBodyShape;
 
         private void Awake()
         {
-            EquipButton.onClick.AddListener(() => OnEquip?.Invoke(ItemId));
+            EquipButton.onClick.AddListener(() =>
+            {
+                OnEquip?.Invoke(ItemId);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
+            });
+
+            UnEquipButton.onClick.AddListener(() =>
+            {
+                OnUnequip?.Invoke(ItemId);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(UnEquipWearableAudio);
+            });
         }
 
         public void SetEquipButtonsState()
         {
-            EquipButton.gameObject.SetActive(!IsEquipped);
+            EquipButton.gameObject.SetActive(!IsEquipped && IsCompatibleWithBodyShape);
             UnEquipButton.gameObject.SetActive(IsEquipped);
         }
 
@@ -91,6 +115,36 @@ namespace DCL.Backpack
 
             if (IsEquipped)
                 EquippedIcon.gameObject.SetActive(false);
+
+            incompatibleWithBodyShapeHoverContainer.SetActive(!IsCompatibleWithBodyShape);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            AnimateExit();
+            EquippedIcon.gameObject.SetActive(IsEquipped);
+            incompatibleWithBodyShapeHoverContainer.SetActive(false);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (string.IsNullOrEmpty(ItemId)) return;
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
+            switch (eventData.clickCount)
+            {
+                case 1:
+                    OnSelectItem?.Invoke(ItemId);
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+                    break;
+                case 2:
+                    if (IsCompatibleWithBodyShape)
+                    {
+                        OnEquip?.Invoke(ItemId);
+                        UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
+                    }
+                    break;
+            }
         }
 
         private void AnimateHover()
@@ -110,31 +164,6 @@ namespace DCL.Backpack
             ContainerTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
             HoverBackgroundTransform.DOScale(Vector3.zero, ANIMATION_TIME).SetEase(Ease.Flash)
                                     .OnComplete(()=>HoverBackgroundTransform.gameObject.SetActive(false)).ToUniTask(cancellationToken: cts.Token);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            AnimateExit();
-            EquippedIcon.gameObject.SetActive(IsEquipped);
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (string.IsNullOrEmpty(ItemId)) return;
-            if (eventData.button != PointerEventData.InputButton.Left) return;
-
-
-            switch (eventData.clickCount)
-            {
-                case 1:
-                    OnSelectItem?.Invoke(ItemId);
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
-                    break;
-                case 2:
-                    OnEquip?.Invoke(ItemId);
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
-                    break;
-            }
         }
     }
 }
