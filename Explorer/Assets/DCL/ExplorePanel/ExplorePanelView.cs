@@ -52,14 +52,14 @@ namespace DCL.ExplorePanel
             CanvasGroup.alpha = 0;
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
-            return CanvasGroup.DOFade(1, 0.1f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+            return CanvasGroup.DOFade(1, 0.2f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
-            return CanvasGroup.DOFade(0, 0.1f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+            return CanvasGroup.DOFade(0, 0.2f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
     }
 
