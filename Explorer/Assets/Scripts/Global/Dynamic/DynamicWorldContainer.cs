@@ -347,7 +347,8 @@ namespace Global.Dynamic
                     dclInput,
                     emotesCache,
                     realmNavigator,
-                    forceRender
+                    forceRender,
+                    realmData
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
