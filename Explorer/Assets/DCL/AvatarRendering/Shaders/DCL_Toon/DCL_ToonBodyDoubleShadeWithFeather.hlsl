@@ -183,11 +183,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float4 _MainTex_var = SAMPLE_MAINTEX(uv_maintex,nMainTexArrID);
     
     // Clipping modes - early outs
-    #if defined(_IS_CLIPPING_MODE)
-        float fAlphaClip = _MainTex_var.a * _BaseColor.a;
-        AlphaClip(fAlphaClip, _Clipping_Level);
-        //clip(_MainTex_var.a-_Clipping_Level);
-    #elif defined(_IS_CLIPPING_TRANSMODE)// || defined(_IS_TRANSCLIPPING_ON)
+    #if defined(_IS_CLIPPING_MODE) || defined(_IS_CLIPPING_TRANSMODE)
         float fAlphaClip = _MainTex_var.a * _BaseColor.a;
         AlphaClip(fAlphaClip, _Clipping_Level);
     #endif
@@ -543,17 +539,10 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         
         finalColor += pointLightColor;
     //#endif
-
-
-    //v.2.0.4
+    
     #ifdef _IS_CLIPPING_OFF
-        //DoubleShadeWithFeather
         half4 finalRGBA = half4(finalColor,1);
-    #elif _IS_CLIPPING_MODE
-        //DoubleShadeWithFeather_Clipping
-        half4 finalRGBA = half4(finalColor,1);
-    #elif _IS_CLIPPING_TRANSMODE
-        //DoubleShadeWithFeather_TransClipping
+    #elif _IS_CLIPPING_MODE || _IS_CLIPPING_TRANSMODE
         float Set_Opacity = SATURATE_IF_SDR((_MainTex_var.a+_Tweak_transparency));
         half4 finalRGBA = half4(finalColor,Set_Opacity);
     #endif
