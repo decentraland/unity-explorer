@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -31,6 +32,11 @@ namespace DCL.ScenesDebug.ScenesConsistency
         private static void Log(string message)
         {
             ReportHub.WithReport(ReportCategory.SCENE_LOADING).Log($"Debugging: {message}");
+        }
+
+        private void Stop()
+        {
+            EditorApplication.isPlaying = false;
         }
 
         private async UniTaskVoid LaunchAsync()
@@ -70,7 +76,7 @@ namespace DCL.ScenesDebug.ScenesConsistency
             }
 
             Log("Ready to quit!");
-            Application.Quit();
+            Stop();
         }
     }
 }
