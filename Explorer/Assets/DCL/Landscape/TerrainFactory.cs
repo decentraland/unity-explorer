@@ -94,7 +94,27 @@ namespace DCL.Landscape
             return terrain;
         }
 
-        public TreePrototype[] GetTreePrototypes()
+        public TerrainData CreateTerrainData(int terrainChunkSize, float maxHeight) =>
+            CreateTerrainData(terrainChunkSize, terrainChunkSize, terrainChunkSize, maxHeight);
+
+        private TerrainData CreateTerrainData(int heightmapResolution, int alphamapResolution, int terrainChunkSize, float maxHeight)
+        {
+            var terrainData = new TerrainData
+            {
+                heightmapResolution = heightmapResolution + 1,
+                alphamapResolution = alphamapResolution,
+                size = new Vector3(terrainChunkSize, Mathf.Max(maxHeight, 0.1f), terrainChunkSize),
+                terrainLayers = terrainGenData.terrainLayers,
+                treePrototypes = GetTreePrototypes(),
+                detailPrototypes = GetDetailPrototypes(),
+            };
+
+            terrainData.SetDetailResolution(terrainChunkSize, 32);
+
+            return terrainData;
+        }
+
+        private TreePrototype[] GetTreePrototypes()
         {
             if (treePrototypes != null)
                 return treePrototypes;
@@ -108,7 +128,7 @@ namespace DCL.Landscape
             return treePrototypes;
         }
 
-        public DetailPrototype[] GetDetailPrototypes()
+        private DetailPrototype[] GetDetailPrototypes()
         {
             return terrainGenData.detailAssets.Select(a =>
                                   {

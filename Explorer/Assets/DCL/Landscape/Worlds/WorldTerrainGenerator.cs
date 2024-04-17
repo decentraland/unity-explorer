@@ -88,43 +88,13 @@ namespace DCL.Landscape
             // Generate TerrainData's
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
-                chunkModel.TerrainData = new TerrainData
-                {
-                    heightmapResolution = terrainModel.ChunkSizeInUnits + 1,
-                    alphamapResolution = terrainModel.ChunkSizeInUnits,
-                    size = new Vector3(terrainModel.ChunkSizeInUnits, 0.1f, terrainModel.ChunkSizeInUnits),
-                    terrainLayers = terrainGenData.terrainLayers,
-                    treePrototypes = factory.GetTreePrototypes(),
-                    detailPrototypes = factory.GetDetailPrototypes(),
-                };
+                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
 
-                chunkModel.TerrainData.SetDetailResolution(terrainModel.ChunkSizeInUnits, 32);
                 SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetTexturesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
                 SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, worldSeed, cancellationToken).Forget();
                 SetTreesAsync(terrainModel, chunkModel, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
-
-                // Dig Holes
-                {
-                    var holes = new bool[terrainModel.ChunkSizeInUnits, terrainModel.ChunkSizeInUnits];
-
-                    for (var x = 0; x < terrainModel.ChunkSizeInUnits; x++)
-                    for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
-                        holes[x, y] = true;
-
-                    if (chunkModel.OutOfTerrainParcels.Count > 0)
-                        foreach (int2 parcel in chunkModel.OutOfTerrainParcels)
-                        {
-                            int x = (parcel.x - chunkModel.MinParcel.x) * PARCEL_SIZE;
-                            int y = (parcel.y - chunkModel.MinParcel.y) * PARCEL_SIZE;
-
-                            for (int i = x; i < x + PARCEL_SIZE; i++)
-                            for (int j = y; j < y + PARCEL_SIZE; j++)
-                                holes[j, i] = false;
-                        }
-
-                    chunkModel.TerrainData.SetHoles(0, 0, holes);
-                }
+                DigHoles(terrainModel, chunkModel);
 
                 await UniTask.Yield(cancellationToken);
             }
@@ -132,6 +102,28 @@ namespace DCL.Landscape
             // Generate Terrain GameObjects
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                 factory.CreateTerrainChunk(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * PARCEL_SIZE, terrainGenData.terrainMaterial, true);
+        }
+
+        private static void DigHoles(TerrainModel terrainModel, ChunkModel chunkModel)
+        {
+            var holes = new bool[terrainModel.ChunkSizeInUnits, terrainModel.ChunkSizeInUnits];
+
+            for (var x = 0; x < terrainModel.ChunkSizeInUnits; x++)
+            for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
+                holes[x, y] = true;
+
+            if (chunkModel.OutOfTerrainParcels.Count > 0)
+                foreach (int2 parcel in chunkModel.OutOfTerrainParcels)
+                {
+                    int x = (parcel.x - chunkModel.MinParcel.x) * PARCEL_SIZE;
+                    int y = (parcel.y - chunkModel.MinParcel.y) * PARCEL_SIZE;
+
+                    for (int i = x; i < x + PARCEL_SIZE; i++)
+                    for (int j = y; j < y + PARCEL_SIZE; j++)
+                        holes[j, i] = false;
+                }
+
+            chunkModel.TerrainData.SetHoles(0, 0, holes);
         }
 
         private void ExtractEmptyParcels(TerrainModel terrainModel)
@@ -231,7 +223,8 @@ namespace DCL.Landscape
                 await UniTask.WhenAll(noiseTasks).AttachExternalCancellation(cancellationToken);
 
                 {
-                    float[,,] result3D = GenerateAlphaMaps(noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray(), chunkSize, chunkSize);
+                    float[,,] result3D = noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray()
+                                                        .GenerateAlphaMaps(chunkSize, chunkSize, terrainGenData.terrainLayers.Length);
                     terrainData.SetAlphamaps(0, 0, result3D);
                 }
             }
@@ -395,45 +388,6 @@ namespace DCL.Landscape
                     treeParallelRandoms.Dispose();
                 }
             }
-        }
-
-        /// <summary>
-        ///     Here we convert the result of the noise generation of the terrain texture layers
-        /// </summary>
-        private float[,,] GenerateAlphaMaps(NativeArray<float>[] textureResults, int width, int height)
-        {
-            var result = new float[width, height, terrainGenData.terrainLayers.Length];
-
-            // every layer has the same direction, so we use the first
-            int length = textureResults[0].Length;
-
-            for (var i = 0; i < length; i++)
-            {
-                int x = i % width;
-                int z = i / width;
-
-                float summary = 0;
-
-                // Get the texture value for each layer at this spot
-                for (var j = 0; j < textureResults.Length; j++)
-                {
-                    float f = textureResults[j][i];
-                    summary += f;
-                }
-
-                // base value is always the unfilled spot where other layers didn't draw texture
-                float baseValue = Mathf.Max(0, 1 - summary);
-                summary += baseValue;
-
-                // we set the base value manually since its not part of the textureResults list
-                result[z, x, 0] = baseValue / summary;
-
-                // set the rest of the values
-                for (var j = 0; j < textureResults.Length; j++)
-                    result[z, x, j + 1] = textureResults[j][i] / summary;
-            }
-
-            return result;
         }
 
         private void SpawnCliffs(TerrainModel terrainModel, GameObject cliffSide, GameObject cliffCorner)

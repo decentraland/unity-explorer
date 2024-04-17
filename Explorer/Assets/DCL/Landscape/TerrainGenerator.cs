@@ -82,6 +82,11 @@ namespace DCL.Landscape
             factory = new TerrainFactory(terrainGenData);
         }
 
+        public void Dispose()
+        {
+            UnityObjectUtils.SafeDestroy(rootGo);
+        }
+
         public IReadOnlyList<Terrain> GetTerrains() =>
             terrains;
 
@@ -397,17 +402,7 @@ namespace DCL.Landscape
             int resolution = terrainGenData.chunkSize;
             int chunkSize = terrainGenData.chunkSize;
 
-            var terrainData = new TerrainData
-            {
-                heightmapResolution = resolution,
-                alphamapResolution = resolution,
-                size = new Vector3(chunkSize, maxHeightIndex, chunkSize),
-                terrainLayers = terrainGenData.terrainLayers,
-                treePrototypes = factory.GetTreePrototypes(),
-                detailPrototypes = factory.GetDetailPrototypes(),
-            };
-
-            terrainData.SetDetailResolution(chunkSize, 32);
+            var terrainData = factory.CreateTerrainData(terrainGenData.chunkSize, maxHeightIndex);
 
             var tasks = new List<UniTask>();
             UniTask heights = SetHeightsAsync(offsetX, offsetZ, terrainData, baseSeed, cancellationToken);
@@ -558,7 +553,7 @@ namespace DCL.Landscape
                     timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [SetHeightsAsync] Noise Job + ModifyTerrainHeightJob Job {t}ms"));
 
                     timeProfiler.StartMeasure();
-                    float[,] heightArray = ConvertTo2DArray(heights, resolution, resolution);
+                    float[,] heightArray = heights.To2DArray(resolution, resolution);
                     terrainData.SetHeights(0, 0, heightArray);
                     localCache.SaveHeights(offsetX, offsetZ, heightArray);
                     timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [SetHeightsAsync] SetHeights {t}ms"));
@@ -601,7 +596,8 @@ namespace DCL.Landscape
                 timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] Parallel Jobs {t}ms"));
 
                 timeProfiler.StartMeasure();
-                float[,,] result3D = GenerateAlphaMaps(noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray(), chunkSize, chunkSize);
+                float[,,] result3D = noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray()
+                                                    .GenerateAlphaMaps(chunkSize, chunkSize, terrainGenData.terrainLayers.Length);
                 terrainData.SetAlphamaps(0, 0, result3D);
                 localCache.SaveAlphaMaps(offsetX, offsetZ, result3D);
                 timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] SetAlphamaps {t}ms"));
@@ -703,61 +699,6 @@ namespace DCL.Landscape
             }
         }
 
-        // Convert flat NativeArray to a 2D array (is there another way?)
-
-        private static float[,] ConvertTo2DArray(NativeArray<float> array, int width, int height)
-        {
-            var result = new float[width, height];
-
-            for (var i = 0; i < array.Length; i++)
-            {
-                int x = i % width;
-                int z = i / width;
-                result[z, x] = array[i];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Here we convert the result of the noise generation of the terrain texture layers
-        /// </summary>
-        private float[,,] GenerateAlphaMaps(NativeArray<float>[] textureResults, int width, int height)
-        {
-            var result = new float[width, height, terrainGenData.terrainLayers.Length];
-
-            // every layer has the same direction, so we use the first
-            int length = textureResults[0].Length;
-
-            for (var i = 0; i < length; i++)
-            {
-                int x = i % width;
-                int z = i / width;
-
-                float summary = 0;
-
-                // Get the texture value for each layer at this spot
-                for (var j = 0; j < textureResults.Length; j++)
-                {
-                    float f = textureResults[j][i];
-                    summary += f;
-                }
-
-                // base value is always the unfilled spot where other layers didn't draw texture
-                float baseValue = Mathf.Max(0, 1 - summary);
-                summary += baseValue;
-
-                // we set the base value manually since its not part of the textureResults list
-                result[z, x, 0] = baseValue / summary;
-
-                // set the rest of the values
-                for (var j = 0; j < textureResults.Length; j++)
-                    result[z, x, j + 1] = textureResults[j][i] / summary;
-            }
-
-            return result;
-        }
-
         // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
         private void FreeMemory()
         {
@@ -768,11 +709,6 @@ namespace DCL.Landscape
             }
 
             noiseGenCache.Dispose();
-        }
-
-        public void Dispose()
-        {
-            UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         //            (size,size)
