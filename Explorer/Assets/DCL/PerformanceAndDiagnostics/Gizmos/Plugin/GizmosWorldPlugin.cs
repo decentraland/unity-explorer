@@ -46,7 +46,7 @@ namespace DCL.Gizmos.Plugin
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies,
-            in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+            in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             DrawSceneGizmosHubSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, SCENE_GIZMOS_PROVIDERS_POOL);
         }

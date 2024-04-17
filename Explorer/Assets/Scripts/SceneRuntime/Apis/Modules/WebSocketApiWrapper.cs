@@ -4,6 +4,7 @@ using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -20,8 +21,7 @@ namespace SceneRuntime.Apis.Modules
 
         public void Dispose()
         {
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
             api.Dispose();
         }
 

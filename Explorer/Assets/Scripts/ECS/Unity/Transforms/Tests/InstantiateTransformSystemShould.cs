@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Optimization.Pools;
 using ECS.TestSuite;
@@ -41,8 +42,8 @@ namespace ECS.Unity.Transforms.Tests
         public void InstantiateTransformComponent()
         {
             // Arrange
-            world.Create(sdkTransform);
-            QueryDescription entityWithoutUnityTransform = new QueryDescription().WithExclusive<SDKTransform>();
+            world.Create(sdkTransform, new CRDTEntity(10));
+            QueryDescription entityWithoutUnityTransform = new QueryDescription().WithAll<SDKTransform>().WithNone<TransformComponent>();
             Assert.AreEqual(1, world.CountEntities(in entityWithoutUnityTransform));
 
             // Act

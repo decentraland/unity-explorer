@@ -18,9 +18,9 @@ namespace Utility
         }
 
         [Conditional("DEBUG")]
-        public static void SetDebugName(this Object @object, Entity entity)
+        public static void SetDebugName(this Object @object, Entity entity, string sdkName)
         {
-            @object.name = $"Entity {entity.Id} : {MultithreadingUtility.FrameCount}";
+            @object.name = $"Entity {entity.Id} ({sdkName}) : T={MultithreadingUtility.FrameCount}";
         }
     }
 }
