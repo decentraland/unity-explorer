@@ -29,6 +29,10 @@ MonoBehaviour:
 '
     m_Metadata:
       m_Items: []
+  - m_Id: 65668131220086784
+    m_Key: INCOMPATIBLE_BODY_SHAPE
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
