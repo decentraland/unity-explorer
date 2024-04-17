@@ -2,6 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.CharacterCamera.Components;
+using DCL.CharacterCamera.Components;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
@@ -9,6 +11,7 @@ using ECS.Abstract;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.UIToolkit;
+using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 
 namespace DCL.Interaction.HoverCanvas.Systems
 {
@@ -17,8 +20,8 @@ namespace DCL.Interaction.HoverCanvas.Systems
     public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;
-
         private readonly Dictionary<InputAction, HoverCanvasSettings.InputButtonSettings> inputButtonSettingsMap;
+        private Vector2 cursorPositionPercent;
 
         internal ShowHoverFeedbackSystem(World world, UI.HoverCanvas hoverCanvasInstance,
             IReadOnlyList<HoverCanvasSettings.InputButtonSettings> settings) : base(world)
@@ -33,7 +36,21 @@ namespace DCL.Interaction.HoverCanvas.Systems
 
         protected override void Update(float t)
         {
+            GetCursorStateQuery(World);
             SetTooltipsQuery(World);
+        }
+
+        [Query]
+        private void GetCursorState(in CursorComponent cursorComponent)
+        {
+            if (cursorComponent.CursorState == CursorState.Free)
+            {
+                // 0,0 is the center of the screen
+                cursorPositionPercent.x = (cursorComponent.Position.x - (Screen.width * 0.5f)) / Screen.width * 100f;
+                cursorPositionPercent.y = (cursorComponent.Position.y - (Screen.height * 0.5f)) / Screen.height * 100f;
+            }
+            else
+                cursorPositionPercent = Vector2Int.zero;
         }
 
         [Query]
@@ -60,6 +77,7 @@ namespace DCL.Interaction.HoverCanvas.Systems
                 }
 
                 hoverCanvasInstance.SetTooltipsCount(hoverFeedbackComponent.Tooltips.Count);
+                hoverCanvasInstance.SetPosition(cursorPositionPercent);
             }
         }
     }

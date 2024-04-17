@@ -68,7 +68,7 @@ namespace DCL.Interaction.Utility
             return true;
         }
 
-        internal static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
+        public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
             Vector3 globalOrigin,
             Vector3 direction)
         {

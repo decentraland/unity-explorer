@@ -9,7 +9,7 @@
                 <ui:Label tabindex="-1" text="CONTROL PANEL" display-tooltip-when-elided="true" class="debug-text--header" style="flex-grow: 1; border-left-width: 10px; -unity-text-align: middle-left;" />
                 <ui:Button text="✖" display-tooltip-when-elided="true" name="CloseButton" style="margin-left: 2px; margin-right: 2px; margin-top: 2px; margin-bottom: 2px; padding-left: 2px; padding-right: 2px; padding-top: 2px; padding-bottom: 2px; -unity-font-style: normal; border-left-width: 0; border-right-width: 6px; border-top-width: 0; border-bottom-width: 0; background-color: rgba(188, 188, 188, 0); align-self: center; border-left-color: rgba(149, 149, 149, 0); border-right-color: rgba(149, 149, 149, 0); border-top-color: rgba(149, 149, 149, 0); border-bottom-color: rgba(149, 149, 149, 0);" />
             </ui:VisualElement>
-            <ui:ScrollView horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto">
+            <ui:ScrollView horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" mouse-wheel-scroll-size="100">
                 <ui:VisualElement name="Parent" />
             </ui:ScrollView>
         </ui:VisualElement>
