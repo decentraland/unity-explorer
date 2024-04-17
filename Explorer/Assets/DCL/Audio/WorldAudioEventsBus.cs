@@ -17,18 +17,18 @@ namespace DCL.Audio
             }
         }
 
-        public event Action<int, NativeArray<int2>> PlayLandscapeAudioEvent;
-        public event Action<int> StopLandscapeAudioEvent;
+        public event Action<int, NativeArray<int2>, WorldAudioClipType> PlayWorldAudioEvent;
+        public event Action<int, WorldAudioClipType> StopWorldAudioEvent;
 
 
-        public void SendPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions)
+        public void SendPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
         {
-            PlayLandscapeAudioEvent?.Invoke(index, audioSourcesPositions);
+            PlayWorldAudioEvent?.Invoke(index, audioSourcesPositions, clipType);
         }
 
-        public void SendStopLandscapeAudioEvent(int index)
+        public void SendStopLandscapeAudioEvent(int index, WorldAudioClipType clipType)
         {
-            StopLandscapeAudioEvent?.Invoke(index);
+            StopWorldAudioEvent?.Invoke(index, clipType);
         }
 
 

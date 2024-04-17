@@ -13,15 +13,15 @@ namespace DCL.Audio
 
         [SerializeField] private List<AudioClipTypeAndConfigKeyValuePair> audioClipConfigsList = new ();
 
-        private readonly Dictionary<WorldAudioClipType, AudioClipConfig> audioClipConfigs = new ();
+        private readonly Dictionary<WorldAudioClipType, AudioClipDayNightVariants> audioClipConfigs = new ();
 
         public float DistanceThreshold => distanceThreshold;
 
         public float MinVolume => minVolume;
 
-        public AudioClipConfig GetAudioClipConfigForType(WorldAudioClipType type)
+        public AudioClipDayNightVariants GetAudioClipConfigForType(WorldAudioClipType type)
         {
-            audioClipConfigs.TryGetValue(type, out AudioClipConfig clipConfig);
+            audioClipConfigs.TryGetValue(type, out AudioClipDayNightVariants clipConfig);
             return clipConfig;
         }
 
@@ -32,25 +32,31 @@ namespace DCL.Audio
             audioClipConfigs.Clear();
             foreach (var clipConfig in audioClipConfigsList)
             {
-                if (clipConfig.Value != null) { audioClipConfigs.Add(clipConfig.Key, clipConfig.Value); }
+                audioClipConfigs.Add(clipConfig.Key, clipConfig.Value);
             }
+        }
+
+        [Serializable]
+        public struct AudioClipDayNightVariants
+        {
+            public AudioClipConfig DayClip;
+            public AudioClipConfig NightClip;
+
         }
 
         [Serializable]
         private struct AudioClipTypeAndConfigKeyValuePair
         {
             public WorldAudioClipType Key;
-            public AudioClipConfig Value;
-        }
-
-        public enum WorldAudioClipType
-        {
-            GladeDay,
-            GladeNight,
-            OceanDay,
-            OceanNight,
-            HillsDay,
-            HillsNight,
+            public AudioClipDayNightVariants Value;
         }
     }
+
+    public enum WorldAudioClipType
+    {
+        Glade,
+        Ocean,
+        Hills,
+    }
+
 }

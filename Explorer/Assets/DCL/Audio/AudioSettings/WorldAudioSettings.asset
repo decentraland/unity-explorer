@@ -20,4 +20,14 @@ MonoBehaviour:
   minVolume: 0.01
   audioClipConfigsList:
   - Key: 0
-    Value: {fileID: 11400000, guid: 25ea0ce1fa067264bb10e4c5f80ffd5b, type: 2}
+    Value:
+      DayClip: {fileID: 11400000, guid: 25ea0ce1fa067264bb10e4c5f80ffd5b, type: 2}
+      NightClip: {fileID: 11400000, guid: 9938a348807b3284bb0ce7bdf23d3cac, type: 2}
+  - Key: 1
+    Value:
+      DayClip: {fileID: 11400000, guid: ff5908bed38935044ad02f6e776a475b, type: 2}
+      NightClip: {fileID: 11400000, guid: ff5908bed38935044ad02f6e776a475b, type: 2}
+  - Key: 2
+    Value:
+      DayClip: {fileID: 11400000, guid: 71fbb4e71cdbb214293fd390bfa0f50c, type: 2}
+      NightClip: {fileID: 11400000, guid: 71fbb4e71cdbb214293fd390bfa0f50c, type: 2}

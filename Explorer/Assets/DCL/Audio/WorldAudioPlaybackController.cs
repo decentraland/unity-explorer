@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace DCL.Audio
@@ -13,73 +14,124 @@ namespace DCL.Audio
     {
         [SerializeField]
         private WorldAudioSettings audioSettings;
+        [SerializeField]
+        private AudioSource audioSourcePrefab;
 
-        private Dictionary<int, List<AudioSource>> audioSourcesPerIndex = new Dictionary<int, List<AudioSource>>();
+        private readonly Dictionary<int, List<AudioSource>> landscapeAudioSourcesPerIndex = new ();
+        private readonly Dictionary<int, List<AudioSource>> hillsAudioSourcesPerIndex = new ();
+        private readonly Dictionary<int, List<AudioSource>> oceanAudioSourcesPerIndex = new ();
         private GameObjectPool<AudioSource> audioSourcePool;
+
         public void Dispose()
         {
-            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent -= OnPlayLandscapeAudioEvent;
-            WorldAudioEventsBus.Instance.StopLandscapeAudioEvent -= StopAndReleaseAudioSources;
+            WorldAudioEventsBus.Instance.PlayWorldAudioEvent -= OnPlayLandscapeAudioEvent;
+            WorldAudioEventsBus.Instance.StopWorldAudioEvent -= StopAndReleaseAudioSources;
             audioSourcePool.Dispose();
         }
 
         public void Initialize()
         {
-            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent += OnPlayLandscapeAudioEvent;
-            WorldAudioEventsBus.Instance.StopLandscapeAudioEvent += StopAndReleaseAudioSources;
-            audioSourcePool = new GameObjectPool<AudioSource>(this.transform);
+            WorldAudioEventsBus.Instance.PlayWorldAudioEvent += OnPlayLandscapeAudioEvent;
+            WorldAudioEventsBus.Instance.StopWorldAudioEvent += StopAndReleaseAudioSources;
+            audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
         }
 
-        private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions)
+        private AudioSource OnCreateAudioSource()
         {
-            if (!audioSourcesPerIndex.TryGetValue(index, out var audioSourceList))
-            {
-                if (audioSourcesPositions.Length == 0) return;
+            AudioSource audioSource = Instantiate(audioSourcePrefab, transform);
+            audioSource.outputAudioMixerGroup = audioSettings.MixerGroup;
+            audioSource.loop = true;
+            audioSource.spatialBlend = 1;
+            return audioSource;
+        }
 
+        private void OnPlayWorldAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
+        {
+
+        }
+
+
+
+
+
+        private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType )
+        {
+            AudioClipConfig audioClipConfig = audioSettings.GetAudioClipConfigForType(clipType).DayClip; //We can switch this depending on the time of day for example
+
+            if (!CheckAudioClips(audioClipConfig)) return;
+
+            var audioSourcesPerIndex = landscapeAudioSourcesPerIndex;
+
+            switch (clipType)
+            {
+                default:
+                case WorldAudioClipType.Glade: break;
+                case WorldAudioClipType.Ocean:
+                    audioSourcesPerIndex = oceanAudioSourcesPerIndex;
+                    break;
+                case WorldAudioClipType.Hills:
+                    audioSourcesPerIndex = hillsAudioSourcesPerIndex;
+                    break;
+            }
+
+            if (!audioSourcesPerIndex.TryGetValue(index, out List<AudioSource> audioSourceList))
+            {
                 audioSourceList = new List<AudioSource>();
 
-                foreach (var position in audioSourcesPositions)
+                foreach (int2 position in audioSourcesPositions)
                 {
-                    var audioSource = audioSourcePool.Get();
-                    audioSource.gameObject.SetActive(true);
-                    audioSource.loop = true; //for now
-                    audioSource.spatialBlend = 1;
-                    audioSource.outputAudioMixerGroup = audioSettings.MixerGroup;
-                    audioSource.transform.parent = this.transform;
-                    audioSource.transform.position = new Vector3(position.x, 1, position.y);
+                    AudioSource audioSource = audioSourcePool.Get();
+                    Transform audioSourceTransform = audioSource.transform;
+                    audioSourceTransform.parent = transform;
+                    audioSourceTransform.position = new Vector3(position.x, 1, position.y);
                     audioSourceList.Add(audioSource);
                 }
 
                 audioSourcesPerIndex.Add(index, audioSourceList);
-
-                var audioClipConfig = audioSettings.GetAudioClipConfigForType(WorldAudioSettings.WorldAudioClipType.GladeDay); //We can check time of day and switch this
-                //We might want to check the clip before doing all this as well
-                if (CheckAudioClips(audioClipConfig))
-                {
-                    foreach (var audioSource in audioSourceList)
-                    {
-                        int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
-                        audioSource.clip = audioClipConfig.AudioClips[clipIndex];
-                        audioSource.time = Random.Range(0, audioSource.clip.length);
-                        audioSource.Play();
-                    }
-                }
             }
-        }
 
-        private void StopAndReleaseAudioSources(int index)
-        {
-            if (audioSourcesPerIndex.TryGetValue(index, out var audioSourceList))
+            foreach (AudioSource audioSource in audioSourceList)
             {
-                foreach (var audioSource in audioSourceList)
-                {
-                    audioSource.Stop();
-                    audioSourcePool.Release(audioSource);
-                }
-                audioSourcesPerIndex.Remove(index);
+                int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+                var clip = audioClipConfig.AudioClips[clipIndex];
+                audioSource.clip = clip;
+                audioSource.time = Random.Range(0, clip.length);
+                audioSource.volume = audioClipConfig.RelativeVolume;
+                audioSource.Play();
             }
         }
 
+        private void StopAndReleaseAudioSources(int index, WorldAudioClipType clipType)
+        {
+            var audioSourcesPerIndex = landscapeAudioSourcesPerIndex;
+
+            switch (clipType)
+            {
+                default:
+                case WorldAudioClipType.Glade: break;
+                case WorldAudioClipType.Ocean:
+                    audioSourcesPerIndex = oceanAudioSourcesPerIndex;
+                    break;
+                case WorldAudioClipType.Hills:
+                    audioSourcesPerIndex = hillsAudioSourcesPerIndex;
+                    break;
+            }
+
+
+            if (!audioSourcesPerIndex.TryGetValue(index, out List<AudioSource> audioSourceList))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.AUDIO), $"Cannot Release AudioSources for terrain of type {clipType} with Index {index} as there is none in the dictionary");
+                return;
+            }
+
+            foreach (AudioSource audioSource in audioSourceList)
+            {
+                audioSource.Stop();
+                audioSourcePool.Release(audioSource);
+            }
+
+            audioSourcesPerIndex.Remove(index);
+        }
 
         private bool CheckAudioClips(AudioClipConfig audioClipConfig)
         {
@@ -88,10 +140,8 @@ namespace DCL.Audio
                 ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
     }
 }

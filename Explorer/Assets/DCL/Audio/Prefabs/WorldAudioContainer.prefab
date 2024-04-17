@@ -45,3 +45,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSettings: {fileID: 11400000, guid: a997e5bc3f2b6ab47890b26af1070d45, type: 2}
+  audioSourcePrefab: {fileID: 3917837804026472468, guid: 19c8d833b2707744b983069d92ccf69c, type: 3}

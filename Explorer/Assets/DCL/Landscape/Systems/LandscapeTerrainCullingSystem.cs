@@ -15,6 +15,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
 using DCL.Audio;
+using Random = UnityEngine.Random;
 
 namespace DCL.Landscape.Systems
 {
@@ -32,6 +33,7 @@ namespace DCL.Landscape.Systems
 
         private NativeArray<float4> nativeFrustumPlanes;
         private NativeArray<VisibleBounds> terrainVisibilities;
+        private NativeArray<TerrainAudioState> terrainAudioStates;
         private NativeArray<NativeArray<int2>> terrainAudioSourcesPositions;
         private Plane[] frustumPlanes;
         private JobHandle jobHandle;
@@ -65,6 +67,8 @@ namespace DCL.Landscape.Systems
             jobHandle.Complete();
             nativeFrustumPlanes.Dispose();
             terrainVisibilities.Dispose();
+            terrainAudioStates.Dispose();
+            terrainAudioSourcesPositions.Dispose();
         }
 
         protected override void Update(float t)
@@ -85,15 +89,15 @@ namespace DCL.Landscape.Systems
         {
             IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
             terrainVisibilities = new NativeArray<VisibleBounds>(terrains.Count, Allocator.Persistent);
+            terrainAudioStates = new NativeArray<TerrainAudioState>(terrains.Count, Allocator.Persistent);
             terrainAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrains.Count, Allocator.Persistent);
 
             for (var i = 0; i < terrains.Count; i++)
             {
                 Terrain terrain = terrains[i];
                 Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
-                ReportHub.Log(new ReportData(ReportCategory.LANDSCAPE), $"Adding Positions for terrain with Index {i} and bounds {bounds.min} - {bounds.max}");
                 terrainAudioSourcesPositions[i] = GetAudioSourcesPositions(terrain.terrainData, bounds);
-
+                terrainAudioStates[i] = new TerrainAudioState();
                 terrainVisibilities[i] = new VisibleBounds
                 {
                     Bounds = new AABB
@@ -107,29 +111,34 @@ namespace DCL.Landscape.Systems
 
         private NativeArray<int2> GetAudioSourcesPositions(TerrainData terrainData, Bounds worldBounds)
         {
+            var split = 4; //This value must come from settings
+            var retryAttempts = 3; //This value must come from settings
             Vector3 terrainSize = terrainData.size;
-            int cellWidth = (int) terrainSize.x / 4;
-            int cellLength = (int) terrainSize.z / 4;
+            int cellWidth = (int)terrainSize.x / split;
+            int cellLength = (int)terrainSize.z / split;
 
-            NativeList<int2> positions = new NativeList<int2>(Allocator.Temp);
-            int2 worldCellCenter = new int2((int)worldBounds.center.x, (int)worldBounds.center.z);
-            for (var row = 0; row < 4; row++)
+            var positions = new NativeList<int2>(Allocator.Temp);
+            var worldCellMin = new int2((int)worldBounds.min.x, (int)worldBounds.min.z);
+
+            for (var row = 0; row < split; row++)
             {
-                for (var col = 0; col < 4; col++)
+                for (var col = 0; col < split; col++)
                 {
-                    int2 localCellCenter = new int2(
-                        ((col * cellWidth) + (cellWidth / 2)),
-                        ((row * cellLength) + (cellLength / 2))
+                    var localCellCenter = new int2(
+                        (col * cellWidth) + (cellWidth / 2),
+                        (row * cellLength) + (cellLength / 2)
                     );
 
-                    //We could retry this 3 or 4 times until we find a valid point.
-                    int2 randomOffset = new int2(UnityEngine.Random.Range(-cellWidth / 2, cellWidth / 2), UnityEngine.Random.Range(-cellLength / 2, cellLength / 2));
-                    int2 randomPosition = localCellCenter + randomOffset;
-
-                    if (!terrainData.IsHole(randomPosition.x, randomPosition.y))
+                    for (int retry = 0; retry < retryAttempts; retry++)
                     {
-                        positions.Add(worldCellCenter + randomPosition);
-                        ReportHub.Log(new ReportData(ReportCategory.LANDSCAPE),$"Added position at {worldCellCenter + randomPosition}");
+                        var randomOffset = new int2(Random.Range(-cellWidth / 2, cellWidth / 2), Random.Range(-cellLength / 2, cellLength / 2));
+                        int2 randomPosition = localCellCenter + randomOffset;
+
+                        if (!terrainData.IsHole(randomPosition.x, randomPosition.y))
+                        {
+                            positions.Add(worldCellMin + randomPosition);
+                            break;
+                        }
                     }
                 }
             }
@@ -154,23 +163,22 @@ namespace DCL.Landscape.Systems
 
                 for (var i = 0; i < terrainVisibilities.Length; i++)
                 {
+                    var audioState = terrainAudioStates[i];
+
+                    if (audioState is { ShouldBeHeard: true, IsHeard: false })
+                    {
+                        audioState.IsHeard = true;
+                        terrainAudioStates[i] = audioState;
+                        WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, terrainAudioSourcesPositions[i], WorldAudioClipType.Glade);
+                    }
+                    else if (audioState is { ShouldBeSilent: true, IsSilent: false })
+                    {
+                        audioState.IsSilent = true;
+                        terrainAudioStates[i] = audioState;
+                        WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i, WorldAudioClipType.Glade);
+                    }
+
                     VisibleBounds visibility = terrainVisibilities[i];
-
-                    if (visibility is {ShouldBeHeard: true, IsHeard: false })
-                    {
-                        //We put audiosources on the positions for this terrain
-                        visibility.IsHeard = true;
-                        terrainVisibilities[i] = visibility;
-                        WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, terrainAudioSourcesPositions[i]);
-                    }
-                    else if (visibility is {ShouldBeSilent: true, IsSilent: false })
-                    {
-                        visibility.IsSilent = true;
-                        terrainVisibilities[i] = visibility;
-                        //We remove audiosources from this terrain
-                        WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i);
-                    }
-
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
                     Terrain terrain = terrains[i];
@@ -198,11 +206,10 @@ namespace DCL.Landscape.Systems
                     nativeFrustumPlanes[i] = new float4(plane.normal.x, plane.normal.y, plane.normal.z, plane.distance);
                 }
 
-                var job = new UpdateBoundariesCullingJob(terrainVisibilities, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(terrainVisibilities, terrainAudioStates, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
                 jobHandle = job.Schedule(terrainVisibilities.Length, 32, jobHandle);
                 Profiler.EndSample();
             }
-
         }
 
         private Bounds GetTerrainBoundsInWorldSpace(Terrain terrain)
