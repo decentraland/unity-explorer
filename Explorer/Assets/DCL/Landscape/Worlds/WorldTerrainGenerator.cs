@@ -18,7 +18,7 @@ namespace DCL.Landscape
     public class WorldTerrainGenerator
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
-        private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
+        private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
 
         private readonly int parcelSize;
 
