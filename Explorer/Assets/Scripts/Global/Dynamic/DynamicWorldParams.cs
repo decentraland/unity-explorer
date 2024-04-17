@@ -15,6 +15,7 @@ namespace Global.Dynamic
         public StaticContainer StaticContainer;
         public IPluginSettingsContainer SettingsContainer;
         public UIDocument RootUIDocument;
+        public UIDocument CursorUIDocument;
         public DynamicSettings DynamicSettings;
         public IWeb3VerifiedAuthenticator Web3Authenticator;
         public IWeb3IdentityCache Web3IdentityCache;

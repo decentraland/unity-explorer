@@ -57,7 +57,7 @@ namespace DCL.Audio
 
         private void ContinuePlayLoopingUIAudio(AudioSource audioSource, bool startLoop, AudioClipConfig audioClipConfig)
         {
-            if (startLoop)
+            if (startLoop && CheckAudioClips(audioClipConfig))
             {
                 int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
@@ -82,7 +82,7 @@ namespace DCL.Audio
         {
             if (audioClipConfig.AudioClips.Length == 0)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
+                ReportHub.Log(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
                 return false;
             }
             else

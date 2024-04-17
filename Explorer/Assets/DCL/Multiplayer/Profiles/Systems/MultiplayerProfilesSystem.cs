@@ -10,6 +10,7 @@ using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.UserInAppInitializationFlow;
+using ECS;
 using ECS.Abstract;
 using UnityEngine;
 using Utility;
@@ -35,6 +36,7 @@ namespace DCL.Multiplayer.Profiles.Systems
         private readonly IRemotePoses remotePoses;
         private readonly ICharacterObject characterObject;
         private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IRealmData realmData;
 
         public MultiplayerProfilesSystem(
             World world,
@@ -45,7 +47,8 @@ namespace DCL.Multiplayer.Profiles.Systems
             IRemoteEntities remoteEntities,
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
-            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus
+            IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus,
+            IRealmData realmData
         ) : base(world)
         {
             this.remoteAnnouncements = remoteAnnouncements;
@@ -56,11 +59,16 @@ namespace DCL.Multiplayer.Profiles.Systems
             this.remotePoses = remotePoses;
             this.characterObject = characterObject;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
+            this.realmData = realmData;
         }
 
         protected override void Update(float t)
         {
             if (realFlowLoadingStatus.CurrentStage is not RealFlowLoadingStatus.Stage.Completed)
+                return;
+
+            // On realm switch it may be not configured yet
+            if (!realmData.Configured)
                 return;
 
             remoteProfiles.Download(remoteAnnouncements);

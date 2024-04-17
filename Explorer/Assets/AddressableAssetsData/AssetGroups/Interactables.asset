@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Interactables
+  m_EditorClassIdentifier: 
+  m_GroupName: Interactables
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 03287bc88d1666443b4c6e7373ace385
+  m_SerializeEntries:
+  - m_GUID: 31f3cd961c052c84baf27b3938e5b0f4
+    m_Address: HoverInteractableValid
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
+    m_Address: HoverInteractableInvalid
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf22911f490866b45b81ddea869255f2
+    m_Address: Assets/DCL/Interaction/Assets/Cursor.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23dcf75316411d344be316dc2cb0e41f
+    m_Address: Assets/DCL/Interaction/Assets/CursorInteractive.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98d75b092dc90bb49a14cf7e80096e01
+    m_Address: Assets/DCL/Interaction/Assets/Crosshair.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26fa4ad5e35df464b8cc4bd887c2a6d9
+    m_Address: Assets/DCL/Interaction/Assets/CrosshairInteractive.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf82184de91c3944b8de02d57d7dd151
+    m_Address: Crosshair.uxml
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25a27c814a51d4a67a7ebd0b3b672284
+    m_Address: Assets/DCL/Input/Assets/CursorDragCamera.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7382805fd18299d41925547efbad99f0
+    m_Address: Assets/DCL/Input/Assets/CursorSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 66bb171002d640f4cbfecc49b71048c7, type: 2}
+    - {fileID: 11400000, guid: 485599ca0a5a243438179fe18223ce36, type: 2}
