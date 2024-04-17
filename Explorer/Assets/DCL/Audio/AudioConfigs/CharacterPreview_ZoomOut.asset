@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CharacterPreview_ZoomOut
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 184f280e504b0ad45aaf8736b7493d4a, type: 3}
+  - {fileID: 0}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0
