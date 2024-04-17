@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using MVC;
 using System.Threading;
@@ -24,7 +25,11 @@ namespace DCL.ExplorePanel
             viewInstance.OpenExploreButton.onClick.RemoveAllListeners();
 
             viewInstance.OpenExploreButton.onClick.AddListener(() =>
-                mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ButtonPressedAudio);
+                mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget();
+            });
         }
+
     }
 }
