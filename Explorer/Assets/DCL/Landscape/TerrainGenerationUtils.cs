@@ -1,6 +1,4 @@
 ﻿using DCL.Landscape.Jobs;
-using DCL.Landscape.NoiseGeneration;
-using DCL.Landscape.Settings;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -30,38 +28,6 @@ namespace DCL.Landscape
                 emptyParcelsData.AsReadOnly(), minParcel, maxParcel);
 
             return job2.Schedule(emptyParcels.Length, 32, handle);
-        }
-
-        public static JobHandle SetupHeightsJobs(
-            ref NativeArray<float> heights,
-            ref NativeParallelHashMap<int2, int> emptyParcelsData,
-            ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData,
-            NoiseGeneratorCache noiseGenCache,
-            TerrainGenerationData terrainGenData,
-            int resolution, int2 terrainMinParcel, int offsetX, int offsetZ, int maxHeightIndex, int parcelSize, uint baseSeed)
-        {
-            INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
-            var noiseDataPointer = new NoiseDataPointer(resolution, offsetX, offsetZ);
-            JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
-
-            NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
-
-            var modifyJob = new ModifyTerrainHeightJob(
-                ref heights,
-                in emptyParcelsNeighborData, in emptyParcelsData,
-                in terrainNoise,
-                terrainGenData.terrainHoleEdgeSize,
-                terrainGenData.minHeight,
-                terrainGenData.pondDepth,
-                resolution,
-                offsetX,
-                offsetZ,
-                maxHeightIndex,
-                terrainMinParcel,
-                parcelSize
-            );
-
-            return modifyJob.Schedule(heights.Length, 64, handle);
         }
 
         /// <summary>

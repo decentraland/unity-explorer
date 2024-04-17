@@ -65,13 +65,13 @@ namespace Global.Dynamic
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
 
                     if (realm != genesisDomain)
-                        await GenerateWorldTerrainAsync(ct);
+                        await GenerateWorldTerrainAsync((uint)realm.GetHashCode(),ct);
                 });
 
             return true;
         }
 
-        private async UniTask GenerateWorldTerrainAsync(CancellationToken ct)
+        private async UniTask GenerateWorldTerrainAsync(uint worldSeed, CancellationToken ct)
         {
             FixedScenePointers scenePointers = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity);
             await UniTask.WaitUntil(() => scenePointers.AllPromisesResolved, cancellationToken: ct);
@@ -87,7 +87,7 @@ namespace Global.Dynamic
             foreach (int2 parcel in decodedParcels)
                 ownedParcels.Add(parcel);
 
-            await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, cancellationToken: ct);
+            await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
         }
 
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
