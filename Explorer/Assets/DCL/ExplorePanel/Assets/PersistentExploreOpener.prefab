@@ -194,6 +194,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1647044090541485172}
   <raycaster>k__BackingField: {fileID: 8235211841819826033}
   <OpenExploreButton>k__BackingField: {fileID: 6259155982829355887}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: ed99255f331fdd34c92d271fbbaddfb2, type: 2}
 --- !u!95 &2111446578221211890
 Animator:
   serializedVersion: 5
@@ -227,7 +228,6 @@ GameObject:
   - component: {fileID: 4787299909605144198}
   - component: {fileID: 71468218957528954}
   - component: {fileID: 6259155982829355887}
-  - component: {fileID: 6005523615960555105}
   m_Layer: 5
   m_Name: OpenExploreButton
   m_TagString: Untagged
@@ -337,17 +337,3 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &6005523615960555105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8926289785583344591}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 6259155982829355887}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: ed99255f331fdd34c92d271fbbaddfb2, type: 2}
