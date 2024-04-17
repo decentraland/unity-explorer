@@ -300,7 +300,6 @@ namespace Global.Dynamic
                     container.MessagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
-                    queuePoolFullMovementMessage,
                     realmData,
                     remoteEntities
                 ),
