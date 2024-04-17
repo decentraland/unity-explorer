@@ -9,6 +9,8 @@ namespace SceneRunner.Scene
     public interface ISceneFacade : IUniTaskAsyncDisposable, IDisposable
     {
         SceneShortInfo Info { get; }
+        ISceneStateProvider? SceneStateProvider { get; }
+        SceneEcsExecutor? EcsExecutor { get; }
 
         /// <summary>
         ///     Start an update loop with a given FPS

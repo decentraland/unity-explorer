@@ -2,6 +2,7 @@
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AssetsProvision.Provisions;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
@@ -29,6 +30,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
 namespace Global
 {
@@ -139,8 +141,8 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            var addressablesProvisioner = new AddressablesProvisioner()
-                                         .WithErrorTrace();
+            ErrorTraceAssetsProvisioner addressablesProvisioner = new AddressablesProvisioner()
+               .WithErrorTrace();
 
             container.AssetsProvisioner = addressablesProvisioner;
             container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
@@ -203,6 +205,7 @@ namespace Global
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
+                new MultiplayerPlugin(),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

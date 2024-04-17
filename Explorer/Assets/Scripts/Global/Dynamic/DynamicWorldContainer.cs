@@ -152,7 +152,7 @@ namespace Global.Dynamic
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
+            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
@@ -300,7 +300,8 @@ namespace Global.Dynamic
                     container.MessagePipesHub,
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
-                    remoteEntities
+                    remoteEntities,
+                    staticContainer.ScenesCache
                 ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput, multiplayerEmotesMessageBus, eventSystem),
@@ -366,7 +367,7 @@ namespace Global.Dynamic
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable)),
                 container.LODContainer.LODPlugin,
-                container.LODContainer.RoadPlugin
+                container.LODContainer.RoadPlugin,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
