@@ -194,6 +194,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1647044090541485172}
   <raycaster>k__BackingField: {fileID: 8235211841819826033}
   <OpenExploreButton>k__BackingField: {fileID: 6259155982829355887}
+  <ExploreOpenerAnimator>k__BackingField: {fileID: 2111446578221211890}
 --- !u!95 &2111446578221211890
 Animator:
   serializedVersion: 5
