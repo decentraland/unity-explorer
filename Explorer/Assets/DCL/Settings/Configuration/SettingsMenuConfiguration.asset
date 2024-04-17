@@ -21,6 +21,7 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 5242998342527483906
       - rid: 5242998500334764034
+      - rid: 5242998503086751746
     - <GroupTitle>k__BackingField: Environment
       <Modules>k__BackingField:
       - rid: 5242998342527483909
@@ -223,3 +224,18 @@ MonoBehaviour:
           options: []
           defaultOptionIndex: 0
         <Feature>k__BackingField: 3
+    - rid: 5242998503086751746
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Window Mode
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Windowed
+          - Fullscreen Borderless
+          - Fullscreen
+          defaultOptionIndex: 1
+        <Feature>k__BackingField: 4
