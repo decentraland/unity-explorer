@@ -218,6 +218,10 @@ MonoBehaviour:
       m_Radius: 8
     <ZoomSensitivity>k__BackingField: 0.04
     <Camera>k__BackingField: {fileID: 1829658356799049534}
+    <CameraOffset>k__BackingField: {fileID: 5294527864094199746}
+    <OffsetBottom>k__BackingField: {x: 1, y: 1, z: -2.5}
+    <OffsetMid>k__BackingField: {x: 1, y: 0, z: 0}
+    <OffsetTop>k__BackingField: {x: 1, y: 1.5, z: 0}
   freeCameraData:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
     <Speed>k__BackingField: 10

@@ -59,6 +59,7 @@ namespace DCL.CharacterCamera.Systems
         {
             HandleZoomingQuery(World);
             HandleSwitchStateQuery(World);
+            HandleOffsetQuery(World);
         }
 
         [Query]
@@ -142,6 +143,22 @@ namespace DCL.CharacterCamera.Systems
             int direction = input.ZoomOut ? 1 : -1;
             UpdateZoomValue(ref state.ThirdPersonZoomValue, direction, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity);
             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
+        }
+
+        [Query]
+        private void HandleOffset(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset)
+        {
+            if (cameraComponent.Mode == CameraMode.ThirdPerson)
+            {
+                float value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
+
+                Vector3 offset;
+
+                if (value < 0.5f) { offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetBottom, cinemachinePreset.ThirdPersonCameraData.OffsetMid, value * 2); }
+                else { offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetMid, cinemachinePreset.ThirdPersonCameraData.OffsetTop, (value - 0.5f) * 2); }
+
+                cinemachinePreset.ThirdPersonCameraData.CameraOffset.m_Offset = offset;
+            }
         }
 
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)

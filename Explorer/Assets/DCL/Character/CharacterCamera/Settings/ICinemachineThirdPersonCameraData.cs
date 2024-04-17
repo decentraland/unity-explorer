@@ -1,5 +1,6 @@
 using Cinemachine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.CharacterCamera.Settings
 {
@@ -21,5 +22,9 @@ namespace DCL.CharacterCamera.Settings
         IReadOnlyList<CinemachineFreeLook.Orbit> ZoomOutOrbitThreshold { get; }
 
         CinemachineFreeLook Camera { get; }
+        CinemachineCameraOffset CameraOffset { get; }
+        Vector3 OffsetBottom { get; }
+        Vector3 OffsetMid { get; }
+        Vector3 OffsetTop { get; }
     }
 }
