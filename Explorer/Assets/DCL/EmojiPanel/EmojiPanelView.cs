@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using DCL.UI;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Emoji
 {
     public class EmojiPanelView : MonoBehaviour
     {
-        public event Action<EmojiSectionName, bool> OnSectionSelected;
+        public event Action<float, bool> OnSectionSelected;
 
         [field: SerializeField]
         public List<EmojiSectionToggle> EmojiSections { get; private set; }
@@ -39,7 +38,7 @@ namespace DCL.Emoji
             OnEmojiFirstOpen?.Invoke();
 
             foreach (EmojiSectionToggle emojiSectionToggle in EmojiSections)
-                emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => OnSectionSelected?.Invoke(emojiSectionToggle.SectionName, isOn));
+                emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => OnSectionSelected?.Invoke(emojiSectionToggle.SectionPosition, isOn));
         }
     }
 }

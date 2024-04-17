@@ -230,7 +230,7 @@ namespace DCL.Nametags
 
         private float CalculatePreferredWidth(string messageContent)
         {
-            if (Username.GetParsedText().Length > (GetEmojisCount(messageContent) > 0 ? MessageContent.GetParsedText().Length + GetEmojisCount(messageContent) : MessageContent.GetParsedText().Length))
+            if(Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0) > MessageContent.preferredWidth)
                 return Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth;
 
             if(MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x < MaxWidth)
@@ -238,9 +238,6 @@ namespace DCL.Nametags
 
             return MaxWidth;
         }
-
-        private int GetEmojisCount(string message) =>
-            message.Split("\\U0").Length - 1;
 
     }
 }

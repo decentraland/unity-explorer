@@ -21,6 +21,9 @@ namespace DCL.Emoji
         [field: SerializeField]
         public EmojiSectionName SectionName { get; private set; }
 
+        [field: SerializeField]
+        public float SectionPosition { get; private set; }
+
         private void Start() =>
             SectionToggle.onValueChanged.AddListener(OnValueChanged);
 

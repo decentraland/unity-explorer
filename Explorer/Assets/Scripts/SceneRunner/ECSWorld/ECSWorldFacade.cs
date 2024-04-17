@@ -15,22 +15,34 @@ namespace SceneRunner.ECSWorld
     {
         public readonly World EcsWorld;
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
+        private readonly IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners;
 
         private readonly SystemGroupWorld systemGroupWorld;
 
         public ECSWorldFacade(
             SystemGroupWorld systemGroupWorld,
             World ecsWorld,
-            IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems)
+            IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems,
+            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
+            this.sceneIsCurrentListeners = sceneIsCurrentListeners;
         }
 
         public void Initialize()
         {
             systemGroupWorld.Initialize();
+        }
+
+        public void OnSceneIsCurrentChanged(bool isCurrent)
+        {
+            for (var i = 0; i < sceneIsCurrentListeners.Count; i++)
+            {
+                try { sceneIsCurrentListeners[i].OnSceneIsCurrentChanged(isCurrent); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
+            }
         }
 
         public void Dispose()
