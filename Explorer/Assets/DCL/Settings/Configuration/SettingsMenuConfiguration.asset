@@ -174,7 +174,7 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 7
     - rid: 5242998342527483920
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -188,13 +188,13 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 6
     - rid: 5242998342527483921
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: UI SFX
+          <ModuleName>k__BackingField: Music
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 1
@@ -202,7 +202,7 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 6
+        <Feature>k__BackingField: 5
     - rid: 5242998342527483922
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

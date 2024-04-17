@@ -4,6 +4,7 @@ using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.Settings.Configuration
 {
@@ -19,7 +20,8 @@ namespace DCL.Settings.Configuration
         public override SettingsFeatureController CreateModule(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            LandscapeData landscapeData)
+            LandscapeData landscapeData,
+            AudioMixer generalAudioMixer)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -27,7 +29,7 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case ToggleFeatures.CHAT_SOUNDS_FEATURE:
-                    return new ChatSoundsSettingsController(viewInstance);
+                    return new ChatSoundsSettingsController(viewInstance, generalAudioMixer);
                 // add other cases...
             }
 

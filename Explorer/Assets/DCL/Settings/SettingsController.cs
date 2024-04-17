@@ -7,6 +7,7 @@ using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using Object = UnityEngine.Object;
 
 namespace DCL.Settings
@@ -15,6 +16,7 @@ namespace DCL.Settings
     {
         private readonly SettingsView view;
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
+        private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
         private readonly RectTransform rectTransform;
@@ -23,11 +25,13 @@ namespace DCL.Settings
         public SettingsController(
             SettingsView view,
             SettingsMenuConfiguration settingsMenuConfiguration,
+            AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
+            this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
 
@@ -78,7 +82,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer));
             }
         }
 

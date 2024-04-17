@@ -4,6 +4,7 @@ using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.Settings.Configuration
 {
@@ -17,15 +18,17 @@ namespace DCL.Settings.Configuration
             MOUSE_SENSITIVITY_FEATURE,
             MASTER_VOLUME_FEATURE,
             WORLD_SOUNDS_VOLUME_FEATURE,
-            AVATAR_SOUNDS_VOLUME_FEATURE,
+            MUSIC_VOLUME_FEATURE,
             UI_SOUNDS_VOLUME_FEATURE,
+            AVATAR_SOUNDS_VOLUME_FEATURE,
             // add other features...
         }
 
         public override SettingsFeatureController CreateModule(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            LandscapeData landscapeData)
+            LandscapeData landscapeData,
+            AudioMixer generalAudioMixer)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -39,13 +42,15 @@ namespace DCL.Settings.Configuration
                 case SliderFeatures.MOUSE_SENSITIVITY_FEATURE:
                     return new MouseSensitivitySettingsController(viewInstance);
                 case SliderFeatures.MASTER_VOLUME_FEATURE:
-                    return new MasterVolumeSettingsController(viewInstance);
+                    return new MasterVolumeSettingsController(viewInstance, generalAudioMixer);
                 case SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE:
-                    return new WorldSoundsVolumeSettingsController(viewInstance);
-                case SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE:
-                    return new AvatarSoundsVolumeSettingsController(viewInstance);
+                    return new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                case SliderFeatures.MUSIC_VOLUME_FEATURE:
+                    return new MusicVolumeSettingsController(viewInstance, generalAudioMixer);
                 case SliderFeatures.UI_SOUNDS_VOLUME_FEATURE:
-                    return new UISoundsVolumeSettingsController(viewInstance);
+                    return new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer);
+                case SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE:
+                    return new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer);
                 // add other cases...
             }
 
