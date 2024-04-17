@@ -264,7 +264,9 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
                 remoteEntities,
-                staticContainer.GlobalWorldProxy
+                staticContainer.GlobalWorldProxy,
+                landscapePlugin,
+                container.LODContainer.RoadPlugin
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>

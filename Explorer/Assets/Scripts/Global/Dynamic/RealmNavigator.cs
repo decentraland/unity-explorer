@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
@@ -11,7 +10,6 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
 using DCL.PluginSystem.Global;
 using DCL.Roads.Systems;
-using DCL.SceneLoadingScreens;
 using ECS.SceneLifeCycle.Components;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
@@ -20,8 +18,6 @@ using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
@@ -53,10 +49,9 @@ namespace Global.Dynamic
             ITeleportController teleportController,
             IRoomHub roomHub,
             IRemoteEntities remoteEntities,
-            ObjectProxy<World> globalWorldProxy
+            ObjectProxy<World> globalWorldProxy,
+            LandscapePlugin landscapePlugin, RoadPlugin roadsPlugin
         )
-        public RealmNavigator(MVCManager mvcManager, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController,
-            LandscapePlugin landscapePlugin, RoadPlugin roadsPlugin)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -87,20 +82,35 @@ namespace Global.Dynamic
                     remoteEntities.ForceRemoveAll(world);
                     await roomHub.StopAsync();
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
+
+                    if (realm != genesisDomain)
+                        await GenerateWorldTerrainAsync((uint)realm.GetHashCode(),ct);
+
                     await roomHub.StartAsync();
                 },
                 ct
             );
-            await ShowLoadingScreenAndExecuteTaskAsync(ct,
-                async loadReport =>
-                {
-                    await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
-
-                    if (realm != genesisDomain)
-                        await GenerateWorldTerrainAsync((uint)realm.GetHashCode(),ct);
-                });
 
             return true;
+        }
+
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
+            {
+                if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
+                {
+                    await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
+                    SwitchMiscVisibility(true);
+
+                    ct.ThrowIfCancellationRequested();
+                }
+
+                WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+                await waitForSceneReadiness.ToUniTask(ct);
+            }, ct);
         }
 
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, CancellationToken ct)
@@ -122,26 +132,6 @@ namespace Global.Dynamic
             await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
         }
 
-        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
-            await ShowLoadingScreenAndExecuteTaskAsync(ct, async loadReport =>
-            {
-                if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
-                {
-                    await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
-                    SwitchMiscVisibility(true);
-
-                    ct.ThrowIfCancellationRequested();
-                }
-
-                WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-                await waitForSceneReadiness.ToUniTask(ct);
-            });
-        }
-
         private void SwitchMiscVisibility(bool isVisible)
         {
             // isVisible
@@ -154,26 +144,26 @@ namespace Global.Dynamic
             landscapePlugin.WorldTerrainGenerator.SwitchVisibility(!isVisible);
         }
 
-        private async UniTask ShowLoadingScreenAndExecuteTaskAsync(CancellationToken ct, params Func<AsyncLoadProcessReport, UniTask>[] operations)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var timeout = TimeSpan.FromSeconds(30);
-            var loadReport = AsyncLoadProcessReport.Create();
-
-            UniTask showLoadingScreenTask = mvcManager.ShowAsync(
-                                                           SceneLoadingScreenController.IssueCommand(
-                                                               new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
-                                                      .AttachExternalCancellation(ct);
-
-            var operationTasks = new UniTask[operations.Length + 1];
-
-            for (var index = 0; index < operations.Length; index++)
-                operationTasks[index] = operations[index](loadReport);
-
-            operationTasks[operations.Length] = showLoadingScreenTask;
-
-            await UniTask.WhenAll(operationTasks);
-        }
+        // private async UniTask ShowLoadingScreenAndExecuteTaskAsync(CancellationToken ct, params Func<AsyncLoadProcessReport, UniTask>[] operations)
+        // {
+        //     ct.ThrowIfCancellationRequested();
+        //
+        //     var timeout = TimeSpan.FromSeconds(30);
+        //     var loadReport = AsyncLoadProcessReport.Create();
+        //
+        //     UniTask showLoadingScreenTask = mvcManager.ShowAsync(
+        //                                                    SceneLoadingScreenController.IssueCommand(
+        //                                                        new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
+        //                                               .AttachExternalCancellation(ct);
+        //
+        //     var operationTasks = new UniTask[operations.Length + 1];
+        //
+        //     for (var index = 0; index < operations.Length; index++)
+        //         operationTasks[index] = operations[index](loadReport);
+        //
+        //     operationTasks[operations.Length] = showLoadingScreenTask;
+        //
+        //     await UniTask.WhenAll(operationTasks);
+        // }
     }
 }
