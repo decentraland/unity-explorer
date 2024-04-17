@@ -46,8 +46,7 @@ namespace DCL.Landscape
 
         private readonly TerrainFactory factory;
         private readonly TerrainChunkDataGenerator chunkDataGenerator;
-        private GameObject rootGo;
-        private TreePrototype[] treePrototypes;
+
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
@@ -61,10 +60,10 @@ namespace DCL.Landscape
         private bool isTerrainGenerated;
         private bool showTerrainByDefault;
 
+        private GameObject rootGo;
+
         public Transform Ocean { get; private set; }
-
         public List<Transform> Cliffs { get; } = new ();
-
         public Transform Wind { get; private set; }
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
@@ -149,7 +148,7 @@ namespace DCL.Landscape
                 /////////////////////////
 
                 var terrainDataDictionary = new Dictionary<int2, TerrainData>();
-                chunkDataGenerator.Prepare((int)worldSeed, PARCEL_SIZE, ref ownedParcels, ref emptyParcelsData, ref emptyParcelsNeighborData);
+                chunkDataGenerator.Prepare((int)worldSeed, PARCEL_SIZE, ref emptyParcelsData, ref emptyParcelsNeighborData);
 
                 for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
                 for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)

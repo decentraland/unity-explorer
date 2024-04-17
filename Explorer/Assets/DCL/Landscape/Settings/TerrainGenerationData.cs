@@ -16,6 +16,10 @@ namespace DCL.Landscape.Settings
         public float terrainHoleEdgeSize;
         public float minHeight = 1f;
         public float pondDepth = 5;
+
+        [Min(0)]
+        public int borderPadding = 2;
+
         public NoiseDataBase terrainHeightNoise;
 
         [Header("Textures")]

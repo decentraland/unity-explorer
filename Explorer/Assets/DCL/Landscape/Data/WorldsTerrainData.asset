@@ -19,6 +19,7 @@ MonoBehaviour:
   terrainHoleEdgeSize: 0.5
   minHeight: 0
   pondDepth: 0
+  borderPadding: 2
   terrainHeightNoise: {fileID: 11400000, guid: 9c77fb8d5e4c2f34aa2299f12ba5920f, type: 2}
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:
