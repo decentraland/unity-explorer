@@ -18,7 +18,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Utility;
 using JobHandle = Unity.Jobs.JobHandle;
 using Object = UnityEngine.Object;
@@ -45,9 +44,9 @@ namespace DCL.Landscape
         private readonly TerrainGenerationData terrainGenData;
         private GameObject rootGo;
         private TreePrototype[] treePrototypes;
-        private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelNeighborData;
-        private NativeParallelHashMap<int2, int> emptyParcelHeights;
-        private NativeArray<int2> emptyParcels;
+        private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
+        private NativeParallelHashMap<int2, int> emptyParcelsData;
+        private readonly NativeArray<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
         private int maxHeightIndex;
         private readonly NoiseGeneratorCache noiseGenCache;
@@ -122,12 +121,11 @@ namespace DCL.Landscape
                 rootGo = TerrainFactory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
 
                 timeProfiler.StartMeasure();
+
                 Ocean = factory.CreateOcean(rootGo.transform);
                 Wind = factory.CreateWind();
-
-                GenerateCliffs();
-
-                GenerateBorderColliders(new int2(-150, -150)*PARCEL_SIZE, new int2(160,160)*PARCEL_SIZE, new int2(310,310)*PARCEL_SIZE)
+                SpawnCliffs();
+                SpawnBorderColliders(new int2(-150, -150)*PARCEL_SIZE, new int2(160,160)*PARCEL_SIZE, new int2(310,310)*PARCEL_SIZE)
                    .position = new Vector3(terrainGenData.terrainSize / 2f, 0, terrainGenData.terrainSize / 2f);
 
                 timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Misc & Cliffs"));
@@ -214,83 +212,22 @@ namespace DCL.Landscape
                 terrain.enabled = true;
         }
 
-        //            (size,size)
-        //        N
-        //      W + E
-        //        S
-        // (0,0)
-        private void GenerateCliffs()
-        {
-            if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
-                return;
-
-            var cliffsRoot = TerrainFactory.CreateCliffsRoot(rootGo.transform);
-
-            factory.CreateCliffCorner(cliffsRoot,new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
-            factory.CreateCliffCorner(cliffsRoot,new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
-            factory.CreateCliffCorner(cliffsRoot,new Vector3(terrainGenData.terrainSize, 0, 0), Quaternion.Euler(0, 90, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainGenData.terrainSize, 0, terrainGenData.terrainSize), Quaternion.identity);
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot,  new Vector3(terrainGenData.terrainSize, 0, i + PARCEL_SIZE),Quaternion.Euler(0, 90, 0)));
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot,  new Vector3(i, 0, terrainGenData.terrainSize), Quaternion.identity));
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(0, 0, i), Quaternion.Euler(0, 270, 0)));
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i + PARCEL_SIZE, 0, 0), Quaternion.Euler(0, 180, 0)));
-        }
-
-        private Transform GenerateBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
-        {
-            var collidersRoot = TerrainFactory.CreateCollidersRoot(rootGo.transform);
-
-            const float HEIGHT = 50.0f; // Height of the collider
-            const float THICKNESS = 10.0f; // Thickness of the collider
-
-            // Create colliders along each side of the terrain
-            AddCollider(minInUnits.x, minInUnits.y, sidesLength.x, "South Border Collider", new int2(0, -1), 0);
-            AddCollider(minInUnits.x, maxInUnits.y, sidesLength.x, "North Border Collider", new int2(0, 1), 0);
-            AddCollider(minInUnits.x, minInUnits.y, sidesLength.y, "West Border Collider", new int2(-1, 0), 90);
-            AddCollider(maxInUnits.x, minInUnits.y, sidesLength.y, "East Border Collider", new int2(1, 0), 90);
-
-            return collidersRoot;
-
-            void AddCollider(float posX, float posY, float length, string name, int2 dir, float rotation)
-            {
-                float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.x;
-                float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.y;
-
-                TerrainFactory.CreateBorderCollider(name, collidersRoot,
-                    size: new Vector3(length, HEIGHT, THICKNESS),
-                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
-            }
-        }
-
         private async UniTask SetupEmptyParcelDataAsync(CancellationToken cancellationToken)
         {
             if (localCache.IsValid())
                 maxHeightIndex = localCache.GetMaxHeight();
             else
             {
-                emptyParcelHeights = new NativeParallelHashMap<int2, int>(emptyParcels.Length, Allocator.Persistent);
-                emptyParcelNeighborData = new NativeParallelHashMap<int2, EmptyParcelNeighborData>(emptyParcels.Length, Allocator.Persistent);
+                var handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
+                    ref emptyParcelsData, ref emptyParcelsNeighborData,
+                    in emptyParcels, ref ownedParcels,
+                    new int2(-150, -150), new int2(150, 150),
+                    terrainGenData.heightScaleNerf);
 
-                var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelHeights.AsParallelWriter(),
-                    terrainGenData.heightScaleNerf, new int2(-150, -150), new int2(150, 150));
-                JobHandle handle = job.Schedule(emptyParcels.Length, 32);
-
-                var job2 = new CalculateEmptyParcelNeighbourHeights(in emptyParcels, in ownedParcels, emptyParcelNeighborData.AsParallelWriter(),
-                    emptyParcelHeights.AsReadOnly(), new int2(-150, -150), new int2(150, 150));
-                JobHandle handle2 = job2.Schedule(emptyParcels.Length, 32, handle);
-
-                await handle2.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
 
                 // Calculate this outside the jobs since they are Parallel
-                foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelHeights)
+                foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
                     if (emptyParcelHeight.Value > maxHeightIndex)
                         maxHeightIndex = emptyParcelHeight.Value;
 
@@ -305,8 +242,9 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                TerrainData terrainData = terrainDatas[new int2(x, z)];
-                GenerateTerrainChunk(x, z, terrainData, terrainGenData.terrainMaterial);
+                var position = new int2(x, z);
+                TerrainData terrainData = terrainDatas[position];
+                terrains.Add(factory.CreateTerrainChunk(terrainData, rootGo.transform, position, terrainGenData.terrainMaterial, showTerrainByDefault));
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + (spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
@@ -433,23 +371,6 @@ namespace DCL.Landscape
                 foreach (GCHandle usedHandle in usedHandles)
                     usedHandle.Free();
             }
-        }
-
-        private void GenerateTerrainChunk(int offsetX, int offsetZ, TerrainData terrainData, Material material)
-        {
-            GameObject terrainObject = Terrain.CreateTerrainGameObject(terrainData);
-            Terrain terrain = terrainObject.GetComponent<Terrain>();
-            terrain.shadowCastingMode = ShadowCastingMode.Off;
-            terrain.materialTemplate = material;
-            terrain.detailObjectDistance = 200;
-            terrain.enableHeightmapRayTracing = false;
-            terrain.drawHeightmap = true; // forced to true for the color map renderer
-            terrain.drawTreesAndFoliage = showTerrainByDefault;
-
-            terrainObject.transform.position = new Vector3(offsetX, -terrainGenData.minHeight, offsetZ);
-            terrainObject.transform.SetParent(rootGo.transform, false);
-
-            terrains.Add(terrain);
         }
 
         private void AddColorMapRenderer(GameObject parent)
@@ -617,7 +538,7 @@ namespace DCL.Landscape
 
                 var modifyJob = new ModifyTerrainHeightJob(
                     ref heights,
-                    in emptyParcelNeighborData, in emptyParcelHeights,
+                    in emptyParcelsNeighborData, in emptyParcelsData,
                     in terrainNoise,
                     terrainGenData.terrainHoleEdgeSize,
                     terrainGenData.minHeight,
@@ -729,7 +650,7 @@ namespace DCL.Landscape
                         var treeInstancesJob = new GenerateTreeInstancesJob(
                             resultReference.AsReadOnly(),
                             treeInstances.AsParallelWriter(),
-                            emptyParcelNeighborData.AsReadOnly(),
+                            emptyParcelsNeighborData.AsReadOnly(),
                             in treeAsset.randomization,
                             treeAsset.radius,
                             treeAssetIndex,
@@ -783,6 +704,7 @@ namespace DCL.Landscape
         }
 
         // Convert flat NativeArray to a 2D array (is there another way?)
+
         private static float[,] ConvertTo2DArray(NativeArray<float> array, int width, int height)
         {
             var result = new float[width, height];
@@ -841,8 +763,8 @@ namespace DCL.Landscape
         {
             if (!localCache.IsValid())
             {
-                emptyParcelNeighborData.Dispose();
-                emptyParcelHeights.Dispose();
+                emptyParcelsNeighborData.Dispose();
+                emptyParcelsData.Dispose();
             }
 
             noiseGenCache.Dispose();
@@ -851,6 +773,62 @@ namespace DCL.Landscape
         public void Dispose()
         {
             UnityObjectUtils.SafeDestroy(rootGo);
+        }
+
+        //            (size,size)
+        //        N
+        //      W + E
+        //        S
+        // (0,0)
+        private void SpawnCliffs()
+        {
+            if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
+                return;
+
+            var cliffsRoot = TerrainFactory.CreateCliffsRoot(rootGo.transform);
+
+            factory.CreateCliffCorner(cliffsRoot,new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
+            factory.CreateCliffCorner(cliffsRoot,new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
+            factory.CreateCliffCorner(cliffsRoot,new Vector3(terrainGenData.terrainSize, 0, 0), Quaternion.Euler(0, 90, 0));
+            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainGenData.terrainSize, 0, terrainGenData.terrainSize), Quaternion.identity);
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
+                Cliffs.Add(factory.CreateCliffSide(cliffsRoot,  new Vector3(terrainGenData.terrainSize, 0, i + PARCEL_SIZE),Quaternion.Euler(0, 90, 0)));
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
+                Cliffs.Add(factory.CreateCliffSide(cliffsRoot,  new Vector3(i, 0, terrainGenData.terrainSize), Quaternion.identity));
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
+                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(0, 0, i), Quaternion.Euler(0, 270, 0)));
+
+            for (var i = 0; i < terrainGenData.terrainSize; i += PARCEL_SIZE)
+                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i + PARCEL_SIZE, 0, 0), Quaternion.Euler(0, 180, 0)));
+        }
+
+        private Transform SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
+        {
+            var collidersRoot = TerrainFactory.CreateCollidersRoot(rootGo.transform);
+
+            const float HEIGHT = 50.0f; // Height of the collider
+            const float THICKNESS = 10.0f; // Thickness of the collider
+
+            // Create colliders along each side of the terrain
+            AddCollider(minInUnits.x, minInUnits.y, sidesLength.x, "South Border Collider", new int2(0, -1), 0);
+            AddCollider(minInUnits.x, maxInUnits.y, sidesLength.x, "North Border Collider", new int2(0, 1), 0);
+            AddCollider(minInUnits.x, minInUnits.y, sidesLength.y, "West Border Collider", new int2(-1, 0), 90);
+            AddCollider(maxInUnits.x, minInUnits.y, sidesLength.y, "East Border Collider", new int2(1, 0), 90);
+
+            return collidersRoot;
+
+            void AddCollider(float posX, float posY, float length, string name, int2 dir, float rotation)
+            {
+                float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.x;
+                float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.y;
+
+                TerrainFactory.CreateBorderCollider(name, collidersRoot,
+                    size: new Vector3(length, HEIGHT, THICKNESS),
+                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
+            }
         }
     }
 }

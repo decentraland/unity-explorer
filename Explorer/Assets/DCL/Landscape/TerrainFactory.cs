@@ -1,6 +1,8 @@
 ﻿using DCL.Landscape.Settings;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Landscape
@@ -72,6 +74,24 @@ namespace DCL.Landscape
             collider.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yRotation, 0));
 
             return collider;
+        }
+
+        public Terrain CreateTerrainChunk(TerrainData terrainData, Transform parent, int2 at, Material material, bool drawTreesAndFoliage)
+        {
+            Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
+                                     .GetComponent<Terrain>();
+
+            terrain.shadowCastingMode = ShadowCastingMode.Off;
+            terrain.materialTemplate = material;
+            terrain.detailObjectDistance = 200;
+            terrain.enableHeightmapRayTracing = false;
+            terrain.drawHeightmap = true; // forced to true for the color map renderer
+            terrain.drawTreesAndFoliage = drawTreesAndFoliage;
+
+            terrain.transform.position = new Vector3(at.x, -terrainGenData.minHeight, at.y);
+            terrain.transform.SetParent(parent, false);
+
+            return terrain;
         }
 
         public TreePrototype[] GetTreePrototypes()
