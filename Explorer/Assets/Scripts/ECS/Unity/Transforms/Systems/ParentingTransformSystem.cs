@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Diagnostics;
 using ECS.Abstract;
@@ -20,10 +21,12 @@ namespace ECS.Unity.Transforms.Systems
     {
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly SceneShortInfo sceneShortInfo;
 
-        public ParentingTransformSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        public ParentingTransformSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot, SceneShortInfo sceneShortInfo) : base(world)
         {
             this.sceneRoot = sceneRoot;
+            this.sceneShortInfo = sceneShortInfo;
             this.entitiesMap = entitiesMap;
         }
 
@@ -40,7 +43,7 @@ namespace ECS.Unity.Transforms.Systems
             foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
             {
                 SetNewChild(ref World.Get<TransformComponent>(childEntity.Entity),
-                    childEntity, sceneRoot);
+                    childEntity, 0, sceneRoot, SpecialEntitiesID.SCENE_ROOT_ENTITY);
             }
 
             transformComponentToBeDeleted.Children.Clear();
@@ -48,7 +51,7 @@ namespace ECS.Unity.Transforms.Systems
 
         [Query]
         [All(typeof(SDKTransform), typeof(TransformComponent))]
-        private void DoParenting(in Entity entity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void DoParenting(in Entity entity, CRDTEntity crdtEntity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             if (!sdkTransform.IsDirty) return;
 
@@ -63,25 +66,30 @@ namespace ECS.Unity.Transforms.Systems
                     RemoveFromParent(transformComponent, World.Reference(entity));
             }
 
-            SetNewChild(ref transformComponent, World.Reference(entity), parentReference);
+            SetNewChild(ref transformComponent, World.Reference(entity), crdtEntity, parentReference, sdkTransform.ParentId);
         }
 
-        private void SetNewChild(ref TransformComponent childComponent, EntityReference childEntityReference,
-            Entity parentEntity)
+        private void SetNewChild(ref TransformComponent childComponent, EntityReference childEntityReference, CRDTEntity childCRDTEntity,
+            Entity parentEntity, CRDTEntity parentId)
         {
             if (childComponent.Parent == parentEntity)
                 return;
 
             if (!World.IsAlive(parentEntity))
             {
-                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntityReference.Entity} to a dead entity parent");
+                ReportHub.LogError(new ReportData(GetReportCategory(), sceneShortInfo: sceneShortInfo), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to a dead entity parent");
                 return;
             }
 
-            TransformComponent parentComponent = World.Get<TransformComponent>(parentEntity);
-            childComponent.Transform.SetParent(parentComponent.Transform, true);
-            childComponent.Parent = World.Reference(parentEntity);
-            parentComponent.Children.Add(childEntityReference);
+            ref TransformComponent parentComponent = ref World.TryGetRef<TransformComponent>(parentEntity, out bool success);
+
+            if (!success)
+            {
+                ReportHub.LogError(new ReportData(GetReportCategory(), sceneShortInfo: sceneShortInfo), $"Trying to parent entity {childEntityReference.Entity} ({childCRDTEntity}) to parent {parentEntity} ({parentId}) that doesn't have a TransformComponent");
+                return;
+            }
+
+            childComponent.AssignParent(childEntityReference, World.Reference(parentEntity), in parentComponent);
         }
 
         private void RemoveFromParent(TransformComponent childComponent, EntityReference childEntityReference)

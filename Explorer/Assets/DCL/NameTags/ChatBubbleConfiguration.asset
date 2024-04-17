@@ -17,5 +17,7 @@ MonoBehaviour:
   bubbleMarginOffsetWidth: 0.4
   bubbleMarginOffsetHeight: 0.6
   animationDuration: 0.7
-  fullOpacityMaxDistance: 8.5
-  bubbleIdleTime: 6000
+  fullOpacityMaxDistance: 20
+  bubbleIdleTime: 5000
+  maxDistance: 40
+  additionalMsPerCharacter: 20

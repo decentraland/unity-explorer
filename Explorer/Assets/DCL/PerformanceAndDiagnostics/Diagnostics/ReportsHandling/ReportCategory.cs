@@ -210,6 +210,8 @@
 
         public const string MULTIPLAYER_MOVEMENT = nameof(MULTIPLAYER_MOVEMENT);
 
+        public const string AUDIO = nameof(AUDIO);
+
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
         /// </summary>
@@ -217,6 +219,8 @@
 
         public const string MVC = nameof(MVC);
 
+        public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
+        
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>

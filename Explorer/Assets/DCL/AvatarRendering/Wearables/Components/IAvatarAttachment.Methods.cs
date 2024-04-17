@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -162,6 +163,12 @@ namespace DCL.AvatarRendering.Wearables.Components
         {
             var representation = GetRepresentation(bodyShapeType);
             var dto = GetDTO();
+
+            if (representation == null)
+            {
+                ReportHub.LogWarning(ReportCategory.WEARABLE, $"Wearable {dto.id} has no representation for body shape {bodyShapeType}");
+                return dto.Metadata.AbstractData.replaces;
+            }
 
             Assert.IsTrue(representation.HasValue);
 

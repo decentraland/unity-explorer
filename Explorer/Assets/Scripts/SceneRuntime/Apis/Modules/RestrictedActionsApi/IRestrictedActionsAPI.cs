@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 {
-    public interface IRestrictedActionsAPI : IDisposable
+    public interface IRestrictedActionsAPI : IJsApiWrapper
     {
         bool TryOpenExternalUrl(string url);
         void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget);

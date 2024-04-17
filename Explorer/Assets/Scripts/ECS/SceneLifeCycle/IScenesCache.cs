@@ -10,7 +10,7 @@ namespace ECS.SceneLifeCycle
     public interface IScenesCache
     {
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
-        
+
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
         void Add(SceneLODInfo sceneLODInfo, IReadOnlyList<Vector2Int> parcels);
@@ -31,12 +31,16 @@ namespace ECS.SceneLifeCycle
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT * 2);
         private readonly Dictionary<Vector2Int, SceneLODInfo> sceneLODInfoByParcels = new (PoolConstants.SCENES_COUNT * 2);
 
-        public IReadOnlyCollection<ISceneFacade> Scenes => scenesByParcels.Values;
-        
+        private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
+
+        public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
+
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
             for (var i = 0; i < parcels.Count; i++)
                 scenesByParcels.Add(parcels[i], sceneFacade);
+
+            scenes.Add(sceneFacade);
         }
 
         public void Add(SceneLODInfo sceneLOD, IReadOnlyList<Vector2Int> parcels)
@@ -48,7 +52,13 @@ namespace ECS.SceneLifeCycle
         public void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels)
         {
             for (var i = 0; i < parcels.Count; i++)
-                scenesByParcels.Remove(parcels[i]);
+            {
+                if (scenesByParcels.TryGetValue(parcels[i], out var sceneFacade))
+                {
+                    scenes.Remove(sceneFacade);
+                    scenesByParcels.Remove(parcels[i]);
+                }
+            }
         }
 
         public void RemoveSceneLOD(IReadOnlyList<Vector2Int> parcels)
@@ -67,6 +77,7 @@ namespace ECS.SceneLifeCycle
         {
             scenesByParcels.Clear();
             sceneLODInfoByParcels.Clear();
+            scenes.Clear();
         }
     }
 }

@@ -5,10 +5,11 @@ using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class SimpleFetchApiWrapper : IDisposable
+    public class SimpleFetchApiWrapper : IJsApiWrapper
     {
         private readonly ISimpleFetchApi api;
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -23,8 +24,7 @@ namespace SceneRuntime.Apis.Modules
 
         public void Dispose()
         {
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
             api.Dispose();
         }
 

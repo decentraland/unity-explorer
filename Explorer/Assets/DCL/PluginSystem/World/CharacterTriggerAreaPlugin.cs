@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ICharacterObject characterObject;
 
-        private IComponentPool<CharacterTriggerArea.CharacterTriggerArea> characterTriggerAreaPoolRegistry;
+        private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
 
         public CharacterTriggerAreaPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            characterTriggerAreaPoolRegistry.Dispose();
+            characterTriggerAreaPoolRegistry?.Dispose();
         }
 
         public async UniTask InitializeAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
@@ -46,10 +46,10 @@ namespace DCL.PluginSystem.World
             await CreateCharacterTriggerAreaPoolAsync(settings, ct);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
-            var cleanupSystem = CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry);
+            CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
+            var cleanupSystem = CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!);
             finalizeWorldSystems.Add(cleanupSystem);
         }
 

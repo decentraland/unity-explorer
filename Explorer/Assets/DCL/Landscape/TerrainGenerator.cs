@@ -52,6 +52,7 @@ namespace DCL.Landscape
         private bool hideTrees;
         private bool hideDetails;
         private readonly ReportData reportData;
+        private Transform windZone;
 
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
@@ -90,6 +91,9 @@ namespace DCL.Landscape
 
         public IReadOnlyList<Transform> GetCliffs() =>
             cliffs;
+
+        public Transform GetWind() =>
+            windZone;
 
         public async UniTask GenerateTerrainAsync(
             uint worldSeed = 1,
@@ -208,8 +212,7 @@ namespace DCL.Landscape
             ocean = Object.Instantiate(terrainGenData.ocean).transform;
             ocean.SetParent(rootGo.transform, true);
 
-            Transform wind = Object.Instantiate(terrainGenData.wind).transform;
-            wind.SetParent(rootGo.transform, true);
+            windZone = Object.Instantiate(terrainGenData.wind).transform;
         }
 
         //           size,size

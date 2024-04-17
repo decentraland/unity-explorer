@@ -8,6 +8,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
 
@@ -15,13 +16,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(UITransformSortingSystem))]
-    [LogCategory(ReportCategory.SCENE_UI)]
     [ThrottlingEnabled]
-    public partial class UITransformUpdateSystem : BaseUnityLoopSystem
+    [LogCategory(ReportCategory.SCENE_UI)]
+    public partial class UITransformUpdateSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
-        private bool? lastIsCurrentScene;
 
         public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
         {
@@ -33,11 +33,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             UpdateUITransformQuery(World);
 
-            if (lastIsCurrentScene != sceneStateProvider.IsCurrent)
-            {
-                lastIsCurrentScene = sceneStateProvider.IsCurrent;
-                CheckUITransformOutOfSceneQuery(World);
-            }
+            // For newly created and modified entities
+            CheckUITransformOutOfSceneQuery(World, sceneStateProvider.IsCurrent);
         }
 
         [Query]
@@ -52,14 +49,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
-        private void CheckUITransformOutOfScene(ref UITransformComponent uiTransformComponent)
+        private void CheckUITransformOutOfScene([Data] bool isCurrent, ref UITransformComponent uiTransformComponent)
         {
             // Ignore all the child transforms
             if (uiTransformComponent.Parent != EntityReference.Null)
                 return;
 
             // Depending on the scene state, we add or remove the root transform from the canvas
-            switch (sceneStateProvider.IsCurrent)
+            switch (isCurrent)
             {
                 case false when !uiTransformComponent.IsHidden:
                     canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
@@ -70,6 +67,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     uiTransformComponent.IsHidden = false;
                     break;
             }
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            CheckUITransformOutOfSceneQuery(World, value);
         }
     }
 }

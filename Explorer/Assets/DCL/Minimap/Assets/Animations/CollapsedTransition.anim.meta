@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/Audio/AudioConfigs/Avatar_Fall_Long.asset.meta
+guid: f67105f93be636844ae2e881124450fe
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+========
+guid: 8c2696c3bca675f41871c5203b5de716
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+>>>>>>>> main:Explorer/Assets/DCL/Minimap/Assets/Animations/CollapsedTransition.anim.meta
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

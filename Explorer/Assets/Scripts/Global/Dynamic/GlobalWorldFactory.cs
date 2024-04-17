@@ -8,6 +8,7 @@ using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -70,11 +71,13 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
         private readonly IEmotesMessageBus emotesMessageBus;
         private readonly CharacterContainer characterContainer;
+        private readonly IMessagePipesHub messagePipesHub;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
-            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus)
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
+            IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus, IMessagePipesHub messagePipesHub)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -92,6 +95,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
+            this.messagePipesHub = messagePipesHub;
             this.emotesMessageBus = emotesMessageBus;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;

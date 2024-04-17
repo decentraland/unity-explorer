@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -29,7 +30,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly IEquippedEmotes equippedEmotes;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackEmoteGridItemView> usedPoolItems;
         private readonly BackpackEmoteGridItemView?[] loadingResults = new BackpackEmoteGridItemView[CURRENT_PAGE_SIZE];
@@ -52,7 +53,7 @@ namespace DCL.Backpack.EmotesSection
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IBackpackEquipStatusController backpackEquipStatusController,
+            IEquippedEmotes equippedEmotes,
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView,
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
@@ -65,7 +66,7 @@ namespace DCL.Backpack.EmotesSection
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
-            this.backpackEquipStatusController = backpackEquipStatusController;
+            this.equippedEmotes = equippedEmotes;
             this.gridItemsPool = gridItemsPool;
             this.emoteProvider = emoteProvider;
             this.embeddedEmoteIds = embeddedEmoteIds;
@@ -214,17 +215,18 @@ namespace DCL.Backpack.EmotesSection
                 usedPoolItems.Add(emotes[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipEmoteCommand(backpackItemView.ItemId)));
-                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipEmoteCommand(backpackItemView.ItemId)));
+                backpackItemView.OnEquip += EquipItem;
+                backpackItemView.OnUnequip += UnEquipItem;
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(EMOTE_CATEGORY);
 
-                int equippedSlot = backpackEquipStatusController.GetEmoteEquippedSlot(emotes[i]);
+                int equippedSlot = equippedEmotes.SlotOf(emotes[i]);
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
 
@@ -232,6 +234,12 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        private void UnEquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
+
+        private void EquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId));
 
         private void OnFilterCategory(string category)
         {
@@ -273,11 +281,12 @@ namespace DCL.Backpack.EmotesSection
         {
             foreach (KeyValuePair<URN, BackpackEmoteGridItemView> backpackItemView in usedPoolItems)
             {
-                backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
-                backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.OnEquip -= EquipItem;
+                backpackItemView.Value.OnUnequip -= UnEquipItem;
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;
+                backpackItemView.Value.IsCompatibleWithBodyShape = false;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }

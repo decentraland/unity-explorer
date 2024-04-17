@@ -10,7 +10,6 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using ECS.Abstract;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
@@ -145,6 +144,7 @@ namespace DCL.CharacterMotion.Systems
             // Games configure this weight trough Animation Curves on each animation, but since we cant do that here, we just do magic math
             float ikWeightBasedOnAnimation = !feetComponent.IsGrounded ? 0 : 1f - ((rightLegPosition.y - settings.FeetHeightCorrection) / settings.FeetHeightDisableIkDistance);
             ikWeightBasedOnAnimation = feetComponent.IsInsideMesh ? 1 : ikWeightBasedOnAnimation;
+
             float targetWeight = Mathf.RoundToInt(ikWeightBasedOnAnimation) * (isEnabled ? 1 : 0);
 
             // We apply ik weight speed only if its increasing, decreasing it is instant, this avoids being partially snapped into the ground when suddenly jumping

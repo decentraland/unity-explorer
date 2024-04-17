@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             sceneStateProvider.IsCurrent.Returns(true);
 
             IDereferencableCache<AudioClip, GetAudioClipIntention> cache = Substitute.For<IDereferencableCache<AudioClip, GetAudioClipIntention>>();
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), sceneStateProvider, cache, poolsRegistry, budgetProvider, budgetProvider);
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), sceneStateProvider, cache, poolsRegistry, budgetProvider, budgetProvider, null);
         }
 
         [Test]
