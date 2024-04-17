@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cinemachine;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
@@ -70,7 +71,7 @@ namespace DCL.CharacterCamera.Tests
 
             inputMap = world.CacheInputMap();
 
-            entity = world.Create(cinemachinePreset, new CameraComponent(camera), new CinemachineCameraState(), new CameraInput());
+            entity = world.Create(cinemachinePreset, new CameraComponent(camera), new CinemachineCameraState(), new CameraInput(), new CursorComponent());
 
             system.Initialize();
         }
@@ -108,6 +109,23 @@ namespace DCL.CharacterCamera.Tests
 
             Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
             Assert.That(cameraState.ThirdPersonZoomValue, Is.EqualTo(ZOOM_SENSITIVITY));
+        }
+
+        [Test]
+        public void ZoomOutInFirstPersonIsCancelledWhenCursorIsOverUI()
+        {
+            world.Set(entity, new CameraInput { ZoomOut = true });
+            world.Set(entity, new CinemachineCameraState { CurrentCamera = firstPersonCameraData.Camera });
+
+            world.Set(entity, new CursorComponent
+                { IsOverUI = true });
+
+            system.Update(1);
+
+            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+
+            Assert.That(cameraState.CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
+            Assert.That(cameraState.ThirdPersonZoomValue, Is.EqualTo(0));
         }
 
         [Test]

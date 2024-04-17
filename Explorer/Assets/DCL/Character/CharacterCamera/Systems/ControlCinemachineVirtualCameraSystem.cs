@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
@@ -127,8 +128,11 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(CameraBlockerComponent))]
-        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
+        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state, in CursorComponent cursorComponent)
         {
+            if (cursorComponent.IsOverUI)
+                return;
+
             if (cameraComponent is not { CameraInputChangeEnabled: true, Mode: CameraMode.ThirdPerson })
                 return;
 

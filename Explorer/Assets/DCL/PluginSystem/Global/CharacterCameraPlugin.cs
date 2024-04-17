@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Character.CharacterCamera.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
@@ -69,9 +70,14 @@ namespace DCL.PluginSystem.Global
             cinemachinePreset.Brain.ControlledObject = cinemachinePreset.Brain.gameObject;
 
             // Create a special camera entity
+            var cameraComponent = new CameraComponent(cinemachinePreset.Brain.OutputCamera)
+            {
+                PlayerFocus = playerFocus.CameraFocus,
+            };
+
             Entity cameraEntity = world.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
-                new CameraComponent(cinemachinePreset.Brain.OutputCamera),
+                cameraComponent,
                 new CursorComponent(),
                 new CameraFieldOfViewComponent(),
                 exposedCameraData,
