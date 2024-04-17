@@ -68,9 +68,10 @@ namespace DCL.ScenesDebug.ScenesConsistency
 
             await chatTeleport.WaitReadyAsync();
 
+            var current = 0;
             foreach (SceneEntity entity in entities)
             {
-                Log($"Executing entity: {entity}");
+                Log($"Executing {++current} / {entities.Count} entity: {entity}");
                 chatTeleport.GoTo(entity.coordinate);
                 await UniTask.Delay(TimeSpan.FromSeconds(delayBetweenTeleports));
             }

@@ -19,12 +19,12 @@ namespace DCL.ScenesDebug.ScenesConsistency.ReportLogs
 
         public void Start()
         {
-            writer.WriteLine("Logging for scenes: ");
+            writer.WriteLine($"{DateTime.Now:HH:mm:ss} Logging for scenes: ");
 
             foreach (SceneEntity sceneEntity in entities)
                 writer.WriteLine(sceneEntity.ToString()!);
 
-            writer.WriteLine("Result of logs: ");
+            writer.WriteLine($"{DateTime.Now:HH:mm:ss} Result of logs: ");
 
             Application.logMessageReceivedThreaded += ApplicationOnlogMessageReceivedThreaded;
         }
