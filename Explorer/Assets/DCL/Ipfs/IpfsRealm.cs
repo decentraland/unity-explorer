@@ -82,8 +82,10 @@ namespace DCL.Ipfs
         private WWWForm NewForm<T>(EntityDefinitionGeneric<T> entity, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
         {
             string entityJson = JsonUtility.ToJson(entity);
+            Debug.Log($"PublishEntity.entity.json: {entityJson}");
             byte[] entityFile = Encoding.UTF8.GetBytes(entityJson);
             string entityId = GetFileHash(entityFile);
+            Debug.Log($"PublishEntity.entity.id: {entityId}");
             using AuthChain authChain = web3IdentityCache.Identity!.Sign(entityId);
 
             var form = new WWWForm();

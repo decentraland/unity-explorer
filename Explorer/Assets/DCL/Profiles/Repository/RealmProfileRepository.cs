@@ -49,7 +49,9 @@ namespace DCL.Profiles
             string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
 
             using var profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
+            Debug.Log($"PublishProfile.profile.dto: {JsonUtility.ToJson(profileDto)}");
             var entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
+            Debug.Log($"PublishProfile.entity: {JsonUtility.ToJson(entity)}");
 
             files.Clear();
             files[bodyHash] = bodySnapshotTextureFile;
