@@ -1,6 +1,5 @@
 ﻿using DCL.Settings.ModuleViews;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -19,9 +18,20 @@ namespace DCL.Settings.ModuleControllers
 
             LoadResolutionOptions();
 
-            view.DropdownView.Dropdown.value = settingsDataStore.HasKey(RESOLUTION_DATA_STORE_KEY) ?
-                settingsDataStore.GetDropdownValue(RESOLUTION_DATA_STORE_KEY) :
-                0;
+            if (settingsDataStore.HasKey(RESOLUTION_DATA_STORE_KEY))
+                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(RESOLUTION_DATA_STORE_KEY);
+            else
+            {
+                for (var index = 0; index < possibleResolutions.Count; index++)
+                {
+                    Resolution resolution = possibleResolutions[index];
+                    if (!IsDefaultResolution(resolution))
+                        continue;
+
+                    view.DropdownView.Dropdown.value = index;
+                    break;
+                }
+            }
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetResolutionSettings);
             SetResolutionSettings(view.DropdownView.Dropdown.value);
@@ -30,21 +40,28 @@ namespace DCL.Settings.ModuleControllers
         private void LoadResolutionOptions()
         {
             view.DropdownView.Dropdown.options.Clear();
-            possibleResolutions.AddRange(Screen.resolutions.SkipWhile(r => r.width <= 1024));
 
-            int length = possibleResolutions.Count;
-            var resolutionLabels = new string[length];
-            for (var i = 0; i < length; i++)
+            // By design, we want the list to be inverted so the biggest resolutions stay on top
+            for (int index = Screen.resolutions.Length - 1; index >= 0; index--)
             {
-                var resolution = possibleResolutions[i];
+                Resolution resolution = Screen.resolutions[index];
 
-                // by design, we want the list to be inverted so the biggest resolutions stay on top
-                // our resolutionSizeIndex is based on this decision
-                resolutionLabels[length - 1 - i] = $"{resolution.width}x{resolution.height} ({GetAspectRatio(resolution.width, resolution.height)}) {resolution.refreshRate} Hz";;
+                // Exclude all resolutions that are not 16:9 or 16:10
+                float aspectRatio = (float)resolution.width / resolution.height;
+                if (aspectRatio - (16.0f / 9.0f) != 0f && aspectRatio - (16.0f / 10.0f) != 0f)
+                    continue;
+
+                // Exclude all resolutions width less than 1024
+                if (resolution.width <= 1024)
+                    continue;
+
+                // Exclude possible duplicates
+                if (possibleResolutions.Contains(resolution))
+                    continue;
+
+                possibleResolutions.Add(resolution);
+                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = $"{resolution.width}x{resolution.height} ({GetAspectRatio(resolution.width, resolution.height)}) {resolution.refreshRate} Hz" });
             }
-
-            foreach (string label in resolutionLabels)
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = label });
         }
 
         private static string GetAspectRatio(int width, int height)
@@ -60,6 +77,16 @@ namespace DCL.Settings.ModuleControllers
             }
 
             return $"{tempWidth / width}:{tempHeight / width}";
+        }
+
+        // By design, the default resolution should be a 1080p resolution with a 16:9 aspect ratio
+        private static bool IsDefaultResolution(Resolution resolution)
+        {
+            if (resolution.height != 1080)
+                return false;
+
+            float aspectRatio = (float)resolution.width / resolution.height;
+            return Mathf.Abs(aspectRatio - (16.0f / 9.0f)) == 0f;
         }
 
         private void SetResolutionSettings(int index)
