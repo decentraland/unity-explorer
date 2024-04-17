@@ -32,5 +32,8 @@ namespace DCL.ScenesDebug.ScenesConsistency.Entities
 
         public bool IsRunning() =>
             status is "RUNNING";
+
+        public override string ToString() =>
+            $"Coordinate: {coordinate}, Status: {status}";
     }
 }
