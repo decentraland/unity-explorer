@@ -1,18 +1,10 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance"
-         engine="UnityEngine.UIElements" editor="UnityEditor.UIElements"
-         noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/DCL/Interaction/HoverCanvas/UI/HoverCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=48fc6d51c040e7341986d956d3390c9e&amp;type=3#HoverCanvasStyleSheet"/>
-    <DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement name="TooltipElement" class="tooltipBackground"
-                                                              style="justify-content: flex-start; flex-direction: row; align-items: center; flex-shrink: 1; flex-wrap: nowrap;">
-        <ui:VisualElement name="KeyRoot" class="tooltipInputKey"
-                          style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); flex-shrink: 0; justify-content: center;">
-            <ui:Label tabindex="-1" text="ENTER" display-tooltip-when-elided="true" name="KeyName"
-                      style="color: rgb(255, 255, 255); -unity-text-align: upper-center; font-size: 12px;"/>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/Interaction/HoverCanvas/UI/HoverCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=48fc6d51c040e7341986d956d3390c9e&amp;type=3#HoverCanvasStyleSheet" />
+    <DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement name="TooltipElement" class="tooltipBackground" style="justify-content: flex-start; flex-direction: row; align-items: center; flex-shrink: 1; flex-wrap: nowrap; background-color: rgba(22, 21, 24, 0.8); padding-left: 8px; -unity-background-image-tint-color: rgb(252, 252, 252); -unity-slice-scale: 1px; padding-right: 8px;">
+        <ui:VisualElement name="KeyRoot" class="tooltipInputKey" style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); flex-shrink: 0; justify-content: center; margin-left: 0; margin-right: 0; padding-left: 6px; padding-right: 6px; height: 60%; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-left-color: rgb(113, 107, 124); border-right-color: rgb(113, 107, 124); border-top-color: rgb(113, 107, 124); border-bottom-color: rgb(113, 107, 124);">
+            <ui:Label tabindex="-1" text="ENTER" display-tooltip-when-elided="true" name="KeyName" style="color: rgb(255, 255, 255); -unity-text-align: upper-center; font-size: 12px; -unity-font: initial; -unity-font-style: bold;" />
         </ui:VisualElement>
-        <ui:Image name="Icon" class="tooltipIcon"
-                  style="--unity-image: url(&apos;project://database/Assets/DCL/Interaction/HoverCanvas/UI/LeftClick.png?fileID=21300000&amp;guid=1298933c0a6b35a499063fcfb805f66b&amp;type=3#LeftClick&apos;); align-self: auto; justify-content: flex-start; align-items: stretch; flex-shrink: 0; display: flex;"/>
-        <ui:Label tabindex="-1" text="It&apos;s a very very very long tooltip that should be truncated"
-                  display-tooltip-when-elided="true" name="Hint" class="tooltipHintText"
-                  style="color: rgb(255, 255, 255); -unity-font: url(&apos;project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf?fileID=12800000&amp;guid=e3265ab4bf004d28a9537516768c1c75&amp;type=3#LiberationSans&apos;); -unity-font-style: normal; -unity-text-align: middle-left; white-space: nowrap; text-overflow: ellipsis; flex-shrink: 1; flex-wrap: nowrap; align-items: flex-start; align-self: center; justify-content: flex-start; display: flex; visibility: visible; overflow: hidden;"/>
+        <ui:Image name="Icon" class="tooltipIcon" style="--unity-image: url(&apos;project://database/Assets/DCL/Interaction/HoverCanvas/UI/LeftClickIcn.png?fileID=21300000&amp;guid=1298933c0a6b35a499063fcfb805f66b&amp;type=3#LeftClickIcn&apos;); align-self: auto; justify-content: flex-start; align-items: stretch; flex-shrink: 0; display: flex; margin-left: 4px; margin-right: 4px;" />
+        <ui:Label tabindex="-1" text="It&apos;s a very very very long tooltip that should be truncated" display-tooltip-when-elided="true" name="Hint" class="tooltipHintText" style="color: rgb(255, 255, 255); -unity-font: url(&apos;project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf?fileID=12800000&amp;guid=e3265ab4bf004d28a9537516768c1c75&amp;type=3#LiberationSans&apos;); -unity-font-style: normal; -unity-text-align: middle-left; white-space: nowrap; text-overflow: ellipsis; flex-shrink: 1; flex-wrap: nowrap; align-items: flex-start; align-self: center; justify-content: flex-start; display: flex; visibility: visible; overflow: hidden; margin-left: 0;" />
     </DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement>
 </ui:UXML>

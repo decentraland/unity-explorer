@@ -16,6 +16,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Settings;
 using DCL.Settings.Configuration;
+using DCL.UI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -29,9 +30,9 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
-
 namespace DCL.PluginSystem.Global
 {
     public class ExplorePanelPlugin : DCLGlobalPluginBase<ExplorePanelPlugin.ExplorePanelSettings>
@@ -50,18 +51,20 @@ namespace DCL.PluginSystem.Global
         private readonly IWearableCatalog wearableCatalog;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
-        private readonly DCLInput dclInput;
         private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteCache emoteCache;
+        private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin backpackSubPlugin = null!;
         private readonly ICollection<string> forceRender;
+        private PersistentExploreOpenerView? exploreOpener;
+        private PersistentExplorePanelOpenerController explorePanelOpener;
+        private ExplorePanelInputHandler inputHandler;
 
-        public ExplorePanelPlugin(
-            IAssetsProvisioner assetsProvisioner,
+        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
@@ -76,10 +79,10 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
-            DCLInput dclInput,
             IEmoteCache emoteCache,
             IRealmNavigator realmNavigator,
-            ICollection<string> forceRender
+            ICollection<string> forceRender,
+            DCLInput dclInput
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -97,10 +100,10 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.webBrowser = webBrowser;
-            this.dclInput = dclInput;
             this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
             this.emoteCache = emoteCache;
+            this.dclInput = dclInput;
         }
 
         public override void Dispose()
@@ -108,6 +111,7 @@ namespace DCL.PluginSystem.Global
             navmapController?.Dispose();
             settingsController?.Dispose();
             backpackSubPlugin.Dispose();
+            inputHandler.Dispose();
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -133,7 +137,7 @@ namespace DCL.PluginSystem.Global
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, realmPartitionSettings.Value, landscapeData.Value);
 
-            PersistentExploreOpenerView? exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
+            exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -143,13 +147,18 @@ namespace DCL.PluginSystem.Global
                 navmapController.InitialiseAssetsAsync(assetsProvisioner, ct).Forget();
                 backpackInitialization.Invoke(ref builder, arguments);
 
-                mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
+                mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow)));
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow),
+                    dclInput));
 
-                mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
-                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager)
+                explorePanelOpener = new PersistentExplorePanelOpenerController(
+                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
+
+                mvcManager.RegisterController(explorePanelOpener
                 );
+
+                inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };
         }
 

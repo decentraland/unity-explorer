@@ -3,8 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
@@ -64,6 +68,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             {
                 raycastResult.UnityRaycastHit = hitInfo;
                 raycastResult.EntityInfo = entityInfo;
+
+                raycastResult.Distance =
+                    camera.Mode == CameraMode.FirstPerson
+                        ? hitInfo.distance
+                        : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
             }
             else
             {
@@ -74,7 +83,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Ray CreateRay(in CameraComponent cameraComponent, in CursorComponent cursorComponent) =>
-            cameraComponent.Camera.ScreenPointToRay(cursorComponent.CursorIsLocked
+            cameraComponent.Camera.ScreenPointToRay(cursorComponent.CursorState != CursorState.Free
                 ? new Vector3(cameraComponent.Camera.pixelWidth / 2f, cameraComponent.Camera.pixelHeight / 2f, 0)
                 : pointInput.ReadValue<Vector2>());
     }

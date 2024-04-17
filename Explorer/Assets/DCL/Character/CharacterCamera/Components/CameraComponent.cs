@@ -20,6 +20,7 @@ namespace DCL.CharacterCamera
         public int CameraInputLocks { get; private set; }
 
         public bool CameraInputChangeEnabled => CameraInputLocks == 0;
+        public Transform PlayerFocus { get; set; }
 
         public void AddCameraInputLock() =>
             CameraInputLocks++;

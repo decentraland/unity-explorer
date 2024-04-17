@@ -11,6 +11,7 @@ namespace MVC
         internal IController topController { get; private set; }
 
         public IController TopMostPopup => popupStack.LastOrDefault();
+        public IController CurrentFullscreenController => fullscreenController;
 
         public PopupPushInfo PushPopup(IController controller)
         {
@@ -22,6 +23,8 @@ namespace MVC
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer - 1),
                     popupStack.Count >= 2 ? popupStack[^2] : null);
         }
+
+
 
         public FullscreenPushInfo PushFullscreen(IController controller)
         {
