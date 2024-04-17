@@ -10,8 +10,9 @@ namespace DCL.Landscape
         // Note: [units] = Unity units (1 unit = 1 meter)
 
         private const int MAX_CHUNK_SIZE = 512; // Maximum size of a chunk in Unity [units]
-        private const int PARCEL_SIZE = 16; // Size of a [parcel] in Unity [units]
         private const int MIN_CHUNKS_PER_SIDE = 2; // Minimum number of chunks along one side of terrain, ensuring at least a 2x2 grid
+
+        private readonly int parcelSize; // Size of a [parcel] in Unity [units]
 
         public readonly int2 MinParcel;
         public readonly int2 MaxParcel;
@@ -27,8 +28,10 @@ namespace DCL.Landscape
         private int chunkSizeInParcels; //  in [parcels]
         private int sizeInChunks; // Number of chunks along one side of the square terrain
 
-        public TerrainModel(WorldModel world, int paddingInParcels)
+        public TerrainModel(int parcelSize, WorldModel world, int paddingInParcels)
         {
+            this.parcelSize = parcelSize;
+
             ChunkSizeInUnits = 0;
             chunkSizeInParcels = 0;
             sizeInChunks = 0;
@@ -38,8 +41,8 @@ namespace DCL.Landscape
             MinParcel = centerInParcels - (sizeInParcels / 2);
             MaxParcel = MinParcel + (sizeInParcels - 1); // last parcel is inclusive
 
-            SizeInUnits = sizeInParcels * PARCEL_SIZE;
-            MinInUnits = MinParcel * PARCEL_SIZE;
+            SizeInUnits = sizeInParcels * parcelSize;
+            MinInUnits = MinParcel * parcelSize;
             MaxInUnits = MinInUnits + SizeInUnits;
 
             ChunkModels = new List<ChunkModel>();
@@ -57,7 +60,7 @@ namespace DCL.Landscape
 
             ChunkSizeInUnits = Mathf.ClosestPowerOfTwo(maxSideLengthInUnits / sizeInChunks);
             ChunkSizeInUnits = Mathf.Min(ChunkSizeInUnits, MAX_CHUNK_SIZE); // Ensure it doesn't exceed the max size
-            chunkSizeInParcels = ChunkSizeInUnits / PARCEL_SIZE;
+            chunkSizeInParcels = ChunkSizeInUnits / parcelSize;
 
             if (maxSideLengthInUnits > ChunkSizeInUnits * sizeInChunks)
                 sizeInChunks = Mathf.CeilToInt((float)maxSideLengthInUnits / ChunkSizeInUnits);

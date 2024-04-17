@@ -9,6 +9,7 @@ namespace DCL.Landscape.Settings
     public class TerrainGenerationData : ScriptableObject
     {
         [Header("Terrain Settings")]
+        public int parcelSize = 16;
         public int terrainSize = 4800;
         public int chunkSize = 512;
         public float heightScaleNerf = 1;

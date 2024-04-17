@@ -7,6 +7,7 @@ using DCL.MapRenderer.ComponentsFactory;
 using ECS.Abstract;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
 
@@ -20,12 +21,13 @@ namespace DCL.Landscape.Systems
     public partial class LandscapeSatelliteSystem : BaseUnityLoopSystem
     {
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
-        private const int PARCEL_SIZE = 16;
+
         private const int CHUNK_SIZE = 40;
         private const int GENESIS_HALF_PARCEL_WIDTH = 150;
         private const int SATELLITE_MAP_RESOLUTION = 8;
         private const float Z_FIGHT_THRESHOLD = 0.02f;
 
+        private readonly int parcelSize;
         private readonly LandscapeData landscapeData;
         private readonly MapRendererTextureContainer textureContainer;
         private Transform landscapeParentObject;
@@ -41,6 +43,8 @@ namespace DCL.Landscape.Systems
         {
             this.landscapeData = landscapeData;
             this.textureContainer = textureContainer;
+
+            parcelSize = (int) ParcelMathHelper.PARCEL_SIZE;
         }
 
         public override void Initialize()
@@ -72,11 +76,11 @@ namespace DCL.Landscape.Systems
 
         private void InitializeSatelliteView()
         {
-            int textureSize = CHUNK_SIZE * PARCEL_SIZE;
-            var genesisCityOffset = new Vector3(GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE, 0, GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE);
+            int textureSize = CHUNK_SIZE * parcelSize;
+            var genesisCityOffset = new Vector3(GENESIS_HALF_PARCEL_WIDTH * parcelSize, 0, GENESIS_HALF_PARCEL_WIDTH * parcelSize);
 
             // the map has some black weird margins, this is an approximation to fit the satellite view in place
-            var mapTextureMargins = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
+            var mapTextureMargins = new Vector3(-2 * parcelSize, 0, -(20 * parcelSize) + 50 - 1.7f);
 
             var quadCenter = new Vector3(textureSize * 0.5f, 0, textureSize * 0.5f);
             Vector3 zFightPrevention = Vector3.down * Z_FIGHT_THRESHOLD;
