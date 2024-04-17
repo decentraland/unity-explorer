@@ -5,7 +5,7 @@ namespace DCL.Settings.ModuleControllers
 {
     public class EnvironmentDistanceSettingsController : SettingsFeatureController
     {
-        private const string ENVIRONMENT_DISTANCE_DATA_STORE_KEY = "EnvironmentDistance";
+        private const string ENVIRONMENT_DISTANCE_DATA_STORE_KEY = "Settings_EnvironmentDistance";
 
         private readonly SettingsSliderModuleView view;
         private readonly LandscapeData landscapeData;

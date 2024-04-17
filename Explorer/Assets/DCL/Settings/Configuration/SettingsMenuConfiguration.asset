@@ -20,6 +20,7 @@ MonoBehaviour:
     - <GroupTitle>k__BackingField: Graphics Quality
       <Modules>k__BackingField:
       - rid: 5242998342527483906
+      - rid: 5242998500334764034
     - <GroupTitle>k__BackingField: Environment
       <Modules>k__BackingField:
       - rid: 5242998342527483909
@@ -69,8 +70,8 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 10
-          maxValue: 80
+          minValue: 20
+          maxValue: 150
           wholeNumbers: 1
           defaultValue: 40
         <Feature>k__BackingField: 0
@@ -83,8 +84,8 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 160
-          maxValue: 5000
+          minValue: 1000
+          maxValue: 7000
           wholeNumbers: 1
           defaultValue: 4000
         <Feature>k__BackingField: 1
@@ -210,3 +211,15 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
         <Feature>k__BackingField: 0
+    - rid: 5242998500334764034
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Resolution
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 3

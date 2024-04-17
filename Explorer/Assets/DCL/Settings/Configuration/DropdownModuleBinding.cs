@@ -14,7 +14,8 @@ namespace DCL.Settings.Configuration
         {
             GRAPHICS_QUALITY_FEATURE,
             CAMERA_LOCK_FEATURE,
-            CAMERA_SHOULDER_FEATURE
+            CAMERA_SHOULDER_FEATURE,
+            RESOLUTION_FEATURE,
             // add other features...
         }
 
@@ -34,6 +35,8 @@ namespace DCL.Settings.Configuration
                     return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
                     return new CameraShoulderSettingsController(viewInstance);
+                case DropdownFeatures.RESOLUTION_FEATURE:
+                    return new ResolutionSettingsController(viewInstance);
                 // add other cases...
             }
 
