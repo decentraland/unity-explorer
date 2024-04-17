@@ -20,6 +20,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private SettingsController? settingsController;
         private BackpackSubPlugin backpackSubPlugin = null!;
         private readonly ICollection<string> forceRender;
+        private readonly IRealmData realmData;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -79,7 +81,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IEmoteCache emoteCache,
             IRealmNavigator realmNavigator,
-            ICollection<string> forceRender
+            ICollection<string> forceRender,
+            IRealmData realmData
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -100,6 +103,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
+            this.realmData = realmData;
             this.emoteCache = emoteCache;
         }
 
@@ -122,7 +126,8 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteCache,
                 settings.EmbeddedEmotesAsURN(),
-                forceRender
+                forceRender,
+                realmData
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

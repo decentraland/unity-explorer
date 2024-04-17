@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
@@ -16,6 +17,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -31,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
+        private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
@@ -53,7 +56,8 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IEmoteCache emoteCache,
             IReadOnlyCollection<URN> embeddedEmotes,
-            ICollection<string> forceRender
+            ICollection<string> forceRender,
+            IRealmData realmData
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -64,6 +68,7 @@ namespace DCL.PluginSystem.Global
             this.equippedEmotes = equippedEmotes;
             this.emoteCache = emoteCache;
             this.embeddedEmotes = embeddedEmotes;
+            this.realmData = realmData;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -134,6 +139,8 @@ namespace DCL.PluginSystem.Global
                 world = builder.World!;
                 playerEntity = args.PlayerEntity;
 
+                var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World);
+
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
@@ -164,7 +171,8 @@ namespace DCL.PluginSystem.Global
                     emoteGridController,
                     avatarView.GetComponentsInChildren<AvatarSlotView>().EnsureNotNull(),
                     emotesController,
-                    backpackCharacterPreviewController
+                    backpackCharacterPreviewController,
+                    thumbnailProvider
                 );
             };
         }

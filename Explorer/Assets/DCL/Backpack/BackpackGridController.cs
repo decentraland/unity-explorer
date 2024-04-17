@@ -12,7 +12,6 @@ using DCL.UI;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
