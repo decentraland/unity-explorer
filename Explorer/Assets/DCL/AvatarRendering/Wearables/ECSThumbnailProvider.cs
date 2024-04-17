@@ -29,10 +29,9 @@ namespace DCL.AvatarRendering.Wearables
 
             WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, avatarAttachment, world, PartitionComponent.TOP_PRIORITY);
 
-            do await UniTask.Delay(250, cancellationToken: ct);
-
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment
+            do await UniTask.Delay(250, cancellationToken: ct);
             while (avatarAttachment.ThumbnailAssetResult == null);
 
             return avatarAttachment.ThumbnailAssetResult!.Value.Asset;
