@@ -46,8 +46,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (lastParcelProcessed == parcel) return;
 
-            scenesCache.TryGetByArea(lastParcelProcessed, out ISceneFacade? lastProcessedScene);
-            scenesCache.TryGetByArea(parcel, out ISceneFacade? currentScene);
+            scenesCache.TryGetByParcel(lastParcelProcessed, out ISceneFacade? lastProcessedScene);
+            scenesCache.TryGetByParcel(parcel, out ISceneFacade? currentScene);
 
             if (lastProcessedScene != currentScene)
             {
