@@ -6185,6 +6185,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8986644367044729187}
     m_Modifications:
+    - target: {fileID: 727645157223249901, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124832982894223493, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: <CharacterPreviewSettingsSo>k__BackingField
       value: 
