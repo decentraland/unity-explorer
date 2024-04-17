@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b39548ec45c44975b040d8b293a22a79, type: 3}
   m_Name: Oak2Variant_W
   m_EditorClassIdentifier: 
-  seed: 44
+  seed: 37
   other: {fileID: 11400000, guid: 7a394b02586ac0441aa9e27a9789dd45, type: 2}

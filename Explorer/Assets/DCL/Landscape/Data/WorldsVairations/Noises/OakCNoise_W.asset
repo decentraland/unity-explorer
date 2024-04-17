@@ -15,14 +15,14 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 1
-    scale: 1.19
+    scale: 0.01
     octaves: 1
-    persistance: 0.49
-    lacunarity: 2.86
-    seed: 44
+    persistance: 1
+    lacunarity: 1
+    seed: 30
     offset: {x: 0, y: 0}
     cutoff: 0
-    noiseType: 1
+    noiseType: 2
     baseValue: 0
     multiplyValue: 1
     divideValue: 2
