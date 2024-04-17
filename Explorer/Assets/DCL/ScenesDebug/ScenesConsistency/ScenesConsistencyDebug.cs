@@ -1,13 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
+using DCL.ScenesDebug.ScenesConsistency.ChatTeleports;
 using DCL.ScenesDebug.ScenesConsistency.Entities;
-using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.Systems;
-using SceneRunner;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -18,14 +14,17 @@ namespace DCL.ScenesDebug.ScenesConsistency
     public class ScenesConsistencyDebug : MonoBehaviour
     {
         [SerializeField] private TextAsset scenesCoordinatesRaw;
+        [SerializeField] private float delayBetweenTeleports = 5;
         [SerializeField] private string productionScene = "Main";
-
 
         //[SerializeField] private
         [Header("Debug")]
         [SerializeField] private List<SceneEntity> entities;
 
-        private static readonly URLDomain ASSET_BUNDLE_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
+        private readonly IChatTeleport chatTeleport = new LogChatTeleport(
+            new ChatTeleport(),
+            ReportHub.WithReport(ReportCategory.SCENE_LOADING).Log
+        );
 
         private void Start()
         {
@@ -40,9 +39,12 @@ namespace DCL.ScenesDebug.ScenesConsistency
                                     .Where(x => x.IsRunning() == false)
                                     .ToList();
 
+            await chatTeleport.WaitReadyAsync();
+
             foreach (SceneEntity entity in entities)
             {
-                // await result.StartUpdateLoopAsync(60, destroyCancellationToken);
+                chatTeleport.GoTo(entity.coordinate);
+                await UniTask.Delay(TimeSpan.FromSeconds(delayBetweenTeleports));
             }
         }
     }
