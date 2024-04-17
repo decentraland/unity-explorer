@@ -7,7 +7,11 @@ module.exports.crdtSendToRenderer = async function(messages) {
 }
 
 module.exports.sendBatch = async function() {
-    return { events: [] }
+    const data = UnityEngineApi.SendBatch()
+    // console.pravslog(`PRAVS - sendBatch() - ${data}`, data)
+    return {
+        events: data
+    };
 }
 
 module.exports.crdtGetState = async function() {
@@ -20,11 +24,13 @@ module.exports.crdtGetState = async function() {
 
 module.exports.subscribe = async function(message) {
     console.log(`JSMODULE: EngineApi.subscribe(${message.eventId}): deprecated`)
+    UnityEngineApi.SubscribeToSDKObservableEvent(data.eventId)
     return {}
 }
 
 module.exports.unsubscribe = async function(message) {
     console.log(`JSMODULE: EngineApi.unsubscribe(${message.eventId}): deprecated`)
+    UnityEngineApi.UnsubscribeFromSDKObservableEvent(data.eventId)
     return {}
 }
 

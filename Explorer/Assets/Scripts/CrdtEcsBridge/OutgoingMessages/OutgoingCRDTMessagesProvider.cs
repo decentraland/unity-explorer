@@ -131,15 +131,18 @@ namespace CrdtEcsBridge.OutgoingMessages
                 {
                     PendingMessage pendingMessage = messages[i];
 
-                    IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
-                    pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                    IMemoryOwner<byte> memory;
 
                     switch (pendingMessage.MessageType)
                     {
                         case CRDTMessageType.PUT_COMPONENT:
+                            memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
+                            pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
                             processedMessages.Add(crdtProtocol.CreatePutMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, memory));
                             break;
                         case CRDTMessageType.APPEND_COMPONENT:
+                            memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
+                            pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
                             processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
                             break;
                         case CRDTMessageType.DELETE_COMPONENT:
