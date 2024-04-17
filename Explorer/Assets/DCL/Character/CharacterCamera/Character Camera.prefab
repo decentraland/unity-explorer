@@ -589,7 +589,7 @@ MonoBehaviour:
     m_SpeedMode: 1
     m_MaxSpeed: 0.1
     m_AccelTime: 0.1
-    m_DecelTime: 0.3
+    m_DecelTime: 0.03
     m_InputAxisName: 
     m_InputAxisValue: 0
     m_InvertInput: 1
@@ -661,6 +661,7 @@ GameObject:
   - component: {fileID: 1725871008748331031}
   - component: {fileID: 1829658356799049534}
   - component: {fileID: 769675175854280020}
+  - component: {fileID: 5294527864094199746}
   m_Layer: 0
   m_Name: ThirdPersonCameraSettings
   m_TagString: Untagged
@@ -821,6 +822,21 @@ MonoBehaviour:
   m_Damping: 0.5
   m_DampingWhenOccluded: 0.2
   m_OptimalTargetDistance: 0.5
+--- !u!114 &5294527864094199746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4708074778744885137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44d70cc20219cd84593f67d248eafe36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Offset: {x: 1, y: 0, z: 0}
+  m_ApplyAfter: 1
+  m_PreserveComposition: 0
 --- !u!1 &5961296889077111515
 GameObject:
   m_ObjectHideFlags: 0
