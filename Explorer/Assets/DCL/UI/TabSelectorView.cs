@@ -1,12 +1,16 @@
 using DCL.Audio;
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class TabSelectorView : MonoBehaviour
+    public class TabSelectorView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        private static readonly int HOVER = Animator.StringToHash("Hover");
+        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
+
         [field: SerializeField]
         public Toggle TabSelectorToggle { get; private set; }
 
@@ -24,6 +28,9 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject SelectedText { get; private set; }
+
+        [field: SerializeField]
+        private Animator tabAnimator;
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -43,6 +50,18 @@ namespace DCL.UI
         private void OnToggle(bool toggle)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if(tabAnimator != null)
+                tabAnimator.SetTrigger(HOVER);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if(tabAnimator != null)
+                tabAnimator.SetTrigger(UNHOVER);
         }
     }
 }
