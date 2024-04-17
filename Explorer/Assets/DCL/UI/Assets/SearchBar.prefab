@@ -198,6 +198,7 @@ MonoBehaviour:
   <InputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
   <ClearTextAudio>k__BackingField: {fileID: 11400000, guid: ef8137a9dffa4d246b25fe9acb15e54c, type: 2}
   <SubmitAudio>k__BackingField: {fileID: 11400000, guid: 14d6e8c4562170b4dbbfc985de1717c0, type: 2}
+  <SelectAudio>k__BackingField: {fileID: 11400000, guid: beb7f9dd3a46dab4a817d38c83832caa, type: 2}
 --- !u!1 &1684105793296059905
 GameObject:
   m_ObjectHideFlags: 0
@@ -508,7 +509,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -719,7 +720,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1

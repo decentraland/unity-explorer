@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
   m_Name: Menu_ExplorePanel_Background_Music
   m_EditorClassIdentifier: 
-  audioClips:
-  - {fileID: 8300000, guid: 4cabc36efde4921438af3db094b289d4, type: 3}
-  relativeVolume: 1
+  audioClips: []
+  relativeVolume: 0
   audioCategory: 4
   pitchVariation: 0
   clipSelectionMode: 0
