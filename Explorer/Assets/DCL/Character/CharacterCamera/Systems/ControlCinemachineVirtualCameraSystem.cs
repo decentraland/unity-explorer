@@ -21,14 +21,14 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
-        private readonly DCLInput input;
+        private readonly DCLInput dclInput;
         private SingleInstanceEntity inputMap;
         private bool wantsToSwitchState;
 
-        internal ControlCinemachineVirtualCameraSystem(World world, DCLInput input) : base(world)
+        internal ControlCinemachineVirtualCameraSystem(World world, DCLInput dclInput) : base(world)
         {
-            this.input = input;
-            input.Camera.SwitchState.performed += OnSwitchState;
+            this.dclInput = dclInput;
+            dclInput.Camera.SwitchState.performed += OnSwitchState;
         }
 
         private void OnSwitchState(InputAction.CallbackContext obj)
@@ -129,51 +129,15 @@ namespace DCL.CharacterCamera.Systems
         [None(typeof(CameraBlockerComponent))]
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
-            if (cameraComponent.CameraInputChangeEnabled)
-            {
-                UpdateZoomValue(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity);
+            if (cameraComponent is not { CameraInputChangeEnabled: true, Mode: CameraMode.ThirdPerson })
+                return;
 
-                if (input.ZoomOut)
-                {
-                    switch (cameraComponent.Mode)
-                    {
-                        // if we switch from FP to TP just zoom at 0 position
-                        case CameraMode.FirstPerson:
-                            SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+            if (input is { ZoomIn: false, ZoomOut: false })
+                return;
 
-                            // Reset zoom value
-                            state.ThirdPersonZoomValue = 0f;
-
-                            // Set a freshly assigned value
-                            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
-                            return;
-                        case CameraMode.ThirdPerson:
-                            // Set a freshly assigned value
-                            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
-                            return;
-                    }
-                }
-                else if (input.ZoomIn)
-                {
-                    switch (cameraComponent.Mode)
-                    {
-                        case CameraMode.ThirdPerson:
-                            // Set a freshly assigned value
-                            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
-                            return;
-                        case CameraMode.Free:
-                            // Switch to third-person
-                            SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
-
-                            // Reset zoom value to the maximum
-                            state.ThirdPersonZoomValue = 1f;
-                            return;
-                    }
-                }
-            }
-
-            if (!IsCorrectCameraEnabled(cameraComponent.Mode, cinemachinePreset))
-                SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
+            int direction = input.ZoomOut ? 1 : -1;
+            UpdateZoomValue(ref state.ThirdPersonZoomValue, direction, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity);
+            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
         }
 
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)

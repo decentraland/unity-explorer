@@ -234,7 +234,6 @@ GameObject:
   m_Component:
   - component: {fileID: 746703142148686107}
   - component: {fileID: 4115714836209283951}
-  - component: {fileID: 6665959256769159347}
   m_Layer: 0
   m_Name: FirstPersonCameraSettings
   m_TagString: Untagged
@@ -297,14 +296,6 @@ MonoBehaviour:
         m_Calls: []
   m_LegacyBlendHint: 0
   m_ComponentOwner: {fileID: 6875022328581232301}
---- !u!81 &6665959256769159347
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3879923591789973987}
-  m_Enabled: 1
 --- !u!1 &4188770681610344737
 GameObject:
   m_ObjectHideFlags: 3
