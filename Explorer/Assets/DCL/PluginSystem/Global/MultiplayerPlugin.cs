@@ -26,8 +26,8 @@ namespace DCL.PluginSystem.Global
 {
     public class MultiplayerPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
-        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IRealmRoomsProvider archipelagoIslandRoom;
+        private readonly IGateKeeperSceneRoomProvider gateKeeperSceneRoomProvider;
         private readonly IRoomHub roomHub;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
@@ -41,8 +41,8 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
 
         public MultiplayerPlugin(
-            IArchipelagoIslandRoom archipelagoIslandRoom,
-            IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IRealmRoomsProvider archipelagoIslandRoom,
+            IGateKeeperSceneRoomProvider gateKeeperSceneRoomProvider,
             IRoomHub roomHub,
             IProfileRepository profileRepository,
             IProfileBroadcast profileBroadcast,
@@ -57,7 +57,7 @@ namespace DCL.PluginSystem.Global
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
-            this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.gateKeeperSceneRoomProvider = gateKeeperSceneRoomProvider;
             this.roomHub = roomHub;
             this.profileRepository = profileRepository;
             this.profileBroadcast = profileBroadcast;
@@ -82,8 +82,8 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remotePoses, debugContainerBuilder);
-            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoom, realFlowLoadingStatus);
+            DebugRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoomProvider, entityParticipantTable, remotePoses, debugContainerBuilder);
+            ConnectionRoomsSystem.InjectToWorld(ref builder, archipelagoIslandRoom, gateKeeperSceneRoomProvider, realFlowLoadingStatus);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),

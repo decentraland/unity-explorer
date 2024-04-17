@@ -2,6 +2,9 @@ using ECS;
 
 namespace DCL.Multiplayer.Connections.Archipelago.WorldAboutUrl.Current
 {
+    /// <summary>
+    /// TODO why so many abstractions?
+    /// </summary>
     public interface ICurrentWorldAboutUrl
     {
         string AboutUrl();

@@ -4,8 +4,7 @@ using DCL.CharacterMotion.Systems;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
-using DCL.Multiplayer.Emotes;
-using UnityEngine.EventSystems;
+using DCL.Multiplayer.Emotes.Interfaces;
 using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
 namespace DCL.PluginSystem.Global
@@ -13,10 +12,10 @@ namespace DCL.PluginSystem.Global
     public class InputPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly DCLInput dclInput;
-        private readonly MultiplayerEmotesMessageBus messageBus;
+        private readonly IEmotesMessageBus messageBus;
         private readonly IEventSystem eventSystem;
 
-        public InputPlugin(DCLInput dclInput, MultiplayerEmotesMessageBus messageBus, IEventSystem eventSystem)
+        public InputPlugin(DCLInput dclInput, IEmotesMessageBus messageBus, IEventSystem eventSystem)
         {
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;

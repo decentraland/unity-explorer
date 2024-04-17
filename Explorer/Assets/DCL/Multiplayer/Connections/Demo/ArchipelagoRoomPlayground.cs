@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
@@ -60,15 +61,17 @@ namespace DCL.Multiplayer.Connections.Demo
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
 
-            var archipelagoIslandRoom = new ArchipelagoIslandRoom(
+            var archipelagoRoomProvider = new RealmRoomsProvider(
                 identityCache,
-                signFlow,
                 loonCharacterObject,
+                IWebRequestController.DEFAULT,
+                signFlow,
                 ICurrentAdapterAddress.NewDefault(IWebRequestController.DEFAULT, new IRealmData.Fake())
             );
+
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
             realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
-            system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);
+            system = new ConnectionRoomsSystem(world, archipelagoRoomProvider, new IGateKeeperSceneRoomProvider.Fake(), realFlowLoadingStatus);
 
             while (this)
             {

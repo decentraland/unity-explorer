@@ -1,15 +1,17 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using LiveKit.Rooms;
+using System.Threading;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {
     public class RoomHub : IRoomHub
     {
-        private readonly IConnectiveRoom archipelagoIslandRoom;
-        private readonly IConnectiveRoom gateKeeperSceneRoom;
+        private readonly IRealmRoomsProvider archipelagoIslandRoom;
+        private readonly IGateKeeperSceneRoomProvider gateKeeperSceneRoom;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IConnectiveRoom gateKeeperSceneRoom)
+        public RoomHub(IRealmRoomsProvider archipelagoIslandRoom, IGateKeeperSceneRoomProvider gateKeeperSceneRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -21,17 +23,16 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IRoom SceneRoom() =>
             gateKeeperSceneRoom.Room();
 
-        public UniTask StartAsync()
+        public async UniTask StartAsync(CancellationToken ct)
         {
-            archipelagoIslandRoom.Start();
-            gateKeeperSceneRoom.Start();
-            return UniTask.CompletedTask;
+            await archipelagoIslandRoom.StartAsync(ct);
+            await gateKeeperSceneRoom.StartAsync(ct);
         }
 
-        public UniTask StopAsync() =>
+        public UniTask StopAsync(CancellationToken ct) =>
             UniTask.WhenAll(
-                archipelagoIslandRoom.StopAsync(),
-                gateKeeperSceneRoom.StopAsync()
+                archipelagoIslandRoom.StopAsync(ct),
+                gateKeeperSceneRoom.StopAsync(ct)
             );
     }
 }

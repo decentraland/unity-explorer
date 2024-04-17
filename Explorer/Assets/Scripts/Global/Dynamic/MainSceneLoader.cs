@@ -177,10 +177,10 @@ namespace Global.Dynamic
                 }
 
                 var webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
-                var roomHub = dynamicWorldContainer!.RoomHub;
+                var roomHub = dynamicWorldContainer!.MultiplayerContainer.RoomHub;
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
+                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MultiplayerContainer.MessagePipesHub);
 
                 // Initialize global plugins
                 var anyFailure = false;

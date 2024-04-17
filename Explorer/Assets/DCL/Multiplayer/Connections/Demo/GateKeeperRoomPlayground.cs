@@ -36,11 +36,11 @@ namespace DCL.Multiplayer.Connections.Demo
             var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests));
             var realmData = new IRealmData.Fake();
 
-            new GateKeeperSceneRoom(
+            new GateKeeperSceneRoomProvider(
                 webRequests,
                 new LogMetaDataSource(new MetaDataSource(realmData, character, places)),
                 gateKeeperUrl
-            ).Start();
+            ).StartAsync(destroyCancellationToken);
         }
     }
 }

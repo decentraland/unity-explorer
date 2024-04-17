@@ -19,8 +19,8 @@ namespace DCL.Multiplayer.Connections.Systems
 
         public DebugRoomsSystem(
             World world,
-            IArchipelagoIslandRoom archipelagoIslandRoom,
-            IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IRealmRoomsProvider archipelagoIslandRoom,
+            IGateKeeperSceneRoomProvider gateKeeperSceneRoomProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemotePoses remotePoses,
             IDebugContainerBuilder debugBuilder
@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             var gateKeeperRoomDisplay = new DebugWidgetRoomDisplay(
                 "Room: Scene",
-                gateKeeperSceneRoom,
+                gateKeeperSceneRoomProvider,
                 debugBuilder
             );
 

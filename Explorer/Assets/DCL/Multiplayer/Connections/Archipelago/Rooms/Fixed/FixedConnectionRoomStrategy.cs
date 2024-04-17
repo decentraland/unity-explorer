@@ -1,47 +1,39 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
-using LiveKit.Rooms;
 using System;
 using System.Threading;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 {
-    public class FixedConnectiveRoom : IConnectiveRoom
+    /// <summary>
+    /// No need for any abstractions - it's a unique behaviour that we can't replace
+    /// </summary>
+    internal class FixedConnectionRoomStrategy : IRealmRoomStrategy
     {
         private readonly IWebRequestController webRequests;
-        private readonly IConnectiveRoom connectiveRoom;
-        private readonly ICurrentAdapterAddress currentAdapterAddress;
+        private readonly string currentAdapterAddress;
 
-        public FixedConnectiveRoom(IWebRequestController webRequests, ICurrentAdapterAddress currentAdapterAddress)
+        public ConnectiveRoom ConnectiveRoom { get; }
+
+        public FixedConnectionRoomStrategy(InteriorRoom sharedRoom, IWebRequestController webRequests, string currentAdapterAddress)
         {
             this.webRequests = webRequests;
             this.currentAdapterAddress = currentAdapterAddress;
 
-            connectiveRoom = new ConnectiveRoom(
+            ConnectiveRoom = new ConnectiveRoom(
+                sharedRoom,
                 static _ => UniTask.CompletedTask,
                 RunConnectCycleStepAsync
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
-
-        public UniTask StopAsync() =>
-            connectiveRoom.StopAsync();
-
-        public IConnectiveRoom.State CurrentState() =>
-            connectiveRoom.CurrentState();
-
-        public IRoom Room() =>
-            connectiveRoom.Room();
-
         private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token)
         {
-            if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
+            if (ConnectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
             {
                 string connectionString = await ConnectionStringAsync(token);
                 await connectToRoomAsyncDelegate(connectionString, token);
@@ -50,9 +42,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
         {
-            string adapterUrl = await currentAdapterAddress.AdapterUrlAsync(token);
             string metadata = FixedMetadata.Default.ToJson();
-            GenericPostRequest result = await webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
+            GenericPostRequest result = await webRequests.SignedFetchPostAsync(currentAdapterAddress, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
             ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");

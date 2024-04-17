@@ -1,8 +1,11 @@
 using Cysharp.Threading.Tasks;
-using LiveKit.Rooms;
+using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
+    /// <summary>
+    ///     This interface became redundant but I keep it if we want to mock in the future
+    /// </summary>
     public interface IConnectiveRoom
     {
         enum State
@@ -10,46 +13,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             Stopped,
             Starting,
             Running,
-            Stopping
+            Stopping,
         }
 
         void Start();
 
-        UniTask StopAsync();
+        UniTask StopAsync(CancellationToken ct);
 
         State CurrentState();
-
-        IRoom Room();
-
-        class Fake : IConnectiveRoom
-        {
-            public void Start()
-            {
-                //ignore
-            }
-
-            public UniTask StopAsync() =>
-                UniTask.CompletedTask;
-
-            public State CurrentState() =>
-                State.Stopped;
-
-            public IRoom Room() =>
-                NullRoom.INSTANCE;
-        }
-    }
-
-    public static class GateKeeperSceneRoomExtensions
-    {
-        public static void StartIfNot(this IConnectiveRoom room)
-        {
-            if (room.CurrentState() is IConnectiveRoom.State.Stopped)
-                room.Start();
-        }
-
-        public static string ParticipantCountInfo(this IConnectiveRoom room) =>
-            room.CurrentState() is IConnectiveRoom.State.Running
-                ? room.Room().Participants.RemoteParticipantSids().Count.ToString()
-                : "Not connected";
     }
 }

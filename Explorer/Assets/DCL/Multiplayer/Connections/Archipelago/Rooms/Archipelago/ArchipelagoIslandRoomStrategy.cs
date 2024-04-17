@@ -1,54 +1,37 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using LiveKit.Internal.FFIClients.Pools;
-using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Rooms;
 using System;
-using System.Buffers;
-using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
-    public class ArchipelagoIslandRoom : IArchipelagoIslandRoom
+    internal class ArchipelagoIslandRoomStrategy : IRealmRoomStrategy
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IArchipelagoSignFlow signFlow;
         private readonly ICharacterObject characterObject;
-        private readonly IConnectiveRoom connectiveRoom;
-        private readonly ICurrentAdapterAddress currentAdapterAddress;
+        private readonly string currentAdapterAddress;
+
+        public ConnectiveRoom ConnectiveRoom { get; }
 
         private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
 
-        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, ICurrentAdapterAddress currentAdapterAddress) : this(
-            web3IdentityCache,
-            new LiveConnectionArchipelagoSignFlow(
-                new WebSocketArchipelagoLiveConnection(
-                    () => new ClientWebSocket(),
-                    new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-                ).WithLog(),
-                new ArrayMemoryPool(ArrayPool<byte>.Shared!),
-                multiPool
-            ).WithLog(),
-            characterObject,
-            currentAdapterAddress
-        ) { }
-
-        public ArchipelagoIslandRoom(
+        public ArchipelagoIslandRoomStrategy(
+            InteriorRoom sharedRoom,
             IWeb3IdentityCache web3IdentityCache,
             IArchipelagoSignFlow signFlow,
             ICharacterObject characterObject,
-            ICurrentAdapterAddress currentAdapterAddress
+            string currentAdapterAddress
         )
         {
             this.web3IdentityCache = web3IdentityCache;
@@ -56,28 +39,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.characterObject = characterObject;
             this.currentAdapterAddress = currentAdapterAddress;
 
-            connectiveRoom = new RenewableConnectiveRoom(
-                () => new ConnectiveRoom(
-                    PrewarmAsync,
-                    SendHeartbeatAsync
-                )
-            );
+            ConnectiveRoom = new ConnectiveRoom(sharedRoom, PrewarmAsync, SendHeartbeatAsync);
         }
-
-        public void Start() =>
-            connectiveRoom.Start();
-
-        public UniTask StopAsync() =>
-            UniTask.WhenAll(
-                //signFlow.DisconnectAsync(CancellationToken.None),
-                connectiveRoom.StopAsync()
-            );
-
-        public IConnectiveRoom.State CurrentState() =>
-            connectiveRoom.CurrentState();
-
-        public IRoom Room() =>
-            connectiveRoom.Room();
 
         private async UniTask PrewarmAsync(CancellationToken token)
         {
@@ -102,15 +65,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private void OnNewConnectionString(string connectionString, CancellationToken token)
         {
-            if (CurrentState() is IConnectiveRoom.State.Stopped) throw new InvalidOperationException("Room is not running");
+            if (ConnectiveRoom.CurrentState() is IConnectiveRoom.State.Stopped) throw new InvalidOperationException("Room is not running");
             connectToRoomAsyncDelegate.EnsureNotNull("Connection delegate is not passed yet");
             connectToRoomAsyncDelegate!(connectionString, token).Forget();
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
-            string adapterUrl = await currentAdapterAddress.AdapterUrlAsync(token);
-            LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
+            LightResult<string> welcomePeerId = await WelcomePeerIdAsync(currentAdapterAddress, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
         }
 

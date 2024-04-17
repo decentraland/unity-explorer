@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using LiveKit.Rooms;
@@ -9,15 +10,17 @@ using System.Threading;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
-    public class GateKeeperSceneRoom : IGateKeeperSceneRoom
+    public class GateKeeperSceneRoomProvider : IGateKeeperSceneRoomProvider
     {
         private readonly IWebRequestController webRequests;
         private readonly IMetaDataSource metaDataSource;
-        private readonly IConnectiveRoom connectiveRoom;
+        private readonly ConnectiveRoom connectiveRoom;
         private readonly string sceneHandleUrl;
         private MetaData? previousMetaData;
 
-        public GateKeeperSceneRoom(
+        private readonly InteriorRoom interiorRoom;
+
+        public GateKeeperSceneRoomProvider(
             IWebRequestController webRequests,
             IMetaDataSource metaDataSource,
             string sceneHandleUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter"
@@ -28,22 +31,26 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             this.sceneHandleUrl = sceneHandleUrl;
 
             connectiveRoom = new ConnectiveRoom(
+                interiorRoom = new InteriorRoom(), // not shared room
                 static _ => UniTask.CompletedTask,
                 RunConnectCycleStepAsync
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
-
-        public UniTask StopAsync() =>
-            connectiveRoom.StopAsync();
+        public IRoom Room() =>
+            interiorRoom;
 
         public IConnectiveRoom.State CurrentState() =>
             connectiveRoom.CurrentState();
 
-        public IRoom Room() =>
-            connectiveRoom.Room();
+        public UniTask StartAsync(CancellationToken ct)
+        {
+            connectiveRoom.Start();
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask StopAsync(CancellationToken ct) =>
+            connectiveRoom.StopAsync(ct);
 
         private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token)
         {

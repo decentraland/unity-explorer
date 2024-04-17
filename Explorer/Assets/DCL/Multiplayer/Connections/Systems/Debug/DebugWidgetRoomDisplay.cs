@@ -1,5 +1,6 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using System;
 
@@ -7,7 +8,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 {
     public class DebugWidgetRoomDisplay : IRoomDisplay
     {
-        private readonly IConnectiveRoom room;
+        private readonly IRoomProvider room;
         private readonly ElementBinding<string> stateScene;
         private readonly ElementBinding<string> remoteParticipantsScene;
         private readonly ElementBinding<string> selfSid;
@@ -18,13 +19,13 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         public DebugWidgetRoomDisplay(
             string roomName,
-            IConnectiveRoom connectiveRoom,
+            IRoomProvider roomProvider,
             IDebugContainerBuilder debugBuilder, Action<DebugWidgetBuilder>? postBuildAction = null
         ) : this(
-            connectiveRoom, debugBuilder.AddWidget(roomName)!, postBuildAction
+            roomProvider, debugBuilder.AddWidget(roomName)!, postBuildAction
         ) { }
 
-        public DebugWidgetRoomDisplay(IConnectiveRoom connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
+        public DebugWidgetRoomDisplay(IRoomProvider connectiveRoom, DebugWidgetBuilder widgetBuilder, Action<DebugWidgetBuilder>? postBuildAction = null)
         {
             room = connectiveRoom;
             selfSid = new ElementBinding<string>(string.Empty);
@@ -46,27 +47,6 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
                .AddCustomMarker("Self Metadata", selfMetadata);
 
             postBuildAction?.Invoke(widgetBuilder);
-        }
-
-        public DebugWidgetRoomDisplay(
-            IConnectiveRoom room,
-            ElementBinding<string> stateScene,
-            ElementBinding<string> remoteParticipantsScene,
-            ElementBinding<string> selfSid,
-            ElementBinding<string> connectionQuality,
-            ElementBinding<string> roomSid,
-            ElementBinding<string> selfMetadata,
-            ElementBinding<string> connectiveState
-        )
-        {
-            this.room = room;
-            this.stateScene = stateScene;
-            this.remoteParticipantsScene = remoteParticipantsScene;
-            this.selfSid = selfSid;
-            this.connectionQuality = connectionQuality;
-            this.roomSid = roomSid;
-            this.selfMetadata = selfMetadata;
-            this.connectiveState = connectiveState;
         }
 
         public void Update()

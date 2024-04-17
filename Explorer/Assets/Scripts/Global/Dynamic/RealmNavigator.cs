@@ -62,9 +62,9 @@ namespace Global.Dynamic
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
                 {
                     remoteEntities.ForceRemoveAll(world);
-                    await roomHub.StopAsync();
+                    await roomHub.StopAsync(ct);
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
-                    await roomHub.StartAsync();
+                    await roomHub.StartAsync(ct);
                 },
                 ct
             );
