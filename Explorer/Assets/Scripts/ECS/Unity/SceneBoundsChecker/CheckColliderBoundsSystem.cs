@@ -68,6 +68,7 @@ namespace ECS.Unity.SceneBoundsChecker
             Collider collider = primitiveCollider.Collider;
             if (!collider) return;
 
+            collider.enabled = true;
             collider.enabled = sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds);
         }
 
@@ -103,12 +104,15 @@ namespace ECS.Unity.SceneBoundsChecker
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
+                    // Unity doesn't calculate bounds if the component is disabled
+                    sdkCollider.Collider.enabled = true; // enable it to calculate
+
                     Bounds colliderBounds = sdkCollider.Collider.bounds;
 
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
-                    sdkCollider.IsActiveBySceneBounds = colliderBounds.extents == Vector3.zero
-                                                        || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds);
+                    sdkCollider.ForceActiveBySceneBounds(colliderBounds.extents == Vector3.zero
+                                                        || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds));
 
                     // write the structure back
                     colliders[i] = sdkCollider;
