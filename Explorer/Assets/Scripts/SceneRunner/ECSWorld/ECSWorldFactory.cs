@@ -73,9 +73,10 @@ namespace SceneRunner.ECSWorld
                .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
+            var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
 
             foreach (IDCLWorldPlugin worldPlugin in plugins)
-                worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems);
+                worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
 
             // Prioritization
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
@@ -93,7 +94,7 @@ namespace SceneRunner.ECSWorld
 
             SystemGroupSnapshot.Instance.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
 
-            return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems);
+            return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
         }
     }
 }

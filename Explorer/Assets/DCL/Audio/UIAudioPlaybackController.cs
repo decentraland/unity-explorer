@@ -57,10 +57,11 @@ namespace DCL.Audio
 
         private void ContinuePlayLoopingUIAudio(AudioSource audioSource, bool startLoop, AudioClipConfig audioClipConfig)
         {
-            if (startLoop)
+            if (startLoop && CheckAudioClips(audioClipConfig))
             {
                 int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+                audioSource.loop = true;
                 audioSource.Play();
                 audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration);
             }
@@ -69,7 +70,7 @@ namespace DCL.Audio
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if ( CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
+            if (!CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;
@@ -81,7 +82,7 @@ namespace DCL.Audio
         {
             if (audioClipConfig.AudioClips.Length == 0)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
+                ReportHub.Log(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
                 return false;
             }
             else

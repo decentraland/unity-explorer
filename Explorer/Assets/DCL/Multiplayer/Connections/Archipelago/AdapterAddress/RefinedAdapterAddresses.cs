@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
@@ -17,7 +18,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
         public async UniTask<string> AdapterUrlAsync(string aboutUrl, CancellationToken token)
         {
             string result = await origin.AdapterUrlAsync(aboutUrl, token);
-            return result.Replace(replaceRefined, string.Empty);
+            result = result.Replace(replaceRefined, string.Empty);
+
+            result = RemoveHttpsPreInfo(result);
+            result = RemoveWssPreInfo(result);
+
+            return result;
+        }
+
+        private string RemoveHttpsPreInfo(string url)
+        {
+            int index = url.IndexOf("https://", StringComparison.OrdinalIgnoreCase);
+            return index == -1 ? url : url.Substring(index);
+        }
+
+        private string RemoveWssPreInfo(string url)
+        {
+            int index = url.IndexOf("wss://", StringComparison.OrdinalIgnoreCase);
+            return index == -1 ? url : url.Substring(index);
         }
     }
 }

@@ -51,10 +51,6 @@ namespace DCL.Chat
         private SingleInstanceEntity cameraEntity;
         private readonly DCLInput dclInput;
 
-        private readonly ChatCommandsHandler commandsHandler;
-        private (IChatCommand command, Match param) chatCommand;
-        private CancellationTokenSource commandCts = new ();
-
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -72,8 +68,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
-            IEventSystem eventSystem,
-            Dictionary<Regex, Func<IChatCommand>> commandsFactory
+            IEventSystem eventSystem
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -89,8 +84,6 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
-
-            commandsHandler = new ChatCommandsHandler(commandsFactory);
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
             // Adding two elements to count as top and bottom padding
@@ -181,12 +174,24 @@ namespace DCL.Chat
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
 
             if (viewInstance.EmojiPanel.EmojiContainer.gameObject.activeInHierarchy)
-                world.AddOrGet(playerEntity, new MovementBlockerComponent());
+                BlockPlayerMovement();
             else
-                world.Remove<MovementBlockerComponent>(playerEntity);
+                UnblockPlayerMovement();
 
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
+        }
+
+        private void BlockPlayerMovement()
+        {
+            world.AddOrGet(playerEntity, new MovementBlockerComponent());
+            dclInput.Shortcuts.Disable();
+        }
+
+        private void UnblockPlayerMovement()
+        {
+            world.Remove<MovementBlockerComponent>(playerEntity);
+            dclInput.Shortcuts.Enable();
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -217,19 +222,7 @@ namespace DCL.Chat
             viewInstance.InputField.ActivateInputField();
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
-            if (commandsHandler.TryGetChatCommand(messageToSend, ref chatCommand))
-                ExecuteChatCommandAsync(chatCommand.command, chatCommand.param).Forget();
-            else
-                chatMessagesBus.Send(messageToSend);
-        }
-
-        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
-        {
-            commandCts = commandCts.SafeRestart();
-            string? response = await command.ExecuteAsync(param, commandCts.Token);
-
-            if (!string.IsNullOrEmpty(response))
-                CreateChatEntry(new ChatMessage(response, "System", string.Empty, true, false));
+            chatMessagesBus.Send(messageToSend);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -285,7 +278,7 @@ namespace DCL.Chat
         {
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
-            world.Remove<MovementBlockerComponent>(playerEntity);
+            UnblockPlayerMovement();
         }
 
         private void OnInputSelected(string inputText)
@@ -298,7 +291,7 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
-            world.AddOrGet(playerEntity, new MovementBlockerComponent());
+            BlockPlayerMovement();
         }
 
         private void OnInputChanged(string inputText)
@@ -376,7 +369,6 @@ namespace DCL.Chat
 
             dclInput.UI.Submit.performed -= OnSubmitAction;
             cts.SafeCancelAndDispose();
-            commandCts.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -1,15 +1,21 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
 using DCL.PluginSystem.Global;
 using DCL.Roads.Systems;
 using DCL.SceneLoadingScreens;
 using ECS.SceneLifeCycle.Components;
+using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -29,27 +35,44 @@ namespace Global.Dynamic
     {
         private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
 
-        private readonly MVCManager mvcManager;
+        private readonly ILoadingScreen loadingScreen;
         private readonly IMapRenderer mapRenderer;
         private readonly IRealmController realmController;
         private readonly ITeleportController teleportController;
+        private readonly IRoomHub roomHub;
+        private readonly IRemoteEntities remoteEntities;
+        private readonly ObjectProxy<World> globalWorldProxy;
         private readonly LandscapePlugin landscapePlugin;
         private readonly RoadPlugin roadsPlugin;
         private readonly WorldTerrainGenerator worldsTerrainGenerator;
 
+        public RealmNavigator(
+            ILoadingScreen loadingScreen,
+            IMapRenderer mapRenderer,
+            IRealmController realmController,
+            ITeleportController teleportController,
+            IRoomHub roomHub,
+            IRemoteEntities remoteEntities,
+            ObjectProxy<World> globalWorldProxy
+        )
         public RealmNavigator(MVCManager mvcManager, IMapRenderer mapRenderer, IRealmController realmController, ITeleportController teleportController,
             LandscapePlugin landscapePlugin, RoadPlugin roadsPlugin)
         {
-            this.mvcManager = mvcManager;
+            this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
             this.landscapePlugin = landscapePlugin;
             this.roadsPlugin = roadsPlugin;
+            this.roomHub = roomHub;
+            this.remoteEntities = remoteEntities;
+            this.globalWorldProxy = globalWorldProxy;
         }
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
+            var world = globalWorldProxy.Object.EnsureNotNull();
+
             ct.ThrowIfCancellationRequested();
 
             if (!await realmController.IsReachableAsync(realm, ct))
@@ -59,6 +82,15 @@ namespace Global.Dynamic
 
             SwitchMiscVisibility(realm == genesisDomain);
 
+            await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
+                {
+                    remoteEntities.ForceRemoveAll(world);
+                    await roomHub.StopAsync();
+                    await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
+                    await roomHub.StartAsync();
+                },
+                ct
+            );
             await ShowLoadingScreenAndExecuteTaskAsync(ct,
                 async loadReport =>
                 {
@@ -94,6 +126,7 @@ namespace Global.Dynamic
         {
             ct.ThrowIfCancellationRequested();
 
+            await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
             await ShowLoadingScreenAndExecuteTaskAsync(ct, async loadReport =>
             {
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
