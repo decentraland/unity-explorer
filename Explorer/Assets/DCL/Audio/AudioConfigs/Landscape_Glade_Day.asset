@@ -13,9 +13,7 @@ MonoBehaviour:
   m_Name: Landscape_Glade_Day
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 806a17ec8e2547140bd72945aae59b9b, type: 3}
-  - {fileID: 8300000, guid: 1edd566143518b4499e1fea474b0a670, type: 3}
-  - {fileID: 8300000, guid: 085fefadd3bd3c64691d270a82214706, type: 3}
+  - {fileID: 8300000, guid: e9dd2ec244e34d042a5f9b60acac5b93, type: 3}
   relativeVolume: 1
   audioCategory: 2
   pitchVariation: 0

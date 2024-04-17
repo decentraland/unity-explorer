@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: Landscape_Ocean
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 9006812327657f54f80edc065b164e32, type: 3}
-  - {fileID: 8300000, guid: 40e230d6b6d1e4b4bb12f33a2798bd34, type: 3}
+  - {fileID: 8300000, guid: dc18dada9095f8d47b2f2c3f0961c6bb, type: 3}
   relativeVolume: 1
   audioCategory: 2
   pitchVariation: 0
