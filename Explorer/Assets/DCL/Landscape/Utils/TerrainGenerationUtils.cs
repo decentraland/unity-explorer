@@ -31,7 +31,7 @@ namespace DCL.Landscape
         }
 
         /// <summary>
-        /// Here we convert the result of the noise generation of the terrain texture layers
+        ///     Here we convert the result of the noise generation of the terrain texture layers
         /// </summary>
         public static float[,,] GenerateAlphaMaps(this NativeArray<float>[] textureResults, int width, int height, int terrainLayersAmount)
         {
