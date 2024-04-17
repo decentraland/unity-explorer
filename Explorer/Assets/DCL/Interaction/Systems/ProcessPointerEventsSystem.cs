@@ -93,7 +93,7 @@ namespace DCL.Interaction.Systems
                         if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
                             candidateForHoverLeaveIsValid = false;
 
-                        pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResult.UnityRaycastHit, raycastResult.OriginRay);
+                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.UnityRaycastHit, raycastResult.OriginRay);
 
                         bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 
@@ -103,14 +103,7 @@ namespace DCL.Interaction.Systems
 
                         if (count > 0)
                         {
-                            world.Query(highlightQuery, e =>
-                            {
-                                ref HighlightComponent highlightComponent = ref world.TryGetRef<HighlightComponent>(e, out bool exists);
-                                if (!exists) return;
-                                highlightComponent.IsEnabled = true;
-                                highlightComponent.IsAtDistance = isAtDistance;
-                                highlightComponent.NextEntity = entityRef;
-                            });
+                            SetupHighlightComponentQuery(world, isAtDistance, entityRef);
                         }
                         else
                         {
@@ -133,19 +126,26 @@ namespace DCL.Interaction.Systems
                 World world = previousEntityInfo.EcsExecutor.World;
 
                 using (previousEntityInfo.EcsExecutor.Sync.GetScope())
-                {
-                    world.Query(highlightQuery, e =>
-                    {
-                        ref HighlightComponent highlightComponent = ref world.TryGetRef<HighlightComponent>(e, out bool exists);
-                        if (!exists) return;
-                        highlightComponent.IsEnabled = false;
-                        highlightComponent.IsAtDistance = false;
-                        highlightComponent.NextEntity = EntityReference.Null;
-                    });
-                }
+                    ResetHighlightComponentQuery(world);
 
                 HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousEntityInfo);
             }
+        }
+
+        [Query]
+        private void SetupHighlightComponent([Data] bool isAtDistance, [Data] EntityReference nextEntity, ref HighlightComponent highlightComponent)
+        {
+            highlightComponent.IsEnabled = true;
+            highlightComponent.IsAtDistance = isAtDistance;
+            highlightComponent.NextEntity = nextEntity;
+        }
+
+        [Query]
+        private void ResetHighlightComponent(ref HighlightComponent highlightComponent)
+        {
+            highlightComponent.IsEnabled = false;
+            highlightComponent.IsAtDistance = false;
+            highlightComponent.NextEntity = EntityReference.Null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
