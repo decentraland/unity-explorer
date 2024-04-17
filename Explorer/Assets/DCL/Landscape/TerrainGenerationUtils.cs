@@ -1,4 +1,6 @@
 ﻿using DCL.Landscape.Jobs;
+using DCL.Landscape.NoiseGeneration;
+using DCL.Landscape.Settings;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -9,25 +11,57 @@ namespace DCL.Landscape
     public static class TerrainGenerationUtils
     {
         public static JobHandle SetupEmptyParcelsJobs(
-            ref NativeParallelHashMap<int2, int> emptyParcelHeights,
-            ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelNeighborHeightsData,
+            ref NativeParallelHashMap<int2, int> emptyParcelsData,
+            ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData,
             in NativeArray<int2> emptyParcels,
             ref NativeParallelHashSet<int2> ownedParcels,
             int2 minParcel, int2 maxParcel,
             float heightScaleNerf)
         {
-            emptyParcelHeights = new NativeParallelHashMap<int2, int>(emptyParcels.Length, Allocator.Persistent);
-            emptyParcelNeighborHeightsData = new NativeParallelHashMap<int2, EmptyParcelNeighborData>(emptyParcels.Length, Allocator.Persistent);
+            emptyParcelsData = new NativeParallelHashMap<int2, int>(emptyParcels.Length, Allocator.Persistent);
+            emptyParcelsNeighborData = new NativeParallelHashMap<int2, EmptyParcelNeighborData>(emptyParcels.Length, Allocator.Persistent);
 
-            var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelHeights.AsParallelWriter(),
+            var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelsData.AsParallelWriter(),
                 heightScaleNerf, minParcel, maxParcel);
 
             JobHandle handle = job.Schedule(emptyParcels.Length, 32);
 
-            var job2 = new CalculateEmptyParcelNeighbourHeights(in emptyParcels, in ownedParcels, emptyParcelNeighborHeightsData.AsParallelWriter(),
-                emptyParcelHeights.AsReadOnly(), minParcel, maxParcel);
+            var job2 = new CalculateEmptyParcelNeighbourHeights(in emptyParcels, in ownedParcels, emptyParcelsNeighborData.AsParallelWriter(),
+                emptyParcelsData.AsReadOnly(), minParcel, maxParcel);
 
             return job2.Schedule(emptyParcels.Length, 32, handle);
+        }
+
+        public static JobHandle SetupHeightsJobs(
+            ref NativeArray<float> heights,
+            ref NativeParallelHashMap<int2, int> emptyParcelsData,
+            ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData,
+            NoiseGeneratorCache noiseGenCache,
+            TerrainGenerationData terrainGenData,
+            int resolution, int2 terrainMinParcel, int offsetX, int offsetZ, int maxHeightIndex, int parcelSize, uint baseSeed)
+        {
+            INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
+            var noiseDataPointer = new NoiseDataPointer(resolution, offsetX, offsetZ);
+            JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
+
+            NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
+
+            var modifyJob = new ModifyTerrainHeightJob(
+                ref heights,
+                in emptyParcelsNeighborData, in emptyParcelsData,
+                in terrainNoise,
+                terrainGenData.terrainHoleEdgeSize,
+                terrainGenData.minHeight,
+                terrainGenData.pondDepth,
+                resolution,
+                offsetX,
+                offsetZ,
+                maxHeightIndex,
+                terrainMinParcel,
+                parcelSize
+            );
+
+            return modifyJob.Schedule(heights.Length, 64, handle);
         }
 
         /// <summary>

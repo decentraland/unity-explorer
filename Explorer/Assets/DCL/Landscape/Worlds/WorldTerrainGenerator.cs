@@ -4,9 +4,9 @@ using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
+using DCL.Landscape.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -35,7 +35,6 @@ namespace DCL.Landscape
         private GameObject rootGo;
 
         private int maxHeightIndex;
-        private uint worldSeed;
         private TreePrototype[] treePrototypes;
 
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
@@ -45,10 +44,14 @@ namespace DCL.Landscape
 
         private Transform ocean;
 
-        public WorldTerrainGenerator(TerrainGenerationData terrainGenData)
+        private readonly TerrainChunkDataGenerator chunkDataGenerator;
+
+        public WorldTerrainGenerator(TerrainGenerationData terrainGenData, bool measureTime = false)
         {
             this.terrainGenData = terrainGenData;
             factory = new TerrainFactory(terrainGenData);
+
+            chunkDataGenerator = new TerrainChunkDataGenerator(null,  new TimeProfiler(measureTime), terrainGenData, ReportCategory.LANDSCAPE, noiseGenCache);
         }
 
         public void SwitchVisibility(bool isVisible)
@@ -68,8 +71,6 @@ namespace DCL.Landscape
 
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
         {
-            this.worldSeed = worldSeed;
-
             this.ownedParcels = ownedParcels;
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(worldModel, 2 + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
@@ -86,22 +87,28 @@ namespace DCL.Landscape
             await SetupEmptyParcelDataAsync(cancellationToken, terrainModel);
 
             // Generate TerrainData's
+            chunkDataGenerator.Initialize((int)worldSeed, ref emptyParcelsNeighborData);
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
-                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
-
-                SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
-                SetTexturesAsync(chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
-                SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, worldSeed, cancellationToken).Forget();
-                SetTreesAsync(terrainModel, chunkModel, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
-                DigHoles(terrainModel, chunkModel);
-
+                GenerateTerrainData(chunkModel, terrainModel, worldSeed, cancellationToken);
                 await UniTask.Yield(cancellationToken);
             }
 
             // Generate Terrain GameObjects
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                 factory.CreateTerrainChunk(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * PARCEL_SIZE, terrainGenData.terrainMaterial, true);
+        }
+
+        private void GenerateTerrainData(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
+        {
+            chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
+
+            SetHeightsAsync(terrainModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
+            chunkDataGenerator.SetTexturesAsync(false, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken).Forget();
+            SetDetailsAsync(chunkModel, chunkModel.MinParcel.x * PARCEL_SIZE, chunkModel.MinParcel.y * PARCEL_SIZE, terrainModel.ChunkSizeInUnits, worldSeed, cancellationToken).Forget();
+            chunkDataGenerator.SetTreesAsync(terrainModel.MinParcel, chunkModel.MinParcel.x, chunkModel.MinParcel.y, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false).Forget();
+
+            DigHoles(terrainModel, chunkModel);
         }
 
         private static void DigHoles(TerrainModel terrainModel, ChunkModel chunkModel)
@@ -164,70 +171,22 @@ namespace DCL.Landscape
         private async UniTask SetHeightsAsync(TerrainModel terrainModel, int offsetX, int offsetZ, TerrainData terrainData, uint baseSeed,
             CancellationToken cancellationToken)
         {
+            int resolution = terrainModel.ChunkSizeInUnits + 1;
+            var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
+
+            JobHandle jobHandle = TerrainGenerationUtils.SetupHeightsJobs(ref heights,
+                ref emptyParcelsData, ref emptyParcelsNeighborData,
+                noiseGenCache, terrainGenData,
+                resolution, terrainModel.MinParcel,
+                offsetX, offsetZ, maxHeightIndex, PARCEL_SIZE, baseSeed);
+
+            try
             {
-                int resolution = terrainModel.ChunkSizeInUnits + 1;
-                var heightArray = new float[resolution, resolution];
+                await jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                float[,] heightArray = heights.To2DArray(resolution, resolution);
                 terrainData.SetHeights(0, 0, heightArray);
-
-                var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
-
-                INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
-                var noiseDataPointer = new NoiseDataPointer(resolution, offsetX, offsetZ);
-                JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
-
-                NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
-
-                var modifyJob = new ModifyTerrainHeightJob(
-                    ref heights,
-                    in emptyParcelsNeighborData, in emptyParcelsData,
-                    in terrainNoise,
-                    terrainGenData.terrainHoleEdgeSize,
-                    terrainGenData.minHeight,
-                    terrainGenData.pondDepth,
-                    resolution,
-                    offsetX,
-                    offsetZ,
-                    maxHeightIndex,
-                    terrainModel.MinParcel,
-                    PARCEL_SIZE
-                );
-
-                JobHandle jobHandle = modifyJob.Schedule(heights.Length, 64, handle);
-
-                try { await jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken); }
-                finally { heights.Dispose(); }
             }
-        }
-
-        private async UniTask SetTexturesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken)
-        {
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var noiseGenerators = new List<INoiseGenerator>();
-                var noiseTasks = new List<UniTask>();
-                var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
-
-                foreach (NoiseData noiseData in terrainGenData.layerNoise)
-                {
-                    if (noiseData == null) continue;
-
-                    INoiseGenerator noiseGenerator = noiseGenCache.GetGeneratorFor(noiseData, baseSeed);
-                    JobHandle handle = noiseGenerator.Schedule(noiseDataPointer, default(JobHandle));
-
-                    UniTask noiseTask = handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                    noiseTasks.Add(noiseTask);
-                    noiseGenerators.Add(noiseGenerator);
-                }
-
-                await UniTask.WhenAll(noiseTasks).AttachExternalCancellation(cancellationToken);
-
-                {
-                    float[,,] result3D = noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer)).ToArray()
-                                                        .GenerateAlphaMaps(chunkSize, chunkSize, terrainGenData.terrainLayers.Length);
-                    terrainData.SetAlphamaps(0, 0, result3D);
-                }
-            }
+            finally { heights.Dispose(); }
         }
 
         private async UniTask SetDetailsAsync(ChunkModel chunkModel, int offsetX, int offsetZ, int chunkSize, uint baseSeed,
@@ -289,103 +248,6 @@ namespace DCL.Landscape
 
                         chunkModel.TerrainData.SetDetailLayer(0, 0, i, detailLayer);
                     }
-                }
-            }
-        }
-
-        private async UniTask SetTreesAsync(TerrainModel terrainModel, ChunkModel chunkModel, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken)
-        {
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                int chunkSize = terrainModel.ChunkSizeInUnits;
-
-                var treeInstances = new NativeParallelHashMap<int2, TreeInstance>(chunkSize * chunkSize, Allocator.Persistent);
-                var treeInvalidationMap = new NativeParallelHashMap<int2, bool>(chunkSize * chunkSize, Allocator.Persistent);
-                var treeRadiusMap = new NativeHashMap<int, float>(terrainGenData.treeAssets.Length, Allocator.Persistent);
-                var treeParallelRandoms = new NativeArray<Random>(chunkSize * chunkSize, Allocator.Persistent);
-
-                JobHandle instancingHandle = default;
-
-                try
-                {
-                    for (var treeAssetIndex = 0; treeAssetIndex < terrainGenData.treeAssets.Length; treeAssetIndex++)
-                    {
-                        LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
-                        NoiseDataBase treeNoiseData = treeAsset.noiseData;
-
-                        treeRadiusMap.Add(treeAssetIndex, treeAsset.radius);
-
-                        INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
-                        var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkModel.MinParcel.x, chunkModel.MinParcel.y);
-                        JobHandle generatorHandle = generator.Schedule(noiseDataPointer, default(JobHandle));
-
-                        var randomizer = new SetupRandomForParallelJobs(treeParallelRandoms, (int)worldSeed);
-                        JobHandle randomizerHandle = randomizer.Schedule(generatorHandle);
-
-                        NativeArray<float> resultReference = generator.GetResult(noiseDataPointer);
-
-                        var treeInstancesJob = new GenerateTreeInstancesJob(
-                            treeNoise: resultReference.AsReadOnly(),
-                            treeInstances: treeInstances.AsParallelWriter(),
-                            emptyParcelResult: emptyParcelsNeighborData.AsReadOnly(),
-                            treeRandomization: in treeAsset.randomization,
-                            treeRadius: treeAsset.radius,
-                            treeIndex: treeAssetIndex,
-                            offsetX: chunkModel.MinParcel.x,
-                            offsetZ: chunkModel.MinParcel.y,
-                            chunkSize: chunkSize,
-                            chunkDensity: chunkSize,
-                            minWorldParcel: new int2(terrainModel.MinParcel.x, terrainModel.MinParcel.y),
-                            randoms: treeParallelRandoms,
-                            useRandomSpawnChance: false,
-                            useValidations: true);
-
-                        instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, randomizerHandle);
-
-                        generatorHandle.Complete();
-                        randomizerHandle.Complete();
-                        instancingHandle.Complete();
-                    }
-
-                    await instancingHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                    instancingHandle.Complete();
-
-                    var invalidationJob = new InvalidateTreesJob(treeInstances.AsReadOnly(), treeInvalidationMap.AsParallelWriter(), treeRadiusMap.AsReadOnly(), chunkSize);
-                    JobHandle invalidationHandle = invalidationJob.Schedule(chunkSize * chunkSize, 8);
-                    await invalidationHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                    invalidationHandle.Complete();
-
-                    var array = new List<TreeInstance>();
-
-                    foreach (KeyValue<int2, TreeInstance> treeInstance in treeInstances)
-                    {
-                        // if its marked as invalid, do not use this tree
-                        if (!treeInvalidationMap.TryGetValue(treeInstance.Key, out bool isInvalid)) continue;
-
-                        foreach (int2 parcel in chunkModel.OccupiedParcels)
-                            if (treeInstance.Key.x >= (-chunkModel.MinParcel.x + parcel.x) * PARCEL_SIZE && treeInstance.Key.x < (-chunkModel.MinParcel.x + parcel.x + 1) * PARCEL_SIZE &&
-                                treeInstance.Key.y >= (-chunkModel.MinParcel.y + parcel.y) * PARCEL_SIZE && treeInstance.Key.y < (-chunkModel.MinParcel.y + parcel.y + 1) * PARCEL_SIZE)
-                                isInvalid = true;
-
-                        if (isInvalid) continue;
-
-                        array.Add(treeInstance.Value);
-                    }
-
-                    TreeInstance[] instances = array.ToArray();
-                    terrainData.SetTreeInstances(instances, true);
-                }
-                catch (Exception e) { }
-                finally
-                {
-                    instancingHandle.Complete();
-
-                    treeInstances.Dispose();
-                    treeInvalidationMap.Dispose();
-                    treeRadiusMap.Dispose();
-                    treeParallelRandoms.Dispose();
                 }
             }
         }
