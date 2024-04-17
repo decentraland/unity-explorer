@@ -18,6 +18,7 @@ namespace DCL.Backpack
     {
         private readonly Func<(World, Entity)> ecsContextProvider;
         private readonly IBackpackCommandBus backpackCommandBus;
+        private readonly IEquippedBodyShape equippedBodyShape;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
@@ -36,7 +37,8 @@ namespace DCL.Backpack
             ISelfProfile selfProfile,
             ICollection<string> forceRender,
             Func<(World, Entity)> ecsContextProvider,
-            IBackpackCommandBus backpackCommandBus
+            IBackpackCommandBus backpackCommandBus,
+            IEquippedBodyShape equippedBodyShape
         )
         {
             this.backpackEventBus = backpackEventBus;
@@ -44,6 +46,7 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
             this.backpackCommandBus = backpackCommandBus;
+            this.equippedBodyShape = equippedBodyShape;
             this.selfProfile = selfProfile;
             this.forceRender = forceRender;
 
@@ -132,10 +135,13 @@ namespace DCL.Backpack
 
         private void OnWearableEquipped(IWearable wearable)
         {
-            equippedWearables.Equip(wearable);
-
             if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
+            {
+                equippedBodyShape.Equip(wearable);
                 UnEquipIncompatibleWearables(wearable);
+            }
+            else
+                equippedWearables.Equip(wearable);
         }
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)

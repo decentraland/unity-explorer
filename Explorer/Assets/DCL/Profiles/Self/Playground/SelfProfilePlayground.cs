@@ -53,7 +53,8 @@ namespace DCL.Profiles.Self.Playground
                 new WearableCatalog(),
                 new MemoryEmotesCache(),
                 new EquippedEmotes(),
-                new List<string>()
+                new List<string>(),
+                new EquippedBodyShape()
             );
 
             var profile = await profiles.ProfileAsync(ct);

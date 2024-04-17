@@ -1,8 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AsyncLoadReporting;
-using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
@@ -38,6 +36,8 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -53,12 +53,10 @@ using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
-using DCL.Profiles.Self;
-using DCL.SceneLoadingScreens.LoadingScreen;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -199,8 +197,9 @@ namespace Global.Dynamic
             staticContainer.CacheCleaner.Register(emotesCache);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
+            var equippedBodyShape = new EquippedBodyShape();
             var forceRender = new List<string>();
-            var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
+            var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender, equippedBodyShape);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
                 realFlowLoadingStatus,
@@ -355,7 +354,8 @@ namespace Global.Dynamic
                     emotesCache,
                     realmNavigator,
                     forceRender,
-                    dclInput
+                    dclInput,
+                    equippedBodyShape
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

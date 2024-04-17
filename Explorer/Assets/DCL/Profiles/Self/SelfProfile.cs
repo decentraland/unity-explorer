@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -24,6 +25,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyList<string> forceRender;
+        private readonly IEquippedBodyShape equippedBodyShape;
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
@@ -33,7 +35,8 @@ namespace DCL.Profiles.Self
             IWearableCatalog wearableCatalog,
             IEmoteCache emoteCache,
             IEquippedEmotes equippedEmotes,
-            IReadOnlyList<string> forceRender
+            IReadOnlyList<string> forceRender,
+            IEquippedBodyShape equippedBodyShape
         )
         {
             this.profileRepository = profileRepository;
@@ -43,6 +46,7 @@ namespace DCL.Profiles.Self
             this.emoteCache = emoteCache;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
+            this.equippedBodyShape = equippedBodyShape;
         }
 
         public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
@@ -71,6 +75,7 @@ namespace DCL.Profiles.Self
             ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
             profile = profileBuilder.From(profile)
+                                    .WithBodyShape(BodyShape.FromStringSafe(equippedBodyShape.Get().GetUrn()))
                                     .WithWearables(uniqueWearables)
                                     .WithEmotes(uniqueEmotes)
                                     .WithForceRender(forceRender)

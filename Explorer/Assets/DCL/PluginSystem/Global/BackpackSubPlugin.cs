@@ -53,7 +53,8 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IEmoteCache emoteCache,
             IReadOnlyCollection<URN> embeddedEmotes,
-            ICollection<string> forceRender
+            ICollection<string> forceRender,
+            IEquippedBodyShape equippedBodyShape
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -75,7 +76,8 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 forceRender,
                 ProvideEcsContext,
-                backpackCommandBus
+                backpackCommandBus,
+                equippedBodyShape
             );
         }
 
