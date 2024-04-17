@@ -114,76 +114,70 @@ namespace DCL.Landscape
 
             try
             {
-                timeProfiler.StartMeasure();
-
-                rootGo = TerrainFactory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
-
-                timeProfiler.StartMeasure();
-
-                Ocean = factory.CreateOcean(rootGo.transform);
-                Wind = factory.CreateWind();
-                SpawnCliffs();
-
-                SpawnBorderColliders(new int2(-150, -150) * PARCEL_SIZE, new int2(160, 160) * PARCEL_SIZE, new int2(310, 310) * PARCEL_SIZE)
-                   .position = new Vector3(terrainGenData.terrainSize / 2f, 0, terrainGenData.terrainSize / 2f);
-
-                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Misc & Cliffs"));
-
-                timeProfiler.StartMeasure();
-                await localCache.LoadAsync(forceCacheRegen);
-                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Load Local Cache"));
-
-                timeProfiler.StartMeasure();
-                await SetupEmptyParcelDataAsync(cancellationToken);
-                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Empty Parcel Setup"));
-
-                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA;
-
-                terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
-                processedTerrainDataCount = 0;
-
-                /////////////////////////
-                // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
-                // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
-                /////////////////////////
-
-                var terrainDataDictionary = new Dictionary<int2, TerrainData>();
-                chunkDataGenerator.Prepare((int)worldSeed, PARCEL_SIZE, ref emptyParcelsData, ref emptyParcelsNeighborData);
-
-                for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
-                for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
                 {
-                    KeyValuePair<int2, TerrainData> generateTerrainDataAsync = await GenerateTerrainDataAsync(x, z, worldSeed, cancellationToken, processReport);
-                    terrainDataDictionary.Add(generateTerrainDataAsync.Key, generateTerrainDataAsync.Value);
-                    await UniTask.Yield(cancellationToken);
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
+                    {
+                        rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+                        Ocean = factory.CreateOcean(rootGo.transform);
+                        Wind = factory.CreateWind();
+
+                        SpawnCliffs();
+
+                        SpawnBorderColliders(new int2(-150, -150) * PARCEL_SIZE, new int2(160, 160) * PARCEL_SIZE, new int2(310, 310) * PARCEL_SIZE)
+                           .position = new Vector3(terrainGenData.terrainSize / 2f, 0, terrainGenData.terrainSize / 2f);
+                    }
+
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
+                        await localCache.LoadAsync(forceCacheRegen);
+
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
+                        await SetupEmptyParcelDataAsync(cancellationToken);
+
+                    if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA;
+
+                    terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
+                    processedTerrainDataCount = 0;
+
+                    /////////////////////////
+                    // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
+                    // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
+                    /////////////////////////
+
+                    var terrainDataDictionary = new Dictionary<int2, TerrainData>();
+                    chunkDataGenerator.Prepare((int)worldSeed, PARCEL_SIZE, ref emptyParcelsData, ref emptyParcelsNeighborData);
+
+                    for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
+                    for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
+                    {
+                        KeyValuePair<int2, TerrainData> generateTerrainDataAsync = await GenerateTerrainDataAsync(x, z, worldSeed, cancellationToken, processReport);
+                        terrainDataDictionary.Add(generateTerrainDataAsync.Key, generateTerrainDataAsync.Value);
+                        await UniTask.Yield(cancellationToken);
+                    }
+
+                    if (withHoles)
+                    {
+                        using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
+                            await DigHolesAsync(terrainDataDictionary, cancellationToken);
+                    }
+
+                    if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
+
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
+                        await GenerateChunksAsync(terrainDataDictionary, processReport, cancellationToken);
+
+                    // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
+                    await UniTask.Yield();
+                    AddColorMapRenderer(rootGo);
+
+                    // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+                    await BugWorkaroundAsync();
+
+                    if (processReport != null) processReport.ProgressCounter.Value = 1f;
+
+                    if (centerTerrain)
+                        rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
                 }
-
-                if (withHoles)
-                {
-                    timeProfiler.StartMeasure();
-                    await DigHolesAsync(terrainDataDictionary, cancellationToken);
-                    timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Holes"));
-                }
-
-                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
-
-                timeProfiler.StartMeasure();
-                await GenerateChunksAsync(terrainDataDictionary, processReport, cancellationToken);
-                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t:F2}ms] Chunks"));
-
-                // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
-                await UniTask.Yield();
-                AddColorMapRenderer(rootGo);
-
-                // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-                await BugWorkaroundAsync();
-
-                if (processReport != null) processReport.ProgressCounter.Value = 1f;
-
-                if (centerTerrain)
-                    rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
-
-                timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"Terrain generation was done in {t / 1000f:F2} seconds"));
             }
             catch (OperationCanceledException)
             {
@@ -260,110 +254,104 @@ namespace DCL.Landscape
         {
             if (localCache.IsValid())
             {
-                timeProfiler.StartMeasure();
-
-                foreach ((int2 key, TerrainData value) in terrainDatas)
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
                 {
-                    bool[,] holes = localCache.GetHoles(key.x, key.y);
-                    value.SetHoles(0, 0, holes);
-                    await UniTask.Yield(cancellationToken);
+                    foreach ((int2 key, TerrainData value) in terrainDatas)
+                    {
+                        bool[,] holes = localCache.GetHoles(key.x, key.y);
+                        value.SetHoles(0, 0, holes);
+                        await UniTask.Yield(cancellationToken);
+                    }
                 }
-
-                timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles {t}ms"));
             }
             else
             {
                 int resolution = terrainGenData.chunkSize;
-
-                timeProfiler.StartMeasure();
                 Dictionary<int2, NativeList<int2>> ownedParcelsByChunk = new ();
                 var nativeHoles = new Dictionary<int2, NativeArray<bool>>();
                 var originalHoles = new Dictionary<int2, bool[,]>();
                 List<GCHandle> usedHandles = new ();
 
-                // initialize the holes native arrays
-                foreach (KeyValuePair<int2, TerrainData> valuePair in terrainDatas)
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] Allocation {t}ms")))
                 {
-                    unsafe
+                    // initialize the holes native arrays
+                    foreach (KeyValuePair<int2, TerrainData> valuePair in terrainDatas)
                     {
-                        var holes = new bool[resolution, resolution];
+                        unsafe
+                        {
+                            var holes = new bool[resolution, resolution];
 
-                        var holeHandle = GCHandle.Alloc(holes, GCHandleType.Pinned);
-                        NativeArray<bool> nativeHole = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<bool>((void*)holeHandle.AddrOfPinnedObject(), resolution * resolution, Allocator.Persistent);
+                            var holeHandle = GCHandle.Alloc(holes, GCHandleType.Pinned);
+                            NativeArray<bool> nativeHole = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<bool>((void*)holeHandle.AddrOfPinnedObject(), resolution * resolution, Allocator.Persistent);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                        NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeHole, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
+                            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeHole, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
 #endif
 
-                        nativeHoles.Add(valuePair.Key, nativeHole);
-                        originalHoles.Add(valuePair.Key, holes);
-                        usedHandles.Add(holeHandle);
+                            nativeHoles.Add(valuePair.Key, nativeHole);
+                            originalHoles.Add(valuePair.Key, holes);
+                            usedHandles.Add(holeHandle);
+                        }
                     }
                 }
 
-                timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"   - [DigHoles] Allocation {t}ms"));
-
-                timeProfiler.StartMeasure();
-
-                // get the local coordinate of each parcel and setup the data for the parallel work
-                // TODO: Can we move this into a job?
-                foreach (int2 ownedParcel in ownedParcels)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    int parcelGlobalX = (150 + ownedParcel.x) * 16;
-                    int parcelGlobalY = (150 + ownedParcel.y) * 16;
-
-                    // Calculate the terrain chunk index for the parcel
-                    int chunkX = Mathf.FloorToInt((float)parcelGlobalX / resolution);
-                    int chunkY = Mathf.FloorToInt((float)parcelGlobalY / resolution);
-
-                    // Calculate the position within the terrain chunk
-                    int localX = parcelGlobalX - (chunkX * resolution);
-                    int localY = parcelGlobalY - (chunkY * resolution);
-
-                    var terrainDataKey = new int2(chunkX * resolution, chunkY * resolution);
-                    var holeCoordinate = new int2(localX, localY);
-
-                    if (terrainDatas.ContainsKey(terrainDataKey))
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] Setup {t}ms")))
+                { // get the local coordinate of each parcel and setup the data for the parallel work
+                    // TODO: Can we move this into a job?
+                    foreach (int2 ownedParcel in ownedParcels)
                     {
-                        if (!ownedParcelsByChunk.ContainsKey(terrainDataKey))
-                            ownedParcelsByChunk.Add(terrainDataKey, new NativeList<int2>(resolution / 16 * resolution / 16, Allocator.Persistent));
+                        cancellationToken.ThrowIfCancellationRequested();
 
-                        ownedParcelsByChunk[terrainDataKey].Add(holeCoordinate);
+                        int parcelGlobalX = (150 + ownedParcel.x) * 16;
+                        int parcelGlobalY = (150 + ownedParcel.y) * 16;
+
+                        // Calculate the terrain chunk index for the parcel
+                        int chunkX = Mathf.FloorToInt((float)parcelGlobalX / resolution);
+                        int chunkY = Mathf.FloorToInt((float)parcelGlobalY / resolution);
+
+                        // Calculate the position within the terrain chunk
+                        int localX = parcelGlobalX - (chunkX * resolution);
+                        int localY = parcelGlobalY - (chunkY * resolution);
+
+                        var terrainDataKey = new int2(chunkX * resolution, chunkY * resolution);
+                        var holeCoordinate = new int2(localX, localY);
+
+                        if (terrainDatas.ContainsKey(terrainDataKey))
+                        {
+                            if (!ownedParcelsByChunk.ContainsKey(terrainDataKey))
+                                ownedParcelsByChunk.Add(terrainDataKey, new NativeList<int2>(resolution / 16 * resolution / 16, Allocator.Persistent));
+
+                            ownedParcelsByChunk[terrainDataKey].Add(holeCoordinate);
+                        }
                     }
                 }
 
-                timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"   - [DigHoles] Setup {t}ms"));
-
-                timeProfiler.StartMeasure();
-                var tasks = new List<UniTask>();
-
-                // Schedule Parallel jobs in Parallel :)
-                foreach (KeyValuePair<int2, TerrainData> valuePair in terrainDatas)
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] Parallel Jobs {t}ms")))
                 {
-                    NativeArray<int2> chunkOwnedParcels = ownedParcelsByChunk[valuePair.Key].AsArray();
+                    var tasks = new List<UniTask>();
 
-                    var setupJob = new SetupTerrainHolesDataJob(nativeHoles[valuePair.Key]);
-                    JobHandle setupJobHandle = setupJob.Schedule(resolution * resolution, 32);
+                    // Schedule Parallel jobs in Parallel :)
+                    foreach (KeyValuePair<int2, TerrainData> valuePair in terrainDatas)
+                    {
+                        NativeArray<int2> chunkOwnedParcels = ownedParcelsByChunk[valuePair.Key].AsArray();
 
-                    var job = new PrepareTerrainHolesDataJob(nativeHoles[valuePair.Key], chunkOwnedParcels.AsReadOnly(), resolution);
-                    JobHandle jobHandle = job.Schedule(chunkOwnedParcels.Length, 32, setupJobHandle);
-                    UniTask task = jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                    tasks.Add(task);
+                        var setupJob = new SetupTerrainHolesDataJob(nativeHoles[valuePair.Key]);
+                        JobHandle setupJobHandle = setupJob.Schedule(resolution * resolution, 32);
+
+                        var job = new PrepareTerrainHolesDataJob(nativeHoles[valuePair.Key], chunkOwnedParcels.AsReadOnly(), resolution);
+                        JobHandle jobHandle = job.Schedule(chunkOwnedParcels.Length, 32, setupJobHandle);
+                        UniTask task = jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+                        tasks.Add(task);
+                    }
+
+                    await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
                 }
 
-                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-                timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"   - [DigHoles] Parallel Jobs {t}ms"));
-
-                timeProfiler.StartMeasure();
-
-                foreach (KeyValuePair<int2, bool[,]> valuePair in originalHoles)
-                {
-                    terrainDatas[valuePair.Key].SetHoles(0, 0, valuePair.Value);
-                    localCache.SaveHoles(valuePair.Key.x, valuePair.Key.y, valuePair.Value);
-                }
-
-                timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"   - [DigHoles] SetHoles {t}ms"));
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] SetHoles {t}ms")))
+                    foreach (KeyValuePair<int2, bool[,]> valuePair in originalHoles)
+                    {
+                        terrainDatas[valuePair.Key].SetHoles(0, 0, valuePair.Value);
+                        localCache.SaveHoles(valuePair.Key.x, valuePair.Key.y, valuePair.Value);
+                    }
 
                 foreach ((int2 _, NativeList<int2> value) in ownedParcelsByChunk)
                     value.Dispose();
@@ -409,6 +397,7 @@ namespace DCL.Landscape
             await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
             if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
+
             timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})"));
 
             return new KeyValuePair<int2, TerrainData>(new int2(offsetX, offsetZ), terrainData);
@@ -436,7 +425,7 @@ namespace DCL.Landscape
             if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
                 return;
 
-            Transform cliffsRoot = TerrainFactory.CreateCliffsRoot(rootGo.transform);
+            Transform cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
 
             factory.CreateCliffCorner(cliffsRoot, new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
             factory.CreateCliffCorner(cliffsRoot, new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
@@ -458,7 +447,7 @@ namespace DCL.Landscape
 
         private Transform SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
         {
-            Transform collidersRoot = TerrainFactory.CreateCollidersRoot(rootGo.transform);
+            Transform collidersRoot = factory.CreateCollidersRoot(rootGo.transform);
 
             const float HEIGHT = 50.0f; // Height of the collider
             const float THICKNESS = 10.0f; // Thickness of the collider
@@ -477,7 +466,7 @@ namespace DCL.Landscape
                 float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.x;
                 float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.y;
 
-                TerrainFactory.CreateBorderCollider(name, collidersRoot,
+                factory.CreateBorderCollider(name, collidersRoot,
                     size: new Vector3(length, HEIGHT, THICKNESS),
                     position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
             }

@@ -19,7 +19,7 @@ namespace DCL.Landscape
             this.terrainGenData = terrainGenData;
         }
 
-        public static GameObject InstantiateSingletonTerrainRoot(string terrainObjectName)
+        public GameObject InstantiateSingletonTerrainRoot(string terrainObjectName)
         {
             var rootGo = GameObject.Find(terrainObjectName);
 
@@ -36,7 +36,7 @@ namespace DCL.Landscape
         public Transform CreateWind() =>
             Object.Instantiate(terrainGenData.wind).transform;
 
-        public static Transform CreateCliffsRoot(Transform parent)
+        public Transform CreateCliffsRoot(Transform parent)
         {
             Transform cliffsRoot = new GameObject("Cliffs").transform;
             cliffsRoot.SetParent(parent);
@@ -58,7 +58,7 @@ namespace DCL.Landscape
             return side;
         }
 
-        public static Transform CreateCollidersRoot(Transform parent)
+        public Transform CreateCollidersRoot(Transform parent)
         {
             Transform collidersRoot = new GameObject("BorderColliders").transform;
             collidersRoot.SetParent(parent);
@@ -66,7 +66,7 @@ namespace DCL.Landscape
             return collidersRoot;
         }
 
-        public static Collider CreateBorderCollider(string name, Transform parent, Vector3 size, Vector3 position, float yRotation)
+        public Collider CreateBorderCollider(string name, Transform parent, Vector3 size, Vector3 position, float yRotation)
         {
             BoxCollider collider = new GameObject(name).AddComponent<BoxCollider>();
             collider.transform.SetParent(parent);

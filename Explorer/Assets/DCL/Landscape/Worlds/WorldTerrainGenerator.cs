@@ -67,7 +67,7 @@ namespace DCL.Landscape
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
 
-            rootGo = TerrainFactory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+            rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.transform.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
             factory.CreateOcean(rootGo.transform);
@@ -171,7 +171,7 @@ namespace DCL.Landscape
             if (cliffSide == null || cliffCorner == null)
                 return;
 
-            Transform cliffsRoot = TerrainFactory.CreateCliffsRoot(rootGo.transform);
+            Transform cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
 
             factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 180, 0));
             factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MaxInUnits.y), Quaternion.Euler(0, 270, 0));
@@ -196,7 +196,7 @@ namespace DCL.Landscape
 
         private void SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
         {
-            Transform collidersRoot = TerrainFactory.CreateCollidersRoot(rootGo.transform);
+            Transform collidersRoot = factory.CreateCollidersRoot(rootGo.transform);
 
             const float HEIGHT = 50.0f; // Height of the collider
             const float THICKNESS = 10.0f; // Thickness of the collider
@@ -214,7 +214,7 @@ namespace DCL.Landscape
                 float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.x;
                 float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + PARCEL_SIZE) * dir.y;
 
-                TerrainFactory.CreateBorderCollider(name, collidersRoot,
+                factory.CreateBorderCollider(name, collidersRoot,
                     size: new Vector3(length, HEIGHT, THICKNESS),
                     position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
             }

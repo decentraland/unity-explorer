@@ -108,7 +108,6 @@ namespace DCL.Landscape
                         if (useCache)
                             localCache.SaveHeights(offsetX, offsetZ, heightArray);
                     }
-
                 }
                 finally { heights.Dispose(); }
             }
@@ -236,6 +235,7 @@ namespace DCL.Landscape
                     }
 
                     var array = new List<TreeInstance>();
+
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [Trees] Array Creation {t}ms")))
                     {
                         foreach (KeyValue<int2, TreeInstance> treeInstance in treeInstances)

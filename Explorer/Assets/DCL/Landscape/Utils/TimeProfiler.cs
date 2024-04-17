@@ -6,7 +6,7 @@ namespace DCL.Landscape.Utils
 {
     public class TimeProfiler
     {
-        public Stack<Stopwatch> Stopwatches { get;  } = new ();
+        private readonly Stack<Stopwatch> stopwatches = new ();
         private readonly bool enabled;
 
         public TimeProfiler(bool enabled)
@@ -19,17 +19,17 @@ namespace DCL.Landscape.Utils
             if (!enabled) return;
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            Stopwatches.Push(stopwatch);
+            stopwatches.Push(stopwatch);
         }
 
         public void EndMeasure(Action<float> action)
         {
             if (!enabled) return;
 
-            if (Stopwatches.Count <= 0)
+            if (stopwatches.Count <= 0)
                 throw new Exception("Measure was never started");
 
-            Stopwatch stopwatch = Stopwatches.Pop();
+            Stopwatch stopwatch = stopwatches.Pop();
             stopwatch.Stop();
             action(stopwatch.ElapsedMilliseconds);
         }

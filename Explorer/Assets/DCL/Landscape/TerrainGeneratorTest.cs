@@ -15,6 +15,8 @@ namespace DCL.Landscape
         public bool centerTerrain;
         public bool hideTrees;
         public bool hideDetails;
+        public bool clearNoiseCacheForWorlds = true;
+
         public TerrainGenerationData genData;
         public ParcelData parcelData;
 
@@ -28,10 +30,10 @@ namespace DCL.Landscape
             GenerateAsync().Forget();
         }
 
-        // private void OnValidate()
-        // {
-        //     wGen = new WorldTerrainGenerator(genData);
-        // }
+        private void OnValidate()
+        {
+            wGen = new WorldTerrainGenerator(genData);
+        }
 
         public TerrainGenerator GetGenerator() =>
             gen;
@@ -44,7 +46,9 @@ namespace DCL.Landscape
 
             if (genData.terrainSize == 1)
             {
-                wGen = new WorldTerrainGenerator(genData);
+                if (clearNoiseCacheForWorlds)
+                    wGen = new WorldTerrainGenerator(genData);
+
                 await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
             }
             else
