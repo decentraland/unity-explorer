@@ -18,12 +18,12 @@ MonoBehaviour:
   m_GUID: 03287bc88d1666443b4c6e7373ace385
   m_SerializeEntries:
   - m_GUID: 31f3cd961c052c84baf27b3938e5b0f4
-    m_Address: Assets/DCL/Interaction/Materials/HoverInteractableValid.mat
+    m_Address: HoverInteractableValid
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
-    m_Address: Assets/DCL/Interaction/Materials/HoverInteractableInvalid.mat
+    m_Address: HoverInteractableInvalid
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

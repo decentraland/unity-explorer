@@ -47,8 +47,8 @@ namespace DCL.PluginSystem.World
         {
             this.settings = settings;
             raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profilingProvider);
-            hoverMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverMaterial, ct)).Value;
-            hoverOorMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverOutOfRangeMaterial, ct)).Value;
+            hoverMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverMaterial!, ct)).Value;
+            hoverOorMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverOutOfRangeMaterial!, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
@@ -95,8 +95,8 @@ namespace DCL.PluginSystem.World
             [field: SerializeField]
             public int GlobalInputPropagationBucketThreshold { get; private set; } = 3;
 
-            [field: SerializeField] internal AssetReferenceMaterial hoverMaterial { get; private set; }
-            [field: SerializeField] internal AssetReferenceMaterial hoverOutOfRangeMaterial { get; private set; }
+            [field: SerializeField] internal AssetReferenceMaterial? hoverMaterial { get; private set; }
+            [field: SerializeField] internal AssetReferenceMaterial? hoverOutOfRangeMaterial { get; private set; }
         }
     }
 }
