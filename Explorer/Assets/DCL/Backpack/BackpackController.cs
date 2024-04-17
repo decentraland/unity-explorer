@@ -2,11 +2,9 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
-using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;
 using ECS.StreamableLoading.Common;
@@ -35,7 +33,8 @@ namespace DCL.Backpack
 
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
-        private bool initialLoadingIsDone;
+        private BackpackSections currentSection = BackpackSections.Avatar;
+        private bool isAvatarLoaded;
 
         public BackpackController(
             BackpackView view,
@@ -43,7 +42,6 @@ namespace DCL.Backpack
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
-            ICharacterPreviewFactory characterPreviewFactory,
             BackpackGridController gridController,
             BackpackInfoPanelController wearableInfoPanelController,
             BackpackInfoPanelController emoteInfoPanelController,
@@ -51,7 +49,7 @@ namespace DCL.Backpack
             BackpackEmoteGridController backpackEmoteGridController,
             AvatarSlotView[] avatarSlotViews,
             EmotesController emotesController,
-            IEquippedEmotes equippedEmotes)
+            BackpackCharacterPreviewController backpackCharacterPreviewController)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -72,7 +70,7 @@ namespace DCL.Backpack
                 gridController,
                 wearableInfoPanelController);
 
-            backpackSections = new ()
+            backpackSections = new Dictionary<BackpackSections, ISection>
             {
                 { BackpackSections.Avatar, avatarController },
                 { BackpackSections.Emotes, emotesController },
@@ -87,16 +85,21 @@ namespace DCL.Backpack
             {
                 tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
+                BackpackSections section = tabSelector.Section;
+
                 tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token).Forget();
+
+                        if (isOn)
+                            currentSection = section;
                     });
             }
 
-            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.characterPreviewView, characterPreviewFactory, backpackEventBus, world, equippedEmotes);
+            this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
         }
@@ -123,6 +126,8 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitForProfileAsync(CancellationTokenSource cts)
         {
+            isAvatarLoaded = false;
+
             world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
@@ -147,17 +152,15 @@ namespace DCL.Backpack
                 backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i));
             }
 
-            initialLoadingIsDone = true;
+            isAvatarLoaded = true;
         }
 
         public void Activate()
         {
-            if (!initialLoadingIsDone)
-            {
-                profileLoadingCts = new CancellationTokenSource();
-                AwaitForProfileAsync(profileLoadingCts).Forget();
-            }
-            backpackSections[BackpackSections.Avatar].Activate();
+            profileLoadingCts = new CancellationTokenSource();
+            AwaitForProfileAsync(profileLoadingCts).Forget();
+
+            backpackSections[currentSection].Activate();
 
             view.gameObject.SetActive(true);
             backpackCharacterPreviewController.OnShow();
@@ -165,9 +168,9 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            if (!initialLoadingIsDone)
-                profileLoadingCts.SafeCancelAndDispose();
-            else
+            profileLoadingCts.SafeCancelAndDispose();
+
+            if (isAvatarLoaded)
                 backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
 
             foreach (ISection backpackSectionsValue in backpackSections.Values)

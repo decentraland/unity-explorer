@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry.AddGameObjectPool<Transform>();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.World
 
             UpdateTransformSystem.InjectToWorld(ref builder);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
+            ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot, sharedDependencies.SceneData.SceneShortInfo);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
 
             var releaseTransformSystem =
@@ -50,7 +50,7 @@ namespace DCL.PluginSystem.World
         {
             UpdateTransformSystem.InjectToWorld(ref builder);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, dependencies.FakeEntitiesMap, dependencies.SceneRoot);
+            ParentingTransformSystem.InjectToWorld(ref builder, dependencies.FakeEntitiesMap, dependencies.SceneRoot, dependencies.SceneData.SceneShortInfo);
             ReleasePoolableComponentSystem<Transform, TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
         }
     }

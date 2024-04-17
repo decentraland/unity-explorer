@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7150489433940370041}
-  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -287,6 +286,16 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 493759110962425617, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3374162131891453127 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3604137211807971006, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4228669688390808703 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2772064026238959110, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &4476560434392169801 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2506524606276384560, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
@@ -328,10 +337,12 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 7949186732838869541}
   <FullBackpackItem>k__BackingField: {fileID: 7977896227215181824}
   <IsEquipped>k__BackingField: 0
-  EquipWearableAudio: {fileID: 11400000, guid: 16df4e18c957e3e459b249626190c33b, type: 2}
-  UnEquipWearableAudio: {fileID: 11400000, guid: 4867c9a3edd8d5f438baccbc70ef12da, type: 2}
-  HoverAudio: {fileID: 11400000, guid: 3c26ccf99795a344b8096b9efae467b0, type: 2}
-  ClickAudio: {fileID: 11400000, guid: 9e9656842cc977c428b43d0deec094de, type: 2}
+  incompatibleWithBodyShapeContainer: {fileID: 3374162131891453127}
+  incompatibleWithBodyShapeHoverContainer: {fileID: 4228669688390808703}
+  <EquipWearableAudio>k__BackingField: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
+  <UnEquipWearableAudio>k__BackingField: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
+  <HoverAudio>k__BackingField: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}
+  <ClickAudio>k__BackingField: {fileID: 11400000, guid: 34a2137250badd542944f35e2f80cad2, type: 2}
   <EquippedSlotLabel>k__BackingField: {fileID: 5288614257337647360}
 --- !u!224 &5337782633102568864 stripped
 RectTransform:

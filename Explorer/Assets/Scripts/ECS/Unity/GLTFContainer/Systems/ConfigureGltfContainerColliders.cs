@@ -36,16 +36,6 @@ namespace ECS.Unity.GLTFContainer.Systems
                 DisableColliders(asset.VisibleMeshesColliders);
         }
 
-        internal static void SetActiveByEntity(this ref SDKCollider sdkCollider, bool isActive)
-        {
-            sdkCollider.IsActiveByEntity = isActive;
-        }
-
-        internal static void SetActiveBySceneBounds(this ref SDKCollider sdkCollider, bool isActive)
-        {
-            sdkCollider.IsActiveBySceneBounds = isActive;
-        }
-
         private static void EnableColliders(List<SDKCollider> colliders, ColliderLayer colliderLayer)
         {
             bool hasUnityLayer = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);

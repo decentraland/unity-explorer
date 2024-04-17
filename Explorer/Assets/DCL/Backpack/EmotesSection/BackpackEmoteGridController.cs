@@ -216,7 +216,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.OnEquip += EquipItem;
-                backpackItemView.UnEquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackUnEquipEmoteCommand(backpackItemView.ItemId)));
+                backpackItemView.OnUnequip += UnEquipItem;
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
@@ -226,6 +226,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
 
@@ -233,6 +234,9 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        private void UnEquipItem(string itemId) =>
+            commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
         private void EquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId));
@@ -278,10 +282,11 @@ namespace DCL.Backpack.EmotesSection
             foreach (KeyValuePair<URN, BackpackEmoteGridItemView> backpackItemView in usedPoolItems)
             {
                 backpackItemView.Value.OnEquip -= EquipItem;
-                backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.OnUnequip -= UnEquipItem;
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;
+                backpackItemView.Value.IsCompatibleWithBodyShape = false;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }
