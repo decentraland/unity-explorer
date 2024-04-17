@@ -16,11 +16,10 @@ namespace DCL.PluginSystem.World
         /// <summary>
         ///     Create dependencies and systems that should exist per scene
         /// </summary>
-        void InjectToWorld(
-            ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
+        void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies,
             in PersistentEntities persistentEntities,
-            List<IFinalizeWorldSystem> finalizeWorldSystems);
+            List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners);
 
         /// <summary>
         ///     Creates a subset of systems that should run in the empty scenes world that exists in a single instance

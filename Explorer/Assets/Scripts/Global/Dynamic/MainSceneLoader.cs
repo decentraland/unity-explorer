@@ -41,6 +41,7 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
+        [SerializeField] private UIDocument cursorRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
@@ -101,7 +102,7 @@ namespace Global.Dynamic
             showLoading = true;
 #endif
 
-            enableLandscape = true;
+            //enableLandscape = true;
 #endif
 
             try
@@ -151,12 +152,15 @@ namespace Global.Dynamic
                     return;
                 }
 
+                bool shouldEnableLandscape = initialRealm == InitialRealm.GenesisCity && enableLandscape;
+
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
                     {
                         StaticContainer = staticContainer!,
                         SettingsContainer = scenePluginSettingsContainer,
                         RootUIDocument = uiToolkitRoot,
+                        CursorUIDocument = cursorRoot,
                         DynamicSettings = dynamicSettings,
                         Web3Authenticator = web3Authenticator,
                         Web3IdentityCache = identityCache,
@@ -166,7 +170,7 @@ namespace Global.Dynamic
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
-                        EnableLandscape = enableLandscape,
+                        EnableLandscape = shouldEnableLandscape,
                     }, ct
                 );
 

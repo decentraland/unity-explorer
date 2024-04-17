@@ -28,10 +28,10 @@ namespace DCL.CharacterTriggerArea.Systems
             ClearDetectedCharactersCollectionQuery(World);
 
             HandleEntityDestructionQuery(World);
-            HandleComponentRemovalQuery(World);
-
-            World.Remove<CharacterTriggerAreaComponent>(HandleComponentRemoval_QueryDescription);
             World.Remove<CharacterTriggerAreaComponent>(HandleEntityDestruction_QueryDescription);
+
+            HandleComponentRemovalQuery(World);
+            World.Remove<CharacterTriggerAreaComponent>(HandleComponentRemoval_QueryDescription);
         }
 
         [Query]

@@ -18,6 +18,7 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
+using ECS;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
 
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemotePoses remotePoses;
         private readonly ICharacterObject characterObject;
+        private readonly IRealmData realmData;
 
         public MultiplayerPlugin(
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -50,6 +52,7 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
+            IRealmData realmData,
             IRemoteEntities remoteEntities
         )
         {
@@ -65,6 +68,7 @@ namespace DCL.PluginSystem.Global
             this.remotePoses = remotePoses;
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
+            this.realmData = realmData;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -91,7 +95,8 @@ namespace DCL.PluginSystem.Global
                 remoteEntities,
                 remotePoses,
                 characterObject,
-                realFlowLoadingStatus
+                realFlowLoadingStatus,
+                realmData
             );
 #endif
         }

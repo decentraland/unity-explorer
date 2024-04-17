@@ -1,3 +1,4 @@
+using DCL.Audio;
 using MVC;
 using System;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace DCL.ExplorePanel
         private static readonly int HOVER = Animator.StringToHash("Hover");
         private static readonly int UNHOVER = Animator.StringToHash("Unhover");
         private static readonly int PRESSED = Animator.StringToHash("Pressed");
+        
         [field: SerializeField]
         public Button OpenExploreButton { get; private set; }
 
@@ -36,5 +38,9 @@ namespace DCL.ExplorePanel
         {
             ExploreOpenerAnimator.SetTrigger(UNHOVER);
         }
+        
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig ButtonPressedAudio { get; private set; }
     }
 }

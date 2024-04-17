@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             float unloadingSqrDistance = unloadingDistance * unloadingDistance;
 
-            StartUnloadingQuery(World, unloadingSqrDistance);
+            ProcessScenesUnloadingInRealmQuery(World, unloadingSqrDistance);
         }
 
         [Query]
@@ -95,6 +95,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void ProcessVolatileRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realm)
         {
             StartScenesLoading(ref realm, maxLoadingSqrDistance);
+        }
+
+        [Query]
+        [None(typeof(StaticScenePointers))]
+        [All(typeof(RealmComponent))]
+        private void ProcessScenesUnloadingInRealm([Data] float unloadingSqrDistance)
+        {
+            StartUnloadingQuery(World, unloadingSqrDistance);
         }
 
         /// <summary>

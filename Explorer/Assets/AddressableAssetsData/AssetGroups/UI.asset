@@ -27,11 +27,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dbfb7e67a438449f9a887f820f733868
-    m_Address: PopupCloser
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b55e2970d2dc94295ad8af70cb9d09f4
     m_Address: PersistentExploreOpener
     m_ReadOnly: 0
@@ -79,6 +74,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d504e2da7abe71a4582c8c2e08e3c285
     m_Address: NftPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dbfb7e67a438449f9a887f820f733868
+    m_Address: Assets/DCL/UI/Popups/PopupCloser.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
