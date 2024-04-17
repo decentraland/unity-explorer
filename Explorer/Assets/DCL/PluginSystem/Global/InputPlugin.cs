@@ -1,27 +1,76 @@
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Input.Crosshair;
 using DCL.Input.Systems;
+using System;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
+using Utility.UIToolkit;
 using DCL.Multiplayer.Emotes;
 using UnityEngine.EventSystems;
 using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
 namespace DCL.PluginSystem.Global
 {
-    public class InputPlugin : IDCLGlobalPluginWithoutSettings
+    [Serializable]
+    public class InputSettings : IDCLPluginSettings
+    {
+        [field: Header(nameof(InputPlugin))]
+        [field: Space]
+        [field: SerializeField] public AssetReferenceVisualTreeAsset CrosshairCanvasAsset { get; set; }
+        [field: SerializeField] public AssetReferenceSprite CrossHairNormal { get; set; }
+        [field: SerializeField] public AssetReferenceSprite CrossHairInteraction { get; set; }
+    }
+
+    public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
         private readonly DCLInput dclInput;
         private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly IEventSystem eventSystem;
+        private readonly ICursor cursor;
+        private readonly UnityEventSystem unityEventSystem;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly UIDocument canvas;
+        private CrosshairCanvas crosshairCanvas;
 
-        public InputPlugin(DCLInput dclInput, MultiplayerEmotesMessageBus messageBus, IEventSystem eventSystem)
+        public InputPlugin(
+            DCLInput dclInput,
+            ICursor cursor,
+            UnityEventSystem eventSystem,
+            IAssetsProvisioner assetsProvisioner,
+            UIDocument canvas,
+            MultiplayerEmotesMessageBus messageBus)
         {
             this.dclInput = dclInput;
+            this.cursor = cursor;
             this.eventSystem = eventSystem;
+            this.assetsProvisioner = assetsProvisioner;
+            this.canvas = canvas;
             this.messageBus = messageBus;
+
             dclInput.Enable();
+        }
+
+        public async UniTask InitializeAsync(InputSettings settings, CancellationToken ct)
+        {
+            crosshairCanvas =
+                (await assetsProvisioner.ProvideMainAssetAsync(settings.CrosshairCanvasAsset, ct: ct))
+               .Value.InstantiateForElement<CrosshairCanvas>();
+
+            // if these sprites count is more than 3, please turn this into an array of (CursorStyle, Sprite)
+            Sprite crosshair = (await assetsProvisioner.ProvideMainAssetAsync(settings.CrossHairNormal, ct)).Value;
+            Sprite crosshairInteractable = (await assetsProvisioner.ProvideMainAssetAsync(settings.CrossHairInteraction, ct)).Value;
+
+            crosshairCanvas.Initialize(crosshair, crosshairInteractable);
+            crosshairCanvas.SetDisplayed(false);
+            canvas.rootVisualElement.Add(crosshairCanvas);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -34,9 +83,12 @@ namespace DCL.PluginSystem.Global
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, messageBus);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, new DCLCursor());
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
+        }
 
-            // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
+        public void Dispose()
+        {
+            dclInput.Dispose();
         }
     }
 }

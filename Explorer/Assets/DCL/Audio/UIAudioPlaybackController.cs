@@ -7,6 +7,9 @@ namespace DCL.Audio
 {
     public class UIAudioPlaybackController : MonoBehaviour, IDisposable
     {
+        //We need different Audio Sources to handle the different volume configurations each category can have.
+        //So we could have for example silenced UI audio, max out music and 50% on Chat sounds.
+
         [SerializeField]
         private AudioSource UiAudioSource;
         [SerializeField]
@@ -17,8 +20,6 @@ namespace DCL.Audio
         private float fadeDuration = 1.5f;
         [SerializeField]
         private AudioSettings audioSettings;
-        [SerializeField]
-        private AudioSource TestWorldAudioSource;
 
 
         private Tweener loopingAudioTweener;
@@ -37,16 +38,6 @@ namespace DCL.Audio
         {
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayLoopingUIAudioEvent += OnPlayLoopingUIAudioEvent;
-            UIAudioEventsBus.Instance.PlayDefaultAudioEvent += OnPlayDefaultAudio;
-        }
-
-        private void OnPlayDefaultAudio(float volume)
-        {
-            TestWorldAudioSource.volume = volume;
-            if (!TestWorldAudioSource.isPlaying)
-            {
-                TestWorldAudioSource.Play();
-            }
         }
 
         private void OnPlayLoopingUIAudioEvent(AudioClipConfig audioClipConfig, bool startLoop)
@@ -66,10 +57,11 @@ namespace DCL.Audio
 
         private void ContinuePlayLoopingUIAudio(AudioSource audioSource, bool startLoop, AudioClipConfig audioClipConfig)
         {
-            if (startLoop)
+            if (startLoop && CheckAudioClips(audioClipConfig))
             {
                 int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+                audioSource.loop = true;
                 audioSource.Play();
                 audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration);
             }
@@ -78,7 +70,7 @@ namespace DCL.Audio
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if ( CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
+            if (!CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
             if (!settings.AudioEnabled) return;
@@ -90,7 +82,7 @@ namespace DCL.Audio
         {
             if (audioClipConfig.AudioClips.Length == 0)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
+                ReportHub.Log(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
                 return false;
             }
             else

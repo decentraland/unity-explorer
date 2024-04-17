@@ -1,5 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PluginSystem;
@@ -9,6 +11,7 @@ using DCL.Quality.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 #nullable disable
@@ -26,12 +29,21 @@ namespace DCL.Quality
         public Plugin CreatePlugin() =>
             new (onDebugViewUpdate);
 
-        public static QualityContainer Create(IPluginSettingsContainer pluginSettingsContainer)
+        public static async UniTask<QualityContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer, IAssetsProvisioner assetsProvisioner)
         {
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
+            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, CancellationToken.None);
+            var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
+            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
+
             var rendererFeaturesCache = new RendererFeaturesCache();
-            IQualityLevelController controller = QualityRuntimeFactory.Create(rendererFeaturesCache, settings.QualitySettings);
+            IQualityLevelController controller = QualityRuntimeFactory.Create(
+                rendererFeaturesCache,
+                settings.QualitySettings,
+                realmPartitionSettings.Value,
+                lodSettingsAsset.Value,
+                landscapeData.Value);
 
             return new QualityContainer
             {
@@ -89,6 +101,15 @@ namespace DCL.Quality
             [field: Header(nameof(QualityContainer))]
             [field: SerializeField]
             public QualitySettingsAsset QualitySettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
+
+            [field: SerializeField]
+            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
         }
     }
 }

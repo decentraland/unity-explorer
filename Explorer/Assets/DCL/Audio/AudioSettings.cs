@@ -6,7 +6,7 @@ using UnityEngine.Audio;
 namespace DCL.Audio
 {
     [CreateAssetMenu(fileName = "AudioSettings", menuName = "SO/Audio/AudioSettings")]
-    public class AudioSettings : ScriptableObject , ISerializationCallbackReceiver
+    public class AudioSettings : ScriptableObject, ISerializationCallbackReceiver
     {
         [SerializeField] private List<AudioCategorySettingsKeyValuePair> audioCategorySettings = new ();
         [SerializeField] private float masterVolume = 1;

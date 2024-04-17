@@ -16,16 +16,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
         private ExternalUrlPromptController externalUrlPromptController;
 
         public ExternalUrlPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             IWebBrowser webBrowser,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
+            this.cursor = cursor;
         }
 
         public async UniTask InitializeAsync(ExternalUrlPromptSettings promptSettings, CancellationToken ct)
@@ -34,7 +37,7 @@ namespace DCL.PluginSystem.Global
                 ExternalUrlPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.ExternalUrlPromptPrefab, ct: ct)).Value.GetComponent<ExternalUrlPromptView>(), null),
                 webBrowser,
-                new DCLCursor());
+                cursor);
 
             mvcManager.RegisterController(externalUrlPromptController);
         }

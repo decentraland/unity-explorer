@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Emoji;
 using DCL.Input;
@@ -26,7 +27,6 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private ChatController chatController;
         private readonly IEventSystem eventSystem;
-        private readonly Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -35,8 +35,8 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
-            IEventSystem eventSystem,
-            Dictionary<Regex, Func<IChatCommand>> chatCommandsFactory)
+            IEventSystem eventSystem
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
-            this.chatCommandsFactory = chatCommandsFactory;
         }
 
         public void Dispose() { }
@@ -77,8 +76,7 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
-                    eventSystem,
-                    chatCommandsFactory
+                    eventSystem
                 );
 
                 mvcManager.RegisterController(chatController);

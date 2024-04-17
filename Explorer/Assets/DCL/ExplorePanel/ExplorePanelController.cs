@@ -1,11 +1,16 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Backpack;
+using DCL.CharacterMotion.Components;
 using DCL.Navmap;
 using DCL.Settings;
 using DCL.UI;
 using MVC;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.ExplorePanel
@@ -15,33 +20,44 @@ namespace DCL.ExplorePanel
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
+        private readonly Entity playerEntity;
+        private readonly World world;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly SystemMenuController systemMenuController;
+        private readonly DCLInput dclInput;
+        private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
+        private Dictionary<ExploreSections, ISection> exploreSections;
 
         private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource animationCts;
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? systemMenuCts;
         private TabSelectorView previousSelector;
+        private ExploreSections lastShownSection;
 
-        private Dictionary<ExploreSections, ISection> exploreSections;
+        private bool isControlClosing;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        public ExplorePanelController(
-            ViewFactoryMethod viewFactory,
+        public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
+            Entity playerEntity,
+            World world,
             ProfileWidgetController profileWidgetController,
-            SystemMenuController systemMenuController)
+            SystemMenuController systemMenuController,
+            DCLInput dclInput)
             : base(viewFactory)
         {
             this.navmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
+            this.playerEntity = playerEntity;
+            this.world = world;
             this.profileWidgetController = profileWidgetController;
             this.systemMenuController = systemMenuController;
+            this.dclInput = dclInput;
         }
 
         public override void Dispose()
@@ -64,19 +80,21 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
+            lastShownSection = ExploreSections.Navmap;
+
             foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
 
-            foreach (ExplorePanelTabSelectorMapping tabSelector in viewInstance.TabSelectorMappedViews)
-            {
-                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+            tabsBySections = viewInstance.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
 
-                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
+            foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
+            {
+                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
-                        animationCts.SafeCancelAndDispose();
-                        animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
+                        ToggleSection(isOn, tabSelector, section, true);
                     }
                 );
             }
@@ -86,16 +104,77 @@ namespace DCL.ExplorePanel
 
         protected override void OnBeforeViewShow()
         {
-            exploreSections[inputData.Section].Activate();
+            isControlClosing = false;
+
+            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
+                ToggleSection(section == inputData.Section, tab, section, false);
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
-
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
                                         new ControllerNoData(), profileWidgetCts.Token)
                                    .Forget();
 
             if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
                 systemMenuController.HideViewAsync(CancellationToken.None).Forget();
+
+            BlockUnwantedActions();
+            RegisterHotkeys();
+        }
+
+        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
+        {
+            animationCts.SafeCancelAndDispose();
+            animationCts = new CancellationTokenSource();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+
+            if (shownSection == lastShownSection)
+                exploreSections[lastShownSection].Activate();
+
+            if (isOn)
+                lastShownSection = shownSection;
+        }
+
+        private void RegisterHotkeys()
+        {
+            dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
+            dclInput.UI.Close.performed += OnCloseMainMenu;
+            dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
+            dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
+            dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+        }
+
+        private void OnCloseMainMenu(InputAction.CallbackContext obj)
+        {
+            isControlClosing = true;
+        }
+
+        private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (lastShownSection != ExploreSections.Navmap)
+                ShowSection(ExploreSections.Navmap);
+            else
+                isControlClosing = true;
+        }
+
+        private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (lastShownSection != ExploreSections.Settings)
+                ShowSection(ExploreSections.Settings);
+            else
+                isControlClosing = true;
+        }
+
+        private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (lastShownSection != ExploreSections.Backpack)
+                ShowSection(ExploreSections.Backpack);
+            else
+                isControlClosing = true;
+        }
+
+        private void ShowSection(ExploreSections section)
+        {
+            ToggleSection(true, tabsBySections[section], section, true);
         }
 
         protected override void OnViewClose()
@@ -105,10 +184,36 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             systemMenuCts.SafeCancelAndDispose();
+
+            UnblockUnwantedActions();
+            UnRegisterHotkeys();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            viewInstance.CloseButton.OnClickAsync(ct);
+        private void UnRegisterHotkeys()
+        {
+            dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
+            dclInput.UI.Close.performed -= OnCloseMainMenu;
+            dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
+            dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
+            dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
+        }
+
+        private void BlockUnwantedActions()
+        {
+            world.Add<CameraBlockerComponent>(playerEntity);
+            world.Add<MovementBlockerComponent>(playerEntity);
+        }
+
+        private void UnblockUnwantedActions()
+        {
+            world.Remove<CameraBlockerComponent>(playerEntity);
+            world.Remove<MovementBlockerComponent>(playerEntity);
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct), UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct));
+        }
 
         private void ShowSystemMenu()
         {

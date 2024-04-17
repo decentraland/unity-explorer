@@ -21,7 +21,7 @@ MonoBehaviour:
   - rid: 1045841226745774107
   - rid: 1045841258647388162
   - rid: 758312499805421571
-  - rid: 758312638436868098
+  - rid: 758312628874641408
   references:
     version: 2
     RefIds:
@@ -29,16 +29,11 @@ MonoBehaviour:
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
-    - rid: 758312638436868098
-      type: {class: AudioPlaybackContainer/AudioPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 758312628874641408
+      type: {class: UIAudioPlaybackContainer/AudioPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <UIAudioPlaybackControllerReference>k__BackingField:
           m_AssetGUID: df3decac75a242f4689cb445dc93eb06
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <WorldAudioPlaybackControllerReference>k__BackingField:
-          m_AssetGUID: d9a7adc162dc338449107a4654a26d50
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -113,6 +108,16 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
+        <hoverMaterial>k__BackingField:
+          m_AssetGUID: 31f3cd961c052c84baf27b3938e5b0f4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <hoverOutOfRangeMaterial>k__BackingField:
+          m_AssetGUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

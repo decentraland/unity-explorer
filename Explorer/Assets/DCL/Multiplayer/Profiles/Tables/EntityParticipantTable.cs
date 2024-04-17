@@ -27,6 +27,9 @@ namespace DCL.Multiplayer.Profiles.Tables
         public bool Has(string walletId) =>
             walletIdToEntity.ContainsKey(walletId);
 
+        public IReadOnlyCollection<string> Wallets() =>
+            walletIdToEntity.Keys;
+
         public void Register(string walletId, Entity entity)
         {
             walletIdToEntity.Add(walletId, entity);
