@@ -17,6 +17,7 @@ namespace DCL.Settings.Configuration
             CAMERA_SHOULDER_FEATURE,
             RESOLUTION_FEATURE,
             WINDOW_MODE_FEATURE,
+            FPS_LIMIT_FEATURE,
             // add other features...
         }
 
@@ -40,6 +41,8 @@ namespace DCL.Settings.Configuration
                     return new ResolutionSettingsController(viewInstance);
                 case DropdownFeatures.WINDOW_MODE_FEATURE:
                     return new WindowModeSettingsController(viewInstance);
+                case DropdownFeatures.FPS_LIMIT_FEATURE:
+                    return new FpsLimitSettingsController(viewInstance);
                 // add other cases...
             }
 
