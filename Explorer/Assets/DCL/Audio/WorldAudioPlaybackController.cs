@@ -45,15 +45,6 @@ namespace DCL.Audio
             return audioSource;
         }
 
-        private void OnPlayWorldAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
-        {
-
-        }
-
-
-
-
-
         private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType )
         {
             AudioClipConfig audioClipConfig = audioSettings.GetAudioClipConfigForType(clipType).DayClip; //We can switch this depending on the time of day for example
