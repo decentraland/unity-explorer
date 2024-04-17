@@ -19,6 +19,7 @@ MonoBehaviour:
   terrainHoleEdgeSize: 0.5
   minHeight: 0
   pondDepth: 0
+  borderPadding: 2
   terrainHeightNoise: {fileID: 11400000, guid: 9c77fb8d5e4c2f34aa2299f12ba5920f, type: 2}
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:
@@ -43,7 +44,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4362537cefadf584c8a7ea303794690c, type: 2}
   - {fileID: 11400000, guid: 86b29852bc6b6aa4ab76c26e069e5c8b, type: 2}
   cliffSide: {fileID: 919132149155446097, guid: c771be5f50b31304fa9980668f783ee3, type: 3}
-  cliffCorner: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
+  cliffCorner: {fileID: 7130223872809235836, guid: 28fe79bce715ec543aef1e2d9a7fe1d8, type: 3}
   ocean: {fileID: 5279076375242104403, guid: 55904b3465b0bbb4c9f09ea3c835df3c, type: 3}
   wind: {fileID: 4984400270765111023, guid: 4ced4aac10a193c41ba708f28429b518, type: 3}
   grassRenderer: {fileID: 6741635715941149560, guid: 8ae2a797632ad94409ca29f2f2b754ba, type: 3}
