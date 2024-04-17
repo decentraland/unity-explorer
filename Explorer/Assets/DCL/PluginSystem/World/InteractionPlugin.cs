@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
-            in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+            in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             InitializeRaycastSystem.InjectToWorld(ref builder);
 

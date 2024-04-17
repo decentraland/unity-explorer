@@ -30,11 +30,11 @@ namespace DCL.ExplorePanel
 
         [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig BackgroundMusic { get; private set; }
+        public AudioClipConfig? BackgroundMusic { get; private set; }
         [field: SerializeField]
-        public AudioMixerSnapshot MuteSoundsSnapshot { get; private set; }
+        public AudioMixerSnapshot? MuteSoundsSnapshot { get; private set; }
         [field: SerializeField]
-        public AudioMixerSnapshot RestoreSoundsSnapShot { get; private set; }
+        public AudioMixerSnapshot? RestoreSoundsSnapShot { get; private set; }
 
 
         private bool snapshotsPresent;

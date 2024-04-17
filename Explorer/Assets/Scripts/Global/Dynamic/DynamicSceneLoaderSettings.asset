@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: DynamicSceneLoaderSettings
   m_EditorClassIdentifier: 
   <StartPosition>k__BackingField: {x: 0, y: 0}
-  <StaticLoadPositions>k__BackingField: []
+  <StaticLoadPositions>k__BackingField:
+  - x: 75
+    y: -7
   <Realms>k__BackingField:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
   - https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main
