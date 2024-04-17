@@ -670,6 +670,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "ChangeShoulder",
+                    "type": "Button",
+                    "id": "2bd33339-099a-414d-8b06-d5032ddb0f56",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "SwitchState",
                     "type": "Button",
                     "id": "35e9217b-165d-43f7-b6e5-ac78cea73300",
@@ -930,6 +939,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "SwitchState",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0412c0a4-8235-4599-b09d-0352f3cb4ee9",
+                    "path": "<Keyboard>/period",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ChangeShoulder",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -25,11 +25,18 @@ namespace DCL.CharacterCamera.Systems
         private readonly DCLInput dclInput;
         private SingleInstanceEntity inputMap;
         private bool wantsToSwitchState;
+        private bool wantsToChangeShoulder;
 
         internal ControlCinemachineVirtualCameraSystem(World world, DCLInput dclInput) : base(world)
         {
             this.dclInput = dclInput;
             dclInput.Camera.SwitchState.performed += OnSwitchState;
+            dclInput.Camera.ChangeShoulder.performed += OnChangeShoulder;
+        }
+
+        private void OnChangeShoulder(InputAction.CallbackContext obj)
+        {
+            wantsToChangeShoulder = true;
         }
 
         private void OnSwitchState(InputAction.CallbackContext obj)
@@ -150,12 +157,33 @@ namespace DCL.CharacterCamera.Systems
         {
             if (cameraComponent.Mode == CameraMode.ThirdPerson)
             {
+                if (wantsToChangeShoulder)
+                {
+                    wantsToChangeShoulder = false;
+
+                    cameraComponent.Shoulder = cameraComponent.Shoulder switch
+                                               {
+                                                   ThirdPersonCameraShoulder.Center => ThirdPersonCameraShoulder.Right,
+                                                   ThirdPersonCameraShoulder.Right => ThirdPersonCameraShoulder.Left,
+                                                   ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Center,
+                                               };
+                }
+
                 float value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
 
                 Vector3 offset;
 
-                if (value < 0.5f) { offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetBottom, cinemachinePreset.ThirdPersonCameraData.OffsetMid, value * 2); }
-                else { offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetMid, cinemachinePreset.ThirdPersonCameraData.OffsetTop, (value - 0.5f) * 2); }
+                if (value < 0.5f)
+                    offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetBottom, cinemachinePreset.ThirdPersonCameraData.OffsetMid, value * 2);
+                else
+                    offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetMid, cinemachinePreset.ThirdPersonCameraData.OffsetTop, (value - 0.5f) * 2);
+
+                offset.x = cameraComponent.Shoulder switch
+                           {
+                               ThirdPersonCameraShoulder.Right => 1,
+                               ThirdPersonCameraShoulder.Left => -1,
+                               ThirdPersonCameraShoulder.Center => 0,
+                           };
 
                 cinemachinePreset.ThirdPersonCameraData.CameraOffset.m_Offset = offset;
             }

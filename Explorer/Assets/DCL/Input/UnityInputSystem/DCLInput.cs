@@ -692,6 +692,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""ChangeShoulder"",
+                    ""type"": ""Button"",
+                    ""id"": ""2bd33339-099a-414d-8b06-d5032ddb0f56"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""SwitchState"",
                     ""type"": ""Button"",
                     ""id"": ""35e9217b-165d-43f7-b6e5-ac78cea73300"",
@@ -952,6 +961,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""SwitchState"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0412c0a4-8235-4599-b09d-0352f3cb4ee9"",
+                    ""path"": ""<Keyboard>/period"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ChangeShoulder"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2388,6 +2408,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_Unlock = m_Camera.FindAction("Unlock", throwIfNotFound: true);
         m_Camera_Delta = m_Camera.FindAction("Delta", throwIfNotFound: true);
         m_Camera_TemporalLock = m_Camera.FindAction("TemporalLock", throwIfNotFound: true);
+        m_Camera_ChangeShoulder = m_Camera.FindAction("ChangeShoulder", throwIfNotFound: true);
         m_Camera_SwitchState = m_Camera.FindAction("SwitchState", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
@@ -2666,6 +2687,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_Unlock;
     private readonly InputAction m_Camera_Delta;
     private readonly InputAction m_Camera_TemporalLock;
+    private readonly InputAction m_Camera_ChangeShoulder;
     private readonly InputAction m_Camera_SwitchState;
     public struct CameraActions
     {
@@ -2679,6 +2701,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Unlock => m_Wrapper.m_Camera_Unlock;
         public InputAction @Delta => m_Wrapper.m_Camera_Delta;
         public InputAction @TemporalLock => m_Wrapper.m_Camera_TemporalLock;
+        public InputAction @ChangeShoulder => m_Wrapper.m_Camera_ChangeShoulder;
         public InputAction @SwitchState => m_Wrapper.m_Camera_SwitchState;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
@@ -2713,6 +2736,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @TemporalLock.started += instance.OnTemporalLock;
             @TemporalLock.performed += instance.OnTemporalLock;
             @TemporalLock.canceled += instance.OnTemporalLock;
+            @ChangeShoulder.started += instance.OnChangeShoulder;
+            @ChangeShoulder.performed += instance.OnChangeShoulder;
+            @ChangeShoulder.canceled += instance.OnChangeShoulder;
             @SwitchState.started += instance.OnSwitchState;
             @SwitchState.performed += instance.OnSwitchState;
             @SwitchState.canceled += instance.OnSwitchState;
@@ -2744,6 +2770,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @TemporalLock.started -= instance.OnTemporalLock;
             @TemporalLock.performed -= instance.OnTemporalLock;
             @TemporalLock.canceled -= instance.OnTemporalLock;
+            @ChangeShoulder.started -= instance.OnChangeShoulder;
+            @ChangeShoulder.performed -= instance.OnChangeShoulder;
+            @ChangeShoulder.canceled -= instance.OnChangeShoulder;
             @SwitchState.started -= instance.OnSwitchState;
             @SwitchState.performed -= instance.OnSwitchState;
             @SwitchState.canceled -= instance.OnSwitchState;
@@ -3226,6 +3255,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnUnlock(InputAction.CallbackContext context);
         void OnDelta(InputAction.CallbackContext context);
         void OnTemporalLock(InputAction.CallbackContext context);
+        void OnChangeShoulder(InputAction.CallbackContext context);
         void OnSwitchState(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
