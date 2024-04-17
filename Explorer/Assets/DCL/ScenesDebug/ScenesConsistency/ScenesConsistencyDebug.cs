@@ -69,6 +69,7 @@ namespace DCL.ScenesDebug.ScenesConsistency
                 await UniTask.Delay(TimeSpan.FromSeconds(delayBetweenTeleports));
             }
 
+            Log("Ready to quit!");
             Application.Quit();
         }
     }
