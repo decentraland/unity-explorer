@@ -21,8 +21,10 @@ namespace DCL.LOD
         public bool Equals(LODKey other) =>
             Hash.Equals(other.Hash, StringComparison.OrdinalIgnoreCase) && Level == other.Level;
 
-        public bool Equals(LODAsset? other) =>
-            other != null && Equals(other.LodKey);
+        public bool Equals(LODAsset other)
+        {
+            return other != null && Equals(other.LodKey);
+        }
 
         public override bool Equals(object obj) =>
             obj is LODKey other && Equals(other);

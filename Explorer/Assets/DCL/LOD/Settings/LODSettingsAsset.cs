@@ -11,18 +11,19 @@ namespace DCL.LOD
     {
         [field: SerializeField] public int[] LodPartitionBucketThresholds { get; set; } = { 1, 2, 5 };
 
-        [field: SerializeField] public int DefaultArraySize { get; set; } = 100;
-
-        //TODO (Juani): No textures higher than should arrive. Check in AB converter
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {
-            new (256, 500), new (512, 100), new (1024, 100)
+            new (256, 500, 100), new (512, 100, 10), new (1024, 100, 10), new (2048, 25, 10), new (4096, 25, 10)
         };
 
-        [field: SerializeField] public bool IsColorDebuging { get; set; }
+        public int ArraySizeForMissingResolutions => 50;
+        public int CapacityForMissingResolutions => 1;
+
+        public bool IsColorDebuging { get; set; }
         [field: SerializeField] public Color[] LODDebugColors { get; set; } = { Color.green, Color.yellow, Color.red };
-        [field: SerializeField] public FaillingLODCube FaillingCube { get; set; }
+        [field: SerializeField] public DebugCube DebugCube { get; set; }
         [field: SerializeField] public bool EnableLODStreaming { get; set; }
+        [field: SerializeField] public float AsyncIntegrationTimeMS { get; set; } = 33;
     }
 
 

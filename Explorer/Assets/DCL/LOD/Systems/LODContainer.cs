@@ -56,7 +56,7 @@ namespace DCL.LOD.Systems
             CancellationToken ct)
         {
             var container = new LODContainer(staticContainer.AssetsProvisioner);
-
+            
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();

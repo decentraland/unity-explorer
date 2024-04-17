@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FaillingLODCube : MonoBehaviour
+public class DebugCube : MonoBehaviour
 {
     public MeshRenderer failingLODCubeMeshRenderer;
 }

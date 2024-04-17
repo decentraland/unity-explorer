@@ -22,7 +22,7 @@ namespace DCL.LOD
         private ILODSettingsAsset LodSettingsAsset;
         public byte CurrentLODLevel;
         public LODAsset.LOD_STATE CurrentLODState;
-        public FaillingLODCube[] DebugCubes;
+        public DebugCube[] DebugCubes;
         
 
         //This is a sync method, so we can use a shared list
@@ -130,10 +130,10 @@ namespace DCL.LOD
 
         public static SceneLODInfoDebug Create(Transform missingSceneParent, ILODSettingsAsset lodSettingsAsset, IReadOnlyList<Vector2Int> parcels)
         {
-            var debugCubes =  new FaillingLODCube[parcels.Count];
+            var debugCubes =  new DebugCube[parcels.Count];
             for (int i = 0; i < parcels.Count; i++)
             {
-                debugCubes[i] = Object.Instantiate(lodSettingsAsset.FaillingCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, missingSceneParent);
+                debugCubes[i] = Object.Instantiate(lodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, missingSceneParent);
                 debugCubes[i].gameObject.SetActive(false);
             }
             

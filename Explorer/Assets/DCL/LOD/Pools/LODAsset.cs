@@ -25,10 +25,6 @@ namespace DCL.LOD
         private readonly ILODAssetsPool Pool;
         internal AssetBundleData AssetBundleReference;
 
-        private readonly string SceneID;
-        private readonly Vector2Int ParcelCoord;
-        private readonly TextureArrayContainer LodTextureArrayContainer;
-
         public enum LOD_STATE
         {
             UNINTIALIZED,
@@ -39,22 +35,13 @@ namespace DCL.LOD
 
 
         public LODAsset(LODKey lodKey, ILODAssetsPool pool, AssetBundleData assetBundleData,
-            Transform lodsTransformParent, Vector3 baseParcelPosition,
-            Vector2Int parcelCoord, TextureArrayContainer lodTextureArrayContainer)
+            AsyncInstantiateOperation<GameObject> asyncInstantiation)
         {
             LodKey = lodKey;
             Pool = pool;
             Slots = Array.Empty<TextureArraySlot?>();
             AssetBundleReference = assetBundleData;
-            SceneID = LodKey.Hash;
-            ParcelCoord = parcelCoord;
-            LodTextureArrayContainer = lodTextureArrayContainer;
-
-            //NOTE: Using the count API since the one without count does not parent correctly.
-            AsyncInstantiation =
-                Object.InstantiateAsync(AssetBundleReference.GetMainAsset<GameObject>(), 1,
-                    lodsTransformParent, baseParcelPosition, Quaternion.identity);
-            AsyncInstantiation.allowSceneActivation = false;
+            AsyncInstantiation = asyncInstantiation;
 
             Root = null;
 
@@ -126,25 +113,16 @@ namespace DCL.LOD
             }
         }
 
-        public void FinalizeInstantiation()
-        {
-            AsyncInstantiation.allowSceneActivation = true;
-
-            AsyncInstantiation.WaitForCompletion();
-
-            Root = AsyncInstantiation.Result[0];
-            if (!LodKey.Level.Equals(0))
-                Slots = LODUtils.ApplyTextureArrayToLOD(SceneID,
-                    ParcelCoord, Root, LodTextureArrayContainer);
-
-            //Note (Juani): Scene boundaries will be moved to the asset bundle converter time to avoid hiccups
-
-            State = LOD_STATE.SUCCESS;
-        }
-
         public void Release()
         {
             Pool.Release(LodKey, this);
+        }
+
+        public void FinalizeInstantiation(GameObject newRoot, TextureArraySlot?[] slots)
+        {
+            Root = newRoot;
+            Slots = slots;
+            State = LOD_STATE.SUCCESS;
         }
     }
 }

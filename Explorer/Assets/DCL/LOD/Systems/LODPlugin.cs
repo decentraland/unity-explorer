@@ -72,7 +72,10 @@ namespace DCL.PluginSystem.Global
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
 
-            lodTextureArrayContainer = textureArrayContainerFactory.Create(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors, TextureFormat.BC7, lodSettingsAsset.DefaultArraySize);
+            AsyncInstantiateOperation.SetIntegrationTimeMS(lodSettingsAsset.AsyncIntegrationTimeMS);
+
+            lodTextureArrayContainer = textureArrayContainerFactory.Create(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
+                TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
             
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);

@@ -12,22 +12,17 @@ namespace DCL.LOD.Components
     public struct SceneLODInfo
     {
         public byte CurrentLODLevel;
-        internal LODAsset CurrentLOD;
-        internal LODAsset LastSuccessfulLOD;
+        public LODAsset CurrentLOD;
+        public LODAsset CurrentVisibleLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
         
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
-            if (CurrentLOD != null)
-            {
-                if (CurrentLOD.State == LODAsset.LOD_STATE.FAILED)
-                    LastSuccessfulLOD?.Release();
-                CurrentLOD?.Release();
-                CurrentLOD = null;
-            }
-
+            if (CurrentVisibleLOD != null && !CurrentVisibleLOD.LodKey.Equals(CurrentLOD))
+                CurrentVisibleLOD.Release();
+            CurrentLOD?.Release();
         }
 
         public static SceneLODInfo Create() =>
@@ -39,31 +34,21 @@ namespace DCL.LOD.Components
         public void SetCurrentLOD(LODAsset newLod)
         {
             CurrentLOD = newLod;
-            UpdateLastSuccessfullLOD();
+            UpdateCurrentVisibleLOD();
         }
 
-        public void UpdateLastSuccessfullLOD()
+        public void UpdateCurrentVisibleLOD()
         {
-            if (CurrentLOD.State == LODAsset.LOD_STATE.SUCCESS)
+            if (CurrentLOD?.State == LODAsset.LOD_STATE.SUCCESS)
             {
-                LastSuccessfulLOD?.Release();
-                LastSuccessfulLOD = CurrentLOD;
+                CurrentVisibleLOD?.Release();
+                CurrentVisibleLOD = CurrentLOD;
             }
         }
 
-        public LODAsset GetCurrentLOD()
+        public void ResetToCurrentVisibleLOD()
         {
-            return CurrentLOD;
-        }
-
-        public LODAsset GetCurrentSuccessfulLOD()
-        {
-            return LastSuccessfulLOD;
-        }
-
-        public void ResetToCurrentSuccesfullLOD()
-        {
-            CurrentLOD = LastSuccessfulLOD;
+            CurrentLOD = CurrentVisibleLOD;
         }
     }
 

@@ -47,15 +47,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
 
         public TextureArrayHandler(
-            int minArraySize,
             IReadOnlyList<TextureArrayResolutionDescriptor> textureArrayResolutionDescriptors,
             int arrayID,
             int textureID,
             TextureFormat textureFormat,
             IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures,
-            int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
+            int arraySizeForMissingResolutions,
+            int initialCapacityForEachResolution)
         {
-            this.minArraySize = minArraySize;
+            minArraySize = arraySizeForMissingResolutions;
             this.arrayID = arrayID;
             this.textureID = textureID;
             this.textureFormat = textureFormat;
@@ -65,13 +65,14 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
 
             for (int i = 0; i < textureArrayResolutionDescriptors.Count; i++)
-                CreateHandler(new Vector2Int(textureArrayResolutionDescriptors[i].Resolution, textureArrayResolutionDescriptors[i].Resolution),
-                    textureArrayResolutionDescriptors[i].ArraySize);
+                CreateHandler(textureArrayResolutionDescriptors[i]);
         }
 
-        private TextureArraySlotHandler CreateHandler(Vector2Int resolution, int arraySize)
+        private TextureArraySlotHandler CreateHandler(TextureArrayResolutionDescriptor descriptor)
         {
-            var slotHandler = new TextureArraySlotHandler(resolution, arraySize, initialCapacityForEachResolution, textureFormat);
+            var resolution = new Vector2Int(descriptor.Resolution, descriptor.Resolution);
+
+            var slotHandler = new TextureArraySlotHandler(resolution, descriptor.ArraySize, descriptor.InitialArrayCapacity, textureFormat);
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture

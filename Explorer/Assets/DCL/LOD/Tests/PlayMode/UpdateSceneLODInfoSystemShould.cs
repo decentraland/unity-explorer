@@ -76,8 +76,8 @@ namespace DCL.LOD.Tests
             system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform,
                 textureArrayContainerFactory.Create(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
                 {
-                    new TextureArrayResolutionDescriptor(256, 500)
-                }, TextureFormat.BC7, 20));
+                    new TextureArrayResolutionDescriptor(256, 500, 1)
+                }, TextureFormat.BC7, 20, 1));
         }
 
 
@@ -121,7 +121,7 @@ namespace DCL.LOD.Tests
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
             Assert.IsFalse(sceneLODInfoRetrieved.IsDirty);
             Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
-            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.LastSuccessfulLOD);
+            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
             Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
             Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
         }
@@ -148,7 +148,7 @@ namespace DCL.LOD.Tests
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
             Assert.IsTrue(sceneLODInfoRetrieved.IsDirty);
             Assert.Null(sceneLODInfoRetrieved.CurrentLOD?.Root);
-            Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.LastSuccessfulLOD);
+            Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
             Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
             Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
         }
