@@ -380,16 +380,13 @@ namespace DCL.Landscape
 
         private void AddColorMapRenderer(GameObject parent)
         {
-            GameObject rendererInstance = Object.Instantiate(terrainGenData.grassRenderer, parent.transform);
-            GrassColorMapRenderer colorMapRenderer = rendererInstance.GetComponent<GrassColorMapRenderer>();
-            GrassColorMap grassColorMap = ScriptableObject.CreateInstance<GrassColorMap>();
-            colorMapRenderer.colorMap = grassColorMap;
+            (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) = factory.CreateColorMapRenderer(parent);
+
             colorMapRenderer.terrainObjects.AddRange(terrains.Select(t => t.gameObject));
             colorMapRenderer.RecalculateBounds();
-            Vector3 center = grassColorMap.bounds.center;
-            center.y = 0;
-            grassColorMap.bounds.center = center;
-            colorMapRenderer.resolution = 2048;
+
+            grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
+
             colorMapRenderer.Render();
         }
 

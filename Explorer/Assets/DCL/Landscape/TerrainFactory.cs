@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using StylizedGrass;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
@@ -59,7 +60,7 @@ namespace DCL.Landscape
 
         public static Transform CreateCollidersRoot(Transform parent)
         {
-            var collidersRoot = new GameObject("BorderColliders").transform;
+            Transform collidersRoot = new GameObject("BorderColliders").transform;
             collidersRoot.SetParent(parent);
 
             return collidersRoot;
@@ -67,7 +68,7 @@ namespace DCL.Landscape
 
         public static Collider CreateBorderCollider(string name, Transform parent, Vector3 size, Vector3 position, float yRotation)
         {
-            var collider = new GameObject(name).AddComponent<BoxCollider>();
+            BoxCollider collider = new GameObject(name).AddComponent<BoxCollider>();
             collider.transform.SetParent(parent);
 
             collider.size = size;
@@ -112,6 +113,19 @@ namespace DCL.Landscape
             terrainData.SetDetailResolution(terrainChunkSize, 32);
 
             return terrainData;
+        }
+
+        public (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) CreateColorMapRenderer(GameObject parent)
+        {
+            GrassColorMapRenderer colorMapRenderer = Object.Instantiate(terrainGenData.grassRenderer, parent.transform)
+                                                           .GetComponent<GrassColorMapRenderer>();
+
+            GrassColorMap grassColorMap = ScriptableObject.CreateInstance<GrassColorMap>();
+
+            colorMapRenderer.colorMap = grassColorMap;
+            colorMapRenderer.resolution = 2048;
+
+            return (colorMapRenderer, grassColorMap);
         }
 
         private TreePrototype[] GetTreePrototypes()
