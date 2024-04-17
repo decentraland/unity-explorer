@@ -89,9 +89,7 @@ namespace ECS.Unity.Transforms.Systems
                 return;
             }
 
-            childComponent.Transform.SetParent(parentComponent.Transform, true);
-            childComponent.Parent = World.Reference(parentEntity);
-            parentComponent.Children.Add(childEntityReference);
+            childComponent.AssignParent(childEntityReference, World.Reference(parentEntity), in parentComponent);
         }
 
         private void RemoveFromParent(TransformComponent childComponent, EntityReference childEntityReference)
