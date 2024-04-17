@@ -99,6 +99,19 @@ namespace CRDT.Protocol
         public int CreateMessagesFromTheCurrentState(ProcessedCRDTMessage[] preallocatedArray) =>
             crdtState.CreateMessagesFromTheCurrentState(preallocatedArray);
 
+        public IReadOnlyList<(int componentId, EntityComponentData)> GetStateForEntityDebug(CRDTEntity entity)
+        {
+            var componentList = new List<(int componentId, EntityComponentData)>();
+
+            foreach ((int componentId, PooledDictionary<CRDTEntity, EntityComponentData> value) in crdtState.lwwComponents)
+            {
+                if (value.TryGetValue(entity, out EntityComponentData componentData))
+                    componentList.Add((componentId, componentData));
+            }
+
+            return componentList;
+        }
+
         public ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data) =>
             CRDTMessagesFactory.CreateAppendMessage(entity, componentId, timestamp, data);
 
@@ -269,7 +282,7 @@ namespace CRDT.Protocol
             return diff == 0 ? CRDTMessageComparer.CompareData(x.Data, y.Data) : diff;
         }
 
-        internal struct EntityComponentData
+        public struct EntityComponentData
         {
             internal int Timestamp;
             internal IMemoryOwner<byte> Data;

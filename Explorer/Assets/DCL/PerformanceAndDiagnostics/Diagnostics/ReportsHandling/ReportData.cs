@@ -12,12 +12,14 @@ namespace DCL.Diagnostics
         public readonly ReportHint Hint;
 
         public SceneShortInfo SceneShortInfo;
+        public uint? SceneTickNumber;
 
-        public ReportData(string category, ReportHint hint = ReportHint.None, SceneShortInfo sceneShortInfo = default)
+        public ReportData(string category, ReportHint hint = ReportHint.None, SceneShortInfo sceneShortInfo = default, uint? sceneTickNumber = null)
         {
             Category = category;
             Hint = hint;
             SceneShortInfo = sceneShortInfo;
+            SceneTickNumber = sceneTickNumber;
         }
 
         public static implicit operator ReportData(string category) =>
