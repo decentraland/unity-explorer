@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace DCL.Landscape.Jobs
 {
@@ -11,7 +12,15 @@ namespace DCL.Landscape.Jobs
         public bool IsVisible;
         public bool IsAtDistance;
         public bool IsDirty;
-        public float SqrDistance;
+        public bool IsSilent; //When we have notified already to silence this
+        public bool IsHeard; //When sqr distance is < value and WorldAudioBus was already notified
+        public bool ShouldBeSilent; //When sqr distance is > value if not already Silent
+        public bool ShouldBeHeard; //When it can be heard but IsHeard is false
+    }
+
+    public struct TerrainAudio
+    {
+
     }
 
     [BurstCompile]
@@ -36,8 +45,27 @@ namespace DCL.Landscape.Jobs
             bool isVisible = TestPlanesAABB(terrain.Bounds);
             var isAtDistance = true;
 
-            terrain.SqrDistance = terrain.Bounds.DistanceSq(cameraPosition);
-            isAtDistance = terrain.SqrDistance < detailDistanceSqr;
+            float sqrDistance = terrain.Bounds.DistanceSq(cameraPosition);
+
+            if (isVisible) { isAtDistance = sqrDistance < detailDistanceSqr; }
+
+            if (sqrDistance < 1000) //This value should come from settings
+            { if (!terrain.IsHeard)
+                {
+                    terrain.ShouldBeHeard = true;
+                    terrain.IsSilent = false;
+                    terrain.ShouldBeSilent = false;
+                }
+            }
+            else
+            {
+                if (!terrain.IsSilent)
+                {
+                    terrain.IsHeard = false;
+                    terrain.ShouldBeHeard = false;
+                    terrain.ShouldBeSilent = true;
+                }
+            }
 
             terrain.IsDirty = terrain.IsVisible != isVisible || terrain.IsAtDistance != isAtDistance;
             terrain.IsVisible = isVisible;

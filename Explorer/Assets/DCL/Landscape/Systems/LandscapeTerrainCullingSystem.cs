@@ -32,6 +32,7 @@ namespace DCL.Landscape.Systems
 
         private NativeArray<float4> nativeFrustumPlanes;
         private NativeArray<VisibleBounds> terrainVisibilities;
+        private NativeArray<NativeArray<int2>> terrainAudioSourcesPositions;
         private Plane[] frustumPlanes;
         private JobHandle jobHandle;
 
@@ -72,8 +73,8 @@ namespace DCL.Landscape.Systems
 
             if (!isTerrainViewInitialized)
             {
-                isTerrainViewInitialized = true;
                 InitializeTerrainVisibility();
+                isTerrainViewInitialized = true;
             }
 
             if (isTerrainViewInitialized)
@@ -84,11 +85,14 @@ namespace DCL.Landscape.Systems
         {
             IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
             terrainVisibilities = new NativeArray<VisibleBounds>(terrains.Count, Allocator.Persistent);
+            terrainAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrains.Count, Allocator.Persistent);
 
             for (var i = 0; i < terrains.Count; i++)
             {
                 Terrain terrain = terrains[i];
                 Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
+                ReportHub.Log(new ReportData(ReportCategory.LANDSCAPE), $"Adding Positions for terrain with Index {i} and bounds {bounds.min} - {bounds.max}");
+                terrainAudioSourcesPositions[i] = GetAudioSourcesPositions(terrain.terrainData, bounds);
 
                 terrainVisibilities[i] = new VisibleBounds
                 {
@@ -99,6 +103,38 @@ namespace DCL.Landscape.Systems
                     },
                 };
             }
+        }
+
+        private NativeArray<int2> GetAudioSourcesPositions(TerrainData terrainData, Bounds worldBounds)
+        {
+            Vector3 terrainSize = terrainData.size;
+            int cellWidth = (int) terrainSize.x / 4;
+            int cellLength = (int) terrainSize.z / 4;
+
+            NativeList<int2> positions = new NativeList<int2>(Allocator.Temp);
+            int2 worldCellCenter = new int2((int)worldBounds.center.x, (int)worldBounds.center.z);
+            for (var row = 0; row < 4; row++)
+            {
+                for (var col = 0; col < 4; col++)
+                {
+                    int2 localCellCenter = new int2(
+                        ((col * cellWidth) + (cellWidth / 2)),
+                        ((row * cellLength) + (cellLength / 2))
+                    );
+
+                    //We could retry this 3 or 4 times until we find a valid point.
+                    int2 randomOffset = new int2(UnityEngine.Random.Range(-cellWidth / 2, cellWidth / 2), UnityEngine.Random.Range(-cellLength / 2, cellLength / 2));
+                    int2 randomPosition = localCellCenter + randomOffset;
+
+                    if (!terrainData.IsHole(randomPosition.x, randomPosition.y))
+                    {
+                        positions.Add(worldCellCenter + randomPosition);
+                        ReportHub.Log(new ReportData(ReportCategory.LANDSCAPE),$"Added position at {worldCellCenter + randomPosition}");
+                    }
+                }
+            }
+
+            return positions.ToArray(Allocator.Persistent);
         }
 
         [Query]
@@ -116,19 +152,24 @@ namespace DCL.Landscape.Systems
 
                 IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
 
-                if (terrainVisibilities[0].IsAtDistance)
-                {
-                    var distance = Mathf.Clamp(terrainVisibilities[0].SqrDistance, 0, 100);
-                    float volume = 1f - Mathf.InverseLerp(0, 100, distance);
-
-                    UIAudioEventsBus.Instance.SendPlayWorldAudioEvent(volume);
-                }
-
                 for (var i = 0; i < terrainVisibilities.Length; i++)
                 {
                     VisibleBounds visibility = terrainVisibilities[i];
 
-
+                    if (visibility is {ShouldBeHeard: true, IsHeard: false })
+                    {
+                        //We put audiosources on the positions for this terrain
+                        visibility.IsHeard = true;
+                        terrainVisibilities[i] = visibility;
+                        WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, terrainAudioSourcesPositions[i]);
+                    }
+                    else if (visibility is {ShouldBeSilent: true, IsSilent: false })
+                    {
+                        visibility.IsSilent = true;
+                        terrainVisibilities[i] = visibility;
+                        //We remove audiosources from this terrain
+                        WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i);
+                    }
 
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 

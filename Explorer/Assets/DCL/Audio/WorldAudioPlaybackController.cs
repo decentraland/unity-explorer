@@ -1,8 +1,9 @@
 ﻿using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -13,64 +14,70 @@ namespace DCL.Audio
         [SerializeField]
         private WorldAudioSettings audioSettings;
 
-        private Dictionary<int, AudioSource> audioSourcesPerIndex = new Dictionary<int, AudioSource>();
+        private Dictionary<int, List<AudioSource>> audioSourcesPerIndex = new Dictionary<int, List<AudioSource>>();
         private GameObjectPool<AudioSource> audioSourcePool;
         public void Dispose()
         {
-            WorldAudioEventsBus.Instance.PlayLoopingUIAudioEvent -= OnPlayLoopingUIAudioEvent;
+            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent -= OnPlayLandscapeAudioEvent;
+            WorldAudioEventsBus.Instance.StopLandscapeAudioEvent -= StopAndReleaseAudioSources;
             audioSourcePool.Dispose();
         }
 
         public void Initialize()
         {
-            WorldAudioEventsBus.Instance.PlayLoopingUIAudioEvent += OnPlayLoopingUIAudioEvent;
+            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent += OnPlayLandscapeAudioEvent;
+            WorldAudioEventsBus.Instance.StopLandscapeAudioEvent += StopAndReleaseAudioSources;
             audioSourcePool = new GameObjectPool<AudioSource>(this.transform);
         }
 
-        private void OnPlayLoopingUIAudioEvent(int index, float volume, bool play)
+        private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions)
         {
-
-            if (!audioSourcesPerIndex.TryGetValue(index, out var audioSource))
+            if (!audioSourcesPerIndex.TryGetValue(index, out var audioSourceList))
             {
-                if (!play || volume < audioSettings.MinVolume)
+                if (audioSourcesPositions.Length == 0) return;
+
+                audioSourceList = new List<AudioSource>();
+
+                foreach (var position in audioSourcesPositions)
                 {
-                    return;
+                    var audioSource = audioSourcePool.Get();
+                    audioSource.gameObject.SetActive(true);
+                    audioSource.loop = true; //for now
+                    audioSource.spatialBlend = 1;
+                    audioSource.outputAudioMixerGroup = audioSettings.MixerGroup;
+                    audioSource.transform.parent = this.transform;
+                    audioSource.transform.position = new Vector3(position.x, 1, position.y);
+                    audioSourceList.Add(audioSource);
                 }
 
-                audioSource = audioSourcePool.Get();
-                audioSource.gameObject.SetActive(true);
-                audioSource.loop = true; //for now
-                audioSource.outputAudioMixerGroup = audioSettings.MixerGroup;
-                audioSourcesPerIndex.Add(index, audioSource);
-            }
+                audioSourcesPerIndex.Add(index, audioSourceList);
 
-
-            if (!play || volume < audioSettings.MinVolume)
-            {
-                StopAndReleaseAudioSource(audioSource, index);
-                return;
-            }
-
-            audioSource.volume = volume;
-
-            if (!audioSource.isPlaying)
-            {
                 var audioClipConfig = audioSettings.GetAudioClipConfigForType(WorldAudioSettings.WorldAudioClipType.GladeDay); //We can check time of day and switch this
+                //We might want to check the clip before doing all this as well
                 if (CheckAudioClips(audioClipConfig))
                 {
-                    int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
-                    audioSource.clip = audioClipConfig.AudioClips[clipIndex];
-                    audioSource.time = Random.Range(0, audioSource.clip.length);
-                    audioSource.Play();
+                    foreach (var audioSource in audioSourceList)
+                    {
+                        int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+                        audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+                        audioSource.time = Random.Range(0, audioSource.clip.length);
+                        audioSource.Play();
+                    }
                 }
             }
         }
 
-        private void StopAndReleaseAudioSource(AudioSource audioSource, int index)
+        private void StopAndReleaseAudioSources(int index)
         {
-            audioSource.Stop();
-            audioSourcesPerIndex.Remove(index);
-            audioSourcePool.Release(audioSource);
+            if (audioSourcesPerIndex.TryGetValue(index, out var audioSourceList))
+            {
+                foreach (var audioSource in audioSourceList)
+                {
+                    audioSource.Stop();
+                    audioSourcePool.Release(audioSource);
+                }
+                audioSourcesPerIndex.Remove(index);
+            }
         }
 
 

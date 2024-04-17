@@ -1,4 +1,7 @@
 ﻿using System;
+using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace DCL.Audio
 {
@@ -14,16 +17,18 @@ namespace DCL.Audio
             }
         }
 
-        public event Action<int, float, bool> PlayLoopingUIAudioEvent;
+        public event Action<int, NativeArray<int2>> PlayLandscapeAudioEvent;
+        public event Action<int> StopLandscapeAudioEvent;
 
-        public void SendPlayLandscapeAudioEvent(int index, float volume)
+
+        public void SendPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions)
         {
-            PlayLoopingUIAudioEvent?.Invoke(index, volume, true);
+            PlayLandscapeAudioEvent?.Invoke(index, audioSourcesPositions);
         }
 
         public void SendStopLandscapeAudioEvent(int index)
         {
-            PlayLoopingUIAudioEvent?.Invoke(index, 0, false);
+            StopLandscapeAudioEvent?.Invoke(index);
         }
 
 

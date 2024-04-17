@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
@@ -195,6 +196,17 @@ namespace DCL.Landscape.Systems
                 for (var i = 0; i < cliffRenderers.Count; i++)
                 {
                     VisibleBounds visibility = cliffsBoundaries[i];
+
+                    //if (visibility.IsHeard)
+                    {
+                        //WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, visibility.CalculatedVolume);
+                    }
+                    //else if (visibility.ShouldBeSilent && !visibility.IsSilent)
+                    {
+                      //  visibility.IsSilent = true;
+                      //  WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i);
+                    }
+
 
                     if (!visibility.IsDirty) continue;
 
