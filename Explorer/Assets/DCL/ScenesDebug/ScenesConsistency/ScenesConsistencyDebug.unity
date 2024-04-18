@@ -167,9 +167,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be000b9b73ea472aa3e231b47bcb9021, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  switchMode: 0
-  scenesCoordinatesRaw: {fileID: 4900000, guid: 09e70e0dcd4a43bfadd67a4ffa8c3607, type: 3}
+  nextSceneDelayType: 1
   delayBetweenTeleports: 15
+  scenesCoordinatesRaw: {fileID: 4900000, guid: 09e70e0dcd4a43bfadd67a4ffa8c3607, type: 3}
   productionScene: Main
   reportPath: Assets/DCL/ScenesDebug/ScenesConsistency/Report.txt
   entities: []

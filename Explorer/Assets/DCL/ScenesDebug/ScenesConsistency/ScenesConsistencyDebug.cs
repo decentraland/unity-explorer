@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.ScenesDebug.ScenesConsistency.ChatTeleports;
+using DCL.ScenesDebug.ScenesConsistency.Conditions;
+using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 using DCL.ScenesDebug.ScenesConsistency.Entities;
 using DCL.ScenesDebug.ScenesConsistency.ReportLogs;
 using System;
@@ -15,8 +18,10 @@ namespace DCL.ScenesDebug.ScenesConsistency
 {
     public class ScenesConsistencyDebug : MonoBehaviour
     {
-        [SerializeField] private TextAsset scenesCoordinatesRaw;
+        [SerializeField] private NextSceneDelayType nextSceneDelayType = NextSceneDelayType.ByTime;
         [SerializeField] private float delayBetweenTeleports = 5;
+        [Space]
+        [SerializeField] private TextAsset scenesCoordinatesRaw;
         [SerializeField] private string productionScene = "Main";
         [SerializeField] private string reportPath = "Assets/Scenes/Debug/ScenesConsistency/Report.txt";
 
@@ -45,10 +50,20 @@ namespace DCL.ScenesDebug.ScenesConsistency
                                     .Where(x => x.IsRunning() == false)
                                     .ToList();
 
+            var chatView = new DelayedResource<ChatView>(FindObjectOfType<ChatView>);
+
             var chatTeleport = new LogChatTeleport(
-                new ChatTeleport(),
+                new ChatTeleport(chatView),
                 Log
             );
+
+            INextSceneDelay nextSceneDelay =
+                nextSceneDelayType switch
+                {
+                    NextSceneDelayType.ByTime => new ByTimeNextSceneDelay(TimeSpan.FromSeconds(delayBetweenTeleports)),
+                    NextSceneDelayType.BySubmit => new BySubmitNextSceneDelay(chatView),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
 
             using var reportLog = new ReportLog(
                 entities,
@@ -58,6 +73,9 @@ namespace DCL.ScenesDebug.ScenesConsistency
                     1024,
                     false
                 )
+                {
+                    AutoFlush = true,
+                }
             );
 
             reportLog.Start();
@@ -69,11 +87,13 @@ namespace DCL.ScenesDebug.ScenesConsistency
             await chatTeleport.WaitReadyAsync();
 
             var current = 0;
+
+            await nextSceneDelay.WaitAsync();
             foreach (SceneEntity entity in entities)
             {
                 Log($"Executing {++current} / {entities.Count} entity: {entity}");
                 chatTeleport.GoTo(entity.coordinate);
-                await UniTask.Delay(TimeSpan.FromSeconds(delayBetweenTeleports));
+                await nextSceneDelay.WaitAsync();
             }
 
             Log("Ready to quit!");

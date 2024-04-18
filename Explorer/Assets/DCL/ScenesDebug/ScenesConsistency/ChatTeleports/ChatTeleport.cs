@@ -1,26 +1,27 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.ScenesDebug.ScenesConsistency.ChatTeleports;
+using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.ScenesDebug.ScenesConsistency
+namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 {
     public class ChatTeleport : IChatTeleport
     {
-        private ChatView? chatView;
+        private readonly IDelayedResource<ChatView> chatViewResource;
+
+        public ChatTeleport(IDelayedResource<ChatView> chatViewResource)
+        {
+            this.chatViewResource = chatViewResource;
+        }
 
         public UniTask WaitReadyAsync() =>
-            UniTask.WaitUntil(() =>
-            {
-                chatView = Object.FindObjectOfType<ChatView>();
-                return chatView != null;
-            });
+            chatViewResource.ResourceAsync();
 
         public void GoTo(Vector2Int coordinate)
         {
-            var field = chatView.EnsureNotNull().InputField;
+            var field = chatViewResource.DangerousResource().EnsureNotNull().InputField;
             field.text = $"/goto {coordinate.x},{coordinate.y}";
             field.OnSubmit(new BaseEventData(null!));
         }
