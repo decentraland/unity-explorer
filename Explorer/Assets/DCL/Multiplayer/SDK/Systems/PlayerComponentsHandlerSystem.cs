@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Systems;
@@ -25,12 +26,14 @@ namespace DCL.Multiplayer.SDK.Systems
     public partial class PlayerComponentsHandlerSystem : BaseUnityLoopSystem
     {
         private readonly IScenesCache scenesCache;
+        private readonly ICharacterObject mainPlayerCharacterObject;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache) : base(world)
+        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
         {
             this.scenesCache = scenesCache;
+            mainPlayerCharacterObject = characterObject;
             ClearReservedEntities();
         }
 
@@ -53,7 +56,7 @@ namespace DCL.Multiplayer.SDK.Systems
             if (sceneFacade.SceneStateProvider == null || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
-            int crdtEntityId = ReserveNextFreeEntity();
+            int crdtEntityId = characterTransform.Transform == mainPlayerCharacterObject.Transform ? SpecialEntitiesID.PLAYER_ENTITY : ReserveNextFreeEntity();
 
             // All reserved entities for that scene are taken
             if (crdtEntityId == -1) return;

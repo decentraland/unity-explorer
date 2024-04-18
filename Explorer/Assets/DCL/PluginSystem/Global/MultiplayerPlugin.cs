@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.Global
                 realmData
             );
 
-            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache);
+            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
 #endif
         }
     }
