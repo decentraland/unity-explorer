@@ -15,10 +15,7 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            // Clean current options loaded from the settings menu configuration and load names from QualitySettings
-            view.DropdownView.Dropdown.options.Clear();
-            foreach (string option in QualitySettings.names)
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
+            LoadGraphicsQualityOptions();
 
             view.DropdownView.Dropdown.value = settingsDataStore.HasKey(GRAPHICS_QUALITY_DATA_STORE_KEY) ?
                 settingsDataStore.GetDropdownValue(GRAPHICS_QUALITY_DATA_STORE_KEY) :
@@ -26,6 +23,13 @@ namespace DCL.Settings.ModuleControllers
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetGraphicsQualitySettings);
             SetGraphicsQualitySettings(view.DropdownView.Dropdown.value);
+        }
+
+        private void LoadGraphicsQualityOptions()
+        {
+            view.DropdownView.Dropdown.options.Clear();
+            foreach (string option in QualitySettings.names)
+                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
         }
 
         private void SetGraphicsQualitySettings(int index)

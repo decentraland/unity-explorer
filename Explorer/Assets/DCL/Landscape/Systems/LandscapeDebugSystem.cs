@@ -85,7 +85,7 @@ namespace DCL.Landscape.Systems
 
             if (lastCullDistanceApplied != cullDistance.Value)
             {
-                landscapeData.detailDistance = cullDistance.Value;
+                landscapeData.DetailDistance = cullDistance.Value;
                 lastCullDistanceApplied = cullDistance.Value;
             }
         }
