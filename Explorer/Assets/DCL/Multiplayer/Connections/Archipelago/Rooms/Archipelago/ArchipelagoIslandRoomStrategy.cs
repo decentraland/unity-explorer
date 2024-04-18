@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private readonly ICharacterObject characterObject;
         private readonly string currentAdapterAddress;
 
-        public ConnectiveRoom ConnectiveRoom { get; }
+        public IConnectiveRoom ConnectiveRoom { get; }
 
         private ConnectToRoomAsyncDelegate? connectToRoomAsyncDelegate;
 

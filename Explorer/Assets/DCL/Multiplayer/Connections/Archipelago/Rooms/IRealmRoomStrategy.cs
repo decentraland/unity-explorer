@@ -4,6 +4,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     internal interface IRealmRoomStrategy
     {
-        ConnectiveRoom ConnectiveRoom { get; }
+        IConnectiveRoom ConnectiveRoom { get; }
     }
 }

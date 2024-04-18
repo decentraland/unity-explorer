@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         private readonly IWebRequestController webRequests;
         private readonly string currentAdapterAddress;
 
-        public ConnectiveRoom ConnectiveRoom { get; }
+        public IConnectiveRoom ConnectiveRoom { get; }
 
         public FixedConnectionRoomStrategy(InteriorRoom sharedRoom, IWebRequestController webRequests, string currentAdapterAddress)
         {
