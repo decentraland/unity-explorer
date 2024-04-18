@@ -144,12 +144,13 @@ namespace DCL.PluginSystem.Global
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                    equippedWearables, sortController, pageButtonView, gridPool, world
+                    equippedWearables, sortController, pageButtonView, gridPool, world,
+                    thumbnailProvider
                 );
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes);
+                    sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes, thumbnailProvider);
 
                 var emotesController = new EmotesController(emoteView,
                     new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityInfoPanelBackgroundsMapping));

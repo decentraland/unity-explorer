@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -14,6 +15,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -52,6 +54,7 @@ namespace DCL.Backpack
         private readonly int totalAmount;
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly World world;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private CancellationTokenSource cts;
         private bool currentCollectiblesOnly;
@@ -73,7 +76,8 @@ namespace DCL.Backpack
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView,
             IObjectPool<BackpackItemView> gridItemsPool,
-            World world)
+            World world,
+            IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -83,6 +87,7 @@ namespace DCL.Backpack
             this.categoryIcons = categoryIcons;
             this.equippedWearables = equippedWearables;
             this.world = world;
+            this.thumbnailProvider = thumbnailProvider;
             this.gridItemsPool = gridItemsPool;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
@@ -282,10 +287,9 @@ namespace DCL.Backpack
         {
             ct.ThrowIfCancellationRequested();
 
-            do { await UniTask.Delay(250, cancellationToken: ct); }
-            while (itemWearable.ThumbnailAssetResult == null);
+            Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
 
-            itemView.WearableThumbnail.sprite = itemWearable.ThumbnailAssetResult.Value.Asset;
+            itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
         }
 

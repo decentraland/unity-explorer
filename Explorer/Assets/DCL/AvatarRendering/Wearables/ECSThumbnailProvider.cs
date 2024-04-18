@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ECSThumbnailProvider : IThumbnailProvider
     {
+        private const int RESOLUTION_FREQUENCY_MS = 250;
+
         private readonly IRealmData realmData;
         private readonly World world;
 
@@ -27,11 +29,23 @@ namespace DCL.AvatarRendering.Wearables
             if (avatarAttachment.ThumbnailAssetResult != null)
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, avatarAttachment, world, PartitionComponent.TOP_PRIORITY);
+            var alreadyRunningPromise = false;
+
+            world.Query(in new QueryDescription().WithAll<IAvatarAttachment, ThumbnailPromise, IPartitionComponent>(),
+                entity =>
+                {
+                    ref IAvatarAttachment a = ref world.Get<IAvatarAttachment>(entity);
+
+                    if (a.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
+                        alreadyRunningPromise = true;
+                });
+
+            if (!alreadyRunningPromise)
+                WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, avatarAttachment, world, PartitionComponent.TOP_PRIORITY);
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment
-            do await UniTask.Delay(250, cancellationToken: ct);
+            do await UniTask.Delay(RESOLUTION_FREQUENCY_MS, cancellationToken: ct);
             while (avatarAttachment.ThumbnailAssetResult == null);
 
             return avatarAttachment.ThumbnailAssetResult!.Value.Asset;
