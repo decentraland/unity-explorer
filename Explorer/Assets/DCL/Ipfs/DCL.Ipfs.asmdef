@@ -15,13 +15,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "Common.Logging.dll",
-        "Common.Logging.Core.dll",
-        "Newtonsoft.Json.dll",
         "Ipfs.Core.dll",
-        "BouncyCastle.Crypto.dll",
-        "Google.Protobuf.dll",
-        "SimpleBase.dll"
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
