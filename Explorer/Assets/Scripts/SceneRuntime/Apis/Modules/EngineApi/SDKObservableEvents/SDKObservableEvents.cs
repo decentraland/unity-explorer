@@ -41,7 +41,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public string userId;
     }
 
-    public struct PlayerExpressionPayload
+    public struct PlayerExpressionPayload // append
     {
         public string expressionId;
     }
@@ -58,7 +58,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public float totalVideoLength;
     }
 
-    public struct ProfileChangedPayload
+    public struct ProfileChangedPayload // AvatarBase + AvatarEquippedData
     {
         public string ethAddress;
         public int version;

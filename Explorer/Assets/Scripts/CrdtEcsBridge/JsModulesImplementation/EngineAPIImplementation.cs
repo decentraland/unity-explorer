@@ -176,6 +176,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             isDisposing = true;
         }
 
+        public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages  { get; } = new HashSet<ProcessedCRDTMessage>();
         private PoolableByteArray SerializeOutgoingCRDTMessages()
         {
             try
@@ -257,7 +258,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
             if (outgoingMessages.Count == 0) return;
 
             foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
+            {
+                OutgoingCRDTMessages.Add(processedCRDTMessage);
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
+            }
         }
     }
 }

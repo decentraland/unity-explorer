@@ -1,5 +1,7 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+﻿using CRDT.Protocol.Factory;
+using CrdtEcsBridge.PoolsProviders;
 using System;
+using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
@@ -21,5 +23,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         ///     Prevents handling messages while the scene runtime is being disposed
         /// </summary>
         void SetIsDisposing();
+
+        public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; }
     }
 }

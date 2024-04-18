@@ -110,7 +110,6 @@ namespace SceneRuntime
 
         public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            // Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
             Register("UnityEngineApi", engineApi = new SDKObservableEventsEngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
