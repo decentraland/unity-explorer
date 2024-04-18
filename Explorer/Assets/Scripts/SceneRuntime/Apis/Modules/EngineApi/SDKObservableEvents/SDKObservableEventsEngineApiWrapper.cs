@@ -106,16 +106,53 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 {
                     CRDTMessage message = outgoingCRDTMessage.message;
 
-                    if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene)
-                        && message.Type == CRDTMessageType.PUT_COMPONENT
-                        && message.ComponentId == ComponentID.PLAYER_IDENTITY_DATA)
+                    switch (message.Type)
                     {
-                        playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
+                        case CRDTMessageType.PUT_COMPONENT:
+                            switch (message.ComponentId)
+                            {
+                                case ComponentID.PLAYER_IDENTITY_DATA: // onEnterScene + playerConnected observables
+                                    playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
+                                    if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene))
+                                    {
+                                        sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
+                                        {
+                                            userId = playerIdentityData.Address
+                                        }));
+                                    }
+                                    if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected))
+                                    {
+                                        sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.PlayerConnected, new UserIdPayload
+                                        {
+                                            userId = playerIdentityData.Address
+                                        }));
+                                    }
+                                    break;
+                                case ComponentID.AVATAR_EQUIPPED_DATA: // profileChanged observable
+                                    break;
+                                case ComponentID.AVATAR_BASE: // profileChanged observable
+                                    break;
+                                case ComponentID.ENGINE_INFO: // sceneStart observable
+                                    break;
+                                // case ComponentID.POINTER_EVENTS_RESULT: // playerClicked observable
+                                //     break;
+                                // case ComponentID.REALM_INFO: // onRealmChanged observables
+                                //     break;
+                            }
+                            break;
+                        case CRDTMessageType.APPEND_COMPONENT:
+                            if (message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
+                            {
 
-                        sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
-                        {
-                            userId = playerIdentityData.Address,
-                        }));
+                            }
+                            break;
+                        case CRDTMessageType.DELETE_COMPONENT:
+                            // onLeaveScene + playerDisconnected observables
+                            if (message.ComponentId == ComponentID.PLAYER_IDENTITY_DATA)
+                            {
+
+                            }
+                            break;
                     }
                 }
 

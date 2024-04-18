@@ -8,7 +8,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public static string EnterScene => "onEnterScene";
         public static string LeaveScene => "onLeaveScene";
         public static string PlayerExpression => "playerExpression";
-        public static string VideoEvent => "videoEvent";
         public static string ProfileChanged => "profileChanged";
         public static string PlayerConnected => "playerConnected";
         public static string PlayerDisconnected => "playerDisconnected";
@@ -44,18 +43,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
     public struct PlayerExpressionPayload // append
     {
         public string expressionId;
-    }
-
-    public struct VideoEventPayload {
-        public string componentId;
-        public string videoClipId;
-        /** Status, can be NONE = 0, ERROR = 1, LOADING = 2, READY = 3, PLAYING = 4,BUFFERING = 5 */
-        public int videoStatus;
-
-        /** Current offset position in seconds */
-        public float currentOffset;
-        /** Video length in seconds. Can be -1 */
-        public float totalVideoLength;
     }
 
     public struct ProfileChangedPayload // AvatarBase + AvatarEquippedData
