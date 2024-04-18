@@ -3270,7 +3270,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4467899340765049217
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3678,6 +3678,9 @@ MonoBehaviour:
   <VerificationCodeHintContainer>k__BackingField: {fileID: 45180935525606365}
   <DiscordButton>k__BackingField: {fileID: 1710274344204595558}
   <CharacterPreviewView>k__BackingField: {fileID: 8398316715096862839}
+  <LoginAnimator>k__BackingField: {fileID: 512411117488763017}
+  <VerificationAnimator>k__BackingField: {fileID: 7608642574103559770}
+  <FinalizeAnimator>k__BackingField: {fileID: 5416563332575766553}
 --- !u!1 &5399791853786771784
 GameObject:
   m_ObjectHideFlags: 0

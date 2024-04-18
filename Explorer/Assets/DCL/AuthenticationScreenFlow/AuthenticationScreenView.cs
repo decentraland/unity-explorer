@@ -62,6 +62,15 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Animator LoginAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Animator VerificationAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Animator FinalizeAnimator { get; private set; } = null!;
+
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do
