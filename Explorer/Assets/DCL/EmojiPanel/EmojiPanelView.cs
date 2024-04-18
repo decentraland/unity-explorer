@@ -9,6 +9,7 @@ namespace DCL.Emoji
     public class EmojiPanelView : MonoBehaviour
     {
         public event Action<float, bool> OnSectionSelected;
+        public event Action<bool> OnEmojiPanelToggle;
 
         [field: SerializeField]
         public List<EmojiSectionToggle> EmojiSections { get; private set; }
@@ -39,6 +40,16 @@ namespace DCL.Emoji
 
             foreach (EmojiSectionToggle emojiSectionToggle in EmojiSections)
                 emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => OnSectionSelected?.Invoke(emojiSectionToggle.SectionPosition, isOn));
+        }
+
+        private void OnEnable()
+        {
+            OnEmojiPanelToggle?.Invoke(true);
+        }
+
+        private void OnDisable()
+        {
+            OnEmojiPanelToggle?.Invoke(false);
         }
     }
 }

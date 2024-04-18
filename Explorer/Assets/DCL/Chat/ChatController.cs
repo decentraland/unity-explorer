@@ -107,8 +107,9 @@ namespace DCL.Chat
             viewInstance.InputField.onSubmit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab, dclInput, eventSystem);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
+            emojiPanelController.OnPanelClosedByClick += () => viewInstance.EmojiPanelButton.SetState(false);
 
             emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
             emojiSuggestionPanelController.OnEmojiSelected += AddEmojiFromSuggestion;
