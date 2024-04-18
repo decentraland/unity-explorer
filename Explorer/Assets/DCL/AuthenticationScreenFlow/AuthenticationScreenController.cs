@@ -183,7 +183,7 @@ namespace DCL.AuthenticationScreenFlow
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
                 viewInstance.FinalizeAnimator.SetTrigger(TO_OTHER);
-                await UniTask.Delay(500, cancellationToken: ct);
+                await UniTask.Delay(300, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
             }

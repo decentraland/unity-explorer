@@ -26,6 +26,8 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
+        private static readonly int OUT = Animator.StringToHash("Out");
+
         [Header("Startup Config")]
         [SerializeField] private InitialRealm initialRealm;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
@@ -45,6 +47,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic;
 
@@ -215,10 +218,12 @@ namespace Global.Dynamic
                 if (showSplash)
                     await WaitUntilSplashAnimationEndsAsync(ct);
 
-                splashRoot.SetActive(false);
-
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);
+
+                splashScreenAnimation.SetTrigger(OUT);
+                await UniTask.Delay(200);
+                splashRoot.SetActive(false);
 
                 UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);

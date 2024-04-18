@@ -414,6 +414,7 @@ MonoBehaviour:
       m_SubObjectType: 
       m_EditorAssetChanged: 0
   splashRoot: {fileID: 7722564697705550552}
+  splashScreenAnimation: {fileID: 7722564697705550554}
   splashAnimation: {fileID: 4327321310632415857}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
 --- !u!1 &704497306
