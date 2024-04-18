@@ -1,4 +1,5 @@
-﻿using CRDT.Protocol;
+﻿using CRDT;
+using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.Serialization;
@@ -19,6 +20,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly ProtobufSerializer<PBPlayerIdentityData> playerIdentityDataSerializer = new ();
         private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
         private readonly PBPlayerIdentityData playerIdentityData = new ();
+        private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
 
         public SDKObservableEventsEngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
         {
@@ -105,7 +107,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 foreach (ProcessedCRDTMessage outgoingCRDTMessage in api.OutgoingCRDTMessages)
                 {
                     CRDTMessage message = outgoingCRDTMessage.message;
-
                     switch (message.Type)
                     {
                         case CRDTMessageType.PUT_COMPONENT:
@@ -127,6 +128,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                             userId = playerIdentityData.Address
                                         }));
                                     }
+                                    userIdEntitiesMap[message.EntityId] = playerIdentityData.Address;
                                     break;
                                 case ComponentID.AVATAR_EQUIPPED_DATA: // profileChanged observable
                                     break;
@@ -150,7 +152,22 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                             // onLeaveScene + playerDisconnected observables
                             if (message.ComponentId == ComponentID.PLAYER_IDENTITY_DATA)
                             {
+                                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
+                                {
+                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
+                                    {
+                                        userId = userIdEntitiesMap[message.EntityId]
+                                    }));
+                                }
+                                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
+                                {
+                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
+                                    {
+                                        userId = userIdEntitiesMap[message.EntityId]
+                                    }));
+                                }
 
+                                userIdEntitiesMap.Remove(message.EntityId);
                             }
                             break;
                     }
