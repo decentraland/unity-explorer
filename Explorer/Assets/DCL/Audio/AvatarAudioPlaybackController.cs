@@ -24,6 +24,7 @@ namespace DCL.Audio
         {
             switch (GetMovementState())
             {
+                case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
                     break;
@@ -60,6 +61,7 @@ namespace DCL.Audio
         {
             switch (GetMovementState())
             {
+                case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
                     break;
@@ -82,7 +84,7 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayLongFallSound()
         {
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall);
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall); //This should be a looping sounds that gets interrupted when landing.
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -99,13 +101,13 @@ namespace DCL.Audio
 
             if (clipConfig == null)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio for {clipType} as it has no AudioClipConfig Assigned");
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no AudioClipConfig Assigned");
                 return;
             }
 
             if (clipConfig.AudioClips.Length == 0)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no Audio Clips Assigned");
+                ReportHub.LogWarning(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no Audio Clips Assigned");
                 return;
             }
 
