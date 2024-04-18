@@ -14,6 +14,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using DCL.Multiplayer.Emotes;
+using DCL.Utilities.Extensions;
 using UnityEngine.EventSystems;
 using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
@@ -70,7 +71,10 @@ namespace DCL.PluginSystem.Global
 
             crosshairCanvas.Initialize(crosshair, crosshairInteractable);
             crosshairCanvas.SetDisplayed(false);
-            canvas.rootVisualElement.Add(crosshairCanvas);
+
+            canvas.EnsureNotNull("Canvas not found")
+                  .rootVisualElement.EnsureNotNull("Root not found")
+                  .Add(crosshairCanvas);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
