@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Backpack_Wearable_UnEquip
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 5c7349f12b4680e4d95b0917bfc20964, type: 3}
+  - {fileID: 8300000, guid: ba48b9a68e2099141adeb3a9c6437d94, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0
