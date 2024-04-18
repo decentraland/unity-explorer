@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Backpack_Hover_Item_Icon
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: c854f59a064ee344686fb9643e30a854, type: 3}
+  - {fileID: 8300000, guid: 7aaa930dc7d7b4b4ba0ce8b5fd56ff2e, type: 3}
   relativeVolume: 1
   audioCategory: 0
-  pitchVariation: 0
+  pitchVariation: 0.5
   clipSelectionMode: 0
