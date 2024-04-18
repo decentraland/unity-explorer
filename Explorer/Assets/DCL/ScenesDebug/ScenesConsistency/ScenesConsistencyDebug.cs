@@ -36,7 +36,7 @@ namespace DCL.ScenesDebug.ScenesConsistency
 
         private static void Log(string message)
         {
-            ReportHub.WithReport(ReportCategory.SCENE_LOADING).Log($"Debugging: {message}");
+            ReportHub.WithReport(ReportCategory.UNSPECIFIED).Log($"Debugging: {message}");
         }
 
         private void Stop()
