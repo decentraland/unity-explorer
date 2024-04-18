@@ -8,17 +8,14 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
-using UnityEngine;
-using Query = Arch.Core.Query;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
-    public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IComponentPool<PBPlayerIdentityData> componentPool;
@@ -31,7 +28,6 @@ namespace DCL.Multiplayer.SDK.Systems
 
         protected override void Update(float t)
         {
-            HandleEntityDeletionQuery(World);
             HandleComponentRemovalQuery(World);
             CreatePlayerIdentityDataQuery(World);
         }
@@ -47,7 +43,7 @@ namespace DCL.Multiplayer.SDK.Systems
                 pbPlayerIdentityData.IsGuest = playerIdentityDataComponent.IsGuest;
             }, playerIdentityDataComponent.CRDTEntity, playerIdentityDataComponent);
 
-            var pbComponent = componentPool.Get();
+            PBPlayerIdentityData? pbComponent = componentPool.Get();
             pbComponent.Address = playerIdentityDataComponent.Address;
             pbComponent.IsGuest = playerIdentityDataComponent.IsGuest;
             World.Add(entity, pbComponent, playerIdentityDataComponent.CRDTEntity);
@@ -56,34 +52,11 @@ namespace DCL.Multiplayer.SDK.Systems
         [Query]
         [All(typeof(PBPlayerIdentityData))]
         [None(typeof(PlayerIdentityDataComponent), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity entity, ref CRDTEntity crdtEntity)
+        private void HandleComponentRemoval(Entity entity, ref CRDTEntity crdtEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
-            World.Remove<PBPlayerIdentityData>(entity);
-            World.Remove<CRDTEntity>(entity);
             World.Add(entity, new DeleteEntityIntention());
-        }
-
-        [Query]
-        [All(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
-        private void HandleEntityDeletion(in Entity entity, ref CRDTEntity crdtEntity)
-        {
-            ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
-            World.Remove<PBPlayerIdentityData>(entity);
-            World.Remove<CRDTEntity>(entity);
-        }
-
-        [Query]
-        [All(typeof(PBPlayerIdentityData), typeof(CRDTEntity))]
-        private void FinalizeComponents(in Entity entity)
-        {
-            World.Remove<PBPlayerIdentityData>(entity);
-            World.Remove<CRDTEntity>(entity);
-        }
-
-        public void FinalizeComponents(in Query query)
-        {
-            FinalizeComponentsQuery(World);
+            World.Remove<PBPlayerIdentityData, CRDTEntity>(entity);
         }
     }
 }
