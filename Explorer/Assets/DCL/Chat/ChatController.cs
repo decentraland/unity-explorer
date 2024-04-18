@@ -254,15 +254,6 @@ namespace DCL.Chat
                     if(profile.ProfilePicture != null)
                         itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
                 }
-                else
-                {
-                    if (itemData.SentByOwnUser)
-                    {
-                        Profile profile = world.Get<Profile>(playerEntity);
-                        if(profile.ProfilePicture != null)
-                            itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
-                    }
-                }
 
                 //temporary approach to extract the username without the walledId, will be refactored
                 //once we have the proper integration of the profile retrieval
