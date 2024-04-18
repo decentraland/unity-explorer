@@ -6,6 +6,7 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
@@ -20,10 +21,12 @@ namespace DCL.Multiplayer.SDK.Systems
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly IComponentPool<PBPlayerIdentityData> componentPool;
 
-        public WritePlayerIdentityDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        public WritePlayerIdentityDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBPlayerIdentityData> componentPool) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.componentPool = componentPool;
         }
 
         protected override void Update(float t)
@@ -44,11 +47,10 @@ namespace DCL.Multiplayer.SDK.Systems
                 pbPlayerIdentityData.IsGuest = playerIdentityDataComponent.IsGuest;
             }, playerIdentityDataComponent.CRDTEntity, playerIdentityDataComponent);
 
-            World.Add(entity, new PBPlayerIdentityData
-            {
-                Address = playerIdentityDataComponent.Address,
-                IsGuest = playerIdentityDataComponent.IsGuest,
-            }, playerIdentityDataComponent.CRDTEntity);
+            var pbComponent = componentPool.Get();
+            pbComponent.Address = playerIdentityDataComponent.Address;
+            pbComponent.IsGuest = playerIdentityDataComponent.IsGuest;
+            World.Add(entity, pbComponent, playerIdentityDataComponent.CRDTEntity);
         }
 
         [Query]

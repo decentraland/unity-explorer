@@ -205,7 +205,7 @@ namespace Global
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
-                new MultiplayerPlugin(),
+                new MultiplayerPlugin(componentsContainer.ComponentPoolsRegistry),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

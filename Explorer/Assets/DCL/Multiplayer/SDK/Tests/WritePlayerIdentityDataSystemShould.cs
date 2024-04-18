@@ -4,6 +4,7 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -22,7 +23,11 @@ namespace DCL.Multiplayer.SDK.Tests
         public void Setup()
         {
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter);
+
+            var componentPoolRegistry = Substitute.For<IComponentPool<PBPlayerIdentityData>>();
+            var instantiatedPbComponent = new PBPlayerIdentityData();
+            componentPoolRegistry.Get().Returns(instantiatedPbComponent);
+            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter, componentPoolRegistry);
 
             playerIdentityData = new PlayerIdentityDataComponent
             {
