@@ -76,12 +76,12 @@ namespace DCL.Emoji
             emojiSearchController.SetValues(foundEmojis);
         }
 
-        private void OnSectionSelected(EmojiSectionName obj, bool isOn)
+        private void OnSectionSelected(float sectionPosition, bool isOn)
         {
             if (!isOn)
                 return;
 
-            view.ScrollView.normalizedPosition = new Vector2(0, 1 - Mathf.Clamp01(Mathf.Abs(sectionTransforms[obj].anchoredPosition.y) / view.ScrollView.content.rect.height));
+            view.ScrollView.normalizedPosition = new Vector2(0, sectionPosition);
         }
 
         public void SetPanelVisibility(bool isVisible) =>

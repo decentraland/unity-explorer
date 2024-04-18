@@ -695,17 +695,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             ""bindings"": [
                 {
                     ""name"": """",
-                    ""id"": ""50f885b0-d8b8-495c-9540-69caaee35ddc"",
-                    ""path"": ""<Keyboard>/numpadMinus"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ZoomOut"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""eada956f-dc86-4f10-a3d7-d619e2d92dec"",
                     ""path"": ""<Gamepad>/dpad/down"",
                     ""interactions"": """",
@@ -739,17 +728,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""4ed60f4f-b125-41d6-820f-4cdc66b576ce"",
-                    ""path"": ""<Keyboard>/numpadPlus"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ZoomIn"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""08846d8b-078e-4e84-89ee-eb2e9155c4dc"",
                     ""path"": ""<XInputController>/dpad/up"",
                     ""interactions"": """",
@@ -773,7 +751,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""12a8cc85-ac90-425f-9120-421f75f08442"",
-                    ""path"": ""<Mouse>/leftButton"",
+                    ""path"": ""<Mouse>/rightButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -806,7 +784,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""b3508dda-328c-4d7b-89dd-abcc86f65324"",
-                    ""path"": ""<Keyboard>/escape"",
+                    ""path"": ""<Mouse>/rightButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -829,6 +807,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""bf8e44a5-7783-4076-972c-6ea991b5a90b"",
                     ""path"": ""<XInputController>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Unlock"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fff42e65-c6b9-47d8-a479-957f4ed268ef"",
+                    ""path"": ""<Keyboard>/escape"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -927,7 +916,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""1887f5bd-1bc4-4854-8445-052b432614c1"",
-                    ""path"": ""<Mouse>/rightButton"",
+                    ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -1224,6 +1213,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Close"",
+                    ""type"": ""Button"",
+                    ""id"": ""3f51becb-da42-4894-bab1-898f4b805634"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1494,7 +1492,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""9e67da5b-8eaa-4e21-9ef3-29c1e6603e89"",
-                    ""path"": ""*/{Submit}"",
+                    ""path"": ""<Keyboard>/enter"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse;Gamepad;Touch;Joystick;XR"",
@@ -1730,6 +1728,165 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ControllerFastCursor"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9b08349a-b8f2-4b4c-9e37-d3c7b77ff1d5"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Shortcuts"",
+            ""id"": ""21959a41-9a8c-4703-8602-9895fd4eb80b"",
+            ""actions"": [
+                {
+                    ""name"": ""MainMenu"",
+                    ""type"": ""Button"",
+                    ""id"": ""20936db2-9a40-404f-97ac-eee3c350d7ec"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Backpack"",
+                    ""type"": ""Button"",
+                    ""id"": ""22261e3d-8587-4a52-bd3c-378cbe477a19"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Map"",
+                    ""type"": ""Button"",
+                    ""id"": ""78bba755-0c5b-440f-87ae-634652b31146"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Settings"",
+                    ""type"": ""Button"",
+                    ""id"": ""a7bdddf3-ea22-4a1c-b848-7b5f83e9dd2b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleUI"",
+                    ""type"": ""Button"",
+                    ""id"": ""aaf75c90-a01b-47ef-8432-c4a9fe7a4aa1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""EmoteWheel"",
+                    ""type"": ""Button"",
+                    ""id"": ""3be778a1-cb40-43d3-a316-304e55aaa81c"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleAvatarBubbles"",
+                    ""type"": ""Button"",
+                    ""id"": ""4209969a-2572-41c8-8380-1b57c867fe75"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""43a499cd-e064-450b-8186-4fe654f8ff1f"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MainMenu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""61b55393-2f1d-4f12-884e-0bf29fadbd75"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Backpack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""462821f6-f55e-4235-9715-85e310915011"",
+                    ""path"": ""<Keyboard>/m"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Map"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cddd8bfd-66ea-45eb-8912-87b6f388af4a"",
+                    ""path"": ""<Keyboard>/p"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Settings"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ce72b0c5-9ffe-4e42-ad45-149db2d47f02"",
+                    ""path"": ""<Keyboard>/u"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleUI"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""39564236-17b4-412c-a2f2-e4477bb2d889"",
+                    ""path"": ""<Keyboard>/b"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""EmoteWheel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""025e5590-7e11-4f49-8719-954bafe5ccc3"",
+                    ""path"": ""<Keyboard>/n"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleAvatarBubbles"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2220,6 +2377,16 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_UI_ControllerClick = m_UI.FindAction("ControllerClick", throwIfNotFound: true);
         m_UI_ControllerDelta = m_UI.FindAction("ControllerDelta", throwIfNotFound: true);
         m_UI_ControllerFastCursor = m_UI.FindAction("ControllerFastCursor", throwIfNotFound: true);
+        m_UI_Close = m_UI.FindAction("Close", throwIfNotFound: true);
+        // Shortcuts
+        m_Shortcuts = asset.FindActionMap("Shortcuts", throwIfNotFound: true);
+        m_Shortcuts_MainMenu = m_Shortcuts.FindAction("MainMenu", throwIfNotFound: true);
+        m_Shortcuts_Backpack = m_Shortcuts.FindAction("Backpack", throwIfNotFound: true);
+        m_Shortcuts_Map = m_Shortcuts.FindAction("Map", throwIfNotFound: true);
+        m_Shortcuts_Settings = m_Shortcuts.FindAction("Settings", throwIfNotFound: true);
+        m_Shortcuts_ToggleUI = m_Shortcuts.FindAction("ToggleUI", throwIfNotFound: true);
+        m_Shortcuts_EmoteWheel = m_Shortcuts.FindAction("EmoteWheel", throwIfNotFound: true);
+        m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -2636,6 +2803,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ControllerClick;
     private readonly InputAction m_UI_ControllerDelta;
     private readonly InputAction m_UI_ControllerFastCursor;
+    private readonly InputAction m_UI_Close;
     public struct UIActions
     {
         private @DCLInput m_Wrapper;
@@ -2653,6 +2821,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ControllerClick => m_Wrapper.m_UI_ControllerClick;
         public InputAction @ControllerDelta => m_Wrapper.m_UI_ControllerDelta;
         public InputAction @ControllerFastCursor => m_Wrapper.m_UI_ControllerFastCursor;
+        public InputAction @Close => m_Wrapper.m_UI_Close;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2701,6 +2870,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ControllerFastCursor.started += instance.OnControllerFastCursor;
             @ControllerFastCursor.performed += instance.OnControllerFastCursor;
             @ControllerFastCursor.canceled += instance.OnControllerFastCursor;
+            @Close.started += instance.OnClose;
+            @Close.performed += instance.OnClose;
+            @Close.canceled += instance.OnClose;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -2744,6 +2916,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ControllerFastCursor.started -= instance.OnControllerFastCursor;
             @ControllerFastCursor.performed -= instance.OnControllerFastCursor;
             @ControllerFastCursor.canceled -= instance.OnControllerFastCursor;
+            @Close.started -= instance.OnClose;
+            @Close.performed -= instance.OnClose;
+            @Close.canceled -= instance.OnClose;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -2761,6 +2936,100 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         }
     }
     public UIActions @UI => new UIActions(this);
+
+    // Shortcuts
+    private readonly InputActionMap m_Shortcuts;
+    private List<IShortcutsActions> m_ShortcutsActionsCallbackInterfaces = new List<IShortcutsActions>();
+    private readonly InputAction m_Shortcuts_MainMenu;
+    private readonly InputAction m_Shortcuts_Backpack;
+    private readonly InputAction m_Shortcuts_Map;
+    private readonly InputAction m_Shortcuts_Settings;
+    private readonly InputAction m_Shortcuts_ToggleUI;
+    private readonly InputAction m_Shortcuts_EmoteWheel;
+    private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
+    public struct ShortcutsActions
+    {
+        private @DCLInput m_Wrapper;
+        public ShortcutsActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @MainMenu => m_Wrapper.m_Shortcuts_MainMenu;
+        public InputAction @Backpack => m_Wrapper.m_Shortcuts_Backpack;
+        public InputAction @Map => m_Wrapper.m_Shortcuts_Map;
+        public InputAction @Settings => m_Wrapper.m_Shortcuts_Settings;
+        public InputAction @ToggleUI => m_Wrapper.m_Shortcuts_ToggleUI;
+        public InputAction @EmoteWheel => m_Wrapper.m_Shortcuts_EmoteWheel;
+        public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
+        public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(ShortcutsActions set) { return set.Get(); }
+        public void AddCallbacks(IShortcutsActions instance)
+        {
+            if (instance == null || m_Wrapper.m_ShortcutsActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_ShortcutsActionsCallbackInterfaces.Add(instance);
+            @MainMenu.started += instance.OnMainMenu;
+            @MainMenu.performed += instance.OnMainMenu;
+            @MainMenu.canceled += instance.OnMainMenu;
+            @Backpack.started += instance.OnBackpack;
+            @Backpack.performed += instance.OnBackpack;
+            @Backpack.canceled += instance.OnBackpack;
+            @Map.started += instance.OnMap;
+            @Map.performed += instance.OnMap;
+            @Map.canceled += instance.OnMap;
+            @Settings.started += instance.OnSettings;
+            @Settings.performed += instance.OnSettings;
+            @Settings.canceled += instance.OnSettings;
+            @ToggleUI.started += instance.OnToggleUI;
+            @ToggleUI.performed += instance.OnToggleUI;
+            @ToggleUI.canceled += instance.OnToggleUI;
+            @EmoteWheel.started += instance.OnEmoteWheel;
+            @EmoteWheel.performed += instance.OnEmoteWheel;
+            @EmoteWheel.canceled += instance.OnEmoteWheel;
+            @ToggleAvatarBubbles.started += instance.OnToggleAvatarBubbles;
+            @ToggleAvatarBubbles.performed += instance.OnToggleAvatarBubbles;
+            @ToggleAvatarBubbles.canceled += instance.OnToggleAvatarBubbles;
+        }
+
+        private void UnregisterCallbacks(IShortcutsActions instance)
+        {
+            @MainMenu.started -= instance.OnMainMenu;
+            @MainMenu.performed -= instance.OnMainMenu;
+            @MainMenu.canceled -= instance.OnMainMenu;
+            @Backpack.started -= instance.OnBackpack;
+            @Backpack.performed -= instance.OnBackpack;
+            @Backpack.canceled -= instance.OnBackpack;
+            @Map.started -= instance.OnMap;
+            @Map.performed -= instance.OnMap;
+            @Map.canceled -= instance.OnMap;
+            @Settings.started -= instance.OnSettings;
+            @Settings.performed -= instance.OnSettings;
+            @Settings.canceled -= instance.OnSettings;
+            @ToggleUI.started -= instance.OnToggleUI;
+            @ToggleUI.performed -= instance.OnToggleUI;
+            @ToggleUI.canceled -= instance.OnToggleUI;
+            @EmoteWheel.started -= instance.OnEmoteWheel;
+            @EmoteWheel.performed -= instance.OnEmoteWheel;
+            @EmoteWheel.canceled -= instance.OnEmoteWheel;
+            @ToggleAvatarBubbles.started -= instance.OnToggleAvatarBubbles;
+            @ToggleAvatarBubbles.performed -= instance.OnToggleAvatarBubbles;
+            @ToggleAvatarBubbles.canceled -= instance.OnToggleAvatarBubbles;
+        }
+
+        public void RemoveCallbacks(IShortcutsActions instance)
+        {
+            if (m_Wrapper.m_ShortcutsActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IShortcutsActions instance)
+        {
+            foreach (var item in m_Wrapper.m_ShortcutsActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_ShortcutsActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public ShortcutsActions @Shortcuts => new ShortcutsActions(this);
 
     // Emotes
     private readonly InputActionMap m_Emotes;
@@ -2939,6 +3208,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnControllerClick(InputAction.CallbackContext context);
         void OnControllerDelta(InputAction.CallbackContext context);
         void OnControllerFastCursor(InputAction.CallbackContext context);
+        void OnClose(InputAction.CallbackContext context);
+    }
+    public interface IShortcutsActions
+    {
+        void OnMainMenu(InputAction.CallbackContext context);
+        void OnBackpack(InputAction.CallbackContext context);
+        void OnMap(InputAction.CallbackContext context);
+        void OnSettings(InputAction.CallbackContext context);
+        void OnToggleUI(InputAction.CallbackContext context);
+        void OnEmoteWheel(InputAction.CallbackContext context);
+        void OnToggleAvatarBubbles(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

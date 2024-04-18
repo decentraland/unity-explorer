@@ -46,6 +46,7 @@ namespace DCL.PluginSystem.Global
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
                 (ICharacterControllerSettings)settings.Value,
+                characterObject,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent(),

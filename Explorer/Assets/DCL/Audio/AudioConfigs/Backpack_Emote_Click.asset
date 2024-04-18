@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Backpack_Emote_Click
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 5c7349f12b4680e4d95b0917bfc20964, type: 3}
+  - {fileID: 8300000, guid: eaf03cecbaf5c67418aa12c3e09a5727, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0

@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Systems;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using InteractionHighlightSystem = DCL.Interaction.Systems.InteractionHighlightSystem;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.PluginSystem.World
@@ -23,25 +25,30 @@ namespace DCL.PluginSystem.World
         private readonly IProfilingProvider profilingProvider;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private IReleasablePerformanceBudget raycastBudget;
         private Settings settings;
+        private Material hoverMaterial;
+        private Material hoverOorMaterial;
 
-        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry)
+        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
         {
             this.sharedDependencies = sharedDependencies;
             this.profilingProvider = profilingProvider;
             this.globalInputEvents = globalInputEvents;
             this.poolsRegistry = poolsRegistry;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void Dispose() { }
 
-        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
             raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profilingProvider);
-            return UniTask.CompletedTask;
+            hoverMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverMaterial!, ct)).Value;
+            hoverOorMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverOutOfRangeMaterial!, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
@@ -62,6 +69,8 @@ namespace DCL.PluginSystem.World
                 sceneDeps.SceneStateProvider,
                 globalInputEvents,
                 poolsRegistry.GetReferenceTypePool<RaycastHit>());
+
+            InteractionHighlightSystem.InjectToWorld(ref builder, hoverMaterial, hoverOorMaterial);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
@@ -85,6 +94,9 @@ namespace DCL.PluginSystem.World
             /// </summary>
             [field: SerializeField]
             public int GlobalInputPropagationBucketThreshold { get; private set; } = 3;
+
+            [field: SerializeField] internal AssetReferenceMaterial? hoverMaterial { get; private set; }
+            [field: SerializeField] internal AssetReferenceMaterial? hoverOutOfRangeMaterial { get; private set; }
         }
     }
 }
