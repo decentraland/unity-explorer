@@ -74,7 +74,7 @@ namespace DCL.Settings.ModuleControllers
             if (!view.gameObject.activeInHierarchy)
                 return;
 
-            CheckIfCustomPreset().Forget();
+            CheckIfCustomPresetAsync().Forget();
         }
 
         private void OnDetailDistanceChanged(float _)
@@ -82,10 +82,10 @@ namespace DCL.Settings.ModuleControllers
             if (!view.gameObject.activeInHierarchy)
                 return;
 
-            CheckIfCustomPreset().Forget();
+            CheckIfCustomPresetAsync().Forget();
         }
 
-        private async UniTaskVoid CheckIfCustomPreset()
+        private async UniTaskVoid CheckIfCustomPresetAsync()
         {
             // Wait for the next frame to ensure that the quality settings have been updated
             await UniTask.NextFrame();
