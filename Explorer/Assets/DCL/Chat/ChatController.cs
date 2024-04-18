@@ -127,7 +127,7 @@ namespace DCL.Chat
         private void OnChatViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
 
-        private void AddEmojiFromSuggestion(string emojiCode)
+        private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
             if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
@@ -136,6 +136,8 @@ namespace DCL.Chat
             viewInstance.InputField.SetTextWithoutNotify(viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode));
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
+            if(shouldClose)
+                emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
