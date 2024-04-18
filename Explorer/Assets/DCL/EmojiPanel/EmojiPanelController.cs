@@ -13,6 +13,7 @@ namespace DCL.Emoji
     public class EmojiPanelController
     {
         public event Action<string> OnEmojiSelected;
+
         private readonly EmojiPanelView view;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly EmojiButton emojiButtonPrefab;
@@ -84,8 +85,10 @@ namespace DCL.Emoji
             view.ScrollView.normalizedPosition = new Vector2(0, sectionPosition);
         }
 
-        public void SetPanelVisibility(bool isVisible) =>
+        public void SetPanelVisibility(bool isVisible)
+        {
             view.gameObject.SetActive(isVisible);
+        }
 
         private void ConfigureEmojiSectionSizes()
         {
