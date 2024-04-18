@@ -1,12 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Input;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Utility;
 using Object = UnityEngine.Object;
@@ -16,45 +13,36 @@ namespace DCL.Emoji
     public class EmojiPanelController
     {
         public event Action<string> OnEmojiSelected;
-        public event Action OnPanelClosedByClick;
 
         private readonly EmojiPanelView view;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly EmojiButton emojiButtonPrefab;
-        private readonly DCLInput dclInput;
         private readonly EmojiSectionView emojiSectionPrefab;
         private readonly EmojiSearchController emojiSearchController;
-        private readonly IEventSystem eventSystem;
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
         public readonly Dictionary<string, EmojiData> EmojiNameMapping = new ();
         private readonly Dictionary<int, string> emojiValueMapping = new ();
         private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
         private readonly List<EmojiData> foundEmojis = new ();
-        private readonly Mouse device;
 
         private CancellationTokenSource cts = new ();
 
         private int startDec;
         private int endDec;
         private int emojiCode;
-        private IReadOnlyList<RaycastResult> raycastResults;
 
         public EmojiPanelController(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab,
-            DCLInput dclInput,
-            IEventSystem eventSystem)
+            EmojiButton emojiButtonPrefab)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
-            this.dclInput = dclInput;
-            this.eventSystem = eventSystem;
             emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
             emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
             emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
@@ -70,31 +58,6 @@ namespace DCL.Emoji
             view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
             view.OnSectionSelected += OnSectionSelected;
-            view.OnEmojiPanelToggle += OnPanelToggle;
-            device = InputSystem.GetDevice<Mouse>();
-        }
-
-        private void OnPanelToggle(bool isActive)
-        {
-            if (isActive)
-                dclInput.UI.Click.performed += OnClick;
-            else
-                dclInput.UI.Click.performed -= OnClick;
-        }
-
-        private void OnClick(InputAction.CallbackContext obj)
-        {
-            raycastResults = eventSystem.RaycastAll(device.position.value);
-            var clickedOnPanel = false;
-            foreach (RaycastResult raycasted in raycastResults)
-                if (raycasted.gameObject == view.gameObject)
-                    clickedOnPanel = true;
-
-            if (!clickedOnPanel)
-            {
-                SetPanelVisibility(false);
-                OnPanelClosedByClick?.Invoke();
-            }
         }
 
         private void OnSearchTextChanged(string searchText)
