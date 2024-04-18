@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
+using DCL.Quality;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.UI;
@@ -19,6 +20,7 @@ namespace DCL.Settings
         private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
+        private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
 
@@ -27,13 +29,15 @@ namespace DCL.Settings
             SettingsMenuConfiguration settingsMenuConfiguration,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            LandscapeData landscapeData)
+            LandscapeData landscapeData,
+            QualitySettingsAsset qualitySettingsAsset)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
+            this.qualitySettingsAsset = qualitySettingsAsset;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -82,7 +86,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset));
             }
         }
 

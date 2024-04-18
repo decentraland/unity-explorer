@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
@@ -18,7 +19,8 @@ namespace DCL.Settings.Configuration
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData,
-            AudioMixer generalAudioMixer);
+            AudioMixer generalAudioMixer,
+            QualitySettingsAsset qualitySettingsAsset);
     }
 
     [Serializable]

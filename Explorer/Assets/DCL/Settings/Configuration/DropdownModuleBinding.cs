@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
@@ -26,7 +27,8 @@ namespace DCL.Settings.Configuration
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             LandscapeData landscapeData,
-            AudioMixer generalAudioMixer)
+            AudioMixer generalAudioMixer,
+            QualitySettingsAsset qualitySettingsAsset)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -34,7 +36,7 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance);
+                    return new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset);
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
                     return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
