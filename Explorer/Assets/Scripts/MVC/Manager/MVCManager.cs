@@ -123,6 +123,9 @@ namespace MVC
         private async UniTask ShowFullScreenAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
+            if (windowsStackManager.CurrentFullscreenController == controller)
+                return;
+
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 

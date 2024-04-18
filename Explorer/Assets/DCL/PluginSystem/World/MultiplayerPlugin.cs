@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.SDK.Systems;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -18,7 +19,7 @@ namespace DCL.PluginSystem.World
             //ignore
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // ResetDirtyFlagSystem<PB...>.InjectToWorld(ref builder);
             var writePlayerIdentityDataSystem = WritePlayerIdentityDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);

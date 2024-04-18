@@ -19,6 +19,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
+using ECS;
 using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
@@ -28,17 +29,18 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
-        private readonly ICharacterObject characterObject;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IRoomHub roomHub;
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IProfileBroadcast profileBroadcast;
         private readonly IProfileRepository profileRepository;
+        private readonly IProfileBroadcast profileBroadcast;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemotePoses remotePoses;
-        private readonly IRoomHub roomHub;
+        private readonly ICharacterObject characterObject;
+        private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
 
         public MultiplayerPlugin(
@@ -53,6 +55,7 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
+            IRealmData realmData,
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache
         )
@@ -69,6 +72,7 @@ namespace DCL.PluginSystem.Global
             this.remotePoses = remotePoses;
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
+            this.realmData = realmData;
             this.scenesCache = scenesCache;
         }
 
@@ -96,7 +100,8 @@ namespace DCL.PluginSystem.Global
                 remoteEntities,
                 remotePoses,
                 characterObject,
-                realFlowLoadingStatus
+                realFlowLoadingStatus,
+                realmData
             );
 
             PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache);

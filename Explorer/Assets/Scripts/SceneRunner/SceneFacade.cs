@@ -177,28 +177,6 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
-        public void SetIsCurrent(bool isCurrent)
-        {
-            SceneStateProvider.IsCurrent = isCurrent;
-            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
-        }
-
-        public async UniTask DisposeAsync()
-        {
-            // Because of multithreading Disposing is not synced with the update loop
-            // so just mark it as disposed and let the update loop handle the disposal
-            SceneStateProvider.State = SceneState.Disposing;
-
-            // TODO do it better
-            runtimeInstance.SetIsDisposing();
-
-            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-
-            DisposeInternal();
-
-            SceneStateProvider.State = SceneState.Disposed;
-        }
-
         private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
@@ -236,6 +214,28 @@ namespace SceneRunner
                 throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
         }
 
+        public void SetIsCurrent(bool isCurrent)
+        {
+            SceneStateProvider.IsCurrent = isCurrent;
+            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
+            ecsWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+        }
+
+        public async UniTask DisposeAsync()
+        {
+            // Because of multithreading Disposing is not synced with the update loop
+            // so just mark it as disposed and let the update loop handle the disposal
+            SceneStateProvider.State = SceneState.Disposing;
+
+            // TODO do it better
+            runtimeInstance.SetIsDisposing();
+
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+
+            DisposeInternal();
+
+            SceneStateProvider.State = SceneState.Disposed;
+        }
         private void DisposeInternal()
         {
             runtimeInstance.Dispose();

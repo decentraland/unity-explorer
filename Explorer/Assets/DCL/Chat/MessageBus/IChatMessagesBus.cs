@@ -18,7 +18,7 @@ namespace DCL.Chat
 
     public static class ChatMessageBusExtensions
     {
-        public static IChatMessagesBus WithSelfResend(this IChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository) =>
+        public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository) =>
             new SelfResendChatMessageBus(messagesBus, web3IdentityCache, profileRepository);
 
         public static IChatMessagesBus WithDebugPanel(this IChatMessagesBus messagesBus, IDebugContainerBuilder debugContainerBuilder)
