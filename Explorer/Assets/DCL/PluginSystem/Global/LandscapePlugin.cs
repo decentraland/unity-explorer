@@ -78,7 +78,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            await TerrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
+            emptyParcels = parcelData.Value.GetEmptyParcels();
+            ownedParcels = parcelData.Value.GetOwnedParcels();
+            // await TerrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
+            await WorldTerrainGenerator.GenerateTerrainAsync2(emptyParcels, ownedParcels, cancellationToken: ct);
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();

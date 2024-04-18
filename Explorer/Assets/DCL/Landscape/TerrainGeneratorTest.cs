@@ -49,7 +49,7 @@ namespace DCL.Landscape
                 if (clearNoiseCacheForWorlds)
                     wGen = new WorldTerrainGenerator(genData);
 
-                await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
+                await wGen.GenerateTerrainAsync2(emptyParcels, ownedParcels, worldSeed);
             }
             else
             {

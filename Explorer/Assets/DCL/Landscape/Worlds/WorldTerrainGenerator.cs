@@ -63,6 +63,36 @@ namespace DCL.Landscape
             }
         }
 
+        public async UniTask GenerateTerrainAsync2(NativeArray<int2> emptyParcels, NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
+        {
+            this.ownedParcels = ownedParcels;
+            var worldModel = new WorldModel(ownedParcels, emptyParcels);
+            var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
+
+            rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+            rootGo.transform.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
+
+            factory.CreateOcean(rootGo.transform);
+            SpawnCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
+            SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
+
+            ExtractEmptyParcels(terrainModel);
+            await SetupEmptyParcelDataAsync(cancellationToken, terrainModel);
+
+            // Generate TerrainData's
+            chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
+
+            foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
+            {
+                await GenerateTerrainData(chunkModel, terrainModel, worldSeed, cancellationToken);
+                await UniTask.Yield(cancellationToken);
+            }
+
+            // Generate Terrain GameObjects
+            foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
+                factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true);
+        }
+
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
         {
             this.ownedParcels = ownedParcels;
@@ -91,22 +121,22 @@ namespace DCL.Landscape
 
             // Generate Terrain GameObjects
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                factory.CreateTerrainChunk(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true);
+                factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true);
         }
 
         private async UniTask GenerateTerrainData(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
         {
             chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
 
-            var tasks = new List<UniTask>
-            {
-                chunkDataGenerator.SetHeightsAsync(terrainModel.MinParcel, chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-                chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-                chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
-                chunkDataGenerator.SetTreesAsync(terrainModel.MinParcel, chunkModel.MinParcel.x, chunkModel.MinParcel.y, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
-            };
-
-            await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+            // var tasks = new List<UniTask>
+            // {
+            //     chunkDataGenerator.SetHeightsAsync(terrainModel.MinParcel, chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+            //     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+            //     chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
+            //     chunkDataGenerator.SetTreesAsync(terrainModel.MinParcel, chunkModel.MinParcel.x, chunkModel.MinParcel.y, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
+            // };
+            //
+            // await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
             DigHoles(terrainModel, chunkModel, parcelSize);
         }
@@ -118,6 +148,17 @@ namespace DCL.Landscape
             for (var x = 0; x < terrainModel.ChunkSizeInUnits; x++)
             for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
                 holes[x, y] = true;
+
+            if (chunkModel.OccupiedParcels.Count > 0)
+                foreach (int2 parcel in chunkModel.OccupiedParcels)
+                {
+                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
+                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
+
+                    for (int i = x; i < x + parcelSize; i++)
+                    for (int j = y; j < y + parcelSize; j++)
+                        holes[j, i] = false;
+                }
 
             if (chunkModel.OutOfTerrainParcels.Count > 0)
                 foreach (int2 parcel in chunkModel.OutOfTerrainParcels)

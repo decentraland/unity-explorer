@@ -48,7 +48,7 @@ namespace DCL.Landscape
             ChunkModels = new List<ChunkModel>();
 
             CalculateChunkSizeAndCount();
-            GenerateChunkModels(world.Parcels);
+            GenerateChunkModels(world.OwnedParcels);
         }
 
         private void CalculateChunkSizeAndCount()
