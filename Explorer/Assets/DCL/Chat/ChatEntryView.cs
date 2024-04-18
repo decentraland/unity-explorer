@@ -40,7 +40,10 @@ namespace DCL.Chat
         internal Image verifiedIcon { get; private set; }
 
         [field: SerializeField]
-        internal Image entryBackground { get; private set; }
+        internal Image ProfileBackground { get; private set; }
+
+        [field: SerializeField]
+        internal Image ProfileOutline { get; private set; }
 
         [field: SerializeField]
         internal CanvasGroup chatEntryCanvasGroup { get; private set; }
