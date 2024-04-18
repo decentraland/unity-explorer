@@ -1,4 +1,5 @@
 ﻿using DCL.Ipfs;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -18,7 +19,7 @@ namespace SceneRuntime.Apis.Modules.SceneApi
             /// <summary>
             ///     A list containing the contents of the deployed entities.
             /// </summary>
-            public List<ContentDefinition> contents;
+            public string contents;
 
             /// <summary>
             ///     JSON serialization of the entity.metadata field.
@@ -29,6 +30,14 @@ namespace SceneRuntime.Apis.Modules.SceneApi
             ///     The base URL used to resolve all content files.
             /// </summary>
             public string baseUrl;
+
+            public GetSceneResponse(string cid, List<ContentDefinition> contents, string metadata, string baseUrl)
+            {
+                this.cid = cid;
+                this.contents = JsonConvert.SerializeObject(contents);
+                this.metadata = metadata;
+                this.baseUrl = baseUrl;
+            }
         }
     }
 }
