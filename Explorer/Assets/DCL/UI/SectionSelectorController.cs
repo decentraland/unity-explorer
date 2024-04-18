@@ -31,6 +31,9 @@ namespace DCL.UI
 
         public void SetAnimationState(bool isOn, TabSelectorView selectorToggle)
         {
+            if (selectorToggle.tabAnimator == null)
+                return;
+
             if(isOn)
                 selectorToggle.tabAnimator.SetTrigger(ACTIVE);
             else

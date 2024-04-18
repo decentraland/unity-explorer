@@ -49,7 +49,7 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            tabAnimator.SetTrigger(ACTIVE);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
