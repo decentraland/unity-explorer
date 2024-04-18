@@ -8,7 +8,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 {
     public static class HoverFeedbackUtils
     {
-        internal static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResult raycastResult, in GlobalColliderEntityInfo previousEntityInfo)
+        public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResult raycastResult, in GlobalColliderEntityInfo previousEntityInfo)
         {
             using (previousEntityInfo.EcsExecutor.Sync.GetScope())
             {
@@ -40,7 +40,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         ///     Creating hover tooltips is completely separated from creating Event Results components
         ///     as it does not require information about raycast hit
         /// </summary>
-        internal static bool TryAppendHoverFeedback(IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
+        public static bool TryAppendHoverFeedback(IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             in PBPointerEvents.Types.Entry pointerEventEntry, ref HoverFeedbackComponent hoverFeedbackComponent,
             bool anyButtonIsDown)
         {

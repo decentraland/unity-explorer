@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.Pool;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
@@ -12,6 +12,8 @@ namespace DCL.Emoji
     public class EmojiSuggestionPanel
     {
         public event Action<string> OnEmojiSelected;
+
+        public bool IsActive { get; private set; }
 
         private readonly EmojiSuggestionPanelView view;
         private readonly IObjectPool<EmojiSuggestionView> suggestionItemsPool;
@@ -21,9 +23,10 @@ namespace DCL.Emoji
         private readonly float entryHeight = 34;
         private readonly float padding = 16;
         private readonly float maxHeight = 340;
-        private Navigation navigation = new () { mode = Navigation.Mode.Vertical };
+        private int currentIndex = 0;
+        private EmojiSuggestionView previouslySelected;
 
-        public EmojiSuggestionPanel(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
+        public EmojiSuggestionPanel(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion, DCLInput dclInput)
         {
             this.view = view;
 
@@ -33,6 +36,32 @@ namespace DCL.Emoji
                 actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
                 actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
             );
+
+            dclInput.Player.ActionForward.performed += OnArrowUp;
+            dclInput.Player.ActionBackward.performed += OnArrowDown;
+            dclInput.UI.Submit.performed += OnSubmit;
+        }
+
+        private void OnSubmit(InputAction.CallbackContext obj)
+        {
+            if (previouslySelected != null && IsActive)
+                OnEmojiSelected?.Invoke(previouslySelected.Emoji.text);
+        }
+
+        private void OnArrowUp(InputAction.CallbackContext obj)
+        {
+            if (currentIndex > 0)
+                SetSelectedEmoji(currentIndex - 1);
+            else
+                SetSelectedEmoji(usedPoolItems.Count - 1);
+        }
+
+        private void OnArrowDown(InputAction.CallbackContext obj)
+        {
+            if (currentIndex < usedPoolItems.Count - 1)
+                SetSelectedEmoji(currentIndex + 1);
+            else
+                SetSelectedEmoji(0);
         }
 
         private EmojiSuggestionView CreatePoolElement(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
@@ -42,8 +71,11 @@ namespace DCL.Emoji
             return emojiSuggestionView;
         }
 
-        public void SetPanelVisibility(bool isVisible) =>
+        public void SetPanelVisibility(bool isVisible)
+        {
+            IsActive = isVisible;
             view.gameObject.SetActive(isVisible);
+        }
 
         public void SetValues(List<EmojiData> foundEmojis)
         {
@@ -75,14 +107,31 @@ namespace DCL.Emoji
                 if(usedPoolItems.Count > i)
                 {
                     usedPoolItems[i].SetEmoji(foundEmoji);
+                    usedPoolItems[i].gameObject.transform.SetAsLastSibling();
                 }
                 else
                 {
                     EmojiSuggestionView emojiSuggestionView = suggestionItemsPool.Get();
                     emojiSuggestionView.SetEmoji(foundEmoji);
+                    emojiSuggestionView.gameObject.transform.SetAsLastSibling();
                     usedPoolItems.Add(emojiSuggestionView);
                 }
             }
+
+            if(usedPoolItems.Count > 0)
+                SetSelectedEmoji(0);
+            else
+                previouslySelected = null;
+        }
+
+        private void SetSelectedEmoji(int index)
+        {
+            if (previouslySelected != null)
+                previouslySelected.SelectedBackground.SetActive(false);
+
+            currentIndex = index;
+            usedPoolItems[index].SelectedBackground.SetActive(true);
+            previouslySelected = usedPoolItems[index];
         }
     }
 }

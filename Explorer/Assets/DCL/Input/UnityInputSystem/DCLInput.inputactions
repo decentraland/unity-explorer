@@ -673,17 +673,6 @@
             "bindings": [
                 {
                     "name": "",
-                    "id": "50f885b0-d8b8-495c-9540-69caaee35ddc",
-                    "path": "<Keyboard>/numpadMinus",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ZoomOut",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "eada956f-dc86-4f10-a3d7-d619e2d92dec",
                     "path": "<Gamepad>/dpad/down",
                     "interactions": "",
@@ -717,17 +706,6 @@
                 },
                 {
                     "name": "",
-                    "id": "4ed60f4f-b125-41d6-820f-4cdc66b576ce",
-                    "path": "<Keyboard>/numpadPlus",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ZoomIn",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "08846d8b-078e-4e84-89ee-eb2e9155c4dc",
                     "path": "<XInputController>/dpad/up",
                     "interactions": "",
@@ -751,7 +729,7 @@
                 {
                     "name": "",
                     "id": "12a8cc85-ac90-425f-9120-421f75f08442",
-                    "path": "<Mouse>/leftButton",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -784,7 +762,7 @@
                 {
                     "name": "",
                     "id": "b3508dda-328c-4d7b-89dd-abcc86f65324",
-                    "path": "<Keyboard>/escape",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -807,6 +785,17 @@
                     "name": "",
                     "id": "bf8e44a5-7783-4076-972c-6ea991b5a90b",
                     "path": "<XInputController>/rightStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Unlock",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fff42e65-c6b9-47d8-a479-957f4ed268ef",
+                    "path": "<Keyboard>/escape",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -905,7 +894,7 @@
                 {
                     "name": "",
                     "id": "1887f5bd-1bc4-4854-8445-052b432614c1",
-                    "path": "<Mouse>/rightButton",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -1202,6 +1191,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Close",
+                    "type": "Button",
+                    "id": "3f51becb-da42-4894-bab1-898f4b805634",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1472,7 +1470,7 @@
                 {
                     "name": "",
                     "id": "9e67da5b-8eaa-4e21-9ef3-29c1e6603e89",
-                    "path": "*/{Submit}",
+                    "path": "<Keyboard>/enter",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse;Gamepad;Touch;Joystick;XR",
@@ -1708,6 +1706,165 @@
                     "processors": "",
                     "groups": "",
                     "action": "ControllerFastCursor",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9b08349a-b8f2-4b4c-9e37-d3c7b77ff1d5",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Close",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Shortcuts",
+            "id": "21959a41-9a8c-4703-8602-9895fd4eb80b",
+            "actions": [
+                {
+                    "name": "MainMenu",
+                    "type": "Button",
+                    "id": "20936db2-9a40-404f-97ac-eee3c350d7ec",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Backpack",
+                    "type": "Button",
+                    "id": "22261e3d-8587-4a52-bd3c-378cbe477a19",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Map",
+                    "type": "Button",
+                    "id": "78bba755-0c5b-440f-87ae-634652b31146",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Settings",
+                    "type": "Button",
+                    "id": "a7bdddf3-ea22-4a1c-b848-7b5f83e9dd2b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleUI",
+                    "type": "Button",
+                    "id": "aaf75c90-a01b-47ef-8432-c4a9fe7a4aa1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "EmoteWheel",
+                    "type": "Button",
+                    "id": "3be778a1-cb40-43d3-a316-304e55aaa81c",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleAvatarBubbles",
+                    "type": "Button",
+                    "id": "4209969a-2572-41c8-8380-1b57c867fe75",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "43a499cd-e064-450b-8186-4fe654f8ff1f",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MainMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "61b55393-2f1d-4f12-884e-0bf29fadbd75",
+                    "path": "<Keyboard>/i",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Backpack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "462821f6-f55e-4235-9715-85e310915011",
+                    "path": "<Keyboard>/m",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Map",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cddd8bfd-66ea-45eb-8912-87b6f388af4a",
+                    "path": "<Keyboard>/p",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Settings",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ce72b0c5-9ffe-4e42-ad45-149db2d47f02",
+                    "path": "<Keyboard>/u",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleUI",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "39564236-17b4-412c-a2f2-e4477bb2d889",
+                    "path": "<Keyboard>/b",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "EmoteWheel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "025e5590-7e11-4f49-8719-954bafe5ccc3",
+                    "path": "<Keyboard>/n",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleAvatarBubbles",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

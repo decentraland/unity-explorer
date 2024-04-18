@@ -20,6 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly ICursor cursor;
         private TeleportPromptController teleportPromptController;
 
         public TeleportPromptPlugin(
@@ -27,13 +28,15 @@ namespace DCL.PluginSystem.Global
             ITeleportController teleportController,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
+            this.cursor = cursor;
         }
 
         public async UniTask InitializeAsync(TeleportPromptSettings promptSettings, CancellationToken ct)
@@ -41,7 +44,7 @@ namespace DCL.PluginSystem.Global
             teleportPromptController = new TeleportPromptController(
                 TeleportPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
-                new DCLCursor(),
+                cursor,
                 teleportController,
                 mvcManager,
                 webRequestController,

@@ -38,6 +38,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
             system = TrackPlayerPositionSystem.InjectToWorld(ref builder);
+
             system.SetQueryMethod(SetPlayerTransformQuery);
             system.Activate();
         }
