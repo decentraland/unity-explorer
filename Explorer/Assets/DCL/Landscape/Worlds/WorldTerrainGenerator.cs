@@ -73,7 +73,7 @@ namespace DCL.Landscape
             rootGo.transform.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
             factory.CreateOcean(rootGo.transform);
-            SpawnCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
+            SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
             SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
 
             ExtractEmptyParcels(terrainModel);
@@ -103,7 +103,7 @@ namespace DCL.Landscape
             rootGo.transform.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
             factory.CreateOcean(rootGo.transform);
-            SpawnCliffs(terrainModel, terrainGenData.cliffSide, terrainGenData.cliffCorner);
+            SpawnCliffs(terrainModel.MinInUnits, terrainModel.MinInUnits);
             SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
 
             ExtractEmptyParcels(terrainModel);
@@ -128,15 +128,15 @@ namespace DCL.Landscape
         {
             chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
 
-            // var tasks = new List<UniTask>
-            // {
-            //     chunkDataGenerator.SetHeightsAsync(terrainModel.MinParcel, chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-            //     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-            //     chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
-            //     chunkDataGenerator.SetTreesAsync(terrainModel.MinParcel, chunkModel.MinParcel.x, chunkModel.MinParcel.y, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
-            // };
-            //
-            // await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+            var tasks = new List<UniTask>
+            {
+                chunkDataGenerator.SetHeightsAsync(terrainModel.MinParcel, chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+                chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+                chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
+                chunkDataGenerator.SetTreesAsync(terrainModel.MinParcel, chunkModel.MinParcel.x, chunkModel.MinParcel.y, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
+            };
+
+            await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
             DigHoles(terrainModel, chunkModel, parcelSize);
         }
@@ -209,29 +209,26 @@ namespace DCL.Landscape
                     maxHeightIndex = emptyParcelHeight.Value;
         }
 
-        private void SpawnCliffs(TerrainModel terrainModel, GameObject cliffSide, GameObject cliffCorner)
+        private void SpawnCliffs(int2 minInUnits, int2 maxInUnits)
         {
-            if (cliffSide == null || cliffCorner == null)
-                return;
-
             Transform cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
 
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 180, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MinInUnits.x, 0, terrainModel.MaxInUnits.y), Quaternion.Euler(0, 270, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MaxInUnits.x, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 90, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainModel.MaxInUnits.x, 0, terrainModel.MaxInUnits.y), Quaternion.identity);
+            factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 180, 0));
+            factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, maxInUnits.y), Quaternion.Euler(0, 270, 0));
+            factory.CreateCliffCorner(cliffsRoot, new Vector3(maxInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 90, 0));
+            factory.CreateCliffCorner(cliffsRoot, new Vector3(maxInUnits.x, 0, maxInUnits.y), Quaternion.identity);
 
-            for (int i = terrainModel.MinInUnits.y; i < terrainModel.MaxInUnits.y; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(terrainModel.MaxInUnits.x, 0, i + parcelSize), Quaternion.Euler(0, 90, 0));
+            for (int i = minInUnits.y; i < maxInUnits.y; i += parcelSize)
+                factory.CreateCliffSide(cliffsRoot, new Vector3(maxInUnits.x, 0, i + parcelSize), Quaternion.Euler(0, 90, 0));
 
-            for (int i = terrainModel.MinInUnits.x; i < terrainModel.MaxInUnits.x; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(i, 0, terrainModel.MaxInUnits.y), Quaternion.identity);
+            for (int i = minInUnits.x; i < maxInUnits.x; i += parcelSize)
+                factory.CreateCliffSide(cliffsRoot, new Vector3(i, 0, maxInUnits.y), Quaternion.identity);
 
-            for (int i = terrainModel.MinInUnits.y; i < terrainModel.MaxInUnits.y; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(terrainModel.MinInUnits.x, 0, i), Quaternion.Euler(0, 270, 0));
+            for (int i = minInUnits.y; i < maxInUnits.y; i += parcelSize)
+                factory.CreateCliffSide(cliffsRoot, new Vector3(minInUnits.x, 0, i), Quaternion.Euler(0, 270, 0));
 
-            for (int i = terrainModel.MinInUnits.x; i < terrainModel.MaxInUnits.x; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(i + parcelSize, 0, terrainModel.MinInUnits.y), Quaternion.Euler(0, 180, 0));
+            for (int i = minInUnits.x; i < maxInUnits.x; i += parcelSize)
+                factory.CreateCliffSide(cliffsRoot, new Vector3(i + parcelSize, 0, minInUnits.y), Quaternion.Euler(0, 180, 0));
 
             cliffsRoot.SetParent(rootGo.transform);
             cliffsRoot.localPosition = Vector3.zero;
