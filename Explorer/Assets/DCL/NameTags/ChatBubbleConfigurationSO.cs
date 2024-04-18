@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Nametags
 {
@@ -10,7 +11,8 @@ namespace DCL.Nametags
         public float nametagMarginOffsetHeight;
         public float bubbleMarginOffsetWidth;
         public float bubbleMarginOffsetHeight;
-        public float animationDuration;
+        public float animationInDuration;
+        public float animationOutDuration;
         public float fullOpacityMaxDistance;
         public int bubbleIdleTime;
         public float maxDistance;
