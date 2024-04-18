@@ -1,3 +1,42 @@
+#if defined(_IS_CLIPPING_MODE) || defined(_IS_CLIPPING_TRANSMODE)
+// Returns true if AlphaToMask functionality is currently available
+// NOTE: This does NOT guarantee that AlphaToMask is enabled for the current draw. It only indicates that AlphaToMask functionality COULD be enabled for it.
+//       In cases where AlphaToMask COULD be enabled, we export a specialized alpha value from the shader.
+//       When AlphaToMask is enabled:     The specialized alpha value is combined with the sample mask
+//       When AlphaToMask is not enabled: The specialized alpha value is either written into the framebuffer or dropped entirely depending on the color write mask
+bool IsAlphaToMaskAvailable()
+{
+    return (_AlphaToMaskAvailable != 0.0);
+}
+
+// When AlphaToMask is available:     Returns a modified alpha value that should be exported from the shader so it can be combined with the sample mask
+// When AlphaToMask is not available: Terminates the current invocation if the alpha value is below the cutoff and returns the input alpha value otherwise
+
+half AlphaClip(half alpha, half cutoff)
+{
+    // Produce 0.0 if the input value would be clipped by traditional alpha clipping and produce the original input value otherwise.
+    // WORKAROUND: The alpha parameter in this ternary expression MUST be converted to a float in order to work around a known HLSL compiler bug.
+    //             See Fogbugz 934464 for more information
+    half clippedAlpha = (alpha >= cutoff) ? float(alpha) : 0.0;
+
+    // Calculate a specialized alpha value that should be used when alpha-to-coverage is enabled
+
+    // If the user has specified zero as the cutoff threshold, the expectation is that the shader will function as if alpha-clipping was disabled.
+    // Ideally, the user should just turn off the alpha-clipping feature in this case, but in order to make this case work as expected, we force alpha
+    // to 1.0 here to ensure that alpha-to-coverage never throws away samples when its active. (This would cause opaque objects to appear transparent)
+    half alphaToCoverageAlpha = (cutoff <= 0.0) ? 1.0 : SharpenAlpha(alpha, cutoff);
+
+    // When alpha-to-coverage is available:     Use the specialized value which will be exported from the shader and combined with the MSAA coverage mask.
+    // When alpha-to-coverage is not available: Use the "clipped" value. A clipped value will always result in thread termination via the clip() logic below.
+    alpha = IsAlphaToMaskAvailable() ? alphaToCoverageAlpha : clippedAlpha;
+
+    // Terminate any threads that have an alpha value of 0.0 since we know they won't contribute anything to the final image
+    clip(alpha - 0.0001);
+
+    return alpha;
+}
+#endif
+
 float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET 
 {
     float2 Set_UV0 = i.uv0;
@@ -144,26 +183,9 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float4 _MainTex_var = SAMPLE_MAINTEX(uv_maintex,nMainTexArrID);
     
     // Clipping modes - early outs
-    #if defined(_IS_CLIPPING_MODE) 
-        //DoubleShadeWithFeather_Clipping
-        // int nClippingMaskArrID = _ClippingMaskArr_ID;
-        // float4 _ClippingMask_var = SAMPLE_CLIPPINGMASK(TRANSFORM_TEX(Set_UV0, _ClippingMask), nClippingMaskArrID);
-        // float Set_Clipping = saturate((lerp( _ClippingMask_var.r, (1.0 - _ClippingMask_var.r), _Inverse_Clipping )+_Clipping_Level));
-        float Set_MainTexAlpha = _MainTex_var.a;
-        clip(Set_MainTexAlpha-_Clipping_Level);
-    #elif defined(_IS_CLIPPING_TRANSMODE)// || defined(_IS_TRANSCLIPPING_ON)
-        //DoubleShadeWithFeather_TransClipping
-        // int nClippingMaskArrID = _ClippingMaskArr_ID;
-        // float4 _ClippingMask_var = SAMPLE_CLIPPINGMASK(TRANSFORM_TEX(Set_UV0, _ClippingMask), nClippingMaskArrID);
-        float Set_MainTexAlpha = _MainTex_var.a;
-        // float _IsBaseMapAlphaAsClippingMask_var = lerp( _ClippingMask_var.r, Set_MainTexAlpha, _IsBaseMapAlphaAsClippingMask );
-        // float _Inverse_Clipping_var = lerp( _IsBaseMapAlphaAsClippingMask_var, (1.0 - _IsBaseMapAlphaAsClippingMask_var), _Inverse_Clipping );
-        // float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
-        float _Inverse_Clipping_var = _MainTex_var.a;
-        clip(Set_MainTexAlpha-_Clipping_Level);
-        //clip(Set_Clipping - 0.5);
-    //#elif defined(_IS_CLIPPING_OFF) || defined(_IS_TRANSCLIPPING_OFF)
-        //DoubleShadeWithFeather
+    #if defined(_IS_CLIPPING_MODE) || defined(_IS_CLIPPING_TRANSMODE)
+        float fAlphaClip = _MainTex_var.a * _BaseColor.a;
+        AlphaClip(fAlphaClip, _Clipping_Level);
     #endif
 
     float shadowAttenuation = 1.0;
@@ -517,18 +539,11 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         
         finalColor += pointLightColor;
     //#endif
-
-
-    //v.2.0.4
+    
     #ifdef _IS_CLIPPING_OFF
-        //DoubleShadeWithFeather
         half4 finalRGBA = half4(finalColor,1);
-    #elif _IS_CLIPPING_MODE
-        //DoubleShadeWithFeather_Clipping
-        half4 finalRGBA = half4(finalColor,1);
-    #elif _IS_CLIPPING_TRANSMODE
-        //DoubleShadeWithFeather_TransClipping
-        float Set_Opacity = SATURATE_IF_SDR((_Inverse_Clipping_var+_Tweak_transparency));
+    #elif _IS_CLIPPING_MODE || _IS_CLIPPING_TRANSMODE
+        float Set_Opacity = SATURATE_IF_SDR((_MainTex_var.a+_Tweak_transparency));
         half4 finalRGBA = half4(finalColor,Set_Opacity);
     #endif
     
