@@ -196,7 +196,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
-            async UniTaskVoid AnimateAndAwait()
+            async UniTaskVoid AnimateAndAwaitAsync()
             {
                 viewInstance.FinalizeAnimator.SetTrigger(JUMP_IN);
                 await UniTask.Delay(200);
@@ -204,7 +204,7 @@ namespace DCL.AuthenticationScreenFlow
                 lifeCycleTask!.TrySetResult();
                 lifeCycleTask = null;
             }
-            AnimateAndAwait().Forget();
+            AnimateAndAwaitAsync().Forget();
         }
 
         private void SwitchState(ViewState state)
