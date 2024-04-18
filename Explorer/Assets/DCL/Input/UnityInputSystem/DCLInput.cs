@@ -708,6 +708,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleFreeFly"",
+                    ""type"": ""Button"",
+                    ""id"": ""f0d9c33e-e2ee-4902-98ff-5f81a8ee1dd9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -972,6 +981,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ChangeShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4463f967-7c19-47a9-9eec-d5411cd773d4"",
+                    ""path"": ""<Keyboard>/f11"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleFreeFly"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2410,6 +2430,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_TemporalLock = m_Camera.FindAction("TemporalLock", throwIfNotFound: true);
         m_Camera_ChangeShoulder = m_Camera.FindAction("ChangeShoulder", throwIfNotFound: true);
         m_Camera_SwitchState = m_Camera.FindAction("SwitchState", throwIfNotFound: true);
+        m_Camera_ToggleFreeFly = m_Camera.FindAction("ToggleFreeFly", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
@@ -2689,6 +2710,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_TemporalLock;
     private readonly InputAction m_Camera_ChangeShoulder;
     private readonly InputAction m_Camera_SwitchState;
+    private readonly InputAction m_Camera_ToggleFreeFly;
     public struct CameraActions
     {
         private @DCLInput m_Wrapper;
@@ -2703,6 +2725,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @TemporalLock => m_Wrapper.m_Camera_TemporalLock;
         public InputAction @ChangeShoulder => m_Wrapper.m_Camera_ChangeShoulder;
         public InputAction @SwitchState => m_Wrapper.m_Camera_SwitchState;
+        public InputAction @ToggleFreeFly => m_Wrapper.m_Camera_ToggleFreeFly;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2742,6 +2765,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @SwitchState.started += instance.OnSwitchState;
             @SwitchState.performed += instance.OnSwitchState;
             @SwitchState.canceled += instance.OnSwitchState;
+            @ToggleFreeFly.started += instance.OnToggleFreeFly;
+            @ToggleFreeFly.performed += instance.OnToggleFreeFly;
+            @ToggleFreeFly.canceled += instance.OnToggleFreeFly;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -2776,6 +2802,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @SwitchState.started -= instance.OnSwitchState;
             @SwitchState.performed -= instance.OnSwitchState;
             @SwitchState.canceled -= instance.OnSwitchState;
+            @ToggleFreeFly.started -= instance.OnToggleFreeFly;
+            @ToggleFreeFly.performed -= instance.OnToggleFreeFly;
+            @ToggleFreeFly.canceled -= instance.OnToggleFreeFly;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -3257,6 +3286,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnTemporalLock(InputAction.CallbackContext context);
         void OnChangeShoulder(InputAction.CallbackContext context);
         void OnSwitchState(InputAction.CallbackContext context);
+        void OnToggleFreeFly(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
     {

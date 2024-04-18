@@ -27,6 +27,7 @@ namespace DCL.CharacterCamera.Tests
 
         private SingleInstanceEntity inputMap;
         private ICinemachineThirdPersonCameraData thirdPersonCameraData;
+        private ICinemachineThirdPersonCameraData droneViewData;
 
         [SetUp]
         public void CreateCameraSetup()
@@ -46,6 +47,13 @@ namespace DCL.CharacterCamera.Tests
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
             thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
             thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
+            thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
+
+            CinemachineFreeLook droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineFreeLook>();
+            droneView.transform.SetParent(cinemachineObj.transform);
+            droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
+            droneViewData.Camera.Returns(droneView);
+            droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<CinemachineCameraOffset>());
 
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();
             freeCamera.transform.SetParent(cinemachineObj.transform);
@@ -60,13 +68,11 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.FirstPersonCameraData.Returns(firstPersonCameraData);
             cinemachinePreset.FreeCameraData.Returns(freeCameraData);
             cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
+            cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
 
-            DCLInput dclInput = Substitute.For<DCLInput>();
-            system = new ControlCinemachineVirtualCameraSystem(world, dclInput);
+            system = new ControlCinemachineVirtualCameraSystem(world);
             world.Create(new InputMapComponent());
-
-            inputMap = world.CacheInputMap();
 
             entity = world.Create(cinemachinePreset, new CameraComponent(camera), new CinemachineCameraState(), new CameraInput(), new CursorComponent());
 
@@ -96,16 +102,40 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(firstPersonCameraData.Camera));
         }
 
-        [Test]
-        public void ZoomOutInThirdPerson()
+        [TestCase(CameraMode.FirstPerson, 1, CameraMode.ThirdPerson)]
+        [TestCase(CameraMode.ThirdPerson, 1, CameraMode.DroneView)]
+        [TestCase(CameraMode.DroneView, 1, CameraMode.DroneView)]
+        [TestCase(CameraMode.DroneView, -1, CameraMode.ThirdPerson)]
+        [TestCase(CameraMode.ThirdPerson, -1, CameraMode.FirstPerson)]
+        [TestCase(CameraMode.FirstPerson, -1, CameraMode.FirstPerson)]
+        public void ZoomChangesStates(CameraMode currentState, int zoomDirection, CameraMode expectedState)
         {
-            world.Set(entity, new CameraInput { ZoomOut = true });
+            world.Set(entity, new CameraInput { ZoomOut = zoomDirection > 0, ZoomIn = zoomDirection < 0 });
+            world.Set(entity, new CameraComponent { Mode = currentState });
             system.Update(1);
 
-            CinemachineCameraState cameraState = world.Get<CinemachineCameraState>(entity);
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(expectedState));
+        }
 
-            Assert.That(cameraState.CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
-            Assert.That(cameraState.ThirdPersonZoomValue, Is.EqualTo(ZOOM_SENSITIVITY));
+        [Test]
+        public void ChangeShouldersWhenOnThirdPersonCamera()
+        {
+            world.Set(entity, new CameraInput { ChangeShoulder = true });
+            world.Set(entity, new CameraComponent { Mode = CameraMode.ThirdPerson, Shoulder = ThirdPersonCameraShoulder.Center });
+
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Right));
+
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Left));
+
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Center));
+
+            // change shoulder is ignored if the input is false
+            world.Set(entity, new CameraInput { ChangeShoulder = false });
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Center));
         }
 
         [Test]
@@ -126,18 +156,27 @@ namespace DCL.CharacterCamera.Tests
         }
 
         [Test]
-        public void SwitchFromThirdPersonToFree()
+        public void SwitchStatePingPong()
         {
-            world.Set(entity, new CameraInput { ZoomOut = true }, new CinemachineCameraState
-            {
-                CurrentCamera = thirdPersonCameraData.Camera,
-                ThirdPersonZoomValue = 1f,
-            });
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+            world.Set(entity, new CameraInput { SwitchState = true });
 
             system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.DroneView));
 
-            Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(freeCameraData.Camera));
-            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.Free));
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.FirstPerson));
+
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
+
+            world.Set(entity, new CameraInput { SwitchState = false });
+
+            system.Update(1);
+            Assert.That(world.Get<CameraComponent>(entity).Mode, Is.EqualTo(CameraMode.ThirdPerson));
         }
 
         [Test]

@@ -91,8 +91,8 @@ namespace DCL.PluginSystem.Global
             exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
             // Register systems
-            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, input);
-            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder);
+            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
             ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder);

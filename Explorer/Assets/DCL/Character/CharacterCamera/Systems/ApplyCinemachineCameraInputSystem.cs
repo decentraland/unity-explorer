@@ -16,7 +16,12 @@ namespace DCL.CharacterCamera.Systems
     [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
-        internal ApplyCinemachineCameraInputSystem(World world) : base(world) { }
+        private readonly DCLInput input;
+
+        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input) : base(world)
+        {
+            this.input = input;
+        }
 
         protected override void Update(float t)
         {
@@ -53,6 +58,10 @@ namespace DCL.CharacterCamera.Systems
 
                     break;
             }
+
+            cameraInput.SetFreeFly = input.Camera.ToggleFreeFly.WasPressedThisFrame();
+            cameraInput.SwitchState = input.Camera.SwitchState.WasPressedThisFrame();
+            cameraInput.ChangeShoulder = input.Camera.ChangeShoulder.WasPressedThisFrame();
 
             // Update the brain manually
             cinemachinePreset.Brain.ManualUpdate();

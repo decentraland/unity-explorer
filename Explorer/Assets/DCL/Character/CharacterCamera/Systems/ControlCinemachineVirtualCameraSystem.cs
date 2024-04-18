@@ -21,27 +21,12 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
-        private readonly DCLInput dclInput;
         private SingleInstanceEntity inputMap;
-        private bool wantsToSwitchState;
-        private bool wantsToChangeShoulder;
         private int hotkeySwitchStateDirection = 1;
 
-        internal ControlCinemachineVirtualCameraSystem(World world, DCLInput dclInput) : base(world)
+        internal ControlCinemachineVirtualCameraSystem(World world) : base(world)
         {
-            this.dclInput = dclInput;
-            dclInput.Camera.SwitchState.performed += OnSwitchState;
-            dclInput.Camera.ChangeShoulder.performed += OnChangeShoulder;
-        }
 
-        private void OnChangeShoulder(InputAction.CallbackContext obj)
-        {
-            wantsToChangeShoulder = true;
-        }
-
-        private void OnSwitchState(InputAction.CallbackContext obj)
-        {
-            wantsToSwitchState = true;
         }
 
         public override void Initialize()
@@ -65,26 +50,63 @@ namespace DCL.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
-            HandleZoomingQuery(World);
-            HandleSwitchStateQuery(World);
-            HandleOffsetQuery(World, t);
+            HandleCameraInputQuery(World, t);
+            UpdateCameraStateQuery(World);
         }
 
         [Query]
-        private void HandleSwitchState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
+        [None(typeof(CameraBlockerComponent))]
+        private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
-            if (!wantsToSwitchState) return;
-            wantsToSwitchState = false;
+            // this blocks the user of changing the current camera, but the SDK still can do it
+            if (!cameraComponent.CameraInputChangeEnabled)
+                return;
 
-            if (!HandleModeSwitch(hotkeySwitchStateDirection, ref cameraComponent))
-                HandleModeSwitch(hotkeySwitchStateDirection, ref cameraComponent);
+            HandleZoomingQuery(World);
+            HandleSwitchStateQuery(World);
+            HandleFreeFlyStateQuery(World);
+            HandleOffsetQuery(World, dt);
+        }
 
+        [Query]
+        private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
+        {
             SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
+        }
+
+        [Query]
+        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, in CursorComponent cursorComponent)
+        {
+            if (cursorComponent.IsOverUI)
+                return;
+
+            if (input is { ZoomIn: false, ZoomOut: false })
+                return;
+
+            int direction = input.ZoomOut ? 1 : -1;
+            HandleModeSwitch(direction, ref cameraComponent, false);
+        }
+
+        [Query]
+        private void HandleFreeFlyState(ref CameraComponent cameraComponent, in CameraInput input)
+        {
+            if (input.SetFreeFly)
+                cameraComponent.Mode = cameraComponent.Mode != CameraMode.Free ? CameraMode.Free : CameraMode.ThirdPerson;
+        }
+
+        [Query]
+        private void HandleSwitchState(ref CameraComponent cameraComponent, in CameraInput input)
+        {
+            if (!input.SwitchState)
+                return;
+
+            if (!HandleModeSwitch(hotkeySwitchStateDirection, ref cameraComponent, true))
+                hotkeySwitchStateDirection *= -1;
         }
 
         private void SwitchCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            if (camera.Mode == targetCameraMode && IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
+            if (IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
                 return;
 
             cameraState.CurrentCamera.enabled = false;
@@ -134,33 +156,18 @@ namespace DCL.CharacterCamera.Systems
             }
         }
 
-        [Query]
-        [None(typeof(CameraBlockerComponent))]
-        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state, in CursorComponent cursorComponent)
+        private bool HandleModeSwitch(int direction, ref CameraComponent cameraComponent, bool pingPong)
         {
-            if (cursorComponent.IsOverUI)
-                return;
-
-            if (input is { ZoomIn: false, ZoomOut: false })
-                return;
-
-            int direction = input.ZoomOut ? 1 : -1;
-            HandleModeSwitch(direction, ref cameraComponent);
-            SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
-        }
-
-        private bool HandleModeSwitch(int direction, ref CameraComponent cameraComponent)
-        {
-            var maxReached = false;
-
             switch (direction)
             {
                 case > 0:
                     switch (cameraComponent.Mode)
                     {
                         case CameraMode.DroneView:
-                            maxReached = true;
-                            break;
+                            if (pingPong)
+                                cameraComponent.Mode = CameraMode.ThirdPerson;
+
+                            return false;
                         case CameraMode.ThirdPerson:
                             cameraComponent.Mode = CameraMode.DroneView;
                             return true;
@@ -180,44 +187,31 @@ namespace DCL.CharacterCamera.Systems
                             cameraComponent.Mode = CameraMode.FirstPerson;
                             return true;
                         case CameraMode.FirstPerson:
-                            maxReached = true;
-                            break;
-                    }
+                            if (pingPong)
+                                cameraComponent.Mode = CameraMode.ThirdPerson;
 
+                            return false;
+                    }
                     break;
             }
 
-            if (!maxReached)
-                return false;
-
-            hotkeySwitchStateDirection *= -1;
             return false;
-
         }
 
         [Query]
-        private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset)
+        private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input)
         {
             if (cameraComponent.Mode == CameraMode.ThirdPerson)
             {
-                if (wantsToChangeShoulder)
-                {
-                    wantsToChangeShoulder = false;
-
+                if (input.ChangeShoulder)
                     cameraComponent.Shoulder = cameraComponent.Shoulder switch
                                                {
                                                    ThirdPersonCameraShoulder.Center => ThirdPersonCameraShoulder.Right,
                                                    ThirdPersonCameraShoulder.Right => ThirdPersonCameraShoulder.Left,
                                                    ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Center,
                                                };
-                }
 
                 ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
-
-                /*if (cursorComponent.CursorState == CursorState.Free)
-                {
-                    thirdPersonCameraShoulder = ThirdPersonCameraShoulder.Center;
-                }*/
 
                 float value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
 
@@ -237,8 +231,6 @@ namespace DCL.CharacterCamera.Systems
 
                 cinemachinePreset.ThirdPersonCameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cinemachinePreset.ThirdPersonCameraData.CameraOffset.m_Offset, offset, 10 * dt);
             }
-
-            wantsToChangeShoulder = false;
         }
 
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)

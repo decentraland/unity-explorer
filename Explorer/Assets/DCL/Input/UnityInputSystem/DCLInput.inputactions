@@ -686,6 +686,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleFreeFly",
+                    "type": "Button",
+                    "id": "f0d9c33e-e2ee-4902-98ff-5f81a8ee1dd9",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -950,6 +959,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ChangeShoulder",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4463f967-7c19-47a9-9eec-d5411cd773d4",
+                    "path": "<Keyboard>/f11",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleFreeFly",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
