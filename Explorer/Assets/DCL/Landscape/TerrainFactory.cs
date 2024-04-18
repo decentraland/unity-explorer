@@ -77,7 +77,7 @@ namespace DCL.Landscape
             return collider;
         }
 
-        public Terrain CreateTerrainChunk(TerrainData terrainData, Transform parent, int2 at, Material material, bool drawTreesAndFoliage)
+        public Terrain CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material, bool drawTreesAndFoliage)
         {
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
                                      .GetComponent<Terrain>();

@@ -242,7 +242,7 @@ namespace DCL.Landscape
 
                 var position = new int2(x, z);
                 TerrainData terrainData = terrainDatas[position];
-                terrains.Add(factory.CreateTerrainChunk(terrainData, rootGo.transform, position, terrainGenData.terrainMaterial, showTerrainByDefault));
+                terrains.Add(factory.CreateTerrainObject(terrainData, rootGo.transform, position, terrainGenData.terrainMaterial, showTerrainByDefault));
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + (spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);

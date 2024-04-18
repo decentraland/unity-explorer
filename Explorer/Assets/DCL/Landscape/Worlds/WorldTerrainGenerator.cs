@@ -85,16 +85,16 @@ namespace DCL.Landscape
 
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
-                await GenerateTerrainData(chunkModel, terrainModel, worldSeed, cancellationToken);
+                await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken);
                 await UniTask.Yield(cancellationToken);
             }
 
             // Generate Terrain GameObjects
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                factory.CreateTerrainChunk(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true);
+                factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true);
         }
 
-        private async UniTask GenerateTerrainData(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
+        private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
         {
             chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
 
