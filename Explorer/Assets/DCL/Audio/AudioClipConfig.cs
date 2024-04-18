@@ -8,9 +8,11 @@ namespace DCL.Audio
     public class AudioClipConfig : ScriptableObject
     {
         [SerializeField] private AudioClip[] audioClips = Array.Empty<AudioClip>();
+        [Range(0f, 1f)]
         [SerializeField] private float relativeVolume = 1;
         [SerializeField] private AudioCategory audioCategory;
-        [SerializeField] private float pitchVariation = 0.5f;
+        [Range(0f, 1f)]
+        [SerializeField] private float pitchVariation = 0.01f;
         [SerializeField] private AudioClipSelectionMode clipSelectionMode;
         public float PitchVariation => pitchVariation;
         public AudioCategory Category => audioCategory;

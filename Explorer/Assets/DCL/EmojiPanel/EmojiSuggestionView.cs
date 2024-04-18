@@ -18,6 +18,9 @@ namespace DCL.Emoji
         [field: SerializeField]
         public TMP_Text EmojiName { get; private set; }
 
+        [field: SerializeField]
+        public GameObject SelectedBackground { get; private set; }
+
         private void Start()
         {
             EmojiButton.onClick.RemoveAllListeners();

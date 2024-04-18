@@ -10,6 +10,8 @@ namespace DCL.Interaction.HoverCanvas.UI
         private List<HoverCanvasTooltipElement> tooltips;
 
         private bool initialized;
+        private Length leftLength;
+        private Length bottomLength;
         public int TooltipsCount => tooltips.Count;
 
         public void Initialize()
@@ -19,6 +21,19 @@ namespace DCL.Interaction.HoverCanvas.UI
             tooltips = this.Query<HoverCanvasTooltipElement>().ToList();
             tooltips.Sort(this);
             initialized = true;
+
+            leftLength = new Length(0, LengthUnit.Percent);
+            bottomLength = new Length(0, LengthUnit.Percent);
+            pickingMode = PickingMode.Ignore;
+        }
+
+        public void SetPosition(Vector2 newPosition)
+        {
+            leftLength.value = newPosition.x;
+            bottomLength.value = newPosition.y;
+
+            style.left = leftLength;
+            style.bottom = bottomLength;
         }
 
         public void SetTooltip([CanBeNull] string hintText, [CanBeNull] string actionKeyText, [CanBeNull] Sprite icon, int index)
