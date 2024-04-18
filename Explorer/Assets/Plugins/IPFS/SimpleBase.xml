@@ -1,0 +1,927 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SimpleBase</name>
+    </assembly>
+    <members>
+        <member name="T:SimpleBase.Base16">
+            <summary>
+            Base16 encoding/decoding.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base16.#ctor(SimpleBase.Base16Alphabet)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base16"/> class.
+            </summary>
+            <param name="alphabet">Alphabet to use.</param>
+        </member>
+        <member name="P:SimpleBase.Base16.UpperCase">
+            <summary>
+            Gets upper case Base16 encoder. Decoding is case-insensitive.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base16.LowerCase">
+            <summary>
+            Gets lower case Base16 encoder. Decoding is case-insensitive.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base16.ModHex">
+            <summary>
+            Gets lower case Base16 encoder. Decoding is case-insensitive.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base16.Alphabet">
+            <summary>
+            Gets the alphabet used by the encoder.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base16.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base16.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base16.GetSafeByteCountForDecoding(System.ReadOnlySpan{System.Char})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base16.GetSafeCharCountForEncoding(System.ReadOnlySpan{System.Byte})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base16.Decode(System.String)">
+            <summary>
+            Decode Upper/Lowercase Base16 text into bytes.
+            </summary>
+            <param name="text">Hex string.</param>
+            <returns>Decoded bytes.</returns>
+        </member>
+        <member name="M:SimpleBase.Base16.DecodeAsync(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode Base16 text through streams for generic use. Stream based variant tries to consume
+            as little memory as possible, and relies of .NET's own underlying buffering mechanisms,
+            contrary to their buffer-based versions.
+            </summary>
+            <param name="input">Stream that the encoded bytes would be read from.</param>
+            <param name="output">Stream where decoded bytes will be written to.</param>
+            <returns>Task that represents the async operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base16.Decode(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode Base16 text through streams for generic use. Stream based variant tries to consume
+            as little memory as possible, and relies of .NET's own underlying buffering mechanisms,
+            contrary to their buffer-based versions.
+            </summary>
+            <param name="input">Stream that the encoded bytes would be read from.</param>
+            <param name="output">Stream where decoded bytes will be written to.</param>
+        </member>
+        <member name="M:SimpleBase.Base16.Encode(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encodes stream of bytes into a Base16 text.
+            </summary>
+            <param name="input">Stream that provides bytes to be encoded.</param>
+            <param name="output">Stream that the encoded text is written to.</param>
+        </member>
+        <member name="M:SimpleBase.Base16.EncodeAsync(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encodes stream of bytes into a Base16 text.
+            </summary>
+            <param name="input">Stream that provides bytes to be encoded.</param>
+            <param name="output">Stream that the encoded text is written to.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base16.Decode(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Decode Base16 text into bytes.
+            </summary>
+            <param name="text">Base16 text.</param>
+            <returns>Decoded bytes.</returns>
+        </member>
+        <member name="M:SimpleBase.Base16.TryDecode(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base16.Encode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encode to Base16 representation.
+            </summary>
+            <param name="bytes">Bytes to encode.</param>
+            <returns>Base16 string.</returns>
+        </member>
+        <member name="M:SimpleBase.Base16.TryEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="T:SimpleBase.Base16Alphabet">
+            <summary>
+            Alphabet representation for Base16 encodings.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base16Alphabet.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base16Alphabet"/> class with
+            case insensitive semantics.
+            </summary>
+            <param name="alphabet">Encoding alphabet.</param>
+        </member>
+        <member name="M:SimpleBase.Base16Alphabet.#ctor(System.String,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base16Alphabet"/> class.
+            </summary>
+            <param name="alphabet">Encoding alphabet.</param>
+            <param name="caseSensitive">If the decoding should be performed case sensitive.</param>
+        </member>
+        <member name="P:SimpleBase.Base16Alphabet.UpperCase">
+            <summary>
+            Gets upper case Base16 alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base16Alphabet.LowerCase">
+            <summary>
+            Gets lower case Base16 alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base16Alphabet.ModHex">
+            <summary>
+            Gets ModHex Base16 alphabet, used by Yubico apps.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base16Alphabet.CaseSensitive">
+            <summary>
+            Gets a value indicating whether the decoding should be performed in a case sensitive fashion.
+            The default is false.
+            </summary>
+        </member>
+        <member name="T:SimpleBase.Base32">
+            <summary>
+            Base32 encoding/decoding functions.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base32.#ctor(SimpleBase.Base32Alphabet)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base32"/> class with a
+            custom alphabet.
+            </summary>
+            <param name="alphabet">Alphabet to use.</param>
+        </member>
+        <member name="P:SimpleBase.Base32.Crockford">
+            <summary>
+            Gets Douglas Crockford's Base32 flavor with substitution characters.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32.Rfc4648">
+            <summary>
+            Gets RFC 4648 variant of Base32 coder.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32.ExtendedHex">
+            <summary>
+            Gets Extended Hex variant of Base32 coder.
+            </summary>
+            <remarks>Also from RFC 4648.</remarks>
+        </member>
+        <member name="P:SimpleBase.Base32.ZBase32">
+            <summary>
+            Gets z-base-32 variant of Base32 coder.
+            </summary>
+            <remarks>This variant is used in Mnet, ZRTP and Tahoe-LAFS.</remarks>
+        </member>
+        <member name="P:SimpleBase.Base32.Geohash">
+            <summary>
+            Gets Geohash variant of Base32 coder.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32.Bech32">
+            <summary>
+            Gets Bech32 variant of Base32 coder.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32.FileCoin">
+            <summary>
+            Gets FileCoin variant of Base32 coder.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32.Alphabet">
+            <summary>
+            Gets the encoding alphabet.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base32.GetSafeByteCountForDecoding(System.ReadOnlySpan{System.Char})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.GetSafeCharCountForEncoding(System.ReadOnlySpan{System.Byte})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.Encode(System.Int64)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.Encode(System.UInt64)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.DecodeUInt64(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.DecodeInt64(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.Encode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encode a memory span into a Base32 string without padding.
+            </summary>
+            <param name="bytes">Buffer to be encoded.</param>
+            <returns>Encoded string.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.Encode(System.ReadOnlySpan{System.Byte},System.Boolean)">
+            <summary>
+            Encode a memory span into a Base32 string.
+            </summary>
+            <param name="bytes">Buffer to be encoded.</param>
+            <param name="padding">Append padding characters in the output.</param>
+            <returns>Encoded string.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.Decode(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Decode a Base32 encoded string into bytes.
+            </summary>
+            <param name="text">Encoded Base32 string.</param>
+            <returns>Decoded bytes.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.Encode(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encode a binary stream to a Base32 text stream without padding.
+            </summary>
+            <param name="input">Input bytes.</param>
+            <param name="output">The writer the output is written to.</param>
+        </member>
+        <member name="M:SimpleBase.Base32.Encode(System.IO.Stream,System.IO.TextWriter,System.Boolean)">
+            <summary>
+            Encode a binary stream to a Base32 text stream.
+            </summary>
+            <param name="input">Input bytes.</param>
+            <param name="output">The writer the output is written to.</param>
+            <param name="padding">Whether to use padding at the end of the output.</param>
+        </member>
+        <member name="M:SimpleBase.Base32.EncodeAsync(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encode a binary stream to a Base32 text stream without padding.
+            </summary>
+            <param name="input">Input bytes.</param>
+            <param name="output">The writer the output is written to.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.EncodeAsync(System.IO.Stream,System.IO.TextWriter,System.Boolean)">
+            <summary>
+            Encode a binary stream to a Base32 text stream.
+            </summary>
+            <param name="input">Input bytes.</param>
+            <param name="output">The writer the output is written to.</param>
+            <param name="padding">Whether to use padding at the end of the output.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.Decode(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode a text stream into a binary stream.
+            </summary>
+            <param name="input">TextReader open on the stream.</param>
+            <param name="output">Binary output stream.</param>
+        </member>
+        <member name="M:SimpleBase.Base32.DecodeAsync(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode a text stream into a binary stream.
+            </summary>
+            <param name="input">TextReader open on the stream.</param>
+            <param name="output">Binary output stream.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.TryEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base32.TryEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Boolean,System.Int32@)">
+            <summary>
+            Encode to the given preallocated buffer.
+            </summary>
+            <param name="bytes">Input bytes.</param>
+            <param name="output">Output buffer.</param>
+            <param name="padding">Whether to use padding characters at the end.</param>
+            <param name="numCharsWritten">Number of characters written to the output.</param>
+            <returns>True if encoding is successful, false if the output is invalid.</returns>
+        </member>
+        <member name="M:SimpleBase.Base32.TryDecode(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="T:SimpleBase.Base32Alphabet">
+            <summary>
+            Base32 alphabet flavors.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base32Alphabet.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base32Alphabet"/> class.
+            </summary>
+            <param name="alphabet">Characters.</param>
+        </member>
+        <member name="M:SimpleBase.Base32Alphabet.#ctor(System.String,System.Char,SimpleBase.PaddingPosition)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base32Alphabet"/> class.
+            </summary>
+            <param name="alphabet">Encoding alphabet to use.</param>
+            <param name="paddingChar">Padding character.</param>
+            <param name="paddingPosition">Position of the padding characters in the encoder output.</param>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.Crockford">
+            <summary>
+            Gets Crockford alphabet.
+            </summary>gpg
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.Rfc4648">
+            <summary>
+            Gets RFC4648 alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.ExtendedHex">
+            <summary>
+            Gets Extended Hex alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.ZBase32">
+            <summary>
+            Gets z-base-32 alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.Geohash">
+            <summary>
+            Gets Geohash alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.FileCoin">
+            <summary>
+            Gets FileCoin alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.Base32H">
+            <summary>
+            Gets Base32H alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.Bech32">
+            <summary>
+            Gets Bech32 alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.PaddingChar">
+            <summary>
+            Gets the padding character used in encoding.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base32Alphabet.PaddingPosition">
+            <summary>
+            Gets the position of the padding characters in the encoder output.
+            </summary>
+        </member>
+        <member name="T:SimpleBase.Base58">
+            <summary>
+            Base58 Encoding/Decoding implementation.
+            </summary>
+            <remarks>
+            Base58 doesn't implement a Stream-based interface because it's not feasible to use
+            on large buffers.
+            </remarks>
+        </member>
+        <member name="M:SimpleBase.Base58.#ctor(SimpleBase.Base58Alphabet)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base58"/> class
+            using a custom alphabet.
+            </summary>
+            <param name="alphabet">Alphabet to use.</param>
+        </member>
+        <member name="P:SimpleBase.Base58.Bitcoin">
+            <summary>
+            Gets Bitcoin flavor.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base58.Ripple">
+            <summary>
+            Gets Ripple flavor.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base58.Flickr">
+            <summary>
+            Gets Flickr flavor.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base58.Alphabet">
+            <summary>
+            Gets the encoding alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base58.ZeroChar">
+            <summary>
+            Gets the character for zero.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base58.GetSafeByteCountForDecoding(System.ReadOnlySpan{System.Char})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base58.GetSafeByteCountForDecoding(System.Int32,System.Int32)">
+            <summary>
+            Retrieve safe byte count while avoiding multiple counting operations.
+            </summary>
+            <param name="textLen">Length of text.</param>
+            <param name="numZeroes">Number of prefix zeroes.</param>
+            <returns>Length of safe allocation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.GetSafeCharCountForEncoding(System.ReadOnlySpan{System.Byte})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base58.EncodeCheck(System.ReadOnlySpan{System.Byte},System.Byte)">
+            <summary>
+            Generate a Base58Check string out of a version and payload.
+            </summary>
+            <param name="payload">Address data.</param>
+            <param name="version">Address version.</param>
+            <returns>Base58Check address.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.TryDecodeCheck(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Byte@,System.Int32@)">
+            <summary>
+            Try to decode and verify a Base58Check address.
+            </summary>
+            <param name="address">Address string.</param>
+            <param name="payload">Output address buffer.</param>
+            <param name="version">Address version.</param>
+            <param name="numBytesWritten">Number of bytes written in the output payload.</param>
+            <returns>True if address was decoded successfully and passed validation. False, otherwise.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.EncodeCb58(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Generate an Avalanche CB58 string out of a version and payload.
+            </summary>
+            <param name="payload">Address data.</param>
+            <returns>CB58 address.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.TryDecodeCb58(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@)">
+            <summary>
+            Try to decode and verify an Avalanche CB58 address.
+            </summary>
+            <param name="address">Address string.</param>
+            <param name="payload">Output address buffer.</param>
+            <param name="numBytesWritten">Number of bytes written in the output payload.</param>
+            <returns>True if address was decoded successfully and passed validation. False, otherwise.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.Encode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encode to Base58 representation.
+            </summary>
+            <param name="bytes">Bytes to encode.</param>
+            <returns>Encoded string.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.Decode(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Decode a Base58 representation.
+            </summary>
+            <param name="text">Base58 encoded text.</param>
+            <returns>Decoded bytes.</returns>
+        </member>
+        <member name="M:SimpleBase.Base58.TryEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base58.TryDecode(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="T:SimpleBase.Base58Alphabet">
+            <summary>
+            Base58 alphabet.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base58Alphabet.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base58Alphabet"/> class
+            using a custom alphabet.
+            </summary>
+            <param name="alphabet">Alphabet to use.</param>
+        </member>
+        <member name="P:SimpleBase.Base58Alphabet.Bitcoin">
+            <summary>
+            Gets Bitcoin alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base58Alphabet.Ripple">
+            <summary>
+            Gets Base58 alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base58Alphabet.Flickr">
+            <summary>
+            Gets Flickr alphabet.
+            </summary>
+        </member>
+        <member name="T:SimpleBase.Base85">
+            <summary>
+            Base58 encoding/decoding class.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base85.#ctor(SimpleBase.Base85Alphabet)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base85"/> class
+            using a custom alphabet.
+            </summary>
+            <param name="alphabet">Alphabet to use.</param>
+        </member>
+        <member name="P:SimpleBase.Base85.Z85">
+            <summary>
+            Gets Z85 flavor of Base85.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85.Ascii85">
+            <summary>
+            Gets Ascii85 flavor of Base85.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85.Rfc1924">
+            <summary>
+            Gets RFC 1924 IPv6 flavor of Base85.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85.Alphabet">
+            <summary>
+            Gets the encoding alphabet.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base85.GetSafeByteCountForDecoding(System.ReadOnlySpan{System.Char})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base85.GetSafeCharCountForEncoding(System.ReadOnlySpan{System.Byte})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base85.Encode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encode the given bytes into Base85.
+            </summary>
+            <param name="bytes">Bytes to encode.</param>
+            <returns>Encoded text.</returns>
+        </member>
+        <member name="M:SimpleBase.Base85.TryEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.Base85.Encode(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encode a given stream into a text writer.
+            </summary>
+            <param name="input">Input stream.</param>
+            <param name="output">Output writer.</param>
+        </member>
+        <member name="M:SimpleBase.Base85.EncodeAsync(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encode a given stream into a text writer.
+            </summary>
+            <param name="input">Input stream.</param>
+            <param name="output">Output writer.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base85.Decode(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode a text reader into a stream.
+            </summary>
+            <param name="input">Input reader.</param>
+            <param name="output">Output stream.</param>
+        </member>
+        <member name="M:SimpleBase.Base85.DecodeAsync(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode a text reader into a stream.
+            </summary>
+            <param name="input">Input reader.</param>
+            <param name="output">Output stream.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.Base85.Decode(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Decode given characters into bytes.
+            </summary>
+            <param name="text">Characters to decode.</param>
+            <returns>Decoded bytes.</returns>
+        </member>
+        <member name="M:SimpleBase.Base85.TryDecode(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@)">
+            <inheritdoc/>
+        </member>
+        <member name="T:SimpleBase.Base85Alphabet">
+            <summary>
+            Base85 Alphabet.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.Base85Alphabet.#ctor(System.String,System.Nullable{System.Char},System.Nullable{System.Char})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base85Alphabet"/> class
+            using custom settings.
+            </summary>
+            <param name="alphabet">Alphabet to use.</param>
+            <param name="allZeroShortcut">Character to substitute for all zero.</param>
+            <param name="allSpaceShortcut">Character to substitute for all space.</param>
+        </member>
+        <member name="P:SimpleBase.Base85Alphabet.Z85">
+            <summary>
+            Gets ZeroMQ Z85 Alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85Alphabet.Ascii85">
+            <summary>
+            Gets Adobe Ascii85 Alphabet (each character is directly produced by raw value + 33),
+            also known as "btoa" encoding.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85Alphabet.Rfc1924">
+            <summary>
+            Gets Base85 encoding defined in RFC 1924.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85Alphabet.AllZeroShortcut">
+            <summary>
+            Gets the character to be used for "all zeros".
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85Alphabet.AllSpaceShortcut">
+            <summary>
+            Gets the character to be used for "all spaces".
+            </summary>
+        </member>
+        <member name="P:SimpleBase.Base85Alphabet.HasShortcut">
+            <summary>
+            Gets a value indicating whether the alphabet uses one of shortcut characters for all spaces
+            or all zeros.
+            </summary>
+        </member>
+        <member name="T:SimpleBase.Base85Ipv6">
+            <summary>
+            Base85 implementation with additional IPv6 coding functions.
+            </summary>
+            <remarks>
+            RFC 1924 sucks, arguably because it's a very early proposal in the history of IPv6:
+            - It contains special chars: It's prone to be confused with other syntactical elements.
+              It can even cause security issues due to poor escaping, let alone UX problems.
+            - Length gains are usually marginal: IPv6 uses zero elimination to reduce the address representation.
+            - Slow. The algorithm is division based, instead of faster bitwise operations.
+            So, that's why I only included a proof of concept implementation instead of working on optimizing it.
+            RFC 1924 should die, and this code should only be used to support some obscure standard or code somewhere.
+            </remarks>
+        </member>
+        <member name="M:SimpleBase.Base85Ipv6.#ctor(SimpleBase.Base85Alphabet)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.Base85Ipv6"/> class.
+            </summary>
+            <param name="alphabet">Coding alphabet.</param>
+        </member>
+        <member name="M:SimpleBase.Base85Ipv6.EncodeIpv6(System.Net.IPAddress)">
+            <summary>
+            Encode IPv6 address into RFC 1924 Base85 text.
+            </summary>
+            <param name="ip">IPv6 address.</param>
+            <returns>Encoded text.</returns>
+        </member>
+        <member name="M:SimpleBase.Base85Ipv6.DecodeIpv6(System.String)">
+            <summary>
+            Decode an RFC 1924 encoded text into an IPv6 address.
+            </summary>
+            <param name="text">Encoded text.</param>
+            <returns>Decoded IPv6 address.</returns>
+        </member>
+        <member name="T:SimpleBase.CodingAlphabet">
+            <summary>
+            A single encoding algorithm can support many different alphabets.
+            EncodingAlphabet consists of a basis for implementing different
+            alphabets for different encodings. It's suitable if you want to
+            implement your own encoding based on the existing base classes.
+            </summary>
+        </member>
+        <member name="F:SimpleBase.CodingAlphabet.maxLength">
+            <summary>
+            Specifies the highest possible char value in an encoding alphabet
+            Any char above with would raise an exception.
+            </summary>
+        </member>
+        <member name="F:SimpleBase.CodingAlphabet.reverseLookupTable">
+            <summary>
+            Holds a mapping from character to an actual byte value
+            The values are held as "value + 1" so a zero would denote "not set"
+            and would cause an exception.
+            </summary>
+            <remarks>byte[] has no discernible perf impact and saves memory.</remarks>
+        </member>
+        <member name="M:SimpleBase.CodingAlphabet.#ctor(System.Int32,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SimpleBase.CodingAlphabet"/> class.
+            </summary>
+            <param name="length">Length of the alphabe.</param>
+            <param name="alphabet">Alphabet character.</param>
+        </member>
+        <member name="P:SimpleBase.CodingAlphabet.Length">
+            <summary>
+            Gets the length of the alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.CodingAlphabet.Value">
+            <summary>
+            Gets the characters of the alphabet.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.CodingAlphabet.InvalidCharacter(System.Char)">
+            <summary>
+            Generates a standard invalid character exception for alphabets.
+            </summary>
+            <remarks>
+            The reason this is not a throwing method itself is
+            that the compiler has no way of knowing whether the execution
+            will end after the method call and can incorrectly assume
+            reachable code.
+            </remarks>
+            <param name="c">Characters.</param>
+            <returns>Exception to be thrown.</returns>
+        </member>
+        <member name="M:SimpleBase.CodingAlphabet.ToString">
+            <summary>
+            Get the string representation of the alphabet.
+            </summary>
+            <returns>The characters of the encoding alphabet.</returns>
+        </member>
+        <member name="M:SimpleBase.CodingAlphabet.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:SimpleBase.CodingAlphabet.Map(System.Char,System.Int32)">
+            <summary>
+            Map a character to a value.
+            </summary>
+            <param name="c">Characters.</param>
+            <param name="value">Corresponding value.</param>
+        </member>
+        <member name="T:SimpleBase.IBaseCoder">
+            <summary>
+            Basic encoding functionality.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.IBaseCoder.Encode(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Encode a buffer to base-encoded representation.
+            </summary>
+            <param name="bytes">Bytes to encode.</param>
+            <returns>Base16 string.</returns>
+        </member>
+        <member name="M:SimpleBase.IBaseCoder.Decode(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Decode base-encoded text into bytes.
+            </summary>
+            <param name="text">Base16 text.</param>
+            <returns>Decoded bytes.</returns>
+        </member>
+        <member name="T:SimpleBase.IBaseStreamCoder">
+            <summary>
+            Stream-based encoding functionality.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.IBaseStreamCoder.Encode(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encodes stream of bytes into base-encoded text.
+            </summary>
+            <param name="input">Stream that provides bytes to be encoded.</param>
+            <param name="output">Stream that the encoded text is written to.</param>
+        </member>
+        <member name="M:SimpleBase.IBaseStreamCoder.EncodeAsync(System.IO.Stream,System.IO.TextWriter)">
+            <summary>
+            Encodes stream of bytes into base-encoded text.
+            </summary>
+            <param name="input">Stream that provides bytes to be encoded.</param>
+            <param name="output">Stream that the encoded text is written to.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SimpleBase.IBaseStreamCoder.Decode(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode base-encoded text through streams. Stream based variant tries to consume
+            as little memory as possible, and relies of .NET's own underlying buffering mechanisms,
+            contrary to their buffer-based versions.
+            </summary>
+            <param name="input">Stream that the encoded bytes would be read from.</param>
+            <param name="output">Stream where decoded bytes will be written to.</param>
+        </member>
+        <member name="M:SimpleBase.IBaseStreamCoder.DecodeAsync(System.IO.TextReader,System.IO.Stream)">
+            <summary>
+            Decode base-encoded text through streams. Stream based variant tries to consume
+            as little memory as possible, and relies of .NET's own underlying buffering mechanisms,
+            contrary to their buffer-based versions.
+            </summary>
+            <param name="input">Stream that the encoded bytes would be read from.</param>
+            <param name="output">Stream where decoded bytes will be written to.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="T:SimpleBase.ICodingAlphabet">
+            <summary>
+            Defines basic encoding alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.ICodingAlphabet.Value">
+            <summary>
+            Gets the characters in the alphabet.
+            </summary>
+        </member>
+        <member name="P:SimpleBase.ICodingAlphabet.Length">
+            <summary>
+            Gets the length of the alphabet.
+            </summary>
+        </member>
+        <member name="T:SimpleBase.INonAllocatingBaseCoder">
+            <summary>
+            Efficient encoding functionality using pre-allocated memory buffers by the callers.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.INonAllocatingBaseCoder.TryEncode(System.ReadOnlySpan{System.Byte},System.Span{System.Char},System.Int32@)">
+            <summary>
+            Encode a buffer into a base-encoded representation using pre-allocated buffers.
+            </summary>
+            <param name="input">Bytes to encode.</param>
+            <param name="output">Output buffer.</param>
+            <param name="numCharsWritten">Actual number of characters written to the output.</param>
+            <returns>Whether encoding was successful or not. If false, <paramref name="numCharsWritten"/>
+            will be zero and the content of <paramref name="output"/> will be undefined.</returns>
+        </member>
+        <member name="M:SimpleBase.INonAllocatingBaseCoder.TryDecode(System.ReadOnlySpan{System.Char},System.Span{System.Byte},System.Int32@)">
+            <summary>
+            Decode an encoded character buffer into a pre-allocated output buffer.
+            </summary>
+            <param name="input">Encoded text.</param>
+            <param name="output">Output buffer.</param>
+            <param name="numBytesWritten">Actual number of bytes written to the output.</param>
+            <returns>Whether decoding was successful. If false, the value of <paramref name="numBytesWritten"/>
+            will be zero and the content of <paramref name="output"/> will be undefined.</returns>
+        </member>
+        <member name="M:SimpleBase.INonAllocatingBaseCoder.GetSafeByteCountForDecoding(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Gets a safe estimation about how many bytes decoding will take without performing
+            the actual decoding operation. The estimation can be slightly larger than the actual
+            output size.
+            </summary>
+            <param name="text">Text to be decoded.</param>
+            <returns>Number of estimated bytes, or zero if the input length is invalid.</returns>
+        </member>
+        <member name="M:SimpleBase.INonAllocatingBaseCoder.GetSafeCharCountForEncoding(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Gets a safe estimation about how many characters encoding a buffer will take without
+            performing the actual encoding operation. The estimation can be slightly larger than the
+            actual output size.
+            </summary>
+            <param name="buffer">Bytes to be encoded.</param>
+            <returns>Number of estimated characters, or zero if the input length is invalid.</returns>
+        </member>
+        <member name="T:SimpleBase.INumericBaseCoder">
+            <summary>
+            Number-based coding functions.
+            </summary>
+        </member>
+        <member name="M:SimpleBase.INumericBaseCoder.Encode(System.Int64)">
+            <summary>
+            Encode the given number.
+            </summary>
+            <param name="number">Number to encode.</param>
+            <returns>Encoded string.</returns>
+            <remarks>Negative numbers are not supported.</remarks>
+            <exception cref="T:System.ArgumentOutOfRangeException">If number is negative.</exception>
+        </member>
+        <member name="M:SimpleBase.INumericBaseCoder.Encode(System.UInt64)">
+            <summary>
+            Encode the given number.
+            </summary>
+            <param name="number">Number to encode.</param>
+            <returns>Encoded string.</returns>
+        </member>
+        <member name="M:SimpleBase.INumericBaseCoder.DecodeInt64(System.String)">
+            <summary>
+            Decode text to a number.
+            </summary>
+            <param name="text">Text to decode.</param>
+            <returns>Decoded number.</returns>
+            <exception cref="T:System.InvalidOperationException">
+            If the decoded number is larger to fit in a variable or is negative.
+            </exception>
+        </member>
+        <member name="M:SimpleBase.INumericBaseCoder.DecodeUInt64(System.String)">
+            <summary>
+            Decode text to a number.
+            </summary>
+            <param name="text">Text to decode.</param>
+            <returns>Decoded number.</returns>
+            <exception cref="T:System.InvalidOperationException">
+            If the decoded number is larger to fit in a variable.
+            </exception>
+        </member>
+        <member name="T:SimpleBase.PaddingPosition">
+            <summary>
+            Position of the padding in an encoder output.
+            </summary>
+        </member>
+        <member name="F:SimpleBase.PaddingPosition.Start">
+            <summary>
+            Padding appears at the start of the encoded buffer.
+            </summary>
+        </member>
+        <member name="F:SimpleBase.PaddingPosition.End">
+            <summary>
+            Padding appears at the end of the buffer.
+            </summary>
+        </member>
+        <member name="T:SimpleBase.StreamHelper">
+            <summary>
+            Provides Stream functionality to any buffer-based encoding operation.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -4,30 +4,6 @@
         <name>Common.Logging.Core</name>
     </assembly>
     <members>
-        <member name="T:Common.Logging.Factory.StringFormatMethodAttribute">
-            <summary>
-            Indicates that the marked method builds string by format pattern and (optional) arguments.
-            Parameter, which contains format string, should be given in constructor. The format string
-            should be in <see cref="M:System.String.Format(System.IFormatProvider,System.String,System.Object[])"/>-like form
-            </summary>
-            <example><code>
-            [StringFormatMethod("message")]
-            public void ShowError(string message, params object[] args) { /* do something */ }
-            public void Foo() {
-              ShowError("Failed: {0}"); // Warning: Non-existing argument in format string
-            }
-            </code></example>
-        </member>
-        <member name="M:Common.Logging.Factory.StringFormatMethodAttribute.#ctor(System.String)">
-            <param name="formatParameterName">
-            Specifies which parameter of an annotated method should be treated as format-string
-            </param>
-        </member>
-        <member name="P:Common.Logging.Factory.StringFormatMethodAttribute.FormatParameterName">
-            <summary>
-            The name of the string parameter being formatted
-            </summary>
-        </member>
         <member name="T:Common.Logging.FormatMessageHandler">
             <summary>
              The type of method that is passed into e.g. <see cref="M:Common.Logging.ILog.Debug(System.Action{Common.Logging.FormatMessageHandler})"/> 
@@ -80,7 +56,7 @@
             </remarks>
             <example>
             The example below demonstrates using callback style for creating the message, where the call to the 
-            <see cref="M:System.Random.NextDouble"/> and the underlying <see cref="M:System.String.Format(System.String,System.Object[])"/> only happens, if level <see cref="F:Common.Logging.LogLevel.Debug"/> is enabled:
+            <see cref="!:Random.NextDouble"/> and the underlying <see cref="M:System.String.Format(System.String,System.Object[])"/> only happens, if level <see cref="F:Common.Logging.LogLevel.Debug"/> is enabled:
             <code>
             Log.Debug( m=&gt;m(&quot;result is {0}&quot;, random.NextDouble()) );
             Log.Debug(delegate(m) { m(&quot;result is {0}&quot;, random.NextDouble()); });
@@ -901,6 +877,30 @@
         <member name="F:Common.Logging.LogLevel.Off">
             <summary>
             Do not log anything.
+            </summary>
+        </member>
+        <member name="T:Common.Logging.Factory.StringFormatMethodAttribute">
+            <summary>
+            Indicates that the marked method builds string by format pattern and (optional) arguments.
+            Parameter, which contains format string, should be given in constructor. The format string
+            should be in <see cref="M:System.String.Format(System.IFormatProvider,System.String,System.Object[])"/>-like form
+            </summary>
+            <example><code>
+            [StringFormatMethod("message")]
+            public void ShowError(string message, params object[] args) { /* do something */ }
+            public void Foo() {
+              ShowError("Failed: {0}"); // Warning: Non-existing argument in format string
+            }
+            </code></example>
+        </member>
+        <member name="M:Common.Logging.Factory.StringFormatMethodAttribute.#ctor(System.String)">
+            <param name="formatParameterName">
+            Specifies which parameter of an annotated method should be treated as format-string
+            </param>
+        </member>
+        <member name="P:Common.Logging.Factory.StringFormatMethodAttribute.FormatParameterName">
+            <summary>
+            The name of the string parameter being formatted
             </summary>
         </member>
     </members>
