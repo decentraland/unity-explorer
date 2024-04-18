@@ -126,6 +126,9 @@ namespace DCL.Emoji
 
         private void SetSelectedEmoji(int index)
         {
+            if (!view.gameObject.activeInHierarchy)
+                return;
+
             if (previouslySelected != null)
                 previouslySelected.SelectedBackground.SetActive(false);
 
