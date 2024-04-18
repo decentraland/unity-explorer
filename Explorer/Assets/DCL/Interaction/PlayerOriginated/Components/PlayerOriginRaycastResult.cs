@@ -9,6 +9,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
         ///     Collider is hit and it belongs to an entity
         /// </summary>
         public bool IsValidHit => EntityInfo.HasValue;
+        public float Distance;
 
         public GlobalColliderEntityInfo? EntityInfo;
 

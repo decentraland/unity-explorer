@@ -52,7 +52,7 @@ namespace DCL.Chat
         public LoopListView2 LoopList { get; private set; }
 
         [field: SerializeField]
-        public Button EmojiPanelButton { get; private set; }
+        public EmojiButtonView EmojiPanelButton { get; private set; }
 
         [field: SerializeField]
         public Button CloseChatButton { get; private set; }
