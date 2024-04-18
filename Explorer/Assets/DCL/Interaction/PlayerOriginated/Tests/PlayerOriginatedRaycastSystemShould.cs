@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Physics;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Interaction.PlayerOriginated.Components;
@@ -94,7 +95,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                        });
 
             ref CursorComponent cc = ref world.Get<CursorComponent>(cameraEntity);
-            cc.CursorIsLocked = true;
+            cc.CursorState = CursorState.Locked;
 
             system.Update(0);
 

@@ -37,6 +37,7 @@ MonoBehaviour:
   - rid: 7162477796324278274
   - rid: 3836309668583964676
   - rid: 6697045322133929986
+  - rid: 4132209997426458630
   references:
     version: 2
     RefIds:
@@ -100,6 +101,16 @@ MonoBehaviour:
           - InputAction: 13
             Key: 4
             Icon: {fileID: 0}
+        <hoverMaterial>k__BackingField:
+          m_AssetGUID: 31f3cd961c052c84baf27b3938e5b0f4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <hoverOutOfRangeMaterial>k__BackingField:
+          m_AssetGUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -168,11 +179,6 @@ MonoBehaviour:
         - confettipopper
         <SettingsMenuConfiguration>k__BackingField:
           m_AssetGUID: b47b66eab8da46b4cbcc30100e4194e0
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <GeneralAudioMixer>k__BackingField:
-          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -266,6 +272,32 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
+    - rid: 4132209997426458630
+      type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CrosshairCanvasAsset>k__BackingField:
+          m_AssetGUID: bf82184de91c3944b8de02d57d7dd151
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CrossHairNormal>k__BackingField:
+          m_AssetGUID: 98d75b092dc90bb49a14cf7e80096e01
+          m_SubObjectName: Crosshair
+          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+          m_EditorAssetChanged: 1
+        <CrossHairInteraction>k__BackingField:
+          m_AssetGUID: 26fa4ad5e35df464b8cc4bd887c2a6d9
+          m_SubObjectName: CrosshairInteractive
+          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+          m_EditorAssetChanged: 1
+        <CrossHairCameraPan>k__BackingField:
+          m_AssetGUID: 25a27c814a51d4a67a7ebd0b3b672284
+          m_SubObjectName: CursorDragCamera
+          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+          m_EditorAssetChanged: 1
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

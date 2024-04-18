@@ -31,6 +31,7 @@ namespace ECS.SceneLifeCycle.Tests
             system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings);
 
             realmComponent = new RealmComponent(new RealmData(new TestIpfsRealm()));
+            world.Create(realmComponent, new VolatileScenePointers());
         }
 
         [Test]
@@ -38,8 +39,6 @@ namespace ECS.SceneLifeCycle.Tests
         {
             realmPartitionSettings.ScenesRequestBatchSize.Returns(2);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(3000);
-
-            world.Create(realmComponent, new VolatileScenePointers());
 
             // Create 4
             for (var i = 0; i < 4; i++)

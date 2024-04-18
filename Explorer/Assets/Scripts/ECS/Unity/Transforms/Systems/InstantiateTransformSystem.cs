@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -31,13 +32,9 @@ namespace ECS.Unity.Transforms.Systems
         [Query]
         [All(typeof(SDKTransform))]
         [None(typeof(TransformComponent))]
-        private void InstantiateTransform(in Entity entity)
+        private void InstantiateTransform(in Entity entity, CRDTEntity sdkEntity)
         {
-            Transform newTransform = transformPool.Get();
-
-            newTransform.SetDebugName(entity);
-            var transformComponent = new TransformComponent(newTransform);
-            World.Add(entity, transformComponent);
+            World.Add(entity, transformPool.CreateTransformComponent(entity, sdkEntity));
         }
     }
 }

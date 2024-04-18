@@ -17,8 +17,5 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 948672f7ec04b4546aca1c268f2b06b3, type: 3}
   relativeVolume: 1
   audioCategory: 3
-  pitchVariation: 0.5
-  ClipSelectionMode: 0
-  ClipPlaybackMode: 0
-  ClipLoopMode: 0
-  startInRandomPositionInsideClip: 0
+  pitchVariation: 0.05
+  clipSelectionMode: 0

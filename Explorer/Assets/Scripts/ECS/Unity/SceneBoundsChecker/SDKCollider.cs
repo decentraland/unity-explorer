@@ -24,19 +24,13 @@ namespace ECS.Unity.SceneBoundsChecker
             }
         }
 
-        public bool IsActiveBySceneBounds
+        public void ForceActiveBySceneBounds(bool value)
         {
-            get => isActiveBySceneBounds;
-
-            internal set
-            {
-                if (isActiveBySceneBounds != value)
-                {
-                    isActiveBySceneBounds = value;
-                    ResolveColliderActivity();
-                }
-            }
+            isActiveBySceneBounds = value;
+            ResolveColliderActivity();
         }
+
+        public bool IsActiveBySceneBounds => isActiveBySceneBounds;
 
         private void ResolveColliderActivity()
         {
