@@ -30,12 +30,15 @@ namespace DCL.CharacterCamera.Systems
         {
             switch (camera.Mode)
             {
+                case CameraMode.DroneView:
+                    CinemachineFreeLook dvc = cinemachinePreset.DroneViewCameraData.Camera;
+                    dvc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
+                    dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
+                    break;
                 case CameraMode.ThirdPerson:
-
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
                     tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
                     tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
-
                     break;
 
                 case CameraMode.FirstPerson:
@@ -60,6 +63,9 @@ namespace DCL.CharacterCamera.Systems
         {
             switch (camera.Mode)
             {
+                case CameraMode.DroneView:
+                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
+                    break;
                 case CameraMode.ThirdPerson:
                     cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
                     break;

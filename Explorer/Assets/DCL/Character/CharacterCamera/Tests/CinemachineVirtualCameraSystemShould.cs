@@ -46,9 +46,6 @@ namespace DCL.CharacterCamera.Tests
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
             thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
             thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
-            thirdPersonCameraData.ZoomSensitivity.Returns(ZOOM_SENSITIVITY);
-            thirdPersonCameraData.ZoomInOrbitThreshold.Returns(new CinemachineFreeLook.Orbit[3]);
-            thirdPersonCameraData.ZoomOutOrbitThreshold.Returns(new CinemachineFreeLook.Orbit[3]);
 
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();
             freeCamera.transform.SetParent(cinemachineObj.transform);

@@ -39,17 +39,15 @@ namespace DCL.CharacterMotion.Systems
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput)
         {
-            float fovChangeSpeed = characterControllerSettings.FOVChangeSpeed * dt;
-
             if (movementInput.Kind == MovementKind.Run)
             {
                 float speedFactor = rigidTransform.MoveVelocity.Velocity.magnitude / characterControllerSettings.RunSpeed;
                 float targetFov = Mathf.Lerp(0, characterControllerSettings.CameraFOVWhileRunning, speedFactor);
 
-                fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, targetFov, fovChangeSpeed);
+                fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, targetFov, characterControllerSettings.FOVIncreaseSpeed * dt);
             }
             else
-                fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, 0, fovChangeSpeed);
+                fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, 0, characterControllerSettings.FOVDecreaseSpeed * dt);
         }
     }
 }
