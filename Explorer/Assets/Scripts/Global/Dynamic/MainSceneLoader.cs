@@ -10,6 +10,7 @@ using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -61,9 +62,15 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            EnsureNotNull();
             SetupInitialConfig();
 
             InitializeFlowAsync(destroyCancellationToken).Forget();
+        }
+
+        private void EnsureNotNull()
+        {
+            cursorRoot.EnsureNotNull();
         }
 
         private void OnDestroy()

@@ -72,9 +72,7 @@ namespace DCL.PluginSystem.Global
             crosshairCanvas.Initialize(crosshair, crosshairInteractable);
             crosshairCanvas.SetDisplayed(false);
 
-            canvas.EnsureNotNull("Canvas not found")
-                  .rootVisualElement.EnsureNotNull("Root not found")
-                  .Add(crosshairCanvas);
+            canvas.rootVisualElement.Add(crosshairCanvas);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
