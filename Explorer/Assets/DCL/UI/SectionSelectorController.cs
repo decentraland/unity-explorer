@@ -21,6 +21,7 @@ namespace DCL.UI
     {
         private readonly Dictionary<T, ISection> sections;
         private T previousSection;
+        private static readonly int ACTIVE = Animator.StringToHash("Active");
 
         public SectionSelectorController(Dictionary<T, ISection> sections, T initialSection)
         {
@@ -28,16 +29,23 @@ namespace DCL.UI
             previousSection = initialSection;
         }
 
+        public void SetAnimationState(bool isOn, TabSelectorView selectorToggle)
+        {
+            if(isOn)
+                selectorToggle.tabAnimator.SetTrigger(ACTIVE);
+            else
+            {
+                selectorToggle.tabAnimator.Rebind();
+                selectorToggle.tabAnimator.Update(0);
+            }
+        }
+
         public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
         {
-            selectorToggle.SelectedImage.gameObject.SetActive(isOn);
-            selectorToggle.UnselectedImage.gameObject.SetActive(!isOn);
-            selectorToggle.SelectedText.SetActive(isOn);
-            selectorToggle.UnselectedText.SetActive(!isOn);
-            selectorToggle.SelectedBackground.gameObject.SetActive(isOn);
-
             if (!isOn || EnumUtils.Equals(section, previousSection))
                 return;
+
+            SetAnimationState(true, selectorToggle);
 
             if (animate)
             {

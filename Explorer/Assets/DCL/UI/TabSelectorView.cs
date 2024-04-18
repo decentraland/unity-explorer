@@ -10,6 +10,7 @@ namespace DCL.UI
     {
         private static readonly int HOVER = Animator.StringToHash("Hover");
         private static readonly int UNHOVER = Animator.StringToHash("Unhover");
+        private static readonly int ACTIVE = Animator.StringToHash("Active");
 
         [field: SerializeField]
         public Toggle TabSelectorToggle { get; private set; }
@@ -30,12 +31,11 @@ namespace DCL.UI
         public GameObject SelectedText { get; private set; }
 
         [field: SerializeField]
-        private Animator tabAnimator;
+        public Animator tabAnimator;
 
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig TabClickAudio { get; private set; }
-
 
         private void OnEnable()
         {
@@ -49,12 +49,12 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
+            tabAnimator.SetTrigger(ACTIVE);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if(tabAnimator != null)
+            if (tabAnimator != null)
                 tabAnimator.SetTrigger(HOVER);
         }
 
