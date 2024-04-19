@@ -18,7 +18,6 @@ namespace DCL.Backpack
     {
         private readonly Func<(World, Entity)> ecsContextProvider;
         private readonly IBackpackCommandBus backpackCommandBus;
-        private readonly IEquippedBodyShape equippedBodyShape;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
@@ -37,8 +36,7 @@ namespace DCL.Backpack
             ISelfProfile selfProfile,
             ICollection<string> forceRender,
             Func<(World, Entity)> ecsContextProvider,
-            IBackpackCommandBus backpackCommandBus,
-            IEquippedBodyShape equippedBodyShape
+            IBackpackCommandBus backpackCommandBus
         )
         {
             this.backpackEventBus = backpackEventBus;
@@ -46,7 +44,6 @@ namespace DCL.Backpack
             this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
             this.backpackCommandBus = backpackCommandBus;
-            this.equippedBodyShape = equippedBodyShape;
             this.selfProfile = selfProfile;
             this.forceRender = forceRender;
 
@@ -81,7 +78,6 @@ namespace DCL.Backpack
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
-                //TODO forceRender
                 await selfProfile.PublishAsync(ct);
                 var profile = await selfProfile.ProfileAsync(ct);
 
@@ -91,27 +87,6 @@ namespace DCL.Backpack
 
             publishProfileCts = publishProfileCts.SafeRestart();
             PublishProfileAsync(publishProfileCts.Token).Forget();
-        }
-
-        //This will retrieve the list of default hides for the current equipped wearables
-
-        //Manual hide override will be a separate task
-
-        //TODO retrieve logic from old renderer
-
-        public List<string> GetCurrentWearableHides()
-        {
-            List<string> hides = new List<string>();
-
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
-            {
-                IWearable? wearable = equippedWearables.Wearable(category);
-
-                if (wearable == null)
-                    continue;
-            }
-
-            return hides;
         }
 
         private void UpdateAvatarInWorld(Profile profile)
@@ -135,23 +110,20 @@ namespace DCL.Backpack
 
         private void OnWearableEquipped(IWearable wearable)
         {
+            equippedWearables.Equip(wearable);
+
             if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
-            {
-                equippedBodyShape.Equip(wearable);
                 UnEquipIncompatibleWearables(wearable);
-            }
-            else
-                equippedWearables.Equip(wearable);
         }
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)
         {
-            foreach ((string? _, IWearable? wearable) in equippedWearables.Items())
+            foreach ((string? key, IWearable? wearable) in equippedWearables.Items())
             {
                 if (wearable == null) continue;
                 if (wearable == bodyShape) continue;
                 if (wearable.IsCompatibleWithBodyShape(bodyShape.GetUrn())) continue;
-                backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(wearable.GetUrn()));
+                backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(key));
             }
         }
     }

@@ -51,7 +51,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly IEmoteCache emoteCache;
         private readonly DCLInput dclInput;
-        private readonly IEquippedBodyShape equippedBodyShape;
         private readonly IWebRequestController webRequestController;
 
         private NavmapController? navmapController;
@@ -80,8 +79,7 @@ namespace DCL.PluginSystem.Global
             IEmoteCache emoteCache,
             IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
-            DCLInput dclInput,
-            IEquippedBodyShape equippedBodyShape
+            DCLInput dclInput
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -103,7 +101,6 @@ namespace DCL.PluginSystem.Global
             this.forceRender = forceRender;
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
-            this.equippedBodyShape = equippedBodyShape;
         }
 
         public override void Dispose()
@@ -126,8 +123,7 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteCache,
                 settings.EmbeddedEmotesAsURN(),
-                forceRender,
-                equippedBodyShape
+                forceRender
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

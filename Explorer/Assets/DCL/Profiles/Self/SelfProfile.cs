@@ -25,7 +25,6 @@ namespace DCL.Profiles.Self
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyList<string> forceRender;
-        private readonly IEquippedBodyShape equippedBodyShape;
         private readonly ProfileBuilder profileBuilder = new ();
 
         public SelfProfile(
@@ -35,8 +34,7 @@ namespace DCL.Profiles.Self
             IWearableCatalog wearableCatalog,
             IEmoteCache emoteCache,
             IEquippedEmotes equippedEmotes,
-            IReadOnlyList<string> forceRender,
-            IEquippedBodyShape equippedBodyShape
+            IReadOnlyList<string> forceRender
         )
         {
             this.profileRepository = profileRepository;
@@ -46,7 +44,6 @@ namespace DCL.Profiles.Self
             this.emoteCache = emoteCache;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
-            this.equippedBodyShape = equippedBodyShape;
         }
 
         public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
@@ -74,8 +71,10 @@ namespace DCL.Profiles.Self
             var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
             ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
+            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
+
             profile = profileBuilder.From(profile)
-                                    .WithBodyShape(BodyShape.FromStringSafe(equippedBodyShape.Get().GetUrn()))
+                                    .WithBodyShape(bodyShape)
                                     .WithWearables(uniqueWearables)
                                     .WithEmotes(uniqueEmotes)
                                     .WithForceRender(forceRender)

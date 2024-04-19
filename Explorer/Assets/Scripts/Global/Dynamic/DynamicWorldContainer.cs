@@ -197,9 +197,8 @@ namespace Global.Dynamic
             staticContainer.CacheCleaner.Register(emotesCache);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
-            var equippedBodyShape = new EquippedBodyShape();
             var forceRender = new List<string>();
-            var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender, equippedBodyShape);
+            var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
                 realFlowLoadingStatus,
@@ -355,8 +354,7 @@ namespace Global.Dynamic
                     emotesCache,
                     realmNavigator,
                     forceRender,
-                    dclInput,
-                    equippedBodyShape
+                    dclInput
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
