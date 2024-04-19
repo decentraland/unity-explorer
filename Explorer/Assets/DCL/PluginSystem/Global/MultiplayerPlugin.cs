@@ -16,9 +16,11 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Systems;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using ECS;
+using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
 
@@ -39,6 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemotePoses remotePoses;
         private readonly ICharacterObject characterObject;
         private readonly IRealmData realmData;
+        private readonly IScenesCache scenesCache;
 
         public MultiplayerPlugin(
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -53,7 +56,8 @@ namespace DCL.PluginSystem.Global
             IRemotePoses remotePoses,
             ICharacterObject characterObject,
             IRealmData realmData,
-            IRemoteEntities remoteEntities
+            IRemoteEntities remoteEntities,
+            IScenesCache scenesCache
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -69,6 +73,7 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
+            this.scenesCache = scenesCache;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -98,6 +103,8 @@ namespace DCL.PluginSystem.Global
                 realFlowLoadingStatus,
                 realmData
             );
+
+            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
 #endif
         }
     }
