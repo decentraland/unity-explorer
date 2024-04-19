@@ -212,6 +212,11 @@
         public const string PLAYER_IDENTITY_DATA = nameof(PLAYER_IDENTITY_DATA);
 
         /// <summary>
+        ///     PBAvatarBase component writer
+        /// </summary>
+        public const string PLAYER_AVATAR_BASE = nameof(PLAYER_AVATAR_BASE);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);

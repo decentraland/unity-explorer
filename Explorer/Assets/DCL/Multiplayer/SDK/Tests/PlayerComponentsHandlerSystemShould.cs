@@ -85,14 +85,14 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(world.TryGet(entity, out PlayerSDKDataComponent playerIdentityDataComponent));
             Assert.AreEqual(playerIdentityDataComponent.Address, FAKE_USER_ID);
             Assert.IsNotNull(playerIdentityDataComponent.CRDTEntity);
-            Assert.IsTrue(scene1World.TryGet(playerIdentityDataComponent.SceneWorldEntity, out PlayerIdentityDataComponent scenePlayerIdentityDataComponent));
+            Assert.IsTrue(scene1World.TryGet(playerIdentityDataComponent.SceneWorldEntity, out PlayerSDKDataComponent scenePlayerIdentityDataComponent));
             Assert.AreEqual(playerIdentityDataComponent, scenePlayerIdentityDataComponent);
         }
 
@@ -107,11 +107,11 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
         }
 
         [Test]
@@ -125,19 +125,19 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
-            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsTrue(world.TryGet(entity, out PlayerSDKDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerSDKDataComponent>(entity));
 
             // Move player transform outside scene
             fakeCharacterUnityTransform.position = Vector3.one * 17;
             system.Update(0);
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
-            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
+            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerSDKDataComponent>(entity));
         }
 
         [Test]
@@ -151,20 +151,20 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
-            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsTrue(world.TryGet(entity, out PlayerSDKDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerSDKDataComponent>(entity));
 
             // Change the current scene
             scene1Facade.SceneStateProvider.IsCurrent.Returns(false);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(true);
             system.Update(0);
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
-            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
+            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerSDKDataComponent>(entity));
         }
 
         [Test]
@@ -178,19 +178,19 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
-            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsTrue(world.TryGet(entity, out PlayerSDKDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerSDKDataComponent>(entity));
 
             // "Disconnect" player
             world.Add(entity, new DeleteEntityIntention());
             system.Update(0);
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
-            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
+            Assert.IsFalse(playerIdentityDataComponent.SceneFacade.EcsExecutor.World.Has<PlayerSDKDataComponent>(entity));
         }
 
         [Test]
@@ -204,11 +204,11 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(world.TryGet(entity, out PlayerSDKDataComponent playerIdentityDataComponent));
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerIdentityDataComponent.CRDTEntity.Id);
 
             // Add 2 more players
@@ -261,12 +261,12 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity entity2 = world.Create(new Profile(FAKE_USER_ID, "fake non-main user", CreateTestAvatar()),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity));
-            Assert.IsFalse(world.Has<PlayerIdentityDataComponent>(entity2));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity));
+            Assert.IsFalse(world.Has<PlayerSDKDataComponent>(entity2));
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out PlayerIdentityDataComponent playerIdentityDataComponent));
+            Assert.IsTrue(world.TryGet(entity, out PlayerSDKDataComponent playerIdentityDataComponent));
             Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, playerIdentityDataComponent.CRDTEntity.Id);
 
             Assert.IsTrue(world.TryGet(entity2, out playerIdentityDataComponent));

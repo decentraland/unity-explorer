@@ -32,26 +32,25 @@ namespace DCL.Multiplayer.SDK.Systems
             CreatePlayerIdentityDataQuery(World);
         }
 
-        // 'PlayerIdentityDataComponent' is put on this scene world entities from the GLOBAL WORLD PlayerComponentsHandlerSystem
         [Query]
         [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData(in Entity entity, PlayerIdentityDataComponent playerIdentityDataComponent)
+        private void CreatePlayerIdentityData(in Entity entity, PlayerSDKDataComponent playerSDKDataComponent)
         {
-            ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PlayerIdentityDataComponent>(static (pbPlayerIdentityData, playerIdentityDataComponent) =>
+            ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PlayerSDKDataComponent>(static (pbPlayerIdentityData, playerSDKDataComponent) =>
             {
-                pbPlayerIdentityData.Address = playerIdentityDataComponent.Address;
-                pbPlayerIdentityData.IsGuest = playerIdentityDataComponent.IsGuest;
-            }, playerIdentityDataComponent.CRDTEntity, playerIdentityDataComponent);
+                pbPlayerIdentityData.Address = playerSDKDataComponent.Address;
+                pbPlayerIdentityData.IsGuest = playerSDKDataComponent.IsGuest;
+            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
 
             PBPlayerIdentityData? pbComponent = componentPool.Get();
-            pbComponent.Address = playerIdentityDataComponent.Address;
-            pbComponent.IsGuest = playerIdentityDataComponent.IsGuest;
-            World.Add(entity, pbComponent, playerIdentityDataComponent.CRDTEntity);
+            pbComponent.Address = playerSDKDataComponent.Address;
+            pbComponent.IsGuest = playerSDKDataComponent.IsGuest;
+            World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
 
         [Query]
         [All(typeof(PBPlayerIdentityData))]
-        [None(typeof(PlayerIdentityDataComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerSDKDataComponent), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(Entity entity, ref CRDTEntity crdtEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
