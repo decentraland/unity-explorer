@@ -32,7 +32,7 @@ namespace SceneRuntime.Apis.Modules.Players
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
                 var profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
-                return new PlayersGetUserDataResponse(profile);
+                return new PlayersGetUserDataResponse(profile, walletId);
             }
 
             return ExecuteAsync().ToPromise();
@@ -89,7 +89,7 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             public UserData? data;
 
-            public PlayersGetUserDataResponse(Profile? profile)
+            public PlayersGetUserDataResponse(Profile? profile, string walletId)
             {
                 if (profile is null)
                 {
@@ -100,7 +100,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 data = new UserData(
                     new AvatarData(profile.Avatar),
                     profile.DisplayName,
-                    profile.UserId,
+                    walletId,
                     profile.UserId,
                     profile.Version
                 );
