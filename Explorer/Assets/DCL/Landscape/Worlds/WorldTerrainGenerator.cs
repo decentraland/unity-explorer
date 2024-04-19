@@ -100,7 +100,7 @@ namespace DCL.Landscape
 
             var tasks = new List<UniTask>
             {
-                chunkDataGenerator.SetHeightsAsync(terrainModel.MinParcel, chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+                // chunkDataGenerator.SetHeightsAsync(terrainModel.MinParcel, chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
                 chunkDataGenerator.SetTreesAsync(terrainModel.MinParcel, chunkModel.MinParcel.x, chunkModel.MinParcel.y, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),

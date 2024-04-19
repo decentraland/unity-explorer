@@ -54,14 +54,17 @@ namespace DCL.Landscape
             this.parcelSize = parcelSize;
         }
 
-        public async UniTask SetHeightsAsync(int2 minTerrainParcel, int offsetX, int offsetZ, int maxHeightIndex, int parcelSize,
-            TerrainData terrainData, uint baseSeed, CancellationToken cancellationToken, bool useCache = true)
+        public async UniTask SetHeightsAsync(int2 chunkMinParcel, int maxHeightIndex, int parcelSize, TerrainData terrainData, uint baseSeed,
+            CancellationToken cancellationToken, bool useCache = true)
         {
+            int parcelMinX = chunkMinParcel.x * parcelSize;
+            int parcelMinZ = chunkMinParcel.y * parcelSize;
+
             if (useCache && localCache.IsValid())
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetHeightsAsync from Cache {t}ms")))
                 {
-                    float[,] heightArray = localCache.GetHeights(offsetX, offsetZ);
+                    float[,] heightArray = localCache.GetHeights(parcelMinX, parcelMinZ);
                     terrainData.SetHeights(0, 0, heightArray);
                 }
             }
@@ -69,11 +72,11 @@ namespace DCL.Landscape
             {
                 timeProfiler.StartMeasure();
 
-                int resolution = terrainGenData.chunkSize + 1;
+                int resolution = terrainData.heightmapResolution;
                 var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
 
                 INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
-                var noiseDataPointer = new NoiseDataPointer(resolution, offsetX, offsetZ);
+                var noiseDataPointer = new NoiseDataPointer(resolution, parcelMinX, parcelMinZ);
                 JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
 
                 NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
@@ -86,10 +89,8 @@ namespace DCL.Landscape
                     terrainGenData.minHeight,
                     terrainGenData.pondDepth,
                     resolution,
-                    offsetX,
-                    offsetZ,
+                    chunkMinParcel,
                     maxHeightIndex,
-                    minTerrainParcel,
                     parcelSize
                 );
 
@@ -106,7 +107,7 @@ namespace DCL.Landscape
                         terrainData.SetHeights(0, 0, heightArray);
 
                         if (useCache)
-                            localCache.SaveHeights(offsetX, offsetZ, heightArray);
+                            localCache.SaveHeights(parcelMinX, parcelMinZ, heightArray);
                     }
                 }
                 finally { heights.Dispose(); }

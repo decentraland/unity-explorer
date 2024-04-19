@@ -12,11 +12,9 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct ModifyTerrainHeightJob : IJobParallelFor
     {
-        [ReadOnly] private readonly int terrainWidth;
-        [ReadOnly] private readonly int offsetX;
-        [ReadOnly] private readonly int offsetZ;
+        [ReadOnly] private readonly int resolution;
+        [ReadOnly] private readonly int2 chunkMinParcel;
         [ReadOnly] private readonly int maxHeight;
-        [ReadOnly] private readonly int2 minWorldParcel;
         [ReadOnly] private readonly int parcelSize;
         [ReadOnly] private readonly float edgeRadius;
         [ReadOnly] private readonly float minHeight;
@@ -35,10 +33,8 @@ namespace DCL.Landscape.Jobs
             float minHeight,
             float pondDepth,
             int resolution,
-            int offsetX,
-            int offsetZ,
-            int maxHeightIndex,
-            int2 minWorldParcel,
+            int2 chunkMinParcel,
+            int maxHeight,
             int parcelSize) : this()
         {
             this.heights = heights;
@@ -49,11 +45,9 @@ namespace DCL.Landscape.Jobs
             this.minHeight = minHeight;
             this.pondDepth = pondDepth;
 
-            terrainWidth = resolution;
-            this.offsetX = offsetX;
-            this.offsetZ = offsetZ;
-            maxHeight = maxHeightIndex;
-            this.minWorldParcel = minWorldParcel;
+            this.resolution = resolution;
+            this.maxHeight = maxHeight;
+            this.chunkMinParcel = chunkMinParcel;
             this.parcelSize = parcelSize;
         }
 
@@ -62,21 +56,18 @@ namespace DCL.Landscape.Jobs
             float rMinHeight = minHeight / maxHeight;
             float radius = edgeRadius;
 
-            int x = index % terrainWidth;
-            int z = index / terrainWidth;
+            int x = index % resolution;
+            int z = index / resolution;
 
-            int worldX = x + offsetX;
-            int worldZ = z + offsetZ;
+            int parcelX = chunkMinParcel.x + (x / parcelSize);
+            int parcelZ = chunkMinParcel.y + (z / parcelSize);
 
-            int parcelX = worldX / parcelSize;
-            int parcelZ = worldZ / parcelSize;
+            var parcel = new int2(parcelX, parcelZ);
 
-            var coord = new int2(minWorldParcel.x + parcelX, minWorldParcel.y + parcelZ);
-
-            if (emptyParcelNeighborData.TryGetValue(coord, out EmptyParcelNeighborData data))
+            if (emptyParcelNeighborData.TryGetValue(parcel, out EmptyParcelNeighborData data))
             {
                 float noise = terrainNoise[index];
-                float currentHeight = emptyParcelHeight[coord];
+                float currentHeight = emptyParcelHeight[parcel];
 
                 // get the pixel position within the parcel coords
                 float lx = x % parcelSize / (float)parcelSize;

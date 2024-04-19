@@ -37,7 +37,6 @@ namespace DCL.Landscape
         private readonly int parcelSize;
 
         private readonly TerrainGenerationData terrainGenData;
-        private readonly NativeArray<int2> emptyParcels;
         private readonly NoiseGeneratorCache noiseGenCache;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
@@ -48,6 +47,7 @@ namespace DCL.Landscape
         private readonly TerrainFactory factory;
         private readonly TerrainChunkDataGenerator chunkDataGenerator;
         private readonly TerrainBoundariesGenerator boundariesGenerator;
+        private NativeArray<int2> emptyParcels;
 
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
@@ -137,7 +137,12 @@ namespace DCL.Landscape
                         await localCache.LoadAsync(forceCacheRegen);
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
+                    {
+                        if (emptyParcels.Length == 0)
+                            ExtractEmptyParcels(terrainModel);
+
                         await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
+                    }
 
                     if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA;
 
@@ -156,6 +161,7 @@ namespace DCL.Landscape
                         await GenerateTerrainData(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
                     }
+
                     //
                     // if (withHoles)
                     // {
@@ -170,6 +176,7 @@ namespace DCL.Landscape
 
                     // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
                     await UniTask.Yield();
+
                     // AddColorMapRenderer(rootGo);
 
                     // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -193,6 +200,25 @@ namespace DCL.Landscape
 
                 isTerrainGenerated = true;
             }
+        }
+
+        private void ExtractEmptyParcels(TerrainModel terrainModel)
+        {
+            var tempEmptyParcels = new List<int2>();
+
+            for (int x = terrainModel.MinParcel.x; x <= terrainModel.MaxParcel.x; x++)
+            for (int y = terrainModel.MinParcel.y; y <= terrainModel.MaxParcel.y; y++)
+            {
+                var currentParcel = new int2(x, y);
+
+                if (!ownedParcels.Contains(currentParcel))
+                    tempEmptyParcels.Add(currentParcel);
+            }
+
+            emptyParcels = new NativeArray<int2>(tempEmptyParcels.Count, Allocator.Persistent);
+
+            for (var i = 0; i < tempEmptyParcels.Count; i++)
+                emptyParcels[i] = tempEmptyParcels[i];
         }
 
         private static void DigHoles(TerrainModel terrainModel, ChunkModel chunkModel, int parcelSize)
@@ -227,7 +253,6 @@ namespace DCL.Landscape
 
             chunkModel.TerrainData.SetHoles(0, 0, holes);
         }
-
 
         private async Task BugWorkaroundAsync()
         {
@@ -284,11 +309,13 @@ namespace DCL.Landscape
             cancellationToken.ThrowIfCancellationRequested();
 
             chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
+
             var tasks = new List<UniTask>
             {
+                chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
-                // chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+
                 // chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
             };
 
@@ -299,7 +326,6 @@ namespace DCL.Landscape
 
             DigHoles(terrainModel, chunkModel, parcelSize);
         }
-
 
         /// <summary>
         ///     This method digs holes on the terrain based on the ownedParcels array
@@ -442,9 +468,10 @@ namespace DCL.Landscape
 
             var tasks = new List<UniTask>
             {
-                chunkDataGenerator.SetHeightsAsync(new int2(-150, -150), offsetX, offsetZ, maxHeightIndex, parcelSize, terrainData, baseSeed, cancellationToken),
+                // chunkDataGenerator.SetHeightsAsync(new int2(-150, -150), offsetX, offsetZ, maxHeightIndex, parcelSize, terrainData, baseSeed, cancellationToken),
                 chunkDataGenerator.SetTexturesAsync(offsetX, offsetZ, resolution, terrainData, baseSeed, cancellationToken),
-                !hideTrees ? chunkDataGenerator.SetTreesAsync(new int2(-150, -150), offsetX, offsetZ, chunkSize, terrainData, baseSeed, cancellationToken, false, int2.zero) : UniTask.CompletedTask,
+
+                // !hideTrees ? chunkDataGenerator.SetTreesAsync(new int2(-150, -150), offsetX, offsetZ, chunkSize, terrainData, baseSeed, cancellationToken, false, int2.zero) : UniTask.CompletedTask,
                 !hideDetails ? chunkDataGenerator.SetDetailsAsync(offsetX, offsetZ, chunkSize, terrainData, baseSeed, cancellationToken, false, int2.zero) : UniTask.CompletedTask,
             };
 
@@ -469,63 +496,6 @@ namespace DCL.Landscape
             }
 
             noiseGenCache.Dispose();
-        }
-
-        //            (size,size)
-        //        N
-        //      W + E
-        //        S
-        // (0,0)
-        private void SpawnCliffs()
-        {
-            if (terrainGenData.cliffSide == null || terrainGenData.cliffCorner == null)
-                return;
-
-            Transform cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
-
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(0, 0, 0), Quaternion.Euler(0, 180, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(0, 0, terrainGenData.terrainSize), Quaternion.Euler(0, 270, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainGenData.terrainSize, 0, 0), Quaternion.Euler(0, 90, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(terrainGenData.terrainSize, 0, terrainGenData.terrainSize), Quaternion.identity);
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += parcelSize)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(terrainGenData.terrainSize, 0, i + parcelSize), Quaternion.Euler(0, 90, 0)));
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += parcelSize)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i, 0, terrainGenData.terrainSize), Quaternion.identity));
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += parcelSize)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(0, 0, i), Quaternion.Euler(0, 270, 0)));
-
-            for (var i = 0; i < terrainGenData.terrainSize; i += parcelSize)
-                Cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i + parcelSize, 0, 0), Quaternion.Euler(0, 180, 0)));
-        }
-
-        private Transform SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
-        {
-            Transform collidersRoot = factory.CreateCollidersRoot(rootGo.transform);
-
-            const float HEIGHT = 50.0f; // Height of the collider
-            const float THICKNESS = 10.0f; // Thickness of the collider
-
-            // Create colliders along each side of the terrain
-            AddCollider(minInUnits.x, minInUnits.y, sidesLength.x, "South Border Collider", new int2(0, -1), 0);
-            AddCollider(minInUnits.x, maxInUnits.y, sidesLength.x, "North Border Collider", new int2(0, 1), 0);
-            AddCollider(minInUnits.x, minInUnits.y, sidesLength.y, "West Border Collider", new int2(-1, 0), 90);
-            AddCollider(maxInUnits.x, minInUnits.y, sidesLength.y, "East Border Collider", new int2(1, 0), 90);
-
-            return collidersRoot;
-
-            void AddCollider(float posX, float posY, float length, string name, int2 dir,
-                float rotation)
-            {
-                float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + parcelSize) * dir.x;
-                float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + parcelSize) * dir.y;
-
-                factory.CreateBorderCollider(name, collidersRoot,
-                    size: new Vector3(length, HEIGHT, THICKNESS),
-                    position: new Vector3(posX + xShift, HEIGHT / 2, posY + yShift), rotation);
-            }
         }
     }
 }
