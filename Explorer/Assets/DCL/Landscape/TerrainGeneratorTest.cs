@@ -54,7 +54,7 @@ namespace DCL.Landscape
             else
             {
                 gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
-                await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails, true);
+                await gen.GenerateTerrainAsync(worldSeed, digHoles, hideTrees, hideDetails, true);
             }
 
             emptyParcels.Dispose();
