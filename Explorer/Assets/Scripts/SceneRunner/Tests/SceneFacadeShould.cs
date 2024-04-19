@@ -101,7 +101,7 @@ namespace SceneRunner.Tests
         [Test]
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
         {
-            var sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>()!, CancellationToken.None);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>()!, CancellationToken.None);
             sceneFacades.Add(sceneFacade);
 
             var cancellationTokenSource = new CancellationTokenSource();
@@ -113,7 +113,6 @@ namespace SceneRunner.Tests
 
             // Asserts are inside the method
         }
-
 
         /*
         TODO: Temporarly commenting flaky test
@@ -135,7 +134,8 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneExceptionsHandler>()!,
                 new SceneStateProvider(),
                 Substitute.For<IEntityCollidersSceneCache>()!,
-                Substitute.For<ISceneData>()!
+                Substitute.For<ISceneData>()!,
+                new SceneEcsExecutor()
             );
 
             sceneFacades.Add(sceneFacade);
@@ -223,7 +223,8 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
                 Substitute.For<IEntityCollidersSceneCache>(),
-                Substitute.For<ISceneData>()
+                Substitute.For<ISceneData>(),
+                new SceneEcsExecutor()
             );
 
             await UniTask.SwitchToThreadPool();

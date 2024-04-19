@@ -202,6 +202,16 @@
         public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
 
         /// <summary>
+        ///     Multiplayer SDK components update handler
+        /// </summary>
+        public const string MULTIPLAYER_SDK_COMPONENTS_HANDLER = nameof(MULTIPLAYER_SDK_COMPONENTS_HANDLER);
+
+        /// <summary>
+        ///     PBPlayerIdentityData component writer
+        /// </summary>
+        public const string PLAYER_IDENTITY_DATA = nameof(PLAYER_IDENTITY_DATA);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);
@@ -220,7 +230,7 @@
         public const string MVC = nameof(MVC);
 
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
-        
+
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
