@@ -55,7 +55,7 @@ namespace DCL.Landscape
         private int maxHeightIndex;
         private bool hideTrees;
         private bool hideDetails;
-
+        private bool withHoles;
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
@@ -112,9 +112,11 @@ namespace DCL.Landscape
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
+            this.showTerrainByDefault = showTerrainByDefault;
+
             this.hideDetails = hideDetails;
             this.hideTrees = hideTrees;
-            this.showTerrainByDefault = showTerrainByDefault;
+            this.withHoles = withHoles;
 
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
@@ -153,21 +155,12 @@ namespace DCL.Landscape
                     // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
                     // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
                     /////////////////////////
-
                     chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
-
                     foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                     {
                         await GenerateTerrainData(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
                     }
-
-                    //
-                    // if (withHoles)
-                    // {
-                    //     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
-                    //         await DigHolesAsync(terrainDataDictionary, cancellationToken);
-                    // }
 
                     if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
 
@@ -177,10 +170,10 @@ namespace DCL.Landscape
                     // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
                     await UniTask.Yield();
 
-                    // AddColorMapRenderer(rootGo);
+                    AddColorMapRenderer(rootGo);
 
                     // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-                    // await BugWorkaroundAsync();
+                    await BugWorkaroundAsync();
 
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
                 }
@@ -267,9 +260,9 @@ namespace DCL.Landscape
 
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
         {
-            // if (localCache.IsValid())
-            //     maxHeightIndex = localCache.GetMaxHeight();
-            // else
+            if (localCache.IsValid())
+                maxHeightIndex = localCache.GetMaxHeight();
+            else
             {
                 JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
                     ref emptyParcelsData, ref emptyParcelsNeighborData,
@@ -290,12 +283,12 @@ namespace DCL.Landscape
 
         private async UniTask SpawnTerrainObjectsAsync(TerrainModel terrainModel, AsyncLoadProcessReport processReport, CancellationToken cancellationToken)
         {
-            // Generate Terrain GameObjects
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, showTerrainByDefault);
+                terrains.Add(
+                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, showTerrainByDefault));
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;
@@ -314,16 +307,22 @@ namespace DCL.Landscape
             {
                 chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-                chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
-                chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
+                !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false): UniTask.CompletedTask,
+                !hideTrees ?chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false): UniTask.CompletedTask,
             };
 
-            processedTerrainDataCount++;
+            if (withHoles)
+            {
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
+                    DigHoles(terrainModel, chunkModel, parcelSize);
+                // await DigHolesAsync(terrainDataDictionary, cancellationToken);
+            }
+
             await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+
+            processedTerrainDataCount++;
             if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
             timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})"));
-
-            DigHoles(terrainModel, chunkModel, parcelSize);
         }
 
         /// <summary>
@@ -452,37 +451,6 @@ namespace DCL.Landscape
             grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
 
             colorMapRenderer.Render();
-        }
-
-        private async UniTask<KeyValuePair<int2, TerrainData>> GenerateTerrainDataAsync(int offsetX, int offsetZ, uint baseSeed, CancellationToken cancellationToken, AsyncLoadProcessReport processReport)
-        {
-            timeProfiler.StartMeasure();
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            int resolution = terrainGenData.chunkSize;
-            int chunkSize = terrainGenData.chunkSize;
-
-            TerrainData terrainData = factory.CreateTerrainData(terrainGenData.chunkSize, maxHeightIndex);
-
-            var tasks = new List<UniTask>
-            {
-                // chunkDataGenerator.SetHeightsAsync(new int2(-150, -150), offsetX, offsetZ, maxHeightIndex, parcelSize, terrainData, baseSeed, cancellationToken),
-                chunkDataGenerator.SetTexturesAsync(offsetX, offsetZ, resolution, terrainData, baseSeed, cancellationToken),
-
-                // !hideTrees ? chunkDataGenerator.SetTreesAsync(new int2(-150, -150), offsetX, offsetZ, chunkSize, terrainData, baseSeed, cancellationToken, false, int2.zero) : UniTask.CompletedTask,
-                !hideDetails ? chunkDataGenerator.SetDetailsAsync(offsetX, offsetZ, chunkSize, terrainData, baseSeed, cancellationToken, false, int2.zero) : UniTask.CompletedTask,
-            };
-
-            processedTerrainDataCount++;
-
-            await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-
-            if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
-
-            timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})"));
-
-            return new KeyValuePair<int2, TerrainData>(new int2(offsetX, offsetZ), terrainData);
         }
 
         // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
