@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace DCL.Profiles.Self
@@ -59,22 +58,17 @@ namespace DCL.Profiles.Self
             if (profile == null)
             {
                 profile = Profile.NewRandomProfile(web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized"));
-                Debug.Log($"PublishProfile.null.random: {JsonUtility.ToJson(profile)}");
                 await profileRepository.SetAsync(profile, ct);
                 return;
             }
-
-            Debug.Log($"PublishProfile.fetch.profile: {JsonUtility.ToJson(profile)}");
 
             using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
 
             uniqueWearables = uniqueWearables.EnsureNotNull();
             ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
-            Debug.Log($"PublishProfile.unique.wearables: {string.Join(',', uniqueWearables)}");
 
             var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
             ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
-            Debug.Log($"PublishProfile.unique.emotes: {string.Join(',', uniqueEmotes)}");
 
             profile = profileBuilder.From(profile)
                                     .WithWearables(uniqueWearables)
@@ -83,8 +77,6 @@ namespace DCL.Profiles.Self
                                     .Build();
 
             profile.UserId = web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!;
-
-            Debug.Log($"PublishProfile.profile.result: {JsonUtility.ToJson(profile)}");
 
             await profileRepository.SetAsync(profile, ct);
         }
