@@ -167,11 +167,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be000b9b73ea472aa3e231b47bcb9021, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextSceneDelayType: 1
-  delayBetweenTeleports: 15
+  nextSceneDelayType: 0
+  delayBetweenTeleports: 10
   scenesCoordinatesRaw: {fileID: 4900000, guid: 09e70e0dcd4a43bfadd67a4ffa8c3607, type: 3}
   productionScene: Main
-  reportPath: Assets/DCL/ScenesDebug/ScenesConsistency/Report.txt
+  reportDirectory: /Users/nickkhalow/Projects/unity-explorer/Explorer/Assets/DCL/ScenesDebug/ScenesConsistency/Reports
   entities: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

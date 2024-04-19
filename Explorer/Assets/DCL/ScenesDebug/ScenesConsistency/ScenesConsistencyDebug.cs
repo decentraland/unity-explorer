@@ -23,7 +23,7 @@ namespace DCL.ScenesDebug.ScenesConsistency
         [Space]
         [SerializeField] private TextAsset scenesCoordinatesRaw;
         [SerializeField] private string productionScene = "Main";
-        [SerializeField] private string reportPath = "Assets/Scenes/Debug/ScenesConsistency/Report.txt";
+        [SerializeField] private string reportDirectory = "Assets/Scenes/Debug/ScenesConsistency/Reports";
 
         //[SerializeField] private
         [Header("Debug")]
@@ -65,21 +65,6 @@ namespace DCL.ScenesDebug.ScenesConsistency
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-            using var reportLog = new ReportLog(
-                entities,
-                new StreamWriter(
-                    new FileStream(reportPath, FileMode.Create, FileAccess.Write),
-                    System.Text.Encoding.UTF8,
-                    1024,
-                    false
-                )
-                {
-                    AutoFlush = true,
-                }
-            );
-
-            reportLog.Start();
-
             Log("Scene loading...!");
             await SceneManager.LoadSceneAsync(productionScene, LoadSceneMode.Additive)!.ToUniTask();
             Log("Scene loaded!");
@@ -89,8 +74,31 @@ namespace DCL.ScenesDebug.ScenesConsistency
             var current = 0;
 
             await nextSceneDelay.WaitAsync();
+
             foreach (SceneEntity entity in entities)
             {
+                using var reportLog = new ReportLog(
+                    entities,
+                    new StreamWriter(
+                        new FileStream(
+                            Path.Combine(
+                                reportDirectory,
+                                $"{entity.coordinate.x}_{entity.coordinate.y}.txt"
+                            ),
+                            FileMode.Create,
+                            FileAccess.Write
+                        ),
+                        System.Text.Encoding.UTF8,
+                        1024,
+                        false
+                    )
+                    {
+                        AutoFlush = true,
+                    }
+                );
+
+                reportLog.Start();
+
                 Log($"Executing {++current} / {entities.Count} entity: {entity}");
                 chatTeleport.GoTo(entity.coordinate);
                 await nextSceneDelay.WaitAsync();
