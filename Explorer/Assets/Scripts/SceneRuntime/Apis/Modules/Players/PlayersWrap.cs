@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
-using DCL.Utilities;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,23 +54,20 @@ namespace SceneRuntime.Apis.Modules.Players
         [Serializable]
         public struct PlayerListResponse
         {
-            public List<Player> players;
+            public string playersJson;
 
             public PlayerListResponse(IParticipantsHub participantsHub)
             {
                 var sids = participantsHub.RemoteParticipantSids();
-                players = new List<Player>();
+                var players = new List<Player>();
 
                 foreach (string sid in sids)
                 {
                     var remote = participantsHub.RemoteParticipant(sid)!;
                     players.Add(new Player(remote));
                 }
-            }
 
-            public PlayerListResponse(List<Player> players)
-            {
-                this.players = players;
+                playersJson = JsonConvert.SerializeObject(players);
             }
         }
 
