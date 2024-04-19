@@ -27,15 +27,15 @@ namespace SceneRunner.EmptyScene
 
         private EmptySceneFacade() { }
 
-        public SceneEcsExecutor? EcsExecutor { get; } = null;
-        public ISceneStateProvider? SceneStateProvider { get; } = null;
-
         internal Entity sceneRoot { get; private set; } = Entity.Null;
 
         //internal Entity grass { get; private set; } = Entity.Null;
         internal Entity environment { get; private set; } = Entity.Null;
 
         public SceneShortInfo Info => args.ShortInfo;
+        public ISceneStateProvider SceneStateProvider { get; }
+        public SceneEcsExecutor EcsExecutor { get; }
+        public bool IsEmpty { get; } = true;
 
         public void Dispose()
         {

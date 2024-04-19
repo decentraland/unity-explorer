@@ -64,9 +64,10 @@ namespace SceneRunner
 
         public ISceneData SceneData { get; }
         public ISceneStateProvider SceneStateProvider { get; }
-        public SceneEcsExecutor? EcsExecutor { get; }
+        public SceneEcsExecutor EcsExecutor { get; }
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
+        public bool IsEmpty { get; } = false;
 
         public void Dispose()
         {
