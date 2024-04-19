@@ -5,9 +5,18 @@ namespace DCL.Landscape
 {
     public class TerrainBoundariesGenerator
     {
-        public Transform SpawnCliffs(int2 minInUnits, int2 maxInUnits, TerrainFactory factory, GameObject rootGo, int parcelSize)
+        private readonly TerrainFactory factory;
+        private readonly int parcelSize;
+
+        public TerrainBoundariesGenerator(TerrainFactory factory, int parcelSize)
         {
-            Transform cliffsRoot = factory.CreateCliffsRoot(rootGo.transform);
+            this.factory = factory;
+            this.parcelSize = parcelSize;
+        }
+
+        public Transform SpawnCliffs(int2 minInUnits, int2 maxInUnits)
+        {
+            Transform cliffsRoot = factory.CreateCliffsRoot(factory.Root);
 
             factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 180, 0));
             factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, maxInUnits.y), Quaternion.Euler(0, 270, 0));
@@ -28,15 +37,14 @@ namespace DCL.Landscape
             for (int i = minInUnits.y; i < maxInUnits.y; i += parcelSize)
                 factory.CreateCliffSide(cliffsRoot, new Vector3(maxInUnits.x, 0, i + parcelSize), Quaternion.Euler(0, 90, 0));
 
-            cliffsRoot.SetParent(rootGo.transform);
             cliffsRoot.localPosition = Vector3.zero;
 
             return cliffsRoot;
         }
 
-        public Transform SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength, TerrainFactory factory, GameObject rootGo, int parcelSize)
+        public Transform SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)
         {
-            Transform collidersRoot = factory.CreateCollidersRoot(rootGo.transform);
+            Transform collidersRoot = factory.CreateCollidersRoot(factory.Root);
 
             const float HEIGHT = 50.0f; // Height of the collider
             const float THICKNESS = 10.0f; // Thickness of the collider

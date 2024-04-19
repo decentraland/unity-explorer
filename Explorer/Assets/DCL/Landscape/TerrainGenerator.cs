@@ -62,7 +62,7 @@ namespace DCL.Landscape
         private bool isTerrainGenerated;
         private bool showTerrainByDefault;
 
-        private GameObject rootGo;
+        private Transform rootGo;
 
         public Transform Ocean { get; private set; }
         public List<Transform> Cliffs { get; } = new ();
@@ -84,7 +84,7 @@ namespace DCL.Landscape
 
             factory = new TerrainFactory(terrainGenData);
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData, noiseGenCache);
-            boundariesGenerator = new TerrainBoundariesGenerator();
+            boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
         }
 
         public void Dispose()
@@ -100,7 +100,7 @@ namespace DCL.Landscape
 
         public void SwitchVisibility(bool isVisible)
         {
-            rootGo.SetActive(isVisible);
+            rootGo.gameObject.SetActive(isVisible);
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -128,11 +128,11 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
                     {
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
-                        Ocean = factory.CreateOcean(rootGo.transform);
+                        Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
 
-                        boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits, factory, rootGo, parcelSize);
-                        boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits, factory, rootGo, parcelSize);
+                        boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
+                        boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
                     }
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
@@ -305,10 +305,10 @@ namespace DCL.Landscape
 
             var tasks = new List<UniTask>
             {
-                chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-                chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-                !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false): UniTask.CompletedTask,
-                !hideTrees ?chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false): UniTask.CompletedTask,
+                chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken),
+                chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken),
+                !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels): UniTask.CompletedTask,
+                !hideTrees ?chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken): UniTask.CompletedTask,
             };
 
             if (withHoles)
@@ -441,7 +441,7 @@ namespace DCL.Landscape
             }
         }
 
-        private void AddColorMapRenderer(GameObject parent)
+        private void AddColorMapRenderer(Transform parent)
         {
             (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) = factory.CreateColorMapRenderer(parent);
 

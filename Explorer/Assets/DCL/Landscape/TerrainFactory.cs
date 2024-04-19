@@ -14,20 +14,24 @@ namespace DCL.Landscape
 
         private TreePrototype[] treePrototypes;
 
+        public Transform Root { get; private set; }
+
         public TerrainFactory(TerrainGenerationData terrainGenData)
         {
             this.terrainGenData = terrainGenData;
         }
 
-        public GameObject InstantiateSingletonTerrainRoot(string terrainObjectName)
+        public Transform InstantiateSingletonTerrainRoot(string terrainObjectName)
         {
             var rootGo = GameObject.Find(terrainObjectName);
 
             if (rootGo != null)
-                UnityObjectUtils.SafeDestroy(rootGo);
+                UnityObjectUtils.SafeDestroy(Root);
 
             rootGo = new GameObject(terrainObjectName);
-            return rootGo;
+
+            Root = rootGo.transform;
+            return Root;
         }
 
         public Transform CreateOcean(Transform parent, bool worldPositionStays = true) =>
@@ -115,9 +119,9 @@ namespace DCL.Landscape
             return terrainData;
         }
 
-        public (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) CreateColorMapRenderer(GameObject parent)
+        public (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) CreateColorMapRenderer(Transform parent)
         {
-            GrassColorMapRenderer colorMapRenderer = Object.Instantiate(terrainGenData.grassRenderer, parent.transform)
+            GrassColorMapRenderer colorMapRenderer = Object.Instantiate(terrainGenData.grassRenderer, parent)
                                                            .GetComponent<GrassColorMapRenderer>();
 
             GrassColorMap grassColorMap = ScriptableObject.CreateInstance<GrassColorMap>();

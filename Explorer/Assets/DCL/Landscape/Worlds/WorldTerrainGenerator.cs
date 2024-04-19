@@ -28,7 +28,7 @@ namespace DCL.Landscape
         private readonly TerrainFactory factory;
         private readonly TerrainChunkDataGenerator chunkDataGenerator;
 
-        private GameObject rootGo;
+        private Transform rootGo;
         private Transform ocean;
 
         private int maxHeightIndex;
@@ -59,7 +59,7 @@ namespace DCL.Landscape
                     emptyParcelsNeighborData.Dispose();
                 }
 
-                rootGo.SetActive(isVisible);
+                rootGo.gameObject.SetActive(isVisible);
             }
         }
 
