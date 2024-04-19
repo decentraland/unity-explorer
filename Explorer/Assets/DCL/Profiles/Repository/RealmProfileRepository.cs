@@ -60,11 +60,6 @@ namespace DCL.Profiles
                 await ipfs.PublishAsync(entity, ct, files);
                 profileCache.Set(profile.UserId, profile);
             }
-            catch (Exception e)
-            {
-                Debug.LogError("Could not save the profile");
-                Debug.LogException(e);
-            }
             finally { files.Clear(); }
         }
 
