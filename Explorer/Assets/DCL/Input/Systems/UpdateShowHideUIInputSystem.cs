@@ -15,7 +15,7 @@ namespace DCL.Input.Systems
 
         private bool nextUIVisibilityState;
 
-        public UpdateShowHideUIInputSystem(World world, DCLInput dclInput, MVCManager mvcManager) : base(world)
+        private UpdateShowHideUIInputSystem(World world, DCLInput dclInput, MVCManager mvcManager) : base(world)
         {
             this.dclInput = dclInput;
             this.mvcManager = mvcManager;
@@ -23,7 +23,7 @@ namespace DCL.Input.Systems
 
         protected override void Update(float t)
         {
-            if (dclInput.Player.Jump.WasPressedThisFrame())
+            if (dclInput.UI.ShowHideUI.WasPressedThisFrame())
             {
                 mvcManager.SetAllViewsCanvasActive(nextUIVisibilityState);
                 nextUIVisibilityState = !nextUIVisibilityState;
