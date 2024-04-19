@@ -191,15 +191,15 @@ namespace DCL.Nametags
             {
                 verifiedIconFinalPosition.x = usernameFinalPosition.x + (Username.preferredWidth / 2) + (VerifiedIcon.sizeDelta.x / 2);
                 verifiedIconFinalPosition.y = usernameFinalPosition.y;
-                VerifiedIcon.DOAnchorPos(verifiedIconFinalPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token);
+                VerifiedIcon.DOAnchorPos(verifiedIconFinalPosition, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token);
             }
 
             //Start all animations
             await UniTask.WhenAll(
-                DOTween.Sequence().AppendInterval(chatBubbleConfiguration.animationDuration / 3).Append(MessageContent.DOColor(textColor, chatBubbleConfiguration.animationDuration / 4)).Play().ToUniTask(cancellationToken: cts.Token),
-                Username.rectTransform.DOAnchorPos(usernameFinalPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token),
-                MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token),
-                DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, chatBubbleConfiguration.animationDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token)
+                DOTween.Sequence().AppendInterval(chatBubbleConfiguration.animationInDuration / 3).Append(MessageContent.DOColor(textColor, chatBubbleConfiguration.animationInDuration / 4)).Play().ToUniTask(cancellationToken: cts.Token),
+                Username.rectTransform.DOAnchorPos(usernameFinalPosition, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token),
+                MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token),
+                DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token)
                 );
         }
 
@@ -212,19 +212,19 @@ namespace DCL.Nametags
             if (isClaimedName)
             {
                 backgroundFinalSize.x = Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x;
-                Username.rectTransform.DOAnchorPos(new Vector2(-VerifiedIcon.sizeDelta.x / 2, 0), chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token);
-                VerifiedIcon.DOAnchorPos(verifiedIconInitialPosition, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token);
+                Username.rectTransform.DOAnchorPos(new Vector2(-VerifiedIcon.sizeDelta.x / 2, 0), chatBubbleConfiguration.animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token);
+                VerifiedIcon.DOAnchorPos(verifiedIconInitialPosition, chatBubbleConfiguration.animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token);
             }
             else
             {
                 backgroundFinalSize.x = Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth;
-                Username.rectTransform.DOAnchorPos(Vector2.zero, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token);
+                Username.rectTransform.DOAnchorPos(Vector2.zero, chatBubbleConfiguration.animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token);
             }
 
             await UniTask.WhenAll(
-                MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token),
-                MessageContent.DOColor(finishColor, chatBubbleConfiguration.animationDuration / 10).ToUniTask(cancellationToken: cts.Token),
-                DOTween.To(() => Background.size, x => Background.size = x, backgroundFinalSize, chatBubbleConfiguration.animationDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token)
+                MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, chatBubbleConfiguration.animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token),
+                MessageContent.DOColor(finishColor, chatBubbleConfiguration.animationOutDuration / 10).ToUniTask(cancellationToken: cts.Token),
+                DOTween.To(() => Background.size, x => Background.size = x, backgroundFinalSize, chatBubbleConfiguration.animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: cts.Token)
                 );
         }
 
