@@ -1222,6 +1222,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ShowHideUI"",
+                    ""type"": ""Button"",
+                    ""id"": ""878e68dd-c235-415e-bd9f-8209db45806c"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1739,6 +1748,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0ca37a39-42e6-4e6c-bfe2-39c2c992eaba"",
+                    ""path"": ""<Keyboard>/u"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowHideUI"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2378,6 +2398,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_UI_ControllerDelta = m_UI.FindAction("ControllerDelta", throwIfNotFound: true);
         m_UI_ControllerFastCursor = m_UI.FindAction("ControllerFastCursor", throwIfNotFound: true);
         m_UI_Close = m_UI.FindAction("Close", throwIfNotFound: true);
+        m_UI_ShowHideUI = m_UI.FindAction("ShowHideUI", throwIfNotFound: true);
         // Shortcuts
         m_Shortcuts = asset.FindActionMap("Shortcuts", throwIfNotFound: true);
         m_Shortcuts_MainMenu = m_Shortcuts.FindAction("MainMenu", throwIfNotFound: true);
@@ -2804,6 +2825,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ControllerDelta;
     private readonly InputAction m_UI_ControllerFastCursor;
     private readonly InputAction m_UI_Close;
+    private readonly InputAction m_UI_ShowHideUI;
     public struct UIActions
     {
         private @DCLInput m_Wrapper;
@@ -2822,6 +2844,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ControllerDelta => m_Wrapper.m_UI_ControllerDelta;
         public InputAction @ControllerFastCursor => m_Wrapper.m_UI_ControllerFastCursor;
         public InputAction @Close => m_Wrapper.m_UI_Close;
+        public InputAction @ShowHideUI => m_Wrapper.m_UI_ShowHideUI;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2873,6 +2896,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started += instance.OnClose;
             @Close.performed += instance.OnClose;
             @Close.canceled += instance.OnClose;
+            @ShowHideUI.started += instance.OnShowHideUI;
+            @ShowHideUI.performed += instance.OnShowHideUI;
+            @ShowHideUI.canceled += instance.OnShowHideUI;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -2919,6 +2945,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started -= instance.OnClose;
             @Close.performed -= instance.OnClose;
             @Close.canceled -= instance.OnClose;
+            @ShowHideUI.started -= instance.OnShowHideUI;
+            @ShowHideUI.performed -= instance.OnShowHideUI;
+            @ShowHideUI.canceled -= instance.OnShowHideUI;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -3209,6 +3238,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnControllerDelta(InputAction.CallbackContext context);
         void OnControllerFastCursor(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
+        void OnShowHideUI(InputAction.CallbackContext context);
     }
     public interface IShortcutsActions
     {
