@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace MVC
 {
@@ -101,6 +102,12 @@ namespace MVC
 
             OnViewClose();
             await viewInstance.HideAsync(ct);
+        }
+
+        public void SetViewCanvasActive(bool isActive)
+        {
+            if (viewInstance != null)
+                viewInstance.SetCanvasActive(isActive);
         }
 
         /// <summary>
