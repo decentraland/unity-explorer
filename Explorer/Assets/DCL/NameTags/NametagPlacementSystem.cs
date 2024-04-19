@@ -73,7 +73,7 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [None(typeof(NametagView), typeof(PlayerComponent))]
+        [None(typeof(NametagView))]
         private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform)) return;
