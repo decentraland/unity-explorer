@@ -88,12 +88,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         public IRuntime.CurrentSceneEntityResponse GetSceneInformation() =>
-            new ()
-            {
-                baseUrl = sceneData.SceneContent.ContentBaseUrl.Value,
-                content = sceneData.SceneEntityDefinition.content.ToArray(), //TODO for some reasons arrays and lists won't work
-                urn = sceneData.SceneEntityDefinition.id,
-                metadataJson = JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
-            };
+            new (
+                baseUrl: sceneData.SceneContent.ContentBaseUrl.Value,
+                urn: sceneData.SceneEntityDefinition.id,
+                content: sceneData.SceneEntityDefinition.content,
+                metadataJson: JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata)
+            );
     }
 }

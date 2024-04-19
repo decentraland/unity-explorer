@@ -10,6 +10,15 @@ module.exports.readFile = async function (message) {
     return await UnityRuntime.ReadFile(message.fileName)
 }
 
-module.exports.getSceneInformation = async function (message) {
-    return UnityRuntime.GetSceneInformation()
+module.exports.getSceneInformation = function (message) {
+    const result = UnityRuntime.GetSceneInformation()
+    
+    const content = JSON.parse(result.contentJson)
+    
+    return {
+        urn: result.urn,
+        content: content
+        metadataJson: result.metadataJson
+        baseUrl: result.baseUrl
+    }
 }
