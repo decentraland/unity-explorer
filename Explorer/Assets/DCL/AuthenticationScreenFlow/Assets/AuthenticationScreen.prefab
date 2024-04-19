@@ -232,7 +232,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6377136878412521182
 RectTransform:
   m_ObjectHideFlags: 0
@@ -251,7 +251,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 125, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0.0024414062, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1004994801631878468
 MonoBehaviour:
@@ -552,8 +552,8 @@ GameObject:
   - component: {fileID: 7702360773112794650}
   - component: {fileID: 9033864795988027910}
   - component: {fileID: 7578292249645083079}
-  - component: {fileID: 713033331353133368}
   - component: {fileID: 6575934798372011232}
+  - component: {fileID: 7462145715943015044}
   m_Layer: 0
   m_Name: BackButton
   m_TagString: Untagged
@@ -664,20 +664,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &713033331353133368
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 690367867981535852}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 7578292249645083079}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!95 &6575934798372011232
 Animator:
   serializedVersion: 5
@@ -699,6 +685,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7462145715943015044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 690367867981535852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 7578292249645083079}
+  <ButtonAnimator>k__BackingField: {fileID: 6575934798372011232}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &823388781594039178
 GameObject:
   m_ObjectHideFlags: 0
@@ -3497,8 +3498,8 @@ GameObject:
   - component: {fileID: 7726502526887811093}
   - component: {fileID: 50357040590464783}
   - component: {fileID: 1710274344204595558}
-  - component: {fileID: 3260056356706075930}
   - component: {fileID: 5712724491899242742}
+  - component: {fileID: 1468151952975705153}
   m_Layer: 0
   m_Name: DiscordButton
   m_TagString: Untagged
@@ -3610,20 +3611,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3260056356706075930
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5320285189117423790}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 1710274344204595558}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!95 &5712724491899242742
 Animator:
   serializedVersion: 5
@@ -3645,6 +3632,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1468151952975705153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5320285189117423790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 1710274344204595558}
+  <ButtonAnimator>k__BackingField: {fileID: 5712724491899242742}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &5339241425948155178
 GameObject:
   m_ObjectHideFlags: 0
@@ -3847,6 +3849,7 @@ MonoBehaviour:
   <LoginContainer>k__BackingField: {fileID: 5265511476716053455}
   <LoginButton>k__BackingField: {fileID: 4708745492529117082}
   <ConnectingToServerContainer>k__BackingField: {fileID: 4194859795826974307}
+  <Slides>k__BackingField: {fileID: 235622075379150934}
   <PendingAuthentication>k__BackingField: {fileID: 9139651224223642632}
   <CancelAuthenticationProcess>k__BackingField: {fileID: 7578292249645083079}
   <ProgressContainer>k__BackingField: {fileID: 234348218636697635}
@@ -4047,8 +4050,8 @@ GameObject:
   - component: {fileID: 8389673711702691545}
   - component: {fileID: 6319799229115273851}
   - component: {fileID: 4828106312302719395}
-  - component: {fileID: 3685603352095806431}
   - component: {fileID: 2373458321560173937}
+  - component: {fileID: 3238677399565183147}
   m_Layer: 0
   m_Name: UseAnotherAccountButton
   m_TagString: Untagged
@@ -4159,20 +4162,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3685603352095806431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5609746862316879584}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 4828106312302719395}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!95 &2373458321560173937
 Animator:
   serializedVersion: 5
@@ -4194,6 +4183,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3238677399565183147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5609746862316879584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4828106312302719395}
+  <ButtonAnimator>k__BackingField: {fileID: 2373458321560173937}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &6302728689054732172
 GameObject:
   m_ObjectHideFlags: 0
@@ -4480,8 +4484,8 @@ GameObject:
   - component: {fileID: 7327401095768751964}
   - component: {fileID: 3159600912255300349}
   - component: {fileID: 4708745492529117082}
-  - component: {fileID: 6849899580318634646}
   - component: {fileID: 7203393505669435826}
+  - component: {fileID: 5524944786755292665}
   m_Layer: 0
   m_Name: StartButton
   m_TagString: Untagged
@@ -4592,20 +4596,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &6849899580318634646
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6351262394580509030}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 4708745492529117082}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!95 &7203393505669435826
 Animator:
   serializedVersion: 5
@@ -4627,6 +4617,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5524944786755292665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6351262394580509030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4708745492529117082}
+  <ButtonAnimator>k__BackingField: {fileID: 7203393505669435826}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &6558392808739463091
 GameObject:
   m_ObjectHideFlags: 0
@@ -5340,8 +5345,8 @@ GameObject:
   - component: {fileID: 3176439600514569765}
   - component: {fileID: 2803467788014236035}
   - component: {fileID: 8577423537029511}
-  - component: {fileID: 4446799014871806851}
   - component: {fileID: 5351041963807919196}
+  - component: {fileID: 4589965471884491952}
   m_Layer: 0
   m_Name: JumpIntoWorld
   m_TagString: Untagged
@@ -5452,20 +5457,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &4446799014871806851
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7900844224099123466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 8577423537029511}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!95 &5351041963807919196
 Animator:
   serializedVersion: 5
@@ -5487,6 +5478,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4589965471884491952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7900844224099123466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8577423537029511}
+  <ButtonAnimator>k__BackingField: {fileID: 5351041963807919196}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &7955526012718410760
 GameObject:
   m_ObjectHideFlags: 0

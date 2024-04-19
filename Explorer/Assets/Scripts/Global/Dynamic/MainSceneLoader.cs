@@ -222,11 +222,12 @@ namespace Global.Dynamic
                 if (showSplash)
                     await WaitUntilSplashAnimationEndsAsync(ct);
 
+                splashScreenAnimation.transform.SetSiblingIndex(1);
+                splashScreenAnimation.SetTrigger(OUT);
+
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);
 
-                splashScreenAnimation.SetTrigger(OUT);
-                await UniTask.Delay(200);
                 splashRoot.SetActive(false);
 
                 UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);

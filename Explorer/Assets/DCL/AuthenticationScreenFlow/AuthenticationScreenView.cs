@@ -27,6 +27,9 @@ namespace DCL.AuthenticationScreenFlow
         public GameObject ConnectingToServerContainer { get; private set; } = null!;
 
         [field: SerializeField]
+        public GameObject Slides { get; private set; } = null!;
+
+        [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
 
         [field: SerializeField]

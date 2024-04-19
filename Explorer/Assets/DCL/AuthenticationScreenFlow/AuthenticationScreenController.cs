@@ -110,6 +110,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
+            viewInstance.gameObject.transform.SetSiblingIndex(2);
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
         }
 
@@ -127,8 +128,7 @@ namespace DCL.AuthenticationScreenFlow
 
             if (storedIdentity is { IsExpired: false })
             {
-                SwitchState(ViewState.Loading);
-
+                //SwitchState(ViewState.Loading);
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();
                 await FetchProfileAsync(loginCancellationToken.Token);
@@ -214,6 +214,7 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(IN);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -225,6 +226,7 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.LoginInProgress:
                     ResetAnimator(viewInstance.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
+                    viewInstance.Slides.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(OUT);
                     viewInstance.VerificationAnimator.SetTrigger(IN);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -236,6 +238,7 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Loading:
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
+                    viewInstance.Slides.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(true);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
