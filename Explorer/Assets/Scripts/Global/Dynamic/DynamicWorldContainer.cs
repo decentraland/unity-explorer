@@ -308,7 +308,8 @@ namespace Global.Dynamic
                     remotePoses,
                     staticContainer.CharacterContainer.CharacterObject,
                     realmData,
-                    remoteEntities
+                    remoteEntities,
+                    staticContainer.ScenesCache
                 ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager),
@@ -375,7 +376,7 @@ namespace Global.Dynamic
                 landscapePlugin,
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable)),
                 container.LODContainer.LODPlugin,
-                container.LODContainer.RoadPlugin
+                container.LODContainer.RoadPlugin,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
