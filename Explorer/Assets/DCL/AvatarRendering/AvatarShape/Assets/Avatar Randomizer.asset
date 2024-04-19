@@ -72,6 +72,7 @@ MonoBehaviour:
     - urn:decentraland:ethereum:collections-v1:dappcraft_moonminer:moonminer_neurahairs_hair
   - pointers:
     - urn:decentraland:matic:collections-v2:0x9ef30e8babfd367e2f31f3374ffe35ff4862e914:2
-  <RandomizeCollection>k__BackingField:
-  - pointer: base-wearable
-    page_size: 282
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xfe54b0887ebfabd61404b2d91672147d90c7ace9:1
+  - pointers:
+    - urn:decentraland:matic:collections-v2:0xdb1db5ffc64430474c2de25dcbc271b592f04d6b:2

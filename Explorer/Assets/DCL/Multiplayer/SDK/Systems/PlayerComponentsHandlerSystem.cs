@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Systems;
@@ -13,7 +14,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems
@@ -25,12 +25,14 @@ namespace DCL.Multiplayer.SDK.Systems
     public partial class PlayerComponentsHandlerSystem : BaseUnityLoopSystem
     {
         private readonly IScenesCache scenesCache;
+        private readonly ICharacterObject mainPlayerCharacterObject;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache) : base(world)
+        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
         {
             this.scenesCache = scenesCache;
+            mainPlayerCharacterObject = characterObject;
             ClearReservedEntities();
         }
 
@@ -50,15 +52,15 @@ namespace DCL.Multiplayer.SDK.Systems
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
 
-            if (sceneFacade.SceneStateProvider == null || !sceneFacade.SceneStateProvider.IsCurrent)
+            if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
-            int crdtEntityId = ReserveNextFreeEntity();
+            int crdtEntityId = characterTransform.Transform == mainPlayerCharacterObject.Transform ? SpecialEntitiesID.PLAYER_ENTITY : ReserveNextFreeEntity();
 
             // All reserved entities for that scene are taken
             if (crdtEntityId == -1) return;
 
-            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor!.Value;
+            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
@@ -72,7 +74,7 @@ namespace DCL.Multiplayer.SDK.Systems
                     SceneWorldEntity = sceneWorldEntity,
                     CRDTEntity = crdtEntityComponent,
                     Address = profile.UserId,
-                    IsGuest = !profile.HasConnectedWeb3, // TODO: check if this assumption is correct
+                    IsGuest = !profile.HasConnectedWeb3,
                 };
 
                 sceneEcsExecutor.World.Add(sceneWorldEntity, playerIdentityData);
@@ -85,9 +87,9 @@ namespace DCL.Multiplayer.SDK.Systems
         {
             // Only target entities outside the current scene
             if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
-                && sceneFacade.SceneStateProvider != null && sceneFacade.SceneStateProvider.IsCurrent) return;
+                && !sceneFacade.IsEmpty && sceneFacade.SceneStateProvider.IsCurrent) return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor!.Value;
+            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
@@ -106,10 +108,10 @@ namespace DCL.Multiplayer.SDK.Systems
         private void HandlePlayerDisconnect(in Entity entity, ref CharacterTransform characterTransform, PlayerIdentityDataComponent playerIdentityDataComponent)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
-                || !sceneFacade.SceneStateProvider.IsCurrent)
+                || sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor!.Value;
+            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())

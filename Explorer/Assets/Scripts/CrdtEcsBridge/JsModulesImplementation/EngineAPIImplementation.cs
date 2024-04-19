@@ -222,7 +222,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     case CRDTMessageType.PUT_COMPONENT:
                         // instead of processing via CRDTProtocol.ProcessMessage
                         // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
-                        crdtProtocol.UpdateLWWState(m.message);
+                        crdtProtocol.EnforceLWWState(m.message);
                         break;
                     default:
                         // as this data is not kept in CRDTProtocol it must be released immediately

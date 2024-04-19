@@ -130,7 +130,6 @@ namespace CrdtEcsBridge.OutgoingMessages
                 for (var i = 0; i < messages.Count; i++)
                 {
                     PendingMessage pendingMessage = messages[i];
-
                     IMemoryOwner<byte> memory;
 
                     switch (pendingMessage.MessageType)

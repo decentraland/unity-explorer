@@ -4,6 +4,7 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -22,7 +23,11 @@ namespace DCL.Multiplayer.SDK.Tests
         public void Setup()
         {
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter);
+
+            IComponentPool<PBPlayerIdentityData> componentPoolRegistry = Substitute.For<IComponentPool<PBPlayerIdentityData>>();
+            var instantiatedPbComponent = new PBPlayerIdentityData();
+            componentPoolRegistry.Get().Returns(instantiatedPbComponent);
+            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter, componentPoolRegistry);
 
             playerIdentityData = new PlayerIdentityDataComponent
             {
@@ -79,24 +84,6 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
             Assert.IsFalse(world.Has<CRDTEntity>(entity));
             Assert.IsTrue(world.Has<DeleteEntityIntention>(entity));
-        }
-
-        [Test]
-        public void HandleEntityDeletionCorrectly()
-        {
-            Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
-
-            system.Update(0);
-
-            Assert.IsTrue(world.Has<PBPlayerIdentityData>(entity));
-
-            world.Add(entity, new DeleteEntityIntention());
-
-            system.Update(0);
-
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerIdentityData.CRDTEntity.Id);
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
-            Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
         }
     }
 }

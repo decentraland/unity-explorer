@@ -104,7 +104,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             for (var i = 0; i < promiseAsset.InvisibleColliders.Count; i++)
             {
                 SDKCollider c = promiseAsset.InvisibleColliders[i];
-                c.IsActiveBySceneBounds = true;
+                c.ForceActiveBySceneBounds(true);
                 promiseAsset.InvisibleColliders[i] = c;
             }
 

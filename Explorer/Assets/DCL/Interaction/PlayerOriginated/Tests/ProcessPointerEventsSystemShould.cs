@@ -62,6 +62,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             {
                 UnityRaycastHit = new RaycastHit
                     { distance = 99 },
+                Distance = 99,
             };
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
@@ -92,6 +93,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             {
                 UnityRaycastHit = new RaycastHit
                     { distance = 150 },
+                Distance = 150,
             };
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
@@ -110,6 +112,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             {
                 UnityRaycastHit = new RaycastHit
                     { distance = 50 },
+                Distance = 50,
             };
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
@@ -139,6 +142,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             {
                 UnityRaycastHit = new RaycastHit
                     { distance = 50 },
+                Distance = 50,
             };
 
             world.Destroy(previousColliderInfo.ColliderEntityInfo.EntityReference);

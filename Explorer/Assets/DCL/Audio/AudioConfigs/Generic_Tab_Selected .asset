@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 'Generic_Tab_Selected '
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: c3819a810a84ae44c9b964942f536da3, type: 3}
+  - {fileID: 8300000, guid: 886fe24db9df84a48aef65a6f732c5f9, type: 3}
   relativeVolume: 1
   audioCategory: 0
-  pitchVariation: 0.2
+  pitchVariation: 0
   clipSelectionMode: 0

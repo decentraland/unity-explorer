@@ -11,7 +11,7 @@ namespace DCL.CharacterTriggerArea
         private readonly HashSet<Transform> currentAvatarsInside = new ();
         internal readonly HashSet<Transform> enteredThisFrame = new ();
         internal readonly HashSet<Transform> exitedThisFrame = new ();
-        [field: NonSerialized] public Transform TargetTransform;
+        [NonSerialized] public Transform TargetTransform;
 
         public IReadOnlyCollection<Transform> EnteredThisFrame => enteredThisFrame;
         public IReadOnlyCollection<Transform> ExitedThisFrame => exitedThisFrame;
