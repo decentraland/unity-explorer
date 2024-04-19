@@ -16,12 +16,12 @@ namespace DCL.Multiplayer.SDK.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
-    public partial class WritePBAvatarBaseSystem : BaseUnityLoopSystem
+    public partial class WriteSDKAvatarBaseSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IComponentPool<PBAvatarBase> componentPool;
 
-        public WritePBAvatarBaseSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBAvatarBase> componentPool) : base(world)
+        public WriteSDKAvatarBaseSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBAvatarBase> componentPool) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.componentPool = componentPool;
@@ -55,6 +55,8 @@ namespace DCL.Multiplayer.SDK.Systems
             pbComponent.HairColor = playerSDKDataComponent.HairColor.ToColor3();
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
+
+        // TODO: Component update
 
         [Query]
         [All(typeof(PBAvatarBase))]
