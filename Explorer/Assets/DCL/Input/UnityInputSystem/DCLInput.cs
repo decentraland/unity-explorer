@@ -1222,15 +1222,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""ShowHideUI"",
-                    ""type"": ""Button"",
-                    ""id"": ""878e68dd-c235-415e-bd9f-8209db45806c"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1750,17 +1741,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Close"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""0ca37a39-42e6-4e6c-bfe2-39c2c992eaba"",
-                    ""path"": ""<Keyboard>/u"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ShowHideUI"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -1826,6 +1806,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ToggleAvatarBubbles"",
                     ""type"": ""Button"",
                     ""id"": ""4209969a-2572-41c8-8380-1b57c867fe75"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ShowHideUI"",
+                    ""type"": ""Button"",
+                    ""id"": ""3b6f2b65-94c5-44ac-9e21-5c3ad3429220"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -1907,6 +1896,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ToggleAvatarBubbles"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a9d64da9-27ec-4ee4-bb71-6a68cd4ee3b3"",
+                    ""path"": ""<Keyboard>/u"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowHideUI"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2398,7 +2398,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_UI_ControllerDelta = m_UI.FindAction("ControllerDelta", throwIfNotFound: true);
         m_UI_ControllerFastCursor = m_UI.FindAction("ControllerFastCursor", throwIfNotFound: true);
         m_UI_Close = m_UI.FindAction("Close", throwIfNotFound: true);
-        m_UI_ShowHideUI = m_UI.FindAction("ShowHideUI", throwIfNotFound: true);
         // Shortcuts
         m_Shortcuts = asset.FindActionMap("Shortcuts", throwIfNotFound: true);
         m_Shortcuts_MainMenu = m_Shortcuts.FindAction("MainMenu", throwIfNotFound: true);
@@ -2408,6 +2407,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleUI = m_Shortcuts.FindAction("ToggleUI", throwIfNotFound: true);
         m_Shortcuts_EmoteWheel = m_Shortcuts.FindAction("EmoteWheel", throwIfNotFound: true);
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
+        m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -2825,7 +2825,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ControllerDelta;
     private readonly InputAction m_UI_ControllerFastCursor;
     private readonly InputAction m_UI_Close;
-    private readonly InputAction m_UI_ShowHideUI;
     public struct UIActions
     {
         private @DCLInput m_Wrapper;
@@ -2844,7 +2843,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ControllerDelta => m_Wrapper.m_UI_ControllerDelta;
         public InputAction @ControllerFastCursor => m_Wrapper.m_UI_ControllerFastCursor;
         public InputAction @Close => m_Wrapper.m_UI_Close;
-        public InputAction @ShowHideUI => m_Wrapper.m_UI_ShowHideUI;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2896,9 +2894,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started += instance.OnClose;
             @Close.performed += instance.OnClose;
             @Close.canceled += instance.OnClose;
-            @ShowHideUI.started += instance.OnShowHideUI;
-            @ShowHideUI.performed += instance.OnShowHideUI;
-            @ShowHideUI.canceled += instance.OnShowHideUI;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -2945,9 +2940,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started -= instance.OnClose;
             @Close.performed -= instance.OnClose;
             @Close.canceled -= instance.OnClose;
-            @ShowHideUI.started -= instance.OnShowHideUI;
-            @ShowHideUI.performed -= instance.OnShowHideUI;
-            @ShowHideUI.canceled -= instance.OnShowHideUI;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -2976,6 +2968,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleUI;
     private readonly InputAction m_Shortcuts_EmoteWheel;
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
+    private readonly InputAction m_Shortcuts_ShowHideUI;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -2987,6 +2980,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleUI => m_Wrapper.m_Shortcuts_ToggleUI;
         public InputAction @EmoteWheel => m_Wrapper.m_Shortcuts_EmoteWheel;
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
+        public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3017,6 +3011,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleAvatarBubbles.started += instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.performed += instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.canceled += instance.OnToggleAvatarBubbles;
+            @ShowHideUI.started += instance.OnShowHideUI;
+            @ShowHideUI.performed += instance.OnShowHideUI;
+            @ShowHideUI.canceled += instance.OnShowHideUI;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3042,6 +3039,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleAvatarBubbles.started -= instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.performed -= instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.canceled -= instance.OnToggleAvatarBubbles;
+            @ShowHideUI.started -= instance.OnShowHideUI;
+            @ShowHideUI.performed -= instance.OnShowHideUI;
+            @ShowHideUI.canceled -= instance.OnShowHideUI;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -3238,7 +3238,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnControllerDelta(InputAction.CallbackContext context);
         void OnControllerFastCursor(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
-        void OnShowHideUI(InputAction.CallbackContext context);
     }
     public interface IShortcutsActions
     {
@@ -3249,6 +3248,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleUI(InputAction.CallbackContext context);
         void OnEmoteWheel(InputAction.CallbackContext context);
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
+        void OnShowHideUI(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

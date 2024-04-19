@@ -23,7 +23,7 @@ namespace DCL.Input.Systems
 
         protected override void Update(float t)
         {
-            if (dclInput.UI.ShowHideUI.WasPressedThisFrame())
+            if (dclInput.Shortcuts.ShowHideUI.WasPressedThisFrame())
             {
                 mvcManager.SetAllViewsCanvasActive(nextUIVisibilityState);
                 nextUIVisibilityState = !nextUIVisibilityState;
