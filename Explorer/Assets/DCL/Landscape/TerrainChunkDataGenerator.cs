@@ -35,6 +35,7 @@ namespace DCL.Landscape
 
         private int worldSeed;
         private int parcelSize;
+        private int resolution;
 
         public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData, NoiseGeneratorCache noiseGenCache)
         {
@@ -162,15 +163,14 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask SetTreesAsync(int2 minTerrainParcel, int offsetX, int offsetZ, int chunkSize, TerrainData terrainData,
-            uint baseSeed, CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, List<int2> chunkOccupiedParcels = null,
+        public async UniTask SetTreesAsync(int2 chunkMinParcel, int chunkSize, TerrainData terrainData, uint baseSeed, CancellationToken cancellationToken,
             bool useCache = true)
         {
             if (useCache && localCache.IsValid())
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
                 {
-                    TreeInstance[] array = localCache.GetTrees(offsetX, offsetZ);
+                    TreeInstance[] array = localCache.GetTrees(chunkMinParcel.x, chunkMinParcel.y);
                     terrainData.SetTreeInstances(array, true);
                 }
             }
@@ -197,7 +197,7 @@ namespace DCL.Landscape
                             treeRadiusMap.Add(treeAssetIndex, treeAsset.radius);
 
                             INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
-                            var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
+                            var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkMinParcel.x, chunkMinParcel.y);
                             JobHandle generatorHandle = generator.Schedule(noiseDataPointer, instancingHandle);
 
                             var randomizer = new SetupRandomForParallelJobs(treeParallelRandoms, worldSeed);
@@ -212,12 +212,11 @@ namespace DCL.Landscape
                                 in treeAsset.randomization,
                                 treeAsset.radius,
                                 treeAssetIndex,
-                                offsetX,
-                                offsetZ,
+                                chunkMinParcel,
                                 chunkSize,
-                                chunkSize,
-                                minTerrainParcel,
-                                treeParallelRandoms);
+                                parcelSize,
+                                treeParallelRandoms,
+                                false);
 
                             instancingHandle = treeInstancesJob.Schedule(resultReference.Length, 32, randomizerHandle);
 
@@ -245,14 +244,6 @@ namespace DCL.Landscape
                             // if its marked as invalid, do not use this tree
                             if (!treeInvalidationMap.TryGetValue(treeInstance.Key, out bool isInvalid)) continue;
 
-                            if (nullifyDetailsOnOwned)
-                            {
-                                foreach (int2 parcel in chunkOccupiedParcels)
-                                    if (treeInstance.Key.x >= (-chunkMinParcel.x + parcel.x) * parcelSize && treeInstance.Key.x < (-chunkMinParcel.x + parcel.x + 1) * parcelSize &&
-                                        treeInstance.Key.y >= (-chunkMinParcel.y + parcel.y) * parcelSize && treeInstance.Key.y < (-chunkMinParcel.y + parcel.y + 1) * parcelSize)
-                                        isInvalid = true;
-                            }
-
                             if (isInvalid) continue;
 
                             array.Add(treeInstance.Value);
@@ -265,7 +256,7 @@ namespace DCL.Landscape
                         terrainData.SetTreeInstances(instances, true);
 
                         if (useCache)
-                            localCache.SaveTreeInstances(offsetX, offsetZ, instances);
+                            localCache.SaveTreeInstances(chunkMinParcel.x, chunkMinParcel.y, instances);
                     }
                 }
                 catch (Exception e) { ReportHub.LogException(e, reportData); }
