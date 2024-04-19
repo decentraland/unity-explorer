@@ -9,6 +9,7 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Unity.ColorComponent;
 using ECS.Unity.Groups;
 
 namespace DCL.Multiplayer.SDK.Systems
@@ -40,19 +41,18 @@ namespace DCL.Multiplayer.SDK.Systems
             {
                 pbAvatarBase.Name = playerSDKDataComponent.Name;
                 pbAvatarBase.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
-
-                // pbAvatarBase.SkinColor = playerSDKDataComponent.SkinColor;
-                // pbAvatarBase.EyesColor = playerSDKDataComponent.EyesColor;
-                // pbAvatarBase.HairColor = playerSDKDataComponent.HairColor;
+                pbAvatarBase.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
+                pbAvatarBase.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
+                pbAvatarBase.HairColor = playerSDKDataComponent.HairColor.ToColor3();
             }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
 
             PBAvatarBase pbComponent = componentPool.Get();
             pbComponent.Name = playerSDKDataComponent.Name;
             pbComponent.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
 
-            // pbComponent.SkinColor = playerSDKDataComponent.SkinColor;
-            // pbComponent.EyesColor = playerSDKDataComponent.EyesColor;
-            // pbComponent.HairColor = playerSDKDataComponent.HairColor;
+            pbComponent.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
+            pbComponent.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
+            pbComponent.HairColor = playerSDKDataComponent.HairColor.ToColor3();
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
 
