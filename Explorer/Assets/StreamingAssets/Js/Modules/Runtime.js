@@ -17,8 +17,8 @@ module.exports.getSceneInformation = function (message) {
     
     return {
         urn: result.urn,
-        content: content
-        metadata: result.metadataJson
+        content: content,
+        metadataJson: result.metadataJson,
         baseUrl: result.baseUrl
     }
 }
