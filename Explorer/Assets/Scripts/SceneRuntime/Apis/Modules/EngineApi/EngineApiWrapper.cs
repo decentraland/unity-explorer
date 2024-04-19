@@ -12,7 +12,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         internal readonly IEngineApi api;
 
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
+        protected readonly ISceneExceptionsHandler exceptionsHandler;
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
@@ -23,7 +23,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             this.exceptionsHandler = exceptionsHandler;
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             // Dispose the last input buffer
             lastInput.ReleaseAndDispose();
