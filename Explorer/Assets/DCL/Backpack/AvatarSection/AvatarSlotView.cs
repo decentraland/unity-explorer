@@ -79,7 +79,36 @@ namespace DCL.Backpack
         public AudioClipConfig ClickAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig HoverAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig OverrideHideAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig DontOverrideHideAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig UnequipAudio { get; private set; }
 
+        private void OnEnable()
+        {
+            OverrideHide.onClick.AddListener(PlayOverrideHideAudio);
+            NoOverride.onClick.AddListener(PlayDontOverrideHideAudio);
+            UnequipButton.onClick.AddListener(PlayUnequipAudio);
+        }
+
+        private void OnDisable()
+        {
+            OverrideHide.onClick.RemoveListener(PlayOverrideHideAudio);
+            NoOverride.onClick.RemoveListener(PlayDontOverrideHideAudio);
+            UnequipButton.onClick.RemoveListener(PlayUnequipAudio);
+
+        }
+
+        private void PlayOverrideHideAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(OverrideHideAudio);
+
+        private void PlayDontOverrideHideAudio () =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(DontOverrideHideAudio);
+
+        private void PlayUnequipAudio () =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(UnequipAudio);
 
         public void Start()
         {
