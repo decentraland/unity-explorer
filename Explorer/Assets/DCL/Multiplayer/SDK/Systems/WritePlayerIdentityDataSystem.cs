@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.SDK.Systems
 
         [Query]
         [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData(in Entity entity, PlayerSDKDataComponent playerSDKDataComponent)
+        private void CreatePlayerIdentityData(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
             ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PlayerSDKDataComponent>(static (pbPlayerIdentityData, playerSDKDataComponent) =>
             {

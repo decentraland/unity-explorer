@@ -38,16 +38,18 @@ namespace DCL.Multiplayer.SDK.Systems
 
         protected override void Update(float t)
         {
-            RemovePlayerIdentityDataOnOutsideCurrentSceneQuery(World);
+            RemovePlayerSDKDataOnOutsideCurrentSceneQuery(World);
 
             HandlePlayerDisconnectQuery(World);
 
-            AddPlayerIdentityDataQuery(World);
+            UpdatePlayerSDKDataQuery(World);
+
+            AddPlayerSDKDataQuery(World);
         }
 
         [Query]
         [None(typeof(PlayerSDKDataComponent), typeof(DeleteEntityIntention))]
-        private void AddPlayerIdentityData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
+        private void AddPlayerSDKData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
@@ -67,9 +69,12 @@ namespace DCL.Multiplayer.SDK.Systems
             {
                 Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
                 var crdtEntityComponent = new CRDTEntity(crdtEntityId);
-                var avatarData = profile.Avatar;
-                var playerIdentityData = new PlayerSDKDataComponent
+                Avatar avatarData = profile.Avatar;
+
+                // TODO: Optimize with a 'PlayerSDKDataComponent' pool??
+                var playerSDKDataComponent = new PlayerSDKDataComponent
                 {
+                    IsDirty = true,
                     SceneFacade = sceneFacade,
                     SceneWorldEntity = sceneWorldEntity,
                     CRDTEntity = crdtEntityComponent,
@@ -79,16 +84,42 @@ namespace DCL.Multiplayer.SDK.Systems
                     BodyShapeURN = avatarData.BodyShape,
                     SkinColor = avatarData.SkinColor,
                     EyesColor = avatarData.EyesColor,
-                    HairColor = avatarData.HairColor
+                    HairColor = avatarData.HairColor,
                 };
 
-                sceneEcsExecutor.World.Add(sceneWorldEntity, playerIdentityData);
-                World.Add(entity, playerIdentityData);
+                sceneEcsExecutor.World.Add(sceneWorldEntity, playerSDKDataComponent);
+                World.Add(entity, playerSDKDataComponent);
             }
         }
 
         [Query]
-        private void RemovePlayerIdentityDataOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerSDKDataComponent playerSDKDataComponent)
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdatePlayerSDKData(in Entity entity, ref Profile profile, ref PlayerSDKDataComponent playerSDKDataComponent)
+        {
+            if (!profile.IsDirty) return;
+
+            SceneEcsExecutor sceneEcsExecutor = playerSDKDataComponent.SceneFacade.EcsExecutor;
+
+            // External world access should be always synchronized (Global World calls into Scene World)
+            using (sceneEcsExecutor.Sync.GetScope())
+            {
+                Avatar avatarData = profile.Avatar;
+                playerSDKDataComponent.IsDirty = true;
+                playerSDKDataComponent.Address = profile.UserId;
+                playerSDKDataComponent.IsGuest = !profile.HasConnectedWeb3;
+                playerSDKDataComponent.Name = profile.Name;
+                playerSDKDataComponent.BodyShapeURN = avatarData.BodyShape;
+                playerSDKDataComponent.SkinColor = avatarData.SkinColor;
+                playerSDKDataComponent.EyesColor = avatarData.EyesColor;
+                playerSDKDataComponent.HairColor = avatarData.HairColor;
+
+                sceneEcsExecutor.World.Set(playerSDKDataComponent.SceneWorldEntity, playerSDKDataComponent);
+                World.Set(entity, playerSDKDataComponent);
+            }
+        }
+
+        [Query]
+        private void RemovePlayerSDKDataOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
             // Only target entities outside the current scene
             if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)

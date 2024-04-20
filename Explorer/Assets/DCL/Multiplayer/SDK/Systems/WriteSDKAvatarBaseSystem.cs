@@ -30,12 +30,13 @@ namespace DCL.Multiplayer.SDK.Systems
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
+            UpdateAvatarBaseQuery(World);
             CreateAvatarBaseQuery(World);
         }
 
         [Query]
         [None(typeof(PBAvatarBase), typeof(DeleteEntityIntention))]
-        private void CreateAvatarBase(in Entity entity, PlayerSDKDataComponent playerSDKDataComponent)
+        private void CreateAvatarBase(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
             ecsToCRDTWriter.PutMessage<PBAvatarBase, PlayerSDKDataComponent>(static (pbAvatarBase, playerSDKDataComponent) =>
             {
@@ -56,7 +57,28 @@ namespace DCL.Multiplayer.SDK.Systems
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
 
-        // TODO: Component update
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateAvatarBase(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent, ref PBAvatarBase pbComponent)
+        {
+            if (!playerSDKDataComponent.IsDirty) return;
+
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, PlayerSDKDataComponent>(static (pbAvatarBase, playerSDKDataComponent) =>
+            {
+                pbAvatarBase.Name = playerSDKDataComponent.Name;
+                pbAvatarBase.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
+                pbAvatarBase.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
+                pbAvatarBase.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
+                pbAvatarBase.HairColor = playerSDKDataComponent.HairColor.ToColor3();
+            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
+
+            pbComponent.Name = playerSDKDataComponent.Name;
+            pbComponent.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
+            pbComponent.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
+            pbComponent.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
+            pbComponent.HairColor = playerSDKDataComponent.HairColor.ToColor3();
+            World.Set(entity, pbComponent);
+        }
 
         [Query]
         [All(typeof(PBAvatarBase))]
