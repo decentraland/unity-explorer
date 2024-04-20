@@ -580,6 +580,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   <zoomVerticalRange>k__BackingField: {x: 14, y: 157}
   <scaleDuration>k__BackingField: 0.3
+  <ZoomInAudio>k__BackingField: {fileID: 11400000, guid: c4f3190f92a015d41b580c7fcf8318f9, type: 2}
+  <ZoomOutAudio>k__BackingField: {fileID: 11400000, guid: 9456c4fad945a3e459b608d1b548bc45, type: 2}
 --- !u!1 &6075758885154517307
 GameObject:
   m_ObjectHideFlags: 0
@@ -715,7 +717,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 4533423698185831559}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9456c4fad945a3e459b608d1b548bc45, type: 2}
 --- !u!1 &6210275713667249348
 GameObject:
   m_ObjectHideFlags: 0
@@ -926,7 +928,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 672909338269276313}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: c4f3190f92a015d41b580c7fcf8318f9, type: 2}
 --- !u!1 &7965068046867791810
 GameObject:
   m_ObjectHideFlags: 0

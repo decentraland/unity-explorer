@@ -1,3 +1,4 @@
+using DCL.Audio;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,8 +14,16 @@ namespace DCL.Navmap
         [field: SerializeField] internal Vector2Int zoomVerticalRange { get; set; } = new (28, 50);
         [field: SerializeField] internal float scaleDuration { get; private set; } = 0.2f;
 
+        [field: Header("Audio")]
+        [field: SerializeField]
+        internal AudioClipConfig ZoomInAudio { get; private set; }
+        [field: SerializeField]
+        internal AudioClipConfig ZoomOutAudio { get; private set; }
+
         internal ZoomInput ZoomIn => zoomIn;
         internal ZoomInput ZoomOut => zoomOut;
+
+
 
         [Serializable]
         internal class ZoomInput

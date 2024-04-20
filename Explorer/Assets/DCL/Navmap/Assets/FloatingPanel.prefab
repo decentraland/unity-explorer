@@ -1711,6 +1711,7 @@ MonoBehaviour:
   dislikeButton: {fileID: 281949347637870519}
   favoriteButton: {fileID: 396524359607738612}
   panelAnimator: {fileID: 4114018274006828034}
+  <OnShowAudio>k__BackingField: {fileID: 11400000, guid: 9a6c94967c30cbf409e4c8788abfa496, type: 2}
 --- !u!95 &4114018274006828034
 Animator:
   serializedVersion: 5
