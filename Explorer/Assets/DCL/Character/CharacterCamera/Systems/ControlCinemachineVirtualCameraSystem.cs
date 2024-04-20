@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterMotion.Components;
@@ -21,8 +22,12 @@ namespace DCL.CharacterCamera.Systems
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity inputMap;
+        private ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
 
-        internal ControlCinemachineVirtualCameraSystem(World world) : base(world) { }
+        internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
+        {
+            this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
+        }
 
         public override void Initialize()
         {
@@ -108,15 +113,16 @@ namespace DCL.CharacterCamera.Systems
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state, in CursorComponent cursorComponent)
         {
             if (cursorComponent.IsOverUI) return;
+
             if (cameraComponent.CameraInputChangeEnabled)
             {
                 if (input.ZoomOut)
-                {
                     switch (cameraComponent.Mode)
                     {
                         // if we switch from FP to TP just zoom at 0 position
                         case CameraMode.FirstPerson:
                             SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
 
                             // Reset zoom value
                             state.ThirdPersonZoomValue = 0f;
@@ -128,6 +134,7 @@ namespace DCL.CharacterCamera.Systems
                             // Zoom out according to sensitivity
                             if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, 1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
                             {
+                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
                                 SwitchCamera(CameraMode.Free, ref cinemachinePreset, ref cameraComponent, ref state);
                                 SetDefaultFreeCameraPosition(in cinemachinePreset);
                                 return;
@@ -137,15 +144,14 @@ namespace DCL.CharacterCamera.Systems
                             SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
                             return;
                     }
-                }
                 else if (input.ZoomIn)
-                {
                     switch (cameraComponent.Mode)
                     {
                         case CameraMode.ThirdPerson:
                             // If we exceed the zoom more than by twice the previous value, switch to FP
                             if (TrySwitchToAnotherMode(ref state.ThirdPersonZoomValue, -1, cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity))
                             {
+                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
                                 SwitchCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
                                 return;
                             }
@@ -155,13 +161,13 @@ namespace DCL.CharacterCamera.Systems
                             return;
                         case CameraMode.Free:
                             // Switch to third-person
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
                             SwitchCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
 
                             // Reset zoom value to the maximum
                             state.ThirdPersonZoomValue = 1f;
                             return;
                     }
-                }
             }
 
             if (!IsCorrectCameraEnabled(cameraComponent.Mode, cinemachinePreset))

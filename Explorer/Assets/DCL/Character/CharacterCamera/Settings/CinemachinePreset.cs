@@ -1,5 +1,4 @@
 using Cinemachine;
-using DCL.Audio;
 using DCL.CharacterCamera.Components;
 using UnityEngine;
 
@@ -11,9 +10,6 @@ namespace DCL.CharacterCamera.Settings
         [SerializeField] private CinemachineThirdPersonCameraData thirdPersonCameraData;
         [SerializeField] private CinemachineFreeCameraData freeCameraData;
 
-        [Header("Audio")]
-        [SerializeField] private AudioClipConfig zoomInAudio;
-        [SerializeField] private AudioClipConfig zoomOutAudio;
 
         [field: SerializeField]
         public CameraMode DefaultCameraMode { get; private set; }
@@ -26,9 +22,5 @@ namespace DCL.CharacterCamera.Settings
         ICinemachineFirstPersonCameraData ICinemachinePreset.FirstPersonCameraData => firstPersonCameraData;
 
         ICinemachineFreeCameraData ICinemachinePreset.FreeCameraData => freeCameraData;
-
-        AudioClipConfig ICinemachinePreset.ZoomInAudio => zoomInAudio;
-
-        AudioClipConfig ICinemachinePreset.ZoomOutAudio => zoomOutAudio;
     }
 }

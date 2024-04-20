@@ -3,7 +3,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Audio
 {
@@ -12,7 +11,6 @@ namespace DCL.Audio
         [SerializeField] private AudioSource AvatarAudioSource;
         [SerializeField] private Animator AvatarAnimator;
         [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
-
 
         private void Start()
         {
@@ -78,7 +76,6 @@ namespace DCL.Audio
         public void PlayHardLandingSound()
         {
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
-
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -111,7 +108,8 @@ namespace DCL.Audio
                 return;
             }
 
-            if (clipConfig.RelativeVolume == 0) {return;}
+            if (clipConfig.RelativeVolume == 0)
+                return;
 
             AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
@@ -121,22 +119,15 @@ namespace DCL.Audio
         private MovementKind GetMovementState()
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Jog)
-            {
                 return MovementKind.Run;
-            }
 
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)(MovementKind.Walk))
-            {
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Walk)
                 return MovementKind.Jog;
-            }
 
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > AvatarAudioSettings.MovementBlendThreshold)
-            {
                 return MovementKind.Walk;
-            }
 
             return MovementKind.None;
         }
-
     }
 }

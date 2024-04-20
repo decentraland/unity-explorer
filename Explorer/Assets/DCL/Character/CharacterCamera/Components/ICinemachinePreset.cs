@@ -1,5 +1,4 @@
 using Cinemachine;
-using DCL.Audio;
 using DCL.CharacterCamera.Settings;
 
 namespace DCL.CharacterCamera.Components
@@ -18,8 +17,5 @@ namespace DCL.CharacterCamera.Components
         internal ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }
 
         internal ICinemachineFreeCameraData FreeCameraData { get; }
-
-        internal AudioClipConfig ZoomInAudio { get; }
-        internal AudioClipConfig ZoomOutAudio { get; }
     }
 }
