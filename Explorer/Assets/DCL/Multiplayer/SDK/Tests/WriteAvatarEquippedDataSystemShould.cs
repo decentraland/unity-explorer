@@ -16,7 +16,7 @@ using System.Linq;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
-    public class WritePlayerAvatarEquippedSystemShould : UnitySystemTestBase<WritePlayerAvatarEquippedSystem>
+    public class WriteAvatarEquippedDataSystemShould : UnitySystemTestBase<WriteAvatarEquippedDataSystem>
     {
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.SDK.Tests
             IComponentPool<PBAvatarEquippedData> componentPoolRegistry = Substitute.For<IComponentPool<PBAvatarEquippedData>>();
             var instantiatedPbComponent = new PBAvatarEquippedData();
             componentPoolRegistry.Get().Returns(instantiatedPbComponent);
-            system = new WritePlayerAvatarEquippedSystem(world, ecsToCRDTWriter, componentPoolRegistry);
+            system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter, componentPoolRegistry);
 
             var wearableURNs = new List<URN>();
             wearableURNs.Add("wearable-urn-1");

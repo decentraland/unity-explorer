@@ -16,12 +16,12 @@ namespace DCL.Multiplayer.SDK.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EQUIPPED)]
-    public partial class WritePlayerAvatarEquippedSystem : BaseUnityLoopSystem
+    public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IComponentPool<PBAvatarEquippedData> componentPool;
 
-        public WritePlayerAvatarEquippedSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBAvatarEquippedData> componentPool) : base(world)
+        public WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBAvatarEquippedData> componentPool) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.componentPool = componentPool;
