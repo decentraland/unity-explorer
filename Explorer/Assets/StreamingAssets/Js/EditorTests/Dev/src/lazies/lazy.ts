@@ -1,12 +1,12 @@
 interface Lazy<T> {
-    get(): T
+    value(): T
 }
 
 export function newLazy<T>(factoryFunction: () => T): Lazy<T> {
     let value: T | null = null
 
     return {
-        get: () => {
+        value: () => {
             if (value === null) {
                 value = factoryFunction()
             }

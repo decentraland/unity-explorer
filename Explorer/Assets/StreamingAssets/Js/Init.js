@@ -18,7 +18,12 @@ function require(moduleName) {
         moduleName.substring(0, 1)   // __dirname
     );
 
-    Validates.registerBundle(module.exports, console.warning, console.error)
+    const logger = {
+        error: (m) => console.error(m),
+        warning: (m) => console.warning(m),
+    }
+    
+    Validates.registerBundle(module.exports, logger)
     
     return module.exports;
 }
