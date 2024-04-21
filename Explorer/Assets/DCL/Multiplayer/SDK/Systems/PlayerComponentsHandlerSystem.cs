@@ -85,6 +85,8 @@ namespace DCL.Multiplayer.SDK.Systems
                     SkinColor = avatarData.SkinColor,
                     EyesColor = avatarData.EyesColor,
                     HairColor = avatarData.HairColor,
+                    WearableUrns = profile.Avatar.Wearables,
+                    EmoteUrns = profile.Avatar.Emotes,
                 };
 
                 sceneEcsExecutor.World.Add(sceneWorldEntity, playerSDKDataComponent);
@@ -112,6 +114,8 @@ namespace DCL.Multiplayer.SDK.Systems
                 playerSDKDataComponent.SkinColor = avatarData.SkinColor;
                 playerSDKDataComponent.EyesColor = avatarData.EyesColor;
                 playerSDKDataComponent.HairColor = avatarData.HairColor;
+                playerSDKDataComponent.WearableUrns = profile.Avatar.Wearables;
+                playerSDKDataComponent.EmoteUrns = profile.Avatar.Emotes;
 
                 sceneEcsExecutor.World.Set(playerSDKDataComponent.SceneWorldEntity, playerSDKDataComponent);
                 World.Set(entity, playerSDKDataComponent);

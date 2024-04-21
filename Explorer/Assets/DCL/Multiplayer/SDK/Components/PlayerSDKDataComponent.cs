@@ -3,14 +3,13 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using DCL.ECSComponents;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Components
 {
     public struct PlayerSDKDataComponent : IDirtyMarker
     {
-        public bool IsDirty { get; set; }
-
         public ISceneFacade SceneFacade;
         public CRDTEntity CRDTEntity;
         public string Address;
@@ -20,7 +19,11 @@ namespace DCL.Multiplayer.SDK.Components
         public Color SkinColor;
         public Color EyesColor;
         public Color HairColor;
+
+        public IReadOnlyList<URN> EmoteUrns;
+        public IReadOnlyCollection<URN> WearableUrns;
         public Entity SceneWorldEntity;
+        public bool IsDirty { get; set; }
 
         // repeated string wearable_urns = 1;
         // repeated string emotes_urns = 2;

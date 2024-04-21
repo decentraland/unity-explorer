@@ -217,6 +217,11 @@
         public const string PLAYER_AVATAR_BASE = nameof(PLAYER_AVATAR_BASE);
 
         /// <summary>
+        ///     PBAvatarEquipped component writer
+        /// </summary>
+        public const string PLAYER_AVATAR_EQUIPPED = nameof(PLAYER_AVATAR_EQUIPPED);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);
